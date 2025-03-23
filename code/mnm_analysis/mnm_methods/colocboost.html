@@ -688,7 +688,6 @@ parameter: R2_threshold = 0.6
 parameter: minimum_ld = 5
 # summary stats QC methods: rss_qc, dentist, slalom
 parameter: qc_method = &quot;NULL&quot;
-
 parameter: target = &quot;&quot;
 # Either an index number in str format or &quot;NULL&quot; as a string
 parameter: target_column_index = &quot;3&quot;
@@ -1352,8 +1351,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
     library(vctrs)
     library(susieR)
     library(matrixStats)
-    for(file in list.files(&quot;/home/xc2270/COLOCBoost/pipline/pecotmr_code&quot;, full.names = T)) {source(file)}
-    source(&quot;/home/xc2270/COLOCBoost/pipline/colocboost_pipline.R&quot;)
+    for(file in list.files(&quot;/home/xc2270/COLOCBoost/pipeline/pecotmr_change_ld&quot;, full.names = T)) {source(file)}
     for(file in list.files(&quot;/home/xc2270/COLOCBoost/code_COLOCBoost/colocboost_updating&quot;, full.names = T)) {source(file)}
   
     ##### ======= set up all input parameters ====== #####
@@ -1431,7 +1429,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
         event_filters &lt;- read.table(&quot;${event_filter_rules}&quot;)
         event_filters &lt;- lapply(1:nrow(event_filters), function(ii) as.list(event_filters[ii,] %&gt;% unlist))
     } else { event_filters &lt;- NULL }
-  
+    
     # Add computational time
     computing_time = list()
     # Load regional multitask data
@@ -1478,8 +1476,9 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
         region_name = &quot;${_meta_info[2]}&quot;
     }
   
+    # - analysis parameters
     region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
-    res &lt;- colocboost_analysis_pipline(region_data = fdat, 
+    res &lt;- colocboost_analysis_pipeline(region_data = fdat, 
                                         event_filters = event_filters,
                                         # - analysis
                                         xqtl_coloc = xqtl_coloc,

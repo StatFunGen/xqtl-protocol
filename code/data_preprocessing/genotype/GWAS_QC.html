@@ -508,7 +508,7 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="genotype-plink-file-quality-control">
 <h1>Genotype PLINK File Quality Control<a class="headerlink" href="#genotype-plink-file-quality-control" title="Link to this heading">#</a></h1>
-<p>This workflow implements some preliminary data QC steps for PLINK input files. VCF format of inputs will be converted to PLINK before performing QC.</p>
+<p>This workflow implements some preliminary data QC steps for PLINK input files. It supports both PLINK1 binary format (BED/BIM/FAM) and PLINK2 format (PGEN/PVAR/PSAM). VCF format of inputs will be converted to PLINK before performing QC.</p>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
 <p>This notebook includes workflow for</p>
@@ -552,7 +552,7 @@ document.write(`
 </section>
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
-<p>The whole genome PLINK bim/bed/fam bundle. For input in VCF format and/or per-chromosome VCF or PLINK format, please use <code class="docutils literal notranslate"><span class="pre">vcf_to_plink</span></code> and <code class="docutils literal notranslate"><span class="pre">merge_plink</span></code> in <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.html">genotype formatting</a> pipeline to convert them to PLINK file bundle.</p>
+<p>The genotype files in either PLINK1 binary format (BED/BIM/FAM) or PLINK2 format (PGEN/PVAR/PSAM). For input in VCF format and/or per-chromosome VCF or PLINK format, please use <code class="docutils literal notranslate"><span class="pre">vcf_to_plink</span></code> and <code class="docutils literal notranslate"><span class="pre">merge_plink</span></code> in <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.html">genotype formatting</a> pipeline to convert them to PLINK file bundle.</p>
 </section>
 <section id="minimal-working-example">
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
@@ -828,7 +828,7 @@ Sections
 parameter: cwd = path(&quot;output&quot;)
 # A string to identify your analysis run
 parameter: name = &quot;&quot;
-# PLINK binary files
+# PLINK binary files (either BED/BIM/FAM or PGEN/PVAR/PSAM format)
 parameter: genoFile = paths
 # The path to the file that contains the list of samples to remove (format FID, IID)
 parameter: remove_samples = path(&#39;.&#39;)
@@ -851,11 +851,49 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 20
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+parameter: entrypoint= &quot;&quot;
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = path(f&quot;{cwd:a}&quot;)
+
+# Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
+def determine_plink_format(file_path):
+    # Check if the file path ends with .bed or .pgen extension
+    if file_path.endswith(&#39;.bed&#39;):
+        return &#39;plink1&#39;
+    elif file_path.endswith(&#39;.pgen&#39;):
+        return &#39;plink2&#39;
+    # If the file doesn&#39;t have a standard extension, try to infer format
+    # by checking for companion files with .bim/.fam or .pvar/.psam extensions
+    base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
+    if os.path.exists(f&quot;{base_path}.bim&quot;) and os.path.exists(f&quot;{base_path}.fam&quot;):
+        return &#39;plink1&#39;
+    elif os.path.exists(f&quot;{base_path}.pvar&quot;) and os.path.exists(f&quot;{base_path}.psam&quot;):
+        return &#39;plink2&#39;
+    # Default to PLINK1 if can&#39;t determine
+    return &#39;plink1&#39;
+
+# Get the appropriate PLINK command based on the input file format
+def get_plink_command_prefix(file_path):
+    format_type = determine_plink_format(file_path)
+    if format_type == &#39;plink1&#39;:
+        return &quot;--bfile&quot;
+    else:  # plink2
+        return &quot;--pfile&quot;
+        
+# Generate the appropriate file extension based on the requested format
+def get_output_extension(output_format, is_prune=False):
+    if output_format == &#39;plink1&#39;:
+        return &#39;.bed&#39; if not is_prune else &#39;.prune.bed&#39;
+    else:  # plink2
+        return &#39;.pgen&#39; if not is_prune else &#39;.prune.pgen&#39;
+        
+# Choose the make-bed or make-pgen command based on desired output format
+def get_make_command(output_format):
+    if output_format == &#39;plink1&#39;:
+        return &#39;--make-bed&#39;
+    else:  # plink2
+        return &#39;--make-pgen&#39;
 </pre></div>
 </div>
 </div>
@@ -873,9 +911,12 @@ parameter: kin_maf = 0.01
 input: genoFile
 output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.kin0&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+
+plink_command = get_plink_command_prefix(genoFile)
+
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint=entrypoint
     plink2 \
-      --bfile ${_input:n} \
+      ${plink_command} ${_input:n} \
       --make-king-table \
       --king-table-filter ${kinship} \
       ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
@@ -1261,30 +1302,34 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 [king_3]
 depends: sos_variable(&quot;related_id&quot;)
 input: output_from(2), genoFile
-output: unrelated_bed = f&#39;{cwd}/{_input[0]:bn}.unrelated.bed&#39;,
-        related_bed = f&#39;{cwd}/{_input[0]:bn}.related.bed&#39;
+plink_command = get_plink_command_prefix(_input[1])
+output_format = determine_plink_format(_input[1])
+make_command = get_make_command(output_format)
+output_ext = get_output_extension(output_format)
+output: unrelated_bed = f&#39;{cwd}/{_input[0]:bn}.unrelated{output_ext}&#39;,
+        related_bed = f&#39;{cwd}/{_input[0]:bn}.related{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash:  expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
     plink2 \
-      --bfile ${_input[1]:n} \
+      ${plink_command} ${_input[1]:n} \
       --remove ${_input[0]} \
       ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-      --make-bed \
+      ${make_command} \
       --out ${_output[0]:n} \
       --threads ${numThreads} \
       --memory ${int(expand_size(mem) * 0.9)/1e6} --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
 
     if [ ${len(related_id)} -ne 0 ] ; then
     plink2 \
-      --bfile ${_input[1]:n} \
+      ${plink_command} ${_input[1]:n} \
       --keep ${_input[0]} \
-      --make-bed \
+      ${make_command} \
       --out ${_output[1]:n} \
       --threads ${numThreads} \
       --memory ${int(expand_size(mem) * 0.9)/1e6} --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
     else
        touch ${_output[1]}
-    fi 
+    fi
 </pre></div>
 </div>
 </div>
@@ -1325,11 +1370,15 @@ fail_if(not (keep_variants.is_file() or keep_variants == path(&#39;.&#39;)), msg
 fail_if(not (remove_samples.is_file() or remove_samples == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{remove_samples}``&#39;)
 
 input: genoFile, group_by=1
-output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.plink_qc{&quot;.extracted&quot; if keep_variants.is_file() else &quot;&quot;}{&quot;.bed&quot; if not meta_only else &quot;.snplist&quot;}&#39;
+plink_command = get_plink_command_prefix(_input)
+output_format = determine_output_format(_input)
+make_command = get_make_command(output_format) if not meta_only else &quot;--write-snplist --write-samples&quot;
+output_ext = get_output_extension(output_format) if not meta_only else &quot;.snplist&quot;
+output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot; + name) if name else &quot;&quot;}.plink_qc{&quot;.extracted&quot; if keep_variants.is_file() else &quot;&quot;}{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
     plink2 \
-      --bfile ${_input:n} \
+      ${plink_command} ${_input:n} \
       ${(&#39;--maf %s&#39; % maf_filter) if maf_filter &gt; 0 else &#39;&#39;} \
       ${(&#39;--max-maf %s&#39; % maf_max_filter) if maf_max_filter &gt; 0 else &#39;&#39;} \
       ${(&#39;--mac %s&#39; % mac_filter) if mac_filter &gt; 0 else &#39;&#39;} \
@@ -1341,7 +1390,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.
       ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
       ${(&#39;--exclude %s&#39; % exclude_variants) if exclude_variants.is_file() else &quot;&quot;} \
       ${(&#39;--extract %s&#39; % keep_variants) if keep_variants.is_file() else &quot;&quot;} \
-      ${(&#39;--make-bed&#39;) if not meta_only else &quot;--write-snplist --write-samples&quot;} \
+      ${make_command} \
       ${(&quot;&quot;) if not rm_dups else &quot;--rm-dup force-first &#39;list&#39;&quot;} \
       ${paths([&quot;--%s&quot; % x for x in other_args]) if other_args else &quot;&quot;} \
       --out ${_output:n} \
@@ -1367,20 +1416,24 @@ parameter: window = 50
 parameter: shift = 10
 parameter: r2 = 0.1
 stop_if(r2==0)
-output: bed=f&#39;{cwd}/{_input:bn}.prune.bed&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
+plink_command = get_plink_command_prefix(_input)
+output_format = determine_output_format(_input)
+make_command = get_make_command(output_format)
+output_ext = get_output_extension(output_format, is_prune=True)
+output: bed=f&#39;{cwd}/{_input:bn}.prune{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
     plink2 \
-    --bfile ${_input:n} \
+    ${plink_command} ${_input:n} \
     --indep-pairwise ${window} ${shift} ${r2}  \
     --out ${_output[&quot;prune&quot;]:nn} \
     --threads ${numThreads} \
     --memory ${int(expand_size(mem) * 0.9)/1e6}
    
     plink2 \
-    --bfile ${_input:n} \
+    ${plink_command} ${_input:n} \
     --extract ${_output[&#39;prune&#39;]} \
-    --make-bed \
+    ${make_command} \
     --out ${_output[&#39;bed&#39;]:n} \
     --threads ${numThreads} \
     --memory ${int(expand_size(mem) * 0.9)/1e6}
@@ -1426,7 +1479,33 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout 
     library(data.table)
 
     # Read data files; let read_delim auto-determine the delimiter
-    genoFam &lt;- fread(${_input[0]:ar}, header=FALSE)
+    input_file &lt;- &quot;${_input[0]}&quot;
+    
+    # Determine if the input is a FAM file (PLINK1) or a PSAM file (PLINK2)
+    if (grepl(&quot;\\.psam$&quot;, input_file)) {
+        # For PSAM file (PLINK2 format)
+        genoFam &lt;- fread(${_input[0]:ar}, header=TRUE)
+        # Standardize column names (PSAM typically uses &#39;#IID&#39; or &#39;#FID IID&#39;)
+        if (&quot;#FID&quot; %in% colnames(genoFam) &amp;&amp; &quot;IID&quot; %in% colnames(genoFam)) {
+            genoFam &lt;- genoFam %&gt;% select(`#FID`, IID)
+            colnames(genoFam) &lt;- c(&quot;V1&quot;, &quot;V2&quot;)  # Make column names match PLINK1 format for consistency
+        } else if (&quot;#IID&quot; %in% colnames(genoFam)) {
+            genoFam &lt;- genoFam %&gt;% mutate(V1 = `#IID`) %&gt;% select(V1, `#IID`)
+            colnames(genoFam) &lt;- c(&quot;V1&quot;, &quot;V2&quot;)  # Make column names match PLINK1 format for consistency
+        } else {
+            # Try to handle other possible PSAM formats
+            if (ncol(genoFam) &gt;= 2) {
+                genoFam &lt;- genoFam[, 1:2]
+                colnames(genoFam) &lt;- c(&quot;V1&quot;, &quot;V2&quot;)  # Make column names match PLINK1 format for consistency
+            } else {
+                stop(&quot;Cannot determine the structure of the PSAM file. Expected columns not found.&quot;)
+            }
+        }
+    } else {
+        # For FAM file (PLINK1 format) - assume standard format with no header
+        genoFam &lt;- fread(${_input[0]:ar}, header=FALSE)
+    }
+    
     phenoFile &lt;- read_delim(${_input[1]:ar}, col_names=TRUE)
     if (${&quot;TRUE&quot; if sample_participant_lookup.is_file() else &quot;FALSE&quot;}) {
         sample_lookup &lt;- fread(${sample_participant_lookup:ar}, header=TRUE)
