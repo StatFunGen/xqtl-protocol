@@ -795,8 +795,8 @@ parameter: impute = False
 parameter: qc_method = &quot;&quot;
 # analysis method: single_effect, susie_rss, bayesian_conditional_regression
 parameter: finemapping_method = &quot;single_effect&quot;
-parameter: target = &quot;&quot;
-parameter: target_column_index = &quot;3&quot;
+parameter: extract_region_name = &quot;NULL&quot;
+parameter: region_name_col = &quot;NULL&quot;
 # compute LD from genotype
 parameter: compute_LD_from_genotype = False
 # remove a variant if it has more than imiss missing individual level data
@@ -821,15 +821,14 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
     n_samples = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][2] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
     n_cases = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][3] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
     n_controls = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][4] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
-    if(&quot;${target}&quot; == &quot;&quot;){
-        target = &quot;${regional_data[&#39;regions&#39;][_regions][3] if len(regional_data[&#39;regions&#39;][_regions]) &gt; 3 else None}&quot;
-        if(target == &quot;None&quot; | &quot;${target_column_index}&quot; == &quot;&quot;){
-            target = &quot;&quot;
+    if(&quot;${extract_region_name}&quot; == &quot;NULL&quot;){
+        extract_region_name = &quot;${regional_data[&#39;regions&#39;][_regions][3] if len(regional_data[&#39;regions&#39;][_regions]) &gt; 3 else None}&quot;
+        if(extract_region_name == &quot;None&quot; | &quot;${region_name_col}&quot; == &quot;NULL&quot;){
+            extract_region_name = NULL
         }
-    }else{target = &quot;${target}&quot;}
-    if(&quot;${target_column_index}&quot; == &quot;&quot;){
-      target_column_index = &quot;&quot;
-    }else{target_column_index = as.numeric(&quot;${target_column_index}&quot;)}
+    } else {
+        extract_region_name = &quot;${extract_region_name}&quot;
+    }
 
     if( ${&quot;TRUE&quot; if compute_LD_from_genotype else &quot;FALSE&quot;}){
     geno_path = readr::read_delim(&quot;${ld_meta_data}&quot;,&quot;\t&quot;)%&gt;% filter(`#chr` == &quot;${regional_data[&#39;regions&#39;][_regions][0]}&quot;, 
@@ -854,8 +853,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
     res = setNames(replicate(length(studies), list(), simplify = FALSE), studies)
     for (r in 1:length(res)) {
         tryCatch({
-        res[[r]] = rss_analysis_pipeline(sumstat_path = sumstat_paths[r], column_file_path = column_file_paths[r], 
-                                        LD_data = LD_data, target = target,  target_column_index = target_column_index, n_sample = as.numeric(n_samples[r]), n_case = as.numeric(n_cases[r]), 
+        res[[r]] = rss_analysis_pipeline(sumstat_path = sumstat_paths[r], column_file_path = column_file_paths[r],
+                                        LD_data = LD_data, extract_region_name = extract_region_name, region_name_col = ${region_name_col}, n_sample = as.numeric(n_samples[r]), n_case = as.numeric(n_cases[r]), 
                                         n_control = as.numeric(n_controls[r]), skip_region = skip_region,
                                         qc_method = ${&quot;NULL&quot; if len(qc_method) == 0 else &quot;&#39;%s&#39;&quot; % qc_method},
                                         impute = ${&quot;TRUE&quot; if impute else &quot;FALSE&quot;},
@@ -864,7 +863,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                                         finemapping_opts = list(init_L = ${L}, max_L = ${max_L}, l_step = ${l_step}, coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}), signal_cutoff = ${pip_cutoff}),
                                         pip_cutoff_to_skip = ${skip_analysis_pip_cutoff}, comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;}
                                         )
-        fwrite(res[[r]]$rss_data_analyzed, file = paste0(&quot;${_output:nn}.&quot;, target, studies[r], &quot;.sumstats.tsv.gz&quot;), sep = &quot;\t&quot;, col.names = TRUE, row.names = FALSE, quote = FALSE, compress = &quot;gzip&quot;)
+        fwrite(res[[r]]$rss_data_analyzed, file = paste0(&quot;${_output:nn}.&quot;, extract_region_name, studies[r], &quot;.sumstats.tsv.gz&quot;), sep = &quot;\t&quot;, col.names = TRUE, row.names = FALSE, quote = FALSE, compress = &quot;gzip&quot;)
         if(is.null(res[[r]][[1]])){
               res[[r]] = list()
         }

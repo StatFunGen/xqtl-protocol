@@ -688,9 +688,9 @@ parameter: R2_threshold = 0.6
 parameter: minimum_ld = 5
 # summary stats QC methods: rss_qc, dentist, slalom
 parameter: qc_method = &quot;NULL&quot;
-parameter: target = &quot;&quot;
+parameter: extract_sumstats_region_name = &quot;NULL&quot;
 # Either an index number in str format or &quot;NULL&quot; as a string
-parameter: target_column_index = &quot;3&quot;
+parameter: sumstats_region_name_col = &quot;NULL&quot;
 parameter: comment_string = &quot;NULL&quot;
 parameter: ld_data_name = []
 
@@ -1387,8 +1387,12 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
     n_samples = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][2] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
     n_cases = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][3] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
     n_controls = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][4] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
-    target = &quot;${target}&quot;
-    target_column_index = ${target_column_index}
+    if(&quot;${extract_sumstats_region_name}&quot; == &quot;NULL&quot;){
+        extract_sumstats_region_name = NULL
+    } else {
+        extract_sumstats_region_name = &quot;${extract_sumstats_region_name}&quot;
+    }
+    sumstats_region_name_col = ${sumstats_region_name_col}
     comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;}
     qc_method = ${&quot;NULL&quot; if qc_method == &quot;NULL&quot; else &quot;&#39;%s&#39;&quot; % qc_method}
     impute = ${&quot;TRUE&quot; if impute else &quot;FALSE&quot;}
@@ -1456,7 +1460,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
                                             match_LD_sumstat = match_LD_sumstat,
                                             conditions_list_sumstat = studies,
                                             n_samples = n_samples, n_cases = n_cases, n_controls = n_controls,
-                                            target = target, target_column_index = target_column_index,
+                                            extract_sumstats_region_name = extract_sumstats_region_name, sumstats_region_name_col = sumstats_region_name_col,
                                             comment_string = comment_string)
     }, NoSNPsError = function(e) {
         message(&quot;Error: &quot;, paste(e$message, &quot;${_meta_info[2] + &#39;@&#39; + _meta_info[1]}&quot;))

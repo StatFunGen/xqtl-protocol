@@ -1810,6 +1810,11 @@ parameter:  min_purity = 0.5
 parameter: epigenetics_mark_treshold = 16
 # Run susie for top pc of the fsusie input
 parameter: susie_top_pc = 10
+# Run fsusie with this post-processing option. Available options are TI, HMM, and none. TI is recommended as default. HMM performs particularly well when analyzing data with, say, few sampling points (i.e., ncol(Y)&lt;30) or when the data are particularly noisy (low signal-to-noise ratio).
+parameter: post_processing =  &quot;TI&quot;
+# Run fsusie with small sample correction 
+parameter: small_sample_correction = False
+
 depends: sos_variable(&quot;regional_data&quot;)
 # Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
 stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
@@ -1915,7 +1920,10 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                                       max_SNP_EM=${max_SNP_EM}, 
                                       max_scale = ${max_scale},
                                       min.purity = ${min_purity},
-                                      cov_lev = ${coverage[0]})
+                                      cov_lev = ${coverage[0]},
+                                      post_processing = &#39;${post_processing}&#39;
+                                      ${&quot;, cor_small = TRUE&quot;  if small_sample_correction else &quot;&quot; }
+                                      )
         fitted[[r]]$Y_coordinates = fdat$Y_coordinates[[r]] # Add Y coord 
         names(fitted[[r]]$fsusie_result$pip) = colnames(fdat$residual_X[[r]]) 
         fitted[[r]]$fsusie_summary &lt;- susie_post_processor(fitted[[r]]$fsusie_result, fdat$residual_X[[r]], NULL, fdat$residual_X_scalar[[r]], 1, fdat$maf[[r]], 
