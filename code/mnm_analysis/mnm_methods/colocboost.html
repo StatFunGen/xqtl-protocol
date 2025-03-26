@@ -488,7 +488,11 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-anlaysis">xQTL only anlaysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-xqtl-integration">GWAS-xQTL integration</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
@@ -542,6 +546,8 @@ document.write(`
 <section id="minimal-working-example-steps">
 <h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
 <p>Timing [FIXME]</p>
+<section id="xqtl-only-anlaysis">
+<h3>xQTL only anlaysis<a class="headerlink" href="#xqtl-only-anlaysis" title="Link to this heading">#</a></h3>
 <p>Below we duplicate the examples for phenotype and covariates to demonstrate that when there are multiple phenotypes for the same genotype it is possible to use this pipeline to analyze all of them (more than two is accepted as well).</p>
 <p>Here using <code class="docutils literal notranslate"><span class="pre">--region-name</span></code> we focus the analysis on 3 genes. In practice if this parameter is dropped, the union of all regions in all phenotype region lists will be analyzed. It is possible for some of the regions there are no genotype data, in which case the pipeline will output RDS files with a warning message to indicate the lack of genotype data to analyze.</p>
 <p><strong>Note:</strong> Suggested output naming convention is cohort_modality, eg ROSMAP_snRNA_pseudobulk.</p>
@@ -554,7 +560,8 @@ document.write(`
                 output/phenotype/protocol_example.protein.region_list.txt \
     --covFile output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
               output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz  \
-    --customized-association-windows input/xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
+    --customized-association-windows input/xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \ 
+    --no-separate-gwas --xqtl-coloc \
     --region-name ENSG00000241973_P42356 ENSG00000160209_O00764 ENSG00000100412_Q99798 \
     --phenotype-names trait_A trait_B
 </pre></div>
@@ -564,14 +571,15 @@ document.write(`
 <p>It is also possible to analyze a selected list of regions using option <code class="docutils literal notranslate"><span class="pre">--region-list</span></code>. The last column of this file will be used for the list to analyze. Here for example use the same list of regions as we used for customized association-window:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/mnm_regression.ipynb susie_twas  \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colcoboost  \
     --name protocol_example_protein  \
-    --genoFile xqtl_association/protocol_example.genotype.chr21_22.bed   \
+    --genoFile input/xqtl_association/protocol_example.genotype.chr21_22.bed   \
     --phenoFile output/phenotype/protocol_example.protein.region_list.txt \
                 output/phenotype/protocol_example.protein.region_list.txt \
     --covFile output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
               output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz  \
-    --customized-association-windows xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
+    --customized-association-windows input/xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
+    --no-separate-gwas --xqtl-coloc \
     --region-list xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
     --phenotype-names trait_A trait_B
 </pre></div>
@@ -579,6 +587,29 @@ document.write(`
 </div>
 </div>
 <p><strong>Note:</strong> When both <code class="docutils literal notranslate"><span class="pre">--region-name</span></code> and <code class="docutils literal notranslate"><span class="pre">--region-list</span></code> are used, the union of regions from these parameters will be analyzed.</p>
+</section>
+<section id="gwas-xqtl-integration">
+<h3>GWAS-xQTL integration<a class="headerlink" href="#gwas-xqtl-integration" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colcoboost  \
+    --name protocol_example_protein  \
+    --genoFile input/xqtl_association/protocol_example.genotype.chr21_22.bed   \
+    --phenoFile output/phenotype/protocol_example.protein.region_list.txt \
+                output/phenotype/protocol_example.protein.region_list.txt \
+    --covFile output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
+              output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz  \
+    --customized-association-windows input/xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
+    --ld-meta-data input/LD_matrix/ld_meta_file.tsv \
+    --gwas-meta-data input/GWAS_sumstat_meta.tsv \
+    --separate-gwas --xqtl-coloc \
+    --region-name ENSG00000241973_P42356 ENSG00000160209_O00764 ENSG00000100412_Q99798 \
+    --phenotype-names trait_A trait_B
+</pre></div>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
@@ -1344,15 +1375,9 @@ task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, 
 R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&quot;, stderr = f&quot;{_output[0]:nn}.colocboost.stderr&quot;, container = container, entrypoint = entrypoint
     options(warn=1)
     
-    #### FIXME later: need to install current version of pecotmr
-    library(tidyverse)
     library(data.table)
-    library(vroom)
-    library(vctrs)
-    library(susieR)
-    library(matrixStats)
-    for(file in list.files(&quot;/home/xc2270/COLOCBoost/pipeline/pecotmr_change_ld&quot;, full.names = T)) {source(file)}
-    for(file in list.files(&quot;/home/xc2270/COLOCBoost/code_COLOCBoost/colocboost_updating&quot;, full.names = T)) {source(file)}
+    library(colocboost)
+    library(pecotmr)
   
     ##### ======= set up all input parameters ====== #####
   
@@ -1596,7 +1621,11 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-anlaysis">xQTL only anlaysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-xqtl-integration">GWAS-xQTL integration</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
