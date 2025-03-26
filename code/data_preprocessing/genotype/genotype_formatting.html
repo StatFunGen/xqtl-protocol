@@ -795,6 +795,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[vcf_to_plink]
 parameter: remove_duplicates = False
 parameter: add_chr = True
+parameter: keep_dosage = False
 # The path to the file that contains the list of samples to remove (format FID, IID)
 parameter: remove_samples = path(&#39;.&#39;)
 # The path to the file that contains the list of samples to keep (format FID, IID)
@@ -806,20 +807,42 @@ if isinstance(genoFile, dict):
     genoFile = genoFile.values()
 
 input: genoFile, group_by = 1
-output: f&#39;{cwd}/{_input:bnn}.bed&#39;
+output: f&#39;{cwd}/{_input:bnn}.{&quot;pgen&quot; if keep_dosage else &quot;bed&quot;}&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
-    plink2 --vcf ${_input} \
-        --vcf-half-call m \
-        --vcf-require-gt \
+    echo &quot;dosage ${keep_dosage}&quot;
+    if [ ${keep_dosage} = True ]; then
+        plink2 --vcf ${_input} dosage=DS \
+        --not-chr X \
         --allow-extra-chr \
+        --double-id \
+        --max-alleles 2 \
+        --set-all-var-ids &#39;@:#:$r:$a&#39; \
+        --new-id-max-allele-len 24 \
         ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
         ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
-        --make-bed --out ${_output:n}  ${&quot;--rm-dup exclude-all&quot; if remove_duplicates else &quot;&quot; } \
+        --make-pgen --out ${_output:n}  ${&quot;--rm-dup exclude-all&quot; if remove_duplicates else &quot;&quot; } \
+        --missing \
+        --genotyping-rate dosage \
+        --pgen-info \
         --threads ${numThreads} \
         --memory ${int(expand_size(mem) * 0.9)/1e06} ${&quot;--output-chr chrMT&quot; if add_chr else &quot;&quot;}  
+    else
+        plink2 --vcf ${_input} \
+            --vcf-half-call m \
+            --vcf-require-gt \
+            --allow-extra-chr \
+            --double-id \
+            ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
+            ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
+            --make-bed --out ${_output:n}  ${&quot;--rm-dup exclude-all&quot; if remove_duplicates else &quot;&quot; } \
+            --threads ${numThreads} \
+            --memory ${int(expand_size(mem) * 0.9)/1e06} ${&quot;--output-chr chrMT&quot; if add_chr else &quot;&quot;}  
+    fi
+    
 
+    
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
         stdout=${_output:n}.stdout
         for i in ${_output} ; do 

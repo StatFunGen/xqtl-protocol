@@ -568,9 +568,7 @@ document.write(`
    --geno-filter 0.1 \
    --mind-filter 0.1 \
    --hwe-filter 1e-08   \
-   --mac-filter 0 \
-   --container /mnt/vast/hpc/csg/containers/bioinfo.sif \
-   -J 1 -q csg -c csg.yml --mem 150G
+   --mac-filter 0
 </pre></div>
 </div>
 </div>
@@ -584,9 +582,7 @@ document.write(`
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
         --cwd output/sample_meta \
         --genoFile input/protocol_example.genotype.chr21_22.fam  \
-        --phenoFile input/protocol_example.protein.csv \
-        --container containers/bioinfo.sif \
-        --mem 5G
+        --phenoFile input/protocol_example.protein.csv
 </pre></div>
 </div>
 </div>
@@ -614,9 +610,7 @@ document.write(`
     --cwd output/kinship \
     --genoFile input/protocol_example.genotype.chr21_22.bed \
     --name pQTL \
-    --keep-samples output/sample_meta/protocol_example.protein.sample_genotypes.txt \
-    --container containers/bioinfo.sif \
-    --mem 40G
+    --keep-samples output/sample_meta/protocol_example.protein.sample_genotypes.txt
 </pre></div>
 </div>
 </div>
@@ -644,9 +638,7 @@ document.write(`
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
    --cwd output/cache \
    --genoFile output/kinship/protocol_example.genotype.chr21_22.pQTL.unrelated.bed \
-   --mac-filter 5 \
-   --container containers/bioinfo.sif \
-   --mem 16G
+   --mac-filter 5
 </pre></div>
 </div>
 </div>
@@ -669,9 +661,7 @@ document.write(`
    --genoFile input/protocol_example.genotype.chr21_22.bed \
    --keep-samples output/sample_meta/protocol_example.protein.sample_genotypes.txt \
    --name pQTL \
-   --mac-filter 5 \
-   --container containers/bioinfo.sif \
-   --mem 40G
+   --mac-filter 5
 </pre></div>
 </div>
 </div>
@@ -693,8 +683,7 @@ document.write(`
     --genoFile output/genotype/chr1_chr6.20220110.related.bed \
     --keep-variants output/genotype/chr1_chr6.20220110.unrelated.for_pca.filtered.prune.in \
     --maf-filter 0 --geno-filter 0 --mind-filter 0.1 \
-    --name for_pca \
-    --container container/bioinfo.sif
+    --name for_pca
 </pre></div>
 </div>
 </div>
@@ -858,20 +847,55 @@ cwd = path(f&quot;{cwd:a}&quot;)
 
 # Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
 def determine_plink_format(file_path):
-    # Check if the file path ends with .bed or .pgen extension
+    &quot;&quot;&quot;
+    Determine the PLINK file format based on file extensions and companion files.
+    
+    Args:
+        file_path (str or Path): Path to the input file
+    
+    Returns:
+        str: &#39;plink1&#39; or &#39;plink2&#39;
+    &quot;&quot;&quot;
+    # Convert to string if it&#39;s a Path object
+    file_path = str(file_path)
+    
+    # Check direct file extensions
     if file_path.endswith(&#39;.bed&#39;):
         return &#39;plink1&#39;
     elif file_path.endswith(&#39;.pgen&#39;):
         return &#39;plink2&#39;
+    
     # If the file doesn&#39;t have a standard extension, try to infer format
-    # by checking for companion files with .bim/.fam or .pvar/.psam extensions
-    base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
-    if os.path.exists(f&quot;{base_path}.bim&quot;) and os.path.exists(f&quot;{base_path}.fam&quot;):
-        return &#39;plink1&#39;
-    elif os.path.exists(f&quot;{base_path}.pvar&quot;) and os.path.exists(f&quot;{base_path}.psam&quot;):
-        return &#39;plink2&#39;
+    try:
+        # Remove the file extension if present
+        base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
+        
+        # Check for PLINK1 companion files
+        plink1_companion_files = [
+            f&quot;{base_path}.bim&quot;,
+            f&quot;{base_path}.fam&quot;
+        ]
+        
+        # Check for PLINK2 companion files
+        plink2_companion_files = [
+            f&quot;{base_path}.pvar&quot;,
+            f&quot;{base_path}.psam&quot;
+        ]
+        
+        # Check PLINK1 format
+        if all(os.path.exists(f) for f in plink1_companion_files):
+            return &#39;plink1&#39;
+        
+        # Check PLINK2 format
+        if all(os.path.exists(f) for f in plink2_companion_files):
+            return &#39;plink2&#39;
+    
+    except Exception as e:
+        print(f&quot;Error determining PLINK format: {e}&quot;)
+    
     # Default to PLINK1 if can&#39;t determine
     return &#39;plink1&#39;
+
 
 # Get the appropriate PLINK command based on the input file format
 def get_plink_command_prefix(file_path):
@@ -1007,7 +1031,7 @@ R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stde
       }
       
       # Read the relatedness file
-      full_kin0 &lt;- fread(relatedness)
+      full_kin0 &lt;- as.data.frame(relatedness)
       
       # Initial pruning of highly related individuals
       working_graph &lt;- full_kin0 |&gt;
@@ -1180,7 +1204,8 @@ R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stde
         filter(!(!!sym(relatednessIID1) %in% all_exclude) &amp; 
                !(!!sym(relatednessIID2) %in% all_exclude)) |&gt;
         filter(!!sym(relatednessRelatedness) &gt; relatednessTh)
-      
+      print(&quot;df_related&quot;)
+      print(df_related)
       if (nrow(df_related) &gt; 0) {
         if (verbose) {
           print(paste0(&quot;Warning: After first plinkQC pass, there are still &quot;, 
@@ -1364,6 +1389,8 @@ parameter: other_args = []
 parameter: meta_only = False
 # Remove duplicate variants
 parameter: rm_dups = False
+# Add option to process dosage
+parameter: treat_dosage_missing = False
 
 fail_if(not (keep_samples.is_file() or keep_samples == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{keep_samples}``&#39;)
 fail_if(not (keep_variants.is_file() or keep_variants == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{keep_variants}``&#39;)
@@ -1371,7 +1398,7 @@ fail_if(not (remove_samples.is_file() or remove_samples == path(&#39;.&#39;)), m
 
 input: genoFile, group_by=1
 plink_command = get_plink_command_prefix(_input)
-output_format = determine_output_format(_input)
+output_format = determine_plink_format(_input)
 make_command = get_make_command(output_format) if not meta_only else &quot;--write-snplist --write-samples&quot;
 output_ext = get_output_extension(output_format) if not meta_only else &quot;.snplist&quot;
 output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot; + name) if name else &quot;&quot;}.plink_qc{&quot;.extracted&quot; if keep_variants.is_file() else &quot;&quot;}{output_ext}&#39;
@@ -1383,9 +1410,9 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.
       ${(&#39;--max-maf %s&#39; % maf_max_filter) if maf_max_filter &gt; 0 else &#39;&#39;} \
       ${(&#39;--mac %s&#39; % mac_filter) if mac_filter &gt; 0 else &#39;&#39;} \
       ${(&#39;--max-mac %s&#39; % mac_max_filter) if mac_max_filter &gt; 0 else &#39;&#39;} \
-      ${(&#39;--geno %s&#39; % geno_filter) if geno_filter &gt; 0 else &#39;&#39;} \
+      ${(&#39;--geno %s&#39; % geno_filter) if geno_filter &gt; 0 else &#39;&#39;} ${(&#39;dosage&#39; if treat_dosage_missing else &#39;&#39;)} \
       ${(&#39;--hwe %s&#39; % hwe_filter) if hwe_filter &gt; 0 else &#39;&#39;} \
-      ${(&#39;--mind %s&#39; % mind_filter) if mind_filter &gt; 0 else &#39;&#39;} \
+      ${(&#39;--mind %s&#39; % mind_filter) if mind_filter &gt; 0 else &#39;&#39;} ${(&#39;dosage&#39; if treat_dosage_missing else &#39;&#39;)} \
       ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
       ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
       ${(&#39;--exclude %s&#39; % exclude_variants) if exclude_variants.is_file() else &quot;&quot;} \
@@ -1417,7 +1444,7 @@ parameter: shift = 10
 parameter: r2 = 0.1
 stop_if(r2==0)
 plink_command = get_plink_command_prefix(_input)
-output_format = determine_output_format(_input)
+output_format = determine_plink_format(_input)
 make_command = get_make_command(output_format)
 output_ext = get_output_extension(output_format, is_prune=True)
 output: bed=f&#39;{cwd}/{_input:bn}.prune{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
