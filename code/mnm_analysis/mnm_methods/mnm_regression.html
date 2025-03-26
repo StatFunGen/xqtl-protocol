@@ -1322,19 +1322,27 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
           if (r %in% names(preset_variants_result)) {
               finemapping_output[[r]]$preset_variants_result &lt;- preset_variants_result[[r]]
           }
+      } 
+      if (empty_elements_cnt&gt;0) {
+          msg = paste0(empty_elements_cnt, &quot; analysis are skipped for failing to pass initial screen for potential association signals&quot;, sep=&quot;&quot;)
+          message(msg)
+          if(length(finemapping_output)==0){
+            finemapping_output = msg
+          }
+          if(length(twas_output)==0){
+            twas_output = msg
+          }
       }
+    
       if (${&quot;FALSE&quot; if skip_fine_mapping else &quot;TRUE&quot;}){
         saveRDS(list(&quot;${_meta_info[2]}&quot; = finemapping_output), 
               paste0(&quot;${cwd:a}&quot;, &quot;/fine_mapping/&quot;, &quot;${_output[0]:bnn}.univariate_bvsr.rds&quot;),
               compress=&#39;xz&#39;)
       }
       if (${&quot;FALSE&quot; if skip_twas_weights else &quot;TRUE&quot;}) {
-        if (length(twas_output) &gt; 0) saveRDS(list(&quot;${_meta_info[2]}&quot; = twas_output), 
+         saveRDS(list(&quot;${_meta_info[2]}&quot; = twas_output), 
                                            paste0(&quot;${cwd:a}&quot;, &quot;/twas_weights/&quot;, &quot;${_output[0]:bnn}.univariate_twas_weights.rds&quot;), 
                                            compress=&#39;xz&#39;)
-      }
-      if (empty_elements_cnt&gt;0) {
-          message(empty_elements_cnt, &quot; analysis are skipped for failing to pass initial screen for potential association signals&quot;)
       }
     }
 </pre></div>
