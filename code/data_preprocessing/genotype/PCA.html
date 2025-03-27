@@ -941,17 +941,52 @@ if not pop_col:
 
 # Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
 def determine_plink_format(file_path):
-    # Check if the file path ends with .bed or .pgen extension
+    &quot;&quot;&quot;
+    Determine the PLINK file format based on file extensions and companion files.
+    
+    Args:
+        file_path (str or Path): Path to the input file
+    
+    Returns:
+        str: &#39;plink1&#39; or &#39;plink2&#39;
+    &quot;&quot;&quot;
+    # Convert to string if it&#39;s a Path object
+    file_path = str(file_path)
+    
+    # Check direct file extensions
     if file_path.endswith(&#39;.bed&#39;):
         return &#39;plink1&#39;
     elif file_path.endswith(&#39;.pgen&#39;):
         return &#39;plink2&#39;
+    
     # If the file doesn&#39;t have a standard extension, try to infer format
-    base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
-    if os.path.exists(f&quot;{base_path}.bim&quot;) and os.path.exists(f&quot;{base_path}.fam&quot;):
-        return &#39;plink1&#39;
-    elif os.path.exists(f&quot;{base_path}.pvar&quot;) and os.path.exists(f&quot;{base_path}.psam&quot;):
-        return &#39;plink2&#39;
+    try:
+        # Remove the file extension if present
+        base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
+        
+        # Check for PLINK1 companion files
+        plink1_companion_files = [
+            f&quot;{base_path}.bim&quot;,
+            f&quot;{base_path}.fam&quot;
+        ]
+        
+        # Check for PLINK2 companion files
+        plink2_companion_files = [
+            f&quot;{base_path}.pvar&quot;,
+            f&quot;{base_path}.psam&quot;
+        ]
+        
+        # Check PLINK1 format
+        if all(os.path.exists(f) for f in plink1_companion_files):
+            return &#39;plink1&#39;
+        
+        # Check PLINK2 format
+        if all(os.path.exists(f) for f in plink2_companion_files):
+            return &#39;plink2&#39;
+    
+    except Exception as e:
+        print(f&quot;Error determining PLINK format: {e}&quot;)
+    
     # Default to PLINK1 if can&#39;t determine
     return &#39;plink1&#39;
 
@@ -962,14 +997,6 @@ def get_plink_command_prefix(file_path):
         return &quot;--bfile&quot;
     else:  # plink2
         return &quot;--pfile&quot;
-
-# Get sample file extension based on format
-def get_sample_file_extension(file_path):
-    format_type = determine_plink_format(file_path)
-    if format_type == &#39;plink1&#39;:
-        return &quot;.fam&quot;
-    else:  # plink2
-        return &quot;.psam&quot;
 </pre></div>
 </div>
 </div>

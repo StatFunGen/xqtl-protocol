@@ -1406,6 +1406,7 @@ task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, 
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
     plink2 \
       ${plink_command} ${_input:n} \
+      --allow-extra-chr \
       ${(&#39;--maf %s&#39; % maf_filter) if maf_filter &gt; 0 else &#39;&#39;} \
       ${(&#39;--max-maf %s&#39; % maf_max_filter) if maf_max_filter &gt; 0 else &#39;&#39;} \
       ${(&#39;--mac %s&#39; % mac_filter) if mac_filter &gt; 0 else &#39;&#39;} \
@@ -1447,11 +1448,13 @@ plink_command = get_plink_command_prefix(_input)
 output_format = determine_plink_format(_input)
 make_command = get_make_command(output_format)
 output_ext = get_output_extension(output_format, is_prune=True)
-output: bed=f&#39;{cwd}/{_input:bn}.prune{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
+output: bed=f&#39;{cwd}/{_input:bn}{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
     plink2 \
     ${plink_command} ${_input:n} \
+    --allow-extra-chr \
+    --rm-dup force-first \
     --indep-pairwise ${window} ${shift} ${r2}  \
     --out ${_output[&quot;prune&quot;]:nn} \
     --threads ${numThreads} \
@@ -1459,6 +1462,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
    
     plink2 \
     ${plink_command} ${_input:n} \
+    --allow-extra-chr \
     --extract ${_output[&#39;prune&#39;]} \
     ${make_command} \
     --out ${_output[&#39;bed&#39;]:n} \

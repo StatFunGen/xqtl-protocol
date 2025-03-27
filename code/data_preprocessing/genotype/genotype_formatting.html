@@ -697,12 +697,11 @@ cwd = f&quot;{cwd:a}&quot;
 
 import os
 def get_genotype_file(geno_file_paths):
-    #
     def valid_geno_file(x):
         suffixes = path(x).suffixes
-        if suffixes[-1] == &#39;.bed&#39;:
+        if suffixes[-1] in [&#39;.bed&#39;, &#39;.pgen&#39;]:
             return True
-        if len(suffixes)&gt;1 and &#39;&#39;.join(suffixes[-2:]) == &quot;.vcf.gz&quot;:
+        if len(suffixes) &gt; 1 and &#39;&#39;.join(suffixes[-2:]) == &quot;.vcf.gz&quot;:
             return True
         return False
     #
@@ -740,7 +739,79 @@ def get_genotype_file(geno_file_paths):
         else:
             raise ValueError(f&quot;{geno_file} should contain one column of file names, or two columns of chrom number and corresponding file name&quot;)
         return genos
-                        
+
+# Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
+def determine_plink_format(file_path):
+    &quot;&quot;&quot;
+    Determine the PLINK file format based on file extensions and companion files.
+    
+    Args:
+        file_path (str or Path): Path to the input file
+    
+    Returns:
+        str: &#39;plink1&#39; or &#39;plink2&#39;
+    &quot;&quot;&quot;
+    # Convert to string if it&#39;s a Path object
+    file_path = str(file_path)
+    
+    # Check direct file extensions
+    if file_path.endswith(&#39;.bed&#39;):
+        return &#39;plink1&#39;
+    elif file_path.endswith(&#39;.pgen&#39;):
+        return &#39;plink2&#39;
+    
+    # If the file doesn&#39;t have a standard extension, try to infer format
+    try:
+        # Remove the file extension if present
+        base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
+        
+        # Check for PLINK1 companion files
+        plink1_companion_files = [
+            f&quot;{base_path}.bim&quot;,
+            f&quot;{base_path}.fam&quot;
+        ]
+        
+        # Check for PLINK2 companion files
+        plink2_companion_files = [
+            f&quot;{base_path}.pvar&quot;,
+            f&quot;{base_path}.psam&quot;
+        ]
+        
+        # Check PLINK1 format
+        if all(os.path.exists(f) for f in plink1_companion_files):
+            return &#39;plink1&#39;
+        
+        # Check PLINK2 format
+        if all(os.path.exists(f) for f in plink2_companion_files):
+            return &#39;plink2&#39;
+    
+    except Exception as e:
+        print(f&quot;Error determining PLINK format: {e}&quot;)
+    
+    # Default to PLINK1 if can&#39;t determine
+    return &#39;plink1&#39;
+
+# Get the appropriate PLINK command prefix
+def get_plink_command_prefix(file_path):
+    format_type = determine_plink_format(file_path)
+    if format_type == &#39;plink1&#39;:
+        return &quot;--bfile&quot;
+    else:  # plink2
+        return &quot;--pfile&quot;
+
+# Get output file extension based on format
+def get_output_extension(format_type):
+    if format_type == &#39;plink1&#39;:
+        return &quot;bed&quot;
+    else:  # plink2
+        return &quot;pgen&quot;       
+     
+# Choose the make-bed or make-pgen command based on desired output format
+def get_make_command(output_format):
+    if output_format == &#39;plink1&#39;:
+        return &#39;--make-bed&#39;
+    else:  # plink2
+        return &#39;--make-pgen&#39;
 genoFile = get_genotype_file(genoFile)
 </pre></div>
 </div>
@@ -823,9 +894,6 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n
         ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
         ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
         --make-pgen --out ${_output:n}  ${&quot;--rm-dup exclude-all&quot; if remove_duplicates else &quot;&quot; } \
-        --missing \
-        --genotyping-rate dosage \
-        --pgen-info \
         --threads ${numThreads} \
         --memory ${int(expand_size(mem) * 0.9)/1e06} ${&quot;--output-chr chrMT&quot; if add_chr else &quot;&quot;}  
     else
@@ -955,23 +1023,42 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <h2>Split PLINK by Chromosome<a class="headerlink" href="#split-plink-by-chromosome" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>## Pls note that .pvar file have meta_file headers before the variant info dataframe
+sos run /home/rl3328/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.ipynb genotype_by_chrom \
+    --genoFile /home/rl3328/motor_data/geno_data/final/LD_pruning/chrAll_GRCh38_biallelic.motor_eQTL.plink_qc.pgen \
+    --cwd /home/rl3328/motor_data/geno_data/final/genotype_by_chrom \
+    --chrom  `grep -v &#39;^#&#39; /home/rl3328/motor_data/geno_data/final/LD_pruning/chrAll_GRCh38_biallelic.motor_eQTL.plink_qc.pvar | cut -f 1 | uniq | sed &quot;s/chr//g&quot;`
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[genotype_by_chrom_1]
 stop_if(len(paths(genoFile))&gt;1, msg = &quot;This workflow expects one input genotype file.&quot;)
 parameter: chrom = list
 chrom = list(set(chrom))
 input: genoFile, for_each = &quot;chrom&quot;
-output: f&#39;{cwd}/{_input:bn}.{_chrom}.bed&#39;
+plink_command = get_plink_command_prefix(_input)
+output_format = determine_plink_format(_input)
+output_ext = get_output_extension(output_format)
+make_command = get_make_command(output_format)
+output: f&#39;{cwd}/{_input:bn}.{_chrom}.{output_ext}&#39;
 # look up for genotype file
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, volumes = [f&#39;{genoFile:ad}:{genoFile:ad}&#39;], entrypoint=entrypoint
-    ##### Get the locus genotypes for $[_chrom]
-    plink2 --bfile $[_input:an] \
-    --make-bed \
-    --out $[_output[0]:n] \
-    --chr $[_chrom] \
-    --threads $[numThreads] \
-    --memory $[int(expand_size(mem) * 0.9)/1e06] \
-    --allow-no-sex
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    echo &quot;input $[_input:n]&quot;
+    plink2 \
+        $[plink_command] $[_input:n] \
+        $[make_command] \
+        --out $[_output[0]:n] \
+        --chr $[_chrom] \
+        --threads $[numThreads] \
+        --memory $[int(expand_size(mem) * 0.9)/1e06] \
+        --allow-no-sex
+
+
+        
 </pre></div>
 </div>
 </div>
@@ -980,8 +1067,10 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[genotype_by_chrom_2]
 input: group_by = &quot;all&quot;
+output_format = determine_plink_format(_input)
+output_ext = get_output_extension(output_format)
 output: f&#39;{_input[0]:nn}.{step_name[:-2]}_files.txt&#39;
-sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = &quot;bed&quot;)
+sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = f&quot;{output_ext}&quot;)
 </pre></div>
 </div>
 </div>
