@@ -642,8 +642,7 @@ document.write(`
     --covariate-file output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
     --customized_cis_windows prototype_example/protocol_example/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
     --cwd output/cis_association/ \
-    --MAC 5 \
-    --container containers/TensorQTL.sif 
+    --MAC 5
 </pre></div>
 </div>
 </div>
@@ -670,8 +669,7 @@ document.write(`
     --covariate-file output/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.unrelated.plink_qc.prune.pca.Marchenko_PC.gz \
     --customized-cis-windows input/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
     --cwd output/association/trans/ \
-    --MAC 5 --numThreads 8 -J 1 -q csg --mem 240G -c /mnt/vast/hpc/csg/molecular_phenotype_calling/csg.yml \
-    --container containers/TensorQTL.sif 
+    --MAC 5
 </pre></div>
 </div>
 </div>
@@ -815,7 +813,7 @@ The singularity image (sif) for running this MWE is uploaded to <a class="refere
     --phenotype-file MWE.bed.recipe \
     --covariate-file ALL.covariate.pca.BiCV.cov.gz \
     --cwd ./output/ \
-    --container containers/TensorQTL.sif --MAC 5
+    --MAC 5
 </pre></div>
 </div>
 </div>
@@ -827,7 +825,7 @@ The singularity image (sif) for running this MWE is uploaded to <a class="refere
     --phenotype-file MWE.bed.recipe \
     --covariate-file ALL.covariate.pca.BiCV.cov.gz \
     --cwd ./output/ \
-    --container containers/TensorQTL.sif --MAC 5 --region-name  gene_name
+    --MAC 5 --region-name  gene_name
 </pre></div>
 </div>
 </div>
@@ -841,7 +839,7 @@ The singularity image (sif) for running this MWE is uploaded to <a class="refere
     --cwd ./output/trans_tensorQTL/ \
     --region-list /mnt/vast/hpc/csg/snuc_pseudo_bulk/eight_tissue_analysis/reference_data/AD_genes.region_list \
     --customized-cis-windows TADB_enhanced_cis.bed \
-    --container containers/TensorQTL.sif --MAC 5 --region-name ID
+    --MAC 5 --region-name ID
 </pre></div>
 </div>
 </div>
@@ -955,7 +953,7 @@ def adapt_file_path_all(df, column_name, reference_file):
     return df[column_name].apply(lambda x: adapt_file_path(x, reference_file))
 
 
-if str(genotype_file).endswith(&quot;bed&quot;) and str(phenotype_file).endswith(&quot;bed.gz&quot;):
+if (str(genotype_file).endswith(&quot;bed&quot;) or str(genotype_file).endswith(&quot;pgen&quot;)) and str(phenotype_file).endswith(&quot;bed.gz&quot;):
     input_files = [[phenotype_file, genotype_file]]
     if len(chromosome) &gt; 0:
         input_chroms = [int(x) for x in chromosome]
@@ -1051,9 +1049,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:n
         phenotype_df = phenotype_df[phenotype_df.index.isin(keep_region)]
         phenotype_pos_df = phenotype_pos_df[phenotype_pos_df.index.isin(keep_region)]
     covariates_df = pd.read_csv(covariates_file, sep=&#39;\t&#39;, index_col=0).T
-    pr = genotypeio.PlinkReader(plink_prefix_path)
-    genotype_df = pr.load_genotypes()
-    variant_df = pr.bim.set_index(&#39;snp&#39;)[[&#39;chrom&#39;, &#39;pos&#39;,&#39;a0&#39;,&#39;a1&#39;]]
+    genotype_df, variant_df = genotypeio.load_genotypes(plink_prefix_path)
     
     ## use custom sample list to subset the covariates data
     if $[keep_sample.is_file()]:
@@ -1084,6 +1080,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:n
     ## Retaining only common samples
     phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, covariates_df.index)]
     phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, genotype_df.columns)] 
+
     if len(interaction_s):
         phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, interaction_s.index)]
         interaction_s = interaction_s[interaction_s.index.isin(phenotype_df.columns)]    
