@@ -703,7 +703,12 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
             return($[&#39;mean_impute(X)&#39; if mean_impute else &#39;X&#39;])
         }  
 
-        pca_output = readRDS(&quot;$[_input[0]]&quot;)$pc_scores
+        if ($[&quot;TRUE&quot; if _input[0].suffix.lower() == &#39;.rds&#39; else &quot;FALSE&quot; ]) {
+          pca_output = readRDS(&quot;$[_input[0]]&quot;)$pc_scores
+        } else {
+          pca_putput = fread(&quot;$[_input[0]]&quot;)
+        }
+        
         mtx = pca_output%&gt;%select(contains(&quot;PC&quot;))%&gt;%t()
         colnames(mtx) &lt;- pca_output$IID
         ## Keep only the number of PCs specified
