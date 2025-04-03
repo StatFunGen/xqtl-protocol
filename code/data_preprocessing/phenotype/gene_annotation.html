@@ -498,7 +498,11 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-global-parameters">Setup and global parameters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#region-list-generation">Region List generation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-coord">Annotate coord</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Input:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Output:</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-pyqtl">Implementation using <code class="docutils literal notranslate"><span class="pre">pyqtl</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-biomart">Implementation using biomaRt</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#annotation-of-leafcutter-isoform">Annotation of leafcutter isoform</a></li>
@@ -750,56 +754,27 @@ parameter: entrypoint= &quot;&quot;
 </div>
 </div>
 </section>
-<section id="region-list-generation">
-<h2>Region List generation<a class="headerlink" href="#region-list-generation" title="Link to this heading">#</a></h2>
-<p>To partitioning the data by genes require a region list file which:</p>
-<ol class="arabic simple">
-<li><p>have 5 columns: chr,start,end,gene_id,gene_name</p></li>
-<li><p>have the same gene as or less gene than that of the bed file</p></li>
-</ol>
-<p>Input:</p>
+<section id="annotate-coord">
+<h2>Annotate coord<a class="headerlink" href="#annotate-coord" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h3>Input:<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
 <ol class="arabic simple">
 <li><p>A gtf file used to generated the bed</p></li>
 <li><p>A phenotype bed file, must have a gene_id column indicating the name of genes.</p></li>
 </ol>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[region_list_generation]
-input: phenoFile, annotation_gtf
-output: f&#39;{cwd:a}/{_input[0]:bnn}.region_list&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
-    import pandas as pd
-    import qtl.io
-    # get the five column data
-    bed_template_df_id = qtl.io.gtf_to_tss_bed(${_input[1]:ar}, feature=&#39;transcript&#39;,phenotype_id = &quot;gene_id&quot; )
-    bed_template_df_name = qtl.io.gtf_to_tss_bed(${_input[1]:ar}, feature=&#39;transcript&#39;,phenotype_id = &quot;gene_name&quot; )
-    bed_template_df = bed_template_df_id.merge(bed_template_df_name, on = [&quot;chr&quot;,&quot;start&quot;,&quot;end&quot;])
-    bed_template_df.columns = [&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;gene_id&quot;,&quot;gene_name&quot;]
-    pheno = pd.read_csv(${_input[0]:r}, sep = &quot;\t&quot;)
-    # Retaining only the genes in the data
-    region_list = bed_template_df[bed_template_df.${phenotype_id_type}.isin(pheno.gene_id)]
-    region_list.to_csv(&quot;${_output}&quot;, sep = &quot;\t&quot;,index = False)
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-</pre></div>
-</div>
-</div>
-</div>
+</section>
+<section id="id2">
+<h3>Output:<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p>annotated phenotype bed file</p></li>
+<li><p>Optional: a tsv file only has the first several columns indicating phenotype_id and names. For RNA-seq, it contains five columns: chr,start,end,gene_id,gene_name</p></li>
+</ol>
+</section>
 </section>
 <section id="implementation-using-pyqtl">
 <h2>Implementation using <code class="docutils literal notranslate"><span class="pre">pyqtl</span></code><a class="headerlink" href="#implementation-using-pyqtl" title="Link to this heading">#</a></h2>
 <p>Implementation based on <a class="reference external" href="https://github.com/broadinstitute/gtex-pipeline/blob/master/qtl/src/eqtl_prepare_expression.py">GTEx pipeline</a>.</p>
-<p>Following step serves to annotate cood for gene expression file.</p>
+<p>Following step serves to annotate coord for gene expression file.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_coord]
@@ -827,9 +802,10 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
     import qtl.io
     from pathlib import Path
     from collections import defaultdict
+    import warnings
 
     # Function to convert gtf to bed
-    def gtf_to_tss_bed(annotation_gtf, feature=&#39;gene&#39;, exclude_chrs=[], phenotype_id=&#39;gene_id&#39;):
+    def gtf_to_bed(annotation_gtf, feature=&#39;gene&#39;, exclude_chrs=[], phenotype_id=&#39;gene_id&#39;):
         &quot;&quot;&quot;
         Parse genes from GTF and return DataFrame with min start and max end positions.
         For each gene, uses the smallest position as start and largest as end position.
@@ -955,11 +931,11 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
         return df
 
     def load_bed_template_from_gtf(input_path, phenotype_id_column):
-        if sum(gtf_to_tss_bed(input_path, feature=&#39;gene&#39;, phenotype_id=&quot;gene_id&quot;).index.duplicated()) &gt; 0:
+        if sum(gtf_to_bed(input_path, feature=&#39;gene&#39;, phenotype_id=&quot;gene_id&quot;).index.duplicated()) &gt; 0:
             raise ValueError(f&quot;gtf file {input_path} needs to be collapsed into gene model by reference data processing module&quot;)
 
-        bed_template_df_id = gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
-        bed_template_df_name = gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
+        bed_template_df_id = gtf_to_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
+        bed_template_df_name = gtf_to_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
         bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;])
         bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;]
         bed_template_df = bed_template_df.set_index(phenotype_id_column, drop=False)
@@ -1014,6 +990,16 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
         
     qtl.io.write_bed(bed_df, ${_output[0]:r})
     bed_df[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;]].assign(path=${_output[0]:r}).to_csv(${_output[1]:r}, &quot;\t&quot;, index=False)
+
+    # If annotating gene or protein, save a gene_list.tsv for gene partitioning
+    if molecular_trait_type in [&quot;gene&quot;, &quot;protein&quot;]:
+        # Save the region list
+        region_list = bed_template_df[bed_template_df.${phenotype_id_column}.isin(df.index)]
+        region_list.to_csv(&#39;${cwd:a}/${_input[0]:bn}.gene_list.tsv&#39;, sep=&quot;\t&quot;, index=False)
+    else:
+        # For ATAC, we cannot partition it by gene.
+        warnings.warn(f&quot;Gene partitioning is not applicable for molecular trait type: {molecular_trait_type}. No gene_list.tsv will be generated.&quot;)
+        
 
 
 bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
@@ -1694,7 +1680,11 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-global-parameters">Setup and global parameters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#region-list-generation">Region List generation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-coord">Annotate coord</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Input:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Output:</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-pyqtl">Implementation using <code class="docutils literal notranslate"><span class="pre">pyqtl</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-biomart">Implementation using biomaRt</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#annotation-of-leafcutter-isoform">Annotation of leafcutter isoform</a></li>
