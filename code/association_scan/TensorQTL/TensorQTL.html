@@ -264,7 +264,7 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../mnm_analysis/fine_mapping_miniprotocol.html">Fine-Mapping</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../mnm_analysis/mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/univariate_fine_mapping_twas_vignette.html">Univariate Fine-Mapping and TWAS with SuSiE</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
@@ -274,6 +274,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/mnm_methods/rss_analysis.html">High-dimensional regression with summary statistics</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mnm_analysis/mnm_postprocessing.html">Integrative Analysis Output Processing</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -514,7 +515,7 @@ document.write(`
 <h1>QTL Association Testing<a class="headerlink" href="#qtl-association-testing" title="Link to this heading">#</a></h1>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>We perform QTL association testing using TensorQTL [<a class="reference external" href="https://doi.org/10.1186/s13059-019-1836-7">cf. Taylor-Weiner et al (2019)</a>]. An additional protocol was added to test for quantile QTL associations.</p>
+<p>We perform QTL association testing using TensorQTL [<a class="reference external" href="https://doi.org/10.1186/s13059-019-1836-7">cf. Taylor-Weiner et al (2019)</a>].</p>
 </section>
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
@@ -560,8 +561,8 @@ document.write(`
 <li><p>ma_samples: Number of samples carrying the minor allele</p></li>
 <li><p>ma_count: Total number of minor alleles across individuals</p></li>
 <li><p>pval: Nominal P-value from linear regression</p></li>
-<li><p>beta: Slope of the linear regression</p></li>
-<li><p>se: Standard error of beta</p></li>
+<li><p>bhat: Slope of the linear regression</p></li>
+<li><p>sebhat: Standard error of bhat</p></li>
 <li><p>chr : Variant chromosome.</p></li>
 <li><p>pos : Variant chromosomal position (basepairs).</p></li>
 <li><p>ref : Variant reference allele (A, C, T, or G).</p></li>
@@ -573,21 +574,21 @@ document.write(`
 <ul class="simple">
 <li><p>chrom: chromosome number</p></li>
 <li><p>pos : Variant chromosomal position (basepairs)</p></li>
-<li><p>a1: Variant reference allele (A, C, T, or G)</p></li>
-<li><p>a2: Variant alternate allele</p></li>
+<li><p>a2: Variant reference allele (A, C, T, or G)</p></li>
+<li><p>a1: Variant alternate allele</p></li>
 <li><p>molecular_trait_id: Molecular trait identifier, varies from phenotypes to phenotypes.</p></li>
 <li><p>variant_id - ID of the top variant (rsid or chr:position:ref:alt)</p></li>
 <li><p>af - Alternative allele frequency in MiGA cohort</p></li>
 <li><p>ma_samples - Number of samples carrying the minor allele</p></li>
 <li><p>ma_count: Total number of minor alleles across individuals</p></li>
 <li><p>pvalue: P-value of the main effect from the nonlinear regression</p></li>
-<li><p>beta: Slope of the main effect from the nonlinear regression</p></li>
+<li><p>bhat: Slope of the main effect from the nonlinear regression</p></li>
 <li><p>se: Standard error of beta</p></li>
 <li><p>pvalue_msex: P-value of the msex term from the nonlinear regression</p></li>
-<li><p>beta_msex: Slope of the msex term from the nonlinear regression</p></li>
+<li><p>bhat_msex: Slope of the msex term from the nonlinear regression</p></li>
 <li><p>se_msex: Standard error of beta_msex</p></li>
 <li><p>pvalue_msex_interaction: P-value of the interaction term from the nonlinear regression</p></li>
-<li><p>beta_msex_interaction: Slope of the interaction term from the nonlinear regression</p></li>
+<li><p>bhat_msex_interaction: Slope of the interaction term from the nonlinear regression</p></li>
 <li><p>se_msex_interaction: Standard error of beta_msex_interaction</p></li>
 <li><p>molecular_trait_object_id: an intermediate id, you can ignore</p></li>
 <li><p>n: number of phenotype</p></li>
@@ -613,20 +614,6 @@ document.write(`
 <li><p>slope_se - Standard error of the slope</p></li>
 <li><p>pval_perm - First permutation P-value directly obtained from the permutations with the direct method</p></li>
 <li><p>pval_beta - Second permutation P-value obtained via beta approximation. This is the one to use for downstream analysis</p></li>
-</ul>
-<p>The columns of nominal association results for quantile regression are as follows:</p>
-<ul class="simple">
-<li><p>phenotype_id: Molecular trait identifier.(gene)</p></li>
-<li><p>variant_id: ID of the variant (rsid or chr:position:ref:alt)</p></li>
-<li><p>chr : Variant chromosome.</p></li>
-<li><p>pos : Variant chromosomal position (basepairs).</p></li>
-<li><p>ref : Variant reference allele (A, C, T, or G).</p></li>
-<li><p>alt : Variant alternate allele.</p></li>
-<li><p>af: Alternative allele frequency in MiGA cohort</p></li>
-<li><p>combined_pval(composite-p value using cauchy combination method): the integrated QR p-value across multiple quantile levels.</p></li>
-<li><p>qr_0.1_pval to qr_0.9_pval: quantile-specific QR p-values for the quantile levels 0.1, 0.2, …, 0.9.</p></li>
-<li><p>qr_0.1_slope to qr_0.9_slope: quantile-specific QR coefficients for the quantile levels 0.1, 0.2, …, 0.9.</p></li>
-<li><p>qr_0.1_tval to qr_0.9_tval: quantile-specific QR t-values for the quantile levels 0.1, 0.2, …, 0.9.</p></li>
 </ul>
 </section>
 <section id="minimal-working-example-steps">
@@ -993,19 +980,6 @@ else:
 # and you want to avoid computing the nominal results again
 parameter: skip_nominal_if_exist = False
 parameter: permutation = True
-parameter: quantile_regression = False
-parameter: qr_vcov= &#39;robust&#39;
-parameter: qr_kernel= &#39;epa&#39;
-parameter: qr_bandwidth= &#39;hsheather&#39;
-parameter: qr_max_iter=200
-parameter: qr_p_tol=0.000001
-parameter: qr_regress_covariates = True
-parameter: qr_add_intercept = False
-parameter: qr_scale = False
-# use -1 to set the maximum number of cores available
-parameter: qr_threads = -1
-if quantile_regression:
-    permutation = False
 
 # Extract interaction name
 var_interaction = interaction
@@ -1016,7 +990,7 @@ test_regional_association = permutation and len(var_interaction) == 0
 
 input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
 output_files = dict([(&quot;parquet&quot;, f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl_pairs.{&quot;&quot; if input_chroms[_index] == 0 else input_chroms[_index]}.parquet&#39;), # This convention is necessary to match the pattern of map_norminal output
-                     (&quot;nominal&quot;, f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_chr%s&quot; % input_chroms[_index]}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_{&quot;quantile_&quot; if quantile_regression else &quot;&quot;}qtl.pairs.tsv.gz&#39;)])
+                     (&quot;nominal&quot;, f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_chr%s&quot; % input_chroms[_index]}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl.pairs.tsv.gz&#39;)])
 if test_regional_association:
     output_files[&quot;regional&quot;] = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_chr%s&quot; % input_chroms[_index]}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl.regional.tsv.gz&#39;
 output: output_files
@@ -1150,344 +1124,128 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:n
     else:
         group_s = None
 
-    if $[&quot;True&quot; if quantile_regression else &quot;False&quot;]:
-        import statsmodels.api as sm
-        import scipy.stats as ss
-        from scipy.stats import cauchy
-        import time
-        import warnings
-        import torch
-        # Perform quantile regression
-        start_time = time.time()
-        def filter_maf_with_numpy(genotypes, variant_ids, maf_threshold, alleles=2):
-            af = genotypes.sum(axis=1) / (alleles * genotypes.shape[1])
-            maf = np.where(af &gt; 0.5, 1 - af, af)
-            if maf_threshold &gt; 0:
-                mask = maf &gt;= maf_threshold
-                #mask = mask.astype(bool)
-                genotypes = genotypes[mask]
-                variant_ids = np.array(variant_ids)[mask]
-                af = af[mask]
-                maf = maf[mask]
-            return genotypes, variant_ids, af, maf
-
-        def remove_covariate_effects_np(X, Z, y, scale=False):
-            # for X,Z,y, rows are samples
-            if not np.all(Z[:, 0] == 1):
-                Z = np.hstack([np.ones((Z.shape[0], 1)), Z])
-            
-            A = np.linalg.inv(Z.T @ Z)
-            SZy = A @ Z.T @ y
-            SZX = A @ Z.T @ X
-            
-            # Adjust y and X based on calculated effects
-            y_adjusted = y - Z @ SZy
-            X_adjusted = X - Z @ SZX
-            
-            if scale:
-                # Standardize y and X
-                y_scaled = (y_adjusted - y_adjusted.mean()) / y_adjusted.std()
-                X_scaled = (X_adjusted - X_adjusted.mean(axis=0)) / X_adjusted.std(axis=0)
-                return X_scaled, y_scaled
-            else:
-                return X_adjusted, y_adjusted
-
-        def impute_mean(genotypes_t, missing=-1):#for torch tensor genotypes_t,cols are samples
-            m = genotypes_t == missing
-            ix = torch.nonzero(m, as_tuple=True)[0]
-            if len(ix) &gt; 0:
-                a = genotypes_t.sum(1)
-                b = m.sum(1).float()
-                mu = (a - missing*b) / (genotypes_t.shape[1] - b)
-                genotypes_t[m] = mu[ix]
-
-        def drop_zero_variance_rows(genotypes, variant_ids):
-            # Calculate the variance of each row
-            variances = np.var(genotypes, axis=1)
-            # Find the indices of rows with non-zero variance
-            non_zero_variance_indices = np.where(variances != 0)[0]
-            # Select rows with non-zero variance in genotypes and corresponding variant_ids
-            genotypes_updated = genotypes[non_zero_variance_indices, :]
-            variant_ids_updated = [variant_ids[i] for i in non_zero_variance_indices.tolist()]
-            return genotypes_updated, variant_ids_updated
-
-        def cauchy_meta(pvals):
-            # Check input
-            pvals = np.array(pvals)
-            pvals = pvals[~np.isnan(pvals)]
-            if len(pvals) == 0:
-                return np.nan
-            # pvals[pvals == 0] = 2.2e-308
-            # Convert to Cauchy
-            cauchy_vals = np.zeros(pvals.shape)
-            valid_indices = pvals &gt;= 1e-15
-            cauchy_vals[valid_indices] = np.tan(np.pi * (0.5 - pvals[valid_indices]))
-            stats = np.mean(cauchy_vals)
-            p = cauchy.sf(stats)
-            return p
-
-        def fit_quantreg(phenotype_id, phenotype_array, genotype_matrix, variant_ids, af, covar_df, taus=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], vcov=&#39;$[qr_vcov]&#39;, kernel=&#39;$[qr_kernel]&#39;, bandwidth=&#39;$[qr_bandwidth]&#39;, max_iter=$[qr_max_iter], p_tol=$[qr_p_tol]):
-            results = []
-            variant_pvals = {vid: [] for vid in variant_ids}
-            
-            if covar_df is not None:
-                if genotype_matrix.shape[1] != covar_df.shape[0]:
-                    raise ValueError(&quot;Mismatch in the number of samples between genotype matrix and covariates DataFrame&quot;)
-            
-            for tau in taus:
-                for idx, genotype_row in enumerate(genotype_matrix):
-                    current_af = af[idx]
-                    if covar_df is not None:
-                        X = np.c_[covar_df.values, genotype_row]
-
-                    else:
-                        # If covar_df is None, just use the genotype_row
-                        X = genotype_row.reshape(-1, 1)
-                        
-                    if $[&quot;True&quot; if qr_add_intercept else &quot;False&quot;]:
-                        X = sm.add_constant(X).astype(&#39;float&#39;)
-                    
-                    model = sm.QuantReg(phenotype_array, X)
-                    try:
-                        res = model.fit(q=tau, vcov=vcov, kernel=kernel, bandwidth=bandwidth, max_iter=max_iter, p_tol=p_tol)
-                        pval = res.pvalues[-1]
-                        variant_pvals[variant_ids[idx]].append(pval)
-                        results.append({
-                            &#39;phenotype_id&#39;: phenotype_id,
-                            &#39;variant_id&#39;: variant_ids[idx],
-                            &#39;af&#39;: current_af, 
-                            &#39;tau&#39;: tau,
-                            &#39;pval&#39;: pval,
-                            &#39;slope&#39;: res.params[-1],
-                            &#39;tval&#39;: res.tvalues[-1]
-        
-                        })
-                    except Exception as e:
-                        raise RuntimeError(f&quot;Error fitting model for variant {variant_ids[idx]} at tau {tau}: {e}&quot;)
-
-            # Calculate combined p-values for each variant
-            start_time_for_combined_p = time.time()
-            for vid in variant_ids:
-                combined_pval = cauchy_meta(variant_pvals[vid])
-                for result in filter(lambda r: r[&#39;variant_id&#39;] == vid, results):
-                    result[&#39;combined_pval&#39;] = combined_pval
-            
-            results_df = pd.DataFrame(results)
-            end_time_for_combined_p = time.time()
-            wide_df = pd.pivot_table(results_df, values=[&#39;pval&#39;, &#39;slope&#39;, &#39;tval&#39;], index=[&#39;phenotype_id&#39;, &#39;variant_id&#39;, &#39;af&#39;,&#39;combined_pval&#39;], columns=&#39;tau&#39;)
-            wide_df.columns = [&#39;qr_{}_{}&#39;.format(col[1], col[0]) for col in wide_df.columns]
-            wide_df.reset_index(inplace=True)
-
-            variant_split = wide_df[&#39;variant_id&#39;].str.extract(r&#39;chr(\d+):(\d+)_([A-Z*]+)_([A-Z*]+)&#39;)
-            variant_split.columns = [&#39;chr&#39;, &#39;pos&#39;, &#39;ref&#39;, &#39;alt&#39;]
-            final_df = pd.concat([variant_split, wide_df], axis=1)
-            return final_df
-
-        # get same order and common samples of phenotype_df, genotype_df, and covariates_df
-        covariates_df.index = covariates_df.index.astype(str)
-        common_samples = np.intersect1d(phenotype_df.columns, genotype_df.columns)
-        genotype_df = genotype_df[common_samples]          
-        sample_order = covariates_df.index
-        phenotype_df = phenotype_df[sample_order]
-        genotype_df = genotype_df[sample_order]
-
-        # quantile qtl mapping:
-        device = torch.device(&quot;cuda&quot; if torch.cuda.is_available() else &quot;cpu&quot;)
-        chrom = None
-        igc = genotypeio.InputGeneratorCis(genotype_df, variant_df, phenotype_df, phenotype_pos_df, group_s=group_s, window=window)
-        results_list = [] 
-
-        def quantile_regression_wrapper(args):
-            phenotype, genotypes, genotype_range, phenotype_id = args
-            genotypes = torch.tensor(genotypes, dtype=torch.float).to(device)
-            impute_mean(genotypes)
-            if genotypes.is_cuda:
-                genotypes = genotypes.cpu()
-            genotypes = genotypes.numpy()
-            # drop_zero_variance_rows
-            variant_ids = variant_df.index[genotype_range[0]:genotype_range[-1]+1].tolist()
-            genotypes, variant_ids = drop_zero_variance_rows(genotypes, variant_ids)   
-            # filter_maf_with_numpy  
-            genotypes, variant_ids, af, maf = filter_maf_with_numpy(genotypes, variant_ids, $[maf_threshold])
-        
-            # regress out covariates from y and X
-            if $[&quot;True&quot; if qr_regress_covariates else &quot;False&quot;]:
-                covar_np = covariates_df.to_numpy()
-                X_adj, phenotype = remove_covariate_effects_np(genotypes.T, covar_np, phenotype, scale = &#39;$[qr_scale]&#39;)
-                genotypes = X_adj.T    
-                quantqtl_start_time = time.time()
-                with warnings.catch_warnings():
-                    warnings.simplefilter(&quot;ignore&quot;)
-                    results_df = fit_quantreg(phenotype_id=phenotype_id,phenotype_array=phenotype,genotype_matrix=genotypes,covar_df=None,variant_ids=variant_ids,af=af
-                    )                
-            else:
-                with warnings.catch_warnings():
-                    warnings.simplefilter(&quot;ignore&quot;)
-                    results_df = fit_quantreg(phenotype_id=phenotype_id,phenotype_array=phenotype,genotype_matrix=genotypes,covar_df=covariates_df,variant_ids=variant_ids,af=af
-                    ) 
-        
-            quantqtl_end_time = time.time()
-            runtime = quantqtl_end_time - quantqtl_start_time
-            return results_df, runtime
-
-        # quantile regression main function
-        qr_threads = $[qr_threads]
-        max_cores = mp.cpu_count()
-        
-        if qr_threads &lt;= 0:
-            qr_threads = max_cores
-        else:
-            qr_threads = min(qr_threads, max_cores)
-
-        results_list = []
-        runtime_list = []
-        if qr_threads == 1:
-            for phenotype, genotypes, genotype_range, phenotype_id in igc.generate_data(chrom=chrom, verbose=True):
-                results_df, runtime = quantile_regression_wrapper((phenotype, genotypes, genotype_range, phenotype_id))
-                results_list.append(results_df)
-                runtime_list.append(runtime)
-        else:
-            pool = mp.Pool(processes=qr_threads)       
-            phenotype_args = [(phenotype, genotypes, genotype_range, phenotype_id)
-                              for phenotype, genotypes, genotype_range, phenotype_id in igc.generate_data(chrom=chrom, verbose=True)]
-        
-            with tqdm(total=len(phenotype_args), desc=&quot;Quantile Regression&quot;) as progress_bar:
-                for results_df, runtime in pool.imap_unordered(quantile_regression_wrapper, phenotype_args):
-                    results_list.append(results_df)
-                    runtime_list.append(runtime)
-                    progress_bar.update(1)
-        
-            pool.close()
-            pool.join()       
-
-        quantile_reg_df = pd.concat(results_list, ignore_index=True)
-        # sort the table if chrom and pos is not in ascending order
-        quantile_reg_df[&#39;pos&#39;] = pd.to_numeric(quantile_reg_df[&#39;pos&#39;])
-        if not all(quantile_reg_df[&#39;pos&#39;].iloc[i] &lt;= quantile_reg_df[&#39;pos&#39;].iloc[i+1] for i in range(len(quantile_reg_df)-1)):
-            quantile_reg_df = quantile_reg_df.sort_values(by=[&#39;chr&#39;, &#39;pos&#39;])        
-        end_time = time.time()  
-        print(f&quot;Total execution time from the beginning to the quantile regression: {end_time - start_time} seconds&quot;)
-
-        # save file
-        quantile_reg_df.to_csv($[_output[&quot;nominal&quot;]:nr], sep=&#39;\t&#39;, index = None)
-        # print general information of quantile_reg_df
-        print(&#39;Output Information:&#39;)
-        print(&quot;Output Rows:&quot;, len(quantile_reg_df))
-        print(&quot;Output Columns:&quot;, quantile_reg_df.columns.tolist())
-        print(&quot;Output Preview:&quot;, quantile_reg_df.iloc[1:5, 1:10])
-        pass
-    else:
-        ## cis-QTL mapping: nominal associations for all variant-phenotype pairs
-        if not ($[skip_nominal_if_exist] and $[_output[&quot;parquet&quot;].is_file()]):
-            if len(interaction_s):
-                cis.map_nominal(genotype_df, variant_df, 
-                        phenotype_df, 
-                        phenotype_pos_df, 
-                        $[_output[&quot;parquet&quot;]:nnnr],
-                        covariates_df=covariates_df,
-                        interaction_df=interaction_s, 
-                        maf_threshold_interaction=$[maf_threshold],
-                        window=window,
-                        group_s=group_s,
-                        run_eigenmt=True, write_top=True, write_stats=True)
-            else:
-                cis.map_nominal(genotype_df, variant_df,
-                    phenotype_df,
-                    phenotype_pos_df,
+    ## cis-QTL mapping: nominal associations for all variant-phenotype pairs
+    if not ($[skip_nominal_if_exist] and $[_output[&quot;parquet&quot;].is_file()]):
+        if len(interaction_s):
+            cis.map_nominal(genotype_df, variant_df, 
+                    phenotype_df, 
+                    phenotype_pos_df, 
                     $[_output[&quot;parquet&quot;]:nnnr],
-                    covariates_df=covariates_df, 
-                    window=window, 
-                    maf_threshold = $[maf_threshold],
-                    group_s=group_s)
-
-        ## Load the parquet and save it as txt
-        pairs_df = pd.read_parquet($[_output[&quot;parquet&quot;]:r])
-        ## Remove rows whose &#39;pval_gi&#39; is null for following t_pval_conversion
-        if len(interaction_s):
-            pairs_df = pairs_df.dropna(subset=[&#39;pval_gi&#39;])
-        # print general information of parquet
-        print(&#39;Output Information:&#39;)
-        print(&quot;This is the file containing the immediate output of TensorQTL&#39;s map_nominal function &quot;)
-        print(os.path.getsize($[_output[&quot;parquet&quot;]:r]))
-
-        ## Adds the group columns to pairs_df, if there is group_s use group_s, else use phenotype_id
-        if group_s is not None:
-            pairs_df = pairs_df.merge(pd.DataFrame( {&quot;molecular_trait_object_id&quot;: group_s}),left_on = &quot;phenotype_id&quot;, right_index = True)
+                    covariates_df=covariates_df,
+                    interaction_df=interaction_s, 
+                    maf_threshold_interaction=$[maf_threshold],
+                    window=window,
+                    group_s=group_s,
+                    run_eigenmt=True, write_top=True)
         else:
-            pairs_df[&quot;molecular_trait_object_id&quot;] = pairs_df.phenotype_id
-        ## if pos in phenotype_pos_df(start distance and end distance are the same), 
-        ## add the column &#39;end_distance&#39; with the same value as &#39;start_distance&#39; to avoid mismatch of column and names
-        if &#39;end_distance&#39; not in pairs_df.columns:
-            # Get the position of &#39;start_distance&#39; column
-            start_pos = pairs_df.columns.get_loc(&#39;start_distance&#39;)
-            # Create a new DataFrame with the same values as start_distance
-            new_df = pairs_df.copy()
-            # Insert end_distance column after start_distance
-            new_df.insert(start_pos + 1, &#39;end_distance&#39;, pairs_df[&#39;start_distance&#39;])
-            pairs_df = new_df
+            cis.map_nominal(genotype_df, variant_df,
+                phenotype_df,
+                phenotype_pos_df,
+                $[_output[&quot;parquet&quot;]:nnnr],
+                covariates_df=covariates_df, 
+                window=window, 
+                maf_threshold=$[maf_threshold],
+                run_eigenmt=$[&#39;False&#39; if permutation else &#39;True&#39;],
+                group_s=group_s)
 
-        # rename columns
-        pairs_df.columns.values[0]  = &quot;molecular_trait_id&quot;
-        pairs_df.columns.values[7]  = &quot;pvalue&quot;
-        pairs_df.columns.values[8]  = &quot;beta&quot;
-        pairs_df.columns.values[9]  = &quot;se&quot;
-        pairs_df.rename(columns={&#39;TSS_D&#39;: &#39;tss_distance&#39;}, inplace=True)
-        if len(interaction_s):
-            # calculate genomic inflation factor lambda on interaction 
-            lambda_col_interaction = pairs_df.groupby(&quot;molecular_trait_object_id&quot;).apply(lambda x: chi2.ppf(1. - np.median(x.pval_gi), 1)/chi2.ppf(0.5,1))
-            pairs_df.columns.values[10]  = &quot;pvalue&quot; + &#39;_&#39; + var_interaction
-            pairs_df.columns.values[11]  = &quot;beta&quot; + &#39;_&#39; + var_interaction
-            pairs_df.columns.values[12]  = &quot;se&quot; + &#39;_&#39; + var_interaction
-            pairs_df.columns.values[13]  = &quot;pvalue&quot; + &#39;_&#39; + var_interaction + &#39;_&#39; + &#39;interaction&#39;
-            pairs_df.columns.values[14]  = &quot;beta&quot; + &#39;_&#39; + var_interaction + &#39;_&#39; + &#39;interaction&#39;
-            pairs_df.columns.values[15]  = &quot;se&quot; + &#39;_&#39; + var_interaction + &#39;_&#39; + &#39;interaction&#39; 
+    ## Load the parquet and save it as txt
+    pairs_df = pd.read_parquet($[_output[&quot;parquet&quot;]:r])
+    ## Remove rows whose &#39;pval_gi&#39; is null for following t_pval_conversion
+    if len(interaction_s):
+        pairs_df = pairs_df.dropna(subset=[&#39;pval_gi&#39;])
+    # print general information of parquet
+    print(&#39;Output Information:&#39;)
+    print(&quot;This is the file containing the immediate output of TensorQTL&#39;s map_nominal function &quot;)
+    print(os.path.getsize($[_output[&quot;parquet&quot;]:r]))
 
-        pairs_df[&quot;n&quot;] = len(phenotype_df.columns.values)
-        pairs_df = variant_df.merge(pairs_df, right_on=&#39;variant_id&#39;, left_index=True)
-        pairs_df.rename(columns={&#39;a1&#39;: &#39;a2&#39;, &#39;a0&#39;: &#39;a1&#39;}, inplace=True)
+    ## Adds the group columns to pairs_df, if there is group_s use group_s, else use phenotype_id
+    if group_s is not None:
+        pairs_df = pairs_df.merge(pd.DataFrame( {&quot;molecular_trait_object_id&quot;: group_s}),left_on = &quot;phenotype_id&quot;, right_index = True)
+    else:
+        pairs_df[&quot;molecular_trait_object_id&quot;] = pairs_df.phenotype_id
+    ## if pos in phenotype_pos_df(start distance and end distance are the same), 
+    ## add the column &#39;end_distance&#39; with the same value as &#39;start_distance&#39; to avoid mismatch of column and names
+    if &#39;end_distance&#39; not in pairs_df.columns:
+        # Get the position of &#39;start_distance&#39; column
+        start_pos = pairs_df.columns.get_loc(&#39;start_distance&#39;)
+        # Create a new DataFrame with the same values as start_distance
+        new_df = pairs_df.copy()
+        # Insert end_distance column after start_distance
+        new_df.insert(start_pos + 1, &#39;end_distance&#39;, pairs_df[&#39;start_distance&#39;])
+        pairs_df = new_df
+
+    # rename columns
+    column_map = {&#39;phenotype_id&#39;: &#39;molecular_trait_id&#39;}
+   
+    if len(interaction_s):
+        # calculate genomic inflation factor lambda on interaction 
+        lambda_col_interaction = pairs_df.groupby(&quot;molecular_trait_object_id&quot;).apply(lambda x: chi2.ppf(1. - np.median(x.pval_gi), 1)/chi2.ppf(0.5,1))
+        column_map.update({
+            &#39;pval_g&#39;: &#39;pvalue&#39;, &#39;b_g&#39;: &#39;bhat&#39;, &#39;b_g_se&#39;: &#39;se&#39;,
+            &#39;pval_i&#39;: f&#39;pvalue_{var_interaction}&#39;,
+            &#39;b_i&#39;: f&#39;bhat_{var_interaction}&#39;,
+            &#39;b_i_se&#39;: f&#39;sebhat_{var_interaction}&#39;,
+            &#39;pval_gi&#39;: f&#39;pvalue_{var_interaction}_interaction&#39;,
+            &#39;b_gi&#39;: f&#39;bhat_{var_interaction}_interaction&#39;,
+            &#39;b_gi_se&#39;: f&#39;sebhat_{var_interaction}_interaction&#39;
+        })
+    else:
+        column_map.update({&#39;pval_nominal&#39;: &#39;pvalue&#39;, &#39;slope&#39;: &#39;bhat&#39;, &#39;slope_se&#39;: &#39;sebhat&#39;})
+    if $[customized_cis_windows.is_file()]:
+        column_map.update({&#39;start_distance&#39;: &#39;cis_window_start_distance&#39;, &#39;end_distance&#39;: &#39;cis_window_end_distance&#39;})
+    else:
+        column_map.update({&#39;start_distance&#39;: &#39;tss_distance&#39;, &#39;end_distance&#39;: &#39;tes_distance&#39;})
+    pairs_df.rename(columns=column_map, inplace=True)
+    pairs_df[&quot;n&quot;] = len(phenotype_df.columns.values)
+    pairs_df = variant_df.merge(pairs_df, right_on=&#39;variant_id&#39;, left_index=True)
+    pairs_df.rename(columns={&#39;a1&#39;: &#39;a2&#39;, &#39;a0&#39;: &#39;a1&#39;}, inplace=True)
+    # sort the table if chrom and pos is not in ascending order
+    if not all(pairs_df[&#39;pos&#39;].iloc[i] &lt;= pairs_df[&#39;pos&#39;].iloc[i+1] for i in range(len(pairs_df)-1)):
+        pairs_df = pairs_df.sort_values(by=[&#39;chrom&#39;, &#39;pos&#39;])
+    # save file
+    pairs_df.to_csv($[_output[&quot;nominal&quot;]:nr], sep=&#39;\t&#39;, index = None)
+    # print general information of pairs_df
+    print(&#39;Output Information:&#39;)
+    print(&quot;Output Rows:&quot;, len(pairs_df))
+    print(&quot;Output Columns:&quot;, pairs_df.columns.tolist())
+    print(&quot;Output Preview:&quot;, pairs_df.iloc[1:5, 1:10])
+
+    if $[test_regional_association]:
+        # calculate genomic inflation factor lambda for main variant effect 
+        lambda_col = pairs_df.groupby(&quot;molecular_trait_object_id&quot;).apply(lambda x: chi2.ppf(1. - np.median(x.pvalue), 1)/chi2.ppf(0.5,1))
+        cis_df = cis.map_cis(genotype_df, 
+                            variant_df, 
+                            phenotype_df,
+                            phenotype_pos_df,
+                            covariates_df=covariates_df, 
+                            seed=999, 
+                            window=window, 
+                            maf_threshold = $[maf_threshold],
+                            group_s=group_s)
+        cis_df.index.name = &quot;molecular_trait_id&quot;
+        ## Add groups columns for eQTL analysis
+        if &quot;group_id&quot; not in cis_df.columns:
+            cis_df[&quot;group_id&quot;] = cis_df.index
+            cis_df[&quot;group_size&quot;] = 1
+        cis_df.rename(columns={&quot;group_id&quot;: &quot;molecular_trait_object_id&quot;, &quot;group_size&quot;: &quot;n_traits&quot;, 
+                        &#39;start_distance&#39;: &#39;tss_distance&#39;, &#39;end_distance&#39;: &#39;tes_distance&#39;,
+                        &quot;num_var&quot;: &quot;n_variants&quot;, &quot;pval_nominal&quot;: &quot;p_nominal&quot;, 
+                        &#39;slope&#39;: &#39;bhat&#39;, &#39;slope_se&#39;: &#39;sebhat&#39;,
+                        &quot;pval_true_df&quot;: &quot;p_true_df&quot;, &quot;pval_perm&quot;: &quot;p_perm&quot;, &quot;pval_beta&quot;: &quot;p_beta&quot;}, inplace = True)
+        cis_df = cis_df.assign(genomic_inflation = lambda dataframe : dataframe[&quot;molecular_trait_object_id&quot;].map(lambda molecular_trait_object_id:lambda_col[molecular_trait_object_id]))
+        # merge cis_df with variant_df
+        cis_df = variant_df.merge(cis_df, right_on=&#39;variant_id&#39;, left_index=True)
+        cis_df.rename(columns={&#39;a1&#39;: &#39;a2&#39;, &#39;a0&#39;: &#39;a1&#39;}, inplace=True)
         # sort the table if chrom and pos is not in ascending order
-        if not all(pairs_df[&#39;pos&#39;].iloc[i] &lt;= pairs_df[&#39;pos&#39;].iloc[i+1] for i in range(len(pairs_df)-1)):
-            pairs_df = pairs_df.sort_values(by=[&#39;chrom&#39;, &#39;pos&#39;])
+        if not all(cis_df[&#39;pos&#39;].iloc[i] &lt;= cis_df[&#39;pos&#39;].iloc[i+1] for i in range(len(cis_df)-1)):
+            cis_df = cis_df.sort_values(by=[&#39;chrom&#39;, &#39;pos&#39;])
         # save file
-        pairs_df.to_csv($[_output[&quot;nominal&quot;]:nr], sep=&#39;\t&#39;, index = None)
-        # print general information of pairs_df
+        cis_df.to_csv(str($[_output[&quot;nominal&quot;]:nnnr])+str(&#39;.regional.tsv&#39;), sep=&#39;\t&#39;, index = None)
+        # print general information of cis_df
         print(&#39;Output Information:&#39;)
-        print(&quot;Output Rows:&quot;, len(pairs_df))
-        print(&quot;Output Columns:&quot;, pairs_df.columns.tolist())
-        print(&quot;Output Preview:&quot;, pairs_df.iloc[1:5, 1:10])
-
-        if $[test_regional_association]:
-            # calculate genomic inflation factor lambda for main variant effect 
-            lambda_col = pairs_df.groupby(&quot;molecular_trait_object_id&quot;).apply(lambda x: chi2.ppf(1. - np.median(x.pvalue), 1)/chi2.ppf(0.5,1))
-            cis_df = cis.map_cis(genotype_df, 
-                                variant_df, 
-                                phenotype_df,
-                                phenotype_pos_df,
-                                covariates_df=covariates_df, 
-                                seed=999, 
-                                window=window, 
-                                maf_threshold = $[maf_threshold],
-                                group_s=group_s)
-            cis_df.index.name = &quot;molecular_trait_id&quot;
-            ## Add groups columns for eQTL analysis
-            if &quot;group_id&quot; not in cis_df.columns:
-                cis_df[&quot;group_id&quot;] = cis_df.index
-                cis_df[&quot;group_size&quot;] = 1
-            cis_df = cis_df.rename({&quot;group_id&quot;:&quot;molecular_trait_object_id&quot;,&quot;group_size&quot;:&quot;n_traits&quot;,&quot;num_var&quot; : &quot;n_variants&quot;,&quot;pval_perm&quot;:&quot;p_perm&quot;, &quot;pval_beta&quot;:&quot;p_beta&quot; },axis = 1)
-            cis_df = cis_df.assign(genomic_inflation = lambda dataframe : dataframe[&quot;molecular_trait_object_id&quot;].map(lambda molecular_trait_object_id:lambda_col[molecular_trait_object_id]))
-            # merge cis_df with variant_df
-            cis_df = variant_df.merge(cis_df, right_on=&#39;variant_id&#39;, left_index=True)
-            cis_df.rename(columns={&#39;a1&#39;: &#39;a2&#39;, &#39;a0&#39;: &#39;a1&#39;, &#39;variant_id&#39;: &#39;variant&#39;}, inplace=True)
-            # sort the table if chrom and pos is not in ascending order
-            if not all(cis_df[&#39;pos&#39;].iloc[i] &lt;= cis_df[&#39;pos&#39;].iloc[i+1] for i in range(len(cis_df)-1)):
-                cis_df = cis_df.sort_values(by=[&#39;chrom&#39;, &#39;pos&#39;])
-            # save file
-            cis_df.to_csv(str($[_output[&quot;nominal&quot;]:nnnr])+str(&#39;.regional.tsv&#39;), sep=&#39;\t&#39;, index = None)
-            # print general information of cis_df
-            print(&#39;Output Information:&#39;)
-            print(&quot;Output Rows:&quot;, len(cis_df))
-            print(&quot;Output Columns:&quot;, cis_df.columns.tolist())
-            print(&quot;Output Preview:&quot;, cis_df.iloc[0:5, 0:10])
+        print(&quot;Output Rows:&quot;, len(cis_df))
+        print(&quot;Output Columns:&quot;, cis_df.columns.tolist())
+        print(&quot;Output Preview:&quot;, cis_df.iloc[0:5, 0:10])
 
 R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;nominal&quot;]:nnn}.stdout&#39;, container = container
     library(purrr)
@@ -1510,33 +1268,21 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.s
         })
     }
     
-    quantile_regression &lt;- &quot;$[quantile_regression]&quot;
-    if (quantile_regression) {
-        pairs_df &lt;- pairs_df %&gt;%
-            group_by(phenotype_id) %&gt;%
-            mutate(
-                across(
-                    .cols = ends_with(&quot;_pval&quot;), 
-                    .fns = ~ compute_qvalues(.x),
-                    .names = &quot;{sub(&#39;_pval$&#39;, &#39;_qval&#39;, .col)}&quot;
-                )
-            )
-    } else {
-        var_interaction &lt;- &quot;$[interaction]&quot;
-        # Check if &#39;interaction&#39; is a file
-        if (file.exists(var_interaction)) {
-            # Read the file into &#39;interaction_s&#39; dataframe
-            interaction_s &lt;- read.delim(var_interaction, row.names = 1)
-            # Update &#39;var_interaction&#39; to the first column name of &#39;interaction_s&#39;
-            var_interaction &lt;- names(interaction_s)[1]
-        }
-
-        if (is.null(var_interaction) || var_interaction == &quot;&quot;) {
-            pairs_df = pairs_df %&gt;% group_by(molecular_trait_id) %&gt;% mutate(qvalue = compute_qvalues(pvalue))
-        } else {
-            pairs_df = pairs_df %&gt;% group_by(molecular_trait_id) %&gt;% mutate(qvalue_main = compute_qvalues(pvalue), qvalue_interaction = compute_qvalues($[&quot;pvalue_%s_interaction&quot; % var_interaction]))         
-        }
+    var_interaction &lt;- &quot;$[interaction]&quot;
+    # Check if &#39;interaction&#39; is a file
+    if (file.exists(var_interaction)) {
+        # Read the file into &#39;interaction_s&#39; dataframe
+        interaction_s &lt;- read.delim(var_interaction, row.names = 1)
+        # Update &#39;var_interaction&#39; to the first column name of &#39;interaction_s&#39;
+        var_interaction &lt;- names(interaction_s)[1]
     }
+
+    if (is.null(var_interaction) || var_interaction == &quot;&quot;) {
+        pairs_df = pairs_df %&gt;% group_by(molecular_trait_id) %&gt;% mutate(qvalue = compute_qvalues(pvalue))
+    } else {
+        pairs_df = pairs_df %&gt;% group_by(molecular_trait_id) %&gt;% mutate(qvalue_main = compute_qvalues(pvalue), qvalue_interaction = compute_qvalues($[&quot;pvalue_%s_interaction&quot; % var_interaction]))         
+    }
+
     pairs_df %&gt;% write_delim($[_output[&quot;nominal&quot;]:nr],&quot;\t&quot;)
   
 bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;nominal&quot;]:nnn}.stdout&#39;, container = container
@@ -1595,7 +1341,7 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
         message(sprintf(&quot;min p-value threshold @ FDR 0.05: %g&quot;, threshold))
         
         emprical_pd &lt;- emprical_pd %&gt;% 
-          mutate(pval_nominal_threshold = qbeta(threshold, beta_shape1, beta_shape2))
+          mutate(p_nominal_threshold = qbeta(threshold, beta_shape1, beta_shape2))
       }
     }
 
@@ -1702,10 +1448,9 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
         trans.apply_permutations(perm_df,trans_df)
 
     ## Output
-    trans_df.columns.values[1]  = &quot;molecular_trait_id&quot;
-    trans_df.columns.values[2]  = &quot;pvalue&quot;
-    trans_df.columns.values[3]  = &quot;beta&quot;
-    trans_df.columns.values[4]  = &quot;se&quot;
+    trans_df.rename(columns={&quot;phenotype_id&quot;: &quot;molecular_trait_id&quot;, 
+                            &quot;pval&quot;: &quot;pvalue&quot;, 
+                            &quot;b&quot;: &quot;bhat&quot;, &quot;b_se&quot;: &quot;sebhat&quot;}, inplace=True)
     trans_df[&quot;n&quot;] = len(phenotype_df.columns.values)
     trans_df = variant_df.merge(trans_df, right_on=&#39;variant_id&#39;, left_index=True)
     trans_df.rename(columns={&#39;a1&#39;: &#39;a2&#39;, &#39;a0&#39;: &#39;a1&#39;}, inplace=True)

@@ -262,7 +262,7 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../mnm_analysis/fine_mapping_miniprotocol.html">Fine-Mapping</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../mnm_analysis/mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/univariate_fine_mapping_twas_vignette.html">Univariate Fine-Mapping and TWAS with SuSiE</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
@@ -272,6 +272,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/mnm_methods/rss_analysis.html">High-dimensional regression with summary statistics</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mnm_analysis/mnm_postprocessing.html">Integrative Analysis Output Processing</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -560,12 +561,11 @@ document.write(`
 <p>Timing: &lt;1 min</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run gene_annotation.ipynb annotate_coord_gene \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run gene_annotation.ipynb annotate_coord \
     --cwd ../../../output_test/phenotype_by_chrom \
     --phenoFile ../../../mwe_data/xQTL_discovery/MWE.log2cpm.mol_phe.bed.gz \
-    --annotation-gtf ../../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
-    --container  oras://ghcr.io/cumc/rna_quantification_apptainer:latest --phenotype-id-type gene_name \
-    -c ../../csg.yml  -q neurology
+    --coordinate-annotation ../../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
+    --phenotype-id-column gene_id
 </pre></div>
 </div>
 </div>
@@ -585,14 +585,14 @@ INFO: Workflow annotate_coord_gene (ID=w90bd1b9b7fb38fca) is executed successful
 <p>Timing: &lt;1 min</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run gene_annotation.ipynb annotate_coord_protein \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run gene_annotation.ipynb annotate_coord \
     --cwd ../../../output_test/phenotype_by_chrom \
     --phenoFile ../../../mwe_data/protocol_data/input/xqtl_association/protocol_example.protein.csv \
-    --annotation-gtf ../../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
+    --coordinate-annotation ../../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
     --sample-participant-lookup ../../../mwe_data/protocol_data/output/protocol_example.protein.sample_overlap.txt \
-    --phenotype-id-type gene_name \
-    --container  oras://ghcr.io/cumc/rna_quantification_apptainer:latest --sep &quot;,&quot;  \
-    -c ../../csg.yml  -q neurology
+    --phenotype-id-column gene_name \
+    --molecular-trait-type protein \
+    --sep &quot;,&quot;
 </pre></div>
 </div>
 </div>
@@ -651,8 +651,7 @@ INFO: Workflow annotate_coord_protein (ID=w75d21004c6718efd) is executed success
 
 Workflows:
   region_list_generation
-  annotate_coord_gene
-  annotate_coord_protein
+  annotate_coord
   annotate_coord_biomart
   map_leafcutter_cluster_to_gene
   annotate_leafcutter_isoforms
@@ -661,14 +660,8 @@ Workflows:
 Global Workflow Options:
   --cwd output (as path)
                         Work directory &amp; output directory
-  --annotation-gtf VAL (as path, required)
-                        gene gtf annotation table
   --phenoFile VAL (as path, required)
                         Molecular phenotype matrix
-  --phenotype-id-type &#39;gene_id&#39;
-                        Whether the input data is named by gene_id or gene_name.
-                        By default it is gene_id, if not, please change it to
-                        gene_name
   --job-size 1 (as int)
                         For cluster jobs, number commands to run per job
   --walltime 5h
@@ -678,29 +671,30 @@ Global Workflow Options:
   --numThreads 1 (as int)
                         Number of threads
   --container &#39;&#39;
-  --sep &#39;\t&#39;
-                        delimiter of phenoFile
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
-
+  --entrypoint &#39;&#39;
 
 Sections
   region_list_generation:
-  annotate_coord_gene:
+  annotate_coord:
     Workflow Options:
       --sample-participant-lookup . (as path)
                         A file to map sample ID from expression to genotype,
                         must contain two columns, sample_id and participant_id,
                         mapping IDs in the expression files to IDs in the
                         genotype (these can be the same).
-  annotate_coord_protein:
-    Workflow Options:
-      --sample-participant-lookup . (as path)
-                        A file to map sample ID from expression to genotype,
-                        must contain two columns, sample_id and participant_id,
-                        mapping IDs in the expression files to IDs in the
-                        genotype (these can be the same).
-      --protein-name-index . (as path)
-      --protein-ID-type SOMAseqID
+      --molecular-trait-type gene
+                        Options: gene, protein, atac
+      --coordinate-annotation VAL (as path, required)
+                        gtf annotation for RNA-seq data; other types of
+                        annotation index for protein and atac-seq
+      --phenotype-id-column &#39;gene_id&#39;
+                        gene_id or gene_name for RNA-seq data, SOMAseqID for
+                        proteins for example
+      --auxiliary-id-mapping . (as path)
+                        Optional mapping file (protein_name_index for protein,
+                        etc.)
+      --[no-]strip-id (default to False)
+                        Optional processing flag
   annotate_coord_biomart:
     Workflow Options:
       --ensembl-version VAL (as int, required)
@@ -710,6 +704,17 @@ Sections
                         Extract the code in case psichromatic needs to be
                         processed the same way PheoFile in this step is the
                         intron_count file
+      --map-stra site
+                        Defines the mapping strategy options: &#39;site&#39; or
+                        &#39;region&#39;, with &#39;site&#39; as the default. The &#39;site&#39;
+                        strategy maps introns to the start and end of each exon.
+                        The &#39;region&#39; strategy, to be recommended in leafcutter2,
+                        maps each intron based on it overlapping more than
+                        overlap_ratio of a gene&#39;s region.
+      --overlap-ratio 0.8 (as float)
+                        Define the overlap ratio as the proportion of the
+                        cluster length that intersects with a gene, used to
+                        determine mapping to the gene.
   annotate_leafcutter_isoforms:
     Workflow Options:
       --sample-participant-lookup . (as path)
@@ -728,12 +733,8 @@ Sections
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # Work directory &amp; output directory
 parameter: cwd = path(&quot;output&quot;)
-#  gene gtf annotation table
-parameter: annotation_gtf = path
 # Molecular phenotype matrix
 parameter: phenoFile = path
-# Whether the input data is named by gene_id or gene_name. By default it is gene_id, if not, please change it to gene_name
-parameter: phenotype_id_type = &#39;gene_id&#39;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -743,11 +744,7 @@ parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 1
 parameter: container = &quot;&quot;
-## delimiter of phenoFile
-parameter: sep = &quot;\t&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
-parameter: strip_id = False
+parameter: entrypoint= &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -805,13 +802,24 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <p>Following step serves to annotate cood for gene expression file.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_coord_gene]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_coord]
 # A file to map sample ID from expression to genotype, must contain two columns, sample_id and participant_id, mapping IDs in the expression files to IDs in the genotype (these can be the same).
 parameter: sample_participant_lookup = path()
-input: phenoFile, annotation_gtf
+# Options: gene, protein, atac
+parameter: molecular_trait_type = &quot;gene&quot; 
+# gtf annotation for RNA-seq data; other types of annotation index for protein and atac-seq
+parameter: coordinate_annotation = path
+# gene_id or gene_name for RNA-seq data, SOMAseqID for proteins for example
+parameter: phenotype_id_column = &quot;gene_id&quot;
+# Optional mapping file (protein_name_index for protein, etc.)
+parameter: auxiliary_id_mapping = path()
+# Optional processing flag
+parameter: strip_id = False
+
+input: phenoFile, coordinate_annotation
 output: f&#39;{cwd:a}/{_input[0]:bn}.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.region_list.txt&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
 
     import pandas as pd
     import qtl.io
@@ -826,230 +834,99 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
 
     def load_and_preprocess_data(input_path, drop_columns):
         df = pd.read_csv(input_path, sep=&quot;${sep}&quot;, skiprows=0)
-        dc = [col for col in df.columns if col in drop_columns] # Take interscet between df.columns and drop_columns
-        df = df.drop(dc,axis = 1) # drop the intersect
+        dc = [col for col in df.columns if col in drop_columns] # Take intersection between df.columns and drop_columns
+        df = df.drop(dc, axis=1) # drop the intersect
         if len(df.columns) &lt; 2:
             raise ValueError(&quot;There are too few columns in the loaded dataframe, please check the delimiter of the input file. The default delimiter is tab&quot;)
         return df
 
-    # convert first column to second column:ProjID to SampleID
     def rename_samples_using_lookup(df, lookup_path):
-        if Path(lookup_path).suffix == &#39;.csv&#39;:
+        lookup_file = Path(lookup_path)
+        
+        if not lookup_file.is_file():
+            return df
+            
+        if lookup_file.suffix == &#39;.csv&#39;:
             sep = &#39;,&#39;
-        elif Path(lookup_path).suffix == &#39;.tsv&#39;:
+        elif lookup_file.suffix == &#39;.tsv&#39;:
             sep = &#39;\t&#39;
         else:
-            raise ValueError(&quot;Unsupported file format. Please use either .csv or .tsv files.&quot;)
-
-        if Path(lookup_path).is_file():
-            sample_participant_lookup = pd.read_csv(lookup_path, sep=sep, header=None, dtype={0: str, 1: str})
-            rename_dict = dict(zip(sample_participant_lookup[0], sample_participant_lookup[1]))
-            df.rename(columns=rename_dict, inplace=True)
+            sep = &#39;\t&#39;  # Default to tab if unknown extension
+            
+        try:
+            sample_participant_lookup = pd.read_csv(lookup_file, sep=sep, dtype={0:str, 1:str})
+            if &quot;genotype_id&quot; in sample_participant_lookup.columns:
+                sample_participant_lookup = sample_participant_lookup.set_index(sample_participant_lookup.columns[1])
+                df.rename(columns=sample_participant_lookup.to_dict()[&quot;genotype_id&quot;], inplace=True)
+            else:
+                # Fall back to the no header style
+                sample_participant_lookup = pd.read_csv(lookup_file, sep=sep, header=None, dtype={0:str, 1:str})
+                rename_dict = dict(zip(sample_participant_lookup[0], sample_participant_lookup[1]))
+                df.rename(columns=rename_dict, inplace=True)
+        except Exception as e:
+            print(f&quot;Warning: Error processing sample lookup file: {e}&quot;)
         return df
 
-    def load_bed_template(input_path, phenotype_id_type):
-        if sum(qtl.io.gtf_to_tss_bed(input_path, feature=&#39;gene&#39;, phenotype_id = &quot;gene_id&quot;).index.duplicated()) &gt; 0:
-            raise valueerror(f&quot;gtf file {input_path} needs to be collapsed into gene model by reference data processing module&quot;)
+    def load_bed_template_from_gtf(input_path, phenotype_id_column):
+        if sum(qtl.io.gtf_to_tss_bed(input_path, feature=&#39;gene&#39;, phenotype_id=&quot;gene_id&quot;).index.duplicated()) &gt; 0:
+            raise ValueError(f&quot;gtf file {input_path} needs to be collapsed into gene model by reference data processing module&quot;)
 
         bed_template_df_id = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
         bed_template_df_name = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
         bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;])
         bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;]
-        bed_template_df = bed_template_df.set_index(phenotype_id_type, drop=False)
-
+        bed_template_df = bed_template_df.set_index(phenotype_id_column, drop=False)
         return bed_template_df
 
-    df = load_and_preprocess_data(${_input[0]:ar}, [&quot;#chr&quot;,&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;,&quot;stop&quot;,&quot;annot.seqnames&quot;,&quot;annot.start&quot;,&quot;annot.end&quot;]) # This function will drop any columns from the DF based on the drop_columns list, so it is good to make the list comprehensive to accomodate different source of inputs.    df.set_index(df.columns[0], inplace=True)
+    drop_cols = [&quot;#chr&quot;, &quot;chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;stop&quot;, &quot;annot.seqnames&quot;, &quot;annot.start&quot;, &quot;annot.end&quot;]
+    df = load_and_preprocess_data(${_input[0]:ar}, drop_cols)
+    molecular_trait_type = &quot;${molecular_trait_type}&quot;
     df.set_index(df.columns[0], inplace=True)
-    df = rename_samples_using_lookup(df, &quot;${sample_participant_lookup:a}&quot;)
-    if ${strip_id}:  
-        # Update the index by stripping the pattern &quot;A | B&quot; to &quot;B&quot;
-        # and removing any leading or trailing spaces around &quot;B&quot;
-        df.index = df.index.map(lambda x: x.split(&#39;|&#39;)[-1].strip() if &#39;|&#39; in x else x)
-    bed_template_df = load_bed_template(${_input[1]:ar}, &quot;${phenotype_id_type}&quot;)
-    bed_df = prepare_bed(df, bed_template_df).drop(&quot;gene_name&quot;, axis=1)
-    bed_df = bed_df.drop_duplicates(&quot;gene_id&quot;, keep=False)
-    bed_df = bed_df.rename(columns={&#39;gene_id&#39;: &#39;ID&#39;})
-    qtl.io.write_bed(bed_df, ${_output[0]:r})
-    bed_df[[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;]].assign(path = ${_output[0]:r}).to_csv(${_output[1]:r},&quot;\t&quot;,index = False) 
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-</pre></div>
-</div>
-</div>
-</div>
-<p>Following step serves to annotate cood for proteiomics data.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_coord_protein]
-# A file to map sample ID from expression to genotype, must contain two columns, sample_id and participant_id, mapping IDs in the expression files to IDs in the genotype (these can be the same).
-parameter: sample_participant_lookup = path()
-parameter: protein_name_index = path()
-parameter: protein_ID_type = &quot;SOMAseqID&quot;
-input: phenoFile, annotation_gtf
-output: f&#39;{cwd:a}/{_input[0]:bn}.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.region_list.txt&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
-
-    import pandas as pd
-    import qtl.io
-    from pathlib import Path
-
-    def prepare_bed(df, bed_template_df, chr_subset=None):
-        bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
-        bed_df = bed_df.groupby(&#39;#chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values(&#39;start&#39;))
-        if chr_subset is not None:
-            bed_df = bed_df[bed_df.chr.isin(chr_subset)]
-        return bed_df
-
-    def load_and_preprocess_data(input_path, drop_columns):
-        df = pd.read_csv(input_path, sep=&quot;${sep}&quot;, skiprows=0)
-        dc = [col for col in df.columns if col in drop_columns] # Take interscet between df.columns and drop_columns
-        df = df.drop(dc,axis = 1) # drop the intersect
-        if len(df.columns) &lt; 2:
-            raise ValueError(&quot;There are too few columns in the loaded dataframe, please check the delimiter of the input file. The default delimiter is tab&quot;)
-        return df
-
-    def rename_samples_using_lookup(df, lookup_path):
-        sample_participant_lookup = Path(lookup_path)
-        if sample_participant_lookup.is_file():
-            sample_participant_lookup_s = pd.read_csv(sample_participant_lookup, sep=&quot;\t&quot;, index_col=1, dtype={0:str,1:str})
-            df.rename(columns=sample_participant_lookup_s.to_dict()[&quot;genotype_id&quot;], inplace=True)
-        return df
-
-    def load_bed_template(input_path, phenotype_id_type):
-        if sum(qtl.io.gtf_to_tss_bed(input_path, feature=&#39;gene&#39;,phenotype_id = &quot;gene_id&quot;).index.duplicated()) &gt; 0:
-            raise valueerror(f&quot;gtf file {input_path} needs to be collapsed into gene model by reference data processing module&quot;)
-
-        bed_template_df_id = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
-        bed_template_df_name = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
-        bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;])
-        bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;]
-        bed_template_df = bed_template_df.set_index(phenotype_id_type, drop=False)
-
-        return bed_template_df
-
-    df = load_and_preprocess_data(${_input[0]:ar}, [&quot;#chr&quot;,&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;,&quot;stop&quot;,&quot;annot.seqnames&quot;,&quot;annot.start&quot;,&quot;annot.end&quot;]) # This function will drop any columns from the DF based on the drop_columns list, so it is good to make the list comprehensive to accomodate different source of inputs.
-    protein_ID = df.columns.values[0]
-    protein_name_index = Path(&quot;${protein_name_index:a}&quot;)
-    if protein_name_index.is_file():
-        df_info = pd.read_csv(protein_name_index).rename(columns={&#39;${protein_ID_type}&#39;: protein_ID, &#39;EntrezGeneSymbol&#39;:&#39;gene_name&#39;})[[&#39;gene_name&#39;,protein_ID,&#39;UniProt&#39;]]
-        df = df_info.merge(df, on=protein_ID).drop(protein_ID,axis=1)
+    if ${True if sample_participant_lookup.is_file() else False}:
+        df = rename_samples_using_lookup(df, &quot;${sample_participant_lookup:a}&quot;)    
+    # First column is always the phenotype ID column
+    phenotype_id = df.columns.values[0]
+    
+    # Type-specific processing
+    if molecular_trait_type == &quot;gene&quot;:
+        if ${strip_id}:
+            # Update the index by stripping the pattern &quot;A | B&quot; to &quot;B&quot;
+            df.index = df.index.map(lambda x: x.split(&#39;|&#39;)[-1].strip() if &#39;|&#39; in x else x)
+            
+        bed_template_df = load_bed_template_from_gtf(${_input[1]:ar}, &quot;${phenotype_id_column}&quot;)
+        bed_df = prepare_bed(df, bed_template_df).drop(&quot;gene_name&quot;, axis=1)
+        bed_df = bed_df.drop_duplicates(&quot;gene_id&quot;, keep=False)
+        bed_df = bed_df.rename(columns={&#39;gene_id&#39;: &#39;ID&#39;})
+        
+    elif molecular_trait_type == &quot;protein&quot;:
+        auxiliary_mapping = Path(&quot;${auxiliary_id_mapping:a}&quot;)
+        
+        if auxiliary_mapping.is_file():
+            # Use protein name mapping from auxiliary file
+            df_info = pd.read_csv(auxiliary_mapping).rename(
+                columns={phenotype_id: phenotype_id, &#39;EntrezGeneSymbol&#39;: &#39;gene_name&#39;}
+            )[[&#39;gene_name&#39;, phenotype_id, &#39;UniProt&#39;]]
+            df = df_info.merge(df, on=phenotype_id).drop(phenotype_id, axis=1)
+        else:
+            # Extract UniProt ID from phenotype ID if no mapping file
+            df[[phenotype_id, &#39;UniProt&#39;]] = df[phenotype_id].astype(str).str.split(&#39;|&#39;, 1, expand=True)
+            
+        bed_template_df = load_bed_template_from_gtf(${_input[1]:ar}, &quot;${phenotype_id_column}&quot;)
+        bed_df = prepare_bed(df, bed_template_df)
+        bed_df[&quot;ID&quot;] = bed_df[&quot;gene_id&quot;] + &quot;_&quot; + bed_df[&quot;UniProt&quot;]
+        bed_df = bed_df.drop_duplicates(&quot;ID&quot;, keep=False)[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;] + df.drop([&quot;UniProt&quot;], axis=1).columns.values.tolist()]
+        
+    elif molecular_trait_type == &quot;atac&quot;:
+        # For ATAC, the coordinate_annotation is directly a BED file
+        bed_template_df = pd.read_csv(&quot;${_input[1]}&quot;, sep=&quot;\t&quot;).set_index(&quot;ID&quot;)
+        bed_template_df = bed_template_df.assign(ID=bed_template_df.index)
+        bed_df = prepare_bed(df, bed_template_df)
+        bed_df = bed_df.drop_duplicates(&quot;ID&quot;, keep=False)
     else:
-        df[[protein_ID, &#39;UniProt&#39;]] = df[protein_ID].astype(str).str.split(&#39;|&#39;, 1, expand=True)
-    df.set_index(df.columns[0], inplace=True)
-    df = rename_samples_using_lookup(df, &quot;${sample_participant_lookup:a}&quot;)
-    bed_template_df = load_bed_template(${_input[1]:ar}, &quot;${phenotype_id_type}&quot;)
-    bed_df = prepare_bed(df, bed_template_df)
-    bed_df[&quot;ID&quot;] = bed_df[&quot;gene_id&quot;] + &quot;_&quot; + bed_df[&quot;UniProt&quot;]
-    bed_df = bed_df.drop_duplicates(&quot;ID&quot;, keep=False)[[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;] + df.drop([&quot;UniProt&quot;],axis=1).columns.values.tolist()]
+        raise ValueError(f&quot;Unsupported molecular_trait_type: {molecular_trait_type}&quot;)
+        
     qtl.io.write_bed(bed_df, ${_output[0]:r})
-    bed_df[[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;]].assign(path = ${_output[0]:r}).to_csv(${_output[1]:r},&quot;\t&quot;,index = False) 
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>Following code annotate the atac_seq peak
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_coord_ATAC]
-# A file to map sample ID from expression to genotype, must contain two columns, sample_id and participant_id, mapping IDs in the expression files to IDs in the genotype (these can be the same).
-parameter: sample_participant_lookup = path()
-parameter: peak_annotation = path
-input: phenoFile, peak_annotation
-output: f&#39;{cwd:a}/{_input[0]:bn}.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.region_list.txt&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
-
-    import pandas as pd
-    import qtl.io
-    from pathlib import Path
-
-    def prepare_bed(df, bed_template_df, chr_subset=None):
-        bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
-        bed_df = bed_df.groupby(&#39;#chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values(&#39;start&#39;))
-        if chr_subset is not None:
-            bed_df = bed_df[bed_df.chr.isin(chr_subset)]
-        return bed_df
-
-    def load_and_preprocess_data(input_path, drop_columns):
-        df = pd.read_csv(input_path, sep=&quot;${sep}&quot;, skiprows=0)
-        dc = [col for col in df.columns if col in drop_columns] # Take interscet between df.columns and drop_columns
-        df = df.drop(dc,axis = 1) # drop the intersect
-        if len(df.columns) &lt; 2:
-            raise ValueError(&quot;There are too few columns in the loaded dataframe, please check the delimiter of the input file. The default delimiter is tab&quot;)
-        return df
-
-    def rename_samples_using_lookup(df, lookup_path):
-        sample_participant_lookup = Path(lookup_path)
-        if sample_participant_lookup.is_file():
-            sample_participant_lookup_s = pd.read_csv(sample_participant_lookup, sep=&quot;\t&quot;, index_col=1, dtype={0:str,1:str})
-            df.rename(columns=sample_participant_lookup_s.to_dict()[&quot;genotype_id&quot;], inplace=True)
-        return df
-
-    def load_bed_template(input_path, phenotype_id_type):
-        if sum(qtl.io.gtf_to_tss_bed(input_path, feature=&#39;gene&#39;,phenotype_id = &quot;gene_id&quot;).index.duplicated()) &gt; 0:
-            raise valueerror(f&quot;gtf file {input_path} needs to be collapsed into gene model by reference data processing module&quot;)
-
-        bed_template_df_id = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
-        bed_template_df_name = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
-        bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;])
-        bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;]
-        bed_template_df = bed_template_df.set_index(phenotype_id_type, drop=False)
-
-        return bed_template_df
-
-    df = load_and_preprocess_data(${_input[0]:ar}, [&quot;#chr&quot;,&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;,&quot;stop&quot;,&quot;annot.seqnames&quot;,&quot;annot.start&quot;,&quot;annot.end&quot;]) # This function will drop any columns from the DF based on the drop_columns list, so it is good to make the list comprehensive to accomodate different source of inputs.    df.set_index(df.columns[0], inplace=True)
-    df.set_index(df.columns[0], inplace=True)
-    df = rename_samples_using_lookup(df, &quot;${sample_participant_lookup:a}&quot;)
-    bed_template_df = pd.read_csv(&quot;${_input[1]}&quot;,sep = &quot;\t&quot;).set_index(&quot;ID&quot;)
-    bed_template_df = bed_template_df.assign(ID = bed_template_df.index )
-    bed_df = prepare_bed(df, bed_template_df)
-    bed_df = bed_df.drop_duplicates(&quot;ID&quot;, keep=False)
-    qtl.io.write_bed(bed_df, ${_output[0]:r})
-    bed_df[[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;]].assign(path = ${_output[0]:r}).to_csv(${_output[1]:r},&quot;\t&quot;,index = False) 
+    bed_df[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;]].assign(path=${_output[0]:r}).to_csv(${_output[1]:r}, &quot;\t&quot;, index=False)
 
 
 bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint

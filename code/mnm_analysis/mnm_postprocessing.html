@@ -1,0 +1,3097 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Integrative Analysis Output Processing &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'code/mnm_analysis/mnm_postprocessing';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="xQTL-GWAS pairwise enrichment and colocalization" href="../pecotmr_integration/SuSiE_enloc.html" />
+    <link rel="prev" title="High-dimensional regression with summary statistics" href="mnm_methods/rss_analysis.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <script>document.write(`<img src="../../_static/xqtl_wf.png" class="logo__image only-dark" alt="FunGen-xQTL Consortium - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../xqtl_protocol_demo.html">Illustration of xQTL protocol</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../commands_generator/bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../commands_generator/eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference_data/reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/bulk_expression_QC.html">Sample level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../molecular_phenotypes/scnuc_expression.html">scRNA-seq expression calling</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/apa_calling.html">APA Calling</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/methylation.html">Methylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/splicing_normalization.html">Normalization and phenotype table generation for splicingQTL analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../data_preprocessing/genotype_preprocessing.html">Genotype data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../data_preprocessing/phenotype_preprocessing.html">Phenotype data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/phenotype/gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/phenotype/phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/phenotype/phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../data_preprocessing/covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/covariate/covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/covariate/covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../association_scan/qtl_association_testing.html">QTL Association Analysis</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../association_scan/TensorQTL/TensorQTL.html">QTL Association Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../association_scan/quantile_models/qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../association_scan/qtl_association_postprocessing.html">QTL data postprocessing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../multivariate_genome/multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../multivariate_genome/MASH/mixture_prior.html">A multivariate EBNM approach for mixture multivariate distribution estimate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../multivariate_genome/MASH/mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Univariate Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_methods/mnm_regression.html">Advanced regression models for association analysis with individual level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_methods/rss_analysis.html">High-dimensional regression with summary statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Integrative Analysis Output Processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pecotmr_integration/SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pecotmr_integration/twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_methods/colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/sldsc_enrichment.html">Stratified LD Score Regression</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/code/mnm_analysis/mnm_postprocessing.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fcode/mnm_analysis/mnm_postprocessing.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/code/mnm_analysis/mnm_postprocessing.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Integrative Analysis Output Processing</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-results">Extracting susie results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-rss-results-for-adgwas">Extracting susie_rss results for ADGWAS</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-fsusie-results">Extracting fsusie results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting-the-pip-plot">Plotting the pip plot</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exporting-cis-analysis-susie-twas-results">Exporting cis_analysis susie_twas results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-gwas-data">Export gwas data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combine-seperate-meta-file">combine seperate meta file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overlapped-gwas-data-and-eqtl-data">Overlapped gwas data and eQTL data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-all-top-loci">Export all top loci</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#into-vcf-format">Into VCF format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cis-window-analysis-result-consolidation">Cis-window analysis Result consolidation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-results-consolidation">GWAS results consolidation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overlap-qtl-and-gwas-results">Overlap QTL and GWAS results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="integrative-analysis-output-processing">
+<h1>Integrative Analysis Output Processing<a class="headerlink" href="#integrative-analysis-output-processing" title="Link to this heading">#</a></h1>
+<p>This notebook is to post-process the susie results into different text file</p>
+<section id="extracting-susie-results">
+<h2>Extracting susie results<a class="headerlink" href="#extracting-susie-results" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_to_tsv \
+    --cwd output/test --rds_path `ls output/test/cache/*rds | head ` --region-list &lt;(head -50  ./dlpfc_region_list) --container containers/stephenslab.sif 
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="extracting-susie-rss-results-for-adgwas">
+<h2>Extracting susie_rss results for ADGWAS<a class="headerlink" href="#extracting-susie-rss-results-for-adgwas" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_to_tsv \
+    --cwd output/ADGWAS_finemapping_extracted/Bellenguez/ --rds_path `ls GWAS_Finemapping_Results/Bellenguez/ADGWAS2022*rds ` \
+    --region-list ~/1300_hg38_EUR_LD_blocks_orig.tsv \
+    --container containers/stephenslab.sif 
+
+sos run pipeline/SuSiE_post_processing.ipynb susie_tsv_collapse \
+    --cwd output/ADGWAS_finemapping_extracted --tsv_path `ls output/ADGWAS_finemapping_extracted/*lbf.tsv` \
+    --container containers/stephenslab.sif 
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="extracting-fsusie-results">
+<h2>Extracting fsusie results<a class="headerlink" href="#extracting-fsusie-results" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
+    --cwd output/f_susie_tad_haQTL_pos --rds_path `ls output/f_susie_tad_haQTL_pos/cache/*rds ` \
+    --region-list ../eqtl/dlpfc_tad_list \
+    --container containers/stephenslab.sif -s build
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
+    --cwd output/f_susie_tad_meQTL_pos_selected/ --rds_path `ls output/f_susie_tad_meQTL_pos_selected//cache/*1204*rds ` \
+    --region-list ../eqtl/dlpfc_tad_list \
+    --container containers/stephenslab.sif -s build
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
+    --cwd output/f_susie_tad_meQTL_pos_2/ --rds_path `ls output/f_susie_tad_meQTL_pos_2//cache/*rds ` \
+    --region-list ../eqtl/dlpfc_tad_list \
+    --container containers/stephenslab.sif -s build
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
+    --cwd output/f_susie_tad_meQTL_pos/ --rds_path `ls output/f_susie_tad_meQTL_pos//cache/*rds ` \
+    --region-list ../eqtl/dlpfc_tad_list \
+    --container containers/stephenslab.sif -s build
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
+    --cwd output/f_susie_tad_haQTL_pos_check_pure_2 --rds_path `ls output/f_susie_tad_haQTL_pos_check_pure_2/cache/*rds ` \
+    --region-list ../eqtl/dlpfc_tad_list \
+    --container containers/stephenslab.sif -s build
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
+    --cwd output/f_susie_tad_meQTL_pos_2/ --rds_path `ls output/f_susie_tad_meQTL_pos_2//cache/*rds ` \
+    --region-list ../eqtl/dlpfc_tad_list \
+    --container containers/stephenslab.sif -s build
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="plotting-the-pip-plot">
+<h2>Plotting the pip plot<a class="headerlink" href="#plotting-the-pip-plot" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_pip_landscape_plot \
+    --cwd output/test/ --plot_list plot_recipe --annot_tibble ~/Annotatr_builtin_annotation_tibble.tsv -s force &amp;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_upsetR_plot \
+    --cwd output/test/ --plot_list plot_recipe_1  -s force &amp;
+</pre></div>
+</div>
+</div>
+</div>
+<p>The required input for this step is a tab-delimited plot_recipe file that specifies the path to each of the variant.tsv files generated from this module. Each column represents a molecular phenotype, and each row indicates the files that share common variants. Since one TAD may correspond to multiple genes, additional eQTL are permitted. If there are additional molecular phenotypes or ADGWAS datasets, additional columns can be appended.</p>
+<p>The built-in Annotatr_builtin_annotation_tibble.tsv can be downloaded from <a class="reference external" href="https://www.synapse.org/#!Synapse:syn51198526">synapse</a>, please download it and specify the path.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>cat /mnt/vast/hpc/csg/molecular_phenotype_calling/QTL_fine_mapping/plot_recipe
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>haQTL	mQTL	eQTL	eQTL	ADGWAS
+/mnt/vast/hpc/csg/molecular_phenotype_calling/QTL_fine_mapping/output/f_susie_tad_meQTL_pos//meQTL.yuqi_mqtl.tad100.uni_Fsusie.mixture_normal_per_scale.variant.tsv	/mnt/vast/hpc/csg/molecular_phenotype_calling/QTL_fine_mapping/output/f_susie_tad_haQTL_pos//haQTL.rosmap_haqtl.tad100.uni_Fsusie.mixture_normal_per_scale.variant.tsv	/mnt/vast/hpc/csg/molecular_phenotype_calling/eqtl//output/susie_per_gene_tad//demo.ENSG00000117322.unisusie.fit.variant.tsv	/mnt/vast/hpc/csg/molecular_phenotype_calling/eqtl//output/susie_per_gene_tad//demo.ENSG00000203710.unisusie.fit.variant.tsv	/mnt/vast/hpc/csg/xqtl_workflow_testing/susie_rss/output/ADGWAS_finemapping_extracted/Bellenguez/ADGWAS2022.chr1.sumstat.chr1_205972031_208461272.unisusie_rss.fit.variant.tsv
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="exporting-cis-analysis-susie-twas-results">
+<h2>Exporting cis_analysis susie_twas results<a class="headerlink" href="#exporting-cis-analysis-susie-twas-results" title="Link to this heading">#</a></h2>
+<p>meta file is produced by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">get_condition</span> <span class="o">&lt;-</span> <span class="n">function</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">Author</span><span class="p">,</span> <span class="n">qtl_type</span><span class="p">){</span>
+    <span class="n">strings</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">()</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">condition</span> <span class="ow">in</span> <span class="n">conditions</span><span class="p">){</span>
+        <span class="n">string</span> <span class="o">=</span>  <span class="n">paste</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">Author</span><span class="p">,</span> <span class="n">qtl_type</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>  
+        <span class="n">string</span> <span class="o">=</span> <span class="n">paste</span><span class="p">(</span><span class="n">unique</span><span class="p">(</span><span class="n">unlist</span><span class="p">(</span><span class="n">strsplit</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">))),</span> <span class="n">collapse</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">strings</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="n">strings</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">strings</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">raw_name</span><span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;Mic&quot;</span><span class="p">,</span><span class="s2">&quot;Ast&quot;</span><span class="p">,</span><span class="s2">&quot;Oli&quot;</span><span class="p">,</span><span class="s2">&quot;OPC&quot;</span><span class="p">,</span><span class="s2">&quot;Exc&quot;</span><span class="p">,</span><span class="s2">&quot;Inh&quot;</span><span class="p">,</span><span class="s2">&quot;DLPFC&quot;</span><span class="p">,</span><span class="s2">&quot;PCC&quot;</span><span class="p">,</span><span class="s2">&quot;AC&quot;</span><span class="p">)</span>
+<span class="n">raw_name_kellis</span><span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;Mic_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Ast_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Oli_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;OPC_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Exc_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Inh_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Ast.10&quot;</span><span class="p">,</span><span class="s2">&quot;Mic.12&quot;</span><span class="p">,</span><span class="s2">&quot;Mic.13&quot;</span><span class="p">)</span>
+
+<span class="n">dejager_name</span> <span class="o">&lt;-</span> <span class="n">get_condition</span><span class="p">(</span><span class="n">raw_name</span><span class="p">,</span> <span class="s2">&quot;De_Jager&quot;</span><span class="p">,</span><span class="s2">&quot;eQTL&quot;</span><span class="p">)</span>
+<span class="n">kellis_name</span> <span class="o">&lt;-</span> <span class="n">get_condition</span><span class="p">(</span><span class="n">raw_name_kellis</span><span class="p">,</span> <span class="s2">&quot;Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;eQTL&quot;</span><span class="p">)</span>
+<span class="n">eQTL_meta</span> <span class="o">&lt;-</span> <span class="n">data</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="n">raw_name</span> <span class="o">=</span> <span class="n">c</span><span class="p">(</span><span class="n">raw_name</span><span class="p">,</span> <span class="n">raw_name_kellis</span><span class="p">),</span> <span class="n">new_name</span> <span class="o">=</span> <span class="n">c</span><span class="p">(</span><span class="n">dejager_name</span><span class="p">,</span> <span class="n">kellis_name</span><span class="p">))</span>
+<span class="n">write_delim</span><span class="p">(</span><span class="n">eQTL_meta</span><span class="p">,</span> <span class="s2">&quot;/mnt/vast/hpc/csg/rf2872/Work/Multivariate/susie_2024_new/eQTL_meta.tsv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>head /mnt/vast/hpc/csg/rf2872/Work/Multivariate/susie_2024_new/eQTL_meta.tsv
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>raw_name new_name
+Mic Mic_De_Jager_eQTL
+Ast Ast_De_Jager_eQTL
+Oli Oli_De_Jager_eQTL
+OPC OPC_De_Jager_eQTL
+Exc Exc_De_Jager_eQTL
+Inh Inh_De_Jager_eQTL
+DLPFC DLPFC_De_Jager_eQTL
+PCC PCC_De_Jager_eQTL
+AC AC_De_Jager_eQTL
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#susie
+sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export    \
+    --region_file /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/TADB_enhanced_cis.protein_coding.bed   \
+    --file_path  /mnt/vast/hpc/homes/rf2872/aws/rds_files   \
+    --name demo_susie   \
+    --suffix univariate_susie_twas_weights.rds   \
+    --prefix  MiGA_eQTL KNIGHT_pQTL  \
+    --min_corr 0.8 \
+    --geno_ref /mnt/vast/hpc/csg/rf2872/data/Fungen_xqtl/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz  \
+    --context-meta /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv  \
+    --cwd demo_susie \
+    --step1_only #optional to keep cache file
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#fsusie
+sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export    \
+    --region_file /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/extended_TADB.bed  \
+    --file_path  /mnt/vast/hpc/homes/rf2872/aws/rds_files     \
+    --name demo_fsusie   \
+    --suffix fsusie_mixture_normal_top_pc_weights.rds    \
+    --prefix  ROSMAP_mQTL ROSMAP_haQTL  \
+    --min_corr 0.8  \
+    --geno_ref /mnt/vast/hpc/csg/rf2872/data/Fungen_xqtl/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz  \
+    --context-meta /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv   \
+    --cwd demo_fsusie \
+    --fsusie \
+    --step1_only #optional to keep cache file
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#meta QTL
+sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export      \
+    --region_file /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/hg38_1362_blocks.bed     \
+    --file_path  /mnt/vast/hpc/homes/rf2872/aws/rds_files       \
+    --name demo_metaQTL     \
+    --suffix univariate_susie_twas_weights.rds        \
+    --prefix  ROSMAP_metaQTL  \
+    --min_corr 0.8   \
+    --geno_ref /mnt/vast/hpc/csg/rf2872/data/Fungen_xqtl/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz    \
+    --context-meta /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv    \
+    --cwd demo_metaQTL \
+    --metaQTL \
+    --step1_only #optional to keep cache file
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># multi gene mvsusie
+# multi gene mvsusie
+    sos run /data/interactive_analysis/rf2872/codes/Jan/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export  \
+    --region_file  /data/xqtl-analysis/resource/extended_TADB.bed  \
+    --file_path /data/analysis_result/mnm/ROSMAP/mnm_genes/   \
+    --name ROSMAP_AC_DeJager_eQTL   \
+    --suffix multigene_bvsr.rds   \
+    --prefix  ROSMAP_AC_DeJager_eQTL \
+    --min_corr 0.8 \
+    --geno_ref  /data/resource/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz \
+    --cwd demo_multigene \
+    --mnm \
+    --region-name  chr10_100845599_104855543 \#optional for testing with one region
+    --step1_only #optional to keep cache file
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="export-gwas-data">
+<h2>Export gwas data<a class="headerlink" href="#export-gwas-data" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span> sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  gwas_results_export      \
+    --region_file /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/hg38_1362_blocks.bed     \
+    --file_path  /home/hs3393/RSS_QC/GWAS_finemapping_Apr9/univariate_rss      \
+    --name demo_gwas   \
+    --suffix  univariate_susie_rss.rds       \
+    --prefix  RSS_QC_RAISS_imputed   \
+    --min_corr 0.8    \
+    --geno_ref /mnt/vast/hpc/csg/rf2872/data/Fungen_xqtl/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz    \
+    --context-meta /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv    \
+    --cwd demo_gwas \
+    --gwas \
+    --region-name chr9_19882538_22992379  \#optional 
+    --step1_only #optional 
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="combine-seperate-meta-file">
+<h2>combine seperate meta file<a class="headerlink" href="#combine-seperate-meta-file" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb   combine_export_meta \
+   --cache_path demo_susie_back/demo_susie_cache \
+   --output_file test_combine
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="overlapped-gwas-data-and-eqtl-data">
+<h2>Overlapped gwas data and eQTL data<a class="headerlink" href="#overlapped-gwas-data-and-eqtl-data" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb   overlap_qtl_gwas \
+    --name demo_overlap \
+    --qtl_meta_path /mnt/vast/hpc/csg/rf2872/Work/Multivariate/susie_2024_new/demo_susie/demo_susie.cis_results_db.tsv \
+    --gwas_meta_path /mnt/vast/hpc/csg/rf2872/Work/Multivariate/susie_2024_new/demo_gwas/demo_gwas.block_results_db.tsv \
+    --cwd demo_overlap
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="export-all-top-loci">
+<h2>Export all top loci<a class="headerlink" href="#export-all-top-loci" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb   export_top_loci \
+--export_path /home/ubuntu/demo_singlecontext/ \
+--region ENSG00000197106 \
+--prefix ROSMAP_DeJager \
+--suffix  cis_results_db.export.rds
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+import glob
+import pandas as pd
+# A region list file documenting the chr_pos_ref_alt of a susie_object
+parameter: cwd = path(&quot;output&quot;)
+parameter: name = &quot;demo&quot;
+
+## Path to work directory where output locates
+## Containers that contains the necessary packages
+parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+# For cluster jobs, number commands to run per job
+parameter: job_size = 50
+# Wall clock time expected
+parameter: walltime = &quot;96h&quot;
+# Memory expected
+parameter: mem = &quot;6G&quot;
+# Number of threads
+parameter: numThreads = 2
+parameter: windows = 1000000
+# use this function to edit memory string for PLINK input
+from sos.utils import expand_size
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_to_tsv_1]
+# Input
+# For complete susie, region_list or tad_list, for susie_rss , LD region list 
+parameter: region_list = path
+region_tbl = pd.read_csv(region_list,sep = &quot;\t&quot;)
+parameter: rds_path = paths
+input: rds_path, group_by = 1
+output: f&quot;{cwd}/{_input:bn}.variant.tsv&quot;,f&quot;{cwd}/{_input:bn}.lbf.tsv&quot;,f&quot;{cwd}/{_input:bn}.effect.tsv&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;dplyr&quot;)
+    library(&quot;tibble&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;tidyr&quot;)
+    library(&quot;readr&quot;)
+    library(&quot;stringr&quot;)
+    library(&quot;susieR&quot;)
+    extract_lbf = function(susie_obj){
+    
+    if(&quot;variants&quot; %in% names(susie_obj) ){
+    ss_bf = tibble(snps = susie_obj$variants, cs_index = ifelse(is.null(susie_obj$sets$cs_index), 0, paste0(susie_obj$sets$cs_index,collapse =&quot;,&quot;)),names = &quot;${f&#39;{_input:br}&#39;.split(&#39;.&#39;)[-4]}&quot;)
+    }
+      else 
+      {
+    ss_bf = tibble(snps = susie_obj$variable_name, cs_index = ifelse(is.null(susie_obj$sets$cs_index), 0, paste0(susie_obj$sets$cs_index,collapse =&quot;,&quot;)),names = &quot;${_input:bnnn}&quot;)
+     }
+    
+    ss_bf = ss_bf%&gt;%cbind(susie_obj$lbf_variable%&gt;%t)%&gt;%as_tibble()
+    
+    return(ss_bf)
+    }
+    
+    extract_variants_pip = function(susie_obj,region_list){
+    susie_tb = tibble( variants =  names(susie_obj$pip)[which( susie_obj$pip &gt;= 0)],
+                           snps_index = which(( susie_obj$pip &gt;= 0))) %&gt;%
+        mutate(chromosome = map_chr(variants, ~read.table(text = .x, sep = &quot;:&quot;)$V1%&gt;%str_replace(&quot;chr&quot;,&quot;&quot;) ),
+                position  = map_chr(variants, ~read.table(text = .x, sep = &quot;:&quot;)$V2  ),
+                ref = map_chr(position , ~read.table(text = .x, sep = &quot;_&quot;,colClasses = &quot;character&quot;)$V2  ),
+                alt = map_chr(position , ~read.table(text = .x, sep = &quot;_&quot;,colClasses = &quot;character&quot;)$V3  ),
+                position  = map_dbl(position , ~read.table(text = .x, sep = &quot;_&quot;,as.is = T)$V1  )
+                             )
+      susie_tb = susie_tb%&gt;%mutate(cs_order =(map(susie_tb$snps_index , ~tryCatch(which(pmap(list( a= susie_obj$sets$cs) , function(a) .x %in% a )%&gt;%unlist()), error = function(e) return(0) )  ))%&gt;%as.character%&gt;%str_replace(&quot;integer\\(0\\)&quot;,&quot;0&quot;),
+                         cs_id = map_chr(cs_order,~ifelse(.x ==&quot;0&quot;, &quot;None&quot; ,names(susie_obj$sets$cs)[.x%&gt;%str_split(&quot;:&quot;)%&gt;%unlist%&gt;%as.numeric] ) ),
+                         log10_base_factor = map_chr(snps_index,~paste0( susie_obj$lbf_variable[,.x],  collapse = &quot;;&quot;)),
+                         pip = susie_obj$pip,
+                         posterior_mean = coef.susie(susie_obj)[-1],
+                         posterior_sd = susie_get_posterior_sd(susie_obj),
+                         z = posterior_mean/posterior_sd)
+    
+          susie_tb =  susie_tb%&gt;%mutate(  molecular_trait_id = region_list$molecular_trait_id,
+                             finemapped_region_start = region_list$finemapped_region_start,
+                             finemapped_region_end = region_list$finemapped_region_end)
+          return(susie_tb)    }
+          
+        
+
+     extract_effect_pip = function(susie_obj,region_list,susie_tb){
+      result_tb =  tibble(phenotype = susie_obj$name,
+        V = susie_obj$V,effect_id = paste0(&quot;L&quot;,1:length(V) ) ,
+        cs_log10bf = susie_obj$lbf)
+        if(is.null(susie_obj$sets$cs)){
+            cs_min_r2 = cs_avg_r2 =  coverage =  0 
+            cs = &quot;None&quot;} else {         cs = map_chr(susie_obj$sets$cs[result_tb$effect_id],~susie_tb$variants[.x]%&gt;%paste0(collapse = &quot;;&quot;))
+        coverage = map(result_tb$effect_id, ~susie_obj$sets$coverage[which(names(susie_obj$sets$cs) == .x )])%&gt;%as.numeric%&gt;%replace_na(0)
+        cs_min_r2  = (susie_obj$sets$purity[result_tb$effect_id,1])%&gt;%as.numeric%&gt;%replace_na(0)  
+        cs_avg_r2  = (susie_obj$sets$purity[result_tb$effect_id,2])%&gt;%as.numeric%&gt;%replace_na(0) }
+        result_tb = result_tb%&gt;%mutate(cs_min_r2 = cs_min_r2,cs_avg_r2 = cs_avg_r2 ,coverage = coverage%&gt;%unlist,cs = cs )            
+      return(result_tb)
+      }
+       
+  
+    susie_obj = readRDS(&quot;${_input:a}&quot;)
+    if(&quot;variants&quot; %in% names(susie_obj) ){susie_obj$variants = susie_obj$variants%&gt;%str_replace(&quot;_&quot;,&quot;:&quot;)}
+    if(is.null(names(susie_obj$pip ))){names(susie_obj$pip) = susie_obj$variants}
+    lbf = extract_lbf(susie_obj)
+    region_list = read_delim(&quot;${region_list}&quot;,&quot;\t&quot;)
+    if(ncol(region_list) == 3 ){   region_list =  region_list%&gt;%mutate(`#chr` = `#chr`%&gt;%str_remove_all(&quot; &quot;) , ID = paste0(`#chr`,&quot;_&quot;,start,&quot;_&quot;,end) ) } # LD_list 
+    if(region_list$start[1] - region_list$end[1]  == -1 ){ 
+        region_list = region_list%&gt;%mutate( start = start - ${windows} ,end = start +${windows}) # region_list for fix cis windows  
+          } 
+      if(&quot;gene_id&quot; %in% colnames(region_list)){region_list = region_list%&gt;%mutate(ID = gene_id)  } # region_list for gene
+    region_list = region_list%&gt;%select(molecular_trait_id = ID, chromosome  = `#chr`,finemapped_region_start = start ,finemapped_region_end = end)  # Formatting
+    region_list = region_list%&gt;%filter(molecular_trait_id == &quot;${f&#39;{_input:br}&#39;.split(&#39;.&#39;)[-4]}&quot;)
+    variants_pip = extract_variants_pip( susie_obj , region_list)
+    effect_pip = extract_effect_pip( susie_obj , region_list,variants_pip)
+    lbf%&gt;%write_delim(&quot;${_output[1]}&quot;,&quot;\t&quot;)
+    variants_pip%&gt;%write_delim(&quot;${_output[0]}&quot;,&quot;\t&quot;)
+    effect_pip%&gt;%write_delim(&quot;${_output[2]}&quot;,&quot;\t&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[sQTL_susie_to_tsv_1]
+# Input
+# For complete susie, region_list or tad_list, for susie_rss , LD region list 
+parameter: region_list = path
+region_tbl = pd.read_csv(region_list,sep = &quot;\t&quot;)
+parameter: rds_path = paths
+input: rds_path, group_by = 1
+input_name=f&quot;{_input:bn}&quot;
+input_name=input_name.replace(&#39;*&#39;, &#39;N&#39;) # &quot;*&quot; in leafcutter2 would be ignored in shell and cause error 
+output: f&quot;{cwd}/{input_name}.variant.tsv&quot;,f&quot;{cwd}/{input_name}.lbf.tsv&quot;,f&quot;{cwd}/{input_name}.effect.tsv&quot;
+tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+tags = tags.replace(&#39;:&#39;, &#39;_&#39;).replace(&#39;+&#39;, &#39;ps&#39;) # also for other symbols in tag id 
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = tags
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container
+    library(&quot;dplyr&quot;)
+    library(&quot;tibble&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;tidyr&quot;)
+    library(&quot;readr&quot;)
+    library(&quot;stringr&quot;)
+    library(&quot;susieR&quot;)
+    extract_lbf = function(susie_obj){
+    
+    if(&quot;variants&quot; %in% names(susie_obj) ){
+    ss_bf = tibble(snps = susie_obj$variants, cs_index = ifelse(is.null(susie_obj$sets$cs_index), 0, paste0(susie_obj$sets$cs_index,collapse =&quot;,&quot;)),names = &quot;${f&#39;{_input:br}&#39;.split(&#39;.&#39;)[-4]}&quot;)
+    }
+      else 
+      {
+    ss_bf = tibble(snps = susie_obj$variable_name, cs_index = ifelse(is.null(susie_obj$sets$cs_index), 0, paste0(susie_obj$sets$cs_index,collapse =&quot;,&quot;)),names = &quot;${_input:bnnn}&quot;)
+     }
+    
+    ss_bf = ss_bf%&gt;%cbind(susie_obj$lbf_variable%&gt;%t)%&gt;%as_tibble()
+    
+    return(ss_bf)
+    }
+    
+    extract_variants_pip = function(susie_obj,region_list){
+    susie_tb = tibble( variants =  names(susie_obj$pip)[which( susie_obj$pip &gt;= 0)],
+                           snps_index = which(( susie_obj$pip &gt;= 0))) %&gt;%
+        mutate(chromosome = map_chr(variants, ~read.table(text = .x, sep = &quot;:&quot;)$V1%&gt;%str_replace(&quot;chr&quot;,&quot;&quot;) ),
+                position  = map_chr(variants, ~read.table(text = .x, sep = &quot;:&quot;)$V2  ),
+                ref = map_chr(position , ~read.table(text = .x, sep = &quot;_&quot;,colClasses = &quot;character&quot;)$V2  ),
+                alt = map_chr(position , ~read.table(text = .x, sep = &quot;_&quot;,colClasses = &quot;character&quot;)$V3  ),
+                position  = map_dbl(position , ~read.table(text = .x, sep = &quot;_&quot;,as.is = T)$V1  )
+                             )
+      susie_tb = susie_tb%&gt;%mutate(cs_order =(map(susie_tb$snps_index , ~tryCatch(which(pmap(list( a= susie_obj$sets$cs) , function(a) .x %in% a )%&gt;%unlist()), error = function(e) return(0) )  ))%&gt;%as.character%&gt;%str_replace(&quot;integer\\(0\\)&quot;,&quot;0&quot;),
+                         cs_id = map_chr(cs_order,~ifelse(.x ==&quot;0&quot;, &quot;None&quot; ,names(susie_obj$sets$cs)[.x%&gt;%str_split(&quot;:&quot;)%&gt;%unlist%&gt;%as.numeric] ) ),
+                         log10_base_factor = map_chr(snps_index,~paste0( susie_obj$lbf_variable[,.x],  collapse = &quot;;&quot;)),
+                         pip = susie_obj$pip,
+                         posterior_mean = coef.susie(susie_obj)[-1],
+                         posterior_sd = susie_get_posterior_sd(susie_obj),
+                         z = posterior_mean/posterior_sd)
+    
+          susie_tb =  susie_tb%&gt;%mutate(  molecular_trait_id = region_list$molecular_trait_id,
+                             finemapped_region_start = region_list$finemapped_region_start,
+                             finemapped_region_end = region_list$finemapped_region_end)
+          return(susie_tb)    }
+          
+        
+
+     extract_effect_pip = function(susie_obj,region_list,susie_tb){
+      result_tb =  tibble(phenotype = susie_obj$name,
+        V = susie_obj$V,effect_id = paste0(&quot;L&quot;,1:length(V) ) ,
+        cs_log10bf = susie_obj$lbf)
+        if(is.null(susie_obj$sets$cs)){
+            cs_min_r2 = cs_avg_r2 =  coverage =  0 
+            cs = &quot;None&quot;} else {         cs = map_chr(susie_obj$sets$cs[result_tb$effect_id],~susie_tb$variants[.x]%&gt;%paste0(collapse = &quot;;&quot;))
+        coverage = map(result_tb$effect_id, ~susie_obj$sets$coverage[which(names(susie_obj$sets$cs) == .x )])%&gt;%as.numeric%&gt;%replace_na(0)
+        cs_min_r2  = (susie_obj$sets$purity[result_tb$effect_id,1])%&gt;%as.numeric%&gt;%replace_na(0)  
+        cs_avg_r2  = (susie_obj$sets$purity[result_tb$effect_id,2])%&gt;%as.numeric%&gt;%replace_na(0) }
+        result_tb = result_tb%&gt;%mutate(cs_min_r2 = cs_min_r2,cs_avg_r2 = cs_avg_r2 ,coverage = coverage%&gt;%unlist,cs = cs )            
+      return(result_tb)
+      }
+       
+  
+    susie_obj = readRDS(&quot;${_input:a}&quot;)
+    if(&quot;variants&quot; %in% names(susie_obj) ){susie_obj$variants = susie_obj$variants%&gt;%str_replace(&quot;_&quot;,&quot;:&quot;)}
+    if(is.null(names(susie_obj$pip ))){names(susie_obj$pip) = susie_obj$variants}
+    lbf = extract_lbf(susie_obj)
+    region_list = read_delim(&quot;${region_list}&quot;,&quot;\t&quot;)
+    if(ncol(region_list) == 3 ){   region_list =  region_list%&gt;%mutate(`#chr` = `#chr`%&gt;%str_remove_all(&quot; &quot;) , ID = paste0(`#chr`,&quot;_&quot;,start,&quot;_&quot;,end) ) } # LD_list 
+    if(region_list$start[1] - region_list$end[1]  == -1 ){ 
+        region_list = region_list%&gt;%mutate( start = start - ${windows} ,end = start +${windows}) # region_list for fix cis windows  
+          } 
+      if(&quot;gene_id&quot; %in% colnames(region_list)){region_list = region_list%&gt;%mutate(ID = gene_id)  } # region_list for gene
+    region_list = region_list%&gt;%select(molecular_trait_id = ID, chromosome  = `#chr`,finemapped_region_start = start ,finemapped_region_end = end)  # Formatting
+    mole_id = &quot;${f&#39;{_input:br}&#39;.split(&#39;.&#39;)[-4]}&quot;%&gt;%gsub(&quot;_N:&quot;,&quot;_*:&quot;,.)#for sQTL
+    region_list = region_list%&gt;%filter(molecular_trait_id == mole_id)
+    variants_pip = extract_variants_pip( susie_obj , region_list)
+    effect_pip = extract_effect_pip( susie_obj , region_list,variants_pip)
+    lbf%&gt;%write_delim(&quot;${_output[1]}&quot;,&quot;\t&quot;)
+    variants_pip%&gt;%write_delim(&quot;${_output[0]}&quot;,&quot;\t&quot;)
+    effect_pip%&gt;%write_delim(&quot;${_output[2]}&quot;,&quot;\t&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[fsusie_to_tsv_1]
+# Input
+# For complete susie, region_list or tad_list, for susie_rss , LD region list 
+parameter: region_list = path
+region_tbl = pd.read_csv(region_list,sep = &quot;\t&quot;)
+parameter: rds_path = paths
+input: rds_path, group_by = 1
+output: f&quot;{cwd}/{_input:bn}.variant.tsv&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;dplyr&quot;)
+    library(&quot;tibble&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;tidyr&quot;)
+    library(&quot;readr&quot;)
+    library(&quot;stringr&quot;)
+    library(&quot;susieR&quot;)
+
+    extract_variants_pip = function(susie_obj,region_list){
+        susie_tb = tibble( variants =  names(susie_obj$csd_X),
+                               snps_index = which(( susie_obj$pip &gt;= 0))) %&gt;%
+            mutate(chromosome = map_chr(variants, ~read.table(text = .x, sep = &quot;:&quot;)$V1%&gt;%str_replace(&quot;chr&quot;,&quot;&quot;) ),
+                    position  = map_chr(variants, ~read.table(text = .x, sep = &quot;:&quot;)$V2  ),
+                    ref = map_chr(position , ~read.table(text = .x, sep = &quot;_&quot;,colClasses = &quot;character&quot;)$V2  ),
+                    alt = map_chr(position , ~read.table(text = .x, sep = &quot;_&quot;,colClasses = &quot;character&quot;)$V3  ),
+                    position  = map_dbl(position , ~read.table(text = .x, sep = &quot;_&quot;,as.is = T)$V1  )
+                                 )
+          susie_tb = susie_tb%&gt;%mutate(cs_order =(map(susie_tb$snps_index , ~tryCatch(which(pmap(list( a= susie_obj$cs) , function(a) .x %in% a )%&gt;%unlist()), error = function(e) return(0) )  ))%&gt;%as.character%&gt;%str_replace(&quot;integer\\(0\\)&quot;,&quot;0&quot;),
+                             pip = susie_obj$pip)
+          susie_tb =  susie_tb%&gt;%mutate(  molecular_trait_id = region_list$tad_index,
+                                 finemapped_region_start = region_list$start,
+                                 finemapped_region_end = region_list$end)
+          if(&quot;purity&quot; %in% names(susie_obj)){
+              susie_tb = susie_tb%&gt;%mutate(purity = map_dbl(susie_tb$cs_order, ~ifelse(.x%&gt;%as.numeric &gt; 0, susie_obj$purity[[as.numeric(.x)]], NA ) ), is_dummy = as.numeric(purity &lt; 0.5)  )
+              }
+    susie_tb = susie_tb%&gt;%mutate(effect_peak_pos = map_dbl(cs_order, ~ifelse(.x%&gt;%as.numeric &gt; 0, susie_obj$outing_grid[which(abs(susie_obj$fitted_func[[as.numeric(.x)]]) == max(abs(susie_obj$fitted_func[[as.numeric(.x)]])))] , NA ) )) 
+    susie_tb_lbf = cbind(susie_tb%&gt;%select(molecular_trait_id,variants,cs_order),Reduce(cbind, susie_obj$lBF)%&gt;%as.tibble%&gt;%`colnames&lt;-`(1:length(susie_obj$lBF)))
+          return(list(susie_tb, susie_tb_lbf))    }
+    susie_obj = readRDS(&quot;${_input:a}&quot;)
+    region_list = read_delim(&quot;${region_list}&quot;,&quot;\t&quot;)
+    region_list = region_list%&gt;%filter(tad_index == &quot;${f&#39;{_input:br}&#39;.split(&#39;.&#39;)[-4]}&quot;)
+    variants_pip = extract_variants_pip( susie_obj , region_list)[[1]]
+    variants_lbf = extract_variants_pip( susie_obj , region_list)[[2]]
+    print(paste0(&quot;fsusie run time is &quot;, round(susie_obj$runtime[[3]]/60),&quot;min&quot;))
+    variants_pip%&gt;%write_delim(&quot;${_output}&quot;,&quot;\t&quot;)
+    variants_pip%&gt;%write_delim(&quot;${_output:nn}.lbf.tsv&quot;,&quot;\t&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[*_to_tsv_2]
+parameter: name = f&#39;{_input[0]:b}&#39;.split(&quot;.&quot;)[0]
+input: group_by = &quot;all&quot;
+output: f&quot;{cwd}/{name}.all_variants.tsv&quot;
+bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+    head -1 ${_input[0]} &gt; ${_output}
+    cat ${_input[0]:d}/*variant.tsv | grep -v cs_order &gt;&gt; ${_output}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_tsv_collapse]
+parameter: tsv_path = paths # TSV needs have the name ends with  *.chr1_2_3.unisusie(_rss).lbf.tsv
+tsv_list  = pd.DataFrame({&quot;lbf_path&quot; : [str(x) for x in tsv_path]})
+chromosome = list(set([f&#39;{x.split(&quot;.&quot;)[-5].split(&quot;_&quot;)[0].replace(&quot;chr&quot;,&quot;&quot;)}&#39;  for x in tsv_list.lbf_path ])) ## Add chr if there is no chr prefix. This is to accomodata chr XY and M
+input: tsv_path, for_each = &quot;chromosome&quot;
+output: f&#39;{cwd}/{_input[0]:bnnnnnnn}.chr{_chromosome}.unisusie_rss.lbf.tsv&#39;
+bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container, entrypoint = entrypoint
+        head -1 ${_input[0]} &gt; ${_output}
+        cat ${_input[0]:d}/*.chr${_chromosome}_*lbf.tsv | grep -v cs_index &gt;&gt; ${_output}
+        
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_pip_landscape_plot]
+parameter: plot_list = path
+parameter: annot_tibble = path(&quot;~/Annotatr_builtin_annotation_tibble.tsv&quot;)
+import pandas as pd
+plot_list  = pd.read_csv(plot_list,sep = &quot;\t&quot;)
+file_type = plot_list.columns.values.tolist()
+file_type = [x.split(&quot;.&quot;)[0] for x in file_type ]
+plot_list = plot_list.to_dict(&quot;records&quot;)
+input: plot_list, group_by = len(file_type)
+output: f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.{str(_input[0]).split(&quot;.&quot;)[-5]}.pip_landscape_plot.rds&#39;,f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.{str(_input[0]).split(&quot;.&quot;)[-5]}.pip_landscape_plot.pdf&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;dplyr&quot;)
+    library(&quot;readr&quot;) 
+    library(&quot;ggplot2&quot;)
+    library(&quot;purrr&quot;)
+    color = c(&quot;black&quot;, &quot;dodgerblue2&quot;, &quot;green4&quot;, &quot;#6A3D9A&quot;, 
+          &quot;#FF7F00&quot;, &quot;gold1&quot;, &quot;skyblue2&quot;, &quot;#FB9A99&quot;, &quot;palegreen2&quot;,
+          &quot;#CAB2D6&quot;, &quot;#FDBF6F&quot;, &quot;gray70&quot;, &quot;khaki2&quot;, &quot;maroon&quot;, &quot;orchid1&quot;,
+          &quot;deeppink1&quot;, &quot;blue1&quot;, &quot;steelblue4&quot;, &quot;darkturquoise&quot;, &quot;green1&quot;, 
+          &quot;yellow4&quot;, &quot;yellow3&quot;,&quot;darkorange4&quot;,&quot;brown&quot;,&quot;navyblue&quot;,&quot;#FF0000&quot;,
+          &quot;darkgreen&quot;,&quot;#FFFF00&quot;,&quot;purple&quot;,&quot;#00FF00&quot;,&quot;pink&quot;,&quot;#0000FF&quot;,
+          &quot;orange&quot;,&quot;#FF00FF&quot;,&quot;cyan&quot;,&quot;#00FFFF&quot;,&quot;#FFFFFF&quot;)
+    extract_table = function(variant_df,type){ 
+    if(&quot;purity&quot; %in% colnames(variant_df) ){
+      variant_df$purity[is.na(variant_df$purity)] = 0
+      variant_df[abs(variant_df$purity) &lt; 0.5,7] = 0
+      }
+     variant_df = variant_df%&gt;%mutate(CS = (cs_order%&gt;%as.factor%&gt;%as.numeric-1)%&gt;%as.factor)%&gt;%
+          select( y = pip ,snp = variants,pos = position , CS, molecular_trait_id)%&gt;%mutate(molecular_trait_id = paste0(type,&quot;_&quot;,molecular_trait_id ) )
+    return(variant_df)
+    }
+    plot_recipe = tibble( type =  c(&#39;${&quot;&#39;,&#39;&quot;.join(file_type) }&#39;), path = c(${_input:r,}))
+    plot_list = map2(plot_recipe$type,plot_recipe$path, ~read_delim(.y, guess_max = 10000000)%&gt;%extract_table(.x) )
+    plot_df = Reduce(rbind,plot_list)
+    plot_range = (plot_df%&gt;%group_by(molecular_trait_id)%&gt;%summarize(start = (min(pos)), end = (max(pos)))%&gt;%mutate(start = median(start),end = median(end)))[1,c(2,3)]%&gt;%as.matrix
+    plot_chr = (plot_df$snp[1]%&gt;%stringr::str_split(&quot;:&quot;))[[1]][1]
+    plot_df = plot_df%&gt;%mutate(Shared = as.logical(map(snp, ~(plot_df%&gt;%filter( snp ==.x ,   CS%&gt;%as.numeric !=  1 )%&gt;%nrow()) &gt; 1  )))
+    pip_plot &lt;- plot_df%&gt;%ggplot2::ggplot(aes(y = y, x = pos,
+                                  col =  CS, shape = Shared )) + facet_grid(molecular_trait_id ~.)+
+      geom_point(size = 7) +
+      scale_color_manual(&quot;CS&quot;,values = color) +
+      theme(axis.ticks.x = element_blank()) +
+     ylab(&quot;Posterior Inclusion Probability (PIP)&quot;)+xlim(plot_range)+
+      theme(axis.ticks.x = element_blank()) +
+            theme(strip.text.y.right = element_text(angle = 0))+
+            xlab(&quot;&quot;) + 
+            theme(text = element_text(size = 30))+ggtitle(&quot;Overview of fine-mapping&quot;)
+  
+    annot = read_delim(&quot;${annot_tibble}&quot;)
+    annot = annot%&gt;%filter(seqnames == plot_chr, start &gt; plot_range[1], end &lt; plot_range[2])
+    annot_plot   = annot%&gt;%filter(!type%in%c(&quot;hg38_genes_introns&quot;,&quot;hg38_genes_1to5kb&quot;))%&gt;%
+                        ggplot(aes())+
+                        geom_segment( aes(x = start,xend = end, y = &quot;Regulartory Element&quot;, yend = &quot;Regulartory Element&quot;, color = type ), linewidth =10)+
+                        ylab(&quot;&quot;)+xlab(&quot;&quot;)+xlim(plot_range)+theme(axis.text.x=element_blank(),text = element_text(size = 20))+scale_color_brewer(palette=&quot;Dark2&quot;)
+    gene_plot = annot%&gt;%filter(type%in%c(&quot;hg38_genes_1to5kb&quot;))%&gt;%group_by(symbol)%&gt;%
+                            summarise(start = min(start), end = max(end))%&gt;%na.omit%&gt;%
+                            ggplot(aes())+geom_segment( aes(x = start,xend = end, y = &quot;Gene&quot;, yend = &quot;Gene&quot;, color = symbol ), linewidth =10)+
+                            geom_label(aes(x = (start+end)/2,y = &quot;Gene&quot;, label = symbol ),size = 5)+ylab(&quot;&quot;)+xlab(&quot;POS&quot;)+
+                            theme(legend.position=&quot;none&quot;)+theme(text = element_text(size = 20))+xlim(plot_range)
+      
+    list(pip_plot,plot_df,annot_plot,gene_plot)%&gt;%saveRDS(&quot;${_output[0]}&quot;)
+    cowplot::plot_grid(plotlist = list(pip_plot,annot_plot,gene_plot),ncol = 1, align = &quot;v&quot;,axis = &quot;tlbr&quot;,rel_heights = c(8,1,1))%&gt;%ggsave(filename = &quot;${_output[1]}&quot;,device = &quot;pdf&quot;,dpi = &quot;retina&quot;,width = 30, height = 30)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_upsetR_plot]
+parameter: plot_list = path
+import pandas as pd
+plot_list  = pd.read_csv(plot_list, sep = &quot;\t&quot;)
+file_type = plot_list.columns.values.tolist()
+file_type = [x.split(&quot;.&quot;)[0] for x in file_type ]
+plot_list = plot_list.to_dict(&quot;records&quot;)
+input: plot_list
+output: f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR.rds&#39;,f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR.pdf&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;dplyr&quot;)
+    library(&quot;readr&quot;) 
+    library(&quot;ggplot2&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;UpSetR&quot;)
+    library(&quot;ComplexUpset&quot;)
+    plot_recipe = tibble( type =  c(&#39;${&quot;&#39;,&#39;&quot;.join(file_type) }&#39;), path = c(${_input:r,}))
+    plot_list = map2(plot_recipe$type,plot_recipe$path, ~read_delim(.y, guess_max = 10000000)%&gt;%mutate(cs = cs_order != 0 )%&gt;%filter(cs &gt; 0)%&gt;%select(variants,cs)%&gt;%`colnames&lt;-`(c(&quot;variants&quot;,.x))%&gt;%distinct() )
+    cs_sharing = Reduce(full_join,plot_list)
+    cs_upsetR_sharing = cs_sharing
+    cs_upsetR_sharing[,2:ncol(cs_upsetR_sharing)]%&gt;%mutate_all(as.numeric)-&gt; cs_upsetR_sharing[,2:ncol(cs_upsetR_sharing)]
+    a = upset(cs_upsetR_sharing%&gt;%as.data.frame,intersect = colnames(cs_upsetR_sharing[2:ncol(cs_upsetR_sharing)]),
+      keep_empty_groups = F,
+          base_annotations=list(`Intersection size` = intersection_size( bar_number_threshold = 1, position = position_dodge(0.5), width = 0.3 ,text = list(size = 5)   )  ) ,
+              themes=upset_default_themes(axis.text=element_text(size=30))     ,
+              min_degree = 1)
+    
+    a%&gt;%ggsave(filename = &quot;${_output[1]}&quot;,device = &quot;pdf&quot;,dpi = &quot;retina&quot;,width=18.5, height=10.5)
+    list(cs_upsetR_sharing)%&gt;%saveRDS(&quot;${_output[0]}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_upsetR_cs_plot]
+parameter: plot_list = path
+import pandas as pd
+plot_list  = pd.read_csv(plot_list, sep = &quot;\t&quot;)
+file_type = plot_list.columns.values.tolist()
+file_type = [x.split(&quot;.&quot;)[0] for x in file_type ]
+plot_list = plot_list.to_dict(&quot;records&quot;)
+parameter: trait_to_select =  1 
+input: plot_list
+output: f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR_{file_type[trait_to_select-1]}_cs.rds&#39;,f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR_{file_type[trait_to_select-1]}_cs.pdf&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+
+    library(&quot;dplyr&quot;)
+    library(&quot;readr&quot;) 
+    library(&quot;ggplot2&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;UpSetR&quot;)
+    library(&quot;ComplexUpset&quot;)
+
+    cs_sharing_identifer = function(upsetR_input,df){
+    inner_join(upsetR_input, df%&gt;%select(variants,molecular_trait_id, cs_order)%&gt;%filter(cs_order != 0))%&gt;%select(-variants)-&gt; dfL_CS_sharing
+    dfL_CS_sharing[is.na(dfL_CS_sharing)] = FALSE
+    dfL_CS_sharing = dfL_CS_sharing%&gt;%group_by(molecular_trait_id,cs_order)%&gt;%summarize(across(everything(), list(mean))   )
+    dfL_CS_sharing = dfL_CS_sharing%&gt;%mutate(across(colnames(dfL_CS_sharing)[3:ncol(dfL_CS_sharing)], ~.x != 0  ))%&gt;%`colnames&lt;-`(c(&quot;molecular_trait_id&quot;,&quot;cs_order&quot;,colnames(cs_sharing)[2:ncol(cs_sharing)]))
+    }
+  
+  
+    plot_recipe = tibble( type =  c(&#39;${&quot;&#39;,&#39;&quot;.join(file_type) }&#39;), path = c(${_input:r,}))
+    plot_list = map2(plot_recipe$type,plot_recipe$path, ~read_delim(.y, guess_max = 10000000)%&gt;%mutate(cs = cs_order != 0 )%&gt;%filter(cs &gt; 0)%&gt;%select(variants,cs)%&gt;%`colnames&lt;-`(c(&quot;variants&quot;,.x))%&gt;%distinct() )
+    cs_sharing = Reduce(full_join,plot_list)
+    cs_upsetR_sharing = cs_sharing
+    cs_upsetR_sharing[,2:ncol(cs_upsetR_sharing)]%&gt;%mutate_all(as.numeric)-&gt; cs_upsetR_sharing[,2:ncol(cs_upsetR_sharing)]
+
+    df = read_delim(plot_recipe$path[[${trait_to_select}]]) 
+    
+    cs_sharing_df = cs_sharing_identifer(cs_upsetR_sharing,df)
+
+    a = upset(cs_sharing_df%&gt;%as.data.frame,intersect = colnames(cs_sharing_df[3:ncol(cs_sharing_df)]),
+          keep_empty_groups = F,
+          base_annotations=list(`Intersection size` = intersection_size( bar_number_threshold = 1, position = position_dodge(0.5), width = 0.3 ,text = list(size = 8)   )  ),
+          themes=upset_default_themes(axis.text=element_text(size=30)),
+          set_size = F  ,  min_degree = 1,wrap = T) + ggtitle( paste0(plot_recipe$type[[${trait_to_select}]],&#39;CS shared with other phenotypes&#39;) )   + theme(plot.title = element_text(size = 40, face = &quot;bold&quot;))
+  
+    a%&gt;%ggsave(filename = &quot;${_output[1]}&quot;,device = &quot;pdf&quot;,dpi = &quot;retina&quot;,width=18.5, height=10.5)
+    list(cs_sharing_df)%&gt;%saveRDS(&quot;${_output[0]}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[tmp_annotatation_of_snps_1]
+parameter: SNP_list = path
+parameter: annotation_rds = path
+input: SNP_list
+output: f&#39;{cwd}/{_input:b}.annotated.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;dplyr&quot;)
+    library(&quot;readr&quot;) 
+    library(&quot;purrr&quot;)
+    library(&quot;stringr&quot;)
+    sharing_snp = readRDS(&quot;${_input}&quot;)
+    sharing_snp_fsusie = sharing_snp[[1]]%&gt;%filter(haQTL == 1 | mQTL == 1)
+    sharing_snp_fsusie = sharing_snp_fsusie%&gt;%mutate(X1 =  read.table(text = sharing_snp_fsusie$variants, sep = &quot;:&quot;)$V1, X2 = read.table(text = read.table(text = sharing_snp_fsusie$variants, sep = &quot;:&quot;)$V2 , sep = &quot;_&quot;)$V1  )
+    sharing_snp_fsusie = sharing_snp_fsusie%&gt;%select(variants,chr = X1, pos = X2)
+    annotation = readRDS(&quot;${annotation_rds}&quot;)
+    print(&quot;data loaded&quot;)
+    result = sharing_snp_fsusie%&gt;%mutate(annot = map2( chr,pos , ~ annotation%&gt;%filter(X1 == .x, X2 &lt;= .y, X3 &gt;= .y)%&gt;%pull(X5)))%&gt;%mutate(annot = map_chr(annot, ~paste0(.x ,collapse = &quot;,&quot;)) )
+    print(&quot;snp annotated&quot;)
+    result%&gt;%saveRDS(&quot;${_output}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[tmp_annotatation_of_snps_2]
+parameter: SNP_list = path
+parameter: annotation_rds = path
+output: f&#39;{cwd}/{_input:b}.annotated_rev.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;dplyr&quot;)
+    library(&quot;readr&quot;) 
+    library(&quot;purrr&quot;)
+    library(&quot;stringr&quot;)
+    result = readRDS(${_input:r})
+    result_rev = tibble(annot = unique(annotation$X5))%&gt;%mutate(variants = map(annot, ~  result%&gt;%filter( str_detect(annot,.x))%&gt;%pull(variants)) )%&gt;%mutate( variants = map_chr(variants,~paste0(.x ,collapse = &quot;,&quot;))  )
+    result_rev%&gt;%saveRDS(&quot;${_output}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[fsusie_extract_effect]
+parameter: rds_path = paths
+parameter: annot_tibble = path(&quot;~/Annotatr_builtin_annotation_tibble.tsv&quot;)
+input: rds_path, group_by = 1
+output: f&#39;{cwd}/{_input:bn}.estimated_effect.tsv&#39;,f&#39;{cwd}/{_input:bn}.estimated_effect.pdf&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;stringr&quot;)
+    library(&quot;dplyr&quot;)
+    library(&quot;readr&quot;) 
+    library(&quot;ggplot2&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;tidyr&quot;)
+    color = c(&quot;black&quot;, &quot;dodgerblue2&quot;, &quot;green4&quot;, &quot;#6A3D9A&quot;, 
+          &quot;#FF7F00&quot;, &quot;gold1&quot;, &quot;skyblue2&quot;, &quot;#FB9A99&quot;, &quot;palegreen2&quot;,
+          &quot;#CAB2D6&quot;, &quot;#FDBF6F&quot;, &quot;gray70&quot;, &quot;khaki2&quot;, &quot;maroon&quot;, &quot;orchid1&quot;,
+          &quot;deeppink1&quot;, &quot;blue1&quot;, &quot;steelblue4&quot;, &quot;darkturquoise&quot;, &quot;green1&quot;, 
+          &quot;yellow4&quot;, &quot;yellow3&quot;,&quot;darkorange4&quot;,&quot;brown&quot;,&quot;navyblue&quot;,&quot;#FF0000&quot;,
+          &quot;darkgreen&quot;,&quot;#FFFF00&quot;,&quot;purple&quot;,&quot;#00FF00&quot;,&quot;pink&quot;,&quot;#0000FF&quot;,
+          &quot;orange&quot;,&quot;#FF00FF&quot;,&quot;cyan&quot;,&quot;#00FFFF&quot;,&quot;#FFFFFF&quot;)
+    
+    effect_extract = function(fsusie){
+        plot_df = fsusie$fitted_func%&gt;%as_tibble(.name_repair = &quot;universal&quot;)%&gt;%mutate(pos =  fsusie$outing_grid)%&gt;%`colnames&lt;-`(c(paste0(&quot;Effect_&quot;,1:length(fsusie$cs)),&quot;pos&quot;))%&gt;%mutate(`#chr` = str_split(names(fsusie$csd_X)[[1]],&quot;:&quot;)[[1]][[1]] )%&gt;%select(`#chr`, pos, everything())
+        plot=  plot_df%&gt;%pivot_longer(cols = 3:ncol(plot_df),names_to = &quot;effect&quot;, values_to = &quot;values&quot;   ) %&gt;%ggplot(aes(x = pos, y = values,color = effect),linewidth = 7)+
+        geom_line()+ylab(&quot;Estimated Effect&quot;) + xlab(&quot;POS&quot;)+facet_grid(effect~. )+
+            scale_color_manual(&quot;Credible set&quot;,values = color[2:length(color)])+geom_line(aes(y = 0), color = &quot;black&quot;)
+            theme(strip.text.y.right = element_text(angle = 0))+
+            xlab(&quot;&quot;) + 
+            ylab(&quot;Estimated Effect&quot;)+ 
+            theme(text = element_text(size = 50))+
+            ggtitle(paste0( &quot;Estimated effect for ${f&#39;{_input:br}&#39;.split(&#39;.&#39;)[-4]}&quot;))
+        return(list(plot_df,plot))
+        }
+    susie_obj =  readRDS(&quot;${_input}&quot;)
+    output = effect_extract(susie_obj)
+    effect_tbl = output[[1]]
+    annot = read_delim(&quot;${annot_tibble}&quot;)
+    annot = annot%&gt;%filter(seqnames == (effect_tbl$`#chr`)[[1]], start &gt; min(effect_tbl$pos), end &lt; max(effect_tbl$pos))
+    plot_range = c(min(effect_tbl$pos),  max(effect_tbl$pos))
+    annot_plot   = annot%&gt;%filter(!type%in%c(&quot;hg38_genes_introns&quot;,&quot;hg38_genes_1to5kb&quot;))%&gt;%
+                        ggplot(aes())+
+                        geom_segment( aes(x = start,xend = end, y = &quot;Regulartory Element&quot;, yend = &quot;Regulartory Element&quot;, color = type ), linewidth =10)+
+                        ylab(&quot;&quot;)+xlab(&quot;&quot;)+xlim(plot_range)+theme(axis.text.x=element_blank(),text = element_text(size = 20))+scale_color_brewer(palette=&quot;Dark2&quot;)
+    gene_plot = annot%&gt;%filter(type%in%c(&quot;hg38_genes_1to5kb&quot;))%&gt;%group_by(symbol)%&gt;%
+                            summarise(start = min(start), end = max(end))%&gt;%na.omit%&gt;%
+                            ggplot(aes())+geom_segment( aes(x = start,xend = end, y = &quot;Gene&quot;, yend = &quot;Gene&quot;, color = symbol ), linewidth =10)+
+                            geom_label(aes(x = (start+end)/2,y = &quot;Gene&quot;, label = symbol ),size = 5)+ylab(&quot;&quot;)+xlab(&quot;POS&quot;)+
+                            theme(legend.position=&quot;none&quot;)+theme(text = element_text(size = 20))+xlim(plot_range)
+    cowplot::plot_grid(plotlist = list(output[[2]]),ncol = 1, align = &quot;v&quot;,axis = &quot;tlbr&quot;,rel_heights = c(8))%&gt;%ggsave(filename = &quot;${_output[1]}&quot;,device = &quot;pdf&quot;,dpi = &quot;retina&quot;,width = 30, height = 30)
+    effect_tbl%&gt;%write_delim(&quot;${_output[0]}&quot;,&quot;\t&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[fsusie_affected_region]
+parameter: rds_path = paths
+input: rds_path, group_by = 1
+output: f&#39;{cwd}/{_input:bn}.affected_region.tsv&#39;,f&#39;{cwd}/{_input:bn}.affected_region.pdf&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+    library(&quot;stringr&quot;)
+    library(&quot;dplyr&quot;)
+    library(&quot;readr&quot;) 
+    library(&quot;ggplot2&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;tidyr&quot;)
+    library(susiF.alpha)
+    library(ashr)
+    library(wavethresh)
+    color = c(&quot;black&quot;, &quot;dodgerblue2&quot;, &quot;green4&quot;, &quot;#6A3D9A&quot;, 
+          &quot;#FF7F00&quot;, &quot;gold1&quot;, &quot;skyblue2&quot;, &quot;#FB9A99&quot;, &quot;palegreen2&quot;,
+          &quot;#CAB2D6&quot;, &quot;#FDBF6F&quot;, &quot;gray70&quot;, &quot;khaki2&quot;, &quot;maroon&quot;, &quot;orchid1&quot;,
+          &quot;deeppink1&quot;, &quot;blue1&quot;, &quot;steelblue4&quot;, &quot;darkturquoise&quot;, &quot;green1&quot;, 
+          &quot;yellow4&quot;, &quot;yellow3&quot;,&quot;darkorange4&quot;,&quot;brown&quot;,&quot;navyblue&quot;,&quot;#FF0000&quot;,
+          &quot;darkgreen&quot;,&quot;#FFFF00&quot;,&quot;purple&quot;,&quot;#00FF00&quot;,&quot;pink&quot;,&quot;#0000FF&quot;,
+          &quot;orange&quot;,&quot;#FF00FF&quot;,&quot;cyan&quot;,&quot;#00FFFF&quot;,&quot;#FFFFFF&quot;)
+    ## Define Function
+    update_cal_credible_band2 &lt;- function(susiF.obj )
+    {
+    
+    
+    
+      if(sum( is.na(unlist(susiF.obj$alpha))))
+      {
+        stop(&quot;Error: some alpha value not updated, please update alpha value first&quot;)
+      }
+      temp &lt;- wavethresh::wd(rep(0, susiF.obj$n_wac))
+    
+    
+      for ( l in 1:susiF.obj$L)
+      {
+        Smat &lt;-  susiF.obj$fitted_wc2[[l]]
+        W1   &lt;- ((wavethresh::GenW(n=  ncol(Smat )  , filter.number = 10, family = &quot;DaubLeAsymm&quot;)))
+        tt   &lt;- diag( W1%*%diag(c(susiF.obj$alpha[[l]]%*%Smat ))%*% t(W1 ))
+    
+        up                       &lt;-  susiF.obj$fitted_func[[l]]+ 3*sqrt(tt)
+        low                      &lt;-  susiF.obj$fitted_func[[l]]- 3*sqrt(tt)
+        susiF.obj$cred_band[[l]] &lt;- rbind(up, low)
+      }
+    
+    
+    
+      return(susiF.obj)
+    }
+    
+    affected_reg &lt;- function( susiF.obj){
+      outing_grid &lt;- susiF.obj$outing_grid
+    
+      reg &lt;-  list()
+      h &lt;- 1
+      for (   l in 1:length(susiF.obj$cs)){
+    
+        pos_up &lt;-  which(susiF.obj$cred_band[[l]][1,]&lt;0)
+        pos_low &lt;- which(susiF.obj$cred_band[[l]][2,]&gt;0)
+    
+    
+        reg_up &lt;- split( pos_up,cumsum(c(1,diff( pos_up)!=1)))
+    
+        reg_low &lt;- split( pos_low,cumsum(c(1,diff( pos_low)!=1)))
+        for( k in 1:length(reg_up)){
+          reg[[h]] &lt;- c(l, outing_grid[reg_up[[k]][1]], outing_grid[reg_up[[k]][length(reg_up[[k]])]])
+    
+          h &lt;- h+1
+        }
+        for( k in 1:length(reg_low )){
+          reg[[h]] &lt;- c(l, outing_grid[reg_low [[k]][1]], outing_grid[reg_low [[k]][length(reg_low [[k]])]])
+    
+          h &lt;- h+1
+        }
+    
+    
+      }
+      reg &lt;-  do.call(rbind, reg)
+      colnames(reg) &lt;- c(&quot;CS&quot;, &quot;Start&quot;,&quot;End&quot;)
+      return(reg)
+    }
+    
+    
+    susiF_obj =  readRDS(&quot;${_input}&quot;)
+    susiF_obj = update_cal_credible_band2(susiF_obj)
+    affected_tbl = affected_reg(susiF_obj)
+    affected_tbl = affected_tbl%&gt;%as_tibble%&gt;%mutate(analysis = susiF_obj$name,
+                          chr = (names(susiF_obj$csd_X)[[1]]%&gt;%stringr::str_split(&quot;:&quot;))[[1]][[1]],
+                          molecular_trait_id =  &quot;${f&#39;{_input:br}&#39;.split(&#39;.&#39;)[-4]}&quot;, 
+                          purity  = purrr::map_dbl(CS,~susiF_obj$purity[[.x]] )  )
+    
+    affected_tbl%&gt;%as_tibble%&gt;%write_delim(&quot;${_output[0]}&quot;,&quot;\t&quot;)
+    plt = plot_susiF(susiF_obj, cred.band = T)
+    plt%&gt;%ggsave(filename = &quot;${_output[1]}&quot;,device = &quot;pdf&quot;,dpi = &quot;retina&quot;,width = 30, height = 30)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="into-vcf-format">
+<h2>Into VCF format<a class="headerlink" href="#into-vcf-format" title="Link to this heading">#</a></h2>
+<p>FIXME: These codes were moved from earlier workflows. To be cleaned up and tested.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#[uni_susie_2]
+input: group_with = &quot;genoFile&quot;
+output: f&quot;{_input:n}.vcf.bgz&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = f&quot;{_output:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+   ## Define create_vcf function
+           create_vcf = function (chrom, pos, nea, ea, snp = NULL, ea_af = NULL, effect = NULL, 
+        se = NULL, pval = NULL, name = NULL,cs = NULL, pip = NULL) 
+    {
+        stopifnot(length(chrom) == length(pos))
+        if (is.null(snp)) {
+            snp &lt;- paste0(chrom, &quot;:&quot;, pos)
+        }
+        snp &lt;- paste0(chrom, &quot;:&quot;, pos)
+        nsnp &lt;- length(chrom)
+        gen &lt;- list()
+        ## Setupt data content for each sample column
+        if (!is.null(ea_af)) 
+            gen[[&quot;AF&quot;]] &lt;- matrix(ea_af, nsnp)
+        if (!is.null(effect)) 
+            gen[[&quot;ES&quot;]] &lt;- matrix(effect, nsnp)
+        if (!is.null(se)) 
+            gen[[&quot;SE&quot;]] &lt;- matrix(se, nsnp)
+        if (!is.null(pval)) 
+            gen[[&quot;LP&quot;]] &lt;- matrix(-log10(pval), nsnp)
+        if (!is.null(cs)) 
+            gen[[&quot;CS&quot;]] &lt;- matrix(cs, nsnp)
+        if (!is.null(pip)) 
+            gen[[&quot;PIP&quot;]] &lt;- matrix(pip, nsnp)
+        gen &lt;- S4Vectors::SimpleList(gen)
+        
+      ## Setup snps info for the fix columns
+        gr &lt;- GenomicRanges::GRanges(chrom, IRanges::IRanges(start = pos, 
+            end = pos + pmax(nchar(nea), nchar(ea)) - 1, names = snp))
+         coldata &lt;- S4Vectors::DataFrame(Studies = name, row.names = name)
+    ## Setup header informations
+        hdr &lt;- VariantAnnotation::VCFHeader(header = IRanges::DataFrameList(fileformat = S4Vectors::DataFrame(Value = &quot;VCFv4.2&quot;, 
+            row.names = &quot;fileformat&quot;)), sample = name)
+        VariantAnnotation::geno(hdr) &lt;- S4Vectors::DataFrame(Number = c(&quot;A&quot;, 
+            &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;), Type = c(&quot;Float&quot;, &quot;Float&quot;, 
+            &quot;Float&quot;, &quot;Float&quot;, &quot;Float&quot;, &quot;Float&quot;), Description = c(&quot;Effect size estimate relative to the alternative allele&quot;, 
+            &quot;Standard error of effect size estimate&quot;, &quot;-log10 p-value for effect estimate&quot;,  
+            &quot;Alternate allele frequency in the association study&quot;,
+            &quot;The CS this variate are captured, 0 indicates not in any cs&quot;, &quot;The posterior inclusion probability to a CS&quot;), 
+            row.names = c(&quot;ES&quot;, &quot;SE&quot;, &quot;LP&quot;, &quot;AF&quot;, &quot;CS&quot;, &quot;PIP&quot;))
+      ## Save only the meta information in the sample columns 
+        VariantAnnotation::geno(hdr) &lt;- subset(VariantAnnotation::geno(hdr), 
+            rownames(VariantAnnotation::geno(hdr)) %in% names(gen))
+      ## Save VCF 
+        vcf &lt;- VariantAnnotation::VCF(rowRanges = gr, colData = coldata, 
+            exptData = list(header = hdr), geno = gen)
+        VariantAnnotation::alt(vcf) &lt;- Biostrings::DNAStringSetList(as.list(ea))
+        VariantAnnotation::ref(vcf) &lt;- Biostrings::DNAStringSet(nea)
+      ## Add fixed values
+        VariantAnnotation::fixed(vcf)$FILTER &lt;- &quot;PASS&quot;
+          return(sort(vcf))
+        }
+    library(&quot;susieR&quot;)
+    library(&quot;dplyr&quot;)
+    library(&quot;tibble&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;readr&quot;)
+    library(&quot;tidyr&quot;)
+    library(&quot;stringr&quot;)
+    
+    # Get list of cs snps
+    susie_list = readRDS(${_input:r})
+    susie_tb_ls = list()
+    for (i in 1:length(susie_list)){
+        susie_tb = tibble( snps =  names(susie_list[[1]]$pip)[which( susie_list[[i]]$pip &gt;= 0)], snps_index = which(( susie_list[[i]]$pip &gt;= 0))  )
+        susie_tb_ls[[i]]= susie_tb%&gt;%mutate( cs = map(snps_index,~which( susie_list[[i]]$sets$cs %in% .x))%&gt;%as.numeric%&gt;%replace_na(0),
+                                 pip = map_dbl(snps_index,~( susie_list[[i]]$pip[.x])),
+                                 coef = map_dbl(snps_index,~(coef.susie( susie_list[[i]])[.x+1])))
+        }
+    if(length(susie_tb_ls) &gt;= 2){ 
+      for(i in 2:length(susie_tb_ls)){
+          susie_tb_ls[[i]] = full_join(susie_tb_ls[[i-1]],susie_tb_ls[[i]], by = &quot;snps&quot;) 
+        }
+    }
+    m = c(&quot;cs&quot;,&quot;pip&quot;,&quot;coef&quot;)    
+    output = list()
+    for(i in m){
+    output[[i]] = susie_tb_ls[[length(susie_tb_ls)]]%&gt;%select(contains(i))%&gt;%as.matrix
+    }
+    snps_tb = susie_tb_ls[[length(susie_tb_ls)]]%&gt;%mutate(
+                         chr = map_chr(snps,~read.table(text = .x,sep = &quot;:&quot;,as.is = T)$V1),
+                         pos_alt_ref = map_chr(snps,~read.table(text = .x,sep = &quot;:&quot;,as.is = TRUE)$V2),
+                         pos = map_dbl(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE)$V1),
+                         alt = map_chr(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE, colClass = &quot;character&quot;)$V2),
+                         ref = map_chr(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE, colClass = &quot;character&quot;)$V3))
+    
+    snps_tb = snps_tb%&gt;%filter(str_detect(ref, &quot;[ACTG]&quot;) &amp; str_detect(alt, &quot;[ACTG]&quot;))
+    output_vcf = create_vcf(
+            chrom = snps_tb$chr,
+             pos = snps_tb$pos,
+             ea = snps_tb$alt,
+             nea = snps_tb$ref,
+             effect = snps_tb%&gt;%select(contains(&quot;coef&quot;))%&gt;%as.matrix ,
+             pip = snps_tb%&gt;%select(contains(&quot;pip&quot;))%&gt;%as.matrix,
+             cs = snps_tb%&gt;%select(contains(&quot;cs&quot;))%&gt;%as.matrix,
+             name = names(susie_list))
+    VariantAnnotation::writeVcf(output_vcf,${_output:nr},index = TRUE)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mv_susie_2]
+input: group_with = &quot;genoFile&quot;
+output: f&quot;{_input:n}.vcf.bgz&quot;
+task: trunk_workers = 1, trunk_size = 1, walltime = &#39;2h&#39;, mem = &#39;55G&#39;, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = f&quot;{_output:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+   ## Define create_vcf function
+           create_vcf = function (chrom, pos, nea, ea, snp = NULL, ea_af = NULL, effect = NULL, 
+        se = NULL, pval = NULL, name = NULL,cs = NULL, pip = NULL) 
+    {
+        stopifnot(length(chrom) == length(pos))
+        if (is.null(snp)) {
+            snp &lt;- paste0(chrom, &quot;:&quot;, pos)
+        }
+        snp &lt;- paste0(chrom, &quot;:&quot;, pos)
+        nsnp &lt;- length(chrom)
+        gen &lt;- list()
+        ## Setupt data content for each sample column
+        if (!is.null(ea_af)) 
+            gen[[&quot;AF&quot;]] &lt;- matrix(ea_af, nsnp)
+        if (!is.null(effect)) 
+            gen[[&quot;ES&quot;]] &lt;- matrix(effect, nsnp)
+        if (!is.null(se)) 
+            gen[[&quot;SE&quot;]] &lt;- matrix(se, nsnp)
+        if (!is.null(pval)) 
+            gen[[&quot;LP&quot;]] &lt;- matrix(-log10(pval), nsnp)
+        if (!is.null(cs)) 
+            gen[[&quot;CS&quot;]] &lt;- matrix(cs, nsnp)
+        if (!is.null(pip)) 
+            gen[[&quot;PIP&quot;]] &lt;- matrix(pip, nsnp)
+        gen &lt;- S4Vectors::SimpleList(gen)
+        
+      ## Setup snps info for the fix columns
+        gr &lt;- GenomicRanges::GRanges(chrom, IRanges::IRanges(start = pos, 
+            end = pos + pmax(nchar(nea), nchar(ea)) - 1, names = snp))
+         coldata &lt;- S4Vectors::DataFrame(Studies = name, row.names = name)
+    ## Setup header informations
+        hdr &lt;- VariantAnnotation::VCFHeader(header = IRanges::DataFrameList(fileformat = S4Vectors::DataFrame(Value = &quot;VCFv4.2&quot;, 
+            row.names = &quot;fileformat&quot;)), sample = name)
+        VariantAnnotation::geno(hdr) &lt;- S4Vectors::DataFrame(Number = c(&quot;A&quot;, 
+            &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;), Type = c(&quot;Float&quot;, &quot;Float&quot;, 
+            &quot;Float&quot;, &quot;Float&quot;, &quot;Float&quot;, &quot;Float&quot;), Description = c(&quot;Effect size estimate relative to the alternative allele&quot;, 
+            &quot;Standard error of effect size estimate&quot;, &quot;-log10 p-value for effect estimate&quot;,  
+            &quot;Alternate allele frequency in the association study&quot;,
+            &quot;The CS this variate are captured, 0 indicates not in any cs&quot;, &quot;The posterior inclusion probability to a CS&quot;), 
+            row.names = c(&quot;ES&quot;, &quot;SE&quot;, &quot;LP&quot;, &quot;AF&quot;, &quot;CS&quot;, &quot;PIP&quot;))
+      ## Save only the meta information in the sample columns 
+        VariantAnnotation::geno(hdr) &lt;- subset(VariantAnnotation::geno(hdr), 
+            rownames(VariantAnnotation::geno(hdr)) %in% names(gen))
+      ## Save VCF 
+        vcf &lt;- VariantAnnotation::VCF(rowRanges = gr, colData = coldata, 
+            exptData = list(header = hdr), geno = gen)
+        VariantAnnotation::alt(vcf) &lt;- Biostrings::DNAStringSetList(as.list(ea))
+        VariantAnnotation::ref(vcf) &lt;- Biostrings::DNAStringSet(nea)
+      ## Add fixed values
+        VariantAnnotation::fixed(vcf)$FILTER &lt;- &quot;PASS&quot;
+          return(sort(vcf))
+        }
+    library(&quot;susieR&quot;)
+    library(&quot;dplyr&quot;)
+    library(&quot;tibble&quot;)
+    library(&quot;purrr&quot;)
+    library(&quot;readr&quot;)
+    library(&quot;tidyr&quot;)
+    
+    # Get list of cs snps
+    res = readRDS(${_input:r})
+    output_snps = tibble( snps = res$variable_name[which(res$pip &gt;= 0)], snps_index = which((res$pip &gt;= 0))  )
+    output_snps = output_snps%&gt;%mutate( cs = map(snps_index,~which(res$sets$cs %in% .x))%&gt;%as.numeric%&gt;%replace_na(0),
+                             pip = map_dbl(snps_index,~(res$pip[.x])),
+                     chr = map_chr(snps,~read.table(text = .x,sep = &quot;:&quot;,as.is = T)$V1),
+                     pos_alt_ref = map_chr(snps,~read.table(text = .x,sep = &quot;:&quot;,as.is = TRUE)$V2),
+                     pos = map_dbl(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE)$V1),
+                     alt = map_chr(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE, colClass = &quot;character&quot;)$V2),
+                     ref = map_chr(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE, colClass = &quot;character&quot;)$V3))
+    
+    effect_mtr = res$coef[output_snps$snps_index+1]%&gt;%as.matrix
+    colnames(effect_mtr) = &quot;${name}&quot;
+    rownames(effect_mtr) = output_snps$snps
+    cs_mtr = effect_mtr
+    for(i in 1:nrow(cs_mtr)) cs_mtr[i,] =  output_snps$cs[[i]]  
+    pip_mtr = effect_mtr
+    for(i in 1:nrow(pip_mtr)) pip_mtr[i,] =  output_snps$pip[[i]]  
+    
+    output_vcf = create_vcf(
+           chrom = output_snps$chr,
+            pos = output_snps$pos,
+            ea = output_snps$alt,
+            nea = output_snps$ref,
+            effect = effect_mtr ,
+            pip = pip_mtr,
+            cs = cs_mtr,
+            name = colnames(effect_mtr)
+              )
+    VariantAnnotation::writeVcf(output_vcf,${_output:nr},index = TRUE)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="cis-window-analysis-result-consolidation">
+<h2>Cis-window analysis Result consolidation<a class="headerlink" href="#cis-window-analysis-result-consolidation" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Exporting cis susie_twas results
+[cis_results_export_1, gwas_results_export_1]
+# per chunk we process at most 200 datasets
+parameter: per_chunk = 200
+# Region list should have last column being region name. 
+parameter:region_file=path()
+# the path stored original output files
+parameter:file_path=&#39;&#39;
+# assuming orinal files are named as prefix.id.suffix
+# prefix of the original files (before id) to identify file.
+parameter:prefix=[]
+# suffix of the original files (after id) to identify file.
+parameter:suffix=str
+# if need to rename context, please load condition meta file
+parameter: condition_meta = path()
+# if the pip all variants in a cs &lt; this threshold, then remove this cs
+parameter: pip_thres = 0.05
+# only keep top cs_size variants in one cs 
+parameter: cs_size = 3
+# provide exported meta to filter the exported genes 
+parameter: exported_file = path()
+# Optional: if a region list is provide the analysis will be focused on provided region. 
+# The LAST column of this list will contain the ID of regions to focus on
+# Otherwise, all regions with both genotype and phenotype files will be analyzed
+parameter: region_list = path()
+# Optional: if a region name is provided 
+# the analysis would be focused on the union of provides region list and region names
+parameter: region_name = []
+# the (aligned) geno bim file to check allele flipping
+parameter: geno_ref = path()
+# context meta file to map renamed context backs
+parameter: context_meta = path()
+# default cretria in susie purity filtering, recommended to use 0.8 here 
+parameter: min_corr = []
+# set this parameter as `True` when exporting gwas data.
+parameter: gwas = False
+# set this parameter as `True` when exporting fsusie data.
+parameter: fsusie = False
+# set this parameter as `True` when exporting metaQTL data.
+parameter: metaQTL = False
+# set this parameter as `True` when exporting mnm data.
+parameter: mnm = False
+
+import pandas as pd
+import os
+
+region = pd.read_csv(region_file, sep=&#39;\t&#39;, names=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;id&#39;])
+
+region_ids = []
+# If region_list is provided, read the file and extract IDs
+if not region_list.is_dir():
+    if region_list.is_file():
+        region_list_df = pd.read_csv(region_list, sep=&#39;\t&#39;, header=None, comment = &quot;#&quot;)
+        region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
+    else:
+        raise ValueError(&quot;The region_list path provided is not a file.&quot;)
+        
+if len(region_name) &gt; 0:
+    region_ids = list(set(region_ids).union(set(region_name)))
+    
+if len(region_ids) &gt; 0:
+    region = region[region[&#39;id&#39;].isin(region_ids)]
+
+# Function to create list of formatted strings for each row
+def create_formatted_list(row):
+    if len(prefix) &gt; 0:
+        formatted_list = [f&quot;{file_path}/{p}.{row[&#39;id&#39;]}.{suffix}&quot; for p in prefix]
+    else:
+        formatted_list = [f&quot;{file_path}/{row[&#39;id&#39;]}.{suffix}&quot;]  # GWAS data do not have prefix     
+    return formatted_list
+
+# Apply the function to each row
+region[&#39;original_data&#39;] = region.apply(create_formatted_list, axis=1)
+
+def group_by_region(lst, partition):
+    # from itertools import accumulate
+    # partition = [len(x) for x in partition]
+    # Compute the cumulative sums once
+    # cumsum_vector = list(accumulate(partition))
+    # Use slicing based on the cumulative sums
+    # return [lst[(cumsum_vector[i-1] if i &gt; 0 else 0):cumsum_vector[i]] for i in range(len(partition))]
+    return partition
+
+def filter_existing_paths(row):
+    existing_paths = [path for path in row if os.path.exists(path)]
+    return existing_paths
+
+def is_file_exported(paths, results_set):
+    for path in paths:
+        basename = os.path.basename(path)
+        if basename not in results_set:
+            return False
+    return True
+
+region[&#39;original_data&#39;] = region[&#39;original_data&#39;].apply(filter_existing_paths)
+region = region[region[&#39;original_data&#39;].map(bool)]
+
+# if provided exported meta, check if the original data are all exported already, isfo skip them 
+if not exported_file.is_dir():
+    if exported_file.is_file():
+        results = pd.read_csv(exported_file, sep=&#39;\t&#39;)
+        results_set = set(results[&#39;original_data&#39;])
+        results_set = {item.strip() for sub in results_set for item in sub.split(&#39;,&#39;)}
+        mask = region[&#39;original_data&#39;].apply(lambda paths: not is_file_exported(paths, results_set))
+        region = region[mask]
+    else:
+        raise ValueError(&quot;The exported_file path provided is not a file.&quot;)
+
+# added because there is frequently changed ID from upstream analysis!!!        
+# If after filtering no region remains, update &#39;id&#39; by concatenating &#39;chr&#39; and original &#39;id&#39; with &#39;_&#39;
+if region.empty:
+    print(&quot;No regions remain after filtering. Reattempting using concatenated id (chr_id).&quot;)
+    # Update the &#39;id&#39; column using the concatenation of the first column (chr) and the original &#39;id&#39;
+    region = pd.read_csv(region_file, sep=&#39;\t&#39;, names=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;id&#39;])
+    region[&#39;id&#39;] = region[&#39;chr&#39;] + &quot;_&quot; + region[&#39;id&#39;]
+    
+    # Reapply region_ids filter if provided
+    if len(region_ids) &gt; 0:
+        region = region[region[&#39;id&#39;].isin(region_ids)]
+    
+    # Recreate original_data with the updated id
+    region[&#39;original_data&#39;] = region.apply(create_formatted_list, axis=1)
+    region[&#39;original_data&#39;] = region[&#39;original_data&#39;].apply(filter_existing_paths)
+    region = region[region[&#39;original_data&#39;].map(bool)]
+    
+    # Reapply exported_file filtering if applicable
+    if not exported_file.is_dir():
+        if exported_file.is_file():
+            results = pd.read_csv(exported_file, sep=&#39;\t&#39;)
+            results_set = set(results[&#39;original_data&#39;])
+            results_set = {item.strip() for sub in results_set for item in sub.split(&#39;,&#39;)}
+            mask = region[&#39;original_data&#39;].apply(lambda paths: not is_file_exported(paths, results_set))
+            region = region[mask]
+        else:
+            raise ValueError(&quot;The exported_file path provided is not a file.&quot;)
+regional_data = {
+    &#39;meta&#39;: [(row[&#39;chr&#39;], row[&#39;start&#39;], row[&#39;end&#39;], row[&#39;id&#39;]) for _, row in region.iterrows()],
+    &#39;data&#39;: [(row[&#39;original_data&#39;]) for _, row in region.iterrows()]
+}
+
+meta_info = regional_data[&#39;meta&#39;]
+stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39; All files have been exported already&#39;)
+
+input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
+output: f&quot;{cwd}/{name}_cache/{name}_{_meta_info[3]}.tsv&quot;
+task: trunk_workers = job_size, walltime = walltime, trunk_size = job_size, mem = mem, cores = numThreads, tags = f&#39;{_output:bn}&#39;
+R: expand = &quot;${ }&quot;,stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+    library(tidyverse)
+    library(data.table)
+    library(susieR)
+    library(pecotmr)
+
+    # check top_loci existing or not
+    has_rows &lt;- function(df) {
+      !is.null(df) &amp;&amp; nrow(df) &gt; 0
+    }
+
+    # function to allele flipping checking by mapping them to aligned genotype bim file
+    align_to_genoref &lt;- function(var_list, geno_ref, region ){
+        geno_ref &lt;- pecotmr:::tabix_region(file= geno_ref,
+                    region = region)
+        colnames(geno_ref) &lt;- c(&#39;chr&#39;, &#39;pos&#39;, &#39;alt&#39;, &#39;ref&#39;)
+        geno_ref &lt;- geno_ref %&gt;% mutate(chr = gsub(&#39;chr&#39;,&#39;&#39;,chr))
+        var_list_df &lt;- data.frame(chr = str_split(var_list,&quot;:|_&quot;,simplify = T)[,1] %&gt;% gsub(&#39;chr&#39;,&#39;&#39;,.),
+            pos = str_split(var_list,&quot;:|_&quot;,simplify = T)[,2],
+            ref = str_split(var_list,&quot;:|_&quot;,simplify = T)[,3],
+            alt = str_split(var_list,&quot;:|_&quot;,simplify = T)[,4])
+        # merge_genotype_data from below cell
+        aligned_var_df &lt;- merge_genotype_data(geno_ref, var_list_df, all=FALSE)
+        aligned_var &lt;- aligned_var_df %&gt;%
+          mutate(id = {
+            if (grepl(&quot;:&quot;, var_list[1])) {
+              if (grepl(&quot;_&quot;, var_list[1])) {
+                paste(chr, paste(pos, ref, alt, sep = &quot;_&quot;),sep = &#39;:&#39;)
+              } else {
+                paste(chr, pos, ref, alt, sep = &quot;:&quot;)
+              }
+            } else {
+              paste(chr, pos, ref, alt, sep = &quot;_&quot;)
+            }
+          }) %&gt;%
+          pull(id)
+        if (grepl(&quot;chr&quot;, var_list[1]))  aligned_var &lt;- paste0(&quot;chr&quot;,aligned_var)
+        return(aligned_var)
+    }
+    
+    # function to map variant list to geno ref
+    merge_genotype_data &lt;- function(df1, df2, all = TRUE) {
+      setDT(df1)
+      setDT(df2)
+      df1[, key := paste(chr, pos, pmin(alt, ref), pmax(alt, ref))]
+      df2[, key := paste(chr, pos, pmin(alt, ref), pmax(alt, ref))]
+      df2[df1, on = &quot;key&quot;, flip := i.alt == ref &amp; i.ref == alt, by = .EACHI]
+      df2[flip == TRUE, c(&quot;alt&quot;, &quot;ref&quot;) := .(ref, alt)]
+      if (all) {
+        df_combined &lt;- unique(rbindlist(list(df1[, .(chr, pos, alt, ref)], df2[, .(chr, pos, alt, ref)])), by = c(&quot;chr&quot;, &quot;pos&quot;, &quot;alt&quot;, &quot;ref&quot;))
+      } else {
+        df_combined &lt;- df2[, .(chr, pos, alt, ref)]
+      }
+      return(df_combined)
+    }
+
+    # Function to filter credible sets with all variants PIP &lt; 0.05 and update rows based on _min_corr suffix condition
+    update_and_filter_cs_ids &lt;- function(dat_con, dat_susie, df, purity_thresholds) {
+      # Identify cs_coverage columns
+      cs_columns &lt;- grep(&quot;^cs_coverage&quot;, names(df), value = TRUE)
+    
+      # Flag rows with any cs_coverage &gt; 0
+      df$cs_all_non_zero_orig &lt;- rowSums(df[cs_columns] == 0) != length(cs_columns)
+    
+      # Iterate over cs_coverage columns and their unique CS IDs
+      for (cs_column in cs_columns) {
+        unique_cs_ids &lt;- unique(df[[cs_column]])
+        # Update top loci based on minimum correlation for each coverage column
+          for(purity_threshold in purity_thresholds){
+              df &lt;- update_top_loci_cs_annotation(dat_con, dat_susie, top_loci_df = df, coverage_value = cs_column, threshold = purity_threshold)
+          }
+    
+        for (cs_id in unique_cs_ids[unique_cs_ids &gt; 0]) {
+          # Flag CS IDs where all PIPs &lt; pip_thres (default 0.05)
+          pip_check &lt;- df[df[[cs_column]] == cs_id, &quot;pip&quot;] &lt; 0.05
+          # label the whole cluster if all pip &lt; pip_thres (default 0.05)
+          if (all(pip_check, na.rm = TRUE)) {
+            df[[cs_column]] &lt;- ifelse(df[[cs_column]] == cs_id, 0, df[[cs_column]])
+          }
+        }
+      }
+      # Identify min corr cs_coverage columns
+      mincor_columns &lt;- grep(&quot;_min_corr&quot;, names(df), value = TRUE) # Identify _mincor columns
+    
+      # Filter out rows where all cs_coverage columns are 0, all _mincor columns are 0,
+      # and cs_all_non_zero_orig is TRUE
+      df &lt;- df %&gt;%
+        filter(!(cs_all_non_zero_orig &amp;
+                   rowSums(df[cs_columns] == 0) == length(cs_columns) &amp;
+                   rowSums(df[mincor_columns] == 0) == length(mincor_columns))) %&gt;%
+        select(-cs_all_non_zero_orig) # Remove the temporary flag column
+      df &lt;- df %&gt;%
+        select(-starts_with(&quot;cs_coverage&quot;), all_of(cs_columns), all_of(mincor_columns))
+      return(df)
+     }
+    
+    
+     # update top loci table
+     update_top_loci_cs_annotation &lt;- function(dat_con, dat_susie, top_loci_df, coverage_value, threshold ) {
+       # update susie obj based CS
+       if(coverage_value == &#39;cs_coverage_0.95&#39;) dat_susie_tmp &lt;- dat_susie
+        else dat_susie_tmp &lt;- dat_susie$sets_secondary[[gsub(&#39;cs_&#39;,&#39;&#39;,coverage_value)]]
+       #get purity res  
+       purity_res &lt;- dat_susie_tmp$sets$purity 
+    
+       not_pass_min_cs &lt;- rownames(purity_res)[purity_res$min.abs.corr &lt; threshold] %&gt;%
+         gsub(&#39;L&#39;, &#39;&#39;, .)
+       top_loci_df[[paste0( coverage_value, &quot;_min_corr_&quot;, threshold)]] &lt;- top_loci_df[[coverage_value]]
+       if (length(not_pass_min_cs) &gt; 0) {
+         top_loci_df[[paste0( coverage_value, &quot;_min_corr_&quot;, threshold)]][top_loci_df[[coverage_value]] %in% not_pass_min_cs] &lt;- 0
+       }
+       return(top_loci_df)
+     }
+    
+    # function to decide run update_and_filter_cs_ids or not
+    process_top_loci &lt;- function(dat_con, dat_susie,purity_thresholds) {
+      data_frame &lt;- dat_con$top_loci
+      if (has_rows(data_frame)) {
+        return(update_and_filter_cs_ids(dat_con, dat_susie, data_frame, purity_thresholds))
+      } else {
+        return(data_frame)
+      }
+    }
+
+    # function to get pip with their variant name
+    get_pip_withname &lt;- function(susie_obj){
+      pip = susie_obj$susie_result_trimmed$pip
+      if(!(is.null(pip)))  names(pip) = susie_obj$variant_names
+      return(pip)
+    }
+  
+    # add column in top loci to indicate if the variant is identified in susie_on_top_pc top loci table or not
+    annotate_susie &lt;- function(obj, top_loci){
+        tryCatch({
+            df &lt;- data.frame()
+    
+            results &lt;- lapply(obj[[&#39;susie_on_top_pc&#39;]], function(x) {
+              x[[&#39;top_loci&#39;]]
+            })
+            results &lt;- results[!sapply(results, is.null)]
+                              
+            df &lt;- bind_rows(results)
+    
+            top_loci_others &lt;-  df %&gt;%
+              filter(rowSums(select(., starts_with(&#39;cs_coverage_&#39;))) == 0)
+            top_loci_cs &lt;- df %&gt;%
+              filter(rowSums(select(., starts_with(&#39;cs_coverage_&#39;))) &gt; 0)
+    
+            susie_vars &lt;- rbind(top_loci_others %&gt;% filter(pip &gt;= 0.05), top_loci_cs) %&gt;% pull(variant_id)
+            if(length(susie_vars) &gt; 0) susie_vars &lt;- align_to_genoref(var_list = susie_vars, geno_ref = geno_ref, region = paste0(gsub(&quot;chr&quot;,&quot;&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
+    
+            susie_vars_cs &lt;- top_loci_cs %&gt;% pull(variant_id)
+            if(length(susie_vars_cs) &gt; 0)  susie_vars_cs &lt;- align_to_genoref(var_list = susie_vars_cs, geno_ref = geno_ref, region = paste0(gsub(&quot;chr&quot;,&quot;&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
+    
+            top_loci &lt;- top_loci %&gt;% mutate(annotated_susie = ifelse(variant_id %in% susie_vars, 1, 0),
+                               annotated_susie_cs = ifelse(variant_id %in% susie_vars_cs, 1, 0))
+    
+            return(top_loci)
+        }, error = function(e) {
+            warning(&quot;Error in annotate_susie: &quot;, e$message)
+        })
+    }
+    
+    # function to match context values and add analysis_name
+    match_contexts &lt;- function(df, context_meta) {
+      # Split context_meta&#39;s context column into separate rows, one for each comma-separated value
+      context_meta_expanded &lt;- context_meta %&gt;% 
+        separate_rows(context, sep = &quot;,&quot;) %&gt;%
+        mutate(context = trimws(context)) # Remove potential leading and trailing whitespace
+
+      # Loop through each context in df to find the most precise match in context_meta_expanded
+      df$super_context &lt;- sapply(df$context, function(df_context) {
+        # Find all potential matches
+        potential_matches &lt;- context_meta_expanded %&gt;%
+          filter(str_detect(df_context, context)) %&gt;%
+          arrange(desc(nchar(context))) # Sort potential matches by descending length of context
+
+        # Select the longest match as the most precise one
+        if(nrow(potential_matches) &gt; 0) {
+          return(potential_matches$context[1])
+        } else {
+          return(NA) # Return NA if no match is found
+        }
+      })
+
+      return(df)
+    }
+    # Define a function to process context data and match contexts
+    process_and_match_contexts &lt;- function(context_meta_path, cons_top_loci, res_minp) {
+      # Read context metadata
+      context_meta &lt;- fread(context_meta_path)
+
+      # Extract super contexts
+      super_contexts &lt;- cons_top_loci[[1]] %&gt;% unlist %&gt;% names %&gt;% as.character
+      # Create a data frame of context and minimum p-values
+      context_df &lt;- data.frame(context = super_contexts,
+                               min_p = res_minp[[1]][super_contexts] %&gt;% unlist %&gt;% as.numeric)
+      # Match contexts using the previously defined match_contexts function
+      context_df &lt;- match_contexts(context_df, context_meta)
+      # Filter context_df by super_context
+      context_df_no_order &lt;- context_df %&gt;% filter(context == super_context)
+      context_df_with_order &lt;- context_df %&gt;% filter(context != super_context) 
+
+      return(list(context_df_no_order= context_df_no_order,context_df_with_order = context_df_with_order ))
+    }
+
+    # Function to filter introns based on leafcutter2 cluster
+    process_lf2_cluster &lt;- function(df){
+        df &lt;- df%&gt;%
+        mutate(cluster_id = str_extract(context, &quot;clu_\\d+&quot;), 
+               category = str_extract(context, &quot;([^:]+)(?=:EN)&quot;)) %&gt;%
+        group_by(cluster_id) %&gt;%
+        # filter the intron clusters with NE and IN events
+        mutate(cluster_status = ifelse(any(category %in% c(&quot;NE&quot;, &quot;IN&quot;)), &quot;no&quot;, &quot;yes&quot;)) %&gt;%
+        filter(cluster_status == &quot;yes&quot;) %&gt;%
+        ungroup %&gt;%
+        filter(!str_detect(context, &quot;:PR:&quot;)) %&gt;%  #FIXME: only keep unproductive events in leafcutter2 results. 
+        select(-cluster_status, -cluster_id, -category)
+        return(df)
+    }
+
+    # Function to combine the contexted with and without order 
+    combine_order &lt;- function(context_df_no_order, context_df_with_order){
+     context_df_with_order &lt;- context_df_with_order %&gt;%
+        group_by(super_context) %&gt;%
+        summarise(min_p = min(min_p), .groups = &#39;keep&#39;) %&gt;%
+        left_join(context_df_with_order, by = c(&quot;super_context&quot;, &quot;min_p&quot; = &quot;min_p&quot;))
+
+      # Combine context_df_no_order and context_df_with_order contexts
+      cons_top_loci_minp &lt;- c(context_df_no_order$context, context_df_with_order$context)
+        return(cons_top_loci_minp)
+    }
+    
+    # Revised summarise_lfsr_by_marker function with distinct error cases
+    summarise_lfsr_by_marker &lt;- function(multicontext_res,
+                                           pos = NULL,
+                                           markers = NULL,
+                                           conditions = NULL,
+                                           poslim = NULL,
+                                           lfsr_cutoff = 0.01,
+                                           sentinel_only = FALSE,
+                                           cs_plot = NULL,
+                                           conditional_effect = TRUE) {
+      tryCatch({
+        # Extract fitted object from multicontext_res
+        fit &lt;- multicontext_res[[1]]$mvsusie_fitted
+    
+        # Set default parameters if not provided
+        if (is.null(markers)) markers &lt;- fit$variable_names
+        if (is.null(conditions)) conditions &lt;- fit$condition_names
+        if (is.null(pos)) pos &lt;- seq(1, length(markers))
+        if (is.null(poslim)) poslim &lt;- range(pos)
+        if (is.null(cs_plot)) cs_plot &lt;- names(fit$sets$cs)
+    
+        # Create initial data frame for plotting
+        pdat &lt;- data.frame(pip = fit$pip, pos = pos, cs = as.character(NA),
+                           stringsAsFactors = FALSE)
+        css &lt;- names(fit$sets$cs)
+        for (i in css) {
+          j &lt;- fit$sets$cs[[i]]
+          pdat[j, &quot;cs&quot;] &lt;- i
+        }
+        rows &lt;- which(!is.na(pdat$cs))
+        pdat_cs &lt;- pdat[rows, ]
+    
+        # Filter by position limits
+        rows1 &lt;- which(pdat$pos &gt;= poslim[1] &amp; pdat$pos &lt;= poslim[2])
+        rows2 &lt;- which(pdat_cs$pos &gt;= poslim[1] &amp; pdat_cs$pos &lt;= poslim[2])
+        pdat &lt;- pdat[rows1, ]
+        pdat_cs &lt;- pdat_cs[rows2, ]
+    
+        # Order and label credible sets
+        pdat_cs$cs &lt;- factor(pdat_cs$cs)
+        css &lt;- levels(pdat_cs$cs)
+        L &lt;- length(css)
+        cs_pos &lt;- sapply(fit$sets$cs[css], function(x) median(pos[x]))
+        css &lt;- css[order(cs_pos)]
+        pdat_cs$cs &lt;- factor(pdat_cs$cs, levels = css)
+        cs_size &lt;- sapply(fit$sets$cs[css], length)
+        for (i in 1:L) {
+          j &lt;- css[i]
+          if (cs_size[i] == 1) {
+            levels(pdat_cs$cs)[i] &lt;- sprintf(&quot;%s (1 SNP)&quot;, j)
+          } else {
+            levels(pdat_cs$cs)[i] &lt;- sprintf(&quot;%s (%d SNPs, %0.3f purity)&quot;,
+                                             j, cs_size[j], fit$sets$purity[j, &quot;min.abs.corr&quot;])
+          }
+        }
+    
+        # Set up traits and effects matrix
+        traits &lt;- conditions
+        r &lt;- length(traits)
+        lmax &lt;- nrow(fit$alpha)
+        fit$b1_rescaled &lt;- fit$b1_rescaled[, -1, ]
+        rownames(fit$b1_rescaled) &lt;- paste0(&quot;L&quot;, 1:lmax)
+        rownames(fit$single_effect_lfsr) &lt;- paste0(&quot;L&quot;, 1:lmax)
+        colnames(fit$single_effect_lfsr) &lt;- traits
+        rownames(fit$alpha) &lt;- paste0(&quot;L&quot;, 1:lmax)
+        effects &lt;- matrix(0, r, L)
+        rownames(effects) &lt;- traits
+        colnames(effects) &lt;- css
+    
+        # Initialize effect data frame
+        effect_dat &lt;- data.frame(matrix(as.numeric(NA),
+                                          prod(length(conditions) * length(markers)), 8))
+        names(effect_dat) &lt;- c(&quot;trait&quot;, &quot;marker&quot;, &quot;pos&quot;, &quot;effect&quot;, &quot;z&quot;, &quot;lfsr&quot;, &quot;cs&quot;, &quot;sentinel&quot;)
+        effect_dat$trait &lt;- rep(conditions, length(markers))
+        effect_dat$marker &lt;- rep(markers, each = length(conditions))
+        effect_dat$pos &lt;- rep(pos, each = length(conditions))
+        effect_dat$sentinel &lt;- 0
+    
+        # Process each credible set
+        for (i in 1:L) {
+          l &lt;- css[i]
+          j &lt;- fit$sets$cs[[l]]
+          b &lt;- fit$b1_rescaled[l, j, ]
+          if (conditional_effect) {
+            b &lt;- b / fit$alpha[l, j]
+          }
+          marker_names &lt;- markers[j]
+          marker_idx &lt;- which(effect_dat$marker %in% marker_names)
+          effect_dat[marker_idx, &quot;cs&quot;] &lt;- l
+          effect_dat[marker_idx, &quot;lfsr&quot;] &lt;- rep(fit$single_effect_lfsr[l, ], length(marker_names))
+          effect_dat[marker_idx, &quot;effect&quot;] &lt;- as.vector(t(b))
+          if (!is.null(fit$z)) {
+            effect_dat[marker_idx, &quot;z&quot;] &lt;- as.vector(t(fit$z[j, ]))
+          }
+          max_idx &lt;- which.max(fit$alpha[l, j])
+          effect_dat[which(effect_dat$marker == marker_names[max_idx]), &quot;sentinel&quot;] &lt;- 1
+          effects[, i] &lt;- ifelse(is.null(nrow(b)), b, b[max_idx, ])
+        }
+    
+        # Filter and process effect data
+        effect_dat &lt;- effect_dat[which(!is.na(effect_dat$cs)), ]
+        rows1 &lt;- which(effect_dat$pos &gt;= poslim[1] &amp; effect_dat$pos &lt;= poslim[2])
+        effect_dat &lt;- effect_dat[rows1, ]
+        effect_dat$marker_cs &lt;- paste0(effect_dat$marker, &quot;(&quot;, effect_dat$cs, &quot;)&quot;)
+        pdat_sentinel &lt;- effect_dat[which(effect_dat$sentinel == 1), ]
+        pdat_sentinel &lt;- unique(pdat_sentinel[, c(&quot;marker&quot;, &quot;marker_cs&quot;, &quot;pos&quot;)])
+        pdat_sentinel$pip &lt;- fit$pip[match(pdat_sentinel$marker, fit$variable_names)]
+    
+        # Optionally keep only sentinel variants
+        if (sentinel_only) {
+          effect_dat &lt;- effect_dat[which(effect_dat$sentinel == 1), ]
+        }
+        # Optionally filter by specified credible sets to plot
+        if (!missing(cs_plot)) {
+          effect_dat &lt;- effect_dat[which(effect_dat$cs %in% cs_plot), ]
+        }
+        effect_dat$cs &lt;- factor(effect_dat$cs, levels = css)
+        effect_dat$trait &lt;- factor(effect_dat$trait, traits)
+        rows &lt;- which(effect_dat$lfsr &lt; lfsr_cutoff)
+        effect_dat &lt;- effect_dat[rows, ]
+    
+        # Error Case 1: No variants left after LFSR cutoff filtering
+        if (nrow(effect_dat) == 0) {
+          message(&quot;Warning Case 1: No variants passed the LFSR cutoff threshold; returning NA values.&quot;)
+          top_loci &lt;- multicontext_res[[1]][[&#39;top_loci&#39;]]
+          top_loci$trait &lt;- NA
+          top_loci$lfsr &lt;- NA
+          return(top_loci)
+        }
+    
+        effect_dat &lt;- effect_dat %&gt;% 
+          mutate(pip = fit$pip[match(marker, names(fit$pip))],
+                 variant_id = marker)
+    
+        # Summarise results and merge with top loci
+        result &lt;- effect_dat %&gt;%
+          group_by(variant_id, cs) %&gt;%
+          arrange(trait) %&gt;%
+          summarise(trait = paste(trait, collapse = &quot;;&quot;), 
+                    lfsr = paste(lfsr, collapse = &quot;;&quot;),
+                    .groups = &quot;drop&quot;) %&gt;% 
+          mutate(cs_coverage_0.95 = gsub(&#39;L&#39;, &#39;&#39;, cs)) %&gt;%
+          select(-cs)
+    
+        top_loci &lt;- multicontext_res[[1]][[&#39;top_loci&#39;]]
+        merge(top_loci, result, by = c(&#39;variant_id&#39;, &#39;cs_coverage_0.95&#39;), all.x = TRUE)
+      }, error = function(e) {
+        # Error Case 2: Any unexpected error in processing
+        message(&quot;Warning Case 2: An unexpected error occurred: &quot;, e$message)
+        top_loci &lt;- tryCatch(multicontext_res[[1]][[&#39;top_loci&#39;]],
+                             error = function(x) data.frame(variant_id = NA, cs_coverage_0.95 = NA))
+        top_loci$trait &lt;- NA
+        top_loci$lfsr &lt;- NA
+        return(top_loci)
+      })
+    }
+    
+    # function to add effect size
+    add_coef_column &lt;- function(dat_study) {
+      # Ensure the required components exist
+      # Check if dat_study contains both required components
+    if (!(&quot;susie_result_trimmed&quot; %in% names(dat_study)) || !(&quot;top_loci&quot; %in% names(dat_study))) {
+      # Return a null list instead of stopping
+      return(data.frame())
+    }
+          
+      # Extract the coefficient matrix and ensure top_loci is a data.frame
+      coef_matrix &lt;- dat_study[[&quot;susie_result_trimmed&quot;]][[&quot;coef&quot;]][-1,] / dat_study[[&quot;susie_result_trimmed&quot;]][[&#39;pip&#39;]]
+      dt &lt;- dat_study[[&quot;top_loci&quot;]]
+      if (!is.data.frame(dt)) {
+        dt &lt;- as.data.frame(dt)
+      }
+      
+      # Check that dt has the required columns
+      if (!all(c(&quot;variant_id&quot;, &quot;trait&quot;) %in% names(dt))) {
+        stop(&quot;The &#39;top_loci&#39; data frame must contain &#39;variant_id&#39; and &#39;trait&#39; columns.&quot;)
+      }
+      
+      # Add the &#39;coef&#39; column by matching each variant with its corresponding traits
+      dt[[&quot;conditional_effect&quot;]] &lt;- mapply(function(variant, trait_str) {
+        # Return NA if trait_str is missing or variant not found in coef_matrix
+        if (is.na(trait_str) || !(variant %in% rownames(coef_matrix))) {
+          return(NA_character_)
+        }
+        # Split the trait string by &#39;;&#39; and trim extra whitespace
+        traits &lt;- trimws(unlist(strsplit(trait_str, &quot;;&quot;)))
+        # Subset coefficients for the variant and specified traits
+        coefs &lt;- coef_matrix[variant, traits, drop = TRUE]
+        paste(coefs, collapse = &quot;;&quot;)
+      }, dt[[&quot;variant_id&quot;]], dt[[&quot;trait&quot;]], USE.NAMES = FALSE)
+      
+      dat_study[[&quot;top_loci&quot;]] &lt;- dt
+      return(dt)
+    }
+
+    ###### MAIN ######
+    # Process each path and collect results
+    orig_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input])})
+     # Extract info from each RDS file
+    results &lt;- list()
+    gene = &quot;${_meta_info[3]}&quot;
+    geno_ref &lt;- &quot;${geno_ref}&quot;
+
+    # Post Processing: Extracting info
+    # use for loop instead of apply to save memory
+    res &lt;- res_sum &lt;- res_minp &lt;- cons_top_loci &lt;- list()
+    pip_sum &lt;- data.frame()
+    for(i in seq_along(orig_files)) {
+      rds_path &lt;- orig_files[i]
+       dat &lt;- tryCatch({
+        readRDS(rds_path)
+      }, error = function(e) {
+        writeLines(rds_path %&gt;% basename, gsub(&quot;.tsv&quot;,&quot;_error&quot;,&quot;${_output}&quot;))
+        return(NULL) # 
+      })
+
+      if(is.null(dat)) next
+  
+      #extract qtl type from susie rds file name, if we have set decent condtiton name, this could be removed 
+      temp_list &lt;- list() # Temporary list to store inner results
+      genes &lt;- names(dat)
+        for(id in genes){
+          dat_study &lt;- dat[[id]]
+          temp_list &lt;- list()
+          if(${&quot;TRUE&quot; if mnm else &quot;FALSE&quot;}) {
+              if (length(dat[[id]]) &lt;= 1) {
+                message(&quot;No multi-contexts results due to no twas results; skipping multi-context export.&quot;)
+                next
+              }
+              conditions &lt;- paste(orig_files[i] %&gt;% basename %&gt;% str_split(., &#39;[.]&#39;, simplify = T) %&gt;% .[,1],dat_study[[&#39;context_names&#39;]] %&gt;% paste(  ., collapse = &#39;;&#39;), sep = &#39;:&#39;) 
+              dat_study[[&#39;top_loci&#39;]] &lt;- summarise_lfsr_by_marker(dat)
+              dat_study[[&#39;top_loci&#39;]] &lt;- add_coef_column(dat_study)
+            } else conditions &lt;- names(dat_study)[sapply(dat_study, function(x) length(x) &gt; 0)]
+  
+          if(length(conditions) &gt; 0) {
+  
+            for(condition in conditions) {
+                if (${&quot;FALSE&quot; if mnm else &quot;TRUE&quot;}) dat_con &lt;- dat_study[[condition]]${[[&#39;fsusie_summary&#39;]] if fsusie else &#39;&#39;} else dat_con &lt;- dat_study${[[&#39;fsusie_summary&#39;]] if fsusie else &#39;&#39;}
+                if (${&quot;TRUE&quot; if gwas else &quot;FALSE&quot;}){
+                    method &lt;- names(dat_study[[condition]])[names(dat_study[[condition]]) != &#39;rss_data_analyzed&#39;] ## FIXME: this method is not showing in meta (not need if only one method). or we can use `context@method` in meta
+                    if(length(method) == 1) dat_con &lt;- dat_con[[method]] else stop(&#39;more than 1 method, please check.&#39;)
+                }
+                dat_susie &lt;- dat_con$susie_result_trimmed
+                
+                # calculate the sum of pip for the vairnats with pip &gt; 0.01
+                pip_sum = rbind(pip_sum, 
+                                data.frame(pip_sum = dat_susie[[&#39;pip&#39;]] [dat_susie[[&#39;pip&#39;]] &gt; 0.01] %&gt;% sum, 
+                                           condition = condition)
+                               )
+                if(${&quot;FALSE&quot; if mnm else &quot;TRUE&quot;} &amp; has_rows(dat_con[[&#39;top_loci&#39;]])) dat_con[[&#39;top_loci&#39;]] &lt;- dat_con[[&#39;top_loci&#39;]] %&gt;% mutate(conditional_effect = (coef(dat_susie)/ (dat_susie[[&#39;pip&#39;]]))[variant_id])
+                
+                # rename context names if needed
+                if(${&quot;TRUE&quot; if condition_meta.is_file() else &quot;FALSE&quot;}){
+                      meta &lt;- suppressMessages(read_delim(&quot;${condition_meta}&quot;, col_names = F))
+                      context &lt;- meta %&gt;% filter(X1 == condition) %&gt;% pull(X2)
+                      if (length(context) == 0) {
+                        context &lt;- condition
+                        message(&quot;No matching entries found. context has been set to the condition value.&quot;)
+                      }
+                    } else {context &lt;- condition}
+                  
+                # align variants to aligned geno
+                if(has_rows(dat_con$top_loci) || has_rows(dat_con$preset_top_loci)) cons_top_loci[[id]][[context]] &lt;- context else  cons_top_loci[[id]][[context]] &lt;- NULL    
+                variant_ids &lt;- c(dat_con$top_loci$variant_id, dat_con$variant_names, dat_con$preset_variants_result$top_loci$variant_id, dat_con$preset_variants_result$variant_names)
+                unique_variant_ids &lt;- unique(variant_ids)
+                aligned_variant_ids &lt;- align_to_genoref(unique_variant_ids, geno_ref, paste0(gsub(&quot;chr&quot;,&quot;&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
+                names(aligned_variant_ids) &lt;- unique_variant_ids
+
+                # change beta or z in top loci and sumstats
+                top_loci_changed_indexes &lt;- which(dat_con$top_loci$variant_id !=  aligned_variant_ids[dat_con$top_loci$variant_id] %&gt;% as.character )
+                if(has_rows(dat_con$top_loci) &amp; length(top_loci_changed_indexes) &gt; 0) {
+                      dat_con$top_loci$conditional_effect[top_loci_changed_indexes] &lt;- (-1)* dat_con$top_loci$conditional_effect[top_loci_changed_indexes] # FIXME if coef does not need to check flip
+                      if (${&quot;FALSE&quot; if gwas else &quot;TRUE&quot;}) {
+                          dat_con$top_loci$betahat[top_loci_changed_indexes] &lt;- (-1)* dat_con$top_loci$betahat[top_loci_changed_indexes]
+                      } else {
+                          dat_con$top_loci$z[top_loci_changed_indexes] &lt;- (-1)* dat_con$top_loci$z[top_loci_changed_indexes]
+                      }
+                }
+                all_changed_indexes &lt;- which(dat_con$variant_names !=  aligned_variant_ids[dat_con$variant_names] %&gt;% as.character )
+                if(length(all_changed_indexes) &gt; 0) {
+                      if (${&quot;FALSE&quot; if gwas else &quot;TRUE&quot;}) {
+                          dat_con$sumstats$betahat[all_changed_indexes] &lt;- (-1)* dat_con$sumstats$betahat[all_changed_indexes]
+                      } else {
+                           dat_con$sumstats$z[all_changed_indexes] &lt;- (-1)* dat_con$sumstats$z[all_changed_indexes]
+                      }
+                }
+
+                # change variant names 
+                if(has_rows(dat_con$top_loci)) dat_con$top_loci$variant_id &lt;- aligned_variant_ids[dat_con$top_loci$variant_id] %&gt;% as.character ###
+                dat_con$variant_names &lt;- aligned_variant_ids[dat_con$variant_names] %&gt;% as.character ###
+
+                
+                if (${&quot;FALSE&quot; if gwas else &quot;TRUE&quot;}) { 
+                    res[[id]][[context]] &lt;- list(
+                      top_loci = process_top_loci(dat_con, dat_susie, purity_thresholds = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in min_corr])})),
+                      pip = get_pip_withname(dat_con)
+                    )
+                    # the preset data in fsusie is actually from first PC and analyzed by susie, we&#39;d like to remove them to avoid misleading
+                    # although no preset res in mnm, we can put it here with the same layer structure. It would not report preset results
+                    if (${&quot;FALSE&quot; if fsusie else &quot;TRUE&quot;}) {
+                          if(has_rows(dat_con$preset_variants_result$top_loci)) {
+                              dat_con$preset_variants_result$top_loci$variant_id &lt;- aligned_variant_ids[dat_con$preset_variants_result$top_loci$variant_id] %&gt;% as.character
+                              # Calculate and add the conditional effect in one step
+                              if(has_rows(dat_con$preset_variants_result[[&#39;top_loci&#39;]])){
+                                  dat_con$preset_variants_result[[&#39;top_loci&#39;]] &lt;- dat_con$preset_variants_result[[&#39;top_loci&#39;]] %&gt;%
+                                      mutate(conditional_effect = (coef(dat_con$preset_variants_result$susie_result_trimmed) /
+                                                                     dat_con$preset_variants_result$susie_result_trimmed[[&#39;pip&#39;]])[variant_id])
+                                  dat_con$top_loci$conditional_effect[top_loci_changed_indexes] &lt;- (-1)* dat_con$top_loci$conditional_effect[top_loci_changed_indexes] # FIXME if coef does not need to check flip
+                                }
+                              }
+                          dat_con$preset_variants_result$variant_names &lt;- aligned_variant_ids[dat_con$preset_variants_result$variant_names] %&gt;% as.character
+                          # change beta in preset top loci
+                          preset_top_loci_changed_indexes &lt;- which(dat_con$preset_variants_result$top_loci$variant_id !=  aligned_variant_ids[dat_con$preset_variants_result$top_loci$variant_id] %&gt;% as.character )
+                          if(has_rows(dat_con$top_loci) &amp; length(preset_top_loci_changed_indexes) &gt; 0) dat_con$preset_variants_result$top_loci$betahat[preset_top_loci_changed_indexes] &lt;- (-1)* dat_con$preset_variants_result$top_loci$betahat[preset_top_loci_changed_indexes]   
+
+                          res[[id]][[context]][[&#39;region_info&#39;]] = dat_con$region_info
+                          res[[id]][[context]][[&#39;CV_table&#39;]] = dat_con$twas_cv_result$performance
+                          res[[id]][[context]][[&#39;preset_top_loci&#39;]] = process_top_loci(dat_con$preset_variants_result, dat_con$preset_variants_result$susie_result_trimmed, purity_thresholds = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in min_corr])}))
+                          res[[id]][[context]][[&#39;preset_pip&#39;]] = get_pip_withname(dat_con$preset_variants_result)
+                    } else {
+                          res[[id]][[context]][[&#39;region_info&#39;]] = dat_study[[condition]]$region_info
+                          res[[id]][[context]][[&#39;CV_table&#39;]] = dat_study[[condition]]$twas_cv_result$performance
+                          res[[id]][[context]][[&#39;top_loci&#39;]] = annotate_susie(dat_study[[condition]], res[[id]][[context]][[&#39;top_loci&#39;]])
+                          
+                    } 
+                # fsusie do not have sumstats or p value
+                if (${&quot;FALSE&quot; if fsusie or mnm else &quot;TRUE&quot;}) {
+                    res_sum[[id]][[context]] &lt;- list(
+                      variant_names = dat_con$variant_names,
+                      sumstats = dat_con$sumstats
+                    )
+
+                    if (${&quot;FALSE&quot; if fsusie or mnm else &quot;TRUE&quot;}) res_minp[[id]][[context]] &lt;- min(pecotmr:::wald_test_pval(dat_con$sumstats$betahat, dat_con$sumstats$sebetahat,  n = 1000)) ##assuming sample size is 1000
+                }
+  
+                } else {
+                    res[[id]][[context]][[method]] &lt;- list(
+                      top_loci = process_top_loci(dat_con, dat_susie, purity_thresholds = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in min_corr])})),
+                      pip = get_pip_withname(dat_con)
+                    )
+                    res_sum[[id]][[context]][[method]] &lt;- list(
+                      variant_names = dat_con$variant_names,
+                      sumstats = dat_con$sumstats
+                    )
+
+                }
+                
+
+                if(has_rows(dat_con$top_loci) || has_rows(dat_con$preset_top_loci)) cons_top_loci[[id]][[context]] &lt;- context else  cons_top_loci[[id]][[context]] &lt;- NULL
+              }
+            }
+        }
+    }
+
+    cons_top_loci &lt;- cons_top_loci %&gt;% compact()  # Use &#39;compact&#39; to remove NULLs
+    cons_top_loci &lt;- if(length(cons_top_loci) &gt; 0) cons_top_loci else NA
+
+    combine_data = combine_data_sumstats = cons_top_loci_minp = &#39;&#39;
+    combine_data = paste0(&quot;${_output:add}&quot;,&quot;/&quot;,&quot;${name}&quot;, &quot;.&quot;, ${&#39;&quot;epigenomics_&quot;&#39; if fsusie else &#39;&quot;&quot;&#39;}, ${ &#39;&quot;metabolomics_&quot;&#39; if metaQTL else &#39;&quot;&quot;&#39;}, gene, &quot;.cis_results_db.export.rds&quot;)
+    if (${&quot;FALSE&quot; if fsusie else &quot;TRUE&quot;}) combine_data_sumstats = gsub(&quot;export.rds$&quot;, &quot;export_sumstats.rds&quot;, combine_data)
+  
+    if (${&quot;TRUE&quot; if exported_file.is_file() else &quot;FALSE&quot;}){
+        if (file.exists(combine_data)) {
+          res_exp &lt;- readRDS(combine_data)
+          res[[gene]] &lt;- c(res[[gene]], res_exp[[gene]]) # this may need to change if tehre are multiple genes in one rds file. 
+        }
+        if (file.exists(combine_data_sumstats)) {
+          res_sum_exp &lt;- readRDS(combine_data_sumstats)
+          res_sum[[gene]] &lt;- c(res_sum[[gene]], res_sum_exp[[gene]])
+        }
+    }
+    saveRDS(res, combine_data)
+    # only save sumstats results when NOT fsusie or multi gene mvsusie
+    if (${&quot;FALSE&quot; if fsusie or mnm else &quot;TRUE&quot;}) saveRDS(res_sum, combine_data_sumstats)
+  
+    # generate md5 for data transferring
+    system(paste(&quot;md5sum &quot;,combine_data, &quot; &gt; &quot;, paste0(combine_data, &quot;.md5&quot;)))
+    if (${&quot;FALSE&quot; if fsusie or mnm else &quot;TRUE&quot;}) system(paste(&quot;md5sum &quot;,combine_data_sumstats, &quot; &gt; &quot;, paste0(combine_data_sumstats, &quot;.md5&quot;)))
+  
+      
+    TSS &lt;- tryCatch({dat_con$region_info$region_coord$start},  error = function(e) {return(NA)})
+    if (length(res) &gt; 0) conditions = paste(names(res[[1]]), collapse = &quot;,&quot;) else conditions = &#39;&#39;
+    
+    # fsusie does not have sumstats or pvalue, do not need to run this
+
+    # if (${&quot;FALSE&quot; if fsusie or gwas or mnm else &quot;TRUE&quot;})  {
+    #     context_map &lt;- process_and_match_contexts(&#39;${context_meta}&#39;, cons_top_loci, res_minp)
+    #     context_map$context_df_with_order &lt;- process_lf2_cluster(context_map$context_df_with_order)
+    #     cons_top_loci_minp &lt;- combine_order(context_map$context_df_no_order, context_map$context_df_with_order)
+    # }
+
+    # save pip sum file 
+     write_delim(pip_sum, 
+                 paste0(&quot;${_output:add}&quot;,&quot;/&quot;,&quot;${name}&quot;, &quot;.&quot;, ${&#39;&quot;epigenomics_&quot;&#39; if fsusie else &#39;&quot;&quot;&#39;}, ${ &#39;&quot;metabolomics_&quot;&#39; if metaQTL else &#39;&quot;&quot;&#39;}, gene, &quot;.pip_sum&quot;), 
+                 delim = &#39;\t&#39;)
+
+    meta = data.frame(chr=&quot;${_meta_info[0]}&quot;, start=&quot;${_meta_info[1]}&quot;, end=&quot;${_meta_info[2]}&quot;, region_id=&quot;${_meta_info[3]}&quot;, TSS =  if(is.null(TSS)) NA else TSS, 
+                      original_data = paste(basename(orig_files), collapse = &quot;,&quot;), combined_data = basename(combine_data), combined_data_sumstats = basename(combine_data_sumstats), 
+                      conditions = conditions, 
+                      conditions_top_loci = if(length(cons_top_loci) &gt; 0) cons_top_loci[[1]] %&gt;% unlist %&gt;% names %&gt;% as.character %&gt;% paste(., collapse = &#39;,&#39;) else &#39;&#39;
+                      # , conditions_top_loci_minp = if(length(cons_top_loci_minp) &gt; 0) cons_top_loci_minp %&gt;% paste(., collapse = &#39;,&#39;) else &#39;&#39;
+                      )
+
+    write_delim(meta, &quot;${_output}&quot;, delim = &#39;\t&#39;)
+  
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[cis_results_export_2, gwas_results_export_2]
+# set it as True if you only want run first step (running parallel) and combine them manually after all finished 
+parameter: step1_only = False
+skip_if(step1_only)
+# provide exported meta to filter the exported genes 
+parameter: exported_file = path()
+# optional: qtl or gwas, there is slightly different in qtl and gwas rds file
+parameter: gwas = False
+input: group_by = &#39;all&#39;
+output: f&quot;{cwd}/{name}.{&#39;block_results_db&#39; if gwas else &#39;cis_results_db&#39;}.tsv&quot; 
+# stop_if(_input[0] not in locals().keys(), &#39;All files have been exported already&#39;) #FIXME should we remove to a separate file. sothat we can stop globally as above
+task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = 1, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    if [ -e &quot;${_output:ad}/${name}_cache/&quot; ]; then
+        sed &#39;s/^chr/#chr/&#39; `ls ${_output:ad}/${name}_cache/*tsv |head -n1` | head -n 1 &gt; ${_output:an}.temp
+        tail -n +2 -q ${_output:ad}/${name}_cache/*.tsv &gt;&gt; ${_output:an}.temp
+        error_files=$(find &quot;${_output:ad}/${name}_cache/&quot; -type f -name &quot;*_error&quot;)
+
+        if [[ -n $error_files ]]; then
+            cat $error_files &gt;&gt; ${_output:an}.error_genes
+        else
+            echo &quot;No truncated files detected&quot;
+        fi
+    else
+        echo &quot;All files have been exported already&quot;
+    fi
+    
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    if (file.exists(paste0(${_output:anr},&quot;.temp&quot;))) {
+        library(tidyverse)
+        meta &lt;- read_delim(paste0(${_output:anr},&quot;.temp&quot;), delim = &#39;\t&#39;)
+
+        if (${&quot;TRUE&quot; if exported_file.is_file() else &quot;FALSE&quot;}){
+          exp_meta &lt;- read_delim(${exported_file:r}, delim = &#39;\t&#39;)
+          meta &lt;- bind_rows(meta, exp_meta) %&gt;%
+              group_by(`#chr`, start, end, region_id, TSS) %&gt;%
+              summarise(across(c(original_data, combined_data, combined_data_sumstats, conditions, conditions_top_loci), 
+                               ~paste(unique(.), collapse = &quot;,&quot;)),
+                        .groups = &#39;drop&#39;)
+              }
+
+        write_delim(meta, ${_output:r}, delim = &#39;\t&#39;)
+    }
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[cis_results_export_3]
+# set it as True if you only want run first step (running parallel) and combine them manually after all finished 
+parameter: step1_only = False
+
+skip_if(step1_only)
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;, entrypoint=entrypoint   
+    rm -rf &quot;${_input:ad}/${name}_cache/&quot;
+    rm -rf ${_input:an}.temp
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="gwas-results-consolidation">
+<h2>GWAS results consolidation<a class="headerlink" href="#gwas-results-consolidation" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#get union of step1
+#1200 blocks costed ~5mins with in one for loop
+[gwas_results_export_3]
+parameter: step1_only = False
+
+skip_if(step1_only)
+output: f&quot;{cwd}/{name}.union_export.tsv.gz&quot; 
+task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = 1, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;, entrypoint=entrypoint   
+    rm -rf &quot;${_input:ad}/${name}_cache/&quot;
+    rm -rf ${_input:an}.temp
+
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    library(tidyverse)
+    library(data.table)
+
+    mtx &lt;- read_delim(${_input:r})
+    files &lt;- mtx %&gt;% filter(!is.na(conditions_top_loci)) %&gt;% pull(combined_data) %&gt;% paste0(${_input[0]:dr},&#39;/&#39;,.)
+    all_top_loci &lt;- data.frame()
+
+    for (i in seq_along(files)) {
+      file &lt;- files[i]
+      res &lt;- readRDS(file)
+
+      file_top_loci &lt;- lapply(names(res), function(block) {
+        lapply(names(res[[block]]), function(study) {
+          lapply(names(res[[block]][[study]]), function(method) {
+            if (!is.null(res[[block]][[study]][[method]]$top_loci)) {
+              temp_df &lt;- res[[block]][[study]][[method]]$top_loci
+              mutate(temp_df, study = study, method = method, block = block)
+            } else {
+              NULL  
+            }
+          })
+        }) %&gt;% bind_rows()  
+      }) %&gt;% bind_rows() 
+
+      all_top_loci &lt;- bind_rows(all_top_loci, file_top_loci)
+      if (i %% 100 == 0) {
+        message(sprintf(&quot;Have processed %d files.&quot;, i))
+      }
+    }
+    fwrite(all_top_loci, ${_output:r})
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># simply combine seperate meta files, not works for having an exsiting exported file for now. 
+[combine_export_meta]
+parameter: cache_path=path
+parameter: output_file = str
+parameter: remove_cache = False
+output: f&quot;{cache_path:d}/{output_file}&quot; 
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;, entrypoint=entrypoint   
+    head -n 1 -q ${cache_path}/*.tsv | sed &#39;s/^chr/#chr/&#39; | head -n 1 &gt; ${_output}
+    tail -n +2 -q ${cache_path}/*.tsv &gt;&gt; ${_output}
+    if ${&quot;true&quot; if remove_cache else &quot;false&quot;}; then
+        rm -rf ${cache_path}
+    fi
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[export_top_loci]
+parameter: export_path=path
+parameter: region = str
+parameter: prefix = str
+parameter: suffix = str
+parameter: fsusie_prefix = &#39;&#39;
+parameter: preset_top_loci = False
+input: f&quot;{export_path}/{prefix}.{fsusie_prefix}{region}.{suffix}&quot; 
+output: f&quot;{cwd:a}/{prefix}.{region}.toploci.bed.gz&quot; 
+task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    library(tidyverse)
+    library(data.table)
+    #function to filter lfsr
+    filter_lfsr &lt;- function(df, lfsr_thres = 0.01){
+        df_na &lt;- df %&gt;% filter(is.na(lfsr)|lfsr == &#39;&#39;) %&gt;% mutate(event_ID = NA)
+        df %&gt;%
+            mutate(
+              lfsr_list = str_split(lfsr, &quot;;&quot;) %&gt;% map(as.numeric),
+              effect_list = str_split(conditional_effect, &quot;;&quot;),
+              event_list = str_split(event_ID, &quot;;&quot;),
+              valid_indices = map(lfsr_list, ~ which(.x &lt; lfsr_thres))
+            ) %&gt;%
+            rowwise() %&gt;%
+            mutate(
+              event_ID = paste(event_list[valid_indices], collapse = &quot;;&quot;),
+              conditional_effect = paste(effect_list[valid_indices], collapse = &quot;;&quot;),
+              lfsr = paste(lfsr_list[valid_indices], collapse = &quot;;&quot;)
+            ) %&gt;%
+            filter(event_ID != &quot;&quot;) %&gt;%
+            select(any_of(colnames(file_top_loci_rename))) %&gt;%
+            ungroup() %&gt;% rbind(df, df_na)
+        }
+    
+    ## main
+    res &lt;- readRDS(&quot;${_input}&quot;)
+    file_top_loci &lt;- lapply(names(res), function(gene) {
+        lapply(names(res[[gene]]), function(context) {
+          lapply(c(&quot;top_loci&quot;${&#39;,&quot;preset_top_loci&quot;&#39; if preset_top_loci else &#39;&#39;}), function(method) {
+            if (&quot;RSS_QC_RAISS_imputed&quot; %in% names(res[[gene]][[context]])) { # that is for rss output
+              temp_df &lt;- res[[gene]][[context]][[&#39;RSS_QC_RAISS_imputed&#39;]][[method]]
+            } else {
+              temp_df &lt;- res[[gene]][[context]][[method]]
+            }
+            if (!is.null(temp_df)) {
+              mutate(temp_df, study = context, method = method, region = gene)
+            } else {
+              NULL  
+            }
+          })
+        }) %&gt;% bind_rows()  
+    }) %&gt;% bind_rows() 
+
+    file_top_loci_rename &lt;- file_top_loci %&gt;% 
+      # Select necessary columns from the original table
+      select(any_of(c(
+        &quot;variant_id&quot;, &quot;pip&quot;, 
+        &quot;cs_coverage_0.95_min_corr&quot;,&quot;cs_coverage_0.7_min_corr&quot;, &quot;cs_coverage_0.5_min_corr&quot;,
+        &quot;cs_coverage_0.95_min_corr_0.8&quot;,&quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;,
+        &quot;cs_coverage_0.95_min_corr_0.5&quot;,&quot;cs_coverage_0.7_min_corr_0.5&quot;, &quot;cs_coverage_0.5_min_corr_0.5&quot;,
+        &quot;study&quot;, &quot;method&quot;, &quot;region&quot;, &quot;conditional_effect&quot;, &quot;lfsr&quot;, &quot;trait&quot;
+      ))) %&gt;% 
+      mutate(
+        # Split variant_id into separate components
+        chr = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 1],  # Chromosome
+        pos = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 2],  # Position
+        a1  = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 4],  # Allele 1
+        a2  = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 3],  # Allele 2
+        # Rename and duplicate columns as required
+        variant_ID = variant_id,
+        gene_ID    = region,
+        event_ID   = study,
+        PIP = pip,
+      )  %&gt;%
+      {
+        if (any(c(&quot;cs_coverage_0.95_min_corr_0.8&quot;, &quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;, 
+                  &quot;cs_coverage_0.95_min_corr_0.5&quot;, &quot;cs_coverage_0.7_min_corr_0.5&quot;, &quot;cs_coverage_0.5_min_corr_0.5&quot;, 
+                  &quot;cs_coverage_0.95_min_corr&quot;, &quot;cs_coverage_0.7_min_corr&quot;, &quot;cs_coverage_0.5_min_corr&quot;) %in% colnames(.))) {
+          mutate(.,
+            cs_coverage_0.95 = if (&quot;cs_coverage_0.95_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr_0.8&quot;) else 
+                               if (&quot;cs_coverage_0.95_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr&quot;) else NA,
+            
+            cs_coverage_0.7 = if (&quot;cs_coverage_0.7_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr_0.8&quot;) else 
+                              if (&quot;cs_coverage_0.7_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr&quot;) else NA,
+            
+            cs_coverage_0.5 = if (&quot;cs_coverage_0.5_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr_0.8&quot;) else 
+                              if (&quot;cs_coverage_0.5_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr&quot;) else NA,
+            
+            cs_coverage_0.95_purity0.5 = if (&quot;cs_coverage_0.95_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr_0.5&quot;) else NA,
+            cs_coverage_0.7_purity0.5 = if (&quot;cs_coverage_0.7_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr_0.5&quot;) else NA,
+            cs_coverage_0.5_purity0.5 = if (&quot;cs_coverage_0.5_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr_0.5&quot;) else NA
+          )
+        } else .
+      } %&gt;%
+        # Conditionally add lfsr if the column exists
+      mutate(region_id = basename(&quot;${_input}&quot;) %&gt;% str_split(., &#39;[.]&#39;, simplify = T) %&gt;% .[,2])  %&gt;% 
+      # Conditionally add lfsr if the column exists
+      { if (&quot;lfsr&quot; %in% colnames(.)) mutate(., lfsr = lfsr, context = str_split(event_ID, &#39;:&#39;, simplify = T) %&gt;% .[,1], event_ID = trait) else . } %&gt;% 
+      # Select and order the final set of columns
+      select(any_of(c(&quot;chr&quot;, &quot;pos&quot;, &quot;a1&quot;, &quot;a2&quot;, &quot;variant_ID&quot;, &quot;gene_ID&quot;, &quot;event_ID&quot;, &quot;cs_coverage_0.95&quot;, &quot;cs_coverage_0.7&quot;, &quot;cs_coverage_0.5&quot;,
+                      &quot;cs_coverage_0.95_purity0.5&quot;, &quot;cs_coverage_0.7_purity0.5&quot;, &quot;cs_coverage_0.5_purity0.5&quot;, &quot;PIP&quot;, &quot;conditional_effect&quot;, 
+                      &quot;lfsr&quot;, &quot;region_id&quot;, &quot;context&quot;${&#39;&quot;,method&quot;&#39; if preset_top_loci else &#39;&#39;}))) %&gt;% 
+      # Sort by chromosome and position (convert pos to numeric if necessary)
+      arrange(chr, as.numeric(pos))
+    # Check if &quot;lfsr&quot; is in column names
+    if (&quot;lfsr&quot; %in% colnames(file_top_loci_rename)) file_top_loci_rename &lt;- filter_lfsr(file_top_loci_rename)
+    fwrite(file_top_loci_rename,&quot;${_output}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="overlap-qtl-and-gwas-results">
+<h2>Overlap QTL and GWAS results<a class="headerlink" href="#overlap-qtl-and-gwas-results" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[overlap_qtl_gwas_1]
+parameter: per_chunk = 100
+parameter: gwas_meta_path = path()
+parameter: qtl_meta_path = path()
+parameter: gwas_file_path = &#39;&#39;
+parameter: qtl_file_path = &#39;&#39;
+# Optional: if a region list is provide the analysis will be focused on provided region. 
+# The LAST column of this list will contain the ID of regions to focus on
+# Otherwise, all regions with both genotype and phenotype files will be analyzed
+parameter: region_list = path()
+# Optional: if a region name is provided 
+# the analysis would be focused on the union of provides region list and region names
+parameter: region_name = []
+import pandas as pd
+import numpy as np
+from pathlib import Path
+
+if qtl_file_path == &#39;&#39;:
+    qtl_file_path = qtl_meta_path.parent
+if gwas_file_path == &#39;&#39;:
+    gwas_file_path = gwas_meta_path.parent
+    
+# Load the data, suppressing messages is not typically done in pandas as it does not inherently output messages when loading files
+gwas_meta = pd.read_csv(gwas_meta_path, sep=&#39;\t&#39;, low_memory=False)
+gwas_meta = gwas_meta[gwas_meta[&#39;conditions_top_loci&#39;].notna()]
+
+qtl_meta = pd.read_csv(qtl_meta_path, sep=&#39;\t&#39;, low_memory=False)
+qtl_meta = qtl_meta[qtl_meta[&#39;conditions_top_loci&#39;].notna()]
+
+# Filter and mutate operations, translated to pandas
+gwas_meta[&#39;combined_data_toploci&#39;] = gwas_meta.apply(lambda row: row[&#39;combined_data&#39;] if pd.notnull(row[&#39;conditions_top_loci&#39;]) else pd.NA, axis=1)
+
+region_ids=[]
+# If region_list is provided, read the file and extract IDs
+if not region_list.is_dir():
+    if region_list.is_file():
+        region_list_df = pd.read_csv(region_list, sep=&#39;\t&#39;, header=None, comment = &quot;#&quot;)
+        region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
+    else:
+        raise ValueError(&quot;The region_list path provided is not a file.&quot;)
+        
+if len(region_name) &gt; 0:
+    region_ids = list(set(region_ids).union(set(region_name)))
+    
+if len(region_ids) &gt; 0:
+    qtl_meta = qtl_meta[qtl_meta[&#39;region_id&#39;].isin(region_ids)]
+    
+def group_by_region(lst, partition):
+    # from itertools import accumulate
+    # partition = [len(x) for x in partition]
+    # Compute the cumulative sums once
+    # cumsum_vector = list(accumulate(partition))
+    # Use slicing based on the cumulative sums
+    # return [lst[(cumsum_vector[i-1] if i &gt; 0 else 0):cumsum_vector[i]] for i in range(len(partition))]
+    return partition
+
+grouped_gwas_meta = {k: v for k, v in gwas_meta.groupby(&#39;#chr&#39;)}
+def check_overlap(gene_row, grouped_gwas_meta):
+    chr_group = gene_row[&#39;#chr&#39;]
+    if chr_group in grouped_gwas_meta:
+        block_region = grouped_gwas_meta[chr_group]
+        overlaps = block_region[
+            (block_region[&#39;start&#39;] &lt;= gene_row[&#39;end&#39;]) &amp;
+            (block_region[&#39;end&#39;] &gt;= gene_row[&#39;start&#39;])
+        ]
+        if not overlaps.empty:
+            return &#39;,&#39;.join(overlaps[&#39;combined_data_toploci&#39;].astype(str))
+    return pd.NA
+
+stop_if(len(qtl_meta) == 0, f&#39;No file left for analysis &#39;)
+
+qtl_meta_cand = qtl_meta.apply(lambda row: pd.Series({
+    &#39;gwas_file&#39;: check_overlap(row, grouped_gwas_meta)
+}), axis=1)
+
+# Concatenate the new columns to the original qtl_meta DataFrame
+qtl_meta_cand = pd.concat([qtl_meta, qtl_meta_cand], axis=1)
+qtl_meta_filtered = qtl_meta_cand[qtl_meta_cand[&#39;gwas_file&#39;].notna()]
+qtl_meta_filtered = qtl_meta_filtered.dropna(subset=[&#39;gwas_file&#39;])
+
+
+regional_data = {
+    &#39;meta&#39;: [(row[&#39;#chr&#39;], row[&#39;start&#39;], row[&#39;end&#39;], row[&#39;region_id&#39;], row[&#39;gwas_file&#39;].split(&#39;,&#39;)) for _, row in qtl_meta_filtered.iterrows()],
+    &#39;qtl_data&#39;: [f&quot;{qtl_file_path}/{row[&#39;combined_data&#39;]}&quot; for _, row in qtl_meta_filtered.iterrows()]
+}
+
+meta_info = regional_data[&#39;meta&#39;]
+stop_if(len(regional_data[&#39;qtl_data&#39;]) == 0, f&#39;No file left for analysis &#39;)
+
+input: regional_data[&quot;qtl_data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;qtl_data&quot;]), group_with = &quot;meta_info&quot;
+output: f&quot;{cwd}/gwas_qtl/cache/{name}_gwas_batch_meta_{_meta_info[3]}.tsv&quot;
+task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    library(tidyverse)
+    library(plyr)
+    library(data.table)
+
+    # Function to add &#39;chr&#39; in variants
+    add_chr_prefix &lt;- function(var) {
+      if (any(grepl(&quot;chr&quot;, var))) {
+        var &lt;- var
+      } else {
+        var &lt;- paste0(&quot;chr&quot;, var)
+      }
+      return(var)
+    }
+
+    # Function to check if a dataframe has rows
+    has_rows &lt;- function(df) {
+      !is.null(df) &amp;&amp; nrow(df) &gt; 0
+    }
+
+
+    extract_top_loci &lt;- function(res, include_method = FALSE) {
+      all_top_loci &lt;- lapply(names(res), function(region) {
+        lapply(names(res[[region]]), function(study) {
+          if (include_method) {
+            method_results &lt;- lapply(names(res[[region]][[study]]), function(method) {
+              top_loci &lt;- NULL
+              if (!is.null(res[[region]][[study]][[method]]$top_loci) &amp;&amp; nrow(res[[region]][[study]][[method]]$top_loci) &gt; 0) {
+                top_loci &lt;- mutate(res[[region]][[study]][[method]]$top_loci, study = study, method = method, region = region)
+              }
+              return(top_loci)
+            })
+            return(bind_rows(method_results))
+          } else {
+            top_loci &lt;- list()
+            if (!is.null(res[[region]][[study]]$top_loci) &amp;&amp; nrow(res[[region]][[study]]$top_loci) &gt; 0) {
+              top_loci[[length(top_loci) + 1]] &lt;- mutate(res[[region]][[study]]$top_loci, study = study, region = region, method = &#39;top_loci&#39;)
+            }
+            if (!is.null(res[[region]][[study]]$preset_top_loci) &amp;&amp; nrow(res[[region]][[study]]$preset_top_loci) &gt; 0) {
+              top_loci[[length(top_loci) + 1]] &lt;- mutate(res[[region]][[study]]$preset_top_loci, study = study, region = region, method = &#39;preset_top_loci&#39;)
+            }
+            return(bind_rows(top_loci))
+          }
+        })
+      }) %&gt;% bind_rows() %&gt;% na.omit()
+
+      return(all_top_loci)
+    }
+
+  
+    # load data 
+    qtl_file = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input])})
+     # Extract info from each RDS file
+    gwas_files = c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % x for x in _meta_info[4])}) %&gt;% paste0(&#39;${gwas_file_path}&#39;,&#39;/&#39;,.)
+    # Process GWAS files
+    gwas_all_top_loci &lt;- do.call(rbind.fill, lapply(gwas_files, function(file) {
+      res &lt;- readRDS(file)
+      gwas_all_top_loci &lt;- extract_top_loci(res, include_method = TRUE) 
+    }))
+    if(!is.null(gwas_all_top_loci) &amp;&amp; nrow(gwas_all_top_loci) &gt; 0){# fixme: could remove this judge if we get a solid enough meta
+      gwas_all_top_loci &lt;- gwas_all_top_loci%&gt;% select(-c(&#39;z&#39;))
+
+      # Process QTL file
+      qtl &lt;- readRDS(qtl_file)
+      qtl_all_top_loci &lt;- extract_top_loci(qtl) 
+      if(!is.null(qtl_all_top_loci) &amp;&amp; nrow(qtl_all_top_loci) &gt; 0){# fixme: could remove this judge if we get a solid enough meta
+        # qtl_all_top_loci &lt;- qtl_all_top_loci%&gt;% select(-c(&#39;betahat&#39;,&#39;sebetahat&#39;,&#39;maf&#39;))
+
+        cs_cal &lt;- c(&#39;cs_coverage_0.95&#39;,&#39;cs_coverage_0.7&#39;,&#39;cs_coverage_0.5&#39;)
+
+        qtl_all_var &lt;- qtl_all_top_loci %&gt;%
+            #filter(rowSums(.[,cs_cal]) &gt; 0 ) %&gt;% #fixme
+            pull(variant_id)
+
+        gwas_all_var &lt;- gwas_all_top_loci %&gt;%
+            #filter(rowSums(.[,cs_cal]) &gt; 0 ) %&gt;% #fixme
+            pull(variant_id)
+
+        gwas_all_var &lt;- if(any(grepl(&quot;chr&quot;, qtl_all_var))) add_chr_prefix(gwas_all_var) else gsub(&quot;chr&quot;, &quot;&quot;, gwas_all_var)
+        gwas_all_top_loci$variant_id &lt;- gwas_all_var
+        # since both qtl and gwas haven mapped to geno ref in exporting, here we intersect them directly
+        int_var &lt;- intersect(qtl_all_var, gwas_all_var)
+        if(length(int_var) &gt; 0){
+            gwas_all_top_loci &lt;- gwas_all_top_loci %&gt;% filter(variant_id %in% int_var) # fixme: keep all gwas variants or intersected ones
+
+            all_top_loci &lt;- rbind.fill(gwas_all_top_loci, qtl_all_top_loci)
+            fwrite(all_top_loci,  gsub(&#39;_gwas_batch_meta&#39;,&#39;_gwas_batch_export&#39;,${_output:r}))
+
+            new_gwas &lt;- split(gwas_all_top_loci, gwas_all_top_loci$study)
+            new_gwas &lt;- lapply(new_gwas, function(df) {
+              split(df, df$method)
+            })
+
+            qtl[[1]] &lt;- c(qtl[[1]], new_gwas)
+            new_qtl_path &lt;-  paste0(${_output:ddr},&quot;/&quot;,gsub(&quot;.rds&quot;,&quot;.overlapped.gwas.rds&quot;,basename(qtl_file)))
+            saveRDS(qtl, new_qtl_path)
+  
+            block_top_loci = gwas_all_top_loci$region %&gt;% unique %&gt;% paste(., collapse = &#39;,&#39;)
+            final_combined_data = new_qtl_path %&gt;% basename
+        } else {block_top_loci = final_combined_data = NA} # fixme: could remove this judge if we get a solid enough meta
+      } else {block_top_loci = final_combined_data = NA} # fixme: could remove this judge if we get a solid enough meta
+    } else {
+        block_top_loci = final_combined_data = NA
+    }
+ 
+    qtl_meta &lt;- suppressMessages(read_delim(&#39;${qtl_meta_path}&#39;))
+    qtl_meta &lt;- qtl_meta %&gt;% filter(region_id == &#39;${_meta_info[3]}&#39;)  %&gt;% mutate(block_top_loci = block_top_loci,
+                                                     final_combined_data = final_combined_data)
+    fwrite(qtl_meta, ${_output:r})
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[overlap_qtl_gwas_2]
+# set it as True if you only want run first step (running parallel) and combine them manually after all finished 
+parameter: step1_only = False
+skip_if(step1_only)
+input: group_by = &#39;all&#39;
+output: f&quot;{cwd}/{name}.overlapped.gwas.tsv&quot;
+task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    library(data.table)
+    exp_path &lt;- ${_input[0]:adr}
+    meta_files &lt;- c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input])})
+    exp_files &lt;- list.files(exp_path, &quot;_gwas_batch_export&quot;, full.names = T)
+    meta_list &lt;- exp_list &lt;- list()
+    meta_combined &lt;- rbindlist(lapply(meta_files, fread), fill = TRUE)
+    exp_combined &lt;- rbindlist(lapply(exp_files, fread), fill = TRUE)
+    fwrite(exp_combined, gsub(&quot;tsv&quot;,&quot;export.csv.gz&quot;,&quot;${_output}&quot;))
+    fwrite(meta_combined, &quot;${_output}&quot;, sep = &#39;\t&#39;)
+  
+#bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    # rm -rf ${_input[0]:adr}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./code/mnm_analysis"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="mnm_methods/rss_analysis.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">High-dimensional regression with summary statistics</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../pecotmr_integration/SuSiE_enloc.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">xQTL-GWAS pairwise enrichment and colocalization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-results">Extracting susie results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-rss-results-for-adgwas">Extracting susie_rss results for ADGWAS</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-fsusie-results">Extracting fsusie results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting-the-pip-plot">Plotting the pip plot</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exporting-cis-analysis-susie-twas-results">Exporting cis_analysis susie_twas results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-gwas-data">Export gwas data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combine-seperate-meta-file">combine seperate meta file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overlapped-gwas-data-and-eqtl-data">Overlapped gwas data and eQTL data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-all-top-loci">Export all top loci</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#into-vcf-format">Into VCF format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cis-window-analysis-result-consolidation">Cis-window analysis Result consolidation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-results-consolidation">GWAS results consolidation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overlap-qtl-and-gwas-results">Overlap QTL and GWAS results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
