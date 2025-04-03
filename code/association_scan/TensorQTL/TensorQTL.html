@@ -488,7 +488,21 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-phenotype-list">Example phenotype list</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nominal-association-results">Nominal Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-testing-corrected-results">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-association-results">Interaction Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#region-gene-level-association-evidence">Region (Gene) Level Association Evidence</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-cis-tensorqtl-command">i. Cis TensorQTL Command</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-trans-tensorqtl-command">ii. Trans TensorQTL Command</a></li>
@@ -521,100 +535,140 @@ document.write(`
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>List of molecular phenotype files: a list of <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> files containing the table for the molecular phenotype. It should have a companion index file in <code class="docutils literal notranslate"><span class="pre">tbi</span></code> format. It is the output of gene_annotation or phenotype_by_chorm</p></li>
-</ul>
-<section id="example-phenotype-list">
-<h3>Example phenotype list<a class="headerlink" href="#example-phenotype-list" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr    start   end ID  path</span>
-<span class="n">chr12</span>   <span class="mi">752578</span>  <span class="mi">752579</span>  <span class="n">ENSG00000060237</span>  <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gw</span><span class="o">/</span><span class="n">GIT</span><span class="o">/</span><span class="n">github</span><span class="o">/</span><span class="n">fungen</span><span class="o">-</span><span class="n">xqtl</span><span class="o">-</span><span class="n">analysis</span><span class="o">/</span><span class="n">analysis</span><span class="o">/</span><span class="n">Wang_Columbia</span><span class="o">/</span><span class="n">ROSMAP</span><span class="o">/</span><span class="n">MWE</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
-<span class="n">chr12</span>   <span class="mi">990508</span>  <span class="mi">990509</span>  <span class="n">ENSG00000082805</span>  <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gw</span><span class="o">/</span><span class="n">GIT</span><span class="o">/</span><span class="n">github</span><span class="o">/</span><span class="n">fungen</span><span class="o">-</span><span class="n">xqtl</span><span class="o">-</span><span class="n">analysis</span><span class="o">/</span><span class="n">analysis</span><span class="o">/</span><span class="n">Wang_Columbia</span><span class="o">/</span><span class="n">ROSMAP</span><span class="o">/</span><span class="n">MWE</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
-<span class="n">chr12</span>   <span class="mi">2794969</span> <span class="mi">2794970</span> <span class="n">ENSG00000004478</span>  <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gw</span><span class="o">/</span><span class="n">GIT</span><span class="o">/</span><span class="n">github</span><span class="o">/</span><span class="n">fungen</span><span class="o">-</span><span class="n">xqtl</span><span class="o">-</span><span class="n">analysis</span><span class="o">/</span><span class="n">analysis</span><span class="o">/</span><span class="n">Wang_Columbia</span><span class="o">/</span><span class="n">ROSMAP</span><span class="o">/</span><span class="n">MWE</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
-<span class="n">chr12</span>   <span class="mi">4649113</span> <span class="mi">4649114</span> <span class="n">ENSG00000139180</span>  <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gw</span><span class="o">/</span><span class="n">GIT</span><span class="o">/</span><span class="n">github</span><span class="o">/</span><span class="n">fungen</span><span class="o">-</span><span class="n">xqtl</span><span class="o">-</span><span class="n">analysis</span><span class="o">/</span><span class="n">analysis</span><span class="o">/</span><span class="n">Wang_Columbia</span><span class="o">/</span><span class="n">ROSMAP</span><span class="o">/</span><span class="n">MWE</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
-<span class="n">chr12</span>   <span class="mi">6124769</span> <span class="mi">6124770</span> <span class="n">ENSG00000110799</span>  <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gw</span><span class="o">/</span><span class="n">GIT</span><span class="o">/</span><span class="n">github</span><span class="o">/</span><span class="n">fungen</span><span class="o">-</span><span class="n">xqtl</span><span class="o">-</span><span class="n">analysis</span><span class="o">/</span><span class="n">analysis</span><span class="o">/</span><span class="n">Wang_Columbia</span><span class="o">/</span><span class="n">ROSMAP</span><span class="o">/</span><span class="n">MWE</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
-<span class="n">chr12</span>   <span class="mi">6534516</span> <span class="mi">6534517</span> <span class="n">ENSG00000111640</span>  <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gw</span><span class="o">/</span><span class="n">GIT</span><span class="o">/</span><span class="n">github</span><span class="o">/</span><span class="n">fungen</span><span class="o">-</span><span class="n">xqtl</span><span class="o">-</span><span class="n">analysis</span><span class="o">/</span><span class="n">analysis</span><span class="o">/</span><span class="n">Wang_Columbia</span><span class="o">/</span><span class="n">ROSMAP</span><span class="o">/</span><span class="n">MWE</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
-</pre></div>
-</div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>The header of the bed.gz is per the [TensorQTL](https://github.com/broadinstitute/tensorqtl) convention:
-
-&gt;    Phenotypes must be provided in BED format, with a single header line starting with # and the first four columns corresponding to: chr, start, end, phenotype_id, with the remaining columns corresponding to samples (the identifiers must match those in the genotype input). The BED file should specify the center of the cis-window (usually the TSS), with start == end-1.
-</pre></div>
-</div>
-<ul class="simple">
-<li><p>List of genotypes in PLINK binary format (<code class="docutils literal notranslate"><span class="pre">bed</span></code>/<code class="docutils literal notranslate"><span class="pre">bim</span></code>/<code class="docutils literal notranslate"><span class="pre">fam</span></code>) for each chromosome, previously processed through our genotype QC pipelines.</p></li>
+<li><p>List of genotypes in both PLINK binary format (bed/bim/fam) and PLINK 2 binary genotype table (pgen/pvar/psam) for each chromosome, previously processed through our genotype QC pipelines.</p></li>
 <li><p>Covariate file, a file with #id + samples name as colnames and each row a covariate: fixed and known covariates as well as hidden covariates recovered from factor analysis.</p></li>
 <li><p>Optionally, a list of traits (genes, regions of molecular features etc) to analyze.</p></li>
 </ul>
+<section id="example-phenotype-list">
+<h3>Example phenotype list<a class="headerlink" href="#example-phenotype-list" title="Link to this heading">#</a></h3>
+<p>The header of the bed.gz is per the <a class="reference external" href="https://github.com/broadinstitute/tensorqtl">TensorQTL</a> convention:</p>
+<ul class="simple">
+<li><p>Phenotypes must be provided in BED format, sorted by chromosome and [start,end] position, with a single header line starting with # and the first four columns corresponding to: chr, start, end, phenotype_id, with the remaining columns corresponding to samples (the identifiers must match those in the genotype input). The BED file should specify the cis-window (usually the TSS), with start = the minimum start for each gene, end = the maximum end for each gene(extracted from phenotype referenced gtf file).</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#chr	start	end	ID	path
+chr1	631073	632616	ENSG00000237973	/home/rl3328/motor_data/pheno_data/Quad/phenotype_by_chrom/genes_logcpm.bed.chr1.bed.gz
+chr1	633695	634376	ENSG00000248527	/home/rl3328/motor_data/pheno_data/Quad/phenotype_by_chrom/genes_logcpm.bed.chr1.bed.gz
+chr1	825137	859446	ENSG00000228794	/home/rl3328/motor_data/pheno_data/Quad/phenotype_by_chrom/genes_logcpm.bed.chr1.bed.gz
+chr1	944202	959309	ENSG00000188976	/home/rl3328/motor_data/pheno_data/Quad/phenotype_by_chrom/genes_logcpm.bed.chr1.bed.gz
+chr1	975203	982093	ENSG00000187642	/home/rl3328/motor_data/pheno_data/Quad/phenotype_by_chrom/genes_logcpm.bed.chr1.bed.gz
+chr1	1216908	1232067	ENSG00000078808	/home/rl3328/motor_data/pheno_data/Quad/phenotype_by_chrom/genes_logcpm.bed.chr1.bed.gz
+</pre></div>
+</div>
+</div>
+</div>
 <p>For cis-analysis:</p>
 <ul class="simple">
-<li><p>Optionally, a list of genomic regions associate with each molecular features to analyze. The default cis-analysis will use a window around TSS. This can be customized to take given start and end genomic coordinates.</p></li>
+<li><p>Optionally, a list of genomic regions associate with each molecular features to analyze. The default cis-analysis will use a window around TSS. This can be customized to take given start and end genomic coordinates. we currently suggest using 1Mb window around a gene because longer customized cis-windows (such as extending by TAD) does not yield significant improvements.</p></li>
 </ul>
 </section>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
-<p>For each chromosome, several of summary statistics files are generated, including both nominal test statistics for each test, as well as region (gene) level association evidence.</p>
-<p>The columns of nominal association result are as follows:</p>
+<p>For each chromosome, several summary statistics files are generated, including both nominal test statistics for each test and region (gene) level association evidence.</p>
+<section id="nominal-association-results">
+<h3>Nominal Association Results<a class="headerlink" href="#nominal-association-results" title="Link to this heading">#</a></h3>
+<p>The columns of the nominal association result are as follows:</p>
 <ul class="simple">
-<li><p>phenotype_id: Molecular trait identifier.(gene)</p></li>
-<li><p>variant_id: ID of the variant (rsid or chr:position:ref:alt)</p></li>
-<li><p>tss_distance: Distance of the SNP to the gene transcription start site (TSS)</p></li>
-<li><p>af: The allele frequency of this SNPs</p></li>
-<li><p>ma_samples: Number of samples carrying the minor allele</p></li>
-<li><p>ma_count: Total number of minor alleles across individuals</p></li>
-<li><p>pval: Nominal P-value from linear regression</p></li>
-<li><p>bhat: Slope of the linear regression</p></li>
-<li><p>sebhat: Standard error of bhat</p></li>
-<li><p>chr : Variant chromosome.</p></li>
-<li><p>pos : Variant chromosomal position (basepairs).</p></li>
-<li><p>ref : Variant reference allele (A, C, T, or G).</p></li>
-<li><p>alt : Variant alternate allele.</p></li>
+<li><p><strong>chrom</strong>: Variant chromosome.</p></li>
+<li><p><strong>pos</strong>: Variant chromosomal position (basepairs).</p></li>
+<li><p><strong>molecular_trait_id</strong>: Molecular trait identifier (gene).</p></li>
+<li><p><strong>variant_id</strong>: ID of the variant (rsid or chr:position:ref:alt).</p></li>
+<li><p><strong>tss_distance</strong>: Distance of the SNP to the gene transcription start site (TSS).</p></li>
+<li><p><strong>tes_distance</strong>: Distance of the SNP to the gene transcription end site (TES).</p></li>
+<li><p><strong>cis_window_start_distance</strong>: Distance of the SNP to the start of the cis window (if using a customized cis window).</p></li>
+<li><p><strong>cis_window_end_distance</strong>: Distance of the SNP to the end of the cis window (if using a customized cis window).</p></li>
+<li><p><strong>af</strong>: The allele frequency of this SNP.</p></li>
+<li><p><strong>ma_samples</strong>: Number of samples carrying the minor allele.</p></li>
+<li><p><strong>ma_count</strong>: Total number of minor alleles across individuals.</p></li>
+<li><p><strong>pvalue</strong>: Nominal P-value from linear regression.</p></li>
+<li><p><strong>bhat</strong>: Slope of the linear regression.</p></li>
+<li><p><strong>sebhat</strong>: Standard error of bhat.</p></li>
+<li><p><strong>n</strong>: Number of phenotypes after basic QC.</p></li>
 </ul>
-<p>The columns of interaction association results are as follows:</p>
-<p>Model: phenotype ~ <span class="math notranslate nohighlight">\(\beta\)</span>*snp + <span class="math notranslate nohighlight">\(\beta_{msex}\)</span>*msex + <span class="math notranslate nohighlight">\(\beta_{interaction}\)</span>*snp
-*msex (taking msex as the interaction factor)</p>
+<section id="multiple-testing-corrected-results">
+<h4>Multiple Testing Corrected Results:<a class="headerlink" href="#multiple-testing-corrected-results" title="Link to this heading">#</a></h4>
 <ul class="simple">
-<li><p>chrom: chromosome number</p></li>
-<li><p>pos : Variant chromosomal position (basepairs)</p></li>
-<li><p>a2: Variant reference allele (A, C, T, or G)</p></li>
-<li><p>a1: Variant alternate allele</p></li>
-<li><p>molecular_trait_id: Molecular trait identifier, varies from phenotypes to phenotypes.</p></li>
-<li><p>variant_id - ID of the top variant (rsid or chr:position:ref:alt)</p></li>
-<li><p>af - Alternative allele frequency in MiGA cohort</p></li>
-<li><p>ma_samples - Number of samples carrying the minor allele</p></li>
-<li><p>ma_count: Total number of minor alleles across individuals</p></li>
-<li><p>pvalue: P-value of the main effect from the nonlinear regression</p></li>
-<li><p>bhat: Slope of the main effect from the nonlinear regression</p></li>
-<li><p>se: Standard error of beta</p></li>
-<li><p>pvalue_msex: P-value of the msex term from the nonlinear regression</p></li>
-<li><p>bhat_msex: Slope of the msex term from the nonlinear regression</p></li>
-<li><p>se_msex: Standard error of beta_msex</p></li>
-<li><p>pvalue_msex_interaction: P-value of the interaction term from the nonlinear regression</p></li>
-<li><p>bhat_msex_interaction: Slope of the interaction term from the nonlinear regression</p></li>
-<li><p>se_msex_interaction: Standard error of beta_msex_interaction</p></li>
-<li><p>molecular_trait_object_id: an intermediate id, you can ignore</p></li>
-<li><p>n: number of phenotype</p></li>
-<li><p>qvalue_main: the false discovery rate of the main effect(pvalue)</p></li>
-<li><p>qvalue_interaction: the false discovery rate of the interaction effect(pvalue_msex_interaction)</p></li>
+<li><p><strong>qvalue</strong>: Calculated q-value for each SNP (grouped by gene).</p></li>
 </ul>
-<p>The column specification of region (gene) level association evidence are as follows:</p>
+</section>
+</section>
+<section id="interaction-association-results">
+<h3>Interaction Association Results<a class="headerlink" href="#interaction-association-results" title="Link to this heading">#</a></h3>
+<p>The columns of interaction association results are as follows (FIXME):</p>
+<p><strong>Model:</strong><br />
+$<span class="math notranslate nohighlight">\(
+\text{phenotype} = \beta_0 + \beta_1 \cdot \text{snp} + \beta_2 \cdot \text{msex} + \beta_3 \cdot (\text{snp} \times \text{msex}) + \epsilon
+\)</span>$</p>
+<p>(Taking msex as the interaction factor)</p>
 <ul class="simple">
-<li><p>phenotype_id - Molecular trait identifier. (gene)</p></li>
-<li><p>num_var - Total number of variants tested in cis</p></li>
-<li><p>beta_shape1 - First parameter value of the fitted beta distribution</p></li>
-<li><p>beta_shape2 - Second parameter value of the fitted beta distribution</p></li>
-<li><p>true_df - Effective degrees of freedom the beta distribution approximation</p></li>
-<li><p>pval_true_df - Empirical P-value for the beta distribution approximation</p></li>
-<li><p>variant_id - ID of the top variant (rsid or chr:position:ref:alt)</p></li>
-<li><p>tss_distance - Distance of the SNP to the gene transcription start site (TSS)</p></li>
-<li><p>ma_samples - Number of samples carrying the minor allele</p></li>
-<li><p>ma_count - Total number of minor alleles across individuals</p></li>
-<li><p>af - Alternative allele frequency in MiGA cohort</p></li>
-<li><p>ref_factor - Flag indicating if the alternative allele is the minor allele in the cohort (1 if AF &lt;= 0.5, -1 if not)</p></li>
-<li><p>pval_nominal - Nominal P-value from linear regression</p></li>
-<li><p>slope - Slope of the linear regression</p></li>
-<li><p>slope_se - Standard error of the slope</p></li>
-<li><p>pval_perm - First permutation P-value directly obtained from the permutations with the direct method</p></li>
-<li><p>pval_beta - Second permutation P-value obtained via beta approximation. This is the one to use for downstream analysis</p></li>
+<li><p><strong>chrom</strong>: Chromosome number.</p></li>
+<li><p><strong>pos</strong>: Variant chromosomal position (basepairs).</p></li>
+<li><p><strong>a2</strong>: Variant reference allele (A, C, T, or G).</p></li>
+<li><p><strong>a1</strong>: Variant alternate allele.</p></li>
+<li><p><strong>molecular_trait_id</strong>: Molecular trait identifier, varies from phenotypes to phenotypes.</p></li>
+<li><p><strong>variant_id</strong>: ID of the top variant (rsid or chr:position:ref:alt).</p></li>
+<li><p><strong>af</strong>: Alternative allele frequency in the MiGA cohort.</p></li>
+<li><p><strong>ma_samples</strong>: Number of samples carrying the minor allele.</p></li>
+<li><p><strong>ma_count</strong>: Total number of minor alleles across individuals.</p></li>
+<li><p><strong>pvalue</strong>: P-value of the main effect from the nonlinear regression.</p></li>
+<li><p><strong>bhat</strong>: Slope of the main effect from the nonlinear regression.</p></li>
+<li><p><strong>se</strong>: Standard error of beta.</p></li>
+<li><p><strong>pvalue_msex</strong>: P-value of the msex term from the nonlinear regression.</p></li>
+<li><p><strong>bhat_msex</strong>: Slope of the msex term from the nonlinear regression.</p></li>
+<li><p><strong>se_msex</strong>: Standard error of bhat_msex.</p></li>
+<li><p><strong>pvalue_msex_interaction</strong>: P-value of the interaction term from the nonlinear regression.</p></li>
+<li><p><strong>bhat_msex_interaction</strong>: Slope of the interaction term from the nonlinear regression.</p></li>
+<li><p><strong>se_msex_interaction</strong>: Standard error of beta_msex_interaction.</p></li>
+<li><p><strong>molecular_trait_object_id</strong>: An intermediate ID (can be ignored).</p></li>
+<li><p><strong>n</strong>: Number of phenotypes.</p></li>
 </ul>
+<section id="id1">
+<h4>Multiple Testing Corrected Results:<a class="headerlink" href="#id1" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>qvalue_main</strong>: The q-value of the main effect.</p></li>
+<li><p><strong>qvalue_interaction</strong>: The q-value of the interaction effect.</p></li>
+</ul>
+</section>
+</section>
+<section id="region-gene-level-association-evidence">
+<h3>Region (Gene) Level Association Evidence<a class="headerlink" href="#region-gene-level-association-evidence" title="Link to this heading">#</a></h3>
+<p>The column specifications for region-level association evidence are as follows:</p>
+<ul class="simple">
+<li><p><strong>chrom</strong>: Chromosome number.</p></li>
+<li><p><strong>pos</strong>: Variant chromosomal position (basepairs).</p></li>
+<li><p><strong>n_variant</strong>: Total number of variants tested in cis.</p></li>
+<li><p><strong>beta_shape1</strong>: First parameter value of the fitted beta distribution.</p></li>
+<li><p><strong>beta_shape2</strong>: Second parameter value of the fitted beta distribution.</p></li>
+<li><p><strong>true_df</strong>: Effective degrees of freedom of the beta distribution approximation.</p></li>
+<li><p><strong>p_true_df</strong>: Empirical P-value for the beta distribution approximation.</p></li>
+<li><p><strong>variant_id</strong>: ID of the top variant (rsid or chr:position:ref:alt).</p></li>
+<li><p><strong>tss_distance</strong>: Distance of the SNP to the gene transcription start site (TSS).</p></li>
+<li><p><strong>tes_distance</strong>: Distance of the SNP to the gene transcription end site (TES).</p></li>
+<li><p><strong>ma_samples</strong>: Number of samples carrying the minor allele.</p></li>
+<li><p><strong>ma_count</strong>: Total number of minor alleles across individuals.</p></li>
+<li><p><strong>af</strong>: Alternative allele frequency.</p></li>
+<li><p><strong>p_nominal</strong>: Nominal P-value from linear regression.</p></li>
+<li><p><strong>bhat</strong>: Slope of the linear regression.</p></li>
+<li><p><strong>sehat</strong>: Standard error of the bhat.</p></li>
+<li><p><strong>p_perm</strong>: First permutation P-value directly obtained from the permutations with the direct method.</p></li>
+<li><p><strong>p_beta</strong>: Second permutation P-value obtained via beta approximation (this is the one to use for downstream analysis).</p></li>
+<li><p><strong>molecular_trait_object_id</strong>: Molecular trait identifier (gene).</p></li>
+<li><p><strong>n_traits</strong>: Group size in the permutation test.</p></li>
+<li><p><strong>genomic_inflation</strong>: Genomic inflation factor (lambda), quantifying the extent of bulk inflation and the excess false positive rate.</p></li>
+</ul>
+<section id="id2">
+<h4>Multiple Testing Corrected Results:<a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>q_beta</strong>: Q-value for p_beta using Storey’s method (qvalue), more conservative than FDR.</p></li>
+<li><p><strong>q_perm</strong>: Q-value for p_perm using Storey’s method (qvalue), more conservative than FDR.</p></li>
+<li><p><strong>fdr_beta</strong>: Adjusted P-value for p_beta using the Benjamini-Hochberg method (FDR).</p></li>
+<li><p><strong>fdr_perm</strong>: Adjusted P-value for p_perm using the Benjamini-Hochberg method (FDR).</p></li>
+<li><p><strong>p_nominal_threshold</strong>: Nominal p-value threshold for variants in the corresponding molecular trait, derived from empirical beta distribution as a result of permutation testing.</p></li>
+</ul>
+</section>
+</section>
 </section>
 <section id="minimal-working-example-steps">
 <h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
@@ -846,7 +900,7 @@ parameter: genotype_file = path
 # Covariate file
 parameter: covariate_file = path
 # Prefix for the analysis output
-parameter: name = f&quot;{phenotype_file:bn}_{covariate_file:bn}&quot;
+parameter: name = &quot;&quot;
 # An optional subset of regions of molecular features to analyze. The last column is the gene names
 parameter: region_list = path()
 parameter: region_list_phenotype_column = 4
@@ -963,6 +1017,8 @@ else:
     input_files = input_files.values.tolist()
     input_chroms = [x[0] for x in input_files]
     input_files = [x[1:] for x in input_files]
+    if len(name) == 0:
+        name = f&#39;{path(input_files[0][0]):bnn}&#39; if len(input_files) == 1 else f&#39;{path(input_files[0][0]):bnnn}&#39;
 </pre></div>
 </div>
 </div>
@@ -1023,7 +1079,8 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:n
         phenotype_df = phenotype_df[phenotype_df.index.isin(keep_region)]
         phenotype_pos_df = phenotype_pos_df[phenotype_pos_df.index.isin(keep_region)]
     covariates_df = pd.read_csv(covariates_file, sep=&#39;\t&#39;, index_col=0).T
-    genotype_df, variant_df = genotypeio.load_genotypes(plink_prefix_path)
+    genotype_df, variant_df = genotypeio.load_genotypes(plink_prefix_path, dosages = True)
+
     
     ## use custom sample list to subset the covariates data
     if $[keep_sample.is_file()]:
@@ -1303,8 +1360,9 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[cis_2]
 done_if(&quot;regional&quot; not in _input.labels)
 input: group_by = &quot;all&quot;
-output: f&#39;{cwd}/{_input[&quot;nominal&quot;][0]:bnnnn}.cis_qtl_regional.fdr.gz&#39;,
-        f&#39;{cwd}/{_input[&quot;nominal&quot;][0]:bnnnn}.cis_qtl_regional.summary.txt&#39;
+output_file_prefix = name if len(_input[&quot;nominal&quot;]) &gt; 1 else f&#39;{_input[&quot;nominal&quot;][0]:bnnnn}&#39;
+output: f&#39;{cwd}/{output_file_prefix}.cis_qtl_regional_significance.tsv.gz&#39;,
+        f&#39;{cwd}/{output_file_prefix}.cis_qtl_regional_significance.summary.txt&#39;
 input_files = [str(x) for x in _input[&quot;regional&quot;]]
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;,container = container
@@ -1345,11 +1403,13 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
       }
     }
 
-    summary = tibble(&quot;fdr_perm_0.05&quot; =  sum(emprical_pd[&quot;fdr_perm&quot;] &lt; 0.05) , 
+    summary = tibble(&quot;fdr_perm_0.05&quot; =  sum(emprical_pd[&quot;fdr_perm&quot;] &lt; 0.05), 
                       &quot;fdr_beta_0.05&quot; = sum(emprical_pd[&quot;fdr_beta&quot;] &lt; 0.05),
-                      &quot;q_perm_0.05&quot; = sum(emprical_pd[&quot;q_perm&quot;] &lt; 0.05) ,
-                      &quot;q_beta_0.05&quot; = sum(emprical_pd[&quot;q_beta&quot;] &lt; 0.05) ,
-                       &quot;q_perm_0.01&quot; = sum(emprical_pd[&quot;q_perm&quot;] &lt; 0.01) ,
+                      &quot;q_perm_0.05&quot; = sum(emprical_pd[&quot;q_perm&quot;] &lt; 0.05),
+                      &quot;q_beta_0.05&quot; = sum(emprical_pd[&quot;q_beta&quot;] &lt; 0.05),
+                      &quot;fdr_perm_0.01&quot; =  sum(emprical_pd[&quot;fdr_perm&quot;] &lt; 0.01), 
+                      &quot;fdr_beta_0.01&quot; = sum(emprical_pd[&quot;fdr_beta&quot;] &lt; 0.01),
+                      &quot;q_perm_0.01&quot; = sum(emprical_pd[&quot;q_perm&quot;] &lt; 0.01),
                       &quot;q_beta_0.01&quot; = sum(emprical_pd[&quot;q_beta&quot;] &lt; 0.01)  )
     emprical_pd%&gt;%write_delim(&quot;$[_output[0]]&quot;,&quot;\t&quot;)
     summary%&gt;%write_delim(&quot;$[_output[1]]&quot;,&quot;\t&quot;)
@@ -1500,7 +1560,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[trans_2]
 # This workflow filters significant trans-QTL associations based on p-value or q-value cutoffs
 input: group_by = &quot;all&quot;
-output: f&#39;{cwd}/qvalue_{qvalue_cutoff if qvalue_cutoff else &quot;pvalue_&quot; + pvalue_cutoff}_filtered/qvalue_{qvalue_cutoff if qvalue_cutoff else &quot;pvalue_&quot; + pvalue_cutoff}_filtered_pairs.txt&#39;
+output: f&#39;{cwd}/{name}_{(&quot;qvalue_%&quot; % qvalue_cutoff) if qvalue_cutoff else (&quot;pvalue_%s&quot; % pvalue_cutoff)}_trans_pairs.tsv&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: expand=&quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
@@ -1617,7 +1677,21 @@ bash: expand=&quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout =
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-phenotype-list">Example phenotype list</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nominal-association-results">Nominal Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-testing-corrected-results">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-association-results">Interaction Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#region-gene-level-association-evidence">Region (Gene) Level Association Evidence</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-cis-tensorqtl-command">i. Cis TensorQTL Command</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-trans-tensorqtl-command">ii. Trans TensorQTL Command</a></li>

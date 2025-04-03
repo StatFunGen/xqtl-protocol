@@ -815,6 +815,7 @@ parameter: phenotype_id_column = &quot;gene_id&quot;
 parameter: auxiliary_id_mapping = path()
 # Optional processing flag
 parameter: strip_id = False
+parameter: sep = &quot;\t&quot;
 
 input: phenoFile, coordinate_annotation
 output: f&#39;{cwd:a}/{_input[0]:bn}.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.region_list.txt&#39;
@@ -822,8 +823,94 @@ task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, 
 python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
 
     import pandas as pd
+    import numpy as np
     import qtl.io
     from pathlib import Path
+    from collections import defaultdict
+
+    # Function to convert gtf to bed
+    def gtf_to_tss_bed(annotation_gtf, feature=&#39;gene&#39;, exclude_chrs=[], phenotype_id=&#39;gene_id&#39;):
+        &quot;&quot;&quot;
+        Parse genes from GTF and return DataFrame with min start and max end positions.
+        For each gene, uses the smallest position as start and largest as end position.
+        &quot;&quot;&quot;
+        
+        # Data collections
+        gene_data = defaultdict(lambda: {&#39;chr&#39;: &#39;&#39;, &#39;start&#39;: float(&#39;inf&#39;), &#39;end&#39;: 0, &#39;strand&#39;: &#39;&#39;})
+        gene_names = {}  # To store gene_name for each gene_id
+        
+        if annotation_gtf.endswith(&#39;.gz&#39;):
+            opener = gzip.open(annotation_gtf, &#39;rt&#39;)
+        else:
+            opener = open(annotation_gtf, &#39;r&#39;)
+            
+        with opener as gtf:
+            for row in gtf:
+                row = row.strip().split(&#39;\t&#39;)
+                if row[0][0] == &#39;#&#39; or row[2] != feature: 
+                    continue  # Skip header or non-matching features
+                
+                # Parse attributes
+                attributes = defaultdict()
+                for a in row[8].replace(&#39;&quot;&#39;, &#39;&#39;).split(&#39;;&#39;)[:-1]:
+                    kv = a.strip().split(&#39; &#39;)
+                    if kv[0] != &#39;tag&#39;:
+                        attributes[kv[0]] = kv[1]
+                    else:
+                        attributes.setdefault(&#39;tags&#39;, []).append(kv[1])
+                
+                # Get gene identifiers
+                curr_gene_id = attributes[&#39;gene_id&#39;]
+                curr_gene_name = attributes[&#39;gene_name&#39;]
+                gene_names[curr_gene_id] = curr_gene_name
+                
+                # Update gene data
+                data = gene_data[curr_gene_id]
+                if data[&#39;chr&#39;] == &#39;&#39;:  # First entry for this gene
+                    data[&#39;chr&#39;] = row[0]
+                    data[&#39;strand&#39;] = row[6]
+                
+                # Update min start and max end
+                start_pos = int(row[3]) - 1  # Convert to 0-based for BED
+                end_pos = int(row[4])
+                data[&#39;start&#39;] = min(data[&#39;start&#39;], start_pos)
+                data[&#39;end&#39;] = max(data[&#39;end&#39;], end_pos)
+        
+        # Convert to dataframe format
+        chrom, start, end, ids, names = [], [], [], [], []
+        for gene_id, data in gene_data.items():
+            chrom.append(data[&#39;chr&#39;])
+            start.append(data[&#39;start&#39;])
+            end.append(data[&#39;end&#39;])
+            ids.append(gene_id)
+            names.append(gene_names[gene_id])
+        
+        # Create DataFrame based on phenotype_id
+        if phenotype_id == &#39;gene_id&#39;:
+            bed_df = pd.DataFrame({
+                &#39;chr&#39;: chrom,
+                &#39;start&#39;: start,
+                &#39;end&#39;: end,
+                &#39;gene_id&#39;: ids
+            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;], index=ids)
+        elif phenotype_id == &#39;gene_name&#39;:
+            bed_df = pd.DataFrame({
+                &#39;chr&#39;: chrom,
+                &#39;start&#39;: start,
+                &#39;end&#39;: end,
+                &#39;gene_id&#39;: names
+            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;], index=names)
+        
+        # Filter out excluded chromosomes
+        mask = np.ones(len(chrom), dtype=bool)
+        for k in exclude_chrs:
+            mask = mask &amp; (bed_df[&#39;chr&#39;] != k)
+        bed_df = bed_df[mask]
+        
+        # Sort by chromosome and start position
+        bed_df = bed_df.groupby(&#39;chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values([&#39;start&#39;, &#39;end&#39;]))
+        
+        return bed_df
 
     def prepare_bed(df, bed_template_df, chr_subset=None):
         bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
@@ -868,11 +955,11 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
         return df
 
     def load_bed_template_from_gtf(input_path, phenotype_id_column):
-        if sum(qtl.io.gtf_to_tss_bed(input_path, feature=&#39;gene&#39;, phenotype_id=&quot;gene_id&quot;).index.duplicated()) &gt; 0:
+        if sum(gtf_to_tss_bed(input_path, feature=&#39;gene&#39;, phenotype_id=&quot;gene_id&quot;).index.duplicated()) &gt; 0:
             raise ValueError(f&quot;gtf file {input_path} needs to be collapsed into gene model by reference data processing module&quot;)
 
-        bed_template_df_id = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
-        bed_template_df_name = qtl.io.gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
+        bed_template_df_id = gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
+        bed_template_df_name = gtf_to_tss_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
         bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;])
         bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;]
         bed_template_df = bed_template_df.set_index(phenotype_id_column, drop=False)

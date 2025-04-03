@@ -538,9 +538,7 @@ document.write(`
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run phenotype_formatting.ipynb phenotype_by_chrom \
     --cwd ../../../output_test/phenotype_by_chrom \
     --phenoFile ../../../output_test/phenotype_by_chrom/protocol_example.protein.bed.gz \
-    --chrom `for i in {21..22}; do echo chr$i; done` \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest \
-    -c ../../csg.yml  -q neurology
+    --chrom `for i in {21..22}; do echo chr$i; done`
 </pre></div>
 </div>
 </div>
@@ -659,7 +657,7 @@ parameter: cwd = path(&quot;output&quot;)
 # The filename namefor output data
 parameter: container = &#39;&#39;
 import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -671,7 +669,7 @@ parameter: numThreads = 20
 # Path to the input molecular phenotype data.
 parameter: phenoFile = path
 # name for the analysis output
-parameter: name= f&#39;{phenoFile:bn}&#39;
+parameter: name = str(phenoFile).removesuffix(&#39;.gz&#39;).removesuffix(&#39;.bed&#39;)
 </pre></div>
 </div>
 </div>

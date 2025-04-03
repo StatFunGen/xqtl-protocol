@@ -595,9 +595,7 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run VCF_QC.ipynb rename_chrs \
     --genoFile /restricted/projectnb/xqtl/xqtl_protocol/reference_data/00-All.vcf.gz \
-    --cwd /restricted/projectnb/xqtl/xqtl_protocol/reference_data \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest \
-    -c /restricted/projectnb/xqtl/xqtl_protocol/scripts/csg.yml -q neurology 
+    --cwd /restricted/projectnb/xqtl/xqtl_protocol/reference_data
 </pre></div>
 </div>
 </div>
@@ -617,9 +615,7 @@ INFO: Workflow rename_chrs (ID=w4f0deb3b5b4ae8ce) is executed successfully with 
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run VCF_QC.ipynb dbsnp_annotate \
     --genoFile /restricted/projectnb/xqtl/xqtl_protocol/reference_data/00-All.add_chr.vcf.gz \
-    --cwd /restricted/projectnb/xqtl/xqtl_protocol/reference_data \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest \
-    -c /restricted/projectnb/xqtl/xqtl_protocol/scripts/csg.yml -q neurology 
+    --cwd /restricted/projectnb/xqtl/xqtl_protocol/reference_data
 </pre></div>
 </div>
 </div>
@@ -641,8 +637,7 @@ INFO: Workflow dbsnp_annotate (ID=wf0ebf0af2d3d81ad) is executed successfully wi
     --genoFile data/MWE/MWE_genotype.vcf     \
     --dbsnp-variants data/reference_data/00-All.add_chr.variants.gz  \
     --reference-genome data/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta   \
-    --cwd MWE/output/genotype_1 \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+    --cwd MWE/output/genotype_1
 </pre></div>
 </div>
 </div>
@@ -654,8 +649,7 @@ INFO: Workflow dbsnp_annotate (ID=wf0ebf0af2d3d81ad) is executed successfully wi
     --genoFile data/mwe/mwe_genotype_list    \
     --dbsnp-variants data/reference_data/00-All.add_chr.variants.gz  \
     --reference-genome data/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta   \
-    --cwd MWE/output/genotype_4 \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+    --cwd MWE/output/genotype_4
 </pre></div>
 </div>
 </div>
@@ -821,7 +815,7 @@ parameter: mem = &#39;60G&#39;
 # Software container option
 parameter: container = &quot;&quot;
 import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+parameter: entrypoint=&quot;&quot;
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = path(f&quot;{cwd:a}&quot;)

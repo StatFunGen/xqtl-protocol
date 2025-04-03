@@ -550,9 +550,8 @@ document.write(`
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink
     --genoFile `ls vcf_qc/*.leftnorm.bcftools_qc.vcf.gz` \
     --cwd Genotype/ \
-    --keep_samples ./ROSMAP_sample_list.txt
-    --container /mnt/vast/hpc/csg/containers/bioinfo.sif \
-    -J 22 -q csg -c csg.yml --mem 120G
+    --keep_samples ./ROSMAP_sample_list.txt \
+    --mem 120G
 </pre></div>
 </div>
 </div>
@@ -568,8 +567,7 @@ document.write(`
     --genoFile `ls *.leftnorm.bcftools_qc.bed` \
     --name ROSMAP_NIA_WGS.leftnorm.bcftools_qc  \
     --cwd Genotype/ \
-    --container /mnt/vast/hpc/csg/containers/bioinfo.sif \
-    -J 5 -q csg -c csg.yml --mem 300G
+    --mem 300G
 </pre></div>
 </div>
 </div>
@@ -583,8 +581,7 @@ document.write(`
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
     --genoFile input/protocol_example.genotype.chr21_22.bed \
     --cwd output \
-    --chrom `cut -f 1 input/protocol_example.genotype.chr21_22.bim | uniq | sed &quot;s/chr//g&quot;` \
-    --container containers/bioinfo.sif 
+    --chrom `cut -f 1 input/protocol_example.genotype.chr21_22.bim | uniq | sed &quot;s/chr//g&quot;`
 </pre></div>
 </div>
 </div>
@@ -681,7 +678,7 @@ parameter: cwd = path(&quot;output&quot;)
 # The filename name for containers
 parameter: container = &#39;&#39;
 import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected

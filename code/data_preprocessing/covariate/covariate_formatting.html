@@ -536,8 +536,7 @@ document.write(`
     --pcaFile output/genotype_pca/protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.rds \
     --covFile  input/protocol_example.samples.tsv \
     --tol_cov 0.4  \
-    --k `awk &#39;$3 &lt; 0.8&#39; output/genotype_pca/protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.scree.txt | tail -1 | cut -f 1 ` \
-    --container containers/bioinfo.sif
+    --k `awk &#39;$3 &lt; 0.8&#39; output/genotype_pca/protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.scree.txt | tail -1 | cut -f 1 `
 </pre></div>
 </div>
 </div>
@@ -653,8 +652,7 @@ parameter: mem = &quot;2G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+parameter: entrypoint=&quot;&quot;
 cwd = path(f&quot;{cwd:a}&quot;)
 </pre></div>
 </div>
