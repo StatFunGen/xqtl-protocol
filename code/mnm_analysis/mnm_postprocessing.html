@@ -250,7 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../association_scan/quantile_models/qr_and_twas.html">Quantile regression for QTL association testing</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../association_scan/qtl_association_postprocessing.html">QTL data postprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../association_scan/qtl_association_postprocessing.html">xQTL Hierarchical Multiple Testing</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
 <ul class="nav bd-sidenav">
@@ -2313,9 +2313,9 @@ R: expand = &quot;${ }&quot;,stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
                 }
                 dat_susie &lt;- dat_con$susie_result_trimmed
                 
-                # calculate the sum of pip for the vairnats with pip &gt; 0.01
+                # calculate the sum of pip for the vairnats with pip &gt; 0
                 pip_sum = rbind(pip_sum, 
-                                data.frame(pip_sum = dat_susie[[&#39;pip&#39;]] [dat_susie[[&#39;pip&#39;]] &gt; 0.01] %&gt;% sum, 
+                                data.frame(pip_sum = dat_susie[[&#39;pip&#39;]] [dat_susie[[&#39;pip&#39;]] &gt; 0] %&gt;% sum, 
                                            condition = condition)
                                )
                 if(${&quot;FALSE&quot; if mnm else &quot;TRUE&quot;} &amp; has_rows(dat_con[[&#39;top_loci&#39;]])) dat_con[[&#39;top_loci&#39;]] &lt;- dat_con[[&#39;top_loci&#39;]] %&gt;% mutate(conditional_effect = (coef(dat_susie)/ (dat_susie[[&#39;pip&#39;]]))[variant_id])
@@ -2620,14 +2620,16 @@ parameter: prefix = str
 parameter: suffix = str
 parameter: fsusie_prefix = &#39;&#39;
 parameter: preset_top_loci = False
+parameter: lfsr_thres = 0.01
 input: f&quot;{export_path}/{prefix}.{fsusie_prefix}{region}.{suffix}&quot; 
 output: f&quot;{cwd:a}/{prefix}.{region}.toploci.bed.gz&quot; 
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
 R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
     library(tidyverse)
     library(data.table)
+    lfsr_thres &lt;- as.numeric(${lfsr_thres})
     #function to filter lfsr
-    filter_lfsr &lt;- function(df, lfsr_thres = 0.01){
+    filter_lfsr &lt;- function(df, lfsr_thres){
         df_na &lt;- df %&gt;% filter(is.na(lfsr)|lfsr == &#39;&#39;) %&gt;% mutate(event_ID = NA)
         df %&gt;%
             mutate(
@@ -2710,7 +2712,8 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
         # Conditionally add lfsr if the column exists
       mutate(region_id = basename(&quot;${_input}&quot;) %&gt;% str_split(., &#39;[.]&#39;, simplify = T) %&gt;% .[,2])  %&gt;% 
       # Conditionally add lfsr if the column exists
-      { if (&quot;lfsr&quot; %in% colnames(.)) mutate(., lfsr = lfsr, context = str_split(event_ID, &#39;:&#39;, simplify = T) %&gt;% .[,1], event_ID = trait) else . } %&gt;% 
+      { if (&quot;lfsr&quot; %in% colnames(.)) mutate(., lfsr = lfsr, context = str_split(event_ID, &#39;:&#39;, simplify = T) %&gt;% .[,1]) else . } %&gt;% 
+      { if (&quot;lfsr&quot; %in% colnames(.) &amp; lfsr_thres != 0) mutate(., event_ID = trait) else . } %&gt;% 
       # Select and order the final set of columns
       select(any_of(c(&quot;chr&quot;, &quot;pos&quot;, &quot;a1&quot;, &quot;a2&quot;, &quot;variant_ID&quot;, &quot;gene_ID&quot;, &quot;event_ID&quot;, &quot;cs_coverage_0.95&quot;, &quot;cs_coverage_0.7&quot;, &quot;cs_coverage_0.5&quot;,
                       &quot;cs_coverage_0.95_purity0.5&quot;, &quot;cs_coverage_0.7_purity0.5&quot;, &quot;cs_coverage_0.5_purity0.5&quot;, &quot;PIP&quot;, &quot;conditional_effect&quot;, 
@@ -2718,7 +2721,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
       # Sort by chromosome and position (convert pos to numeric if necessary)
       arrange(chr, as.numeric(pos))
     # Check if &quot;lfsr&quot; is in column names
-    if (&quot;lfsr&quot; %in% colnames(file_top_loci_rename)) file_top_loci_rename &lt;- filter_lfsr(file_top_loci_rename)
+    if (&quot;lfsr&quot; %in% colnames(file_top_loci_rename) &amp; lfsr_thres != 0) file_top_loci_rename &lt;- filter_lfsr(file_top_loci_rename, lfsr_thres = lfsr_thres)
     fwrite(file_top_loci_rename,&quot;${_output}&quot;)
 </pre></div>
 </div>

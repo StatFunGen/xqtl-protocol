@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>QTL data postprocessing &#8212; FunGen-xQTL Consortium</title>
+    <title>xQTL Hierarchical Multiple Testing &#8212; FunGen-xQTL Consortium</title>
   
   
   
@@ -250,7 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="quantile_models/qr_and_twas.html">Quantile regression for QTL association testing</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">QTL data postprocessing</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">xQTL Hierarchical Multiple Testing</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
 <ul class="nav bd-sidenav">
@@ -471,7 +471,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>QTL data postprocessing</h1>
+    <h1>xQTL Hierarchical Multiple Testing</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -481,12 +481,12 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-yml">Generate yml</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-the-target">Generate the target</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#standardized-the-sumstat">Standardized the sumstat</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convert-sumstats-to-vcf">Convert sumstats to VCF</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#associate-result-processing">Associate result processing</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-of-result-to-be-update">Summary of result - To be update</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-command">Example command</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#genetic-effect">Genetic effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-effect">Interaction effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-qtl">Quantile QTL</a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -498,115 +498,162 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="qtl-data-postprocessing">
-<h1>QTL data postprocessing<a class="headerlink" href="#qtl-data-postprocessing" title="Link to this heading">#</a></h1>
-<p>To be updated, you can safely skip it for now.</p>
-<section id="generate-yml">
-<h2>Generate yml<a class="headerlink" href="#generate-yml" title="Link to this heading">#</a></h2>
+  <section class="tex2jax_ignore mathjax_ignore" id="xqtl-hierarchical-multiple-testing">
+<h1>xQTL Hierarchical Multiple Testing<a class="headerlink" href="#xqtl-hierarchical-multiple-testing" title="Link to this heading">#</a></h1>
+<p>This protocol implements a three-step procedure:</p>
+<ol class="arabic simple">
+<li><p>Local adjustment: p-values of all cis-variants adjusted within each gene</p></li>
+<li><p>Global adjustment: minimum adjusted p-values from Step 1 further adjusted across all genes</p></li>
+<li><p>Global informed identification of significant xQTL: xQTL with locally adjusted p-value below the threshold</p></li>
+</ol>
+<p>It also reorganizes intermediate files produced in tensorQTL analysis to specified archive folder for book-keeping or deletion, to save space.</p>
+<section id="example-command">
+<h2>Example command<a class="headerlink" href="#example-command" title="Link to this heading">#</a></h2>
+<section id="genetic-effect">
+<h3>Genetic effect<a class="headerlink" href="#genetic-effect" title="Link to this heading">#</a></h3>
+<p>With</p>
+<ol class="arabic simple">
+<li><p>permutation testing</p></li>
+<li><p>recounted number of variants limited to MAF and cis-windows for Bonferroni correction</p></li>
+</ol>
+<p>We recommend reassessing significance of Bonferroni correction if previous analysis use too large of window or contain many low frequency variants. Below we reassess with MAF &gt; 0.01 and cis-window size 1000000 up and downstreams of TSS/TES.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span>LR<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.01<span class="w"> </span>--cis_window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--regional-pattern<span class="w"> </span><span class="s2">&quot;*.cis_qtl.regional.tsv.gz</span>$<span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">cis_window</span></code> are not zero, the program will first compute the number of variants after filtering by these metric and write files with <code class="docutils literal notranslate"><span class="pre">n_variants_suffix</span></code> in the same folder as QTL data, then use those numbers to create filtered list of variants for Bonferroni adjusted p-value.</p>
+</section>
+<section id="interaction-effect">
+<h3>Interaction effect<a class="headerlink" href="#interaction-effect" title="Link to this heading">#</a></h3>
+<p>With EigenMT method to get us the effective number of tests, it is recommended setting <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">cis_window</span></code> to zero to avoid having to recompute counts for Bonferroni correction,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;interaction/msex&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span><span class="w"> </span>--cis_window<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--regional-pattern<span class="w"> </span><span class="s2">&quot;*.cis_qtl_top_assoc.txt.gz</span>$<span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
+</pre></div>
+</div>
+<p>The above approach seems recommended by <code class="docutils literal notranslate"><span class="pre">tensorqtl</span></code> package because it is their default option for interaction QTL analysis. We will also adopt it as a recommended practice.</p>
+<p>To keep using variant count based Bonferroni correct, simply remove <code class="docutils literal notranslate"><span class="pre">--regional-pattern</span></code>,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;interaction/msex&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
+</pre></div>
+</div>
+</section>
+<section id="quantile-qtl">
+<h3>Quantile QTL<a class="headerlink" href="#quantile-qtl" title="Link to this heading">#</a></h3>
+<p>Here we summarize the significant QTL using both original variants as well as additionally considering MAF&gt;0.05 and cis-window 1Mb around a gene, for Bonferroni adjusted p-value,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/QR_ROSMAP_Ast_mega_quantile_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;.&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.05<span class="w"> </span>--cis_window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--af-col<span class="w"> </span>maf<span class="w"> </span>--tss-dist-col<span class="w"> </span>feature_tss<span class="w"> </span>--tes-dist-col<span class="w"> </span>feature_tes<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
+</pre></div>
+</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>xqtl-protocol/pipeline/yml_generator.ipynb<span class="w"> </span>yml_list<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--sumstat-list<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/TADB/TensorQTL.cis._recipe.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span>pQTL<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--container<span class="w"> </span>/mnt/vast/hpc/csg/containers/bioinfo.sif
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: cwd = path(&quot;.&quot;)
+parameter: gene_coordinates = path
+parameter: output_dir = path
+parameter: archive_dir = path
+parameter: sub_dir = path
+parameter: maf_cutoff = 0.01
+parameter: cis_window = 1000000
+parameter: tss_dist_col = &quot;start_distance&quot;
+parameter: tes_dist_col = &quot;end_distance&quot;
+parameter: af_col = &quot;af&quot;
+# This is for selecting the subset of data to process on protential signals 
+# assuming we drop those above this threshold
+# This might lead to underestimates in qvalue method since qvalue &lt; 0.05 may contain pvalue &gt; 0.05
+parameter: pvalue_cutoff = 0.05
+# This is used for both event and variant level significance filter
+parameter: fdr_threshold = 0.05
+# eg &quot;pvalue&quot; for pvalue, &quot;pvalue_*_interaction&quot; for interaction
+parameter: pvalue_pattern = &quot;pvalue&quot;
+# eg &quot;qvalue&quot; for pvalue, &quot;qvalue_*_interaction&quot; for interaction
+parameter: qvalue_pattern = &quot;qvalue&quot;
+# eg &quot;*.cis_qtl.regional.tsv.gz$&quot; for genetic effect via our pipeline TensorQTL.ipynb
+# &quot;*.cis_qtl_top_assoc.txt.gz$&quot; for interaction genetic effect
+parameter: regional_pattern = &quot;NULL&quot;
+parameter: n_variants_suffix = &quot;cis_n_variants_stats.tsv.gz&quot;
+parameter: qtl_pattern = &quot;*.cis_qtl.pairs.tsv.gz$&quot;
+
+work_dir = f&quot;{cwd:a}/{sub_dir}&quot;
+if sub_dir == path(&quot;.&quot;):
+    output_dir = f&quot;{output_dir:a}/{cwd:b}&quot;
+    archive_dir = f&quot;{archive_dir:a}/{cwd:b}&quot;
+    work_dir = f&quot;{cwd:a}&quot;
+else:
+    output_dir = f&quot;{output_dir:a}/{cwd:b}/{sub_dir}&quot;
+    archive_dir = f&quot;{archive_dir:a}/{cwd:b}/{sub_dir}&quot;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[default]
+output: f&quot;{output_dir}/{cwd:b}_consolidated.rds&quot;
+task: trunk_workers = 1, tags = f&#39;tensorqtl_postprocessing_{_output:n}&#39;
+R: expand = &quot;${ }&quot;
+
+    params &lt;- list()
+    params$workdir           &lt;- &quot;${work_dir}&quot;
+    params$maf_cutoff        &lt;- ${maf_cutoff}
+    params$cis_window        &lt;- ${cis_window}
+    params$pvalue_cutoff     &lt;- ${pvalue_cutoff}
+    params$fdr_threshold     &lt;- ${fdr_threshold}
+    params$gene_coordinates  &lt;- &quot;${gene_coordinates:a}&quot;
+    params$output_dir        &lt;- &quot;${output_dir}&quot;
+    params$archive_dir       &lt;- &quot;${archive_dir}&quot;
+    params$regional_pattern  &lt;- &quot;${regional_pattern}&quot;
+    params$n_variants_suffix &lt;- &quot;${n_variants_suffix}&quot;
+    params$qtl_pattern       &lt;- &quot;${qtl_pattern}&quot;
+    params$pvalue_pattern    &lt;- &quot;${pvalue_pattern}&quot;
+    params$qvalue_pattern    &lt;- &quot;${qvalue_pattern}&quot;
+    params$start_distance_col &lt;- &quot;${tss_dist_col}&quot;
+    params$end_distance_col   &lt;- &quot;${tes_dist_col}&quot;
+    params$af_col &lt;- &quot;${af_col}&quot;
+
+    convert_null_strings &lt;- function(params) {
+      if (is.list(params)) {
+        # Apply the function to each element in the list
+        result &lt;- lapply(params, convert_null_strings)
+        return(result)
+      } else {
+        # For non-list elements, check if it&#39;s the string &quot;NULL&quot;
+        if (is.character(params) &amp;&amp; params == &quot;NULL&quot;) {
+          return(NULL)
+        } else {
+          return(params)
+        }
+      }
+    }
+
+    params &lt;- convert_null_strings(params)
+    source(&quot;~/GIT/pecotmr/inst/code/tensorqtl_postprocessor.R&quot;)
+    results &lt;- hierarchical_multiple_testing_correction(params)
+    write_results(results, params$output_dir, params$workdir, to_cwd = &quot;regional&quot;)
+    archive_files(params)
+    saveRDS(results, ${_output:r})
 </pre></div>
 </div>
 </div>
 </div>
 </section>
-<section id="generate-the-target">
-<h2>Generate the target<a class="headerlink" href="#generate-the-target" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>xqtl-protocol/pipeline/summary_stats_standardizer.ipynb<span class="w"> </span>TARGET_generation<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--fasta<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta<span class="w">  </span><span class="se">\</span>
-<span class="w">    </span>--sumstat-list<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/qced_sumstat_list.txt<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--yml-list<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/yml_list.txt<span class="w">  </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--container<span class="w"> </span>/mnt/vast/hpc/csg/containers/bioinfo.sif<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--walltime<span class="w"> </span>100h<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--numThreads<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--mem<span class="w"> </span>150G<span class="w"> </span>-J<span class="w"> </span><span class="m">50</span><span class="w"> </span>-c<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/csg.yml<span class="w"> </span>-q<span class="w"> </span>csg
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="standardized-the-sumstat">
-<h2>Standardized the sumstat<a class="headerlink" href="#standardized-the-sumstat" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>xqtl-protocol/pipeline/summary_stats_standardizer.ipynb<span class="w"> </span>sumstat_standardization<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--sumstat-list<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/qced_sumstat_list.txt<span class="w">  </span><span class="se">\</span>
-<span class="w">    </span>--yml-list<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/yml_list.txt<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--TARGET_list<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/TARGET.ref.list<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--container<span class="w"> </span>/mnt/vast/hpc/csg/containers/bioinfo.sif<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--walltime<span class="w"> </span>100h<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--numThreads<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--mem<span class="w"> </span>200G<span class="w"> </span>-J<span class="w"> </span><span class="m">50</span><span class="w"> </span>-c<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/csg.yml<span class="w"> </span>-q<span class="w"> </span>csg
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="convert-sumstats-to-vcf">
-<h2>Convert sumstats to VCF<a class="headerlink" href="#convert-sumstats-to-vcf" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>xqtl-protocol/pipeline/summary_stats_standardizer.ipynb<span class="w"> </span>sumstat_to_vcf<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--sumstat-list<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/qced_sumstat_list.txt<span class="w">  </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--container<span class="w"> </span>/mnt/vast/hpc/csg/containers/bioinfo.sif<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--walltime<span class="w"> </span>100h<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--numThreads<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--mem<span class="w"> </span>200G<span class="w"> </span>-J<span class="w"> </span><span class="m">50</span><span class="w"> </span>-c<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/csg.yml<span class="w"> </span>-q<span class="w"> </span>csg
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="associate-result-processing">
-<h2>Associate result processing<a class="headerlink" href="#associate-result-processing" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>xqtl-protocol/pipeline/assoc_result_processing.ipynb<span class="w"> </span>genome<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--vcf<span class="w"> </span><span class="sb">`</span>ls<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/*/*cis_long_table.vcf<span class="sb">`</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--padjust-method<span class="w"> </span><span class="s2">&quot;bonferroni&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--container<span class="w"> </span>/mnt/vast/hpc/csg/containers/bioinfo.sif<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--mem<span class="w"> </span>200G<span class="w"> </span>-J<span class="w"> </span><span class="m">22</span><span class="w"> </span>-q<span class="w"> </span>csg<span class="w"> </span>-c<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/csg.yml<span class="w">  </span>
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="summary-of-result-to-be-update">
-<h2>Summary of result - To be update<a class="headerlink" href="#summary-of-result-to-be-update" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cat<span class="w"> </span>/mnt/vast/hpc/csg/molecular_phenotype_calling/pQTL_cis/rosmap_stad/pQTL.1/pheno_recipe_rosmap_pheno.rosmap_cov.ROSMAP_NIA_WGS.leftnorm.filtered.pQTL.unrelated.filtered.prune.pca.resid.Marchenko_pc.1.n_sig.txt
-</pre></div>
-</div>
-</div>
-</div>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>tissue</p></th>
-<th class="head"><p>n_assoc</p></th>
-<th class="head"><p>n_snp</p></th>
-<th class="head"><p>n_gene</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>pQTL</p></td>
-<td><p>290330</p></td>
-<td><p>266394</p></td>
-<td><p>3166</p></td>
-</tr>
-</tbody>
-</table>
-</div>
 </section>
 </section>
 
@@ -619,16 +666,16 @@ document.write(`
         },
         codeMirrorConfig: {
             theme: "abcdef",
-            mode: "bash"
+            mode: "sos"
         },
         kernelOptions: {
-            name: "bash",
+            name: "sos",
             path: "./code/association_scan"
         },
         predefinedOutput: true
     }
     </script>
-    <script>kernelName = 'bash'</script>
+    <script>kernelName = 'sos'</script>
 
                 </article>
               
@@ -674,12 +721,12 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-yml">Generate yml</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-the-target">Generate the target</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#standardized-the-sumstat">Standardized the sumstat</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convert-sumstats-to-vcf">Convert sumstats to VCF</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#associate-result-processing">Associate result processing</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-of-result-to-be-update">Summary of result - To be update</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-command">Example command</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#genetic-effect">Genetic effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-effect">Interaction effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-qtl">Quantile QTL</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
