@@ -853,13 +853,14 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
                 data[&#39;end&#39;] = max(data[&#39;end&#39;], end_pos)
         
         # Convert to dataframe format
-        chrom, start, end, ids, names = [], [], [], [], []
+        chrom, start, end, ids, names, strand = [], [], [], [], [], []
         for gene_id, data in gene_data.items():
             chrom.append(data[&#39;chr&#39;])
             start.append(data[&#39;start&#39;])
             end.append(data[&#39;end&#39;])
             ids.append(gene_id)
             names.append(gene_names[gene_id])
+            strand.append(data[&#39;strand&#39;])
         
         # Create DataFrame based on phenotype_id
         if phenotype_id == &#39;gene_id&#39;:
@@ -867,15 +868,17 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
                 &#39;chr&#39;: chrom,
                 &#39;start&#39;: start,
                 &#39;end&#39;: end,
-                &#39;gene_id&#39;: ids
-            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;], index=ids)
+                &#39;gene_id&#39;: ids,
+                &#39;strand&#39;: strand
+            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;, &#39;strand&#39;], index=ids)
         elif phenotype_id == &#39;gene_name&#39;:
             bed_df = pd.DataFrame({
                 &#39;chr&#39;: chrom,
                 &#39;start&#39;: start,
                 &#39;end&#39;: end,
-                &#39;gene_id&#39;: names
-            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;], index=names)
+                &#39;gene_id&#39;: names,
+                &#39;strand&#39;: strand
+            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;, &#39;strand&#39;], index=names)
         
         # Filter out excluded chromosomes
         mask = np.ones(len(chrom), dtype=bool)
@@ -890,7 +893,7 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
 
     def prepare_bed(df, bed_template_df, chr_subset=None):
         bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
-        bed_df = bed_df.groupby(&#39;#chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values(&#39;start&#39;))
+        bed_df = bed_df.groupby(&#39;#chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values([&#39;start&#39;,&#39;end&#39;]))
         if chr_subset is not None:
             bed_df = bed_df[bed_df.chr.isin(chr_subset)]
         return bed_df
@@ -936,8 +939,8 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
 
         bed_template_df_id = gtf_to_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
         bed_template_df_name = gtf_to_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
-        bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;])
-        bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;]
+        bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;strand&quot;])
+        bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;strand&quot;, &quot;gene_name&quot;]
         bed_template_df = bed_template_df.set_index(phenotype_id_column, drop=False)
         return bed_template_df
 
@@ -989,7 +992,7 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
         raise ValueError(f&quot;Unsupported molecular_trait_type: {molecular_trait_type}&quot;)
         
     qtl.io.write_bed(bed_df, ${_output[0]:r})
-    bed_df[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;]].assign(path=${_output[0]:r}).to_csv(${_output[1]:r}, &quot;\t&quot;, index=False)
+    bed_df[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;, &quot;strand&quot;]].assign(path=${_output[0]:r}).to_csv(${_output[1]:r}, &quot;\t&quot;, index=False)
 
     # If annotating gene or protein, save a gene_list.tsv for gene partitioning
     if molecular_trait_type in [&quot;gene&quot;, &quot;protein&quot;]:
@@ -1295,7 +1298,6 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
             file_contents = file.read()
         updated_contents = file_contents.replace(&quot;gene_biotype&quot;, &quot;gene_type&quot;)
         gtf = ${_input[1]:rn}.tmp${_input[1]:rx}
-        print(gtf)
         with open(gtf, &#39;w&#39;) as file:
             file.write(updated_contents)
 
