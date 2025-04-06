@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>xQTL Hierarchical Multiple Testing &#8212; FunGen-xQTL Consortium</title>
+    <title>Hierarchical Multiple Testing &#8212; FunGen-xQTL Consortium</title>
   
   
   
@@ -250,7 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="quantile_models/qr_and_twas.html">Quantile regression for QTL association testing</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">xQTL Hierarchical Multiple Testing</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Hierarchical Multiple Testing</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
 <ul class="nav bd-sidenav">
@@ -471,7 +471,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>xQTL Hierarchical Multiple Testing</h1>
+    <h1>Hierarchical Multiple Testing</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -481,7 +481,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-command">Example command</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-commands">Example commands</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#genetic-effect">Genetic effect</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-effect">Interaction effect</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-qtl">Quantile QTL</a></li>
@@ -498,8 +498,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="xqtl-hierarchical-multiple-testing">
-<h1>xQTL Hierarchical Multiple Testing<a class="headerlink" href="#xqtl-hierarchical-multiple-testing" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="hierarchical-multiple-testing">
+<h1>Hierarchical Multiple Testing<a class="headerlink" href="#hierarchical-multiple-testing" title="Link to this heading">#</a></h1>
 <p>This protocol implements a three-step procedure:</p>
 <ol class="arabic simple">
 <li><p>Local adjustment: p-values of all cis-variants adjusted within each gene</p></li>
@@ -507,8 +507,8 @@ document.write(`
 <li><p>Global informed identification of significant xQTL: xQTL with locally adjusted p-value below the threshold</p></li>
 </ol>
 <p>It also reorganizes intermediate files produced in tensorQTL analysis to specified archive folder for book-keeping or deletion, to save space.</p>
-<section id="example-command">
-<h2>Example command<a class="headerlink" href="#example-command" title="Link to this heading">#</a></h2>
+<section id="example-commands">
+<h2>Example commands<a class="headerlink" href="#example-commands" title="Link to this heading">#</a></h2>
 <section id="genetic-effect">
 <h3>Genetic effect<a class="headerlink" href="#genetic-effect" title="Link to this heading">#</a></h3>
 <p>With</p>
@@ -520,7 +520,7 @@ document.write(`
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span>LR<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.01<span class="w"> </span>--cis_window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.01<span class="w"> </span>--cis-window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--regional-pattern<span class="w"> </span><span class="s2">&quot;*.cis_qtl.regional.tsv.gz</span>$<span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
 </pre></div>
@@ -529,15 +529,16 @@ document.write(`
 </section>
 <section id="interaction-effect">
 <h3>Interaction effect<a class="headerlink" href="#interaction-effect" title="Link to this heading">#</a></h3>
-<p>With EigenMT method to get us the effective number of tests, it is recommended setting <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">cis_window</span></code> to zero to avoid having to recompute counts for Bonferroni correction,</p>
+<p>With EigenMT method to get us the effective number of tests, it is recommended setting <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">cis_window</span></code> <strong>both to zero</strong> to tell the program to <strong>not</strong> recompute counts for Bonferroni correction,</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;interaction/msex&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span><span class="w"> </span>--cis_window<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span><span class="w"> </span>--cis-window<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--regional-pattern<span class="w"> </span><span class="s2">&quot;*.cis_qtl_top_assoc.txt.gz</span>$<span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
+<span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_.*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--fdr-threshold<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="c1"># set it large for illustration purpose</span>
 </pre></div>
 </div>
 <p>The above approach seems recommended by <code class="docutils literal notranslate"><span class="pre">tensorqtl</span></code> package because it is their default option for interaction QTL analysis. We will also adopt it as a recommended practice.</p>
@@ -545,9 +546,10 @@ document.write(`
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;interaction/msex&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
+<span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_.*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--fdr-threshold<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="c1"># set it large for illustration purpose</span>
 </pre></div>
 </div>
 </section>
@@ -557,7 +559,7 @@ document.write(`
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/QR_ROSMAP_Ast_mega_quantile_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;.&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.05<span class="w"> </span>--cis_window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.05<span class="w"> </span>--cis-window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--af-col<span class="w"> </span>maf<span class="w"> </span>--tss-dist-col<span class="w"> </span>feature_tss<span class="w"> </span>--tes-dist-col<span class="w"> </span>feature_tes<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
 </pre></div>
@@ -581,15 +583,15 @@ parameter: af_col = &quot;af&quot;
 parameter: pvalue_cutoff = 0.05
 # This is used for both event and variant level significance filter
 parameter: fdr_threshold = 0.05
-# eg &quot;pvalue&quot; for pvalue, &quot;pvalue_*_interaction&quot; for interaction
+# eg &quot;pvalue&quot; for pvalue, &quot;pvalue_.*_interaction&quot; for interaction
 parameter: pvalue_pattern = &quot;pvalue&quot;
-# eg &quot;qvalue&quot; for pvalue, &quot;qvalue_*_interaction&quot; for interaction
+# eg &quot;qvalue&quot; for pvalue, &quot;qvalue_interaction&quot; for interaction
 parameter: qvalue_pattern = &quot;qvalue&quot;
 # eg &quot;*.cis_qtl.regional.tsv.gz$&quot; for genetic effect via our pipeline TensorQTL.ipynb
 # &quot;*.cis_qtl_top_assoc.txt.gz$&quot; for interaction genetic effect
 parameter: regional_pattern = &quot;NULL&quot;
-parameter: n_variants_suffix = &quot;cis_n_variants_stats.tsv.gz&quot;
 parameter: qtl_pattern = &quot;*.cis_qtl.pairs.tsv.gz$&quot;
+parameter: n_variants_suffix = &quot;cis_n_variants_stats.tsv.gz&quot;
 
 work_dir = f&quot;{cwd:a}/{sub_dir}&quot;
 if sub_dir == path(&quot;.&quot;):
@@ -606,7 +608,7 @@ else:
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[default]
-output: f&quot;{output_dir}/{cwd:b}_consolidated.rds&quot;
+output: f&quot;{output_dir}/{cwd:b}_multiple_testing_consolidated.rds&quot;
 task: trunk_workers = 1, tags = f&#39;tensorqtl_postprocessing_{_output:n}&#39;
 R: expand = &quot;${ }&quot;
 
@@ -721,7 +723,7 @@ R: expand = &quot;${ }&quot;
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-command">Example command</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-commands">Example commands</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#genetic-effect">Genetic effect</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-effect">Interaction effect</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-qtl">Quantile QTL</a></li>
