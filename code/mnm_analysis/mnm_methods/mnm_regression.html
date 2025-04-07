@@ -1829,7 +1829,7 @@ depends: sos_variable(&quot;regional_data&quot;)
 stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
 meta_info = regional_data[&#39;meta_info&#39;]
 input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
-output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0].replace(&quot;:&quot;, &quot;_&quot;).replace(&quot;-&quot;, &quot;_&quot;)}.fsusie_{prior}{&quot;_top_pc_weights&quot; if not skip_twas_weights else &quot;&quot;}.rds&#39;
+output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0].replace(&quot;:&quot;, &quot;_&quot;).replace(&quot;-&quot;, &quot;_&quot;)}.fsusie_{prior}_{post_processing}_{&quot;_top_pc_weights&quot; if not skip_twas_weights else &quot;&quot;}.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
     options(warn=1)
