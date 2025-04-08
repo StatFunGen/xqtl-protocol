@@ -1368,7 +1368,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     library(data.table)
     library(pecotmr)
     library(readr)
-
+    
     # get xQTL weight information
     xqtl_meta_df &lt;- fread(&quot;${xqtl_meta_data}&quot;) # Get related gene information from the xqtl_meta data table
     xqtl_type_table &lt;- if (isTRUE(file.exists(&quot;${xqtl_type_table}&quot;))) fread(&quot;${xqtl_type_table}&quot;) else NULL
@@ -1391,18 +1391,40 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     weight_db_list &lt;- split(weight_db_list, names(weight_db_list))
 
     # Update weight_db_list
-    weight_db_list_update &lt;- lapply(weight_db_list, function(file_list){
-        do.call(c, lapply(file_list, function(file) if (file.size(file) &gt; 200) file))
+    weight_db_list_update &lt;- lapply(weight_db_list, function(file_list) {
+        valid_files &lt;- Filter(function(file) {
+            if (file.size(file) &gt; 200) {
+                content &lt;- tryCatch({
+                    data &lt;- readRDS(file)
+                }, error = function(e) {
+                    warning(paste(&quot;Failed to read RDS file:&quot;, file))
+                    NULL
+                })
+
+                return(!is.null(content) &amp;&amp; any(sapply(content, function(gene_data) {
+                    is.list(gene_data) &amp;&amp; any(sapply(gene_data, function(context_data) {
+                        is.list(context_data) &amp;&amp; &quot;twas_variant_names&quot; %in% names(context_data)
+                    }))
+                })))
+            }
+            return(FALSE)
+        }, file_list)
+
+        if (length(valid_files) == 0) return(NULL)
+
+        return(valid_files)
     })
 
-    # Check if weight_db_list_update is empty
-    if(length(weight_db_list_update) &lt;= 0) {
-        stop(paste0(&quot;No weight information available from &quot;, paste0(weight_db_list, collapse=&quot;,&quot;), &quot;. &quot;))
+    weight_db_list_update &lt;- Filter(Negate(is.null), weight_db_list_update)
+
+    if (length(weight_db_list_update) == 0 || all(sapply(weight_db_list_update, length) == 0)) {
+        message(&quot;No valid twas weight files found after filtering. Exiting the script.&quot;)
+        quit(save = &quot;no&quot;, status = 0) 
     }
 
+    # Check if weight_db_list_update is empty
     # Define tau_values
     tau_values &lt;- seq(0.01, 0.99, 0.01)
-
     # Main processing loop
     for (gene_db in names(weight_db_list_update)) {
         weight_dbs &lt;- weight_db_list_update[[gene_db]]
@@ -1426,6 +1448,12 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
         }
     }
 
+    if (length(twas_weights_results) == 0 || all(sapply(twas_weights_results, is.null))) {
+        stop(&quot;twas_weights_results is empty or invalid. Exiting.&quot;)
+    }
+
+    saveRDS(twas_weights_results, &quot;${_output[0]:nnn}.grouped_quantile_twas_weight.rds&quot;, compress=&#39;xz&#39;)
+    #twas_weights_results
     #Step 2: twas analysis for imputable genes across contexts
     twas_results_db &lt;- twas_pipeline(twas_weights_data = twas_weights_results, 
                                     ld_meta_file_path = &quot;${ld_meta_data}&quot;, 
@@ -1435,9 +1463,28 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
                                     output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;} )
 
     # Merging with xQTL meta-data      
+    if (is.null(twas_results_db$twas_result) || nrow(twas_results_db$twas_result) == 0) {
+        message(&quot;twas_results_db$twas_result is NULL. Exiting script normally.&quot;)
+        quit(save = &quot;no&quot;, status = 0)  
+    }
+
     message(&quot;Merging twas_result with xqtl_meta_df...&quot;)    
-    twas_results_db$twas_result &lt;- merge(twas_results_db$twas_result, xqtl_meta_df[, c(&quot;region_id&quot;,&quot;TSS&quot;,&quot;start&quot;,&quot;end&quot;)], by.x=&quot;molecular_id&quot;, by.y=&quot;region_id&quot;)
-    twas_results_db$twas_result &lt;- unique(twas_results_db$twas_result)
+
+    # Check twas_results_db before merging
+    common_ids &lt;- intersect(twas_results_db$twas_result$molecular_id, xqtl_meta_df$region_id)       
+    if (length(common_ids) &gt; 0) {
+        twas_results_db$twas_result &lt;- merge(
+            twas_results_db$twas_result,
+            xqtl_meta_df[, c(&quot;region_id&quot;, &quot;TSS&quot;, &quot;start&quot;, &quot;end&quot;)],
+            by.x = &quot;molecular_id&quot;,
+            by.y = &quot;region_id&quot;
+        )
+        twas_results_db$twas_result &lt;- unique(twas_results_db$twas_result)
+    } else {
+        warning(&quot;No common molecular_id and region_id. Skipping merge.&quot;)
+    }
+    
+    
     fwrite(twas_results_db$twas_result[, c(2, 1, (ncol(twas_results_db$twas_result)-2):ncol(twas_results_db$twas_result), 3:(ncol(twas_results_db$twas_result)-3))], file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
 
     # Step 3: reformat for follow up cTWAS analysis
