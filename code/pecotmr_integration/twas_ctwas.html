@@ -954,6 +954,7 @@ parameter: rsq_option=&quot;rsq&quot;
 parameter: rsq_pval_option=[&quot;adj_rsq_pval&quot;, &quot;pval&quot;]
 # load by batches if memory resource is limited, default to load all at once 
 parameter: batch_load_memory = &#39;inf&#39;
+parameter: event_filter_rules = path()
 
 input: filtered_regional_xqtl_files, group_by = lambda x: group_by_region(x, filtered_regional_xqtl_files), group_with = &quot;filtered_region_info&quot;
 output_files = [f&#39;{cwd:a}/{step_name}/{name}.{_filtered_region_info[3]}.twas.tsv.gz&#39;]
@@ -974,6 +975,11 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     xqtl_meta_df &lt;- fread(&quot;${xqtl_meta_data}&quot;, data.table=FALSE) # Get related gene information from the xqtl_meta data table
     xqtl_type_table &lt;- if (isTRUE(file.exists(&quot;${xqtl_type_table}&quot;))) fread(&quot;${xqtl_type_table}&quot;) else NULL
     gene_list &lt;- c(${&#39;, &#39;.join([f&quot;&#39;{gene}&#39;&quot; for gene in _filtered_region_info[4]])})
+    event_filter_rules = ${&quot;NULL&quot; if not event_filter_rules.is_file() else &quot;&#39;%s&#39;&quot; % event_filter_rules}
+    if (!is.null(event_filter_rules)) {
+        event_filters &lt;- read.table(&quot;${event_filter_rules}&quot;)
+        event_filters &lt;- lapply(1:nrow(event_filters), function(ii) as.list(event_filters[ii,] %&gt;% unlist))
+    } else { event_filters &lt;- NULL }
 
     # Process weights 
     twas_weights_results &lt;- list()
@@ -983,7 +989,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     # remove weight db files that only contain messages: &quot;No SNPs found in the specified region ...&quot;
     weight_db_list_update &lt;- Filter(Negate(is.null), lapply(weight_db_list, function(file_list){do.call(c,lapply(file_list, function(file) if (file.size(file) &gt; 200) file))}))
     if(length(weight_db_list_update) &lt;= 0) stop(paste0(&quot;No weight information available from &quot;, paste0(weight_db_list, collapse=&quot;,&quot;), &quot;. &quot;))
-    
+
     # Step 1: Load TWAS weights and generate twas weight db, output export_twas_weights_db 
     for (gene_db in names(weight_db_list_update)) {
         weight_dbs &lt;- weight_db_list_update[[gene_db]]
@@ -1018,7 +1024,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
                                      rsq_pval_option=c(${&quot;, &quot;.join([f&#39;&quot;{x}&quot;&#39; for x in rsq_pval_option])}), 
                                      mr_pval_cutoff = ${mr_pval_cutoff},
                                      mr_coverage_column = &quot;${coverage}&quot;, 
-                                     output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;})     
+                                     output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;},
+                                     event_filters = event_filters)
     }
     rm(twas_weights_results)
     gc()
@@ -1286,6 +1293,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}_{prior_var_stru
 
     library(ctwas)
     library(pecotmr)
+    library(data.table)
     outputdir = &quot;${cwd:a}/ctwas/&quot;
 
     param_study_files &lt;- c(${_input:r,})
@@ -1302,11 +1310,11 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}_{prior_var_stru
     for (study in names(param_study_files)){
         group_prior &lt;- param[[study]]$group_prior
         group_prior_var &lt;- param[[study]]$group_prior_var 
-        finemap_res_file &lt;- file.path(outputdir, paste0(&quot;${name}_ctwas_finemap_res_${prior_var_structure}_${_region_name}_&quot;, study, &quot;_thin${thin}.rds&quot;))
+        finemap_res_file &lt;- file.path(outputdir, paste0(&quot;${name}_ctwas_finemap_res_${prior_var_structure}_${_region_name}_&quot;, study, &quot;_thin${thin}.tsv&quot;))
         susie_alpha_file &lt;- file.path(outputdir, paste0(&quot;${name}_ctwas_susie_alpha_res${prior_var_structure}_${_region_name}_&quot;, study, &quot;_thin${thin}.rds&quot;))
         if (nrow(region_data[[study]][[gsub(&quot;chr&quot;, &quot;&quot;, &quot;${_region_name}&quot;)]]$z_gene)==0) {
             message(&quot;No z_gene data available for &quot;, study, &quot; in ${_region_name}. &quot;)
-            saveRDS(data.frame(), finemap_res_file, compress=&#39;xz&#39;)
+            fwrite(data.frame(), finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
             next
         }
         screen_res &lt;- screen_regions_noLD(region_data[[study]][gsub(&quot;chr&quot;, &quot;&quot;, &quot;${_region_name}&quot;)],
@@ -1314,9 +1322,10 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}_{prior_var_stru
                                        ncore = ${numThreads},verbose = FALSE, logfile = file.path(outputdir, 
                                        paste0(&quot;${name}_screen_regions_${prior_var_structure}_${_region_name}_thin${thin}.log&quot;)))
         screened_region_data &lt;- screen_res$screened_region_data
+        saveRDS(screened_region_data, file.path(outputdir, paste0(&quot;${name}_ctwas_screenreg_${prior_var_structure}_${_region_name}_&quot;, study, &quot;_thin${thin}.rds&quot;)))
         if (length(screened_region_data)==0) {
             message(&quot;No region selected for &quot;, study, &quot; in ${_region_name}. &quot;)
-            saveRDS(data.frame(), finemap_res_file, compress=&#39;xz&#39;)
+            fwrite(data.frame(), finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
             next
         }
         screen_summary &lt;- screen_res$screen_summary
@@ -1340,7 +1349,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}_{prior_var_stru
         finemap_res &lt;- res$finemap_res
         finemap_res$pval &lt;- z2p(finemap_res$z)
         susie_alpha_res &lt;- res$susie_alpha_res
-        saveRDS(finemap_res, finemap_res_file, compress=&#39;xz&#39;)
+        fwrite(finemap_res, finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
         saveRDS(susie_alpha_res, susie_alpha_file, compress=&#39;xz&#39;)
         message(&quot;Fine-mapping completed for &quot;, study, &quot;. &quot;)
     }
