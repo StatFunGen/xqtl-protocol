@@ -1041,7 +1041,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
         fwrite(data.frame(), file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
     }
     # Step 3: reformat for follow up cTWAS analysis
-    if (${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;}) {
+    if (${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;} &amp; length(twas_results_db)!=0) {
         if (length(twas_results_db) &gt; 1){
             twas_results_db[[1]]$twas_data$weights &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$weights))
             twas_results_db[[1]]$twas_data$susie_weights_intermediate_qced &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$susie_weights_intermediate_qced))
@@ -1055,7 +1055,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
         saveRDS(twas_results_db[[1]]$twas_data, &quot;${_output[0]:nnn}.twas_data.rds&quot;, compress=&#39;xz&#39;)
     }
     if (${&quot;TRUE&quot; if save_mr_result else &quot;FALSE&quot;}) {
-        if(!is.null(twas_results_db)) {
+        if(length(twas_results_db)!=0) {
            fwrite(do.call(rbind, lapply(twas_results_db, function(x) x$mr_result)), file = &quot;${_output[0]:nnn}.mr_result.tsv.gz&quot;, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
         } else {
             fwrite(data.frame(), file = &quot;${_output[0]:nnn}.mr_result.tsv.gz&quot;, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
