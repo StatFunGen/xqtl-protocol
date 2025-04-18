@@ -1029,7 +1029,9 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     }
     rm(twas_weights_results)
     gc()
-    if(!is.null(twas_results_db)){
+    twas_results_db &lt;- Filter(Negate(is.null), twas_results_db)
+
+    if(length(twas_results_db)!=0){
         for (batch in 1:length(twas_results_db)){
             twas_results_db[[batch]]$twas_result &lt;- merge(twas_results_db[[batch]]$twas_result, xqtl_meta_df[, c(&quot;region_id&quot;,&quot;TSS&quot;,&quot;start&quot;,&quot;end&quot;)], 
                                                           by.x=&quot;molecular_id&quot;, by.y=&quot;region_id&quot;)
