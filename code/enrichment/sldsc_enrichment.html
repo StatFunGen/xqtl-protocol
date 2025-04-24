@@ -541,8 +541,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#make-annotation-file">Make Annotation File</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics-option-1-no-signed-summary-statistic">Munge Summary Statistics (Option 1: No Signed Summary Statistic)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics-option-2-no-signed-summary-statistic">Munge Summary Statistics (Option 2: No Signed Summary Statistic)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics">Munge Summary Statistics</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-functional-enrichment-using-annotations">Calculate Functional Enrichment using Annotations</a></li>
 </ul>
             </nav>
@@ -557,7 +556,8 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="stratified-ld-score-regression">
 <h1>Stratified LD Score Regression<a class="headerlink" href="#stratified-ld-score-regression" title="Link to this heading">#</a></h1>
-<p>This notebook implements the pipepline of <a class="reference external" href="https://github.com/bulik/ldsc/wiki">S-LDSC</a> for LD score and functional enrichment analysis.</p>
+<p>This notebook implements the pipepline of <a class="reference external" href="https://www.nature.com/articles/ng.3954">S-LDSC</a> for LD score and functional enrichment analysis.</p>
+<p><strong>Important: the S-LDSC implementation comes for the <a class="reference external" href="https://github.com/omerwe/polyfun/tree/master">polyfun</a> package, not the original LDSC from <code class="docutils literal notranslate"><span class="pre">bulik/ldsc</span></code> GitHub repo.</strong></p>
 <p>The purpose of this pipeline is to use LD Score Regression (LDSC) to analyze the heritability and enrichment of genome annotations across GWAS traits. By integrating genome annotation files and GWAS summary statistics, this pipeline allows single tau analysis (individual annotation contributions) and joint tau analysis (independent contributions of multiple annotations after removing shared effects).</p>
 <p>The pipeline is developed to integrate GWAS summary statistics data, annotation data, and LD reference panel data to compute functional enrichment for each of the epigenomic annotations that the user provides using the S-LDSC model. We will first start off with an introduction, instructions to set up, and the minimal working examples. Then the workflow code that can be run using SoS on any data will be at the end.</p>
 <section id="a-brief-review-on-stratified-ld-score-regression">
@@ -840,7 +840,7 @@ $<span class="math notranslate nohighlight">\(p = 2 \times \Phi(-|Z|)\)</span>$<
 <li><p>Per chromosome:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">.annot.gz</span></code>: Genome annotation scores.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.l2.ldscore.gz</span></code>: LD score file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.l2.ldscore.parquet</span></code>: LD score file.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">.l2.M</span></code>: Total SNP count.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">.l2.M_5_50</span></code>: SNP count in LD blocks.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">.log</span></code>: Processing logs.</p></li>
@@ -1077,7 +1077,8 @@ parameter: cwd = path(&#39;output&#39;)
 parameter: annotation_name = str
 parameter: joint_annotation_names = [] #if joint analysis is used, pass annotation names
 parameter: joint_tau = False
-parameter: ldsc_path = path() #optional: ldsc github
+parameter: python_exec = &quot;python&quot; # e.g. &quot;/home/you/.conda/envs/polyfun/bin/python&quot;
+parameter: polyfun_path   = path # e.g. &quot;/home/you/tools/polyfun&quot;
 
 # for make_annotation_files_ldscore workflow:
 parameter: annotation_file = path()
@@ -1085,7 +1086,8 @@ parameter: reference_anno_file = path()
 parameter: genome_ref_file = path() # with .bed 
 parameter: chromosome = []
 parameter: snp_list = path()
-parameter: ld_wind_cm = 1.0
+parameter: ld_wind_kb = 1000
+parameter: plink_dir = path() # ADSP_chr .bim, .bed, .fam
 
 # for get_heritability workflow
 parameter: all_traits_file = path() # txt file, each row contains all GWAS summary statistics name: e.g. CAD_META.filtered.sumstats.gz
@@ -1096,7 +1098,7 @@ parameter: frqfile_dir = path()  # Directory containing allele frequency files
 parameter: weights_dir = path()  # Directory containing LD weights
 
 # Number of threads
-parameter: numThreads = 8
+parameter: numThreads = 16
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 parameter: walltime = &#39;12h&#39;
@@ -1116,6 +1118,7 @@ parameter: mem = &#39;16G&#39;
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[make_annotation_files_ldscore]
 parameter: score_column = 3
 parameter: is_range = False # parameter to handle range expansion
+
 
 import pandas as pd
 import os
@@ -1219,11 +1222,13 @@ else:
 input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
 output: dict([
    (&#39;annot&#39;, f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.annot.gz&#39;),
-   (&#39;ldscore&#39;, f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.l2.ldscore.gz&#39;)
+   (&#39;ldscore&#39;, f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.l2.ldscore.parquet&#39;),
+   (&#39;Mfile&#39;,  f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.l2.M&#39;) # set output for generation .M files
 ])
+
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
 
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;annot&quot;]}.stderr&#39;, stdout = f&#39;{_output[&quot;annot&quot;]}.stdout&#39;, container = container, entrypoint = entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;annot&quot;]}.stderr&#39;, stdout = f&#39;{_output[&quot;annot&quot;]}.stdout&#39;
     library(data.table)
 
     # Function to clean chromosome notation
@@ -1359,66 +1364,67 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;annot&quot;]}.stderr&
     fwrite(result_anno, ${_output[&quot;annot&quot;]:nr}, 
         quote=FALSE, col.names=TRUE, row.names=FALSE, sep=&quot;\t&quot;)
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;annot&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;annot&quot;]:nnn}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;annot&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;annot&quot;]:nnn}.stdout&#39;
    gzip -f $[_output[&quot;annot&quot;]:n] 
 
-bash: expand=&quot;${ }&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout = f&#39;{_output[1]}.stdout&#39;   
-  #/home/al4225/miniconda3/envs/ldsc/bin/python2 ${ldsc_path}/ldsc.py \
-  ldsc \
-      --print-snps ${snp_list} \
-      --ld-wind-cm ${ld_wind_cm} \
-      --out ${_output[&quot;ldscore&quot;]:nnn} \
-      --bfile ${_input[-1]:nar} \
-      --yes-really \
-      --annot ${_output[0]:a} \
-      --l2                       
+bash: expand=&quot;${ }&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout = f&#39;{_output[1]}.stdout&#39;
+    echo &quot;Running chromosome ${input_chroms[_index]}&quot;  
+    ${python_exec} ${polyfun_path}/compute_ldscores.py \
+      --annot ${_output[&quot;annot&quot;]:a} \
+      --bfile ${genotype_ref_file:d}/ADSP_chr${input_chroms[_index]} \
+      --ld-wind-kb ${ld_wind_kb} \
+      --out ${_output[&quot;ldscore&quot;]} \
+      --allow-missing 
+
+# Newly added: generate .M files
+python: expand=True, stderr=f&#39;{_output[&quot;Mfile&quot;]}.stderr&#39;, stdout=f&#39;{_output[&quot;Mfile&quot;]}.stdout&#39;
+    import pyarrow.parquet as pq
+    import numpy as np
+    import pandas as pd
+    from pathlib import Path
+    PREAMBLE = [&#39;CHR&#39;,&#39;SNP&#39;,&#39;BP&#39;,&#39;A1&#39;,&#39;A2&#39;,&#39;CM&#39;]
+    parquet_file = Path(r&quot;${_output[&#39;ldscore&#39;]:ar}&quot;)
+    m_file       = Path(r&quot;${_output[&#39;Mfile&#39;]:ar}&quot;)
+    tbl = pq.read_table(parquet_file).combine_chunks()
+    df  = tbl.to_pandas()
+    # remove prefix and calculate sums
+    anno_df = df.drop(columns=[c for c in PREAMBLE if c in df.columns], errors=&#39;ignore&#39;)
+    col_sums = anno_df.values.sum(axis=0)
+    # save as M file
+    np.savetxt(m_file, col_sums.reshape(1,-1), fmt=&#39;%i&#39;, delimiter=&#39; &#39;)
+    print(f&quot;[OK] wrote {m_file} with {col_sums.size} annotation columns&quot;)
 </pre></div>
 </div>
 </div>
 </div>
 </section>
-<section id="munge-summary-statistics-option-1-no-signed-summary-statistic">
-<h2>Munge Summary Statistics (Option 1: No Signed Summary Statistic)<a class="headerlink" href="#munge-summary-statistics-option-1-no-signed-summary-statistic" title="Link to this heading">#</a></h2>
+<section id="munge-summary-statistics">
+<h2>Munge Summary Statistics<a class="headerlink" href="#munge-summary-statistics" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#This option is for when the summary statistic file does not contain a signed summary statistic (Z or Beta). 
-#In this case,the program will calculate Z for you based on A1 being the risk allele
-[munge_sumstats_no_sign]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># This unified step replaces both [munge_polyfun_sign] and [munge_polyfun_no_sign].
+# The script munge_polyfun_sumstats.py automatically detects whether signed statistics 
+# (Z, BETA/SE, etc.) are present and computes Z-scores if needed. 
+# No need to separate signed vs. unsigned inputs.
+[munge_polyfun]
+parameter: sumst   = str
+parameter: output  = str
+parameter: n       = 0
+parameter: min_info = 0.6
+parameter: min_maf  = 0.001
+parameter: keep_hla = False
+parameter: chi2_cut = 30
 
-
-
-#path to summary statistic file
-parameter: sumst = str
-#path to Hapmap3 SNPs file, keep all columns (SNP, A1, and A2) for the munge_sumstats program
-parameter: alleles = &quot;w_hm3.snplist&quot;
-#path to output file
-parameter: output = str
-
-bash: expand = True
-    munge_sumstats.py --sumstats {sumst} --merge-alleles {alleles} --out {output} --a1-inc
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="munge-summary-statistics-option-2-no-signed-summary-statistic">
-<h2>Munge Summary Statistics (Option 2: No Signed Summary Statistic)<a class="headerlink" href="#munge-summary-statistics-option-2-no-signed-summary-statistic" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># This option is for when the summary statistic file does contain a signed summary statistic (Z or Beta)
-[munge_sumstats_sign]
-
-
-
-#path to summary statistic file
-parameter: sumst = str
-#path to Hapmap3 SNPs file, keep all columns (SNP, A1, and A2) for the munge_sumstats program
-parameter: alleles = &quot;w_hm3.snplist&quot;
-#path to output file
-parameter: output = str
-
-bash: expand = True
-    munge_sumstats.py --sumstats {sumst} --merge-alleles {alleles} --out {output}
+bash: expand=True
+    {python_exec} {polyfun_path}/munge_polyfun_sumstats.py \
+        --sumstats {sumst} \
+        --out {output} \
+        {&#39;--n {}&#39;.format(n) if n else &#39;&#39;} \
+        {&#39;--min-info {}&#39;.format(min_info) if min_info != 0.6 else &#39;&#39;} \
+        {&#39;--min-maf {}&#39;.format(min_maf) if min_maf != 0.001 else &#39;&#39;} \
+        {&#39;--chi2-cutoff {}&#39;.format(chi2_cut) if chi2_cut != 30 else &#39;&#39;} \
+        {&#39;--keep-hla&#39; if keep_hla else &#39;&#39;} \
+        --remove-strand-ambig
 </pre></div>
 </div>
 </div>
@@ -1435,16 +1441,13 @@ bash: expand = &quot;${ }&quot;
     output_dir=&quot;${cwd}&quot;
     mkdir -p $output_dir
     while read -r trait; do
-        #/home/al4225/miniconda3/envs/ldsc/bin/python2 ${ldsc_path}/ldsc.py \
-        ldsc \
+        ${python_exec} ${polyfun_path}/ldsc.py \
             --h2 ${sumstat_dir}/$trait \
-            --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/baselineLD. \
+            --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/baseline_chr \
             --out ${cwd}/$trait \
             --overlap-annot \
-            --frqfile-chr ${frqfile_dir}/1000G.EUR.hg38. \
-            --w-ld-chr ${weights_dir}/weights.hm3_noMHC. \
-            --print-coefficients \
-            --print-delete-vals
+            --w-ld-chr ${weights_dir}/weights_chr \
+            --not-M-5-50
     done &lt; ${all_traits_file}
 </pre></div>
 </div>
@@ -1456,7 +1459,7 @@ bash: expand = &quot;${ }&quot;
 output: f&#39;{cwd:a}/{annotation_name}.joint_tau.initial_processed_stats.rds&#39; if joint_tau else f&#39;{cwd:a}/{annotation_name}.single_tau.initial_processed_stats.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
     library(data.table)
     print(paste(&quot;Joint tau analysis:&quot;, ${str(joint_tau).upper()}))
     is_joint &lt;- ${&quot;TRUE&quot; if joint_tau else &quot;FALSE&quot;}
@@ -1873,8 +1876,7 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#make-annotation-file">Make Annotation File</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics-option-1-no-signed-summary-statistic">Munge Summary Statistics (Option 1: No Signed Summary Statistic)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics-option-2-no-signed-summary-statistic">Munge Summary Statistics (Option 2: No Signed Summary Statistic)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics">Munge Summary Statistics</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-functional-enrichment-using-annotations">Calculate Functional Enrichment using Annotations</a></li>
 </ul>
   </nav></div>
