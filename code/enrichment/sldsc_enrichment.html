@@ -1087,7 +1087,6 @@ parameter: genome_ref_file = path() # with .bed
 parameter: chromosome = []
 parameter: snp_list = path()
 parameter: ld_wind_kb = 1000
-parameter: plink_dir = path() # ADSP_chr .bim, .bed, .fam
 
 # for get_heritability workflow
 parameter: all_traits_file = path() # txt file, each row contains all GWAS summary statistics name: e.g. CAD_META.filtered.sumstats.gz
@@ -1376,8 +1375,8 @@ bash: expand=&quot;${ }&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout =
       --out ${_output[&quot;ldscore&quot;]} \
       --allow-missing 
 
-# Newly added: generate .M files
 python: expand=True, stderr=f&#39;{_output[&quot;Mfile&quot;]}.stderr&#39;, stdout=f&#39;{_output[&quot;Mfile&quot;]}.stdout&#39;
+    # https://github.com/omerwe/polyfun/wiki/2.-Using-and-creating-functional-annotations#creating-your-own-annotations
     import pyarrow.parquet as pq
     import numpy as np
     import pandas as pd
@@ -1402,27 +1401,25 @@ python: expand=True, stderr=f&#39;{_output[&quot;Mfile&quot;]}.stderr&#39;, stdo
 <h2>Munge Summary Statistics<a class="headerlink" href="#munge-summary-statistics" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># This unified step replaces both [munge_polyfun_sign] and [munge_polyfun_no_sign].
-# The script munge_polyfun_sumstats.py automatically detects whether signed statistics 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># The script munge_polyfun_sumstats.py automatically detects whether signed statistics 
 # (Z, BETA/SE, etc.) are present and computes Z-scores if needed. 
-# No need to separate signed vs. unsigned inputs.
-[munge_polyfun]
-parameter: sumst   = str
-parameter: output  = str
+[munge_sumstats_polyfun]
+parameter: sumstats  = path
 parameter: n       = 0
 parameter: min_info = 0.6
 parameter: min_maf  = 0.001
 parameter: keep_hla = False
 parameter: chi2_cut = 30
-
-bash: expand=True
+input: sumstats
+output: f&quot;{_input:n}.munged.gz&quot;
+bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:nn}.stdout&#39;
     {python_exec} {polyfun_path}/munge_polyfun_sumstats.py \
-        --sumstats {sumst} \
-        --out {output} \
-        {&#39;--n {}&#39;.format(n) if n else &#39;&#39;} \
-        {&#39;--min-info {}&#39;.format(min_info) if min_info != 0.6 else &#39;&#39;} \
-        {&#39;--min-maf {}&#39;.format(min_maf) if min_maf != 0.001 else &#39;&#39;} \
-        {&#39;--chi2-cutoff {}&#39;.format(chi2_cut) if chi2_cut != 30 else &#39;&#39;} \
+        --sumstats {_input} \
+        --out {_output} \
+        {&#39;--n {}&#39;.format(n) if n&gt;0 else &#39;&#39;} \
+        {&#39;--min-info {}&#39;.format(min_info)} \
+        {&#39;--min-maf {}&#39;.format(min_maf)} \
+        {&#39;--chi2-cutoff {}&#39;.format(chi2_cut)} \
         {&#39;--keep-hla&#39; if keep_hla else &#39;&#39;} \
         --remove-strand-ambig
 </pre></div>
