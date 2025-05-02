@@ -513,7 +513,7 @@ document.write(`
 <h1>Multi-trait colocalization using ColocBoost<a class="headerlink" href="#multi-trait-colocalization-using-colocboost" title="Link to this heading">#</a></h1>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>This notebook performs colocalizatoin for multiple xQTL in a given region, with/without GWAS summary statistics. Current protocol (Feb, 2025) supports individual level xQTL data from the same cohort (multiple phenotypes, same genotype) along with summary statistics and companion LD reference data.</p>
+<p>We use ColocBoost to perform colocalization analyses <a class="reference external" href="https://www.medrxiv.org/content/10.1101/2025.04.17.25326042v1">cf. Cao et al (2025)</a>. In short, ColocBoost performs colocalization while accounting for multiple causal variants within a genomic region of interest and can scale to hundreds of traits. We allow users to include or omit GWAS summary statistics. Required inputs are individual xQTL data from the same cohort (multiple phenotypes, same genotype). Linkage disequilibrium reference data is required if GWAS summary statistics are used.</p>
 </section>
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
@@ -542,15 +542,15 @@ document.write(`
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
-<p>For each analysis region, the output are various ColocBoost models fitted and saved in RDS format.</p>
+<p>For each analysis region, the output are various ColocBoost models fitted and saved in RDS format. An RDS file with the following values will be generated for each gene of interest and for each GWAS, if GWAS integration is used.</p>
 <ol class="arabic simple">
-<li><p>ucos_summary</p></li>
-<li><p>vpa</p></li>
-<li><p>data_info</p></li>
-<li><p>model_info</p></li>
-<li><p>ucos_details</p></li>
-<li><p>region_info</p></li>
-<li><p>computing_time</p></li>
+<li><p>ucos_summary - a summary table of colocalization events</p></li>
+<li><p>vpa - the variable colocalized probability for each variable, or the probability of a variant being colocalized with at least one trait.</p></li>
+<li><p>data_info -  an object containing information on the input data</p></li>
+<li><p>model_info -  an object containing information on the colocboost model</p></li>
+<li><p>ucos_details - contains trait specific (uncolocalized) effects information</p></li>
+<li><p>region_info - information on the region(s) of interest</p></li>
+<li><p>computing_time - time to run the steps of coloc boost (loading, QC and analysis)</p></li>
 </ol>
 </section>
 <section id="minimal-working-example-steps">
@@ -651,6 +651,113 @@ document.write(`
 </pre></div>
 </div>
 </div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: sos run /restricted/projectnb/xqtl/xqtl_protocol/xqtl-protocol/code/mnm_analysis/mnm_methods/colocboost.ipynb
+               [workflow_name | -t targets] [options] [workflow_options]
+  workflow_name:        Single or combined workflows defined in this script
+  targets:              One or more targets to generate
+  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  workflow_options:     Double-hyphen workflow-specific parameters
+
+Workflows:
+  get_analysis_regions
+  get_rss_analysis_regions
+  colocboost
+
+Global Workflow Options:
+  --name VAL (as str, required)
+                        It is required to input the name of the analysis
+  --cwd output (as path)
+  --genoFile VAL (as path, required)
+                        A list of file paths for genotype data, or the genotype data itself.
+  --phenoFile  paths
+
+                        One or multiple lists of file paths for phenotype data.
+  --phenoIDFile  paths()
+
+                        One or multiple lists of file paths for phenotype ID mapping file. The first column should be the original ID, the 2nd column should be the ID to be mapped to.
+  --covFile  paths
+
+                        Covariate file path
+  --gwas-meta-data . (as path)
+                        Summary statistics interface, see `rss_analysis.ipynb` for details
+  --ld-meta-data . (as path)
+  --gwas-name  (as list)
+  --gwas-data  (as list)
+  --column-mapping  (as list)
+  --region-list . (as path)
+                        Optional: if a region list is provide the analysis will be focused on provided region. The LAST column of this list will contain the ID of regions to focus on when
+                        region_name is given Otherwise, all regions with both genotype and phenotype files will be analyzed
+  --region-name  (as list)
+                        Optional: if a region name is provided the analysis would be focused on the union of provides region list and region names
+  --keep-samples . (as path)
+                        Only focus on a subset of samples
+  --keep-variants . (as path)
+                        Only focus on a subset of variants
+  --customized-association-windows . (as path)
+                        An optional list documenting the custom association window for each region to analyze, with four column, chr, start, end, region ID (eg gene ID). If this list is not
+                        provided, the default `window` parameter (see below) will be used.
+  --cis-window -1 (as int)
+                        Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp When this is set to negative, we will rely on using
+                        customized_association_windows
+  --[no-]save-data (default to False)
+                        save data object or not
+  --phenotype-names  [f&#39;{x:bn}&#39; for x in phenoFile]
+
+                        Name of phenotypes
+  --[no-]trans-analysis (default to False)
+                        And indicator whether it is trans-analysis, ie, not using phenotypic coordinate information
+  --seed 999 (as int)
+  --imiss 1.0 (as float)
+                        remove a variant if it has more than imiss missing individual level data
+  --maf 0.0025 (as float)
+                        MAF and variance of X cutoff
+  --xvar-cutoff 0.0 (as float)
+  --mac 5 (as int)
+                        MAC cutoff, on top of MAF cutoff
+  --[no-]indel (default to True)
+                        Remove indels if indel = False
+  --event-filter-rules . (as path)
+  --skip-analysis-pip-cutoff  (as list)
+                        If this value is not 0, then an initial single effect analysis will be performed to determine if follow up analysis will be continued or to simply return NULL If this is
+                        negative we use a default way to determine this cutoff which is conservative but still useful
+  --skip-sumstats-analysis-pip-cutoff -1.0 (as float)
+  --[no-]xqtl-coloc (default to True)
+                        Perform xQTL colocalization
+  --[no-]joint-gwas (default to False)
+                        Perform joint colocalization with many traits
+  --[no-]separate-gwas (default to True)
+                        Perform separate GWAS targeted anlaysis one at a time
+  --[no-]impute (default to False)
+                        Whether to impute the sumstat for all the snp in LD but not in sumstat.
+  --rcond 0.01 (as float)
+  --lamb 0.01 (as float)
+  --R2-threshold 0.6 (as float)
+  --minimum-ld 5 (as int)
+  --qc-method NULL
+                        summary stats QC methods: rss_qc, dentist, slalom
+  --extract-sumstats-region-name NULL
+  --sumstats-region-name-col NULL
+                        Either an index number in str format or &quot;NULL&quot; as a string
+  --comment-string NULL
+  --ld-data-name  (as list)
+  --container &#39;&#39;
+                        Analysis environment settings
+  --entrypoint &#39;&#39;
+  --job-size 200 (as int)
+                        For cluster jobs, number commands to run per job
+  --walltime 1h
+                        Wall clock time expected
+  --mem 20G
+                        Memory expected
+  --numThreads 1 (as int)
+                        Number of threads
+
+Sections
+  get_analysis_regions:
+  get_rss_analysis_regions:
+  colocboost:
+</pre></div>
 </div>
 </section>
 <section id="workflow-implementation">
