@@ -764,14 +764,28 @@ parameter: mem = &#39;16G&#39;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[enrichment]
 parameter: annotations_start = 7
-input: significant_variants_path, baseline_anno_path
 output: enrichment = f&#39;{cwd:a}/{step_name}/{name}.enrichment_results.rds&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
     library(tidyverse)
 
-    # Helper function for enrichment calculation
+    # Helper function to read different file formats
+    read_input_file &lt;- function(file_path) {
+        # Get full file extension (e.g., &quot;txt.gz&quot;)
+        full_ext &lt;- sub(&quot;.*\\.&quot;, &quot;&quot;, file_path)
+        # Get base extension (e.g., &quot;txt&quot; from &quot;txt.gz&quot;)
+        base_ext &lt;- tools::file_ext(sub(&quot;\\.gz$&quot;, &quot;&quot;, file_path))
+        
+        if (full_ext == &quot;rds&quot;) {
+            return(readRDS(file_path))
+        } else if (base_ext %in% c(&quot;txt&quot;, &quot;tsv&quot;)) {
+            return(data.table::fread(file_path))
+        } else {
+            stop(paste(&quot;Unsupported file format:&quot;, full_ext))
+        }
+    }
+
     calculate_OR_enrichment &lt;- function(set1, set2, target_set = NULL){
         if (is.null(target_set)){
             target_set &lt;- unique(union(set1, set2))
@@ -802,13 +816,26 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
 
     # Load input data
     print(&quot;Loading input data...&quot;)
-    coloc_anno &lt;- readRDS(&quot;${significant_variants_path}&quot;)
-    baseline &lt;- readRDS(&quot;${baseline_anno_path}&quot;)
+    your_anno &lt;- read_input_file(&quot;${significant_variants_path}&quot;)
+    baseline &lt;- read_input_file(&quot;${baseline_anno_path}&quot;)
     print(&quot;Data loaded successfully!&quot;)
 
+    if (&quot;chr&quot; %in% colnames(baseline) &amp;&amp; !&quot;CHR&quot; %in% colnames(baseline)) {
+        names(baseline)[names(baseline) == &quot;chr&quot;] &lt;- &quot;CHR&quot;
+    }
+
+    if (&quot;pos&quot; %in% colnames(baseline) &amp;&amp; !&quot;BP&quot; %in% colnames(baseline)) {
+        names(baseline)[names(baseline) == &quot;pos&quot;] &lt;- &quot;BP&quot;
+    }
+
+    if (!is.numeric(baseline$CHR)) {
+        baseline$CHR &lt;- as.numeric(gsub(&quot;chr&quot;, &quot;&quot;, baseline$CHR))
+    }
+
+
     # Process significant variants  
-    coloc_anno &lt;- sapply(1:nrow(coloc_anno), function(i) {
-        a &lt;- coloc_anno[i,]
+    your_anno &lt;- sapply(1:nrow(your_anno), function(i) {
+        a &lt;- your_anno[i,]
         if (is.numeric(a$chr) || grepl(&quot;^[0-9]+$&quot;, a$chr)) { 
             paste0(&quot;chr&quot;, a$chr, &quot;:&quot;, a$pos)
         } else {
@@ -821,6 +848,7 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
     baseline &lt;- baseline %&gt;%
         mutate(chr_bp = paste0(&quot;chr&quot;, CHR, &quot;:&quot;, BP))%&gt;%
         relocate(chr_bp, .before = 1)
+
     print(&quot;Processed baseline annotation.&quot;)
 
     # Get annotation columns
@@ -841,12 +869,12 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
         pp &lt;- which(baseline$CHR == chr)
         baseline.jk &lt;- baseline[-pp,]
         target_set &lt;- baseline.jk$chr_bp
-        
+
         for (i in 1:length(annotations)){
             anno &lt;- baseline %&gt;% select(annotations[i])
             pos &lt;- which(anno == 1)
             baseline.tmp &lt;- baseline$chr_bp[pos]
-            res &lt;- calculate_OR_enrichment(baseline.tmp, coloc_anno, target_set = target_set)
+            res &lt;- calculate_OR_enrichment(baseline.tmp, your_anno, target_set = target_set)
             OR_blockJacknife[i.chr, i] &lt;- res$OR
             Enrichment_blockJacknife[i.chr, i] &lt;- res$Enrichment
         }
@@ -857,20 +885,37 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
     print(&quot;Calculating final statistics...&quot;)
     OR &lt;- colMeans(log2(OR_blockJacknife), na.rm = TRUE)
     Enrichment &lt;- colMeans(Enrichment_blockJacknife, na.rm = TRUE)
+    Enrichment_log2 &lt;- colMeans(log2(Enrichment_blockJacknife), na.rm = TRUE)
 
-    OR_sd &lt;- Enrichment_sd &lt;- numeric(length(annotations))
+    OR_sd &lt;- Enrichment_sd &lt;- OR_sd_log2 &lt;- Enrichment_sd_log2 &lt;- numeric(length(annotations))
     for (j in 1:length(annotations)){
         OR_sd[j] &lt;- sqrt(var(OR_blockJacknife[,j], na.rm = TRUE) * 21^2 / 22)
         Enrichment_sd[j] &lt;- sqrt(var(Enrichment_blockJacknife[,j], na.rm = TRUE) * 21^2 / 22)
+        OR_sd_log2[j] &lt;- sqrt(var(log2(OR_blockJacknife[,j]), na.rm = TRUE) * 21^2 / 22)
+        Enrichment_sd_log2[j] &lt;- sqrt(var(log2(Enrichment_blockJacknife[,j]), na.rm = TRUE) * 21^2 / 22)
     }
+
+    # Calculate Z-scores and p-values
+    Enrichment_z_scores &lt;- Enrichment / Enrichment_sd
+    Enrichment_p_values &lt;- pchisq(Enrichment_z_scores^2, 1, lower.tail = FALSE)
+    Enrichment_log2_z_scores &lt;- Enrichment_log2 / Enrichment_sd_log2
+    Enrichment_log2_p_values &lt;- pchisq(Enrichment_log2_z_scores^2, 1, lower.tail = FALSE)
 
     # Create summary data frame
     summary_df &lt;- data.frame(
         Annotation = annotations,
-        OR = exp(OR),
+        OR = 2^OR,
         OR_SE = OR_sd,
+        OR_log2 = OR,
+        OR_SE_log2 = OR_sd_log2,
         Enrichment = Enrichment,
-        Enrichment_SE = Enrichment_sd
+        Enrichment_SE = Enrichment_sd,
+        Enrichment_log2 = Enrichment_log2,
+        Enrichment_SE_log2 = Enrichment_sd_log2,
+        Enrichment_Z_score = Enrichment_z_scores,
+        Enrichment_P_value = Enrichment_p_values,
+        Enrichment_log2_z_scores = Enrichment_log2_z_scores,
+        Enrichment_log2_p_values = Enrichment_log2_p_values        
     )
     print(&quot;Summary data frame created.&quot;)
 
@@ -883,13 +928,21 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
         &quot;Enrichment&quot; = Enrichment,
         &quot;OR_sd&quot; = OR_sd,
         &quot;Enrichment_sd&quot; = Enrichment_sd,
+        &quot;Enrichment_Z_scores&quot; = Enrichment_z_scores,
+        &quot;Enrichment_P_values&quot; = Enrichment_p_values,                
         &quot;annotations&quot; = annotations
     )
     print(&quot;Results prepared.&quot;)
 
+
     # Save results
     saveRDS(results, &#39;${_output[&#39;enrichment&#39;]}&#39;, compress=&#39;xz&#39;)
     print(paste(&quot;Results saved to:&quot;, &#39;${_output[&#39;enrichment&#39;]}&#39;))
+
+    # Save summary table as TSV gz
+    summary_tsv_path &lt;- sub(&quot;\\.rds$&quot;, &quot;_summary.tsv.gz&quot;, &#39;${_output[&#39;enrichment&#39;]}&#39;)
+    data.table::fwrite(summary_df, summary_tsv_path, sep=&quot;\t&quot;, quote=FALSE, compress=&quot;gzip&quot;)
+    print(paste(&quot;Summary table saved to:&quot;, summary_tsv_path))
 
     # End timing
     end_time &lt;- Sys.time()
