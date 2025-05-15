@@ -1084,7 +1084,8 @@ depends: sos_variable(&quot;filtered_region_info&quot;)
 # chromosome number to merge for region data, can be an integer or a string, i.e. &#39;chr1&#39;
 parameter: chrom=&quot;&quot;
 # twas weight cutoff for ctwas variant selection
-parameter: twas_weight_cutoff = 0
+parameter: twas_weight_cutoff = 0.0
+parameter: max_num_variants = Inf
 # cs_min_cor cutoff in susie finemapping result for variant selection
 parameter: cs_min_cor = 0
 # minimum pip cutoff in susie finemapping result for variant selection
@@ -1187,7 +1188,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
         ctwas_dat &lt;- merge_context_names(region_dat)
         if (is.null(ctwas_dat)) next 
         weight_tmp &lt;- trim_ctwas_variants(ctwas_dat, twas_weight_cutoff=${twas_weight_cutoff}, cs_min_cor=${cs_min_cor},
-                            min_pip_cutoff=${min_pip_cutoff}, max_num_variants=Inf)
+                            min_pip_cutoff=${min_pip_cutoff}, max_num_variants=${max_num_variants})
         for (study in names(weight_tmp)) {
             if (!study %in% gwas_studies) next
             weight_list[[study]] &lt;- c(weight_list[[study]], weight_tmp[[study]])
