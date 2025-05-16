@@ -721,9 +721,10 @@ $<span class="math notranslate nohighlight">\(
 <h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/functional_enrichment.ipynb enrichment\
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/eoo_enrichment.ipynb enrichment\
     --significant_variants_path /path/to/significant_variants.rds \
     --baseline_anno_path ./Anno_Enrichment/Baseline_anno_each.rds \
+    --name eoo \
     --cwd output
 </pre></div>
 </div>
@@ -734,10 +735,36 @@ $<span class="math notranslate nohighlight">\(
 <h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run functional_enrichment.ipynb -h
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run eoo_enrichment.ipynb -h
 </pre></div>
 </div>
 </div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">sos</span> <span class="n">run</span> <span class="n">eoo_enrichment</span><span class="o">.</span><span class="n">ipynb</span>
+               <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
+  <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
+  <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
+<span class="n">Workflows</span><span class="p">:</span>
+  <span class="n">enrichment</span>
+<span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+  <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
+                        <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">work</span> <span class="n">directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">analysis</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">significant</span><span class="o">-</span><span class="n">variants</span><span class="o">-</span><span class="n">path</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">baseline</span><span class="o">-</span><span class="n">anno</span><span class="o">-</span><span class="n">path</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">numThreads</span> <span class="mi">8</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+                        <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
+  <span class="o">--</span><span class="n">name</span> <span class="n">eoo</span>
+                        <span class="n">For</span> <span class="n">cluster</span> <span class="n">jobs</span><span class="p">,</span> <span class="n">number</span> <span class="n">commands</span> <span class="n">to</span> <span class="n">run</span> <span class="n">per</span> <span class="n">job</span>
+  <span class="o">--</span><span class="n">job</span><span class="o">-</span><span class="n">size</span> <span class="mi">1</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">walltime</span> <span class="mi">12</span><span class="n">h</span>
+  <span class="o">--</span><span class="n">mem</span> <span class="mi">16</span><span class="n">G</span>
+<span class="n">Sections</span>
+  <span class="n">enrichment</span><span class="p">:</span>
+    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+      <span class="o">--</span><span class="n">annotations</span><span class="o">-</span><span class="n">start</span> <span class="mi">7</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+</pre></div>
 </div>
 </section>
 <section id="workflow-implementation">
@@ -753,6 +780,7 @@ parameter: baseline_anno_path = path
 # Number of threads
 parameter: numThreads = 8
 # For cluster jobs, number commands to run per job
+parameter: name = &#39;eoo&#39;
 parameter: job_size = 1
 parameter: walltime = &#39;12h&#39;
 parameter: mem = &#39;16G&#39;
