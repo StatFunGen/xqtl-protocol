@@ -1085,7 +1085,7 @@ depends: sos_variable(&quot;filtered_region_info&quot;)
 parameter: chrom=&quot;&quot;
 # twas weight cutoff for ctwas variant selection
 parameter: twas_weight_cutoff = 0.0
-parameter: max_num_variants = Inf
+parameter: max_num_variants =&quot;Inf&quot;
 # cs_min_cor cutoff in susie finemapping result for variant selection
 parameter: cs_min_cor = 0
 # minimum pip cutoff in susie finemapping result for variant selection
@@ -1277,6 +1277,7 @@ parameter: thin=1.0
 parameter: prior_var_structure = &quot;shared_all&quot;
 parameter: multi_group = True
 parameter: numThreads = 8
+parameter: niter = 50
 
 thin=int(thin) if thin == 1.0 else thin
 skip_if(run_param_est == False, &quot; Skip [ctwas_2] parameter estimation. &quot; )
@@ -1323,7 +1324,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_param_est
         param &lt;- est_param(region_data[[study]],
                   group_prior_var_structure = &quot;${prior_var_structure}&quot;, 
                   niter_prefit = 3,
-                  niter = 50,
+                  niter = ${niter},
                   min_group_size = 10,
                   ncore = ${numThreads},
                   verbose = TRUE)
