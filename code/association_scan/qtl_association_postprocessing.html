@@ -481,12 +481,17 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-commands">Example commands</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#genetic-effect">Genetic effect</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-effect">Interaction effect</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-qtl">Quantile QTL</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description-fixme">Description [FIXME]</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-genetic-effect">i. Genetic Effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-interaction-effect">ii. Interaction Effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-quantile-qtl">iii. Quantile QTL</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
 </ul>
             </nav>
         </div>
@@ -500,6 +505,8 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="hierarchical-multiple-testing">
 <h1>Hierarchical Multiple Testing<a class="headerlink" href="#hierarchical-multiple-testing" title="Link to this heading">#</a></h1>
+<section id="description-fixme">
+<h2>Description [FIXME]<a class="headerlink" href="#description-fixme" title="Link to this heading">#</a></h2>
 <p>This protocol implements a three-step procedure:</p>
 <ol class="arabic simple">
 <li><p>Local adjustment: p-values of all cis-variants adjusted within each gene</p></li>
@@ -507,16 +514,40 @@ document.write(`
 <li><p>Global informed identification of significant xQTL: xQTL with locally adjusted p-value below the threshold</p></li>
 </ol>
 <p>It also reorganizes intermediate files produced in tensorQTL analysis to specified archive folder for book-keeping or deletion, to save space.</p>
-<section id="example-commands">
-<h2>Example commands<a class="headerlink" href="#example-commands" title="Link to this heading">#</a></h2>
-<section id="genetic-effect">
-<h3>Genetic effect<a class="headerlink" href="#genetic-effect" title="Link to this heading">#</a></h3>
+<p><a class="reference external" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6294523/">cf. Huang et al. 2018</a></p>
+</section>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Output from TensorQTL in the form of <code class="docutils literal notranslate"><span class="pre">*.cis_qtl.regional.tsv.gz</span></code> files</p></li>
+<li><p>A gene coordinates tsv file with <code class="docutils literal notranslate"><span class="pre">chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code> and <code class="docutils literal notranslate"><span class="pre">gene_id</span></code> columns</p></li>
+</ol>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">*significant_qtl.filtered_bonferroni_BH_adjusted.tsv.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*significant_qtl.original_bonferroni_BH_adjusted.tsv.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*significant_qtl.permutation_adjusted.tsv.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*significant_qtl.q_beta_adjusted_events_qvalue.tsv.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*significant_events.filtered_bonferroni_BH_adjusted.tsv.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*significant_events.original_bonferroni_BH_adjusted.tsv.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*significant_events.permutation_adjusted.tsv.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*summary.txt</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*multiple_testing_consolidated.rds</span></code></p></li>
+</ol>
+</section>
+<section id="minimal-working-example-steps">
+<h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
+<section id="i-genetic-effect">
+<h3>i. Genetic Effect<a class="headerlink" href="#i-genetic-effect" title="Link to this heading">#</a></h3>
 <p>With</p>
 <ol class="arabic simple">
 <li><p>permutation testing</p></li>
 <li><p>recounted number of variants limited to MAF and cis-windows for Bonferroni correction</p></li>
 </ol>
 <p>We recommend reassessing significance of Bonferroni correction if previous analysis use too large of window or contain many low frequency variants. Below we reassess with MAF &gt; 0.01 and cis-window size 1000000 up and downstreams of TSS/TES.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">cis_window</span></code> are not zero, the program will first compute the number of variants after filtering by these metric and write files with <code class="docutils literal notranslate"><span class="pre">n_variants_suffix</span></code> in the same folder as QTL data, then use those numbers to create filtered list of variants for Bonferroni adjusted p-value.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span>LR<span class="w"> </span><span class="se">\</span>
@@ -525,11 +556,12 @@ document.write(`
 <span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
 </pre></div>
 </div>
-<p>When <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">cis_window</span></code> are not zero, the program will first compute the number of variants after filtering by these metric and write files with <code class="docutils literal notranslate"><span class="pre">n_variants_suffix</span></code> in the same folder as QTL data, then use those numbers to create filtered list of variants for Bonferroni adjusted p-value.</p>
 </section>
-<section id="interaction-effect">
-<h3>Interaction effect<a class="headerlink" href="#interaction-effect" title="Link to this heading">#</a></h3>
+<section id="ii-interaction-effect">
+<h3>ii. Interaction Effect<a class="headerlink" href="#ii-interaction-effect" title="Link to this heading">#</a></h3>
 <p>With EigenMT method to get us the effective number of tests, it is recommended setting <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">cis_window</span></code> <strong>both to zero</strong> to tell the program to <strong>not</strong> recompute counts for Bonferroni correction,</p>
+<p>The above approach seems recommended by <code class="docutils literal notranslate"><span class="pre">tensorqtl</span></code> package because it is their default option for interaction QTL analysis. We will also adopt it as a recommended practice.</p>
+<p>To keep using variant count based Bonferroni correct, simply remove <code class="docutils literal notranslate"><span class="pre">--regional-pattern</span></code>,</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;interaction/msex&quot;</span><span class="w"> </span><span class="se">\</span>
@@ -541,20 +573,9 @@ document.write(`
 <span class="w">    </span>--fdr-threshold<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="c1"># set it large for illustration purpose</span>
 </pre></div>
 </div>
-<p>The above approach seems recommended by <code class="docutils literal notranslate"><span class="pre">tensorqtl</span></code> package because it is their default option for interaction QTL analysis. We will also adopt it as a recommended practice.</p>
-<p>To keep using variant count based Bonferroni correct, simply remove <code class="docutils literal notranslate"><span class="pre">--regional-pattern</span></code>,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>~/Downloads/snuc_DeJager_Ast_tensorQTL_MWE<span class="w"> </span>--sub-dir<span class="w"> </span><span class="s2">&quot;interaction/msex&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_.*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--fdr-threshold<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="c1"># set it large for illustration purpose</span>
-</pre></div>
-</div>
 </section>
-<section id="quantile-qtl">
-<h3>Quantile QTL<a class="headerlink" href="#quantile-qtl" title="Link to this heading">#</a></h3>
+<section id="iii-quantile-qtl">
+<h3>iii. Quantile QTL<a class="headerlink" href="#iii-quantile-qtl" title="Link to this heading">#</a></h3>
 <p>Here we summarize the significant QTL using both original variants as well as additionally considering MAF&gt;0.05 and cis-window 1Mb around a gene, for Bonferroni adjusted p-value,</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>~/GIT/xqtl-protocol/code/association_scan/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--gene-coordinates<span class="w"> </span>look_up_gene_id.tsv<span class="w"> </span><span class="se">\</span>
@@ -565,6 +586,62 @@ document.write(`
 <span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
 </pre></div>
 </div>
+</section>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run qtl_association_postprocessing.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="n">usage</span><span class="p">:</span> <span class="n">sos</span> <span class="n">run</span> <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">xqtl</span><span class="o">-</span><span class="n">protocol</span><span class="o">/</span><span class="n">code</span><span class="o">/</span><span class="n">association_scan</span><span class="o">/</span><span class="n">qtl_association_postprocessing</span><span class="o">.</span><span class="n">ipynb</span>
+               <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
+  <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
+  <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
+
+<span class="n">Workflows</span><span class="p">:</span>
+  <span class="n">default</span>
+
+<span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+  <span class="o">--</span><span class="n">cwd</span> <span class="o">.</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">gene</span><span class="o">-</span><span class="n">coordinates</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">archive</span><span class="o">-</span><span class="nb">dir</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">sub</span><span class="o">-</span><span class="nb">dir</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">maf</span><span class="o">-</span><span class="n">cutoff</span> <span class="mf">0.01</span> <span class="p">(</span><span class="k">as</span> <span class="nb">float</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">cis</span><span class="o">-</span><span class="n">window</span> <span class="mi">1000000</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">tss</span><span class="o">-</span><span class="n">dist</span><span class="o">-</span><span class="n">col</span> <span class="s1">&#39;start_distance&#39;</span>
+  <span class="o">--</span><span class="n">tes</span><span class="o">-</span><span class="n">dist</span><span class="o">-</span><span class="n">col</span> <span class="s1">&#39;end_distance&#39;</span>
+  <span class="o">--</span><span class="n">af</span><span class="o">-</span><span class="n">col</span> <span class="n">af</span>
+  <span class="o">--</span><span class="n">molecular</span><span class="o">-</span><span class="nb">id</span><span class="o">-</span><span class="n">col</span> <span class="s1">&#39;molecular_trait_object_id&#39;</span>
+  <span class="o">--</span><span class="n">pvalue</span><span class="o">-</span><span class="n">cutoff</span> <span class="mf">0.05</span> <span class="p">(</span><span class="k">as</span> <span class="nb">float</span><span class="p">)</span>
+                        <span class="n">This</span> <span class="ow">is</span> <span class="k">for</span> <span class="n">selecting</span> <span class="n">the</span> <span class="n">subset</span> <span class="n">of</span> <span class="n">data</span> <span class="n">to</span> <span class="n">process</span> <span class="n">on</span> <span class="n">protential</span> <span class="n">signals</span> <span class="n">assuming</span> <span class="n">we</span> <span class="n">drop</span> <span class="n">those</span> <span class="n">above</span> <span class="n">this</span> <span class="n">threshold</span> <span class="n">This</span> <span class="n">might</span> <span class="n">lead</span> <span class="n">to</span> <span class="n">underestimates</span> <span class="ow">in</span> <span class="n">qvalue</span> <span class="n">method</span>
+                        <span class="n">since</span> <span class="n">qvalue</span> <span class="o">&lt;</span> <span class="mf">0.05</span> <span class="n">may</span> <span class="n">contain</span> <span class="n">pvalue</span> <span class="o">&gt;</span> <span class="mf">0.05</span>
+  <span class="o">--</span><span class="n">fdr</span><span class="o">-</span><span class="n">threshold</span> <span class="mf">0.05</span> <span class="p">(</span><span class="k">as</span> <span class="nb">float</span><span class="p">)</span>
+                        <span class="n">This</span> <span class="ow">is</span> <span class="n">used</span> <span class="k">for</span> <span class="n">both</span> <span class="n">event</span> <span class="ow">and</span> <span class="n">variant</span> <span class="n">level</span> <span class="n">significance</span> <span class="nb">filter</span>
+  <span class="o">--</span><span class="n">pvalue</span><span class="o">-</span><span class="n">pattern</span> <span class="s1">&#39;^pvalue$&#39;</span>
+                        <span class="n">eg</span> <span class="s2">&quot;pvalue&quot;</span> <span class="k">for</span> <span class="n">pvalue</span><span class="p">,</span> <span class="s2">&quot;pvalue_.*_interaction&quot;</span> <span class="k">for</span> <span class="n">interaction</span>
+  <span class="o">--</span><span class="n">qvalue</span><span class="o">-</span><span class="n">pattern</span> <span class="s1">&#39;^qvalue$&#39;</span>
+                        <span class="n">eg</span> <span class="s2">&quot;qvalue&quot;</span> <span class="k">for</span> <span class="n">pvalue</span><span class="p">,</span> <span class="s2">&quot;qvalue_interaction&quot;</span> <span class="k">for</span> <span class="n">interaction</span>
+  <span class="o">--</span><span class="n">regional</span><span class="o">-</span><span class="n">pattern</span> <span class="n">NULL</span>
+                        <span class="n">eg</span> <span class="s2">&quot;*.cis_qtl.regional.tsv.gz$&quot;</span> <span class="k">for</span> <span class="n">genetic</span> <span class="n">effect</span> <span class="n">via</span> <span class="n">our</span> <span class="n">pipeline</span> <span class="n">TensorQTL</span><span class="o">.</span><span class="n">ipynb</span> <span class="s2">&quot;*.cis_qtl_top_assoc.txt.gz$&quot;</span> <span class="k">for</span> <span class="n">interaction</span> <span class="n">genetic</span> <span class="n">effect</span>
+  <span class="o">--</span><span class="n">qtl</span><span class="o">-</span><span class="n">pattern</span> <span class="s1">&#39;*.cis_qtl.pairs.tsv.gz$&#39;</span>
+  <span class="o">--</span><span class="n">n</span><span class="o">-</span><span class="n">variants</span><span class="o">-</span><span class="n">suffix</span> <span class="s1">&#39;cis_n_variants_stats.tsv.gz&#39;</span>
+
+<span class="n">Sections</span>
+  <span class="n">default</span><span class="p">:</span>
+
+</pre></div>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
@@ -659,7 +736,6 @@ R: expand = &quot;${ }&quot;
 </div>
 </section>
 </section>
-</section>
 
     <script type="text/x-thebe-config">
     {
@@ -725,12 +801,17 @@ R: expand = &quot;${ }&quot;
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-commands">Example commands</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#genetic-effect">Genetic effect</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-effect">Interaction effect</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-qtl">Quantile QTL</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description-fixme">Description [FIXME]</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-genetic-effect">i. Genetic Effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-interaction-effect">ii. Interaction Effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-quantile-qtl">iii. Quantile QTL</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
 </ul>
   </nav></div>
 

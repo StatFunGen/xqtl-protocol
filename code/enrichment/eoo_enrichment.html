@@ -500,15 +500,8 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-summary-outputs">Step 3: Summary Outputs</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-format">Input Format</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#significant-variants-path">1. <code class="docutils literal notranslate"><span class="pre">significant_variants_path</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#baseline-anno-path">2. <code class="docutils literal notranslate"><span class="pre">baseline_anno_path</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output Format</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#enrichment-results-rds">1. <code class="docutils literal notranslate"><span class="pre">enrichment_results.rds</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
@@ -527,14 +520,7 @@ document.write(`
 <h1>Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife<a class="headerlink" href="#chromosome-specific-enrichment-analysis-of-annotations-using-block-jackknife" title="Link to this heading">#</a></h1>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>This notebook performs a chromosome-specific enrichment analysis for genomic annotations using a block jackknife approach. It computes odds ratios (OR) and enrichment statistics for each annotation column by systematically leaving out one chromosome at a time and recalculating the statistics. The analysis provides insight into the overlap and significance of annotations in relation to significant variants within a genomic region.</p>
-<p>Key features:</p>
-<ul class="simple">
-<li><p>Helper function to compute odds ratios and enrichment.calculate_OR_enrichment</p></li>
-<li><p>Chromosome-level leave-one-out cross-validation.</p></li>
-<li><p>Summary statistics, including means and standard errors for OR and enrichment values.</p></li>
-</ul>
-<p>The results are saved as an RDS file for downstream analysis.</p>
+<p>We include a chromosome-specific enrichment analysis for genomic annotations using a block jackknife approach. It computes odds ratios (OR) and enrichment statistics for each annotation column by systematically leaving out one chromosome at a time and recalculating the statistics. The analysis provides insight into the overlap and significance of annotations in relation to significant variants within a genomic region.</p>
 </section>
 <section id="definitions-and-test-statistics">
 <h2>Definitions and Test Statistics<a class="headerlink" href="#definitions-and-test-statistics" title="Link to this heading">#</a></h2>
@@ -633,16 +619,17 @@ $<span class="math notranslate nohighlight">\(
 </ul>
 </section>
 </section>
-<section id="input-format">
-<h2>Input Format<a class="headerlink" href="#input-format" title="Link to this heading">#</a></h2>
-<section id="significant-variants-path">
-<h3>1. <code class="docutils literal notranslate"><span class="pre">significant_variants_path</span></code><a class="headerlink" href="#significant-variants-path" title="Link to this heading">#</a></h3>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">significant_variants_path</span></code></p></li>
+</ol>
 <ul>
-<li><p><strong>Format</strong>: RDS file containing significant variants.</p></li>
+<li><p><strong>Format</strong>: RDS file containing significant variants. This must contain some variants that are not in the <code class="docutils literal notranslate"><span class="pre">baseline_anno_path</span></code> input.</p></li>
 <li><p><strong>Columns</strong>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">chr</span></code>: Chromosome number (integer).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pos</span></code>: Genomic position (integer).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chr</span></code>: Chromosome number (integer, required).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pos</span></code>: Genomic position (integer, required).</p></li>
 </ul>
 </li>
 <li><p><strong>Example</strong>:</p>
@@ -653,21 +640,19 @@ $<span class="math notranslate nohighlight">\(
 </div>
 </li>
 </ul>
-</section>
-<section id="baseline-anno-path">
-<h3>2. <code class="docutils literal notranslate"><span class="pre">baseline_anno_path</span></code><a class="headerlink" href="#baseline-anno-path" title="Link to this heading">#</a></h3>
+<ol class="arabic simple" start="2">
+<li><p><code class="docutils literal notranslate"><span class="pre">baseline_anno_path</span></code></p></li>
+</ol>
 <ul>
-<li><p><strong>Format</strong>: RDS file containing a tabular data frame with baseline annotations.</p></li>
+<li><p><strong>Format</strong>: RDS file containing a tabular data frame with baseline annotations. This must contain some variants that are not in the <code class="docutils literal notranslate"><span class="pre">significant_variants_path</span></code> input.</p></li>
 <li><p><strong>Columns</strong>:</p>
 <ul class="simple">
-<li><p><strong>CHR</strong>: Chromosome number (integer).</p></li>
-<li><p><strong>BP</strong>: Genomic base pair position (integer).</p></li>
-<li><p><strong>SNP</strong>: SNP ID (character).</p></li>
-<li><p><strong>CM</strong>: Centimorgan position (numeric).</p></li>
-<li><p><strong>base</strong>: Base-level information (integer).</p></li>
-<li><p><strong>Annotation columns</strong>: Binary columns (0/1) for various genomic annotations (e.g., <code class="docutils literal notranslate"><span class="pre">Coding_UCSC</span></code>, <code class="docutils literal notranslate"><span class="pre">Conserved_LindbladToh</span></code>, <code class="docutils literal notranslate"><span class="pre">CTCF_Hoffman</span></code>, etc.).</p></li>
-<li><p><strong>Flanking regions</strong>: Binary columns indicating the presence of annotations within 500 bp of the main region (e.g., <code class="docutils literal notranslate"><span class="pre">Coding_UCSC.flanking.500</span></code>, <code class="docutils literal notranslate"><span class="pre">Conserved_LindbladToh.flanking.500</span></code>, etc.).</p></li>
-<li><p><strong>Additional annotation metrics</strong>: Annotation statistics like species enhancer counts and promoter scores (<code class="docutils literal notranslate"><span class="pre">Human_Enhancer_Villar_Species_Enhancer_Count</span></code>, <code class="docutils literal notranslate"><span class="pre">Human_Promoter_Villar_ExAC</span></code>, etc.).</p></li>
+<li><p><strong>CHR</strong>: Chromosome number (integer, required).</p></li>
+<li><p><strong>BP</strong>: Genomic base pair position (integer, required).</p></li>
+<li><p><strong>SNP</strong>: SNP ID (character, optional).</p></li>
+<li><p><strong>CM</strong>: Centimorgan position (numeric, optional).</p></li>
+<li><p><strong>base</strong>: Base-level information (integer, optional).</p></li>
+<li><p><strong>Annotation columns</strong>: Binary columns (0/1, required) for various genomic annotations (e.g., <code class="docutils literal notranslate"><span class="pre">Coding_UCSC</span></code>, <code class="docutils literal notranslate"><span class="pre">Conserved_LindbladToh</span></code>, <code class="docutils literal notranslate"><span class="pre">CTCF_Hoffman</span></code>, etc.). Multiple such annnotation columns may exist in the input file. The columns start index of this file is given in the <code class="docutils literal notranslate"><span class="pre">--annotations-start</span></code> argument.</p></li>
 </ul>
 </li>
 <li><p><strong>Example</strong>:</p>
@@ -681,12 +666,11 @@ $<span class="math notranslate nohighlight">\(
 </li>
 </ul>
 </section>
-</section>
-<hr class="docutils" />
-<section id="output-format">
-<h2>Output Format<a class="headerlink" href="#output-format" title="Link to this heading">#</a></h2>
-<section id="enrichment-results-rds">
-<h3>1. <code class="docutils literal notranslate"><span class="pre">enrichment_results.rds</span></code><a class="headerlink" href="#enrichment-results-rds" title="Link to this heading">#</a></h3>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">enrichment_results.rds</span></code></p></li>
+</ol>
 <ul>
 <li><p><strong>Format</strong>: RDS file containing the following components:</p>
 <ul>
@@ -715,7 +699,6 @@ $<span class="math notranslate nohighlight">\(
 </ul>
 </li>
 </ul>
-</section>
 </section>
 <section id="minimal-working-example-steps">
 <h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
@@ -1064,15 +1047,8 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-summary-outputs">Step 3: Summary Outputs</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-format">Input Format</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#significant-variants-path">1. <code class="docutils literal notranslate"><span class="pre">significant_variants_path</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#baseline-anno-path">2. <code class="docutils literal notranslate"><span class="pre">baseline_anno_path</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output Format</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#enrichment-results-rds">1. <code class="docutils literal notranslate"><span class="pre">enrichment_results.rds</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
