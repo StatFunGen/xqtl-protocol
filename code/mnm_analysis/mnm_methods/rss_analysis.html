@@ -588,7 +588,8 @@ document.write(`
 <li><p>sumstats_qc_impute: a table of sumstat after qc and imputation.</p></li>
 <li><p>sumstats_qc_impute: a table of sumstat after qc and imputation, bad quality imputation variants removed by empirical thresholds. (the actual input of all qc_impute results)</p></li>
 </ol>
-<p>Each rds file is accompanied by 2 tsv files reporting elements 8 and 9 in tsv format for the sake of convenience.</p>
+<p>Each rds file is accompanied by a tsv files reporting elements 9 in tsv format for the sake of convenience.</p>
+<p>If Diagnostics is set to TRUE, a diagnostic file will added in each .rds file. This diagnostic table provides key information to add additional finemapping results using other methods in this RDS file.</p>
 </section>
 <section id="minimal-working-example">
 <h2>Minimal working example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
@@ -598,7 +599,7 @@ document.write(`
     --ld-meta-data ADSP_R4_EUR.LD.list \
     --gwas-meta-data AD_sumstat_list.txt \
     --impute --qc-method dentist --finemapping-method susie_rss \
-    --container oras://ghcr.io/cumc/pecotmr_apptainer:latest
+    --diagnostics
 </pre></div>
 </div>
 </div>
@@ -805,11 +806,11 @@ parameter: imiss = 1.0
 # MAF cutoff
 parameter: maf = 0.0025
 parameter: comment_string = &quot;NULL&quot;
-
+parameter: diagnostics = False
 depends: sos_variable(&quot;regional_data&quot;)
 regions = list(regional_data[&#39;regions&#39;].keys())
 input: for_each = &quot;regions&quot;
-output: f&#39;{cwd:a}/{step_name}/{&quot;%s&quot; % qc_method.upper() if qc_method else &quot;noQC&quot;}{&quot;_RAISS_imputed&quot; if impute else &quot;&quot;}.chr{_regions.replace(&quot;:&quot;, &quot;_&quot;)}.univariate{&quot;_%s&quot; % finemapping_method if finemapping_method else &quot;&quot;}.rds&#39;
+output: f&#39;{cwd:a}/{step_name}/{&quot;%s&quot; % qc_method.upper() if qc_method else &quot;noQC&quot;}{&quot;_RAISS_imputed&quot; if impute else &quot;&quot;}.chr{_regions.replace(&quot;:&quot;, &quot;_&quot;)}.univariate{&quot;_%s&quot; % finemapping_method if finemapping_method else &quot;&quot;}.rds&#39; if not diagnostics else f&#39;{cwd:a}/{step_name}/Automated_QC.chr{_regions.replace(&quot;:&quot;, &quot;_&quot;)}.univariate.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
     library(pecotmr)
@@ -862,7 +863,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                                         impute_opts = list(rcond = ${rcond}, R2_threshold = ${R2_threshold}, minimum_ld = ${minimum_ld}, lamb=${lamb}),
                                         finemapping_method = ${&quot;NULL&quot; if len(finemapping_method) == 0 else &quot;&#39;%s&#39;&quot; % finemapping_method}, 
                                         finemapping_opts = list(init_L = ${L}, max_L = ${max_L}, l_step = ${l_step}, coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}), signal_cutoff = ${pip_cutoff}),
-                                        pip_cutoff_to_skip = ${skip_analysis_pip_cutoff}, comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;}
+                                        pip_cutoff_to_skip = ${skip_analysis_pip_cutoff}, comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;},
+                                        diagnostics = ${&quot;TRUE&quot; if diagnostics else &quot;FALSE&quot;}
                                         )
         fwrite(res[[r]]$rss_data_analyzed, file = paste0(&quot;${_output:nn}.&quot;, extract_region_name, studies[r], &quot;.sumstats.tsv.gz&quot;), sep = &quot;\t&quot;, col.names = TRUE, row.names = FALSE, quote = FALSE, compress = &quot;gzip&quot;)
         if(is.null(res[[r]][[1]])){
