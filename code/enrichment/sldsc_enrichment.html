@@ -1095,6 +1095,8 @@ parameter: target_anno_dir = path()  # Directory containing target annotation fi
 parameter: baseline_ld_dir = path()  # Directory containing baseline LD score files
 parameter: frqfile_dir = path()  # Directory containing allele frequency files
 parameter: weights_dir = path()  # Directory containing LD weights
+parameter: baseline_name = &quot;baselineLD.&quot;  # Prefix of baseline annotation files
+parameter: weight_name = &quot;weights.hm3_noMHC.&quot;  # Prefix of LD weights files
 
 # Number of threads
 parameter: numThreads = 16
@@ -1366,32 +1368,48 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;annot&quot;]}.stderr&
 bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;annot&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;annot&quot;]:nnn}.stdout&#39;
    gzip -f $[_output[&quot;annot&quot;]:n] 
 
+R: expand=&quot;${ }&quot;, stderr=f&#39;{_output[&quot;Mfile&quot;]}.stderr&#39;, stdout=f&#39;{_output[&quot;Mfile&quot;]}.stdout&#39;
+    # Read the *.annot.gz produced in the previous step, calculate column-wise sums (M values) for all annotation columns, and save them as *.l2.M expected by sLDSC.
+    suppressPackageStartupMessages(library(data.table))
+    annot_file &lt;- ${_output[&quot;annot&quot;]:ar}   # path to chrX.annot.gz
+    out_file   &lt;- ${_output[&quot;Mfile&quot;]:ar}   # path to chrX.l2.M
+
+    # 1. Load the annotation matrix --------------------------------
+    # The first 4 columns are CHR, SNP, BP, CM; A1/A2 may exist.
+    annot_dt   &lt;- fread(annot_file)
+    annot_cols &lt;- setdiff(
+        names(annot_dt),
+        c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;BP&quot;, &quot;CM&quot;, &quot;A1&quot;, &quot;A2&quot;)
+    )
+
+    # 2. If no annotation columns are present, add a dummy column --
+    if (length(annot_cols) == 0L) {
+        annot_dt[, ANNOT1 := 1L]
+        annot_cols &lt;- &quot;ANNOT1&quot;
+    }
+
+    # 3. Compute M = column sums of the annotation matrix ----------
+    M &lt;- annot_dt[, lapply(.SD, sum), .SDcols = annot_cols]
+
+    # 4. Write the *.l2.M file (single line, tab-separated) --------
+    fwrite(
+        M,
+        file      = out_file,
+        sep       = &quot;\t&quot;,
+        col.names = FALSE,
+        quote     = FALSE
+    )
+    cat(sprintf(&quot;[OK] wrote %s with %d annotation columns\n&quot;,
+                out_file, length(annot_cols)))
+
 bash: expand=&quot;${ }&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout = f&#39;{_output[1]}.stdout&#39;
     echo &quot;Running chromosome ${input_chroms[_index]}&quot;  
     ${python_exec} ${polyfun_path}/compute_ldscores.py \
       --annot ${_output[&quot;annot&quot;]:a} \
-      --bfile ${genotype_ref_file:d}/ADSP_chr${input_chroms[_index]} \
+      --bfile ${_input[-1]:nar} \
       --ld-wind-kb ${ld_wind_kb} \
       --out ${_output[&quot;ldscore&quot;]} \
       --allow-missing 
-
-python: expand=True, stderr=f&#39;{_output[&quot;Mfile&quot;]}.stderr&#39;, stdout=f&#39;{_output[&quot;Mfile&quot;]}.stdout&#39;
-    # https://github.com/omerwe/polyfun/wiki/2.-Using-and-creating-functional-annotations#creating-your-own-annotations
-    import pyarrow.parquet as pq
-    import numpy as np
-    import pandas as pd
-    from pathlib import Path
-    PREAMBLE = [&#39;CHR&#39;,&#39;SNP&#39;,&#39;BP&#39;,&#39;A1&#39;,&#39;A2&#39;,&#39;CM&#39;]
-    parquet_file = Path(r&quot;${_output[&#39;ldscore&#39;]:ar}&quot;)
-    m_file       = Path(r&quot;${_output[&#39;Mfile&#39;]:ar}&quot;)
-    tbl = pq.read_table(parquet_file).combine_chunks()
-    df  = tbl.to_pandas()
-    # remove prefix and calculate sums
-    anno_df = df.drop(columns=[c for c in PREAMBLE if c in df.columns], errors=&#39;ignore&#39;)
-    col_sums = anno_df.values.sum(axis=0)
-    # save as M file
-    np.savetxt(m_file, col_sums.reshape(1,-1), fmt=&#39;%i&#39;, delimiter=&#39; &#39;)
-    print(f&quot;[OK] wrote {m_file} with {col_sums.size} annotation columns&quot;)
 </pre></div>
 </div>
 </div>
@@ -1440,11 +1458,13 @@ bash: expand = &quot;${ }&quot;
     while read -r trait; do
         ${python_exec} ${polyfun_path}/ldsc.py \
             --h2 ${sumstat_dir}/$trait \
-            --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/baseline_chr \
+            --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/${baseline_name} \
             --out ${cwd}/$trait \
             --overlap-annot \
-            --w-ld-chr ${weights_dir}/weights_chr \
-            --not-M-5-50
+            --w-ld-chr ${weights_dir}/${weight_name} \
+            --not-M-5-50 \
+            --print-coefficients \
+            --print-delete-vals
     done &lt; ${all_traits_file}
 </pre></div>
 </div>
@@ -1473,8 +1493,8 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
             cols &lt;- paste0(&quot;ANNOT_&quot;, annot_index) 
             num &lt;- num + ((nrow(dat)-1) * sapply(dat[, ..cols], var))
         } else {
-            if((4 + annot_index) &gt; ncol(dat)) stop(paste(&quot;Index out of range:&quot;, m))
-            num &lt;- num + ((nrow(dat)-1) * var(dat[, 4+annot_index, with=FALSE]))
+            if((5 + annot_index) &gt; ncol(dat)) stop(paste(&quot;Index out of range:&quot;, m))
+            num &lt;- num + ((nrow(dat)-1) * var(dat[, 5+annot_index, with=FALSE]))
         }
         den &lt;- den + (nrow(dat)-1)
     }
@@ -1504,7 +1524,7 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
 
     tryCatch({
         results &lt;- fread(files$result)
-        h2g &lt;- as.numeric(gsub(&quot;.*h2: ([0-9.]+).*&quot;, &quot;\\1&quot;, 
+        h2g &lt;- as.numeric(gsub(&quot;.*h2: (-?[0-9.]+).*&quot;, &quot;\\1&quot;,
                             grep(&quot;Total Observed scale h2:&quot;, readLines(files$log), value=TRUE)))
         delete_values &lt;- fread(files$delete)
         
@@ -1580,8 +1600,8 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
 
     if (is_joint) {
     # Get baseline info and indices
-    base &lt;- fread(paste0(&quot;${baseline_ld_dir}&quot;, &quot;/baselineLD.22.annot.gz&quot;))
-    base_index &lt;- ncol(base) - 4
+    base &lt;- arrow::read_parquet(paste0(&quot;${baseline_ld_dir}&quot;, &quot;/baselineLF2.2.UKB.22.annot.parquet&quot;))
+    base_index &lt;- ncol(base) - 5
     
     tab2 &lt;- fread(paste0(&quot;${cwd}&quot;, &quot;/&quot;, traits[1], &quot;.results&quot;))
     indices &lt;- 1:(nrow(tab2) - base_index)
