@@ -529,7 +529,7 @@ document.write(`
 <h1>Normalization and phenotype table generation for splicingQTL analysis<a class="headerlink" href="#normalization-and-phenotype-table-generation-for-splicingqtl-analysis" title="Link to this heading">#</a></h1>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>Quality control and normalization are performed on output from the leafcutter and psichomics tools. The raw output data is first converted to bed format. Quality control involves the removal of features with high missingness across samples (default 40%) and any remaining missing values are retained. Then introns with less than a minimal variation (default of 0.005) are removed from the data. Quantile-Quantile normalization is performed on the quality controlled data. Imputation of missing values is done separately afterwards.</p>
+<p>Quality control and normalization are performed on output from the leafcutter and psichomics tools. The raw output data is first converted to bed format. Quality control involves the removal of features with high missingness across samples (default 40%) and any remaining missing values are retained. Then introns with less than a minimal variation (default of 0.001) are removed from the data. Quantile-Quantile normalization is performed on the quality controlled data. Imputation of missing values is done separately afterwards.</p>
 </section>
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
@@ -1150,7 +1150,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <h2><code class="docutils literal notranslate"><span class="pre">psichomics_norm</span></code><a class="headerlink" href="#psichomics-norm" title="Link to this heading">#</a></h2>
 <p>Documentation: <a class="reference external" href="http://bioconductor.org/packages/release/bioc/html/psichomics.html"><code class="docutils literal notranslate"><span class="pre">psichomics</span></code></a>
 Consider retaining more information, the only QC on PSI values here are NA removal and a minimal variance filter, however, psichomics team suggested some further QC which can be checked <a class="reference external" href="https://github.com/nuno-agostinho/psichomics/issues/450">here</a>.
-For reference, default minimal variance in leafcutter QC is 0.005.</p>
+For reference, default minimal variance in leafcutter QC is 0.001.</p>
 <p>Due to the difference of alternative splicing event type in psichomics outputs, we are not performing normalization on each sample’s data (columns) but only on each event (rows).</p>
 <p><em><strong>TO DO:</strong></em> rename the .qqnorm. and test downstreams</p>
 <div class="cell docutils container">
