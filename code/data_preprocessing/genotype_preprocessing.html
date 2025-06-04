@@ -536,15 +536,14 @@ document.write(`
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># We only do this for autosomal variants
 
 echo ./ZOD14598_AD_GRM_WGS_2021-04-29_chr1.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr2.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr3.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr4.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr5.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr6.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr7.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr8.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr9.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr10.recalibrated_variants.vcf.gz  ./ZOD14598_AD_GRM_WGS_2021-04-29_chr11.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr12.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr13.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr14.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr15.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr16.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr17.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr18.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr19.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr20.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr21.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr22.recalibrated_variants.vcf.gz \
-    | tr &#39; &#39; &#39;\n&#39; &gt; vcf_qc/ZOD14598_AD_GRM_WGS_2021-04-29_vcf_files.txt
+    | tr &#39; &#39; &#39;\n&#39; &gt; /path/to/ZOD14598_AD_GRM_WGS_2021-04-29_vcf_files.txt
 
 sos run pipeline/VCF_QC.ipynb qc \
-    --genoFile vcf_qc/ZOD14598_AD_GRM_WGS_2021-04-29_vcf_files.txt \
-    --dbsnp-variants /mnt/vast/hpc/csg/snuc_pseudo_bulk/data/reference_data/00-All.add_chr.variants.gz \
-    --reference-genome /mnt/vast/hpc/csg/snuc_pseudo_bulk/data/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --genoFile /path/to/ZOD14598_AD_GRM_WGS_2021-04-29_vcf_files.txt \
+    --dbsnp-variants /path/to/reference_data/00-All.add_chr.variants.gz \
+    --reference-genome /path/to/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
     --cwd vcf_qc/ \
-    -J 22 --mem 120G \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+    -J 22 --mem 120G 
 </pre></div>
 </div>
 </div>
@@ -555,12 +554,9 @@ sos run pipeline/VCF_QC.ipynb qc \
 <p>Converting VCF to PLINK keeping only the ROSMAP samples.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink
-    --genoFile `ls vcf_qc/*.leftnorm.bcftools_qc.vcf.gz` \
-    --cwd genotype/ \
-    --keep-samples ./ROSMAP_sample_list.txt \
-    --mem 120G \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb vcf_to_plink \
+    --genoFile `ls /path/to/genotype/vcf/wgs.chr*.random.vcf.gz` \
+    --cwd /path/to/genotype/plink/ 
 </pre></div>
 </div>
 </div>
@@ -568,11 +564,9 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb merge_plink \
-    --genoFile `ls *.leftnorm.bcftools_qc.bed` \
-    --name ROSMAP_NIA_WGS.leftnorm.bcftools_qc  \
-    --cwd genotype/ \
-    -J 5 \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+    --genoFile `ls /path/to/plink/wgs.chr*.bed` \
+    --name wgs.merged  \
+    --cwd /path/to/output/genotype/ 
 </pre></div>
 </div>
 </div>
@@ -589,13 +583,12 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb qc_no_prune \
-   --cwd genotype \
-   --genoFile xqtl_association/protocol_example.genotype.chr21_22.bed \
+   --cwd /path/to/output/genotype/ \
+   --genoFile /path/to/output/genotype/wgs.merged.bed \
    --geno-filter 0.1 \
    --mind-filter 0.1 \
    --hwe-filter 1e-08   \
-   --mac-filter 0 \
-   --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+   --mac-filter 0 
 </pre></div>
 </div>
 </div>
@@ -607,10 +600,9 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb genotype_by_chrom \
-    --genoFile xqtl_association/protocol_example.genotype.chr21_22.bed \
-    --cwd output \
-    --chrom `cut -f 1 xqtl_association/protocol_example.genotype.chr21_22.bim | uniq | sed &quot;s/chr//g&quot;` \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+    --genoFile /path/to/output/genotype/wgs.merged.plink_qc.bed \
+    --cwd /path/to/output/genotype/ \
+    --chrom `cut -f 1 /path/to/output/genotype/wgs.merged.plink_qc.bim | uniq | sed &quot;s/chr//g&quot;`
 </pre></div>
 </div>
 </div>
@@ -621,11 +613,9 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
-        --cwd output/sample_meta \
-        --genoFile xqtl_association/protocol_example.genotype.chr21_22.fam  \
-        --phenoFile xqtl_association/protocol_example.protein.csv \
-        --container oras://ghcr.io/cumc/bioinfo_apptainer:latest \
-        --mem 5G
+        --cwd /path/to/output/genotype/ \
+        --genoFile /path/to/output/genotype/wgs.merged.plink_qc.fam  \
+        --phenoFile /path/to/output/phenotype/test_pheno.csv 
 </pre></div>
 </div>
 </div>
@@ -637,11 +627,9 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb king \
-    --cwd output/kinship \
-    --genoFile xqtl_association/protocol_example.genotype.chr21_22.bed \
-    --name pQTL \
-    --keep-samples output/sample_meta/protocol_example.protein.sample_genotypes.txt \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest \
+    --cwd /path/to/output/genotype/kinship \
+    --genoFile /path/to/output/genotype/wgs.merged.plink_qc.bed \
+    --name pcs \
     --no-maximize-unrelated \
     --mem 40G
 </pre></div>
@@ -654,10 +642,9 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb qc \
-   --cwd output/cache \
-   --genoFile output/kinship/protocol_example.genotype.chr21_22.pQTL.unrelated.bed \
+   --cwd /path/to/output/genotype/ \
+   --genoFile /path/to/output/genotype/kinship/wgs.merged.plink_qc.unrelated.bed \
    --mac-filter 5 \
-   --container oras://ghcr.io/cumc/bioinfo_apptainer:latest \
    --mem 16G
 </pre></div>
 </div>
@@ -667,12 +654,10 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb qc \
-   --cwd output/cache \
-   --genoFile xqtl_association/protocol_example.genotype.chr21_22.bed \
-   --keep-samples output/sample_meta/protocol_example.protein.sample_genotypes.txt \
-   --name pQTL \
+   --cwd /path/to/output/genotype/ \
+   --genoFile /path/to/output/genotype/wgs.merged.plink_qc.bed \
+   --name pcs \
    --mac-filter 5 \
-   --container oras://ghcr.io/cumc/bioinfo_apptainer:latest \
    --mem 40G
 </pre></div>
 </div>
@@ -684,9 +669,8 @@ sos run pipeline/VCF_QC.ipynb qc \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/PCA.ipynb flashpca \
-   --cwd output/genotype_pca \
-   --genoFile output/cache/protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.bed \
-   --container oras://ghcr.io/cumc/flashpcar_apptainer:latest \
+   --cwd /path/to/output/genotype/genotype_pca \
+   --genoFile /path/to/output/genotype/wgs.merged.plink_qc.prune.bed \
    --mem 16G
 </pre></div>
 </div>

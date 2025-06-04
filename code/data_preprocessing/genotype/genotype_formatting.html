@@ -547,10 +547,9 @@ document.write(`
 <p><code class="docutils literal notranslate"><span class="pre">ROSMAP_sample_list.txt</span></code> is a list that includes all ROSMAP samples we need for analysis, in formatting of FID, IID. This file has been uploaded to ftp: <code class="docutils literal notranslate"><span class="pre">/ftp_fgc_xqtl/projects/WGS/ROSMAP</span></code></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink
-    --genoFile `ls vcf_qc/*.leftnorm.bcftools_qc.vcf.gz` \
-    --cwd Genotype/ \
-    --keep_samples ./ROSMAP_sample_list.txt \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb vcf_to_plink \
+    --genoFile `ls /path/to/genotype/vcf/wgs.chr*.random.vcf.gz` \
+    --cwd /path/to/genotype/plink/ \
     --mem 120G
 </pre></div>
 </div>
@@ -564,9 +563,9 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb merge_plink \
-    --genoFile `ls *.leftnorm.bcftools_qc.bed` \
-    --name ROSMAP_NIA_WGS.leftnorm.bcftools_qc  \
-    --cwd Genotype/ \
+    --genoFile `ls /path/to/plink/wgs.chr*.bed` \
+    --name wgs.merged  \
+    --cwd /path/to/output/genotype/ \
     --mem 300G
 </pre></div>
 </div>
@@ -578,10 +577,10 @@ document.write(`
 <p>Timing: &lt;1 min</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
-    --genoFile input/protocol_example.genotype.chr21_22.bed \
-    --cwd output \
-    --chrom `cut -f 1 input/protocol_example.genotype.chr21_22.bim | uniq | sed &quot;s/chr//g&quot;`
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb genotype_by_chrom \
+    --genoFile /path/to/output/genotype/wgs.merged.plink_qc.bed \
+    --cwd /path/to/output/genotype/ \
+    --chrom `cut -f 1 /path/to/output/genotype/wgs.merged.plink_qc.bim | uniq | sed &quot;s/chr//g&quot;`
 </pre></div>
 </div>
 </div>

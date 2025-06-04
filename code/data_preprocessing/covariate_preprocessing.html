@@ -524,12 +524,11 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/covariate_formatting.ipynb merge_genotype_pc \
-    --cwd output/covariate \
-    --pcaFile output/genotype_pca/protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.rds \
-    --covFile xqtl_association/protocol_example.samples.tsv \
+    --cwd /path/to/output/covariate/ \
+    --pcaFile /path/to/output/genotype_pca/test.genotype.plink_qc.prune.pca.rds \
+    --covFile /path/to/test_covs.tsv \
     --tol-cov 0.4  \
-    --k `awk &#39;$3 &lt; 0.8&#39; output/genotype_pca/protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.scree.txt | tail -1 | cut -f 1 ` \
-    --container oras://ghcr.io/cumc/bioinfo_apptainer:latest
+    --k `awk &#39;$3 &lt; 0.8&#39; /path/to/output/genotype_pca/test.genotype.plink_qc.prune.pca.rds | tail -1 | cut -f 1 ` 
 </pre></div>
 </div>
 </div>
@@ -540,11 +539,10 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/covariate_hidden_factor.ipynb Marchenko_PC \
-   --cwd output/covariate \
-   --phenoFile output/phenotype/protocol_example.protein.bed.gz  \
-   --covFile output/covariate/protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.gz \
-   --mean-impute-missing \
-   --container oras://ghcr.io/cumc/pcatools_apptainer:latest
+   --cwd /path/to/output/covariate \
+   --phenoFile /path/to/output/phenotype/test_pheno.bed.gz  \
+   --covFile /path/to/output/covariate/test.genotype.plink_qc.prune.pca.gz \
+   --mean-impute-missing 
 </pre></div>
 </div>
 </div>
