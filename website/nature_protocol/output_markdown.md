@@ -91,7 +91,7 @@ Our pipeline calls alternative splicing events from RNA-seq data using leafcutte
 We use two different tools to quantify the many types of splicing events which are outlined in [[cf. Wang et al (2008)](https://doi.org/10.1038/nature07509)] and [[cf. Park et al (2018)](https://doi.org/10.1016/j.ajhg.2017.11.002)]. The first, leafcutter, quantifies the usage of alternatively excised introns. This collectively captures skipped exons, 5’ and 3’ alternative splice site usage and other complex events [[cf. Li et al 2018](https://doi.org/10.1038/s41588-017-0004-9)]. This method was previously applied to ROSMAP data as part of the Brain xQTL version 2.0.  The second, psichomics, quantifies specific splicing events [[cf. Agostinho et al. 2019](https://doi.org/10.1093/nar/gky888)].
 
 
-Quality control and normalization are performed on output from the leafcutter and psichomics tools. The raw output data is first converted to bed format. Quality control involves the removal of features with high missingness across samples (default 40%) and any remaining missing values are retained. Then introns with less than a minimal variation (default of 0.005) are removed from the data. Quantile-Quantile normalization is performed on the quality controlled data. Imputation of missing values is done separately afterwards. 
+Quality control and normalization are performed on output from the leafcutter and psichomics tools. The raw output data is first converted to bed format. Quality control involves the removal of features with high missingness across samples (default 40%) and any remaining missing values are retained. Then introns with less than a minimal variation (default of 0.001) are removed from the data. Quantile-Quantile normalization is performed on the quality controlled data. Imputation of missing values is done separately afterwards. 
 #### Data Pre-processing (Step 3)
 ##### A.  Genotype data preprocessing
 
@@ -352,7 +352,7 @@ sos run VCF_QC.ipynb qc    \
 Timing X min
 
 ```
-sos run pipeline/genotype_formatting.ipynb vcf_to_plink
+sos run xqtl-protocol/pipeline/genotype_formatting.ipynb vcf_to_plink \
 
 ```
 
@@ -369,7 +369,7 @@ sos run xqtl-protocol/pipeline/GWAS_QC.ipynb qc_no_prune \
 Timing <1 min
 
 ```
-sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
+sos run xqtl-protocol/pipeline/genotype_formatting.ipynb genotype_by_chrom \
 
 ```
 
@@ -435,7 +435,7 @@ Timing <1 min
 Timing < 1 min
 
 ```
-!sos run phenotype_formatting.ipynb phenotype_by_chrom \
+sos run xqtl-protocol/pipeline/phenotype_formatting.ipynb phenotype_by_chrom \
 
 ```
 
@@ -447,7 +447,7 @@ Timing < 1 min
 Timing <1 min
 
 ```
-sos run pipeline/covariate_formatting.ipynb merge_genotype_pc \
+sos run xqtl-protocol/pipeline/covariate_formatting.ipynb merge_genotype_pc \
 
 ```
 
@@ -465,7 +465,7 @@ Timing X min
 Timing <1 min
 
 ```
-!sos run covariate_hidden_factor.ipynb PCA \
+sos run xqtl-protocol/pipeline/covariate_hidden_factor.ipynb Marchenko_PC \
 
 ```
 
