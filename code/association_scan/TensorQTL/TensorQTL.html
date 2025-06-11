@@ -562,6 +562,20 @@ chr1	1216908	1232067	ENSG00000078808	/home/rl3328/motor_data/pheno_data/Quad/phe
 <ul class="simple">
 <li><p>Optionally, a list of genomic regions associate with each molecular features to analyze. The default cis-analysis will use a window around TSS. This can be customized to take given start and end genomic coordinates. we currently suggest using 1Mb window around a gene because longer customized cis-windows (such as extending by TAD) does not yield significant improvements.</p></li>
 </ul>
+<p>For trans-analysis:</p>
+<p><strong>Computational strategy designed for trans analysis:</strong></p>
+<p>Trans analysis faces significant memory challenges as we calculate all associations between all molecular traits × all genetic variants across the genome, creating a massive computational burden. To address this challenge, we implement a two-stage chromosome-based parallelization approach:</p>
+<p><strong>Stage 1 (trans_1): Chromosome-based parallelization</strong></p>
+<ul class="simple">
+<li><p>Phenotype data is processed per chromosome (e.g., 22 separate jobs for autosomes)</p></li>
+<li><p>For each phenotype chromosome, we test associations against variants from all 22 chromosomes</p></li>
+<li><p>This creates phenotype_chr × genotype_chr combinations (e.g., phenotype chr1 vs genotype chr1-22); Garbage was collected between each chromosome combination caculation to release memory</p></li>
+<li><p>Results are combined across all chromosome combinations and saved as compressed files</p></li>
+</ul>
+<p><strong>Stage 2 (trans_2): Significance filtering</strong></p>
+<ul class="simple">
+<li><p>Supports p-value cutoffs (<code class="docutils literal notranslate"><span class="pre">--pvalue-cutoff</span></code>) or q-value cutoffs (<code class="docutils literal notranslate"><span class="pre">--qvalue-cutoff</span></code>)</p></li>
+</ul>
 </section>
 </section>
 <section id="output">
@@ -700,7 +714,6 @@ $<span class="math notranslate nohighlight">\(
 </div>
 </div>
 </div>
-<p>The following will take more than 180G of memory to run.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/TensorQTL.ipynb trans \
@@ -709,6 +722,10 @@ $<span class="math notranslate nohighlight">\(
     --region-list output/protocol_example.protein.region_list \
     --covariate-file output/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.unrelated.plink_qc.prune.pca.Marchenko_PC.gz \
     --customized-cis-windows input/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
+    --chromosome 22 \
+    --no-permutation \
+    --covariate-pattern msex age_death pheno_PC \
+    --qvalue-cutoff 0.01 \
     --cwd output/association/trans/ \
     --MAC 5
 </pre></div>
@@ -871,20 +888,6 @@ The singularity image (sif) for running this MWE is uploaded to <a class="refere
 </div>
 </div>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/TensorQTL.ipynb trans \
-    --genotype-file plink_files_list.txt \
-    --phenotype-file MWE.bed.recipe \
-    --covariate-file /mnt/vast/hpc/csg/snuc_pseudo_bulk/eight_tissue_analysis/output/data_preprocessing/ALL/covariates/ALL.log2cpm.ALL.covariate.pca.resid.PEER.cov.gz \
-    --cwd ./output/trans_tensorQTL/ \
-    --region-list /mnt/vast/hpc/csg/snuc_pseudo_bulk/eight_tissue_analysis/reference_data/AD_genes.region_list \
-    --customized-cis-windows TADB_enhanced_cis.bed \
-    --MAC 5 --region-name ID
-</pre></div>
-</div>
-</div>
-</div>
 </section>
 <section id="setup-and-global-parameters">
 <h2>Setup and global parameters<a class="headerlink" href="#setup-and-global-parameters" title="Link to this heading">#</a></h2>
@@ -899,8 +902,8 @@ parameter: phenotype_file = path
 parameter: genotype_file = path
 # Covariate file
 parameter: covariate_file = path
-# Optional pattern to filter covariates (space-separated list of covariate prefixes or exact names)
-parameter: covariate_pattern = &quot;&quot;
+# Optional pattern to filter covariates (list of covariate prefixes or exact names)
+parameter: covariate_pattern = []
 # Prefix for the analysis output
 parameter: name = &quot;&quot;
 # An optional subset of regions of molecular features to analyze. The last column is the gene names
@@ -948,8 +951,7 @@ parameter: maf_threshold = MAC/(2.0*N)
 
 # Filtering significant trans associations (for trans_2 workflow)
 parameter: pvalue_cutoff = &quot;&quot;
-parameter: qvalue_cutoff = &quot;0.01&quot;  # default cutoff is 0.01
-
+parameter: qvalue_cutoff = &quot;&quot;
 
 import os
 import pandas as pd
@@ -1479,10 +1481,9 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
     covariates_df = pd.read_csv(covariates_file, sep=&#39;\t&#39;, index_col=0).T
 
     ## Filter covariates based on covariate_pattern if provided
-    covariate_pattern = &quot;$[covariate_pattern]&quot;.strip()
-    if covariate_pattern:
-        pattern_list = [p.strip() for p in covariate_pattern.split(&#39;,&#39;)]
-        print(f&quot;Filtering covariates using pattern: {pattern_list}&quot;)
+    covariate_pattern_list = $[covariate_pattern]
+    if covariate_pattern_list:
+        print(f&quot;Filtering covariates using pattern: {covariate_pattern_list}&quot;)
         pattern_mapping = {
             &quot;pheno_PC&quot;: [&quot;Hidden_Factor_PC&quot;],  # Map pheno_PC to columns starting with Hidden_Factor_PC
             &quot;geno_PC&quot;: [&quot;PC&quot;]                 # Map geno_PC to columns starting with PC
@@ -1490,11 +1491,11 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
         
         keep_cols = []
         for col in covariates_df.columns:
-            if col in pattern_list:
+            if col in covariate_pattern_list:
                 keep_cols.append(col)
                 continue
         
-            for pattern in pattern_list:
+            for pattern in covariate_pattern_list:
                 if pattern in pattern_mapping:
                     # For special patterns like pheno_PC and geno_PC, check their mappings
                     for mapped_pattern in pattern_mapping[pattern]:
@@ -1650,7 +1651,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
         lambda_col.columns = [&#39;molecular_trait_id&#39;, &#39;genomic_inflation_lambda&#39;]
         lambda_col.to_csv(&quot;$[_output:nnn].genomic_inflation.tsv.gz&quot;, sep=&#39;\t&#39;, index=None, 
                         compression={&#39;method&#39;: &#39;gzip&#39;, &#39;compresslevel&#39;: 9})
-        combined_results = combined_results.sort_values(by=[&#39;molecular_trait_id&#39;, &#39;chrom&#39;, &#39;pos&#39;])
+        combined_results = combined_results.sort_values(by=[&#39;chrom&#39;, &#39;pos&#39;, &#39;molecular_trait_id&#39;])
 
         # Output information
         print(&#39;Output Information:&#39;)
@@ -1686,44 +1687,27 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.s
             message(&quot;Too few p-values to calculate qvalue, fall back to BH&quot;)
             qvalue(pvalues, pi0 = 1)$qvalues
         })
-    }f
+    }
     
-    pairs_df = read_delim(&quot;$[_output[&#39;nominal&#39;]:n]&quot;, delim = &#39;\t&#39;)
+    #pairs_df = read_delim(&quot;$[_output[&#39;nominal&#39;]:n]&quot;, delim = &#39;\t&#39;)
+
+    pairs_df &lt;- read.table(&quot;$[_output[&#39;nominal&#39;]:n]&quot;, header = TRUE, sep = &#39;\t&#39;, stringsAsFactors = FALSE)
 
     if (nrow(pairs_df) &lt;= 1) {
         message(&quot;File is empty or has only header. No qvalues to calculate.&quot;)
     } else {
-        var_interaction &lt;- &quot;$[interaction]&quot;
-        # Check if &#39;interaction&#39; is a file
-        if (file.exists(var_interaction)) {
-            # Read the file into &#39;interaction_s&#39; dataframe
-            interaction_s &lt;- read.delim(var_interaction, row.names = 1)
-            # Update &#39;var_interaction&#39; to the first column name of &#39;interaction_s&#39;
-            var_interaction &lt;- names(interaction_s)[1]
+        unique_traits &lt;- unique(pairs_df$molecular_trait_id)
+        for(trait in unique_traits) {
+            trait_rows &lt;- pairs_df$molecular_trait_id == trait
+            pairs_df$qvalue[trait_rows] &lt;- compute_qvalues(pairs_df$pvalue[trait_rows])
         }
-
-        if (is.null(var_interaction) || var_interaction == &quot;&quot;) {
-            # No interaction, calculate regular qvalues by molecular_trait_id
-            pairs_df = pairs_df %&gt;% 
-                group_by(molecular_trait_id) %&gt;% 
-                mutate(qvalue = compute_qvalues(pvalue))
-        } else {
-            # Interaction present, calculate both regular and interaction qvalues
-            pairs_df = pairs_df %&gt;% 
-                group_by(molecular_trait_id) %&gt;% 
-                mutate(
-                    qvalue_main = compute_qvalues(pvalue),
-                    qvalue_interaction = compute_qvalues(get(paste0(&quot;pvalue_&quot;, var_interaction, &quot;_interaction&quot;)))
-                )         
-        }
-        write_delim(pairs_df, &quot;$[_output[&#39;nominal&#39;]:n]&quot;, &quot;\t&quot;)
+        
+        write.table(pairs_df, &quot;$[_output[&#39;nominal&#39;]:n]&quot;, sep = &#39;\t&#39;, row.names = FALSE, quote = FALSE)
     }
 
 bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;nominal&quot;]:nnn}.stdout&#39;, container = container
         bgzip --compress-level 9 $[_output[&quot;nominal&quot;]:n]
         tabix -S 1 -s 1 -b 2 -e 2 $[_output[&quot;nominal&quot;]]
-
-
 </pre></div>
 </div>
 </div>
@@ -1732,48 +1716,50 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[trans_2]
 # This workflow filters significant trans-QTL associations based on p-value or q-value cutoffs
-input: group_by = &quot;all&quot;
-output: f&#39;{cwd}/{name}_{(&quot;qvalue_%&quot; % qvalue_cutoff) if qvalue_cutoff else (&quot;pvalue_%s&quot; % pvalue_cutoff)}_trans_pairs.tsv&#39;
+input: [str(x) for x in output_from(&#39;trans_1&#39;) if str(x).endswith(&#39;.trans_qtl.pairs.tsv.gz&#39;)]
+output: f&#39;{cwd}/{_input:bn}.filtered_trans_pairs.tsv&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: expand=&quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
     #!/bin/bash
     set -e
-    home_dir=&quot;$[cwd]&quot;
+    input_file=&quot;$[_input]&quot;
     pvalue_cutoff=&quot;$[pvalue_cutoff]&quot;
     qvalue_cutoff=&quot;$[qvalue_cutoff]&quot;
-    first_file=$(ls &quot;${home_dir}&quot;/*trans_qtl.pairs.tsv.gz | head -n 1)
     
-    # Determine cutoff value 
-    if [ -n &quot;$pvalue_cutoff&quot; ] &amp;&amp; [ -n &quot;$qvalue_cutoff&quot; ]; then
-        echo &quot;Both p-value and q-value cutoffs provided, using q-value cutoff&quot;
+    # Determine cutoff value and column
+    if [ -n &quot;$qvalue_cutoff&quot; ]; then
         cutoff_value=&quot;$qvalue_cutoff&quot;
-        cutoff_col=$(zcat &quot;$first_file&quot; | awk -F &#39;\t&#39; -v col=&#39;qvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
+        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;qvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
+        cutoff_name=&quot;qvalue_${qvalue_cutoff}&quot;
+        echo &quot;Using q-value cutoff: $cutoff_value&quot;
     elif [ -n &quot;$pvalue_cutoff&quot; ]; then
         cutoff_value=&quot;$pvalue_cutoff&quot;
-        cutoff_col=$(zcat &quot;$first_file&quot; | awk -F &#39;\t&#39; -v col=&#39;pvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
-    elif [ -n &quot;$qvalue_cutoff&quot; ]; then
-        cutoff_value=&quot;$qvalue_cutoff&quot;
-        cutoff_col=$(zcat &quot;$first_file&quot; | awk -F &#39;\t&#39; -v col=&#39;qvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
+        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;pvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
+        cutoff_name=&quot;pvalue_${pvalue_cutoff}&quot;
+        echo &quot;Using p-value cutoff: $cutoff_value&quot;
     else
         echo &quot;No cutoff provided, using default q-value cutoff of 0.01&quot;
         cutoff_value=&quot;0.01&quot;
-        cutoff_col=$(zcat &quot;$first_file&quot; | awk -F &#39;\t&#39; -v col=&#39;qvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
+        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;qvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
+        cutoff_name=&quot;qvalue_0.01&quot;
     fi
     
     echo &quot;Using column $cutoff_col with cutoff value $cutoff_value&quot;
+    
+    # Create the final output directory and file
+    input_basename=$(basename &quot;$input_file&quot; .gz)
+    input_basename=${input_basename%.tsv}
+    final_output_dir=&quot;$[cwd]/$[name]${cutoff_name}_filtered&quot;
+    final_output_file=&quot;${final_output_dir}/${input_basename}.${cutoff_name}_filtered_trans_pairs.tsv&quot;
+    mkdir -p &quot;$final_output_dir&quot;
 
-    output_file=&quot;$[_output[0]]&quot;
-    mkdir -p $(dirname &quot;$output_file&quot;)
-    zcat &quot;$first_file&quot; | head -n 1 &gt; &quot;$output_file&quot;
+    zcat &quot;$input_file&quot; | head -n 1 &gt; &quot;$final_output_file&quot;
     
-    for gz_file in &quot;${home_dir}&quot;/*trans_qtl.pairs.tsv.gz; do
-        echo &quot;Processing $gz_file...&quot;
-        # Append significant data from each .gz file to the collective file
-        zcat &quot;$gz_file&quot; | awk -v cutoff=&quot;$cutoff_value&quot; -v col=&quot;$cutoff_col&quot; &#39;NR == 1 {next} NR &gt; 1 &amp;&amp; $col &lt; cutoff&#39; &gt;&gt; &quot;$output_file&quot;
-    done
-    
-    echo &quot;Total significant associations found: $(wc -l &lt; &quot;$output_file&quot;) (including header)&quot;
+    # Filter and append significant associations
+    echo &quot;Processing $input_file...&quot;
+    zcat &quot;$input_file&quot; | awk -v cutoff=&quot;$cutoff_value&quot; -v col=&quot;$cutoff_col&quot; &#39;NR &gt; 1 &amp;&amp; $col &lt; cutoff&#39; &gt;&gt; &quot;$final_output_file&quot;
+    echo &quot;Total significant associations found: $(wc -l &lt; &quot;$final_output_file&quot;) (including header)&quot;
 </pre></div>
 </div>
 </div>
