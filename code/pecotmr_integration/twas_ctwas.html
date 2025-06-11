@@ -1022,6 +1022,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
       meta_data_df = xqtl_meta_df,
       max_memory_per_batch = ${&quot;Inf&quot; if batch_load_memory == &quot;inf&quot; else batch_load_memory}
     )
+    
     # Step 2: twas analysis for imputable genes across contexts
     twas_results_db &lt;- list()
     for (batch in 1:length(twas_weights_results)){
@@ -1181,8 +1182,24 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     weight_list = vector(&quot;list&quot;, length(gwas_studies))
     names(weight_list) &lt;- gwas_studies
     z_gene &lt;- weight_list  # empty list  
-    z_snp &lt;- weight_list
- 
+    
+    # get LD snp info table (snp_map) and ld variants 
+    max_pos &lt;- fread(&quot;${ld_meta_data}&quot;, data.table=FALSE)
+    max_pos &lt;- max(max_pos$end[max_pos[,1]==&quot;${chrom}&quot;])
+    region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = 0, end = max_pos+1)
+    snp_map &lt;- load_ld_snp_info(&quot;${ld_meta_data}&quot;, region_of_interest)
+    ld_variants &lt;- paste(&quot;chr&quot;, unlist(lapply(snp_map, function(x) x$id)))
+    ld_variants &lt;- ld_variants[!duplicated(ld_variants)]
+
+    regions_data &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;, names(snp_map))
+    region_info &lt;- regions_data$region_info
+    LD_map &lt;- regions_data$LD_info
+    if (!is.null(${name_suffix})) name &lt;- paste0(&quot;${name}_&quot;, ${name_suffix})  else name &lt;- &quot;${name}&quot;
+    saveRDS(LD_map, file.path(outputdir, paste0(name, &quot;.LD_map.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
+    saveRDS(snp_map, file.path(outputdir, paste0(name, &quot;.snp_map.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
+    rm(regions_data, LD_map)
+    gc()
+            
     # merge chromosome wide data, weight, z_gene, z_snp from the twas pipeline output of twas.data.rds files 
     for (region_dat in c(${_input:r,})){
         ctwas_dat &lt;- merge_context_names(region_dat)
@@ -1201,24 +1218,19 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     z_gene &lt;- Filter(Negate(is.null), z_gene)
     weight_list &lt;- Filter(Negate(is.null), weight_list)
     if (length(z_gene)==0 | length(weight_list)==0) stop(&quot;Please check input data. No twas z-score value available. &quot;)
-    
-    # get LD snp info table (snp_map) and ld variants 
-    max_pos &lt;- fread(&quot;${ld_meta_data}&quot;, data.table=FALSE)
-    max_pos &lt;- max(max_pos$end[max_pos[,1]==&quot;${chrom}&quot;])
-    region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = 0, end = max_pos+1)
-    snp_map &lt;- load_ld_snp_info(&quot;${ld_meta_data}&quot;, region_of_interest)
-    ld_variants &lt;- paste(&quot;chr&quot;, unlist(lapply(snp_map, function(x) x$id)))
-    ld_variants &lt;- ld_variants[!duplicated(ld_variants)]
 
-    regions_data &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;, names(snp_map))
-    region_info &lt;- regions_data$region_info
-    LD_map &lt;- regions_data$LD_info
-    if (!is.null(${name_suffix})) name &lt;- paste0(&quot;${name}_&quot;, ${name_suffix})  else name &lt;- &quot;${name}&quot;
-    saveRDS(LD_map, file.path(outputdir, paste0(name, &quot;.LD_map.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
-    saveRDS(snp_map, file.path(outputdir, paste0(name, &quot;.snp_map.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
-    rm(regions_data, LD_map)
-    gc()
-    
+    # if weight variants are trimmed, load LD for re-computing twas z score 
+    if (${twas_weight_cutoff}!=0 | ${cs_min_cor}!=0 | ${min_pip_cutoff}!=0 | ${max_num_variants}!=Inf ) {
+        region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = min(find_data(weight_list, c(3, &quot;p0&quot;))), end =  max(find_data(weight_list, c(3, &quot;p1&quot;))))
+        LD_list &lt;- load_LD_matrix(&quot;${ld_meta_data}&quot;, region_of_interest)
+        # remove duplicate variants
+        dup_idx &lt;- which(duplicated(LD_list$combined_LD_variants))
+        if (length(dup_idx) &gt;= 1) {
+            LD_list$combined_LD_variants &lt;- LD_list$combined_LD_variants[-dup_idx]
+            LD_list$combined_LD_matrix &lt;- LD_list$combined_LD_matrix[-dup_idx, -dup_idx]
+        }
+    }
+
     # for each gwas study - merge ctwas input data        
     for (study in names(weight_list)){
       if (is.null(z_gene[[study]])) next
@@ -1229,9 +1241,20 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
          outname &lt;- paste0(name, &quot;.ctwas_region_data.&quot;, study, &quot;.&quot;, contexts, &quot;.${chrom}&quot;)
          names(outname) &lt;- contexts
       }
+
       z_snp &lt;- harmonize_gwas(gwas_files[study], query_region=paste0(readr::parse_number(&quot;${chrom}&quot;), &quot;:0-&quot;, max_pos+1), ld_variants, c(&quot;beta&quot;, &quot;z&quot;), match_min_prop = 0)
-      z_snp &lt;- z_snp[,c(&quot;variant_id&quot;, &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;)]
-      colnames(z_snp)[1] &lt;-&quot;id&quot; 
+      z_snp &lt;- z_snp[, colnames(z_snp)[colnames(z_snp) %in% c(&quot;chrom&quot;, &quot;pos&quot;, &quot;variant_id&quot;, 
+                                        &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;, &quot;beta&quot;, &quot;n_sample&quot;,&quot;n_case&quot;, &quot;n_control&quot;, &quot;effect_allele_frequency&quot;)]]
+      z_snp &lt;- z_snp[, c(&quot;chrom&quot;, &quot;pos&quot;, colnames(z_snp)[!colnames(z_snp) %in% c(&quot;chrom&quot;, &quot;pos&quot;)])]
+      if (${twas_weight_cutoff}!=0 | ${cs_min_cor}!=0 | ${min_pip_cutoff}!=0 | ${max_num_variants}!=Inf){
+        # recompute twas z score in case of weight variants are reduced and replace old results 
+        for (context in names(weight_list[[study]])){
+            twas_df &lt;- twas_analysis(weight_list[[study]][[context]]$wgt, z_snp, LD_list$combined_LD_matrix, rownames(weight_list[[study]][[context]]$wgt))[[1]]
+            z_gene[[study]]$z[z_gene[[study]]$id==context &amp;z_gene[[study]]$gwas_study==study] &lt;- twas_df$z 
+        }
+      }
+      colnames(z_snp)[match(&quot;variant_id&quot;, colnames(z_snp))] &lt;-&quot;id&quot; 
+      z_snp &lt;- z_snp[, c(&quot;id&quot;, &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;)]
 
       # iterate by study-context pair (single group) or by study itself (multigroup) 
       for (group_name in outname){ 
@@ -1243,6 +1266,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
               if (length(weight_list[[study]][grepl(context, names(weight_list[[study]]))])==0) next
               subset_inx &lt;- which(grepl(context, names(weight_list[[study]])))
           }
+
           res &lt;- assemble_region_data(region_info,
                                     z_snp,
                                     z_gene[[study]],
