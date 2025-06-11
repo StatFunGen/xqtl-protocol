@@ -531,10 +531,10 @@ document.write(`
 <h3>i. Download Reference Data<a class="headerlink" href="#i-download-reference-data" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run reference_data.ipynb download_hg_reference --cwd ../reference_data
-sos run reference_data.ipynb download_gene_annotation --cwd ../reference_data
-sos run reference_data.ipynb download_ercc_reference --cwd ../reference_data
-sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb download_hg_reference --cwd reference_data
+sos run pipeline/reference_data_preparation.ipynb download_gene_annotation --cwd reference_data
+sos run pipeline/reference_data_preparation.ipynb download_ercc_reference --cwd reference_data
+sos run pipeline/reference_data_preparation.ipynb download_dbsnp --cwd reference_data
 </pre></div>
 </div>
 </div>
@@ -544,10 +544,10 @@ sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
 <h3>ii. Format Reference Data<a class="headerlink" href="#ii-format-reference-data" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run reference_data.ipynb hg_reference \
-    --cwd ../reference_data \
-    --ercc-reference ../reference_data/ERCC92.fa \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.fa 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb hg_reference \
+    --cwd reference_data \
+    --ercc-reference reference_data/ERCC92.fa \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.fa 
 </pre></div>
 </div>
 </div>
@@ -557,11 +557,11 @@ sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
 <h3>iii. Format Gene Feature Data<a class="headerlink" href="#iii-format-gene-feature-data" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run reference_data.ipynb gene_annotation \
-    --cwd ../reference_data \
-    --ercc-gtf ../reference_data/ERCC92.gtf \
-    --hg-gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb gene_annotation \
+    --cwd reference_data \
+    --ercc-gtf reference_data/ERCC92.gtf \
+    --hg-gtf reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta \
     --stranded 
 </pre></div>
 </div>
@@ -572,9 +572,9 @@ sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
 <h3>iv. Generate STAR Index<a class="headerlink" href="#iv-generate-star-index" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run reference_data.ipynb STAR_index \
-    --cwd ../reference_data \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb STAR_index \
+    --cwd reference_data \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta 
 </pre></div>
 </div>
 </div>
@@ -584,10 +584,10 @@ sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
 <h3>v. Generate RSEM Index<a class="headerlink" href="#v-generate-rsem-index" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run reference_data.ipynb RSEM_index \
-    --cwd ../reference_data \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --hg-gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb RSEM_index \
+    --cwd reference_data \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --hg-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
 </pre></div>
 </div>
 </div>
@@ -597,9 +597,9 @@ sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
 <h3>vi. Generate RefFlat Annotation for Picard<a class="headerlink" href="#vi-generate-refflat-annotation-for-picard" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run reference_data.ipynb RefFlat_generation \
-    --cwd ../reference_data \
-    --hg-gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb RefFlat_generation \
+    --cwd reference_data \
+    --hg-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
 </pre></div>
 </div>
 </div>
@@ -609,9 +609,9 @@ sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
 <h3>vii. Generate SUPPA Annotation for Psichomics<a class="headerlink" href="#vii-generate-suppa-annotation-for-psichomics" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run reference_data.ipynb SUPPA_annotation \
-    --cwd ../reference_data \
-    --hg_gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb SUPPA_annotation \
+    --cwd reference_data \
+    --hg_gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
 </pre></div>
 </div>
 </div>
@@ -621,8 +621,8 @@ sos run reference_data.ipynb download_dbsnp --cwd ../reference_data
 <h3>viii. Extract rsIDs for known variants<a class="headerlink" href="#viii-extract-rsids-for-known-variants" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run VCF_QC.ipynb dbsnp_annotate \
-    --genoFile ../reference_data/00-All.vcf.gz 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb dbsnp_annotate \
+    --genoFile reference_data/00-All.vcf.gz 
 </pre></div>
 </div>
 </div>

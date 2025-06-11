@@ -563,20 +563,33 @@ document.write(`
 <p><strong>Note:</strong> Suggested output naming convention is cohort_modality, eg ROSMAP_snRNA_pseudobulk.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colcoboost  \
-    --name protocol_example_protein  \
-    --genoFile input/xqtl_association/protocol_example.genotype.chr21_22.bed   \
-    --phenoFile output/phenotype/protocol_example.protein.region_list.txt \
-                output/phenotype/protocol_example.protein.region_list.txt \
-    --covFile output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
-              output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz  \
-    --customized-association-windows input/xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \ 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colocboost \
+    --name test_coloc_boost_xqtl_only  \
+    --cwd output/colocboost \
+    --genoFile output/plink/wgs.merged.bed \
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
+    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
     --no-separate-gwas --xqtl-coloc \
-    --region-name ENSG00000241973_P42356 ENSG00000160209_O00764 ENSG00000100412_Q99798 \
-    --phenotype-names trait_A trait_B
+    --region-name ENSG00000239945 \
+    --phenotype-names trait_A
 </pre></div>
 </div>
 </div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_rss_analysis_regions</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_rss_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_rss_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">regional_rss_data</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_analysis_regions</span><span class="p">:</span> 
+<span class="n">Loading</span> <span class="n">customized</span> <span class="n">association</span> <span class="n">analysis</span> <span class="n">window</span> <span class="kn">from</span><span class="w"> </span><span class="nn">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">TADB_enhanced_cis</span><span class="o">.</span><span class="n">bed</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">regional_data</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">colocboost</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">colocboost</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">colocboost</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">colocboost</span><span class="o">/</span><span class="n">colocboost</span><span class="o">/</span><span class="n">test_coloc_boost_xqtl_only</span><span class="o">.</span><span class="n">chr1_ENSG00000239945</span><span class="o">.</span><span class="n">cb_xqtl</span><span class="o">.</span><span class="n">rds</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">colocboost</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">w675afec4b9a12f39</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">3</span> <span class="n">completed</span> <span class="n">steps</span><span class="o">.</span>
+</pre></div>
 </div>
 <p>It is also possible to analyze a selected list of regions using option <code class="docutils literal notranslate"><span class="pre">--region-list</span></code>. The last column of this file will be used for the list to analyze. Here for example use the same list of regions as we used for customized association-window:</p>
 <div class="cell docutils container">
@@ -602,22 +615,36 @@ document.write(`
 <h3>GWAS-xQTL integration<a class="headerlink" href="#gwas-xqtl-integration" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colcoboost  \
-    --name protocol_example_protein  \
-    --genoFile input/xqtl_association/protocol_example.genotype.chr21_22.bed   \
-    --phenoFile output/phenotype/protocol_example.protein.region_list.txt \
-                output/phenotype/protocol_example.protein.region_list.txt \
-    --covFile output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
-              output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz  \
-    --customized-association-windows input/xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
-    --ld-meta-data input/LD_matrix/ld_meta_file.tsv \
-    --gwas-meta-data input/GWAS_sumstat_meta.tsv \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colocboost \
+    --name colocboost_gwas  \
+    --cwd output/colocboost_gwas \
+    --genoFile output/plink/wgs.merged.bed \
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
+    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --ld-meta-data data/ld_meta_file.tsv \
+    --gwas-meta-data data/colocboost/gwas_meta.txt \
     --separate-gwas --xqtl-coloc \
-    --region-name ENSG00000241973_P42356 ENSG00000160209_O00764 ENSG00000100412_Q99798 \
-    --phenotype-names trait_A trait_B
+    --region-name ENSG00000239945 \
+    --phenotype-names trait_A
 </pre></div>
 </div>
 </div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_rss_analysis_regions</span><span class="p">:</span> 
+<span class="n">Using</span> <span class="n">customized</span> <span class="n">association</span> <span class="n">window</span> <span class="n">file</span><span class="p">:</span> <span class="n">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">TADB_enhanced_cis</span><span class="o">.</span><span class="n">bed</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_analysis_regions</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_rss_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_rss_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">regional_rss_data</span>
+<span class="n">Loading</span> <span class="n">customized</span> <span class="n">association</span> <span class="n">analysis</span> <span class="n">window</span> <span class="kn">from</span><span class="w"> </span><span class="nn">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">TADB_enhanced_cis</span><span class="o">.</span><span class="n">bed</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">regional_data</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">colocboost</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">colocboost</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">colocboost</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">colocboost_gwas</span><span class="o">/</span><span class="n">colocboost</span><span class="o">/</span><span class="n">colocboost_gwas</span><span class="o">.</span><span class="n">chr1_ENSG00000239945</span><span class="o">.</span><span class="n">cb_xqtl</span><span class="o">.</span><span class="n">rds</span> <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">colocboost_gwas</span><span class="o">/</span><span class="n">colocboost</span><span class="o">/</span><span class="n">colocboost_gwas</span><span class="o">.</span><span class="n">chr1_ENSG00000239945</span><span class="o">.</span><span class="n">cb_xqtl_Wightman</span><span class="o">.</span><span class="n">rds</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">colocboost</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">w39fc8e9aa4cca1be</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">3</span> <span class="n">completed</span> <span class="n">steps</span><span class="o">.</span>
+
+</pre></div>
 </div>
 </section>
 </section>

@@ -544,35 +544,23 @@ document.write(`
 <h3>vii. Multi-sample read count normalization<a class="headerlink" href="#vii-multi-sample-read-count-normalization" title="Link to this heading">#</a></h3>
 <p>Timing &lt;10min</p>
 <p>TMM normalization of read counts.</p>
-<p><strong>Note:</strong> We recommend using a count-threshold default value of 6. This was changed to 1 below for the MWE.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run bulk_expression_normalization.ipynb normalize \
-    --cwd ../../output_test/normalize \
-    --tpm-gct ../../output_test/rnaseqc_qc/PCC_sample_list_subset.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz \
-    --counts-gct ../../output_test/rnaseqc_qc/PCC_sample_list_subset.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct.gz \
-    --annotation-gtf ../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
-    --sample-participant-lookup ../../PCC_sample_subset_map_test \
-    --count-threshold 1 \
-    --tpm_threshold 0.1 \
-    --sample_frac_threshold 0.2 \
-    --normalization_method tmm  \
-    --container oras://ghcr.io/statfungen/rna_quantification_apptainer:latest \
-    -s force -c ../csg.yml -q neurology
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/bulk_expression_normalization.ipynb normalize \
+    --cwd output/rnaseq \
+    --tpm-gct output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tpm.gct.gz \
+    --counts-gct output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.geneCount.gct.gz \
+    --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf  \
+    --count-threshold 1 --sample_participant_lookup data/rnaseq/sample_participant_lookup.txt
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>INFO: Running <span class=" -Color -Color-Green">normalize</span>: 
-INFO: t903fc22d31109304 <span class=" -Color -Color-Green">submitted</span> to neurology with job id Your job 2487615 (&quot;job_t903fc22d31109304&quot;) has been submitted
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: <span class=" -Color -Color-Green">normalize</span> output:   <span class=" -Color -Color-Green">/restricted/projectnb/xqtl/xqtl_protocol/output_test/normalize/PCC_sample_list_subset.rnaseqc.low_expression_filtered.outlier_removed.tmm.expression.bed.gz</span>
-INFO: Workflow normalize (ID=wc742b6df800ede96) is executed successfully with 1 completed step and 1 completed task.
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">normalize</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">normalize</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">normalize</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">rnaseq</span><span class="o">/</span><span class="n">bulk_rnaseq_tmp_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">outlier_removed</span><span class="o">.</span><span class="n">tmm</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">normalize</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">wfac0c64bd10a9bed</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">1</span> <span class="n">completed</span> <span class="n">step</span><span class="o">.</span>
 </pre></div>
-</div>
-</div>
 </div>
 </section>
 </section>
@@ -711,7 +699,7 @@ python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, s
 
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, stdout = f&#39;{_output[0]:nn}.stdout&#39;,container = container, entrypoint = entrypoint
     for i in {1..22} X Y MT; do echo chr$i; done &gt; ${_output[0]:bnnn}.vcf_chr_list
-    eqtl_prepare_expression.py ${_input[0]} ${_input[1]} ${_input[2]} \
+    eqtl_prepare_expression ${_input[0]} ${_input[1]} ${_input[2]} \
         ${_input[3]} ${_output[0]:nnn} \
         --chrs  ${_output[0]:bnnn}.vcf_chr_list \
         --tpm_threshold ${tpm_threshold} \

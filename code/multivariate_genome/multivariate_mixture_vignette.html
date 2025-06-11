@@ -569,31 +569,31 @@ document.write(`
 <h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
 <section id="i-compute-mash-prior">
 <h3>i. Compute MASH prior<a class="headerlink" href="#i-compute-mash-prior" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>sos run $PATH/mixture_prior.ipynb ed_bovy \
-    --output_prefix MWE_ed_bovy \
-    --data $PATH/MWE.rds \
-    --cwd $PATH/output/ --vhat mle
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mixture_prior</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">ed_bovy</span> \
+    <span class="o">--</span><span class="n">output_prefix</span> <span class="n">MWE_ed_bovy</span> \
+    <span class="o">--</span><span class="n">data</span> <span class="n">data</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE</span><span class="o">.</span><span class="n">rds</span> \
+    <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span> <span class="o">--</span><span class="n">vhat</span> <span class="n">mle</span> 
 </pre></div>
 </div>
 </section>
 <section id="ii-mash-fit">
 <h3>ii. MASH fit<a class="headerlink" href="#ii-mash-fit" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>sos run $PATH/mash_fit.ipynb mash \
-    --output-prefix MWE_ed_bovy_posterior \
-    --data $PATH/MWE.rds \
-    --vhat-data $PATH/MWE_ed_bovy.EZ.V_simple.rds \
-    --prior-data $PATH/MWE_ed_bovy.EZ.prior.rds \
-    --compute-posterior \
-    --cwd $PATH/output/ \
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mash_fit</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">mash</span> \
+    <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">prefix</span> <span class="n">MWE_ed_bovy_posterior</span> \
+    <span class="o">--</span><span class="n">data</span> <span class="n">data</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE</span><span class="o">.</span><span class="n">rds</span> \
+    <span class="o">--</span><span class="n">vhat</span><span class="o">-</span><span class="n">data</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE_ed_bovy</span><span class="o">.</span><span class="n">EE</span><span class="o">.</span><span class="n">V_simple</span><span class="o">.</span><span class="n">rds</span> \
+    <span class="o">--</span><span class="n">prior</span><span class="o">-</span><span class="n">data</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE_ed_bovy</span><span class="o">.</span><span class="n">EE</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">rds</span> \
+    <span class="o">--</span><span class="n">compute</span><span class="o">-</span><span class="n">posterior</span> \
+    <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span> 
 </pre></div>
 </div>
 </section>
 <section id="iii-generate-plots">
 <h3>iii. Generate Plots<a class="headerlink" href="#iii-generate-plots" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>sos run $PATH/mixture_prior.ipynb plot_U \
-    --output-prefix protocol_example.mixture_plots  \
-    --data $PATH/MWE_ed_bovy.EZ.prior.rds \
-    --cwd $PATH/output/ \
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mixture_prior</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">plot_U</span> \
+    <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">prefix</span> <span class="n">protocol_example</span><span class="o">.</span><span class="n">mixture_plots</span>  \
+    <span class="o">--</span><span class="n">data</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE_ed_bovy</span><span class="o">.</span><span class="n">EE</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">rds</span> \
+    <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span>
 </pre></div>
 </div>
 </section>
@@ -601,8 +601,8 @@ document.write(`
 <section id="anticipated-results">
 <h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
 <p>i. Compute MASH prior<br />
-<code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.EZ.prior.rds</span></code>: rds file containing U, w and loglik.</p>
-<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.EZ.V_simple.rds</span></code>: an NxN matrix</p>
+<code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.EE.prior.rds</span></code>: rds file containing U, w and loglik.</p>
+<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.EE.V_simple.rds</span></code>: an NxN matrix</p>
 <p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.canonical.rds</span></code>: rds file containing multiple NxN matrices</p>
 <p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.flash.model.rds</span></code>: rds file containing a model and factors</p>
 <p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.flash.rds</span></code>: rds file containing three matrices:</p>
@@ -625,7 +625,7 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">tPCA</span></code></p></li>
 </ol>
 <p>ii. MASH fit</p>
-<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy_posterior.EZ.mash_model.rds</span></code>:rds file contaning mash_model, vhat_file path and prior_file path. mash_model contains:</p>
+<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy_posterior.EE.mash_model.rds</span></code>:rds file contaning mash_model, vhat_file path and prior_file path. mash_model contains:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">result</span></code> - contains <code class="docutils literal notranslate"><span class="pre">PosteriorMean</span></code>, <code class="docutils literal notranslate"><span class="pre">PosteriorSD</span></code>, <code class="docutils literal notranslate"><span class="pre">NegativeProb</span></code>, <code class="docutils literal notranslate"><span class="pre">lfsr</span></code> and <code class="docutils literal notranslate"><span class="pre">PosteriorCov</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">loglik</span></code></p></li>
@@ -637,9 +637,9 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">lm</span></code> - contains <code class="docutils literal notranslate"><span class="pre">loglik_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">lfactors</span></code></p></li>
 </ol>
-<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy_posterior.EZ.posterior.rds</span></code>: rds file containint PosteriorMean, PosteriorSD, lfdr, NegativeProb and lfsr</p>
+<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy_posterior.EE.posterior.rds</span></code>: rds file containint PosteriorMean, PosteriorSD, lfdr, NegativeProb and lfsr</p>
 <p>iii. Generate Plots</p>
-<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.EZ.prior.pdf</span></code>: file containing heatmap plots</p>
+<p><code class="docutils literal notranslate"><span class="pre">MWE_ed_bovy.EE.prior.pdf</span></code>: file containing heatmap plots</p>
 <p><img src='./MWE_ed_bovy.EZ.prior.png'>MWE_ed_bovy.EZ.prior.png</img></p>
 </section>
 <div class="toctree-wrapper compound">

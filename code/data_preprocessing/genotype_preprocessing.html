@@ -554,19 +554,19 @@ sos run pipeline/VCF_QC.ipynb qc \
 <p>Converting VCF to PLINK keeping only the ROSMAP samples.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb vcf_to_plink \
-    --genoFile `ls /path/to/genotype/vcf/wgs.chr*.random.vcf.gz` \
-    --cwd /path/to/genotype/plink/ 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink \
+    --genoFile `ls data/WGS/vcf/wgs.chr*.random.vcf.gz` \
+    --cwd output/plink/ 
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb merge_plink \
-    --genoFile `ls /path/to/plink/wgs.chr*.bed` \
-    --name wgs.merged  \
-    --cwd /path/to/output/genotype/ 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb merge_plink \
+    --genoFile `ls output/plink/wgs.chr*.random.bed` \
+    --name wgs.merged \
+    --cwd output/plink/ 
 </pre></div>
 </div>
 </div>
@@ -582,12 +582,12 @@ sos run pipeline/VCF_QC.ipynb qc \
 </ul>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb qc_no_prune \
-   --cwd /path/to/output/genotype/ \
-   --genoFile /path/to/output/genotype/wgs.merged.bed \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
+   --cwd output/plink \
+   --genoFile output/plink/wgs.merged.bed \
    --geno-filter 0.1 \
    --mind-filter 0.1 \
-   --hwe-filter 1e-08   \
+   --hwe-filter 1e-08 \
    --mac-filter 0 
 </pre></div>
 </div>
@@ -599,10 +599,10 @@ sos run pipeline/VCF_QC.ipynb qc \
 <p>This step is necessary for TensorQTL applications.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/genotype_formatting.ipynb genotype_by_chrom \
-    --genoFile /path/to/output/genotype/wgs.merged.plink_qc.bed \
-    --cwd /path/to/output/genotype/ \
-    --chrom `cut -f 1 /path/to/output/genotype/wgs.merged.plink_qc.bim | uniq | sed &quot;s/chr//g&quot;`
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
+    --genoFile output/plink/wgs.merged.plink_qc.bed \
+    --cwd output/genotype_by_chrom \
+    --chrom `cut -f 1 output/plink/wgs.merged.plink_qc.bim | uniq | sed &quot;s/chr//g&quot;`
 </pre></div>
 </div>
 </div>
@@ -612,10 +612,10 @@ sos run pipeline/VCF_QC.ipynb qc \
 <h3>v. Sample match with genotype<a class="headerlink" href="#v-sample-match-with-genotype" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
-        --cwd /path/to/output/genotype/ \
-        --genoFile /path/to/output/genotype/wgs.merged.plink_qc.fam  \
-        --phenoFile /path/to/output/phenotype/test_pheno.csv 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
+        --cwd output/genotype/ \
+        --genoFile output/plink/wgs.merged.plink_qc.fam  \
+        --phenoFile output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.bed.bed.gz
 </pre></div>
 </div>
 </div>
@@ -626,12 +626,11 @@ sos run pipeline/VCF_QC.ipynb qc \
 <p>To accuratly estimate the PCs for the genotype. We split participants based on their kinship coefficients, estimated by KING</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb king \
-    --cwd /path/to/output/genotype/kinship \
-    --genoFile /path/to/output/genotype/wgs.merged.plink_qc.bed \
-    --name pcs \
-    --no-maximize-unrelated \
-    --mem 40G
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb king \
+    --cwd output/genotype/kinship \
+    --genoFile output/plink/wgs.merged.plink_qc.bed \
+    --name wgs.merged.king \
+    --keep-samples output/genotype/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.bed.bed.sample_genotypes.txt
 </pre></div>
 </div>
 </div>
@@ -641,11 +640,10 @@ sos run pipeline/VCF_QC.ipynb qc \
 <h3>vii. Prepare unrelated individuals data for PCA<a class="headerlink" href="#vii-prepare-unrelated-individuals-data-for-pca" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb qc \
-   --cwd /path/to/output/genotype/ \
-   --genoFile /path/to/output/genotype/kinship/wgs.merged.plink_qc.unrelated.bed \
-   --mac-filter 5 \
-   --mem 16G
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
+   --cwd output/genotype/ \
+   --genoFile output/genotype/kinship/wgs.merged.plink_qc.wgs.merged.king.unrelated.bed \
+   --mac-filter 5 
 </pre></div>
 </div>
 </div>
@@ -653,12 +651,10 @@ sos run pipeline/VCF_QC.ipynb qc \
 <p><strong>If <code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">related</span> <span class="pre">individuals</span> <span class="pre">detected</span> <span class="pre">from</span> <span class="pre">*.kin0</span></code> occurs, there is no separate genotype data generated for unrelated individuals. In this case, we need to work from the original genotype data and must use <code class="docutils literal notranslate"><span class="pre">--keep-samples</span></code> to run <code class="docutils literal notranslate"><span class="pre">qc</span></code> to extract samples for PCA.</strong> For example:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/GWAS_QC.ipynb qc \
-   --cwd /path/to/output/genotype/ \
-   --genoFile /path/to/output/genotype/wgs.merged.plink_qc.bed \
-   --name pcs \
-   --mac-filter 5 \
-   --mem 40G
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
+   --cwd output/genotype/ \
+   --genoFile output/plink/wgs.merged.plink_qc.bed \
+   --mac-filter 5 
 </pre></div>
 </div>
 </div>
@@ -668,10 +664,9 @@ sos run pipeline/VCF_QC.ipynb qc \
 <h3>viii. PCA on genotype<a class="headerlink" href="#viii-pca-on-genotype" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/PCA.ipynb flashpca \
-   --cwd /path/to/output/genotype/genotype_pca \
-   --genoFile /path/to/output/genotype/wgs.merged.plink_qc.prune.bed \
-   --mem 16G
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/PCA.ipynb flashpca \
+   --cwd output/genotype/genotype_pca \
+   --genoFile output/genotype/wgs.merged.plink_qc.plink_qc.prune.bed
 </pre></div>
 </div>
 </div>

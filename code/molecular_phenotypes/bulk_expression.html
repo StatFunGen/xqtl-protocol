@@ -531,10 +531,8 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb fastqc \
     --cwd output/rnaseq/fastqc \
-    --samples protocol_data/input_data/RNASeq/fastq/xqtl_protocol_data.fastqlist \
-    --data-dir protocol_data/input_data/RNASeq/fastq \
-    --container containers/rna_quantification.sif \
-    --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf
+    --sample-list data/fastq.list.txt \
+    --data-dir data/fastq
 </pre></div>
 </div>
 </div>
@@ -545,10 +543,9 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb fastp_trim_adaptor \
-    --cwd output/rnaseq --samples protocol_data/input_data/RNASeq/fastq/xqtl_protocol_data.fastqlist \
-    --data-dir protocol_data/input_data/RNASeq/fastq --STAR-index reference_data/STAR_Index/ \
+    --cwd output/rnaseq --sample-list data/fastq.list.txt \
+    --data-dir data/fastq --STAR-index reference_data/STAR_Index/ \
     --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
-    --container containers/rna_quantification.sif \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
     --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat
 </pre></div>
@@ -561,12 +558,11 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb STAR_align \
-    --cwd output/rnaseq --samples protocol_data/input_data/RNASeq/fastq/xqtl_protocol_data.fastqlist \
-    --data-dir protocol_data/input_data/RNASeq/fastq --STAR-index reference_data/STAR_Index/ \
+    --cwd output/rnaseq/bam --sample-list data/fastq.list.txt \
+    --data-dir data/fastq --STAR-index reference_data/STAR_Index/ \
     --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
-    --container containers/rna_quantification.sif \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat --uncompressed 
+    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat 
 </pre></div>
 </div>
 </div>
@@ -610,10 +606,9 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/bulk_expression_QC.ipynb qc \
-    --cwd output/rnaseq \ \
-    --tpm-gct output/rnaseq/xqtl_protocol_data.rnaseqc.gene_tpm.gct.gz \
-    --counts-gct output/rnaseq/xqtl_protocol_data.rnaseqc.gene_readsCount.gct.gz \
-    --container containers/rna_quantification.sif 
+    --cwd output/rnaseq \
+    --tpm-gct data/rnaseq/bulk_rnaseq_tmp_matrix.bed \
+    --counts-gct data/rnaseq/bulk_rnaseq_count_matrix.bed
 </pre></div>
 </div>
 </div>
@@ -625,11 +620,10 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/bulk_expression_normalization.ipynb normalize \
     --cwd output/rnaseq \
-    --tpm-gct output/rnaseq/xqtl_protocol_data.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz \
-    --counts-gct output/rnaseq/xqtl_protocol_data.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct.gz \
+    --tpm-gct output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tpm.gct.gz \
+    --counts-gct output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.geneCount.gct.gz \
     --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf  \
-    --container containers/rna_quantification.sif \
-    --count-threshold 1 --sample_participant_lookup reference_data/sample_participant_lookup.rnaseq
+    --count-threshold 1 --sample_participant_lookup data/rnaseq/sample_participant_lookup.txt
 </pre></div>
 </div>
 </div>

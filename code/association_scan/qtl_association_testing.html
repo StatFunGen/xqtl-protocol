@@ -541,14 +541,13 @@ document.write(`
 <h3>i. Cis TensorQTL Command<a class="headerlink" href="#i-cis-tensorqtl-command" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>xqtl-protocol/pipeline/TensorQTL.ipynb<span class="w"> </span>cis<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genotype-file<span class="w"> </span>output/protocol_example.genotype.chr21_22.genotype_by_chrom_files.txt<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--phenotype-file<span class="w"> </span>output/phenotype_by_chrom/protocol_example.protein.bed.phenotype_by_chrom_files.txt<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--covariate-file<span class="w"> </span>output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--customized-cis-windows<span class="w"> </span>xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>output/cis_association/<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--MAC<span class="w"> </span><span class="m">5</span><span class="w"> </span>--numThreads<span class="w"> </span><span class="m">2</span><span class="w"> </span>-J<span class="w"> </span><span class="m">22</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--container<span class="w"> </span>oras://ghcr.io/statfungen/tensorqtl_apptainer:latest
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/TensorQTL.ipynb<span class="w"> </span>cis<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genotype-file<span class="w"> </span>output/genotype_by_chrom/wgs.merged.plink_qc.genotype_by_chrom_files.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenotype-file<span class="w"> </span>output/phenotype/phenotype_by_chrom/bulk_rnaseq.phenotype_by_chrom_files.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--covariate-file<span class="w"> </span>output/covariate/covariates.wgs.merged.plink_qc.plink_qc.prune.pca.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--customized-cis-windows<span class="w"> </span>reference_data/TAD/TADB_enhanced_cis.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>output/tensorqtl_cis/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--MAC<span class="w"> </span><span class="m">5</span><span class="w"> </span>
 </pre></div>
 </div>
 </div>
@@ -556,16 +555,6 @@ document.write(`
 </section>
 <section id="ii-trans-tensorqtl-command">
 <h3>ii. Trans TensorQTL Command<a class="headerlink" href="#ii-trans-tensorqtl-command" title="Link to this heading">#</a></h3>
-<p>Some protein is not in the customized cis windows list. There we will need to remove them from the analysis by create a region_list. Noted that the region list need to be a actual file. So <code class="docutils literal notranslate"><span class="pre">&lt;()</span></code> file is not acceptable.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>zcat<span class="w"> </span>output/phenotype/protocol_example.protein.bed.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-f<span class="w"> </span><span class="m">1</span>,2,3,4<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>-e<span class="w"> </span>ENSG00000163554<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-e<span class="w"> </span>ENSG00000171564<span class="w"> </span>-e<span class="w"> </span>ENSG00000171560<span class="w"> </span>-e<span class="w"> </span>ENSG00000171557<span class="w"> </span>&gt;<span class="w"> </span>output/protocol_example.protein.region_list
-</pre></div>
-</div>
-</div>
-</div>
-<p>It take more than 180G of mem to run the following commands.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>xqtl-protocol/pipeline/TensorQTL.ipynb<span class="w"> </span>trans<span class="w"> </span><span class="se">\</span>

@@ -532,40 +532,25 @@ document.write(`
 <p><strong>Note:</strong> We recommend using DSFilterPercent default value of 0.05. DSFilterPercent changed from default (0.05) to 0.1 here for testing with few samples.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run bulk_expression_QC.ipynb qc \
-    --cwd ../../output_test/rnaseqc_qc \
-    --tpm-gct ../../output_test/star_output/PCC_sample_list_subset.rnaseqc.gene_tpm.gct.gz \
-    --counts-gct ../../output_test/star_output/PCC_sample_list_subset.rnaseqc.gene_readsCount.gct.gz \
-    --DSFilterPercent 0.1 \
-    --container oras://ghcr.io/statfungen/rna_quantification_apptainer:latest \
-    -s force -c ../csg.yml  -q neurology 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/bulk_expression_QC.ipynb qc \
+    --cwd output/rnaseq \
+    --tpm-gct data/rnaseq/bulk_rnaseq_tmp_matrix.bed \
+    --counts-gct data/rnaseq/bulk_rnaseq_count_matrix.bed
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>INFO: Running <span class=" -Color -Color-Green">basic check and low expression filtering</span>: 
-INFO: tafc955937c3625d3 <span class=" -Color -Color-Green">re-execute completed</span>
-INFO: tafc955937c3625d3 <span class=" -Color -Color-Green">submitted</span> to neurology with job id Your job 2487320 (&quot;job_tafc955937c3625d3&quot;) has been submitted
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: <span class=" -Color -Color-Green">basic check and low expression filtering</span> output:   <span class=" -Color -Color-Green">/restricted/projectnb/xqtl/xqtl_protocol/output_test/rnaseqc_qc/PCC_sample_list_subset.rnaseqc.low_expression_filtered.tpm.gct.gz</span>
-INFO: Running <span class=" -Color -Color-Green">remove outliers</span>: 
-INFO: tc7361a814fec7f21 <span class=" -Color -Color-Green">submitted</span> to neurology with job id Your job 2487339 (&quot;job_tc7361a814fec7f21&quot;) has been submitted
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: <span class=" -Color -Color-Green">remove outliers</span> output:   <span class=" -Color -Color-Green">/restricted/projectnb/xqtl/xqtl_protocol/output_test/rnaseqc_qc/PCC_sample_list_subset.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz</span>
-INFO: Running <span class=" -Color -Color-Green">remove gene and samples from raw counts</span>: 
-INFO: tab40adeac3335a70 <span class=" -Color -Color-Green">submitted</span> to neurology with job id Your job 2487364 (&quot;job_tab40adeac3335a70&quot;) has been submitted
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: Waiting for the completion of <span class=" -Color -Color-Green">1</span> task.
-INFO: <span class=" -Color -Color-Green">remove gene and samples from raw counts</span> output:   <span class=" -Color -Color-Green">/restricted/projectnb/xqtl/xqtl_protocol/output_test/rnaseqc_qc/PCC_sample_list_subset.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct.gz</span>
-INFO: Workflow qc (ID=w1ced59ea596cdce1) is executed successfully with 3 completed steps and 3 completed tasks.
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">basic</span> <span class="n">check</span> <span class="ow">and</span> <span class="n">low</span> <span class="n">expression</span> <span class="n">filtering</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">basic</span> <span class="n">check</span> <span class="ow">and</span> <span class="n">low</span> <span class="n">expression</span> <span class="n">filtering</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">basic</span> <span class="n">check</span> <span class="ow">and</span> <span class="n">low</span> <span class="n">expression</span> <span class="n">filtering</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">rnaseq</span><span class="o">/</span><span class="n">bulk_rnaseq_tmp_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">tpm</span><span class="o">.</span><span class="n">gct</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">remove</span> <span class="n">outliers</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">remove</span> <span class="n">outliers</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">remove</span> <span class="n">outliers</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">rnaseq</span><span class="o">/</span><span class="n">bulk_rnaseq_tmp_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">outlier_removed</span><span class="o">.</span><span class="n">tpm</span><span class="o">.</span><span class="n">gct</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">remove</span> <span class="n">gene</span> <span class="ow">and</span> <span class="n">samples</span> <span class="kn">from</span><span class="w"> </span><span class="nn">raw</span> <span class="n">counts</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">remove</span> <span class="n">gene</span> <span class="ow">and</span> <span class="n">samples</span> <span class="kn">from</span><span class="w"> </span><span class="nn">raw</span> <span class="n">counts</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">remove</span> <span class="n">gene</span> <span class="ow">and</span> <span class="n">samples</span> <span class="kn">from</span><span class="w"> </span><span class="nn">raw</span> <span class="n">counts</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">rnaseq</span><span class="o">/</span><span class="n">bulk_rnaseq_tmp_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">outlier_removed</span><span class="o">.</span><span class="n">geneCount</span><span class="o">.</span><span class="n">gct</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">qc</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">w533b8add03a0af8a</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">3</span> <span class="n">completed</span> <span class="n">steps</span><span class="o">.</span>
 </pre></div>
-</div>
-</div>
 </div>
 </section>
 </section>

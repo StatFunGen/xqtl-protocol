@@ -523,12 +523,12 @@ document.write(`
 <p>You can edit the total amount of variation you want your PCs to explain by editing the <code class="docutils literal notranslate"><span class="pre">--k</span> </code> parameter. In this example, we chose 80%.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/covariate_formatting.ipynb merge_genotype_pc \
-    --cwd /path/to/output/covariate/ \
-    --pcaFile /path/to/output/genotype_pca/test.genotype.plink_qc.prune.pca.rds \
-    --covFile /path/to/test_covs.tsv \
-    --tol-cov 0.4  \
-    --k `awk &#39;$3 &lt; 0.8&#39; /path/to/output/genotype_pca/test.genotype.plink_qc.prune.pca.rds | tail -1 | cut -f 1 ` 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_formatting.ipynb merge_genotype_pc \
+    --cwd output/covariate/ \
+    --pcaFile output/genotype/genotype_pca/wgs.merged.plink_qc.plink_qc.prune.pca.rds \
+    --covFile data/covariate/covariates.tsv \
+    --tol-cov 0.4 \
+    --k `awk &#39;$3 &lt; 0.8&#39; output/genotype/genotype_pca/wgs.merged.plink_qc.plink_qc.prune.pca.scree.txt | tail -1 | cut -f 1 ` 
 </pre></div>
 </div>
 </div>
@@ -538,10 +538,10 @@ document.write(`
 <h3>ii. Compute Residual on Merged Covariates and Perform Hidden Factor Analysis<a class="headerlink" href="#ii-compute-residual-on-merged-covariates-and-perform-hidden-factor-analysis" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/covariate_hidden_factor.ipynb Marchenko_PC \
-   --cwd /path/to/output/covariate \
-   --phenoFile /path/to/output/phenotype/test_pheno.bed.gz  \
-   --covFile /path/to/output/covariate/test.genotype.plink_qc.prune.pca.gz \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb Marchenko_PC \
+   --cwd output/covariate \
+   --phenoFile output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.bed.bed.gz  \
+   --covFile output/covariate/covariates.wgs.merged.plink_qc.plink_qc.prune.pca.gz \
    --mean-impute-missing 
 </pre></div>
 </div>

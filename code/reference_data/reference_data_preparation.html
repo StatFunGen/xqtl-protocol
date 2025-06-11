@@ -621,10 +621,10 @@ document.write(`
 <p>Timing: ~2 hours</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb download_hg_reference --cwd ../reference_data
-!sos run reference_data_preparation.ipynb download_gene_annotation --cwd ../reference_data
-!sos run reference_data_preparation.ipynb download_ercc_reference --cwd ../reference_data
-!sos run reference_data_preparation.ipynb download_dbsnp --cwd ../reference_data
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb download_hg_reference --cwd reference_data
+!sos run pipeline/reference_data_preparation.ipynb download_gene_annotation --cwd reference_data
+!sos run pipeline/reference_data_preparation.ipynb download_ercc_reference --cwd reference_data
+!sos run pipeline/reference_data_preparation.ipynb download_dbsnp --cwd reference_data
 </pre></div>
 </div>
 </div>
@@ -664,10 +664,10 @@ INFO: Workflow download_dbsnp (ID=wd4d1efccb2946bf1) is executed successfully wi
 <p>Timing: ~40 min</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb hg_reference \
-    --cwd ../reference_data \
-    --ercc-reference ../reference_data/ERCC92.fa \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.fa 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb hg_reference \
+    --cwd reference_data \
+    --ercc-reference reference_data/ERCC92.fa \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.fa 
 </pre></div>
 </div>
 </div>
@@ -704,10 +704,10 @@ INFO: Workflow hg_reference (ID=wc092cd2056576e99) is executed successfully with
 <p>Change the –stranded option to –no-stranded if using un-stranded RNA-seq protocol.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb hg_gtf \
-    --cwd ../reference_data \
-    --hg-gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb hg_gtf \
+    --cwd reference_data \
+    --hg-gtf reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta \
     --stranded 
 </pre></div>
 </div>
@@ -745,11 +745,11 @@ INFO: Workflow hg_gtf (ID=wafa522e33646f5f8) is executed successfully with 2 com
 <p>Change the –stranded option to –no-stranded if using un-stranded RNA-seq protocol.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb gene_annotation \
-    --cwd ../reference_data \
-    --ercc-gtf ../reference_data/ERCC92.gtf \
-    --hg-gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb gene_annotation \
+    --cwd reference_data \
+    --ercc-gtf reference_data/ERCC92.gtf \
+    --hg-gtf reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta \
     --stranded 
 </pre></div>
 </div>
@@ -786,9 +786,9 @@ INFO: Workflow gene_annotation (ID=wd680c7eefcd76b7e) is executed successfully w
 <p>Generate the STAR index without the GTF annotation file to allow for customized read length later in STAR alignment.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb STAR_index \
-    --cwd ../reference_data \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb STAR_index \
+    --cwd reference_data \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
     --numThreads 10 \
     --mem 40G
 </pre></div>
@@ -843,10 +843,10 @@ INFO: Workflow STAR_index (ID=wc6567c60a9fc9f11) is executed successfully with 1
 <p>Generate RSEM index with the uncollapsed gtf file (without the gene tag in its file name.)</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb RSEM_index \
-    --cwd ../reference_data \
-    --hg-reference ../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --hg-gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb RSEM_index \
+    --cwd reference_data \
+    --hg-reference reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --hg-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf
 </pre></div>
 </div>
 </div>
@@ -869,9 +869,9 @@ INFO: Workflow RSEM_index (ID=wee55a025a3891eb8) is executed successfully with 1
 <p>Timing: ~1min</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb RefFlat_generation \
-    --cwd ../reference_data \
-    --hg-gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb RefFlat_generation \
+    --cwd reference_data \
+    --hg-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf
 </pre></div>
 </div>
 </div>
@@ -893,9 +893,9 @@ INFO: Workflow RefFlat_generation (ID=w3f901e2f82fc33e0) is executed successfull
 <p>Timing: ~1min</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run reference_data_preparation.ipynb SUPPA_annotation \
-    --cwd ../reference_data \
-    --hg_gtf ../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/reference_data_preparation.ipynb SUPPA_annotation \
+    --cwd reference_data \
+    --hg_gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
 </pre></div>
 </div>
 </div>
@@ -924,9 +924,9 @@ INFO: Workflow SUPPA_annotation (ID=wc2895daedb91047b) is executed successfully 
 <p>Extract the rsID for the known varriants so that we can distinguish them from the novel variants we had in our study. The procedure/rationale is explained in this post</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run VCF_QC.ipynb dbsnp_annotate \
-    --genoFile ../reference_data/00-All.vcf.gz \
-    --cwd ../reference_data 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run pipeline/VCF_QC.ipynb dbsnp_annotate \
+    --genoFile reference_data/00-All.vcf.gz \
+    --cwd reference_data 
 </pre></div>
 </div>
 </div>

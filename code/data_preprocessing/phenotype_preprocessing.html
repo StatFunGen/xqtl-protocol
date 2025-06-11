@@ -525,13 +525,11 @@ document.write(`
 <p>This step serves as annote cooresponding <code class="docutils literal notranslate"><span class="pre">chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, and <code class="docutils literal notranslate"><span class="pre">gene_id</span></code> to genes in the original phenotype matrix.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/gene_annotation.ipynb annotate_coord_protein \
-    --cwd /path/to/output/phenotype \
-    --phenoFile /path/to/phenotype/protocol_example.protein.csv \
-    --annotation-gtf /path/to/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
-    --phenotype-id-type gene_name \
-    --sample-participant-lookup /path/to/output/sample_meta/sample_map.txt \
-    --sep &quot;,&quot; 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_coord \
+    --cwd output/rnaseq \
+    --phenoFile output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.bed.gz \
+    --coordinate-annotation reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
+    --phenotype-id-column gene_id
 </pre></div>
 </div>
 </div>
@@ -542,9 +540,9 @@ document.write(`
 <p>This step serves as impute the missing entries for molecular phenotype data. This step is optional for eQTL analysis. But for other QTL analysis, this step is necessary. The missing entries are imputed by <code class="docutils literal notranslate"><span class="pre">flashier</span></code>, a Empirical Bayes Matrix Factorization model.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/phenotype_imputation.ipynb gEBMF \
-    --phenoFile /path/to/phenotype/test_data.bed.gz \
-    --cwd /path/to/output/phenotype \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb gEBMF \
+    --phenoFile output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.bed.bed.gz \
+    --cwd output/phenotype \
     --no-qc-prior-to-impute 
 </pre></div>
 </div>
@@ -555,10 +553,10 @@ document.write(`
 <h3>iii. Partition by Chromosome<a class="headerlink" href="#iii-partition-by-chromosome" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/phenotype_formatting.ipynb phenotype_by_chrom \
-    --cwd /path/to/output/phenotype/phenotype_by_chrom \
-    --phenoFile /path/to/output/phenotype/test_data.bed.gz \
-    --name test_data.impute \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_formatting.ipynb phenotype_by_chrom \
+    --cwd output/phenotype/phenotype_by_chrom \
+    --phenoFile output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.bed.bed.gz \
+    --name bulk_rnaseq \
     --chrom `for i in {1..22}; do echo chr$i; done`
 </pre></div>
 </div>
