@@ -1086,7 +1086,8 @@ parameter: reference_anno_file = path()
 parameter: genome_ref_file = path() # with .bed 
 parameter: chromosome = []
 parameter: snp_list = path()
-parameter: ld_wind_kb = 1000
+parameter: ld_wind_kb = 0 # use kb if the value is provided
+parameter: ld_wind_cm = 1.0 # default using ld_wind_cm
 
 # for get_heritability workflow
 parameter: all_traits_file = path() # txt file, each row contains all GWAS summary statistics name: e.g. CAD_META.filtered.sumstats.gz
@@ -1094,9 +1095,11 @@ parameter: sumstat_dir = path() # Directory containing GWAS summary statistics
 parameter: target_anno_dir = path()  # Directory containing target annotation files: output of ldscore
 parameter: baseline_ld_dir = path()  # Directory containing baseline LD score files
 parameter: frqfile_dir = path()  # Directory containing allele frequency files
+parameter: plink_name = &quot;ADSP_chr&quot;
 parameter: weights_dir = path()  # Directory containing LD weights
-parameter: baseline_name = &quot;baselineLD.&quot;  # Prefix of baseline annotation files
-parameter: weight_name = &quot;weights.hm3_noMHC.&quot;  # Prefix of LD weights files
+parameter: baseline_name = &quot;baseline_chr&quot;  # Prefix of baseline annotation files
+parameter: weight_name = &quot;weights_chr&quot;  # Prefix of LD weights files
+parameter: Mref = -1 # Reference number of SNP value. If &gt; 0, use provided value; if &lt;= 0, auto-calculate from ldscore files
 
 # Number of threads
 parameter: numThreads = 16
@@ -1119,7 +1122,6 @@ parameter: mem = &#39;16G&#39;
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[make_annotation_files_ldscore]
 parameter: score_column = 3
 parameter: is_range = False # parameter to handle range expansion
-
 
 import pandas as pd
 import os
@@ -1221,9 +1223,29 @@ else:
         input_files = [[x[1], x[-2], x[-1]] for x in input_files]
         
 input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
+# Dynamically determine output format based on snp_list parameter
+import os
+use_print_snps = snp_list.is_file()
+
+if use_print_snps:
+    # ldsc.py outputs .gz format
+    ldscore_ext = &quot;l2.ldscore.gz&quot;
+else:
+    # compute_ldscores.py outputs .parquet format  
+    ldscore_ext = &quot;l2.ldscore.parquet&quot;
+
+if ld_wind_kb &gt; 0:
+    use_kb_window = True
+    ld_window_param = ld_wind_kb
+    ld_window_flag = &quot;--ld-wind-kb&quot;
+else:
+    use_kb_window = False
+    ld_window_param = ld_wind_cm 
+    ld_window_flag = &quot;--ld-wind-cm&quot;
+
 output: dict([
    (&#39;annot&#39;, f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.annot.gz&#39;),
-   (&#39;ldscore&#39;, f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.l2.ldscore.parquet&#39;),
+   (&#39;ldscore&#39;, f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.{ldscore_ext}&#39;),
    (&#39;Mfile&#39;,  f&#39;{cwd:a}/{annotation_name}/{annotation_name}.{input_chroms[_index]}.l2.M&#39;) # set output for generation .M files
 ])
 
@@ -1368,48 +1390,228 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;annot&quot;]}.stderr&
 bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;annot&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;annot&quot;]:nnn}.stdout&#39;
    gzip -f $[_output[&quot;annot&quot;]:n] 
 
-R: expand=&quot;${ }&quot;, stderr=f&#39;{_output[&quot;Mfile&quot;]}.stderr&#39;, stdout=f&#39;{_output[&quot;Mfile&quot;]}.stdout&#39;
-    # Read the *.annot.gz produced in the previous step, calculate column-wise sums (M values) for all annotation columns, and save them as *.l2.M expected by sLDSC.
-    suppressPackageStartupMessages(library(data.table))
-    annot_file &lt;- ${_output[&quot;annot&quot;]:ar}   # path to chrX.annot.gz
-    out_file   &lt;- ${_output[&quot;Mfile&quot;]:ar}   # path to chrX.l2.M
-
-    # 1. Load the annotation matrix --------------------------------
-    # The first 4 columns are CHR, SNP, BP, CM; A1/A2 may exist.
-    annot_dt   &lt;- fread(annot_file)
-    annot_cols &lt;- setdiff(
-        names(annot_dt),
-        c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;BP&quot;, &quot;CM&quot;, &quot;A1&quot;, &quot;A2&quot;)
-    )
-
-    # 2. If no annotation columns are present, add a dummy column --
-    if (length(annot_cols) == 0L) {
-        annot_dt[, ANNOT1 := 1L]
-        annot_cols &lt;- &quot;ANNOT1&quot;
-    }
-
-    # 3. Compute M = column sums of the annotation matrix ----------
-    M &lt;- annot_dt[, lapply(.SD, sum), .SDcols = annot_cols]
-
-    # 4. Write the *.l2.M file (single line, tab-separated) --------
-    fwrite(
-        M,
-        file      = out_file,
-        sep       = &quot;\t&quot;,
-        col.names = FALSE,
-        quote     = FALSE
-    )
-    cat(sprintf(&quot;[OK] wrote %s with %d annotation columns\n&quot;,
-                out_file, length(annot_cols)))
-
 bash: expand=&quot;${ }&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout = f&#39;{_output[1]}.stdout&#39;
-    echo &quot;Running chromosome ${input_chroms[_index]}&quot;  
-    ${python_exec} ${polyfun_path}/compute_ldscores.py \
-      --annot ${_output[&quot;annot&quot;]:a} \
-      --bfile ${_input[-1]:nar} \
-      --ld-wind-kb ${ld_wind_kb} \
-      --out ${_output[&quot;ldscore&quot;]} \
-      --allow-missing 
+    echo &quot;Running chromosome ${input_chroms[_index]}&quot;
+    echo &quot;use_print_snps = ${use_print_snps}&quot;
+    echo &quot;use_kb_window = ${use_kb_window}&quot; 
+    echo &quot;ld_window_flag = ${ld_window_flag}&quot;
+    echo &quot;ld_window_param = ${ld_window_param}&quot;
+    if [ &quot;${use_kb_window}&quot; = &quot;True&quot; ]; then
+        echo &quot;Using custom LD window: ${ld_window_param} kb&quot;
+    else
+        echo &quot;Using default LD window: ${ld_window_param} cM&quot;
+    fi
+    
+    # Use the dynamically determined mode
+    if [ &quot;${use_print_snps}&quot; = &quot;True&quot; ]; then
+        echo &quot;SNP list found: ${snp_list}&quot;
+        echo &quot;Using ldsc.py --print-snps mode&quot;
+        ${python_exec} ${polyfun_path}/ldsc.py \
+          --print-snps ${snp_list} \
+          ${ld_window_flag} ${ld_window_param} \
+          --out ${_output[&quot;ldscore&quot;]:nnn} \
+          --bfile ${_input[-1]:nar} \
+          --yes-really \
+          --annot ${_output[&quot;annot&quot;]:a} \
+          --l2
+    else
+        echo &quot;No SNP list provided, using compute_ldscores.py to save time&quot;
+        ${python_exec} ${polyfun_path}/compute_ldscores.py \
+          --annot ${_output[&quot;annot&quot;]:a} \
+          --bfile ${_input[-1]:nar} \
+          ${ld_window_flag} ${ld_window_param} \
+          --out ${_output[&quot;ldscore&quot;]} \
+          --allow-missing
+    fi
+
+R: expand=&quot;${ }&quot;, stderr=f&#39;{_output[&quot;Mfile&quot;]}.stderr&#39;, stdout=f&#39;{_output[&quot;Mfile&quot;]}.stdout&#39;
+    # Check if --print-snps mode was used
+    use_print_snps &lt;- ${str(use_print_snps).upper()}
+    out_file     &lt;- ${_output[&quot;Mfile&quot;]:ar}
+    out_file_550 &lt;- paste0(${_output[&quot;Mfile&quot;]:ar}, &quot;_5_50&quot;)
+    
+    if(use_print_snps) {
+        cat(&quot;--print-snps mode was used, checking if M files already exist...\n&quot;)
+        
+        if(file.exists(out_file)) {
+            cat(&quot;M file already exists:&quot;, out_file, &quot;\n&quot;)
+            if(file.exists(out_file_550)) {
+                cat(&quot;M_5_50 file already exists:&quot;, out_file_550, &quot;\n&quot;)
+                cat(&quot;Both M files found, skipping generation\n&quot;)
+                quit(save = &quot;no&quot;, status = 0)
+            }
+        }
+    }
+    
+    cat(&quot;Proceeding with M file generation...\n&quot;)
+
+    # Generate .M and .M_5_50 files based on SNPs actually used in LD score computation
+    suppressPackageStartupMessages({
+        library(data.table)
+        library(dplyr)
+    })
+    
+    # File paths
+    ldscore_file &lt;- ${_output[&quot;ldscore&quot;]:ar}   # polyfun generated .l2.ldscore.parquet
+    annot_file   &lt;- ${_output[&quot;annot&quot;]:ar}     # annotation file
+    bfile_prefix &lt;- ${_input[-1]:nar}          # plink file prefix
+    
+    cat(&quot;Reading input files...\n&quot;)
+    cat(&quot;LD score file path:&quot;, ldscore_file, &quot;\n&quot;)
+    
+    # 1. Read LD scores file (polyfun output) - Fixed logic
+    ldscore_dt &lt;- NULL
+    
+    # Try reading the file based on its actual extension
+    if(endsWith(ldscore_file, &quot;.parquet&quot;)) {
+        tryCatch({
+            suppressPackageStartupMessages(library(arrow))
+            ldscore_dt &lt;- arrow::read_parquet(ldscore_file)
+            cat(&quot;Successfully read LD scores from .parquet file\n&quot;)
+        }, error = function(e) {
+            cat(&quot;Error reading parquet file:&quot;, e$message, &quot;\n&quot;)
+            cat(&quot;Trying alternative methods...\n&quot;)
+        })
+    } else if(endsWith(ldscore_file, &quot;.gz&quot;)) {
+        tryCatch({
+            ldscore_dt &lt;- fread(ldscore_file)
+            cat(&quot;Successfully read LD scores from .gz file\n&quot;)
+        }, error = function(e) {
+            cat(&quot;Error reading gz file:&quot;, e$message, &quot;\n&quot;)
+            cat(&quot;Trying alternative methods...\n&quot;)
+        })
+    } else {
+        # Check if alternative file formats exist
+        alt_files &lt;- c(
+            paste0(ldscore_file, &quot;.parquet&quot;),
+            paste0(ldscore_file, &quot;.gz&quot;),
+            paste0(gsub(&quot;\\.[^.]*$&quot;, &quot;&quot;, ldscore_file), &quot;.parquet&quot;),
+            paste0(gsub(&quot;\\.[^.]*$&quot;, &quot;&quot;, ldscore_file), &quot;.gz&quot;)
+        )
+        
+        for(alt_file in alt_files) {
+            if(file.exists(alt_file)) {
+                cat(&quot;Found alternative file:&quot;, alt_file, &quot;\n&quot;)
+                tryCatch({
+                    if(endsWith(alt_file, &quot;.parquet&quot;)) {
+                        suppressPackageStartupMessages(library(arrow))
+                        ldscore_dt &lt;- arrow::read_parquet(alt_file)
+                        cat(&quot;Successfully read from alternative parquet file\n&quot;)
+                        break
+                    } else if(endsWith(alt_file, &quot;.gz&quot;)) {
+                        ldscore_dt &lt;- fread(alt_file)
+                        cat(&quot;Successfully read from alternative gz file\n&quot;)
+                        break
+                    }
+                }, error = function(e) {
+                    cat(&quot;Failed to read&quot;, alt_file, &quot;:&quot;, e$message, &quot;\n&quot;)
+                })
+            }
+        }
+        
+        # Last resort: try direct read
+        if(is.null(ldscore_dt) &amp;&amp; file.exists(ldscore_file)) {
+            tryCatch({
+                ldscore_dt &lt;- fread(ldscore_file)
+                cat(&quot;Successfully read LD scores from direct file read\n&quot;)
+            }, error = function(e) {
+                cat(&quot;Error in direct file read:&quot;, e$message, &quot;\n&quot;)
+            })
+        }
+    }
+    
+    # Check if we successfully read the file
+    if(is.null(ldscore_dt)) {
+        stop(&quot;Failed to read LD scores file from any format. Please check the file: &quot;, ldscore_file)
+    }
+    
+    cat(&quot;LD scores data dimensions:&quot;, nrow(ldscore_dt), &quot;x&quot;, ncol(ldscore_dt), &quot;\n&quot;)
+    cat(&quot;LD scores columns:&quot;, paste(names(ldscore_dt), collapse=&quot;, &quot;), &quot;\n&quot;)
+    
+    # 2. Read annotation file
+    annot_dt &lt;- fread(annot_file)
+    cat(sprintf(&quot;Read annotation file with %d SNPs\n&quot;, nrow(annot_dt)))
+    
+    # 3. Check for .frq file and read MAF information if available
+    frq_file &lt;- paste0(bfile_prefix, &quot;.frq&quot;)
+    has_frq &lt;- file.exists(frq_file)
+    
+    if(has_frq) {
+        cat(&quot;Found .frq file, will calculate both M and M_5_50\n&quot;)
+        frq_dt &lt;- fread(frq_file)
+        frq_dt &lt;- frq_dt[, .(SNP, MAF)]
+        cat(sprintf(&quot;Read MAF information for %d SNPs\n&quot;, nrow(frq_dt)))
+    } else {
+        cat(&quot;No .frq file found, will only calculate M file\n&quot;)
+        frq_dt &lt;- NULL
+    }
+    
+    # 4. Filter based on SNPs actually used in LD scores computation
+    # LD scores file contains the final set of SNPs used
+    used_snps &lt;- ldscore_dt$SNP
+    cat(sprintf(&quot;LD scores file contains %d SNPs\n&quot;, length(used_snps)))
+    
+    # 5. Filter annotation file to keep only SNPs in LD scores
+    annot_filtered &lt;- annot_dt[annot_dt$SNP %in% used_snps, ]
+    cat(sprintf(&quot;Annotation file after filtering: %d SNPs\n&quot;, nrow(annot_filtered)))
+    
+    # 6. Merge with MAF information if available
+    if(has_frq) {
+        annot_with_maf &lt;- merge(annot_filtered, frq_dt, by = &quot;SNP&quot;, all.x = TRUE)
+        cat(sprintf(&quot;After merging with MAF: %d SNPs\n&quot;, nrow(annot_with_maf)))
+    } else {
+        annot_with_maf &lt;- annot_filtered
+    }
+    
+    # 7. Identify annotation columns (exclude standard columns)
+    standard_cols &lt;- c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;BP&quot;, &quot;CM&quot;, &quot;A1&quot;, &quot;A2&quot;)
+    if(has_frq) {
+        standard_cols &lt;- c(standard_cols, &quot;MAF&quot;)
+    }
+    
+    annot_cols &lt;- setdiff(names(annot_with_maf), standard_cols)
+    
+    # Add default annotation column if none exist
+    if (length(annot_cols) == 0L) {
+        annot_with_maf[, ANNOT := 1L]
+        annot_cols &lt;- &quot;ANNOT&quot;
+        cat(&quot;No annotation columns found, added default ANNOT column\n&quot;)
+    }
+    
+    cat(sprintf(&quot;Found %d annotation columns: %s\n&quot;, 
+                length(annot_cols), paste(annot_cols, collapse=&quot;, &quot;)))
+    
+    # 8. Calculate M values (all SNPs)
+    M &lt;- annot_with_maf[, lapply(.SD, sum, na.rm=TRUE), .SDcols = annot_cols]
+    
+    cat(sprintf(&quot;Total SNPs used for M calculation: %d\n&quot;, nrow(annot_with_maf)))
+    
+    # 9. Calculate M_5_50 values (MAF &gt; 0.05 SNPs) if MAF data available
+    if(has_frq) {
+        annot_common &lt;- annot_with_maf[!is.na(MAF) &amp; MAF &gt; 0.05, ]
+        M_5_50 &lt;- annot_common[, lapply(.SD, sum, na.rm=TRUE), .SDcols = annot_cols]
+        cat(sprintf(&quot;Common SNPs (MAF&gt;0.05) used for M_5_50: %d\n&quot;, nrow(annot_common)))
+    }
+    
+    # 10. Write .l2.M file (ensure single row format)
+    M_values &lt;- as.numeric(M)
+    writeLines(paste(M_values, collapse=&quot; &quot;), out_file)
+    
+    cat(sprintf(&quot;[SUCCESS] Wrote %s with M values: %s\n&quot;, 
+                out_file, paste(M_values, collapse=&quot; &quot;)))
+    
+    # 11. Write .l2.M_5_50 file if MAF data available
+    if(has_frq) {
+        M_5_50_values &lt;- as.numeric(M_5_50)
+        writeLines(paste(M_5_50_values, collapse=&quot; &quot;), out_file_550)
+        
+        cat(sprintf(&quot;[SUCCESS] Wrote %s with M_5_50 values: %s\n&quot;, 
+                    out_file_550, paste(M_5_50_values, collapse=&quot; &quot;)))
+    } else {
+        cat(&quot;[INFO] Skipped M_5_50 file generation (no MAF data available)\n&quot;)
+    }
+    
+    cat(&quot;M file generation completed successfully!\n&quot;)
 </pre></div>
 </div>
 </div>
@@ -1429,7 +1631,7 @@ parameter: min_maf  = 0.001
 parameter: keep_hla = False
 parameter: chi2_cut = 30
 input: sumstats
-output: f&quot;{_input:n}.munged.gz&quot;
+output: f&quot;{_input:n}.munged.parquet&quot;
 bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:nn}.stdout&#39;
     {python_exec} {polyfun_path}/munge_polyfun_sumstats.py \
         --sumstats {_input} \
@@ -1450,22 +1652,99 @@ bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_heritability]
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
+# First read the traits file and create input paths
+parameter: all_traits = [] 
+
+import pandas as pd
+import os
+
+# Read traits and construct full paths
+with open(all_traits_file, &#39;r&#39;) as f:
+    all_traits = [os.path.join(sumstat_dir, line.strip()) for line in f if line.strip()]
+
+input: all_traits, group_by = 1
+output: f&quot;{cwd}/{os.path.basename(_input[0])}.log&quot;, f&quot;{cwd}/{os.path.basename(_input[0])}.results&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 
 bash: expand = &quot;${ }&quot;
+    trait=&quot;${os.path.basename(_input[0])}&quot;
     output_dir=&quot;${cwd}&quot;
     mkdir -p $output_dir
-    while read -r trait; do
+
+    # Check if frqfile_dir is provided and frq files exist (check a representative chromosome file)
+    frq_file_check=&quot;${frqfile_dir}/${plink_name}22.frq&quot;
+    if [ -f &quot;$frq_file_check&quot; ]; then
+        echo &quot;Found frq files, using --frqfile-chr option&quot;
+        frq_option=&quot;--frqfile-chr ${frqfile_dir}/${plink_name}&quot;
+    else
+        echo &quot;No frq files found at ${frqfile_dir}/${plink_name}*.frq, using --not-M-5-50 option&quot;
+        frq_option=&quot;--not-M-5-50&quot;
+    fi
+
+    # First attempt: original command
+    ${python_exec} ${polyfun_path}/ldsc.py \
+        --h2 ${sumstat_dir}/$trait \
+        --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/${baseline_name} \
+        --out ${cwd}/$trait \
+        --overlap-annot \
+        --w-ld-chr ${weights_dir}/${weight_name} \
+        $frq_option \
+        --print-coefficients \
+        --print-delete-vals
+
+    # Check if it failed with FloatingPointError
+    if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
+        echo &quot;FloatingPointError detected, retrying with --chisq-max 30...&quot;
+        
         ${python_exec} ${polyfun_path}/ldsc.py \
             --h2 ${sumstat_dir}/$trait \
             --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/${baseline_name} \
             --out ${cwd}/$trait \
             --overlap-annot \
             --w-ld-chr ${weights_dir}/${weight_name} \
-            --not-M-5-50 \
+            $frq_option \
+            --chisq-max 30 \
             --print-coefficients \
             --print-delete-vals
-    done &lt; ${all_traits_file}
+        
+        # Check again if it still failed with FloatingPointError
+        if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
+            echo &quot;Still FloatingPointError with --chisq-max 30, retrying with --chisq-max 20...&quot;
+            
+            ${python_exec} ${polyfun_path}/ldsc.py \
+                --h2 ${sumstat_dir}/$trait \
+                --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/${baseline_name} \
+                --out ${cwd}/$trait \
+                --overlap-annot \
+                --w-ld-chr ${weights_dir}/${weight_name} \
+                $frq_option \
+                --chisq-max 20 \
+                --print-coefficients \
+                --print-delete-vals
+            
+            # Check a third time if it still failed with FloatingPointError
+            if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
+                echo &quot;Still FloatingPointError with --chisq-max 20, retrying with --chisq-max 10...&quot;
+                
+                ${python_exec} ${polyfun_path}/ldsc.py \
+                    --h2 ${sumstat_dir}/$trait \
+                    --ref-ld-chr ${target_anno_dir}/${annotation_name}.,${baseline_ld_dir}/${baseline_name} \
+                    --out ${cwd}/$trait \
+                    --overlap-annot \
+                    --w-ld-chr ${weights_dir}/${weight_name} \
+                    $frq_option \
+                    --chisq-max 10 \
+                    --print-coefficients \
+                    --print-delete-vals
+                
+                # Final check - if still failing, log the persistent error
+                if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
+                    echo &quot;ERROR: FloatingPointError persists even with --chisq-max 10 for trait: $trait&quot;
+                    echo &quot;This trait may have severe numerical instability issues in the summary statistics.&quot;
+                fi
+            fi
+        fi
+    fi
 </pre></div>
 </div>
 </div>
@@ -1473,6 +1752,8 @@ bash: expand = &quot;${ }&quot;
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[processed_stats_1]
+parameter: num_non_annotation_cols = -1 # number of non-annotation columns like CHR, BP, SNP, A1, A2, CM, MAF, default is calculate from pipeline, if provided, directly use this number
+
 output: f&#39;{cwd:a}/{annotation_name}.joint_tau.initial_processed_stats.rds&#39; if joint_tau else f&#39;{cwd:a}/{annotation_name}.single_tau.initial_processed_stats.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 
@@ -1481,9 +1762,101 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
     print(paste(&quot;Joint tau analysis:&quot;, ${str(joint_tau).upper()}))
     is_joint &lt;- ${&quot;TRUE&quot; if joint_tau else &quot;FALSE&quot;}
     print(paste(&quot;Is joint analysis:&quot;, is_joint))
-       
+    provided_num_non_annotation_cols = ${num_non_annotation_cols}   
+    standard_non_annot_cols &lt;- c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;BP&quot;, &quot;CM&quot;, &quot;A1&quot;, &quot;A2&quot;, &quot;MAF&quot;)
+
+    # Function to auto-calculate Mref from ldscore files
+    calculate_mref &lt;- function(target_anno_dir) {
+        message(&quot;Auto-calculating Mref from ldscore files...&quot;)
+        
+        # Find ldscore files (both .gz and .parquet formats)
+        ldscore_files &lt;- list.files(target_anno_dir, 
+                                  pattern = &quot;\\.l2\\.ldscore\\.(gz|parquet)$&quot;, 
+                                  full.names = TRUE)
+        
+        if (length(ldscore_files) == 0) {
+            stop(&quot;No ldscore files found in directory: &quot;, target_anno_dir)
+        }
+        
+        message(&quot;Found &quot;, length(ldscore_files), &quot; ldscore files:&quot;)
+        
+        total_snps &lt;- 0
+        file_details &lt;- data.frame(
+            file = character(),
+            format = character(), 
+            rows = integer(),
+            stringsAsFactors = FALSE
+        )
+        
+        for (file in ldscore_files) {
+            tryCatch({
+                if (endsWith(file, &quot;.parquet&quot;)) {
+                    suppressPackageStartupMessages(library(arrow))
+                    data &lt;- arrow::read_parquet(file)
+                    file_format &lt;- &quot;parquet&quot;
+                } else if (endsWith(file, &quot;.gz&quot;)) {
+                    data &lt;- fread(file)
+                    file_format &lt;- &quot;gz&quot;
+                } else {
+                    warning(&quot;Unsupported file format: &quot;, file)
+                    next
+                }
+                
+                n_rows &lt;- nrow(data)
+                total_snps &lt;- total_snps + n_rows
+                
+                file_details &lt;- rbind(file_details, data.frame(
+                    file = basename(file),
+                    format = file_format,
+                    rows = n_rows
+                ))
+                
+                message(&quot;  &quot;, basename(file), &quot; (&quot;, file_format, &quot;): &quot;, n_rows, &quot; SNPs&quot;)
+                
+            }, error = function(e) {
+                warning(&quot;Error reading file &quot;, file, &quot;: &quot;, e$message)
+            })
+        }
+        
+        message(&quot;Total SNPs across all files: &quot;, total_snps)
+        message(&quot;Using Mref = &quot;, total_snps)
+        
+        return(total_snps)
+    }
+    
+    # Determine Mref value
+    mref_param &lt;- ${Mref}
+    if (mref_param &gt; 0) {
+        Mref &lt;- mref_param
+        message(&quot;Using provided Mref value: &quot;, Mref)
+    } else {
+        Mref &lt;- calculate_mref(&quot;${target_anno_dir}&quot;)
+    }
+
     calculate_sd_annot &lt;- function(cell_path, annot_index = 1) {
     ll &lt;- list.files(cell_path, pattern = &quot;\\.annot\\.gz$&quot;, full.names = TRUE)
+    if(length(ll) == 0) {
+        stop(&quot;No annotation files found in: &quot;, cell_path)
+    }
+
+    # detect number of non-annotation cols 
+    if(provided_num_non_annotation_cols &gt; 0) {
+        num_non_annotation_cols &lt;- provided_num_non_annotation_cols
+        message(&quot;Using provided num_non_annotation_cols: &quot;, num_non_annotation_cols)
+    } else {
+        # calculate automatically
+        first_file &lt;- ll[1]
+        sample_dat &lt;- fread(first_file, nrows = 5)
+        file_cols &lt;- names(sample_dat)
+        present_standard_cols &lt;- intersect(file_cols, standard_non_annot_cols)
+        num_non_annotation_cols &lt;- length(present_standard_cols)
+        
+        message(&quot;Auto-detected annotation file structure:&quot;)
+        message(&quot;  Total columns: &quot;, length(file_cols))
+        message(&quot;  Standard non-annotation columns found: &quot;, paste(present_standard_cols, collapse=&quot;, &quot;))
+        message(&quot;  Number of non-annotation columns: &quot;, num_non_annotation_cols)
+    }
+    
     num = numeric(length(annot_index))
     den = 0
     
@@ -1493,8 +1866,8 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
             cols &lt;- paste0(&quot;ANNOT_&quot;, annot_index) 
             num &lt;- num + ((nrow(dat)-1) * sapply(dat[, ..cols], var))
         } else {
-            if((5 + annot_index) &gt; ncol(dat)) stop(paste(&quot;Index out of range:&quot;, m))
-            num &lt;- num + ((nrow(dat)-1) * var(dat[, 5+annot_index, with=FALSE]))
+            if((num_non_annotation_cols + annot_index) &gt; ncol(dat)) stop(paste(&quot;Index out of range:&quot;, m))
+            num &lt;- num + ((nrow(dat)-1) * var(dat[, num_non_annotation_cols+annot_index, with=FALSE]))
         }
         den &lt;- den + (nrow(dat)-1)
     }
@@ -1536,8 +1909,7 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
     }
 
     # Process tau analysis
-    process_tau_analysis &lt;- function(trait_data, sd_annots, base_index = NULL, is_joint = FALSE) {
-    Mref &lt;- 5961159
+    process_tau_analysis &lt;- function(trait_data, sd_annots, base_index = NULL, is_joint = FALSE, Mref) {
     
     if(is_joint) {
         indices &lt;- 1:(nrow(trait_data$results) - base_index)
@@ -1566,8 +1938,7 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
     }
 
     # Process enrichment
-    process_enrichment &lt;- function(trait_data) {
-    Mref &lt;- 5961159
+    process_enrichment &lt;- function(trait_data, Mref) {
     enrichment_p &lt;- as.numeric(trait_data$results[1, &quot;Enrichment_p&quot;])
     enrich_ratio &lt;- ((trait_data$results[1, &quot;Prop._h2&quot;] / trait_data$results[1, &quot;Prop._SNPs&quot;]) - 
                         (1 - trait_data$results[1, &quot;Prop._h2&quot;]) / (1 - trait_data$results[1, &quot;Prop._SNPs&quot;]))
@@ -1600,8 +1971,28 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
 
     if (is_joint) {
     # Get baseline info and indices
-    base &lt;- arrow::read_parquet(paste0(&quot;${baseline_ld_dir}&quot;, &quot;/baselineLF2.2.UKB.22.annot.parquet&quot;))
-    base_index &lt;- ncol(base) - 5
+    base_path &lt;- paste0(&quot;${baseline_ld_dir}&quot;, &quot;/&quot;, &quot;${baseline_name}&quot;, &quot;22.annot&quot;)
+    if (file.exists(paste0(base_path, &quot;.parquet&quot;))) {
+        base &lt;- arrow::read_parquet(paste0(base_path, &quot;.parquet&quot;))
+    } else if (file.exists(paste0(base_path, &quot;.gz&quot;))) {
+        base &lt;- fread(paste0(base_path, &quot;.gz&quot;))
+    } else {
+        stop(&quot;Neither .parquet nor .gz file found for baseline annotation&quot;)
+    }    
+
+    if(provided_num_non_annotation_cols &gt; 0) {
+        base_num_non_annotation_cols &lt;- provided_num_non_annotation_cols
+        message(&quot;Using provided num_non_annotation_cols for baseline: &quot;, base_num_non_annotation_cols)
+    } else {
+        base_cols &lt;- names(base)
+        base_standard_cols &lt;- intersect(base_cols, standard_non_annot_cols)
+        base_num_non_annotation_cols &lt;- length(base_standard_cols)
+        message(&quot;Auto-detected baseline structure:&quot;)
+        message(&quot;  Total columns: &quot;, ncol(base))
+        message(&quot;  Non-annotation columns: &quot;, base_num_non_annotation_cols)
+    }
+
+    base_index &lt;- ncol(base) - num_non_annotation_cols
     
     tab2 &lt;- fread(paste0(&quot;${cwd}&quot;, &quot;/&quot;, traits[1], &quot;.results&quot;))
     indices &lt;- 1:(nrow(tab2) - base_index)
@@ -1610,7 +2001,7 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
     
     for (trait in traits) {
         if (!is.null(trait_data &lt;- process_trait(trait, &quot;${cwd}&quot;))) {
-            results[[trait]] &lt;- process_tau_analysis(trait_data, sd_annots, base_index, TRUE)
+            results[[trait]] &lt;- process_tau_analysis(trait_data, sd_annots, base_index, TRUE, Mref)
         } else {
             problematic_traits &lt;- c(problematic_traits, trait)
         }
@@ -1621,8 +2012,8 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
     for (trait in traits) {
         if (!is.null(trait_data &lt;- process_trait(trait, &quot;${cwd}&quot;))) {
             results[[trait]] &lt;- c(
-                process_tau_analysis(trait_data, sd_annot, NULL, FALSE),
-                list(enrichment = process_enrichment(trait_data))
+                process_tau_analysis(trait_data, sd_annot, NULL, FALSE, Mref),
+                list(enrichment = process_enrichment(trait_data, Mref))
             )
         } else {
             problematic_traits &lt;- c(problematic_traits, trait)
@@ -1739,12 +2130,42 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
                   return(c(x$enrichment$meta_enr$Enrichment,
                           x$enrichment$meta_enr$Enrichment_std_error))
               })
+         
               enr_matrix &lt;- do.call(rbind, enr_data)
+              valid_rows &lt;- !is.na(enr_matrix[,1]) &amp; !is.na(enr_matrix[,2]) &amp; 
+                          !is.nan(enr_matrix[,1]) &amp; !is.nan(enr_matrix[,2]) &amp;
+                          enr_matrix[,2] &gt; 0               
+              trait_names &lt;- names(group_stats)
+              invalid_traits &lt;- trait_names[!valid_rows]
+
+              message(sprintf(&quot;Group %s - Total: %d, Valid: %d, Invalid: %d&quot;, 
+                              group_names[i], nrow(enr_matrix), sum(valid_rows), sum(!valid_rows))) 
+              if(sum(!valid_rows) &gt; 0) {
+                  invalid_traits &lt;- trait_names[!valid_rows]
+                  invalid_se_values &lt;- enr_matrix[!valid_rows, 2]
+                
+                  message(sprintf(&quot;Invalid traits in group %s (SE = 0):&quot;, group_names[i]))
+                  for(j in 1:length(invalid_traits)) {
+                      se_val &lt;- invalid_se_values[j]
+                      if(is.na(se_val) || is.nan(se_val)) {
+                          message(sprintf(&quot;  - %s: SE = NA/NaN&quot;, invalid_traits[j]))
+                      } else if(se_val == 0) {
+                          message(sprintf(&quot;  - %s: SE = 0&quot;, invalid_traits[j]))
+                      } 
+                  }
+              }                                                       
               enrstat_data &lt;- lapply(group_stats, function(x) {
                   return(c(x$enrichment$meta_enrstat$enrich_stat, x$enrichment$meta_enrstat$enrich_sd))})
               enrstat_matrix &lt;- do.call(rbind, enrstat_data)
 
-              meta_enr &lt;- meta.summaries(enr_matrix[, 1], enr_matrix[, 2], method = &quot;random&quot;)
+              if(sum(valid_rows) &gt;= 2) {
+                  meta_enr &lt;- meta.summaries(enr_matrix[valid_rows, 1], 
+                                          enr_matrix[valid_rows, 2], 
+                                          method = &quot;random&quot;)
+              } else {
+                  warning(paste(&quot;Insufficient valid data for&quot;, group_names[i]))
+                  meta_enr &lt;- list(summary = NA, se.summary = NA)
+              }              
               meta_enrstat &lt;- meta.summaries(enrstat_matrix[, 1], enrstat_matrix[, 2], method = &quot;random&quot;)   
               enrichment_results[[group_names[i]]] &lt;- c(meta_enr$summary,
                                                       meta_enr$se.summary,
