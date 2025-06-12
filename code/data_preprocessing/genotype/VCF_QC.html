@@ -816,6 +816,8 @@ parameter: mem = &#39;60G&#39;
 parameter: container = &quot;&quot;
 import re
 parameter: entrypoint=&quot;&quot;
+#whether things like DP in the vcf header should be ignored when filtering.
+parameter: skip_vcf_header_filtering = False
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = path(f&quot;{cwd:a}&quot;)
@@ -939,18 +941,35 @@ input: genoFile, group_by = 1
 output: f&#39;{cwd}/{_input:bnn}.{&quot;leftnorm&quot; if not bi_allelic else &quot;biallelic&quot;}{&quot;.snp&quot; if snp_only else &quot;&quot;}.vcf.gz&#39;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
-    # split multiallelic sites into biallelic records 
-    ${&#39;bcftools norm -m-any&#39; if not bi_allelic else &#39;bcftools view -m2 -M2&#39;} ${&#39;-v snps&#39; if snp_only else &quot;&quot;} ${_input} |\
-    # Fix incorrect or missing REF alleles and warn about them
-    bcftools norm -d exact -N --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
-    # Fill missing tags
-    bcftools +fill-tags -- -t all,F_MISSING,&#39;VD=sum(FMT/DP)&#39; | \
-    # Remove ID and replace with CHROM:POS:REF:ALT format
-    bcftools annotate -x ID -I +&#39;%CHROM:%POS:%REF:%ALT&#39; | \
-    # Annotate with dbSNP rsID
-    bcftools annotate -a ${dbsnp_variants}  -h &lt;(echo &#39;##INFO=&lt;ID=RSID,Number=1,Type=String,Description=&quot;dbSNP rsID&quot;&gt;&#39;) \
-        -c CHROM,FROM,TO,INFO/RSID -Oz --threads ${numThreads} -o ${_output}
+    
+    if [ &quot;${skip_vcf_header_filtering}&quot; = &quot;True&quot; ]; then
+        printf &quot;not filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
+        # split multiallelic sites into biallelic records 
+        ${&#39;bcftools norm -m-any&#39; if not bi_allelic else &#39;bcftools view -m2 -M2&#39;} ${&#39;-v snps&#39; if snp_only else &quot;&quot;} ${_input} |\
+        # Fix incorrect or missing REF alleles and warn about them
+        bcftools norm -d exact -N --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
+        # Remove ID and replace with CHROM:POS:REF:ALT format
+        bcftools annotate -x ID -I +&#39;%CHROM:%POS:%REF:%ALT&#39; | \
+        # Annotate with dbSNP rsID
+        bcftools annotate -a ${dbsnp_variants}  -h &lt;(echo &#39;##INFO=&lt;ID=RSID,Number=1,Type=String,Description=&quot;dbSNP rsID&quot;&gt;&#39;) \
+            -c CHROM,FROM,TO,INFO/RSID -Oz --threads ${numThreads} -o ${_output}
 
+    else
+        printf &quot;filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
+        # split multiallelic sites into biallelic records 
+        ${&#39;bcftools norm -m-any&#39; if not bi_allelic else &#39;bcftools view -m2 -M2&#39;} ${&#39;-v snps&#39; if snp_only else &quot;&quot;} ${_input} |\
+        # Fix incorrect or missing REF alleles and warn about them
+        bcftools norm -d exact -N --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
+        # Fill missing tags
+        bcftools +fill-tags -- -t all,F_MISSING,&#39;VD=sum(FMT/DP)&#39; | \
+        # Remove ID and replace with CHROM:POS:REF:ALT format
+        bcftools annotate -x ID -I +&#39;%CHROM:%POS:%REF:%ALT&#39; | \
+        # Annotate with dbSNP rsID
+        bcftools annotate -a ${dbsnp_variants}  -h &lt;(echo &#39;##INFO=&lt;ID=RSID,Number=1,Type=String,Description=&quot;dbSNP rsID&quot;&gt;&#39;) \
+            -c CHROM,FROM,TO,INFO/RSID -Oz --threads ${numThreads} -o ${_output}
+
+    fi
+    
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
     for i in ${_output} ; do 
         # Capture file metadata
@@ -993,25 +1012,38 @@ parameter: hwe_filter = 0.0
 output: f&quot;{_input:nn}.bcftools_qc.vcf.gz&quot;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
-    # Initial filtering based on depth and genotype quality for SNPs and INDELs. Will set to missing genotypes that do not meet both conditions (DP&gt;=DP_spns &amp; GQ&gt;=GQ), similarly for indels
-    bcftools filter -S . -i \
-    &#39;(TYPE=&quot;SNP&quot; &amp; (FMT/DP)&gt;=${DP_snp} &amp; (FMT/GQ)&gt;=${GQ}) | 
-     (TYPE=&quot;INDEL&quot; &amp; (FMT/DP)&gt;=${DP_indel} &amp; (FMT/GQ)&gt;=${GQ})&#39; ${_input} | \
-     
-    # Further filtering to retain only variants that are PASS and have at least one non-reference allele 
-    bcftools view -c1 | \
-    bcftools view -f PASS | \
 
-    # Filter based on genotype (hom/het) and allelic balance for SNPs and INDELs
-    bcftools filter -i \
-    &#39;GT=&quot;hom&quot; | 
-     TYPE=&quot;snp&quot; &amp; GT=&quot;het&quot; &amp; (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) &gt;= ${AB_snp} | 
-     TYPE=&quot;indel&quot; &amp; GT=&quot;het&quot; &amp; (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) &gt;= ${AB_indel}&#39; | \
+    if [ &quot;${skip_vcf_header_filtering}&quot; = &quot;True&quot; ]; then
+        printf &quot;not filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
 
-    # Filter based on missingness and Hardy-Weinberg equilibrium 
-    bcftools filter -i &#39;F_MISSING&lt;${geno_filter} &amp; HWE&gt;${hwe_filter}&#39; \
-    -Oz --threads ${numThreads} -o ${_output}
+        bcftools view -c1 ${_input} | \
+        bcftools view -f PASS | \
 
+        # Filter based on missingness and Hardy-Weinberg equilibrium 
+        bcftools filter -i &#39;F_MISSING&lt;${geno_filter}&#39; \
+         -Oz --threads ${numThreads} -o ${_output}
+    else
+
+        printf &quot;filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
+        # Initial filtering based on depth and genotype quality for SNPs and INDELs. Will set to missing genotypes that do not meet both conditions (DP&gt;=DP_spns &amp; GQ&gt;=GQ), similarly for indels
+        bcftools filter -S . -i \
+        &#39;(TYPE=&quot;SNP&quot; &amp; (FMT/DP)&gt;=${DP_snp} &amp; (FMT/GQ)&gt;=${GQ}) | 
+         (TYPE=&quot;INDEL&quot; &amp; (FMT/DP)&gt;=${DP_indel} &amp; (FMT/GQ)&gt;=${GQ})&#39; ${_input} | \
+
+        # Further filtering to retain only variants that are PASS and have at least one non-reference allele 
+        bcftools view -c1 | \
+        bcftools view -f PASS | \
+
+        # Filter based on genotype (hom/het) and allelic balance for SNPs and INDELs
+        bcftools filter -i \
+        &#39;GT=&quot;hom&quot; | 
+         TYPE=&quot;snp&quot; &amp; GT=&quot;het&quot; &amp; (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) &gt;= ${AB_snp} | 
+         TYPE=&quot;indel&quot; &amp; GT=&quot;het&quot; &amp; (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) &gt;= ${AB_indel}&#39; | \
+
+        # Filter based on missingness and Hardy-Weinberg equilibrium 
+        bcftools filter -i &#39;F_MISSING&lt;${geno_filter} &amp; HWE&gt;${hwe_filter}&#39; \
+        -Oz --threads ${numThreads} -o ${_output}
+    fi
 
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
     for i in ${_output} ; do 

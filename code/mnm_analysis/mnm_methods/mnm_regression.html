@@ -607,17 +607,17 @@ document.write(`
 <p><strong>Note:</strong> Suggested output naming convention is cohort_modality, eg ROSMAP_snRNA_pseudobulk.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb susie_twas  \
-    --name protocol_example_protein  \
-    --genoFile input/xqtl_association/protocol_example.genotype.chr21_22.bed   \
-    --phenoFile output/phenotype/protocol_example.protein.region_list.txt \
-                output/phenotype/protocol_example.protein.region_list.txt \
-    --covFile output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
-              output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz  \
-    --customized-association-windows input/xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
-    --region-name ENSG00000241973_P42356 ENSG00000160209_O00764 ENSG00000100412_Q99798 \
-    --phenotype-names trait_A trait_B \
-    --container oras://ghcr.io/cumc/pecotmr_apptainer:latest
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb susie_twas \
+    --name test_susie_twas \
+    --genoFile output/genotype_by_chrom/wgs.merged.plink_qc.1.bed \
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
+    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --phenotype-names test_pheno \
+    --max-cv-variants 5000 --ld_reference_meta_file data/ld_meta_file_with_bim.tsv \
+    --region-name ENSG00000049246 ENSG00000054116 ENSG00000116678 \
+    --save-data \
+    --cwd output/mnm_regression/susie_twas
 </pre></div>
 </div>
 </div>
@@ -625,17 +625,17 @@ document.write(`
 <p>It is also possible to analyze a selected list of regions using option <code class="docutils literal notranslate"><span class="pre">--region-list</span></code>. The last column of this file will be used for the list to analyze. Here for example use the same list of regions as we used for customized association-window:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run xqtl-protocol/pipeline/mnm_regression.ipynb susie_twas  \
-    --name protocol_example_protein  \
-    --genoFile xqtl_association/protocol_example.genotype.chr21_22.bed   \
-    --phenoFile output/phenotype/protocol_example.protein.region_list.txt \
-                output/phenotype/protocol_example.protein.region_list.txt \
-    --covFile output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
-              output/covariate/protocol_example.protein.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz  \
-    --customized-association-windows xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
-    --region-list xqtl_association/protocol_example.protein.enhanced_cis_chr21_chr22.bed \
-    --phenotype-names trait_A trait_B \
-    --container oras://ghcr.io/cumc/pecotmr_apptainer:latest
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb susie_twas \
+    --name test_susie_twas \
+    --genoFile output/genotype_by_chrom/wgs.merged.plink_qc.1.bed \
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
+    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --phenotype-names test_pheno \
+    --max-cv-variants 5000 --ld_reference_meta_file data/ld_meta_file_with_bim.tsv \
+    --region-list data/region_list.bed \
+    --save-data \
+    --cwd output/mnm_regression/susie_twas
 </pre></div>
 </div>
 </div>
@@ -670,16 +670,28 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb fsusie \
-    --name protocol_example_methylation \
-    --genoFile xqtl_association/protocol_example.genotype.chr21_22.plink_per_chrom.txt \
-    --phenoFile output/phenotype_by_region/protocol_example.methylation.bed.phenotype_by_region_files.txt \
-                output/phenotype_by_region/protocol_example.methylation.bed.phenotype_by_region_files.txt  \
-    --covFile output/covariate/protocol_example.methylation.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
-              output/covariate/protocol_example.methylation.protocol_example.samples.protocol_example.genotype.chr21_22.pQTL.plink_qc.prune.pca.Marchenko_PC.gz \
-    --container oras://ghcr.io/cumc/pecotmr_apptainer:latest
+    --cwd output/fsusie/ \
+    --name test_fsusie \
+    --genoFile output/genotype_by_chrom/wgs.merged.plink_qc.genotype_by_chrom_files.txt \
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
+    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --numThreads 8 \
+    --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --save-data \
+    --region-name ENSG00000186891
 </pre></div>
 </div>
 </div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_analysis_regions</span><span class="p">:</span> 
+<span class="n">Loading</span> <span class="n">customized</span> <span class="n">association</span> <span class="n">analysis</span> <span class="n">window</span> <span class="kn">from</span><span class="w"> </span><span class="nn">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">TADB_enhanced_cis</span><span class="o">.</span><span class="n">bed</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">regional_data</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">fsusie</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">fsusie</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">fsusie</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">fsusie</span><span class="o">/</span><span class="n">fsus</span><span class="o">/</span><span class="n">test_fsusie</span><span class="o">.</span><span class="n">chr1_1203507_1206591</span><span class="o">.</span><span class="n">fsusie_mixture_normal_TI__top_pc_weights</span><span class="o">.</span><span class="n">rds</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">fsusie</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">wcb4ce30c08d43c15</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">2</span> <span class="n">completed</span> <span class="n">steps</span><span class="o">.</span>
+</pre></div>
 </div>
 </section>
 <section id="iii-mvsusie-with-twas-weights-from-mr-mash">
@@ -687,24 +699,27 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mnm \
-    --name multi_trait \
-    --genoFile /mnt/vast/hpc/csg/FunGen_xQTL/ROSMAP/Genotype/geno_by_chrom/ROSMAP_NIA_WGS.leftnorm.bcftools_qc.plink_qc.11.bed \
-    --phenoFile /mnt/vast/hpc/csg/wanggroup/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl/Mic/output/data_preprocessing/phenotype_data/Mic.log2cpm.region_list.txt \
-      /mnt/vast/hpc/csg/wanggroup/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl/Ast/output/data_preprocessing/phenotype_data/Ast.log2cpm.region_list.txt \
-      /mnt/vast/hpc/csg/wanggroup/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl/Oli/output/data_preprocessing/phenotype_data/Oli.log2cpm.region_list.txt \
-    --covFile /mnt/vast/hpc/csg/wanggroup/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl/Mic/output/data_preprocessing/covariate_data/Mic.log2cpm.Mic.rosmap_cov.ROSMAP_NIA_WGS.leftnorm.bcftools_qc.plink_qc.snuc_pseudo_bulk.related.plink_qc.extracted.pca.projected.Marchenko_PC.gz \
-      /mnt/vast/hpc/csg/wanggroup/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl/Ast/output/data_preprocessing/covariate_data/Ast.log2cpm.Ast.rosmap_cov.ROSMAP_NIA_WGS.leftnorm.bcftools_qc.plink_qc.snuc_pseudo_bulk.related.plink_qc.extracted.pca.projected.Marchenko_PC.gz \
-      /mnt/vast/hpc/csg/wanggroup/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl/Oli/output/data_preprocessing/covariate_data/Oli.log2cpm.Oli.rosmap_cov.ROSMAP_NIA_WGS.leftnorm.bcftools_qc.plink_qc.snuc_pseudo_bulk.related.plink_qc.extracted.pca.projected.Marchenko_PC.gz \
-    --customized-association-windows /mnt/vast/hpc/csg/cl4215/mrmash/workflow/susie_twas/TADB_enhanced_cis.coding.bed \
-    --cwd output/ \
-    --region-name ENSG00000073921 \
-    --phenotype-names Mic_DeJager_eQTL Ast_DeJager_eQTL Oli_DeJager_eQTL \
-    --mixture_prior /home/aw3600/MR_KMT_analysis/PTWAS/twas_mr_test/mash_test/mixture_prior_example.EZ.prior.rds \
-    --max_cv_variants 1000 \
-    --ld_reference_meta_file /mnt/vast/hpc/csg/data_public/20240120_ADSP_LD_matrix/ld_meta_file.tsv
+    --name test_mnm --cwd output/mnm \
+    --genoFile output/genotype_by_chrom/wgs.merged.plink_qc.genotype_by_chrom_files.txt \
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
+    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --customized-association-windows reference_data/TADB_enhanced_cis.coding.bed \
+    --region-name ENSG00000073921 --save_data --no-skip-twas-weights \
+    --phenotype-names test_pheno \
+    --mixture_prior output/multivariate_mixture/MWE_ed_bovy.EE.prior.rds \
+    --max_cv_variants 5000 \
+	--ld_reference_meta_file data/ld_meta_file.tsv 
 </pre></div>
 </div>
 </div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_analysis_regions</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">regional_data</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">mnm</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Either</span> <span class="n">genotype</span> <span class="ow">or</span> <span class="n">phenotype</span> <span class="n">data</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">available</span> <span class="k">for</span> <span class="n">region</span> <span class="n">ENSG00000073921</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">mnm</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">w65545ca8b5143ce7</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">1</span> <span class="n">completed</span> <span class="n">step</span><span class="o">.</span>
+</pre></div>
 </div>
 </section>
 </section>

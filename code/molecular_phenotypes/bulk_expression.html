@@ -493,7 +493,6 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#v-call-transcript-level-rna-expression-via-rsem">v. Call transcript level RNA expression via RSEM</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vi-multi-sample-rna-seq-qc">vi. Multi-sample RNA-seq QC</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vii-multi-sample-read-count-normalization">vii. Multi-sample read count normalization</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#viii-region-list-generation-optional">viii. Region list generation (optional)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
@@ -562,7 +561,9 @@ document.write(`
     --data-dir data/fastq --STAR-index reference_data/STAR_Index/ \
     --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat 
+    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
+    --chimSegmentMin 0 \
+    -J 50 --mem 200G --numThreads 8    
 </pre></div>
 </div>
 </div>
@@ -573,13 +574,13 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rnaseqc_call \
-    --cwd output/rnaseq \
-    --samples input_data/RNASeq/fastq/xqtl_protocol_data.fastqlist    \
-    --data-dir input_data/RNASeq/fastq \
+    --cwd data/bam \
+    --sample-list data/fastq.list.txt \
+    --data-dir data/fastq \
     --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.gtf \
-    --container containers/rna_quantification.sif \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --bam_list output/rnaseq/xqtl_protocol_data_bam_list
+    --varVCFfile reference_data/ZOD14598_AD_GRM_WGS_2021-04-29_all.recalibrated_variants.leftnorm.filtered.AF.WASP.vcf \
+    --bam_list data/bam/sample_bam_list.txt
 </pre></div>
 </div>
 </div>
@@ -589,13 +590,17 @@ document.write(`
 <h3>v. Call transcript level RNA expression via RSEM<a class="headerlink" href="#v-call-transcript-level-rna-expression-via-rsem" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rsem_call  \
-    --cwd output/rnaseq   \
-    --samples protocol_data/input_data/RNASeq/fastq/xqtl_protocol_data.fastqlist  \
-    --data-dir protocol_data/input_data/RNASeq/fastq/   \
-    --RSEM-index reference_data/RSEM_Index/   \
-    --container containers/rna_quantification.sif   \
-    --bam_list output/rnaseq/xqtl_protocol_data_bam_list   
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rsem_call \
+    --cwd data/bam \
+    --sample-list data/fastq.list.txt \
+    --data-dir data/fastq \
+    --STAR-index reference_data/STAR_Index/ \
+    --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
+    --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
+    --varVCFfile reference_data/ZOD14598_AD_GRM_WGS_2021-04-29_all.recalibrated_variants.leftnorm.filtered.AF.WASP.vcf \
+    --bam_list data/bam/sample_bam_list.txt \
+    --RSEM-index reference_data/RSEM_Index
 </pre></div>
 </div>
 </div>
@@ -624,23 +629,6 @@ document.write(`
     --counts-gct output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.geneCount.gct.gz \
     --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf  \
     --count-threshold 1 --sample_participant_lookup data/rnaseq/sample_participant_lookup.txt
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="viii-region-list-generation-optional">
-<h3>viii. Region list generation (optional)<a class="headerlink" href="#viii-region-list-generation-optional" title="Link to this heading">#</a></h3>
-<p>By default, the first 4 column of the bed.gz file contains the chr,start (TSS), end (TSS+1), and gene id of each gene. User can extract these information with a simple <code class="docutils literal notranslate"><span class="pre">zcat</span> <span class="pre">{phenoFile}.bed.gz</span> <span class="pre">|</span> <span class="pre">cut</span> <span class="pre">-f</span> <span class="pre">1,2,3,4</span> </code> command. However, when a region list with both gene id and gene name are needed, following utilities are provided.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb region_list_generation \
-    --cwd output/rnaseq  \
-    --phenoFile output/rnaseq/xqtl_protocol_data.rnaseqc.low_expression_filtered.outlier_removed.tmm.expression.bed.gz \
-    --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf  \
-    --sample-participant-lookup reference_data/sample_participant_lookup.rnaseq \
-    --container containers/bioinfo.sif \
-    --phenotype-id-type gene_id
 </pre></div>
 </div>
 </div>
@@ -735,7 +723,6 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#v-call-transcript-level-rna-expression-via-rsem">v. Call transcript level RNA expression via RSEM</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vi-multi-sample-rna-seq-qc">vi. Multi-sample RNA-seq QC</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vii-multi-sample-read-count-normalization">vii. Multi-sample read count normalization</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#viii-region-list-generation-optional">viii. Region list generation (optional)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>

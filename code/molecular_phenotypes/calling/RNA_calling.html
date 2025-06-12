@@ -644,7 +644,9 @@ sos run pipeline/RNA_calling.ipynb STAR_align \
     --data-dir data/fastq --STAR-index reference_data/STAR_Index/ \
     --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat 
+    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
+    --chimSegmentMin 0 \
+    -J 50 --mem 200G --numThreads 8    
 </pre></div>
 </div>
 </div>
@@ -659,7 +661,9 @@ sos run pipeline/RNA_calling.ipynb STAR_align \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
     --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
     --varVCFfile reference_data/ZOD14598_AD_GRM_WGS_2021-04-29_all.recalibrated_variants.leftnorm.filtered.AF.WASP.vcf \
-    --wasp yes
+    --wasp yes \
+    --chimSegmentMin 0 \
+    -J 50 --mem 200G --numThreads 8
 </pre></div>
 </div>
 </div>
@@ -674,7 +678,9 @@ sos run pipeline/RNA_calling.ipynb STAR_align \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
     --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
     --varVCFfile reference_data/ZOD14598_AD_GRM_WGS_2021-04-29_all.recalibrated_variants.leftnorm.filtered.AF.WASP.vcf \
-    --unique yes
+    --unique yes \
+    --chimSegmentMin 0 \
+    -J 50 --mem 200G --numThreads 8
 </pre></div>
 </div>
 </div>
@@ -690,7 +696,9 @@ sos run pipeline/RNA_calling.ipynb STAR_align \
     --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
     --varVCFfile reference_data/ZOD14598_AD_GRM_WGS_2021-04-29_all.recalibrated_variants.leftnorm.filtered.AF.WASP.vcf \
     --wasp yes \
-    --unique yes
+    --unique yes \
+    --chimSegmentMin 0 \
+    -J 50 --mem 200G --numThreads 8
 </pre></div>
 </div>
 </div>
@@ -702,17 +710,14 @@ sos run pipeline/RNA_calling.ipynb STAR_align \
 <p>Call gene-level RNA expression using rnaseqc and run multiqc. The gtf file must include gene-level data instead of transcript-level data. Add <code class="docutils literal notranslate"><span class="pre">--varVCFfile</span></code> if adding tags during <code class="docutils literal notranslate"><span class="pre">STAR_align</span></code>. Change your <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> option for different filter choice.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run RNA_calling.ipynb rnaseqc_call \
-    --cwd ../../output_test/star_output \
-    --sample-list ../../PCC_sample_list_subset \
-    --data-dir /restricted/projectnb/amp-ad/ROSMAP_PCC_AC/PCC/ \
-    --STAR-index ../../reference_data/STAR_Index/ \
-    --gtf ../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
-    --container oras://ghcr.io/statfungen/rna_quantification_apptainer:latest \
-    --reference-fasta ../../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --ref-flat ../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
-    --bam-list ../../output_test/star_output/PCC_sample_list_subset_bam_list \
-    -s build  -c ../csg.yml  -q neurology 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rnaseqc_call \
+    --cwd data/bam \
+    --sample-list data/fastq.list.txt \
+    --data-dir data/fastq \
+    --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.gtf \
+    --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --varVCFfile reference_data/ZOD14598_AD_GRM_WGS_2021-04-29_all.recalibrated_variants.leftnorm.filtered.AF.WASP.vcf \
+    --bam_list data/bam/sample_bam_list.txt
 </pre></div>
 </div>
 </div>
@@ -722,21 +727,19 @@ sos run pipeline/RNA_calling.ipynb STAR_align \
 <h3>v. Call transcript level RNA expression via RSEM<a class="headerlink" href="#v-call-transcript-level-rna-expression-via-rsem" title="Link to this heading">#</a></h3>
 <p>Timing &lt;X hours</p>
 <p>Call transcript level RNA expression using RSEM and run multiqc. The gtf file used as input should match the one used to generate the RSEM index and therefore contain transcript-level, not gene-level, information. Add <code class="docutils literal notranslate"><span class="pre">--varVCFfile</span></code> if adding tags during <code class="docutils literal notranslate"><span class="pre">STAR_align</span></code>. Change your <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> option for different filter choice.</p>
-<p>FIXME</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run RNA_calling.ipynb rsem_call \
-    --cwd ../../output_test/star_output \
-    --sample-list ../../PCC_sample_list_subset \
-    --data-dir /restricted/projectnb/amp-ad/ROSMAP_PCC_AC/PCC/ \
-    --STAR-index ../../reference_data/STAR_Index/ \
-    --gtf ../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
-    --container oras://ghcr.io/statfungen/rna_quantification_apptainer:latest \
-    --reference-fasta ../../reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --ref-flat ../../reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
-    --bam-list ../../output_test/star_output/PCC_sample_list_subset_bam_list \
-    --RSEM-index ../../reference_data/RSEM_Index \
-    -s build  -c ../csg.yml  -q neurology 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rsem_call \
+    --cwd data/bam \
+    --sample-list data/fastq.list.txt \
+    --data-dir data/fastq \
+    --STAR-index reference_data/STAR_Index/ \
+    --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
+    --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
+    --varVCFfile reference_data/ZOD14598_AD_GRM_WGS_2021-04-29_all.recalibrated_variants.leftnorm.filtered.AF.WASP.vcf \
+    --bam_list data/bam/sample_bam_list.txt \
+    --RSEM-index reference_data/RSEM_Index
 </pre></div>
 </div>
 </div>
@@ -1274,7 +1277,7 @@ bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:
     align_start_time=$(date +%s)
 
     # Run STAR alignment
-    star --runMode alignReads \
+    STAR --runMode alignReads \
          --runThreadN $[numThreads] \
          --genomeDir $[STAR_index] \
          --readFilesIn $[_input:r] \
@@ -1569,7 +1572,7 @@ bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:
 
         # Execute the commands
         samtools index &quot;$input_file&quot;
-        bamcoverage -b &quot;$input_file&quot; -o &quot;$bigwig_file&quot;
+        bamCoverage -b &quot;$input_file&quot; -o &quot;$bigwig_file&quot;
     }
 
     export -f generate_bigwig  # To make it available in subshells, if needed.
@@ -1783,7 +1786,7 @@ input: trans_bam_list, group_by = 1, group_with = {&quot;sample_id&quot;, &quot;
 output: f&#39;{cwd}/{_sample_id}.rsem.isoforms.results&#39;, f&#39;{cwd}/{_sample_id}.rsem.genes.results&#39;,f&#39;{cwd}/{_sample_id}.rsem.stat/{_sample_id}.rsem.cnt&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
-    run_rsem ${RSEM_index:a} ${_input:a} ${_sample_id} \
+    run_RSEM ${RSEM_index:a} ${_input:a} ${_sample_id} \
         -o ${_output[0]:d} \
         --max_frag_len ${max_frag_len} \
         --estimate_rspd ${&#39;true&#39; if estimate_rspd else &#39;false&#39;} \
