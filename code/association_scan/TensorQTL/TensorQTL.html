@@ -981,8 +981,9 @@ N = len(pd.read_csv(covariate_file, sep = &quot;\t&quot;,nrows = 1).columns) - 1
 parameter: maf_threshold = MAC/(2.0*N)
 
 # Filtering significant trans associations (for trans_2 workflow)
-parameter: pvalue_cutoff = &quot;&quot;
+parameter: pvalue_cutoff = &quot;5e-8&quot;
 parameter: qvalue_cutoff = &quot;&quot;
+
 
 import os
 import pandas as pd
@@ -1039,6 +1040,12 @@ else:
     import pandas as pd
     import os
     molecular_pheno_files = pd.read_csv(phenotype_file, sep = &quot;\t&quot;)
+    
+    if &quot;#dir&quot; in molecular_pheno_files.columns and &quot;#chr&quot; not in molecular_pheno_files.columns:
+        molecular_pheno_files = molecular_pheno_files.rename(columns={&quot;#dir&quot;: &quot;path&quot;})
+        if &quot;#id&quot; in molecular_pheno_files.columns:
+            molecular_pheno_files = molecular_pheno_files.rename(columns={&quot;#id&quot;: &quot;#chr&quot;})
+    
     if &quot;#chr&quot; in molecular_pheno_files.columns:
         molecular_pheno_files = molecular_pheno_files.groupby([&#39;#chr&#39;,&#39;path&#39;]).size().reset_index(name=&#39;count&#39;).drop(&quot;count&quot;,axis = 1).rename(columns = {&quot;#chr&quot;:&quot;#id&quot;})
     genotype_files = pd.read_csv(genotype_file,sep = &quot;\t&quot;)
@@ -1046,6 +1053,7 @@ else:
     genotype_files[&quot;#path&quot;] = genotype_files[&quot;#path&quot;].apply(lambda x: adapt_file_path(x, genotype_file))
     molecular_pheno_files[&quot;#id&quot;] = [x.replace(&quot;chr&quot;,&quot;&quot;) for x in molecular_pheno_files[&quot;#id&quot;].astype(str)]
     input_files = molecular_pheno_files.merge(genotype_files, on = &quot;#id&quot;)
+    
     # Only keep chromosome specified in --chromosome
     if len(chromosome) &gt; 0:
         input_files = input_files[input_files[&#39;#id&#39;].isin(chromosome)]
@@ -1099,6 +1107,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:n
     ## Define paths
     plink_prefix_path = $[_input[1]:nar]
     expression_bed = $[_input[0]:ar]
+
     covariates_file = &quot;$[covariate_file:a]&quot;
     window = $[window]
     interaction = &quot;$[interaction]&quot;
@@ -1489,13 +1498,15 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
     phenotype_df, phenotype_pos_df = tensorqtl.read_phenotype_bed(expression_bed)
     phenotype_id = phenotype_pos_df.index.name
 
+
     ## Analyze only the regions listed
     if $[region_list.is_file()]:
-        region = pd.read_csv(&quot;$[region_list:a]&quot;, comment=&quot;#&quot;, header=None,sep=&quot;\t&quot;)
+        region = pd.read_csv(&quot;$[region_list:a]&quot;)
         phenotype_column = 1 if len(region.columns) == 1 else $[region_list_phenotype_column]
-        keep_region = region.iloc[:,phenotype_column-1].to_list()
+        keep_region = region.iloc[:, phenotype_column-1].astype(str).str.strip().to_list()
         phenotype_df = phenotype_df[phenotype_df.index.isin(keep_region)]
         phenotype_pos_df = phenotype_pos_df[phenotype_pos_df.index.isin(keep_region)]
+
 
     ## use custom cis windows
     if $[customized_cis_windows.is_file()]:
@@ -1510,6 +1521,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
             phenotype_df = phenotype_df.loc[phenotype_df.index.isin(cis_list[phenotype_id])]
 
     covariates_df = pd.read_csv(covariates_file, sep=&#39;\t&#39;, index_col=0).T
+
 
     ## Filter covariates based on covariate_pattern if provided
     covariate_pattern_list = $[covariate_pattern]
@@ -1539,26 +1551,34 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
         else:
             print(f&quot;Keeping {len(keep_cols)} covariates: {keep_cols}&quot;)
             covariates_df = covariates_df[keep_cols]
+       
 
-    
+    genotype_df, variant_df = genotypeio.load_genotypes(plink_prefix_path, dosages = True) 
     ## use custom sample list to subset the covariates data
     if $[keep_sample.is_file()]:
         sample_list = pd.read_csv(&quot;$[keep_sample:a]&quot;, comment=&quot;#&quot;, header=None, names=[&quot;sample_id&quot;], sep=&quot;\t&quot;)
         covariates_df = covariates_df.loc[sample_list.sample_id]
-    
-    ## Get all chromosomes from genotype and phenotype data
-    # Standardize chromosome format, remove &quot;chr&quot; prefix
-    phenotype_pos_df.chr = [x.replace(&quot;chr&quot;,&quot;&quot;) for x in phenotype_pos_df.chr]
-    
-    pheno_chroms = sorted(phenotype_pos_df.chr.str.replace(&quot;chr&quot;, &quot;&quot;).unique().tolist())
-    print(f&quot;Phenotype data contains chromosomes: {pheno_chroms}&quot;)
 
+    ## Retaining only common samples
+    phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, covariates_df.index)]
+    phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, genotype_df.columns)] 
+    covariates_df = covariates_df.transpose()[np.intersect1d(phenotype_df.columns, covariates_df.index)].transpose()
     pr = genotypeio.PlinkReader(plink_prefix_path)
     bim_df = pr.bim
     bim_df[&#39;chrom&#39;] = bim_df[&#39;chrom&#39;].str.replace(&quot;chr&quot;, &quot;&quot;)
-    geno_chroms = sorted(bim_df[&#39;chrom&#39;].unique().tolist())
-    print(f&quot;Genotype data contains chromosomes: {geno_chroms}&quot;)
+
     
+    ## Get all chromosomes from genotype and phenotype data
+    ## To simplify things, there should really not be &quot;chr&quot; prefix 
+    phenotype_pos_df.chr = phenotype_pos_df.chr.astype(str).str.replace(&quot;chr&quot;, &quot;&quot;)
+    variant_df.chrom = variant_df.chrom.astype(&quot;str&quot;).str.replace(&quot;chr&quot;, &quot;&quot;) 
+    
+    pheno_chroms = sorted(phenotype_pos_df.chr.unique().tolist())
+    print(f&quot;Phenotype data contains chromosomes: {pheno_chroms}&quot;)
+
+    geno_chroms = sorted(variant_df.chrom.unique().tolist())
+    print(f&quot;Genotype data contains chromosomes: {geno_chroms}&quot;)
+
     # If current chromosome specified, only process that phenotype chromosome
     if current_chrom and current_chrom in pheno_chroms:
         pheno_chroms_to_process = [current_chrom]
@@ -1575,6 +1595,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
     total_combinations = len(pheno_chroms_to_process) * len(geno_chroms_to_process)
     print(f&quot;Total combinations to process: {total_combinations}&quot;)
     all_results = []
+    
 
     # Process each combination
     combination_count = 0
@@ -1594,7 +1615,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
             print(f&quot;Processing combination {combination_count}/{total_combinations}: phenotype chr{pheno_chrom} x genotype chr{geno_chrom}&quot;)
             
             # Filter genotype data to keep only current chromosome
-            chrom_variants = bim_df[bim_df[&#39;chrom&#39;] == geno_chrom][&#39;snp&#39;].tolist()
+            chrom_variants = variant_df[variant_df.chrom == geno_chrom].index.tolist()
             
             if len(chrom_variants) == 0:
                 print(f&quot;No variants found for chromosome {geno_chrom}, skipping&quot;)
@@ -1660,6 +1681,8 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
                         # Merge variant information
                         trans_df = variant_df_chr.merge(trans_df, right_on=&#39;variant_id&#39;, left_index=True)
                         trans_df.rename(columns={&#39;a1&#39;: &#39;a2&#39;, &#39;a0&#39;: &#39;a1&#39;}, inplace=True)
+                        trans_df[&#39;pheno_chrom&#39;] = pheno_chrom
+                        trans_df[&#39;geno_chrom&#39;] = geno_chrom
                         all_results.append(trans_df)
                     else:
                         print(f&quot;No trans-QTLs found after cis filtering&quot;)
@@ -1720,8 +1743,6 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.s
         })
     }
     
-    #pairs_df = read_delim(&quot;$[_output[&#39;nominal&#39;]:n]&quot;, delim = &#39;\t&#39;)
-
     pairs_df &lt;- read.table(&quot;$[_output[&#39;nominal&#39;]:n]&quot;, header = TRUE, sep = &#39;\t&#39;, stringsAsFactors = FALSE)
 
     if (nrow(pairs_df) &lt;= 1) {
@@ -1747,8 +1768,15 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[trans_2]
 # This workflow filters significant trans-QTL associations based on p-value or q-value cutoffs
-input: [str(x) for x in output_from(&#39;trans_1&#39;) if str(x).endswith(&#39;.trans_qtl.pairs.tsv.gz&#39;)]
-output: f&#39;{cwd}/{_input:bn}.filtered_trans_pairs.tsv&#39;
+input: [str(x) for x in output_from(&#39;trans_1&#39;) if str(x).endswith(&#39;.trans_qtl.pairs.tsv.gz&#39;)], group_by = 1
+
+if qvalue_cutoff:
+    cutoff_name = f&quot;qvalue_{qvalue_cutoff}&quot;
+elif pvalue_cutoff:
+    cutoff_name = f&quot;pvalue_{pvalue_cutoff}&quot;
+else:
+    cutoff_name = &quot;pvalue_5e-8&quot;
+output: f&#39;{cwd}/{_input:bn}.{cutoff_name}_filtered_trans_pairs.tsv&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: expand=&quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
@@ -1770,10 +1798,10 @@ bash: expand=&quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout =
         cutoff_name=&quot;pvalue_${pvalue_cutoff}&quot;
         echo &quot;Using p-value cutoff: $cutoff_value&quot;
     else
-        echo &quot;No cutoff provided, using default q-value cutoff of 0.01&quot;
-        cutoff_value=&quot;0.01&quot;
-        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;qvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
-        cutoff_name=&quot;qvalue_0.01&quot;
+        echo &quot;No cutoff provided, using default p-value cutoff of 5e-8&quot;
+        cutoff_value=&quot;5e-8&quot;
+        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;pvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
+        cutoff_name=&quot;pvalue_5e-8&quot;
     fi
     
     echo &quot;Using column $cutoff_col with cutoff value $cutoff_value&quot;
@@ -1781,12 +1809,10 @@ bash: expand=&quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout =
     # Create the final output directory and file
     input_basename=$(basename &quot;$input_file&quot; .gz)
     input_basename=${input_basename%.tsv}
-    final_output_dir=&quot;$[cwd]/$[name]${cutoff_name}_filtered&quot;
-    final_output_file=&quot;${final_output_dir}/${input_basename}.${cutoff_name}_filtered_trans_pairs.tsv&quot;
-    mkdir -p &quot;$final_output_dir&quot;
+    final_output_file=&quot;$[_output[0]]&quot;
+    mkdir -p $(dirname &quot;$final_output_file&quot;)
 
     zcat &quot;$input_file&quot; | head -n 1 &gt; &quot;$final_output_file&quot;
-    
     # Filter and append significant associations
     echo &quot;Processing $input_file...&quot;
     zcat &quot;$input_file&quot; | awk -v cutoff=&quot;$cutoff_value&quot; -v col=&quot;$cutoff_col&quot; &#39;NR &gt; 1 &amp;&amp; $col &lt; cutoff&#39; &gt;&gt; &quot;$final_output_file&quot;
