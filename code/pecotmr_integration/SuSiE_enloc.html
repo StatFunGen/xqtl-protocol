@@ -601,22 +601,29 @@ output from <code class="docutils literal notranslate"><span class="pre">fine_ma
 </section>
 <section id="coloc-would-trigger-enrichment-automatically">
 <h3>Coloc (would trigger enrichment automatically)<a class="headerlink" href="#coloc-would-trigger-enrichment-automatically" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="w"> </span>sos<span class="w"> </span>run<span class="w"> </span>SuSiE_enloc.ipynb<span class="w"> </span>susie_coloc<span class="w">    </span><span class="se">\</span>
-<span class="w">    </span>--gwas_meta_data<span class="w">  </span>/mnt/vast/hpc/csg/rf2872/Work/Multivariate/susie_2024_new/demo_gwas/demo_gwas.block_results_db.tsv<span class="w">    </span><span class="se">\</span>
-<span class="w">    </span>--xqtl_meta_data<span class="w">  </span>/mnt/vast/hpc/csg/rf2872/Work/Multivariate/susie_2024_new/demo_overlap/demo_overlap.overlapped.gwas.tsv<span class="w">   </span><span class="se">\</span>
-<span class="w">    </span>--xqtl_finemapping_obj<span class="w"> </span>preset_variants_result<span class="w"> </span>susie_result_trimmed<span class="w">              </span><span class="se">\</span>
-<span class="w">    </span>--xqtl_varname_obj<span class="w"> </span>preset_variants_result<span class="w"> </span>variant_names<span class="w">             </span><span class="se">\</span>
-<span class="w">    </span>--gwas_finemapping_obj<span class="w"> </span>AD_Bellenguez_2022<span class="w"> </span>RSS_QC_RAISS_imputed<span class="w"> </span>susie_result_trimmed<span class="w">              </span><span class="se">\</span>
-<span class="w">    </span>--gwas_varname_obj<span class="w">  </span>AD_Bellenguez_2022<span class="w"> </span>RSS_QC_RAISS_imputed<span class="w"> </span>variant_names<span class="w">             </span><span class="se">\</span>
-<span class="w">    </span>--xqtl_region_obj<span class="w">  </span>region_info<span class="w">   </span>grange<span class="w">       </span><span class="se">\</span>
-<span class="w">    </span>--qtl-path<span class="w"> </span>/mnt/vast/hpc/homes/rf2872/aws/rds_files<span class="w">    </span><span class="se">\</span>
-<span class="w">    </span>--gwas_path<span class="w"> </span>/home/hs3393/RSS_QC/GWAS_finemapping_Apr9/univariate_rss<span class="w">    </span><span class="se">\</span>
-<span class="w">    </span>--context_meta<span class="w"> </span>/mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv<span class="w">      </span><span class="se">\</span>
-<span class="w">    </span>--ld_meta_file_path<span class="w"> </span>/mnt/vast/hpc/csg/data_public/20240120_ADSP_LD_matrix/ld_meta_file.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>demo_coloc
+<p>Include the <code class="docutils literal notranslate"><span class="pre">--skip-enrich</span></code> to skip the enrichment part. Otherwise, the <code class="docutils literal notranslate"><span class="pre">*enrichment.rds</span></code> file from the previous step must be in the location of the <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> directory.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/SuSiE_enloc.ipynb<span class="w"> </span>susie_coloc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gwas-meta-data<span class="w"> </span>data/susie_enloc_data/demo_gwas.block_results_db.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--xqtl-meta-data<span class="w"> </span>data/susie_enloc_data/demo_overlap.overlapped.gwas.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--xqtl_finemapping_obj<span class="w"> </span>preset_variants_result<span class="w"> </span>susie_result_trimmed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--xqtl_varname_obj<span class="w"> </span>preset_variants_result<span class="w"> </span>variant_names<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gwas_finemapping_obj<span class="w"> </span>AD_Bellenguez_2022<span class="w"> </span>RSS_QC_RAISS_imputed<span class="w"> </span>susie_result_trimmed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gwas_varname_obj<span class="w">  </span>AD_Bellenguez_2022<span class="w"> </span>RSS_QC_RAISS_imputed<span class="w"> </span>variant_names<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--xqtl_region_obj<span class="w">  </span>region_info<span class="w"> </span>grange<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qtl-path<span class="w"> </span>data/susie_enloc_data<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gwas_path<span class="w"> </span>data/susie_enloc_data<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--context_meta<span class="w"> </span>data/susie_enloc_data/context_meta.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ld_meta_file_path<span class="w"> </span>/restricted/projectnb/xqtl/xqtl_protocol/scripts/pixi_scripts/ld_meta_file.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>output/susie_coloc
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_overlapped_analysis_regions</span><span class="p">:</span> <span class="n">get</span> <span class="n">overlapped</span> <span class="n">regions</span> <span class="kn">from</span><span class="w"> </span><span class="nn">flatten</span> <span class="n">table</span><span class="p">,</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">regions</span> <span class="k">with</span> <span class="n">overlapped</span> <span class="n">variants</span> <span class="ow">and</span> <span class="n">select</span> <span class="n">those</span> <span class="n">regions</span> <span class="k">for</span> <span class="n">coloc</span> <span class="n">analysis</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_overlapped_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">get_overlapped_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">overlapped_regional_data</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">susie_coloc</span><span class="p">:</span> 
+<span class="n">INFO</span><span class="p">:</span> <span class="n">susie_coloc</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">susie_coloc</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">susie_coloc</span><span class="o">/</span><span class="n">susie_coloc</span><span class="o">/</span><span class="n">demo_overlap</span><span class="o">.</span><span class="n">overlapped</span><span class="o">.</span><span class="n">demo_gwas</span><span class="o">.</span><span class="n">Knight_eQTL_brain</span><span class="nd">@ENSG00000142798</span><span class="o">.</span><span class="n">coloc</span><span class="o">.</span><span class="n">rds</span>
+<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">susie_coloc</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">w1fbe3c73c7bfc0b7</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">2</span> <span class="n">completed</span> <span class="n">steps</span><span class="o">.</span>
 </pre></div>
 </div>
 </section>

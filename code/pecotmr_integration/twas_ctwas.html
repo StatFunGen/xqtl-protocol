@@ -1134,6 +1134,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     library(data.table)
     library(ctwas) # multigroup_ctwas
     library(pecotmr)
+    library(stringr)
     outputdir = &quot;${cwd:a}/${step_name.split(&#39;_&#39;)[0]}&quot;
     
     # load genome-wide data across all regions
@@ -1182,6 +1183,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     weight_list = vector(&quot;list&quot;, length(gwas_studies))
     names(weight_list) &lt;- gwas_studies
     z_gene &lt;- weight_list  # empty list  
+    z_snp &lt;- weight_list
     
     # get LD snp info table (snp_map) and ld variants 
     max_pos &lt;- fread(&quot;${ld_meta_data}&quot;, data.table=FALSE)
@@ -1199,36 +1201,59 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     saveRDS(snp_map, file.path(outputdir, paste0(name, &quot;.snp_map.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
     rm(regions_data, LD_map)
     gc()
-            
+    region_map &lt;- c()
     # merge chromosome wide data, weight, z_gene, z_snp from the twas pipeline output of twas.data.rds files 
     for (region_dat in c(${_input:r,})){
         ctwas_dat &lt;- merge_context_names(region_dat)
         if (is.null(ctwas_dat)) next 
         weight_tmp &lt;- trim_ctwas_variants(ctwas_dat, twas_weight_cutoff=${twas_weight_cutoff}, cs_min_cor=${cs_min_cor},
                             min_pip_cutoff=${min_pip_cutoff}, max_num_variants=${max_num_variants})
+        if (length(weight_tmp)==0) next 
         for (study in names(weight_tmp)) {
             if (!study %in% gwas_studies) next
             weight_list[[study]] &lt;- c(weight_list[[study]], weight_tmp[[study]])
             z_gene[[study]] &lt;- rbind(z_gene[[study]], ctwas_dat$z_gene[[study]])
             z_gene[[study]] &lt;- z_gene[[study]][!is.na(z_gene[[study]]$z) &amp; !is.infinite(z_gene[[study]]$z) &amp; z_gene[[study]]$id %in% names(weight_list[[study]]),]        
         }
-        rm(ctwas_dat, weight_tmp)
+        region &lt;- str_extract(region_dat, &quot;chr[0-9XY]+_[0-9]+_[0-9]+&quot;)
+        z_genes &lt;- unique(find_data(weight_tmp, c(3, &quot;molecular_id&quot;)))
+        names(z_genes) &lt;- rep(str_extract(region_dat, &quot;chr[0-9XY]+_[0-9]+_[0-9]+&quot;), length(z_genes))
+        region_map &lt;- c(region_map, z_genes)
+        rm(ctwas_dat, weight_tmp, z_genes, region)
         gc()
     }
     z_gene &lt;- Filter(Negate(is.null), z_gene)
     weight_list &lt;- Filter(Negate(is.null), weight_list)
     if (length(z_gene)==0 | length(weight_list)==0) stop(&quot;Please check input data. No twas z-score value available. &quot;)
-
-    # if weight variants are trimmed, load LD for re-computing twas z score 
+    
+    for (study in names(weight_list)){
+        z_snp[[study]] &lt;- harmonize_gwas(gwas_files[study], query_region=paste0(readr::parse_number(&quot;${chrom}&quot;), &quot;:0-&quot;, max_pos+1), ld_variants, c(&quot;beta&quot;, &quot;z&quot;), match_min_prop = 0)
+        z_snp[[study]] &lt;- z_snp[[study]][, colnames(z_snp[[study]])[colnames(z_snp[[study]]) %in% c(&quot;chrom&quot;, &quot;pos&quot;, &quot;variant_id&quot;, &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;, &quot;beta&quot;, &quot;n_sample&quot;,&quot;n_case&quot;, &quot;n_control&quot;, &quot;effect_allele_frequency&quot;)]]
+        z_snp[[study]] &lt;- z_snp[[study]][, c(&quot;chrom&quot;, &quot;pos&quot;, colnames(z_snp[[study]])[!colnames(z_snp[[study]]) %in% c(&quot;chrom&quot;, &quot;pos&quot;)])]
+    }
+    # if weight variants are trimmed, load LD and re-compute twas z score 
     if (${twas_weight_cutoff}!=0 | ${cs_min_cor}!=0 | ${min_pip_cutoff}!=0 | ${max_num_variants}!=Inf ) {
-        region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = min(find_data(weight_list, c(3, &quot;p0&quot;))), end =  max(find_data(weight_list, c(3, &quot;p1&quot;))))
-        LD_list &lt;- load_LD_matrix(&quot;${ld_meta_data}&quot;, region_of_interest)
-        # remove duplicate variants
-        dup_idx &lt;- which(duplicated(LD_list$combined_LD_variants))
-        if (length(dup_idx) &gt;= 1) {
-            LD_list$combined_LD_variants &lt;- LD_list$combined_LD_variants[-dup_idx]
-            LD_list$combined_LD_matrix &lt;- LD_list$combined_LD_matrix[-dup_idx, -dup_idx]
+        region_map_list &lt;- split(region_map, names(region_map))
+        for (region in names(region_map_list)){
+            region_genes &lt;- unique(region_map_list[[region]])
+            weight_list_sub &lt;- find_data(weight_list, 2)  
+            weight_list_sub &lt;- weight_list_sub[gsub( &quot;\\|.*$&quot;, &quot;&quot;, names(weight_list_sub)) %in% region_genes]
+            region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = min(find_data(weight_list_sub, c(2, &quot;p0&quot;))), end =  max(find_data(weight_list_sub, c(2, &quot;p1&quot;))))
+            rm(weight_list_sub);gc()
+            LD_list &lt;- load_LD_matrix(&quot;${ld_meta_data}&quot;, region_of_interest)
+            dup_idx &lt;- which(duplicated(LD_list$combined_LD_variants))
+            LD_list &lt;- LD_list[&#39;combined_LD_matrix&#39;]  
+            if (length(dup_idx) &gt;= 1) LD_list$combined_LD_matrix &lt;- LD_list$combined_LD_matrix[-dup_idx, -dup_idx]
+            for (study in names(weight_list)){
+                sub_idx &lt;- which(gsub(&quot;\\|.*$&quot;, &quot;&quot;, names(weight_list[[study]])) %in% region_genes)
+                for (context in names(weight_list[[study]][sub_idx])){
+                    twas_df &lt;- twas_analysis(weight_list[[study]][[context]]$wgt, z_snp[[study]], LD_list$combined_LD_matrix, rownames(weight_list[[study]][[context]]$wgt))[[1]]
+                    z_gene[[study]]$z[z_gene[[study]]$id==context &amp;z_gene[[study]]$gwas_study==study] &lt;- twas_df$z 
+                }
+            }
+            rm(LD_list);gc()     
         }
+        rm(LD_list);gc()
     }
 
     # for each gwas study - merge ctwas input data        
@@ -1242,19 +1267,8 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
          names(outname) &lt;- contexts
       }
 
-      z_snp &lt;- harmonize_gwas(gwas_files[study], query_region=paste0(readr::parse_number(&quot;${chrom}&quot;), &quot;:0-&quot;, max_pos+1), ld_variants, c(&quot;beta&quot;, &quot;z&quot;), match_min_prop = 0)
-      z_snp &lt;- z_snp[, colnames(z_snp)[colnames(z_snp) %in% c(&quot;chrom&quot;, &quot;pos&quot;, &quot;variant_id&quot;, 
-                                        &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;, &quot;beta&quot;, &quot;n_sample&quot;,&quot;n_case&quot;, &quot;n_control&quot;, &quot;effect_allele_frequency&quot;)]]
-      z_snp &lt;- z_snp[, c(&quot;chrom&quot;, &quot;pos&quot;, colnames(z_snp)[!colnames(z_snp) %in% c(&quot;chrom&quot;, &quot;pos&quot;)])]
-      if (${twas_weight_cutoff}!=0 | ${cs_min_cor}!=0 | ${min_pip_cutoff}!=0 | ${max_num_variants}!=Inf){
-        # recompute twas z score in case of weight variants are reduced and replace old results 
-        for (context in names(weight_list[[study]])){
-            twas_df &lt;- twas_analysis(weight_list[[study]][[context]]$wgt, z_snp, LD_list$combined_LD_matrix, rownames(weight_list[[study]][[context]]$wgt))[[1]]
-            z_gene[[study]]$z[z_gene[[study]]$id==context &amp;z_gene[[study]]$gwas_study==study] &lt;- twas_df$z 
-        }
-      }
-      colnames(z_snp)[match(&quot;variant_id&quot;, colnames(z_snp))] &lt;-&quot;id&quot; 
-      z_snp &lt;- z_snp[, c(&quot;id&quot;, &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;)]
+      colnames(z_snp[[study]])[match(&quot;variant_id&quot;, colnames(z_snp[[study]]))] &lt;-&quot;id&quot; 
+      z_snp[[study]] &lt;- z_snp[[study]][, c(&quot;id&quot;, &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;)]
 
       # iterate by study-context pair (single group) or by study itself (multigroup) 
       for (group_name in outname){ 
@@ -1268,7 +1282,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
           }
 
           res &lt;- assemble_region_data(region_info,
-                                    z_snp,
+                                    z_snp[[study]],
                                     z_gene[[study]],
                                     weight_list[[study]][subset_inx],
                                     snp_map,
@@ -1284,8 +1298,10 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
           saveRDS(boundary_genes, boundary_gene_file, compress=&#39;xz&#39;)   
       }
       saveRDS(weight_list[[study]], file.path(outputdir, paste0(name,&quot;.ctwas_weights.&quot;, study, &quot;.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
-      saveRDS(list(z_snp=z_snp, z_gene=z_gene[[study]]), file.path(outputdir,  paste0(name, &quot;.z_gene_snp.&quot;, study, &quot;.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
+      saveRDS(list(z_snp=z_snp[[study]], z_gene=z_gene[[study]]), file.path(outputdir,  paste0(name, &quot;.z_gene_snp.&quot;, study, &quot;.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
       weight_list[[study]] &lt;- NULL
+      z_gene[[study]] &lt;- NULL
+      z_snp[[study]] &lt;- NULL
     }
 </pre></div>
 </div>
@@ -1411,7 +1427,7 @@ weight_files = region_info_list[_index][&#39;weights&#39;]
 z_snp_file  = region_info_list[_index][&#39;zfiles&#39;]
 params = region_info_list[_index][&#39;params&#39;]
 chrom = region_name.split(&quot;_&quot;)[0]
-depends: region_data_file, f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.snp_map.{chrom}.rds&quot;,f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.ld_map.{chrom}.rds&quot;
+depends: region_data_file, f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.snp_map.{chrom}.rds&quot;,f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.LD_map.{chrom}.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 R: expand = &#39;${ }&#39;, stdout = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_res.{prior_var_structure}.{region_name}.thin{thin}.stdout&quot;, 
 stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_res.{prior_var_structure}.{region_name}.thin{thin}.stderr&quot;, container = container, entrypoint = entrypoint
@@ -1437,14 +1453,14 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
 
     region_data &lt;- readRDS(&quot;${region_data_file}&quot;)
     names(weight_files) &lt;- gsub(&#39;^.*.ctwas_weights.\\s*|\\s*.${chrom}.*$&#39;, &#39;&#39;, weight_files) # gwas study names regardless of single/multigroup
-    LD_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.ld_map.${chrom}.rds&quot;)
+    LD_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.LD_map.${chrom}.rds&quot;)
     snp_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.snp_map.${chrom}.rds&quot;)
     names(z_snp_files) &lt;- gsub(&#39;^.*.z_gene_snp.\\s*|\\s*.${chrom}.*$&#39;, &#39;&#39;, z_snp_files)
 
     ## loop through gwas studies (multigroup) / gwas_study_context groups (single_group)
     for (study in names(param)){
-        finemap_res_file &lt;- file.path(outputdir, paste0(&quot;${name}.ctwas_finemap_res.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.tsv&quot;))
-        susie_alpha_file &lt;- gsub(&quot;ctwas_finemap_res&quot;, &quot;ctwas_susie_alpha_res&quot;, finemap_res_file)
+        finemap_res_file &lt;- file.path(outputdir, paste0(&quot;${name}.ctwas_finemap_res.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.tsv.gz&quot;))
+        susie_alpha_file &lt;- gsub(&quot;.tsv.gz&quot;, &quot;.rds&quot;, gsub(&quot;ctwas_finemap_res&quot;, &quot;ctwas_susie_alpha_res&quot;, finemap_res_file))
         if (nrow(region_data[[study]][[gsub(&quot;chr&quot;, &quot;&quot;, &quot;${region_name}&quot;)]]$z_gene)==0) {
             message(&quot;No z_gene data available for &quot;, study, &quot; in ${region_name}. &quot;)
             fwrite(data.frame(), finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
@@ -1475,7 +1491,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
                                               ncore = ${numThreads})
         }
         screen_res &lt;- screen_regions(region_data[[study]][gsub(&quot;chr&quot;, &quot;&quot;, &quot;${region_name}&quot;)],
-                                       group_prior = group_prior, group_prior_var = group_prior_var, min_nonSNP_PIP = 0.5, min_pval = 5e-8,
+                                       group_prior = group_prior, group_prior_var = group_prior_var, min_nonSNP_PIP = 0.5, 
                                        ncore = ${numThreads}, verbose = FALSE, logfile = file.path(outputdir, 
                                        paste0(&quot;${name}.screen_regions.${prior_var_structure}.${region_name}.thin${thin}.log&quot;)))
         screened_region_data &lt;- screen_res$screened_region_data
@@ -1532,7 +1548,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
           susie_alpha_res &lt;- res$susie_alpha_res
           message(&quot;Fine-mapping without LD for region ${region_name} with &quot;, study, &quot;. &quot;)
           finemap_res_file &lt;- gsub(study, paste0(study, &quot;_update&quot;), finemap_res_file)
-          susie_alpha_file &lt;- gsub(&quot;ctwas_finemap_res&quot;, &quot;ctwas_susie_alpha_res&quot;, finemap_res_file)
+          susie_alpha_file &lt;- gsub(study, paste0(study, &quot;_update&quot;), susie_alpha_file)
           fwrite(finemap_res, finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
           saveRDS(susie_alpha_res, susie_alpha_file, compress=&#39;xz&#39;)
         }
