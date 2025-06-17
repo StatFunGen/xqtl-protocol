@@ -1340,7 +1340,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_param_est
     outputdir = &quot;${cwd:a}/${step_name.split(&#39;_&#39;)[0]}&quot;
     region_data_files &lt;- c(${_input:r,})
     names(region_data_files) &lt;- gsub(&#39;^.*${name}.ctwas_region_data.\\s*|\\s*.chr*.*$&#39;, &#39;&#39;, region_data_files)   
-    gwas_studies &lt;- if (length(${gwas_study})!=0) ${gwas_study} else names(region_data)
+    gwas_studies &lt;- if (length(${gwas_study})!=0 &amp; ${&quot;TRUE&quot; if multi_group else &quot;FALSE&quot;}) ${gwas_study} else unique(names(region_data_files))
 
     # assess global parameters
     for (study in gwas_studies){
@@ -1357,7 +1357,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_param_est
             group_name &lt;- &#39;single&#39;      
         }
         region_data &lt;- lapply(split(region_data, names(region_data)), function(x) do.call(c, unname(x)))
-        saveRDS(region_data, file.path(outputdir, paste0(&quot;${name}.region_data_merged.&quot;,  group_name, &quot;.thin${thin}.rds&quot;)), compress=&#39;xz&#39;) #merge and save into one file to be used later
+        saveRDS(region_data, file.path(outputdir, paste0(&quot;${name}.region_data_merged.&quot;, group_name,&quot;.&quot;, study,&quot;.thin${thin}.rds&quot;)), compress=&#39;xz&#39;) #merge and save into one file to be used later
         if (length(region_data[[study]])==0) stop(&quot;Study &quot;, study, &quot; not present in region_data &quot;, file.path(outputdir, paste0(&quot;${name}.region_data_merged.&quot;,  group_name, &quot;.thin${thin}.rds&quot;)))
         group_prior_file &lt;- file.path(outputdir, paste0(&quot;${name}.ctwas_param_${prior_var_structure}.&quot;, study, &quot;.thin${thin}.rds&quot;))
         message(&quot;Start global parameter estimation for &quot;, study, &quot;. &quot;)
