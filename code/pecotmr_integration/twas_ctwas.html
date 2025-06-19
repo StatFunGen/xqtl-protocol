@@ -1197,7 +1197,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     region_info &lt;- regions_data$region_info
     LD_map &lt;- regions_data$LD_info
     if (!is.null(${name_suffix})) name &lt;- paste0(&quot;${name}_&quot;, ${name_suffix})  else name &lt;- &quot;${name}&quot;
-    saveRDS(LD_map, file.path(outputdir, paste0(name, &quot;.LD_map.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
+    if (!file.exists(file.path(outputdir, paste0(name, &quot;.LD_map.rds&quot;)))) saveRDS(LD_map, file.path(outputdir, paste0(name, &quot;.LD_map.rds&quot;)), compress=&#39;xz&#39;)
     saveRDS(snp_map, file.path(outputdir, paste0(name, &quot;.snp_map.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
     rm(regions_data, LD_map)
     gc()
@@ -1344,7 +1344,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_param_est
 
     # assess global parameters
     for (study in gwas_studies){
-        region_files &lt;- region_data_files[grepl(study, region_data_files)]
+        region_files &lt;- region_data_files[grepl(paste0(study, &quot;.chr&quot;), region_data_files)]
         region_data &lt;- setNames(lapply(region_files, readRDS), names(region_files))
         contexts &lt;- unique(find_data(region_data, c(4, &quot;context&quot;)))
         # subset either study specific or study-context specific region data based on multigroup/single group
@@ -1395,24 +1395,25 @@ import glob
 skip_if(run_finemapping == False, &quot; Skip [ctwas_3] fine-mapping. &quot; )
 thin=int(thin) if thin == 1.0 else thin
 name = f&quot;{name}_{name_suffix}&quot; if name_suffix else name
+base = f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}&quot;
+
 region_data_file = (
-    f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.region_data_merged.multi.thin{thin}.rds&quot;
+    [f&quot;{base}.region_data_merged.multi.{study}.thin{thin}.rds&quot; for study in gwas_study]
     if multi_group
-    else f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.region_data_merged.single.thin{thin}.rds&quot;
+    else [x for x in glob.glob(f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.region_data_merged.single.*.thin{thin}.rds&quot;)]
 )
 
 region_info_list = []
 for region in region_name:
     chrom = region.split(&quot;_&quot;)[0]
-    base = f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}&quot;
     if gwas_study:
         weights = [f&quot;{base}.ctwas_weights.{study}.{chrom}.rds&quot; for study in gwas_study]
         zfiles = [f&quot;{base}.z_gene_snp.{study}.{chrom}.rds&quot; for study in gwas_study]
         params = [x for study in gwas_study for x in glob.glob(f&quot;{base}.ctwas_param_{prior_var_structure}.{study}*.thin{thin}.rds&quot;)]
     else:
-        weights = [f&quot;{base}.ctwas_weights.*.{chrom}.rds&quot;]
-        zfiles = [f&quot;{base}.z_gene_snp.*.{chrom}.rds&quot;]
-        params = [f&quot;{base}.ctwas_param_{prior_var_structure}.*.thin{thin}.rds&quot;]
+        weights = [x for x in glob.glob(f&quot;{base}.ctwas_weights.*.{chrom}.rds&quot;)]
+        zfiles = [x for x in glob.glob(f&quot;{base}.z_gene_snp.*.{chrom}.rds&quot;)]
+        params = [x for x in glob.glob(f&quot;{base}.ctwas_param_{prior_var_structure}.*.thin{thin}.rds&quot;)]
     region_info_list.append({
         &quot;region_name&quot;: region,
         &quot;weights&quot;: weights,
@@ -1427,7 +1428,7 @@ weight_files = region_info_list[_index][&#39;weights&#39;]
 z_snp_file  = region_info_list[_index][&#39;zfiles&#39;]
 params = region_info_list[_index][&#39;params&#39;]
 chrom = region_name.split(&quot;_&quot;)[0]
-depends: region_data_file, f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.snp_map.{chrom}.rds&quot;,f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.LD_map.{chrom}.rds&quot;
+depends: region_data_file, f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.snp_map.{chrom}.rds&quot;,f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.LD_map.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 R: expand = &#39;${ }&#39;, stdout = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_res.{prior_var_structure}.{region_name}.thin{thin}.stdout&quot;, 
 stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_res.{prior_var_structure}.{region_name}.thin{thin}.stderr&quot;, container = container, entrypoint = entrypoint
@@ -1451,14 +1452,15 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
         param &lt;- param[sapply(names(param), function(x) any(sapply(paste0(gwas_studies, &quot;.&quot;), function(c) grepl(c, x))))] # gwas_study x context pair per each prior 
     }
 
-    region_data &lt;- readRDS(&quot;${region_data_file}&quot;)
+    region_data_files &lt;- ${&#39;c(&#39; + &#39;, &#39;.join(f&#39;&quot;{x}&quot;&#39; for x in region_data_file) + &#39;)&#39;}
     names(weight_files) &lt;- gsub(&#39;^.*.ctwas_weights.\\s*|\\s*.${chrom}.*$&#39;, &#39;&#39;, weight_files) # gwas study names regardless of single/multigroup
-    LD_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.LD_map.${chrom}.rds&quot;)
+    LD_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.LD_map.rds&quot;)
     snp_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.snp_map.${chrom}.rds&quot;)
     names(z_snp_files) &lt;- gsub(&#39;^.*.z_gene_snp.\\s*|\\s*.${chrom}.*$&#39;, &#39;&#39;, z_snp_files)
 
     ## loop through gwas studies (multigroup) / gwas_study_context groups (single_group)
     for (study in names(param)){
+        region_data &lt;- readRDS(region_data_files[grepl(study, region_data_files)])
         finemap_res_file &lt;- file.path(outputdir, paste0(&quot;${name}.ctwas_finemap_res.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.tsv.gz&quot;))
         susie_alpha_file &lt;- gsub(&quot;.tsv.gz&quot;, &quot;.rds&quot;, gsub(&quot;ctwas_finemap_res&quot;, &quot;ctwas_susie_alpha_res&quot;, finemap_res_file))
         if (nrow(region_data[[study]][[gsub(&quot;chr&quot;, &quot;&quot;, &quot;${region_name}&quot;)]]$z_gene)==0) {
@@ -1552,7 +1554,10 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
           fwrite(finemap_res, finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
           saveRDS(susie_alpha_res, susie_alpha_file, compress=&#39;xz&#39;)
         }
-        saveRDS(ld_diag, file.path(outputdir, paste0(&quot;${name}.ctwas_ld_diag.${prior_var_structure}.${region_name}.&quot;, study,&quot;.thin${thin}.rds&quot;)))
+        saveRDS(ld_diag[1:3], file.path(outputdir, paste0(&quot;${name}.ctwas_ld_diag.${prior_var_structure}.${region_name}.&quot;, study,&quot;.thin${thin}.rds&quot;)))
+        pdf(file.path(outputdir, paste0(&quot;${name}.ctwas_ld_diag_plot.${prior_var_structure}.${region_name}.&quot;, study,&quot;.thin${thin}.pdf&quot;)), width = 7, height = 7)
+        print(ld_diag$plots)
+        dev.off()
         message(&quot;Fine-mapping completed for region ${region_name} with &quot;, study, &quot;. &quot;)
         rm(screened_region_data, ld_diag, susie_alpha_res, res, screen_res)
         gc()
@@ -1591,7 +1596,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
                                               LD_loader_fun = ctwas_ld_loader, 
                                               snpinfo_loader_fun = ctwas_bimfile_loader)
                 finemap_res_file &lt;- gsub(study, paste0(study,&quot;_merged&quot;),finemap_res_file)
-                susie_alpha_file &lt;- gsub(&quot;ctwas_finemap_res&quot;, &quot;ctwas_susie_alpha_res&quot;, finemap_res_file)
+                susie_alpha_file &lt;- gsub(study, paste0(study, &quot;_merged&quot;), susie_alpha_file)
                 finemap_res &lt;- finemap_merged_regions_res$finemap_res
                 finemap_res$pval &lt;- z2p(finemap_res$z)
                 fwrite(finemap_res, finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
