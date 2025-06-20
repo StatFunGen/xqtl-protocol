@@ -522,6 +522,12 @@ document.write(`
 <h3>Step 1: TWAS<a class="headerlink" href="#step-1-twas" title="Link to this heading">#</a></h3>
 <ol class="arabic simple">
 <li><p>Extract GWAS z-score for region of interest and corresponding LD matrix.</p></li>
+</ol>
+<ul class="simple">
+<li><p>Note: When loading GWAS summary statistics, specifying a column_file_path (YAML format) enables the use of load_rss_data(). This function standardizes column names and can flexibly generate missing “z” or “beta” columns using the col_to_flip option. If no column_file_path is provided, the simpler tabix_region() is used instead.</p></li>
+<li><p>Note: To handle comment lines in the summary statistics file, use the –comment_string option to specify the comment symbol (e.g., –comment_string “#”, with quotation marks). By default, no comment symbol is assumed.</p></li>
+</ul>
+<ol class="arabic simple" start="2">
 <li><p>(Optional) perform allele matching QC for the LD matrix with summary stats.</p></li>
 <li><p>Process weights: for a number of methods such as LASSO, Elastic Net and mr.ash we have to take the weights as is for QTL variants overlapping with GWAS variants. For SuSiE weights it can be adjusted to exactly match GWAS variants.</p></li>
 <li><p>Perofrm TWAS test for multiple sets of weights.</p></li>
@@ -966,6 +972,7 @@ parameter: rsq_pval_option=[&quot;adj_rsq_pval&quot;, &quot;pval&quot;]
 # load by batches if memory resource is limited, default to load all at once 
 parameter: batch_load_memory = &#39;inf&#39;
 parameter: event_filter_rules = path()
+parameter: comment_string = &quot;NULL&quot;
 
 input: filtered_regional_xqtl_files, group_by = lambda x: group_by_region(x, filtered_regional_xqtl_files), group_with = &quot;filtered_region_info&quot;
 output_files = [f&#39;{cwd:a}/{step_name}/{name}.{_filtered_region_info[3]}.twas.tsv.gz&#39;]
@@ -982,6 +989,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     library(pecotmr)
     library(readr)
 
+    gwas_meta_data = fread(&quot;${gwas_meta_data}&quot;, data.table=FALSE)
+    column_file_path = gwas_meta_data$column_mapping[1]# since one GWAS only has one column mapping file
     # get xQTL weight information 
     xqtl_meta_df &lt;- fread(&quot;${xqtl_meta_data}&quot;, data.table=FALSE) # Get related gene information from the xqtl_meta data table
     xqtl_type_table &lt;- if (isTRUE(file.exists(&quot;${xqtl_type_table}&quot;))) fread(&quot;${xqtl_type_table}&quot;) else NULL
@@ -1037,7 +1046,9 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
                                      mr_pval_cutoff = ${mr_pval_cutoff},
                                      mr_coverage_column = &quot;${coverage}&quot;, 
                                      output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;},
-                                     event_filters = event_filters)
+                                     event_filters = event_filters,
+                                     column_file_path = column_file_path,
+                                     comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;})
     }
     rm(twas_weights_results)
     gc()
