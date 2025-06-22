@@ -1068,11 +1068,9 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
         if (length(twas_results_db) &gt; 1){
             twas_results_db[[1]]$twas_data$weights &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$weights))
             twas_results_db[[1]]$twas_data$susie_weights_intermediate_qced &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$susie_weights_intermediate_qced))
-            twas_results_db[[1]]$twas_data$snp_info &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$snp_info))
             studies &lt;- unique(names(find_data(twas_results_db, c(3, &quot;z_gene&quot;))))
             for (study in studies){
                 twas_results_db[[1]][[&quot;twas_data&quot;]][[&quot;z_gene&quot;]][[study]] &lt;- do.call(rbind, lapply(twas_results_db, function(x) x$twas_data$z_gene[[study]]))
-                twas_results_db[[1]][[&quot;twas_data&quot;]][[&quot;z_snp&quot;]][[study]] &lt;- do.call(rbind, lapply(twas_results_db, function(x) x$twas_data$z_snp[[study]]))
             }
         }
         saveRDS(twas_results_db[[1]]$twas_data, &quot;${_output[0]:nnn}.twas_data.rds&quot;, compress=&#39;xz&#39;)
