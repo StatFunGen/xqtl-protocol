@@ -1126,7 +1126,7 @@ R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.std
     dat &lt;- readRDS(${_input[2]:r})
     f &lt;- dat$pca_model                           
     # Read the bim/pvar file to obtain reference alleles
-    variant_file &lt;- if(stringr::str_detect(&#39;${_input[0]:n}&#39;, &quot;\\.bed$&quot;)) &#39;${_input[0]:n}.bim&#39; else &#39;${_input[0]:n}.pvar&#39;
+    variant_file &lt;- if(stringr::str_detect(&#39;${_input[0]}&#39;, &quot;\\.bed$&quot;)) &#39;${_input[0]:n}.bim&#39; else &#39;${_input[0]:n}.pvar&#39;
     bim &lt;- read.table(variant_file, stringsAsFactors=F)
     ref_col &lt;- if(stringr::str_detect(variant_file, &quot;\\.bim$&quot;)) 5 else 4  # Column index differs between .bim and .pvar
     ref &lt;- as.character(bim[,ref_col])
