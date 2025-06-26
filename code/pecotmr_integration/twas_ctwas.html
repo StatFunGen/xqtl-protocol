@@ -1199,7 +1199,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     max_pos &lt;- max(max_pos$end[max_pos[,1]==&quot;${chrom}&quot;])
     region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = 0, end = max_pos+1)
     snp_map &lt;- load_ld_snp_info(&quot;${ld_meta_data}&quot;, region_of_interest)
-    ld_variants &lt;- paste(&quot;chr&quot;, unlist(lapply(snp_map, function(x) x$id)))
+    ld_variants &lt;- paste0(&quot;chr&quot;, unlist(lapply(snp_map, function(x) x$id)))
     ld_variants &lt;- ld_variants[!duplicated(ld_variants)]
 
     regions_data &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;, names(snp_map))
