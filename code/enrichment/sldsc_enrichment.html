@@ -953,13 +953,17 @@ $<span class="math notranslate nohighlight">\(p = 2 \times \Phi(-|Z|)\)</span>$<
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span> # case 1: txt file as input
- sos run /home/al4225/project/quantile_twas/analysis/SLDSC/scripts/ldsc.ipynb make_annotation_files_ldscore \
-    --annotation_file /home/al4225/project/quantile_twas/analysis/SLDSC/data/quantile_qtl_annotation/157genes/AC_DeJager_eQTL.shared_heter_qr.txt \
-    --reference_anno_file /home/al4225/project/quantile_twas/analysis/SLDSC/data/reference_annotation.txt \
-    --genome_ref_file /home/al4225/project/quantile_twas/analysis/SLDSC/data/genome_reference_bfile.txt \
-    --snp_list /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/1000G_EUR_Phase3_hg38/list.txt \
-    --annotation_name AC_DeJager_eQTL.shared_heter_qr \
-    --cwd /home/al4225/project/quantile_twas/analysis/SLDSC/output --chromosome 1
+ sos run pipeline/sldsc_enrichment.ipynb make_annotation_files_ldscore \
+    --annotation_file data/polyfun/input/colocboost_test_annotation_path.txt \
+    --reference_anno_file data/polyfun/input/reference_annotation0.txt \
+    --genome_ref_file data/polyfun/input/genome_reference_bfile.txt \
+    --annotation_name test_colocboost \
+    --plink_name reference. \
+    --baseline_name annotations. \
+    --weight_name weights. \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --cwd output/polyfun/ -j 22
 </pre></div>
 </div>
 </div>
@@ -968,13 +972,17 @@ $<span class="math notranslate nohighlight">\(p = 2 \times \Phi(-|Z|)\)</span>$<
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># single file format
- sos run /home/al4225/project/quantile_twas/analysis/SLDSC/scripts/ldsc.ipynb make_annotation_files_ldscore \
-    --annotation_file /home/al4225/project/quantile_twas/analysis/output/157genes/step2_rq_lr_summary/enrich_info_by_context_class/AC_DeJager_eQTL.unique_qr.rds \
-    --reference_anno_file /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/example_anno/ABC_Road_GI_BRN.1.annot.gz \
-    --genome_ref_file /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/plink_files/1000G.EUR.hg38.1.bed \
-    --snp_list /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/1000G_EUR_Phase3_hg38/list.txt \
-    --annotation_name AC_DeJager_eQTL.shared_heter_qr \
-    --cwd /home/al4225/project/quantile_twas/analysis/SLDSC/output --chromosome 1
+ sos run pipeline/sldsc_enrichment.ipynb make_annotation_files_ldscore \
+    --annotation_file data/polyfun/input/colocboost_test.tsv \
+    --reference_anno_file data/polyfun/example_annot0/annotations.1.annot.gz \
+    --genome_ref_file data/polyfun/example_data/reference.1.bed \
+    --annotation_name test_colocboost \
+    --plink_name reference. \
+    --baseline_name annotations. \
+    --weight_name weights. \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --cwd output/polyfun/ --chromosome 1
 </pre></div>
 </div>
 </div>
@@ -1016,15 +1024,20 @@ $<span class="math notranslate nohighlight">\(p = 2 \times \Phi(-|Z|)\)</span>$<
 <h4>2. get_heritability<a class="headerlink" href="#get-heritability" title="Link to this heading">#</a></h4>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run /home/al4225/project/quantile_twas/analysis/SLDSC/scripts/ldsc.ipynb get_heritability \
-    --target_anno_dir /home/al4225/project/quantile_twas/analysis/SLDSC/output/AC_DeJager_eQTL.unique_qr/ \
-    --sumstat_dir /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/sumstat \
-    --baseline_ld_dir /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/1000G_EUR_Phase3_hg38/baselineLD_v2.2 \
-    --frqfile_dir /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/plink_files \
-    --weights_dir /home/al4225/project/quantile_twas/analysis/SLDSC/data/weights \
-    --annotation_name AC_DeJager_eQTL.unique_qr \
-    --cwd /home/al4225/project/quantile_twas/analysis/SLDSC/output/AC_DeJager_eQTL.unique_qr/heritability \
-    --all_traits_file /home/al4225/project/quantile_twas/analysis/SLDSC/data/sumstats_test_all.txt
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb get_heritability \
+    --target_anno_dir output/polyfun/test_colocboost \
+    --sumstat_dir data/polyfun/example_data \
+    --baseline_ld_dir data/polyfun/example_data \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --weights_dir data/polyfun/example_data \
+    --plink_name reference. \
+    --baseline_name annotations. \
+    --weight_name weights. \
+    --annotation_name test_colocboost \
+    --cwd output/polyfun/test_colocboost/sumstats/ \
+    --all_traits_file data/polyfun/input/sumstats_test_all.txt \
+    -s build -j 2
 </pre></div>
 </div>
 </div>
@@ -1038,14 +1051,21 @@ $<span class="math notranslate nohighlight">\(p = 2 \times \Phi(-|Z|)\)</span>$<
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># processed stats cwd has to be the same with get_heritability
-sos run /home/al4225/project/quantile_twas/analysis/SLDSC/scripts/ldsc.ipynb processed_stats \
-    --target_anno_dir /home/al4225/project/quantile_twas/analysis/SLDSC/output/AC_DeJager_eQTL.unique_qr/test_anno_joint/AC_DeJager_eQTL.unique_qr \
-    --baseline_ld_dir /mnt/vast/hpc/csg/xc2270/colocboost/post/SLDSC/1000G_EUR_Phase3_hg38/baselineLD_v2.2 \
-    --annotation_name AC_DeJager_eQTL.unique_qr \
-    --cwd /home/al4225/project/quantile_twas/analysis/SLDSC/output/AC_DeJager_eQTL.unique_qr/heritability \
-    --trait_group_paths &quot;/home/al4225/project/quantile_twas/analysis/SLDSC/data/sumstats_test_all.txt /home/al4225/project/quantile_twas/analysis/SLDSC/data/sumstats_test_brain_trait.txt /home/al4225/project/quantile_twas/analysis/SLDSC/data/sumstats_test_blood_trait.txt&quot; \
-    --trait_group_names &quot;All Brain Blood&quot; \
-    --all_traits_file /home/al4225/project/quantile_twas/analysis/SLDSC/data/sumstats_test_all.txt -s build
+sos run pipeline/sldsc_enrichment.ipynb processed_stats \
+    --target_anno_dir output/polyfun/test_colocboost \
+    --sumstat_dir data/polyfun/example_data \
+    --baseline_ld_dir data/polyfun/example_data \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --weights_dir data/polyfun/example_data \
+    --plink_name reference. \
+    --baseline_name annotations. \
+    --weight_name weights. \
+    --annotation_name test_colocboost \
+    --cwd output/polyfun/test_colocboost/sumstats/ \
+    --trait_group_paths &quot;data/polyfun/input/sumstats_test_all.txt data/polyfun/input/sumstats_test_category1.txt&quot; \
+    --trait_group_names &quot;All category1&quot; \
+    --all_traits_file data/polyfun/input/sumstats_test_all.txt
 </pre></div>
 </div>
 </div>

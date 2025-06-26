@@ -630,9 +630,9 @@ document.write(`
 <h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run /home/al4225/project/quantile_twas/analysis/pathway/pathway.ipynb pathway_analysis \
-    --genes_file /home/al4225/project/quantile_twas/analysis/pathway/test_data/157_genes_input.tsv \
-    --cwd /home/al4225/project/quantile_twas/analysis/pathway/output --name rosmap.157genes -s build
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gsea.ipynb pathway_analysis \
+    --genes_file data/pathway/test_pathway_genes_input.tsv \
+    --cwd output/pathway_results --name test_genes
 </pre></div>
 </div>
 </div>
@@ -712,7 +712,7 @@ parameter: organism = &#39;hsa&#39;
 output: pathway = f&#39;{cwd:a}/{step_name}/{name}.pathway_results.rds&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
     library(org.Hs.eg.db)
     library(AnnotationDbi)
     library(clusterProfiler)
