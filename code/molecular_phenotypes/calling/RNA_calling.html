@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../../../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -1740,8 +1740,45 @@ python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0
     with open(&quot;${cwd}/${bam_list:bn}.rnaseqc.metrics_output_list&quot;, &quot;w&quot;) as f:
         f.write(&#39;\n&#39;.join(metrics_list))
 
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
-    aggregate_rnaseqc_metrics  ${_output[3]:n}_output_list ${_output[3]:nn}
+
+    input_files_tsv = &quot;${_output[3]:n}_output_list&quot;
+    prefix = &quot;${_output[3]:nn}&quot;
+
+
+
+
+    annotation_headers = &quot;&quot;
+
+    annotation_tsvs = []
+    output_dir = &quot;.&quot;
+
+
+    if len(annotation_headers)==1 and annotation_headers[0]==&#39;&#39;:
+        annotation_headers = []
+
+    path_s = pd.read_csv(input_files_tsv, sep=&#39;\t&#39;, index_col=0, header=None, names=[&#39;sample_id&#39;,&#39;metrics_path&#39;]).squeeze(&quot;columns&quot;)
+    if path_s.isnull().all():  # ID not provided
+        path_s = pd.Series(path_s.index, index=[os.path.split(i)[1].split(&#39;.metrics.tsv&#39;)[0] for i in path_s.index])
+
+    # check format
+    df = pd.read_csv(path_s.iloc[0], sep=&#39;\t&#39;, header=None)
+    if df.shape[0]==2:  # RNA-SeQC v1.1.9
+        dfs = [pd.read_csv(i, sep=&#39;\t&#39;) for i in path_s]
+    elif df.shape[1]==2:  # RNA-SeQC v2
+        dfs = [pd.read_csv(i, sep=&#39;\t&#39;, header=None, index_col=0).T for i in path_s]
+    else:
+        raise ValueError(&#39;Unrecognized input format (shape {}).&#39;.format(df.shape))
+    metrics_df = pd.concat(dfs, axis=0)
+    metrics_df.index = metrics_df[&#39;Sample&#39;]
+
+    # add optional annotations as additional columns
+    for h,tsv in zip(annotation_headers, annotation_tsvs):
+        annotation_df = pd.read_csv(tsv, sep=&#39;\t&#39;, index_col=0, header=None, names=[&#39;sample_id&#39;,h])
+        metrics_df[h] = annotation_df.loc[metrics_df.index, h]
+
+    metrics_df.to_csv(os.path.join(output_dir, prefix+&#39;.metrics.tsv&#39;), sep=&#39;\t&#39;, index=False, float_format=&#39;%.8g&#39;)
+#bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+#    aggregate_rnaseqc_metrics  ${_output[3]:n}_output_list ${_output[3]:nn}
 </pre></div>
 </div>
 </div>
@@ -1841,7 +1878,7 @@ R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n
             # Note: N1 = nUnique + nMulti
 
             stopifnot(file.exists(source[1]))
-            isDir &lt;- file.info(source)$isdir
+            isDir &lt;- file.info(source[1])$isdir
             if (isDir) {
                 files &lt;- system(paste(&quot;find&quot;, source, &quot;-name \&quot;*.rsem.cnt\&quot;&quot;), intern=TRUE)
                 stopifnot(length(files) &gt; 0)
@@ -1979,9 +2016,12 @@ R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.std
 
       stopifnot(length(source) == 1)
       stopifnot(file.exists(source))
-      pattern_suffix &lt;- ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp_qc&quot;,&quot;&quot;)
-      pattern &lt;- paste0(&#39;*.Aligned.sortedByCoord.out&#39;,pattern_suffix,&#39;.md.metrics&#39;)
-      substitute &lt;- paste0(&#39;.Aligned.sortedByCoord.out&#39;,pattern_suffix,&#39;.md.metrics&#39;)
+      #pattern_suffix &lt;- ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp_qc&quot;,&quot;&quot;)
+      #pattern_suffix &lt;- ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp_qc&quot;,&quot;&quot;)
+      pattern &lt;- paste0(&#39;*.Aligned.sortedByCoord.out&#39;,ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp&quot;,&quot;_nowasp&quot;),ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_qc&quot;,&quot;_noqc&quot;),&#39;.md.metrics&#39;)
+      substitute &lt;- paste0(&#39;.Aligned.sortedByCoord.out&#39;,ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp&quot;,&quot;_nowasp&quot;),ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_qc&quot;,&quot;_noqc&quot;),&#39;.md.metrics&#39;)
+      #substitute &lt;- paste0(&#39;.Aligned.sortedByCoord.out&#39;,pattern_suffix,&#39;.md.metrics&#39;)
+      #f&#39;{cwd}/{_sample_id}.Aligned.toTranscriptome.out{&quot;_wasp&quot; if wasp else &quot;_nowasp&quot;}{&quot;_qc&quot; if wasp else &quot;_noqc&quot;}.bam&#39;
       isDir &lt;- file.info(source)$isdir
       if (isDir) {
         files &lt;- system(paste(&quot;find -L&quot;, source, &quot;-name&quot;,pattern), intern=TRUE)
