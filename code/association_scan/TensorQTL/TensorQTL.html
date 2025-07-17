@@ -1454,14 +1454,16 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f
 <p>For transQTL analysis, if you output all the p-values for many genes (default setting) it is suggested to provide the largest memory and CPU threads available on a compute node. eg 250G and &gt;32 threads.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[trans_1]
-input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
-output: nominal = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_%s&quot; % input_chroms[_index]}.trans_qtl.pairs.tsv.gz&#39;
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[trans]
 
 parameter: batch_size = 10000
 parameter: pval_threshold = 1.0
 # Permutation testing is incorrect when the analysis is done by chrom
 parameter: permutation = False
+parameter: pval = 0.0
+
+input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
+output: nominal = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_%s&quot; % input_chroms[_index] if input_chroms[_index] != 0 else &quot;&quot;}.trans_qtl{&quot;_p_%.0e&quot; % pval if pval &gt; 0.0 else &quot;&quot;}.pairs.tsv.gz&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;,container =container
@@ -1702,6 +1704,30 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
             print(f&quot;Output Preview (first 5 rows):&quot;)
             print(combined_results.iloc[0:min(5, len(combined_results)), 0:10])
         
+        if $[pval] &gt; 0:
+            # Record initial number of variants
+            initial_n = len(combined_results)
+
+            # Calculate p-value distribution by each 10th percentile (before filtering)
+            pval_percentiles = np.percentile(combined_results[&#39;pvalue&#39;], np.arange(0, 110, 10))
+
+            # Filter combined_results by p-value threshold
+            combined_results = combined_results[combined_results[&#39;pvalue&#39;] &lt; $[pval]]
+
+            # Print summary
+            print(f&quot;Number of variants initially: {initial_n}&quot;)
+            print(f&quot;Number of variants after filtering: {len(combined_results)}&quot;)
+            print(&quot;P-value distribution by each 10th percentile (before filtering):&quot;)
+            print(dict(zip([f&quot;{i}%&quot; for i in range(0, 110, 10)], pval_percentiles)))
+
+            # Save summary to TSV
+            summary_df = pd.DataFrame({
+                &#39;metric&#39;: [&#39;initial_n&#39;, &#39;after_filtering&#39;] + [f&quot;{i}%&quot; for i in range(0, 110, 10)],
+                &#39;value&#39;: [initial_n, len(combined_results)] + list(pval_percentiles)
+            })
+
+            summary_df.to_csv(f&quot;$[_output[&#39;nominal&#39;]:nn].summary.tsv&quot;, sep=&quot;\t&quot;, index=False)
+            
         output_file = &quot;$[_output[&#39;nominal&#39;]:n]&quot;
         combined_results.to_csv(output_file, sep=&#39;\t&#39;, index=None)
         print(f&quot;Results saved to {output_file}&quot;)
@@ -1747,63 +1773,6 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.s
 bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;nominal&quot;]:nnn}.stdout&#39;, container = container
         bgzip --compress-level 9 $[_output[&quot;nominal&quot;]:n]
         tabix -S 1 -s 1 -b 2 -e 2 $[_output[&quot;nominal&quot;]]
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[trans_2]
-# This workflow filters significant trans-QTL associations based on p-value or q-value cutoffs
-input: [str(x) for x in output_from(&#39;trans_1&#39;) if str(x).endswith(&#39;.trans_qtl.pairs.tsv.gz&#39;)], group_by = 1
-
-if qvalue_cutoff:
-    cutoff_name = f&quot;qvalue_{qvalue_cutoff}&quot;
-elif pvalue_cutoff:
-    cutoff_name = f&quot;pvalue_{pvalue_cutoff}&quot;
-else:
-    cutoff_name = &quot;pvalue_5e-8&quot;
-output: f&#39;{cwd}/{_input:bn}.{cutoff_name}_filtered_trans_pairs.tsv&#39;
-
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand=&quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
-    #!/bin/bash
-    set -e
-    input_file=&quot;$[_input]&quot;
-    pvalue_cutoff=&quot;$[pvalue_cutoff]&quot;
-    qvalue_cutoff=&quot;$[qvalue_cutoff]&quot;
-    
-    # Determine cutoff value and column
-    if [ -n &quot;$qvalue_cutoff&quot; ]; then
-        cutoff_value=&quot;$qvalue_cutoff&quot;
-        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;qvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
-        cutoff_name=&quot;qvalue_${qvalue_cutoff}&quot;
-        echo &quot;Using q-value cutoff: $cutoff_value&quot;
-    elif [ -n &quot;$pvalue_cutoff&quot; ]; then
-        cutoff_value=&quot;$pvalue_cutoff&quot;
-        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;pvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
-        cutoff_name=&quot;pvalue_${pvalue_cutoff}&quot;
-        echo &quot;Using p-value cutoff: $cutoff_value&quot;
-    else
-        echo &quot;No cutoff provided, using default p-value cutoff of 5e-8&quot;
-        cutoff_value=&quot;5e-8&quot;
-        cutoff_col=$(zcat &quot;$input_file&quot; | awk -F &#39;\t&#39; -v col=&#39;pvalue&#39; &#39;NR==1{for (i=1; i&lt;=NF; i++) if ($i==col) {print i;exit}}&#39;)
-        cutoff_name=&quot;pvalue_5e-8&quot;
-    fi
-    
-    echo &quot;Using column $cutoff_col with cutoff value $cutoff_value&quot;
-    
-    # Create the final output directory and file
-    input_basename=$(basename &quot;$input_file&quot; .gz)
-    input_basename=${input_basename%.tsv}
-    final_output_file=&quot;$[_output[0]]&quot;
-    mkdir -p $(dirname &quot;$final_output_file&quot;)
-
-    zcat &quot;$input_file&quot; | head -n 1 &gt; &quot;$final_output_file&quot;
-    # Filter and append significant associations
-    echo &quot;Processing $input_file...&quot;
-    zcat &quot;$input_file&quot; | awk -v cutoff=&quot;$cutoff_value&quot; -v col=&quot;$cutoff_col&quot; &#39;NR &gt; 1 &amp;&amp; $col &lt; cutoff&#39; &gt;&gt; &quot;$final_output_file&quot;
-    echo &quot;Total significant associations found: $(wc -l &lt; &quot;$final_output_file&quot;) (including header)&quot;
 </pre></div>
 </div>
 </div>
