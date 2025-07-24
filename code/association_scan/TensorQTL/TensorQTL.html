@@ -506,6 +506,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-cis-tensorqtl-command">i. Cis TensorQTL Command</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-trans-tensorqtl-command">ii. Trans TensorQTL Command</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-interaction-tensorqtl-command">iii. Interaction TensorQTL Command</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
@@ -746,6 +747,67 @@ INFO: Workflow cis (ID=wf24d8ec17aef888e) is executed successfully with 2 comple
     --covariate-file output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
     --cwd output/tensorqtl_trans/ \
     --MAC 5 
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="iii-interaction-tensorqtl-command">
+<h3>iii. Interaction TensorQTL Command<a class="headerlink" href="#iii-interaction-tensorqtl-command" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Example 1: Running full iQTL scan in parallel across all chromosomes
+# If using .txt files for genotype and phenotype input (with no --chromosome specified), the pipeline will run in parallel across all chromosomes.
+# Note: &quot;sex&quot; must be a column in your covariate file; otherwise, replace --interaction with a path to an interaction file.
+
+sos run pipeline/TensorQTL.ipynb cis \
+    --genotype-file output/genotype_by_chrom/wgs.merged.plink_qc.genotype_by_chrom_files.txt \
+    --phenotype-file output/phenotype/phenotype_by_chrom/bulk_rnaseq.phenotype_by_chrom_files.txt \
+    --covariate-file output/covariate/covariates.wgs.merged.plink_qc.plink_qc.prune.pca.gz \
+    --customized-cis-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --cwd output/tensorqtl_int/ \
+    --no-permutation \
+    --maf-threshold 0.05 \
+    --interaction sex \
+    -j 22
+
+# Example 2: Run TensorQTL for a specific chromosome
+sos run pipeline/TensorQTL.ipynb cis \
+    --genotype-file output/genotype_by_chrom/wgs.merged.plink_qc.genotype_by_chrom_files.txt \
+    --phenotype-file output/phenotype/phenotype_by_chrom/bulk_rnaseq.phenotype_by_chrom_files.txt \
+    --covariate-file output/covariate/covariates.wgs.merged.plink_qc.plink_qc.prune.pca.gz \
+    --customized-cis-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --cwd output/tensorqtl_int/ \
+    --chromosome 21 \
+    --no-permutation \
+    --maf-threshold 0.05 \
+    --interaction sex
+
+# Example 3: Run TensorQTL for a single chromosome with specific genotype and phenotype files
+sos run pipeline/TensorQTL.ipynb cis \
+    --genotype-file output/genotype_by_chrom/wgs.merged.plink_qc.21.bed \
+    --phenotype-file output/phenotype/phenotype_by_chrom/bulk_rnaseq.chr21.bed.gz \
+    --covariate-file output/covariate/covariates.wgs.merged.plink_qc.plink_qc.prune.pca.gz \
+    --customized-cis-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --cwd output/tensorqtl_int/ \
+    --chromosome 21 \
+    --no-permutation \
+    --maf-threshold 0.05 \
+    --interaction sex \
+    -s build
+
+# Example 4: Use a specific interaction file instead of an interaction column
+sos run pipeline/TensorQTL.ipynb cis \
+    --genotype-file output/genotype_by_chrom/wgs.merged.plink_qc.21.bed \
+    --phenotype-file output/phenotype/phenotype_by_chrom/bulk_rnaseq.chr21.bed.gz \
+    --covariate-file output/covariate/covariates.wgs.merged.plink_qc.plink_qc.prune.pca.gz \
+    --customized-cis-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --cwd output/tensorqtl_int/ \
+    --chromosome 21 \
+    --no-permutation \
+    --maf-threshold 0.05 \
+    --interaction data/ROSMAP_interaction_example.tsv \
+    -s build
 </pre></div>
 </div>
 </div>
@@ -1867,6 +1929,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-cis-tensorqtl-command">i. Cis TensorQTL Command</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-trans-tensorqtl-command">ii. Trans TensorQTL Command</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-interaction-tensorqtl-command">iii. Interaction TensorQTL Command</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
