@@ -558,7 +558,7 @@ document.write(`
 <span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.01<span class="w"> </span>--cis-window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--regional-pattern<span class="w"> </span><span class="s2">&quot;*.cis_qtl.regional.tsv.gz</span>$<span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--output-dir<span class="w"> </span>output/heirarchical_multi_test/output<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--archive-dir<span class="w"> </span>output/heirarchical_multi_test/archive<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--archive-dir<span class="w"> </span>output/heirarchical_multi_test/archive<span class="w"> </span>--enable_archive<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-s<span class="w"> </span>force
 </pre></div>
 </div>
@@ -576,7 +576,7 @@ document.write(`
 <span class="w">    </span>--regional-pattern<span class="w"> </span><span class="s2">&quot;*.cis_qtl_top_assoc.txt.gz</span>$<span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--pvalue-pattern<span class="w"> </span><span class="s2">&quot;pvalue_.*_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;qvalue_interaction&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force<span class="w"> </span>--enable_archive<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--fdr-threshold<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="c1"># set it large for illustration purpose</span>
 </pre></div>
 </div>
@@ -591,7 +591,7 @@ document.write(`
 <span class="w">    </span>--pecotmr-path<span class="w"> </span>/path/to/pecotmr<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--af-col<span class="w"> </span>maf<span class="w"> </span>--tss-dist-col<span class="w"> </span>feature_tss<span class="w"> </span>--tes-dist-col<span class="w"> </span>feature_tes<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--qvalue-pattern<span class="w"> </span><span class="s2">&quot;^qvalue</span>$<span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>-s<span class="w"> </span>force
+<span class="w">    </span>--output-dir<span class="w"> </span>~/output<span class="w"> </span>--archive-dir<span class="w"> </span>~/archive<span class="w"> </span>--enable_archive<span class="w"> </span>True<span class="w"> </span>-s<span class="w"> </span>force
 </pre></div>
 </div>
 </section>
@@ -682,6 +682,8 @@ parameter: qvalue_pattern = &quot;^qvalue$&quot;
 parameter: regional_pattern = &quot;NULL&quot;
 parameter: qtl_pattern = &quot;*.cis_qtl.pairs.tsv.gz$&quot;
 parameter: n_variants_suffix = &quot;cis_n_variants_stats.tsv.gz&quot;
+parameter: enable_archive = False
+parameter: additional_pvalue_cols = &quot;&quot;
 
 work_dir = f&quot;{cwd:a}/{sub_dir}&quot;
 if sub_dir == path(&quot;.&quot;):
@@ -720,6 +722,14 @@ R: expand = &quot;${ }&quot;
     params$end_distance_col   &lt;- &quot;${tes_dist_col}&quot;
     params$af_col &lt;- &quot;${af_col}&quot;
     params$molecular_id_col &lt;- &quot;${molecular_id_col}&quot;
+    enable_archive_val &lt;- &quot;${enable_archive}&quot;
+    if (enable_archive_val %in% c(&quot;True&quot;, &quot;TRUE&quot;, &quot;true&quot;)) {
+      params$enable_archive &lt;- TRUE
+    } else {
+      params$enable_archive &lt;- FALSE
+    }
+    message(sprintf(&quot;Archive setting - input: &#39;%s&#39;, converted: %s&quot;, enable_archive_val, params$enable_archive))    
+    params$additional_pvalue_cols &lt;- &quot;${additional_pvalue_cols}&quot;    
     convert_null_strings &lt;- function(params) {
       if (is.list(params)) {
         # Apply the function to each element in the list
@@ -739,7 +749,9 @@ R: expand = &quot;${ }&quot;
     source(&quot;${pecotmr_path}/inst/code/tensorqtl_postprocessor.R&quot;)
     results &lt;- hierarchical_multiple_testing_correction(params)
     write_results(results, params$output_dir, params$workdir, to_cwd = &quot;regional&quot;)
-    archive_files(params)
+    if (params$enable_archive) {
+      archive_files(params)
+    }
     saveRDS(results, ${_output:r})
 </pre></div>
 </div>
