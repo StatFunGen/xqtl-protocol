@@ -1025,9 +1025,11 @@ def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files,
             pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)
             # Here we combine genotype_windows which contains &quot;#chr&quot; and &quot;ID&quot; to pheno_df by creating a cartesian product
             pheno_df = pd.merge(genotype_windows.assign(key=1), pheno_df.assign(key=1), on=&#39;key&#39;).drop(&#39;key&#39;, axis=1)
-            # then set start and end columns to zero
-            pheno_df[&#39;start&#39;] = 0
-            pheno_df[&#39;end&#39;] = 0
+            # Only set start and end columns to zero if they don&#39;t exist
+            if &#39;start&#39; not in pheno_df.columns:
+                pheno_df[&#39;start&#39;] = 0
+            if &#39;end&#39; not in pheno_df.columns:
+                pheno_df[&#39;end&#39;] = 0
             if id_map_path is not None:
                 # Filter pheno_df by specific association-window and phenotype pairs
                 association_analysis_pair = pd.read_csv(id_map_path, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;ID&#39;, &#39;Original_ID&#39;])
@@ -1149,7 +1151,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
         fdat = load_regional_univariate_data(genotype = ${_input[0]:anr},
                                               phenotype = phenotype_files,
                                               covariate = covariate_files,
-                                              region = ${(&quot;&#39;%s&#39;&quot; % _meta_info[0]) if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &#39;NULL&#39;}, # if the end position is zero return NULL
+                                              region = ${(&quot;&#39;%s&#39;&quot; % _meta_info[0]) if not trans_analysis else &#39;NULL&#39;},
                                               association_window = &quot;${_meta_info[1]}&quot;,
                                               conditions = conditions,
                                               maf_cutoff = ${maf},
