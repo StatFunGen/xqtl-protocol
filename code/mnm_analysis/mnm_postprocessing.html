@@ -206,11 +206,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../molecular_phenotypes/scnuc_expression.html">scRNA-seq expression calling</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/apa_calling.html">APA Calling</a></li>
-</ul>
-</details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/methylation.html">Methylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/methylation_calling.html">Quantification of methylation data</a></li>
 </ul>
@@ -2680,7 +2675,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
         &quot;cs_coverage_0.95_min_corr&quot;,&quot;cs_coverage_0.7_min_corr&quot;, &quot;cs_coverage_0.5_min_corr&quot;,
         &quot;cs_coverage_0.95_min_corr_0.8&quot;,&quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;,
         &quot;cs_coverage_0.95_min_corr_0.5&quot;,&quot;cs_coverage_0.7_min_corr_0.5&quot;, &quot;cs_coverage_0.5_min_corr_0.5&quot;,
-        &quot;study&quot;, &quot;method&quot;, &quot;region&quot;, &quot;conditional_effect&quot;, &quot;lfsr&quot;, &quot;trait&quot;
+        &quot;study&quot;, &quot;method&quot;, &quot;region&quot;, &quot;conditional_effect&quot;, &quot;lfsr&quot;, &quot;trait&quot;, &quot;maf&quot;
       ))) %&gt;% 
       mutate(
         # Split variant_id into separate components
@@ -2693,6 +2688,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
         gene_ID    = region,
         event_ID   = study,
         PIP = pip,
+        MAF = maf,
       )  %&gt;%
       {
         if (any(c(&quot;cs_coverage_0.95_min_corr_0.8&quot;, &quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;, 
@@ -2720,7 +2716,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
       { if (&quot;lfsr&quot; %in% colnames(.)) mutate(., lfsr = lfsr, context = str_split(event_ID, &#39;:&#39;, simplify = T) %&gt;% .[,1]) else . } %&gt;% 
       { if (&quot;lfsr&quot; %in% colnames(.) &amp; lfsr_thres != 0) mutate(., event_ID = trait) else . } %&gt;% 
       # Select and order the final set of columns
-      select(any_of(c(&quot;chr&quot;, &quot;pos&quot;, &quot;a1&quot;, &quot;a2&quot;, &quot;variant_ID&quot;, &quot;gene_ID&quot;, &quot;event_ID&quot;, &quot;cs_coverage_0.95&quot;, &quot;cs_coverage_0.7&quot;, &quot;cs_coverage_0.5&quot;,
+      select(any_of(c(&quot;chr&quot;, &quot;pos&quot;, &quot;a1&quot;, &quot;a2&quot;, &quot;variant_ID&quot;, &quot;MAF&quot;, &quot;gene_ID&quot;, &quot;event_ID&quot;, &quot;cs_coverage_0.95&quot;, &quot;cs_coverage_0.7&quot;, &quot;cs_coverage_0.5&quot;,
                       &quot;cs_coverage_0.95_purity0.5&quot;, &quot;cs_coverage_0.7_purity0.5&quot;, &quot;cs_coverage_0.5_purity0.5&quot;, &quot;PIP&quot;, &quot;conditional_effect&quot;, 
                       &quot;lfsr&quot;, &quot;region_id&quot;, &quot;context&quot;${&#39;&quot;,method&quot;&#39; if preset_top_loci else &#39;&#39;}))) %&gt;% 
       # Sort by chromosome and position (convert pos to numeric if necessary)

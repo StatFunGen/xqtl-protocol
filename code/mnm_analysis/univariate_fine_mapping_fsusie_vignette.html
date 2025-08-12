@@ -206,11 +206,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../molecular_phenotypes/scnuc_expression.html">scRNA-seq expression calling</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/apa_calling.html">APA Calling</a></li>
-</ul>
-</details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/methylation.html">Methylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/methylation_calling.html">Quantification of methylation data</a></li>
 </ul>
@@ -488,6 +483,7 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-run-the-fine-mapping-with-fsusie">iii. Run the Fine-Mapping with fSuSiE</a></li>
 </ul>
@@ -533,6 +529,15 @@ chr21   10840000        16880069        TADB_1298       $PATH/protocol_example.h
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">--region-name</span></code>: if you only wish to analyze one region, then include the ID of a region found in the <code class="docutils literal notranslate"><span class="pre">customized-association-windows</span></code> file</p>
 </section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">*.fsusie_mixture_normal_TI__top_pc_weights.rds</span></code></p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</section>
 <section id="minimal-working-example-steps">
 <h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
 <section id="iii-run-the-fine-mapping-with-fsusie">
@@ -544,11 +549,11 @@ chr21   10840000        16880069        TADB_1298       $PATH/protocol_example.h
     <span class="o">--</span><span class="n">name</span> <span class="n">test_fsusie</span> \
     <span class="o">--</span><span class="n">genoFile</span> <span class="n">output</span><span class="o">/</span><span class="n">genotype_by_chrom</span><span class="o">/</span><span class="n">wgs</span><span class="o">.</span><span class="n">merged</span><span class="o">.</span><span class="n">plink_qc</span><span class="o">.</span><span class="n">genotype_by_chrom_files</span><span class="o">.</span><span class="n">txt</span> \
     <span class="o">--</span><span class="n">phenoFile</span> <span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">phenotype_by_chrom_for_cis</span><span class="o">/</span><span class="n">bulk_rnaseq</span><span class="o">.</span><span class="n">phenotype_by_chrom_files</span><span class="o">.</span><span class="n">region_list</span><span class="o">.</span><span class="n">txt</span> \
-    <span class="o">--</span><span class="n">covFile</span> <span class="n">output</span><span class="o">/</span><span class="n">covariate</span><span class="o">/</span><span class="n">bulk_rnaseq_tmp_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">outlier_removed</span><span class="o">.</span><span class="n">tmm</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">covariates</span><span class="o">.</span><span class="n">wgs</span><span class="o">.</span><span class="n">merged</span><span class="o">.</span><span class="n">plink_qc</span><span class="o">.</span><span class="n">plink_qc</span><span class="o">.</span><span class="n">prune</span><span class="o">.</span><span class="n">pca</span><span class="o">.</span><span class="n">Marchenko_PC</span><span class="o">.</span><span class="n">gz</span> \
+    <span class="o">--</span><span class="n">covFile</span> <span class="n">output</span><span class="o">/</span><span class="n">covariate</span><span class="o">/</span><span class="n">bulk_rnaseq_tpm_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">outlier_removed</span><span class="o">.</span><span class="n">tmm</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">covariates</span><span class="o">.</span><span class="n">wgs</span><span class="o">.</span><span class="n">merged</span><span class="o">.</span><span class="n">plink_qc</span><span class="o">.</span><span class="n">plink_qc</span><span class="o">.</span><span class="n">prune</span><span class="o">.</span><span class="n">pca</span><span class="o">.</span><span class="n">Marchenko_PC</span><span class="o">.</span><span class="n">gz</span> \
     <span class="o">--</span><span class="n">numThreads</span> <span class="mi">8</span> \
     <span class="o">--</span><span class="n">customized</span><span class="o">-</span><span class="n">association</span><span class="o">-</span><span class="n">windows</span> <span class="n">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">TADB_enhanced_cis</span><span class="o">.</span><span class="n">bed</span> \
     <span class="o">--</span><span class="n">save</span><span class="o">-</span><span class="n">data</span> \
-    <span class="o">--</span><span class="n">region</span><span class="o">-</span><span class="n">name</span> <span class="n">ENSG00000186891</span>
+    <span class="o">--</span><span class="n">region</span><span class="o">-</span><span class="n">name</span> <span class="n">ENSG00000049246</span> <span class="n">ENSG00000054116</span> <span class="n">ENSG00000116678</span> <span class="n">ENSG00000073921</span> <span class="n">ENSG00000186891</span>
 </pre></div>
 </div>
 </div>
@@ -648,6 +653,7 @@ chr21   10840000        16880069        TADB_1298       $PATH/protocol_example.h
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-run-the-fine-mapping-with-fsusie">iii. Run the Fine-Mapping with fSuSiE</a></li>
 </ul>

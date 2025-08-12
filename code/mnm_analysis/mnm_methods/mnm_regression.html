@@ -206,11 +206,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../molecular_phenotypes/QC/bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../molecular_phenotypes/scnuc_expression.html">scRNA-seq expression calling</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../molecular_phenotypes/apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../molecular_phenotypes/calling/apa_calling.html">APA Calling</a></li>
-</ul>
-</details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../molecular_phenotypes/methylation.html">Methylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../molecular_phenotypes/calling/methylation_calling.html">Quantification of methylation data</a></li>
 </ul>
@@ -679,11 +674,11 @@ document.write(`
     --name test_fsusie \
     --genoFile output/genotype_by_chrom/wgs.merged.plink_qc.genotype_by_chrom_files.txt \
     --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
-    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --covFile output/covariate/bulk_rnaseq_tpm_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
     --numThreads 8 \
     --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
     --save-data \
-    --region-name ENSG00000186891
+    --region-name ENSG00000049246 ENSG00000054116 ENSG00000116678 ENSG00000073921 ENSG00000186891
 </pre></div>
 </div>
 </div>
@@ -707,9 +702,9 @@ document.write(`
     --name test_mnm --cwd output/mnm \
     --genoFile output/genotype_by_chrom/wgs.merged.plink_qc.genotype_by_chrom_files.txt \
     --phenoFile output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt \
-    --covFile output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
-    --customized-association-windows reference_data/TADB_enhanced_cis.coding.bed \
-    --region-name ENSG00000073921 --save_data --no-skip-twas-weights \
+    --covFile output/covariate/bulk_rnaseq_tpm_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --region-name ENSG00000073921 --save-data --no-skip-twas-weights \
     --phenotype-names test_pheno \
     --mixture_prior output/multivariate_mixture/MWE_ed_bovy.EE.prior.rds \
     --max_cv_variants 5000 \
@@ -1429,7 +1424,11 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
       keep_samples = unlist(strsplit(readLines(${keep_samples:ar}), &quot;\\s+&quot;))
       message(paste(length(keep_samples), &quot;samples are selected to be loaded for analysis&quot;))
     }
-    
+    data_dir &lt;- paste0(&quot;${cwd:a}&quot;, &quot;/data/&quot;)
+
+    if (!dir.exists(data_dir)) {
+        dir.create(data_dir, recursive = TRUE)
+    }  
     # Load regional association data
     tryCatch({
     fdat = load_regional_multivariate_data(genotype = ${_input[0]:anr},
@@ -1448,18 +1447,16 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
                                           phenotype_header = ${&quot;4&quot; if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;},
                                           region_name_col = ${&quot;4&quot; if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;},
                                           scale_residuals = FALSE)
+  
         }, NoSNPsError = function(e) {
         message(&quot;Error: &quot;, paste(e$message, &quot;${_meta_info[2] + &#39;@&#39; + _meta_info[1]}&quot;))
-        data_dir &lt;- paste0(&quot;${cwd:a}&quot;, &quot;/data/&quot;)
-        if (!dir.exists(data_dir)) {
-            dir.create(data_dir, recursive = TRUE)
-        }
+
         saveRDS(list(${_meta_info[2]} = e$message),
                 paste0(data_dir, &quot;${_output[0]:bnn}.multicontext_data.rds&quot;), 
                 compress=&#39;xz&#39;)            
         quit(save=&quot;no&quot;)
     })
-    if (${&quot;TRUE&quot; if save_data else &quot;FALSE&quot;}) {
+    if (${&quot;TRUE&quot; if save_data else &quot;FALSE&quot;}) {        
         saveRDS(fdat, paste0(&quot;${cwd:a}&quot;, &quot;/data/&quot;, &quot;${_output[0]:bnn}.multicontext_data.rds&quot;), compress=&#39;xz&#39;)
     }
     if (${&quot;FALSE&quot; if skip_fine_mapping and skip_twas_weights else &quot;TRUE&quot;}) {
