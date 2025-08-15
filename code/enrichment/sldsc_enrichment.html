@@ -1121,6 +1121,7 @@ parameter: weights_dir = path()  # Directory containing LD weights
 parameter: baseline_name = &quot;baseline_chr&quot;  # Prefix of baseline annotation files
 parameter: weight_name = &quot;weights_chr&quot;  # Prefix of LD weights files
 parameter: Mref = -1 # Reference number of SNP value. If &gt; 0, use provided value; if &lt;= 0, auto-calculate from ldscore files
+parameter: n_blocks = 200
 
 # Number of threads
 parameter: numThreads = 16
@@ -1711,7 +1712,8 @@ bash: expand = &quot;${ }&quot;
         --w-ld-chr ${weights_dir}/${weight_name} \
         $frq_option \
         --print-coefficients \
-        --print-delete-vals
+        --print-delete-vals \
+        --n-blocks ${n_blocks}
 
     # Check if it failed with FloatingPointError
     if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
@@ -1726,7 +1728,8 @@ bash: expand = &quot;${ }&quot;
             $frq_option \
             --chisq-max 30 \
             --print-coefficients \
-            --print-delete-vals
+            --print-delete-vals \
+            --n-blocks ${n_blocks}
         
         # Check again if it still failed with FloatingPointError
         if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
@@ -1741,7 +1744,8 @@ bash: expand = &quot;${ }&quot;
                 $frq_option \
                 --chisq-max 20 \
                 --print-coefficients \
-                --print-delete-vals
+                --print-delete-vals \
+                --n-blocks ${n_blocks}
             
             # Check a third time if it still failed with FloatingPointError
             if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
@@ -1756,7 +1760,8 @@ bash: expand = &quot;${ }&quot;
                     $frq_option \
                     --chisq-max 10 \
                     --print-coefficients \
-                    --print-delete-vals
+                    --print-delete-vals \
+                    --n-blocks ${n_blocks}
                 
                 # Final check - if still failing, log the persistent error
                 if [ $? -ne 0 ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;${cwd}/$trait.log&quot; 2&gt;/dev/null; then
@@ -2108,7 +2113,7 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
                   df &lt;- matrix(0, nrow = length(group_stats), ncol = 2)
                   for(k in 1:length(group_stats)) {
                       sc_values &lt;- group_stats[[k]]$sc_matrices[,j]
-                      df[k,] &lt;- c(mean(sc_values), sqrt(199^2/200 * var(sc_values)))
+                      df[k,] &lt;- c(mean(sc_values), sqrt((${n_blocks}-1)^2/${n_blocks} * var(sc_values)))
                   }
                   
                   meta &lt;- meta.summaries(df[,1], df[,2], method = &quot;random&quot;)
@@ -2137,7 +2142,7 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
           if (length(group_stats) &gt; 0) {
               sc_data &lt;- lapply(group_stats, function(x) {
                   mean_sc &lt;- mean(x$single_tau$sc_matrix[, 1])
-                  se_sc &lt;- sqrt(199^2 / 200 * var(x$single_tau$sc_matrix[, 1]))
+                  se_sc &lt;- sqrt((${n_blocks}-1)^2 / ${n_blocks} * var(x$single_tau$sc_matrix[, 1]))
                   return(c(mean_sc, se_sc))
               })
               sc_matrix &lt;- do.call(rbind, sc_data)
