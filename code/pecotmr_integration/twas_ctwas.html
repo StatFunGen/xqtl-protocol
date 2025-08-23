@@ -971,7 +971,7 @@ parameter: save_mr_result = True
 parameter: rsq_option=&quot;rsq&quot;
 parameter: rsq_pval_option=[&quot;adj_rsq_pval&quot;, &quot;pval&quot;]
 # load by batches if memory resource is limited, default to load all at once 
-parameter: batch_load_memory = &#39;inf&#39;
+parameter: batch_load_memory = 500
 parameter: event_filter_rules = path()
 parameter: comment_string = &quot;NULL&quot;
 
@@ -1505,7 +1505,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
         screen_res &lt;- screen_regions(region_data[[study]][gsub(&quot;chr&quot;, &quot;&quot;, &quot;${region_name}&quot;)],
                                        group_prior = group_prior, group_prior_var = group_prior_var, min_nonSNP_PIP = 0.5, 
                                        ncore = ${numThreads}, verbose = FALSE, logfile = file.path(outputdir, 
-                                       paste0(&quot;${name}.screen_regions.${prior_var_structure}.${region_name}.thin${thin}.log&quot;)))
+                                       paste0(&quot;${name}.screen_regions.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.log&quot;)))
         screened_region_data &lt;- screen_res$screened_region_data
         # screen_summary &lt;- screen_res$screen_summary
         saveRDS(screen_res, file.path(outputdir, paste0(&quot;${name}.screen_regions.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.rds&quot;)))
@@ -1587,20 +1587,14 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
                                                region_info = region_info,
                                                LD_map = LD_map,
                                                snp_map = snp_map,
-                                               weights = weights,
                                                z_snp = z_snp,
                                                z_gene = z_gene,
-                                               estimate_L = TRUE,
-                                               maxSNP = ${maxSNP},
-                                               LD_format = &quot;custom&quot;, 
-                                               LD_loader_fun = ctwas_ld_loader, 
-                                               snpinfo_loader_fun = ctwas_bimfile_loader)
+                                               maxSNP = ${maxSNP})
                 finemap_merged_regions_res &lt;- finemap_regions(merge_region_res$merged_region_data,
                                               LD_map = merge_region_res$merged_LD_map,
                                               weights = weights,
                                               group_prior = group_prior,
                                               group_prior_var = group_prior_var,
-                                              L = merge_region_res$merged_region_L,
                                               save_cor = FALSE,
                                               LD_format = &quot;custom&quot;, 
                                               LD_loader_fun = ctwas_ld_loader, 
