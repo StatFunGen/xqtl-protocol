@@ -974,7 +974,7 @@ parameter: rsq_pval_option=[&quot;adj_rsq_pval&quot;, &quot;pval&quot;]
 parameter: batch_load_memory = 500
 parameter: event_filter_rules = path()
 parameter: comment_string = &quot;NULL&quot;
-
+parameter: rename_column = False
 input: filtered_regional_xqtl_files, group_by = lambda x: group_by_region(x, filtered_regional_xqtl_files), group_with = &quot;filtered_region_info&quot;
 output_files = [f&#39;{cwd:a}/{step_name}/{name}.{_filtered_region_info[3]}.twas.tsv.gz&#39;]
 if save_ctwas_data:
@@ -990,99 +990,132 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     library(pecotmr)
     library(readr)
 
-    gwas_meta_data = fread(&quot;${gwas_meta_data}&quot;, data.table=FALSE)
-    column_file_path = gwas_meta_data$column_mapping[1]# since one GWAS only has one column mapping file
-    # get xQTL weight information 
-    xqtl_meta_df &lt;- fread(&quot;${xqtl_meta_data}&quot;, data.table=FALSE) # Get related gene information from the xqtl_meta data table
-    xqtl_type_table &lt;- if (isTRUE(file.exists(&quot;${xqtl_type_table}&quot;))) fread(&quot;${xqtl_type_table}&quot;) else NULL
-    gene_list &lt;- c(${&#39;, &#39;.join([f&quot;&#39;{gene}&#39;&quot; for gene in _filtered_region_info[4]])})
-    event_filter_rules = ${&quot;NULL&quot; if not event_filter_rules.is_file() else &quot;&#39;%s&#39;&quot; % event_filter_rules}
-    if (!is.null(event_filter_rules)) {
-        event_filters &lt;- read.table(&quot;${event_filter_rules}&quot;)
-        event_filters &lt;- lapply(1:nrow(event_filters), function(ii) as.list(event_filters[ii,] %&gt;% unlist))
-    } else { event_filters &lt;- NULL }
-
-    # Process weights 
-    twas_weights_results &lt;- list()
-    weight_db_list &lt;- c(${_input:r,})
-    names(weight_db_list) &lt;- gene_list
-    weight_db_list &lt;- split(weight_db_list, names(weight_db_list), c)
-    # remove weight db files that only contain messages: &quot;No SNPs found in the specified region ...&quot;
-    weight_db_list_update &lt;- Filter(Negate(is.null), lapply(weight_db_list, function(file_list){do.call(c,lapply(file_list, function(file) if (file.size(file) &gt; 200) file))}))
-    if(length(weight_db_list_update) &lt;= 0) stop(paste0(&quot;No weight information available from &quot;, paste0(weight_db_list, collapse=&quot;,&quot;), &quot;. &quot;))
-
-    # Step 1: Load TWAS weights and generate twas weight db, output export_twas_weights_db 
-    for (gene_db in names(weight_db_list_update)) {
-        weight_dbs &lt;- weight_db_list_update[[gene_db]]
-        twas_weights_results[[gene_db]] = load_twas_weights(weight_dbs, variable_name_obj=&quot;variant_names&quot;, 
-                                                           susie_obj=&quot;susie_weights_intermediate&quot;,
-                                                           twas_weights_table = &quot;twas_weights&quot;)
-        if (length(twas_weights_results[[gene_db]]) &gt; 1) {
-          twas_weights_results[[gene_db]]$data_type &lt;- setNames(lapply(names(twas_weights_results[[gene_db]]$weights), function(context) xqtl_type_table$type[sapply(xqtl_type_table$context,
-                                                                function(x) grepl(x, context))]), names(twas_weights_results[[gene_db]]$weights))      
-        } else {
-          twas_weights_results[[gene_db]] &lt;- NULL
-        }                   
-    }
-    rm(weight_db_list, weight_db_list_update, xqtl_type_table, gene_list)
-    gc()
-    # batch load twas weights to reduce memory consumption 
-    twas_weights_results &lt;- batch_load_twas_weights(
-      twas_weights_results = twas_weights_results,
-      meta_data_df = xqtl_meta_df,
-      max_memory_per_batch = ${&quot;Inf&quot; if batch_load_memory == &quot;inf&quot; else batch_load_memory}
-    )
-    
-    # Step 2: twas analysis for imputable genes across contexts
-    twas_results_db &lt;- list()
-    for (batch in 1:length(twas_weights_results)){
-        twas_results_db[[batch]] &lt;- twas_pipeline(twas_weights_results[[batch]], 
-                                     &quot;${ld_meta_data}&quot;, 
-                                     &quot;${gwas_meta_data}&quot;,  
-                                     region_block=&quot;${_filtered_region_info[3]}&quot;,
-                                     rsq_cutoff = ${rsq_cutoff}, 
-                                     rsq_option = &quot;${rsq_option}&quot;, 
-                                     rsq_pval_cutoff = ${rsq_pval_cutoff}, 
-                                     rsq_pval_option=c(${&quot;, &quot;.join([f&#39;&quot;{x}&quot;&#39; for x in rsq_pval_option])}), 
-                                     mr_pval_cutoff = ${mr_pval_cutoff},
-                                     mr_coverage_column = &quot;${coverage}&quot;, 
-                                     output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;},
-                                     event_filters = event_filters,
-                                     column_file_path = column_file_path,
-                                     comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;})
-    }
-    rm(twas_weights_results)
-    gc()
-    twas_results_db &lt;- Filter(Negate(is.null), twas_results_db)
-
-    if(length(twas_results_db)!=0){
-        for (batch in 1:length(twas_results_db)){
-            twas_results_db[[batch]]$twas_result &lt;- merge(twas_results_db[[batch]]$twas_result, xqtl_meta_df[, c(&quot;region_id&quot;,&quot;TSS&quot;,&quot;start&quot;,&quot;end&quot;)], 
-                                                          by.x=&quot;molecular_id&quot;, by.y=&quot;region_id&quot;)
+    # Initialize tryCatch for error handling
+    tryCatch({
+        if (${&quot;TRUE&quot; if rename_column else &quot;FALSE&quot;}) {
+            gwas_meta_data = fread(&quot;${gwas_meta_data}&quot;, data.table=FALSE)
+            column_file_path = gwas_meta_data$column_mapping[1]# since one GWAS only has one column mapping file
+        }else {
+            column_file_path = &quot;NULL&quot;
         }
-        fwrite(do.call(rbind, lapply(twas_results_db, function(x) x$twas_result[, c(2,1,14:16,3:13)])), ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
-    } else {
-        fwrite(data.frame(), file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
-    }
-    # Step 3: reformat for follow up cTWAS analysis
-    if (${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;} &amp; length(twas_results_db)!=0) {
-        if (length(twas_results_db) &gt; 1){
-            twas_results_db[[1]]$twas_data$weights &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$weights))
-            twas_results_db[[1]]$twas_data$susie_weights_intermediate_qced &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$susie_weights_intermediate_qced))
-            studies &lt;- unique(names(find_data(twas_results_db, c(3, &quot;z_gene&quot;))))
-            for (study in studies){
-                twas_results_db[[1]][[&quot;twas_data&quot;]][[&quot;z_gene&quot;]][[study]] &lt;- do.call(rbind, lapply(twas_results_db, function(x) x$twas_data$z_gene[[study]]))
+        
+        # get xQTL weight information 
+        xqtl_meta_df &lt;- fread(&quot;${xqtl_meta_data}&quot;, data.table=FALSE) # Get related gene information from the xqtl_meta data table
+        xqtl_type_table &lt;- if (isTRUE(file.exists(&quot;${xqtl_type_table}&quot;))) fread(&quot;${xqtl_type_table}&quot;) else NULL
+        gene_list &lt;- c(${&#39;, &#39;.join([f&quot;&#39;{gene}&#39;&quot; for gene in _filtered_region_info[4]])})
+        event_filter_rules = ${&quot;NULL&quot; if not event_filter_rules.is_file() else &quot;&#39;%s&#39;&quot; % event_filter_rules}
+        if (!is.null(event_filter_rules)) {
+            event_filters &lt;- read.table(&quot;${event_filter_rules}&quot;)
+            event_filters &lt;- lapply(1:nrow(event_filters), function(ii) as.list(event_filters[ii,] %&gt;% unlist))
+        } else { event_filters &lt;- NULL }
+
+        # Process weights 
+        twas_weights_results &lt;- list()
+        weight_db_list &lt;- c(${_input:r,})
+        names(weight_db_list) &lt;- gene_list
+        weight_db_list &lt;- split(weight_db_list, names(weight_db_list))
+        # remove weight db files that only contain messages: &quot;No SNPs found in the specified region ...&quot;
+        weight_db_list_update &lt;- Filter(Negate(is.null), lapply(weight_db_list, function(file_list){do.call(c,lapply(file_list, function(file) if (file.size(file) &gt; 200) file))}))
+        if(length(weight_db_list_update) &lt;= 0) {
+            message(paste0(&quot;No weight information available for region ${_filtered_region_info[3]}. Creating empty output files.&quot;))
+            fwrite(data.frame(), file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+            if (${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;}) {
+                saveRDS(list(), &quot;${_output[0]:nnn}.twas_data.rds&quot;, compress=&#39;xz&#39;)
+            }
+            if (${&quot;TRUE&quot; if save_mr_result else &quot;FALSE&quot;}) {
+                fwrite(data.frame(), file = &quot;${_output[0]:nnn}.mr_result.tsv.gz&quot;, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+            }
+            quit(save = &quot;no&quot;, status = 0)
+        }
+
+        # Step 1: Load TWAS weights and generate twas weight db, output export_twas_weights_db 
+        for (gene_db in names(weight_db_list_update)) {
+            weight_dbs &lt;- weight_db_list_update[[gene_db]]
+            twas_weights_results[[gene_db]] = load_twas_weights(weight_dbs, variable_name_obj=&quot;variant_names&quot;, 
+                                                            susie_obj=&quot;susie_weights_intermediate&quot;,
+                                                            twas_weights_table = &quot;twas_weights&quot;)
+            if (length(twas_weights_results[[gene_db]]) &gt; 1) {
+                twas_weights_results[[gene_db]]$data_type &lt;- setNames(lapply(names(twas_weights_results[[gene_db]]$weights), function(context) xqtl_type_table$type[sapply(xqtl_type_table$context,
+                                                                    function(x) grepl(x, context))]), names(twas_weights_results[[gene_db]]$weights))      
+            } else {
+                twas_weights_results[[gene_db]] &lt;- NULL
+            }                   
+        }
+        rm(weight_db_list, weight_db_list_update, xqtl_type_table, gene_list)
+        gc()
+        # batch load twas weights to reduce memory consumption 
+        twas_weights_results &lt;- batch_load_twas_weights(
+            twas_weights_results = twas_weights_results,
+            meta_data_df = xqtl_meta_df,
+            max_memory_per_batch = ${&quot;Inf&quot; if batch_load_memory == &quot;inf&quot; else batch_load_memory}
+        )
+        
+        # Step 2: twas analysis for imputable genes across contexts
+        twas_results_db &lt;- list()
+        for (batch in 1:length(twas_weights_results)){
+            twas_results_db[[batch]] &lt;- twas_pipeline(twas_weights_results[[batch]], 
+                                            &quot;${ld_meta_data}&quot;, 
+                                            &quot;${gwas_meta_data}&quot;,  
+                                            region_block=&quot;${_filtered_region_info[3]}&quot;,
+                                            rsq_cutoff = ${rsq_cutoff}, 
+                                            rsq_option = &quot;${rsq_option}&quot;, 
+                                            rsq_pval_cutoff = ${rsq_pval_cutoff}, 
+                                            rsq_pval_option=c(${&quot;, &quot;.join([f&#39;&quot;{x}&quot;&#39; for x in rsq_pval_option])}), 
+                                            mr_pval_cutoff = ${mr_pval_cutoff},
+                                            mr_coverage_column = &quot;${coverage}&quot;, 
+                                            output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;},
+                                            event_filters = event_filters,
+                                            column_file_path = column_file_path,
+                                            comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;})
+        }
+        rm(twas_weights_results)
+        gc()
+        twas_results_db &lt;- Filter(Negate(is.null), twas_results_db)
+
+        if(length(twas_results_db)!=0){
+            for (batch in 1:length(twas_results_db)){
+                twas_results_db[[batch]]$twas_result &lt;- merge(twas_results_db[[batch]]$twas_result, xqtl_meta_df[, c(&quot;region_id&quot;,&quot;TSS&quot;,&quot;start&quot;,&quot;end&quot;)], 
+                                                                by.x=&quot;molecular_id&quot;, by.y=&quot;region_id&quot;)
+            }
+            fwrite(do.call(rbind, lapply(twas_results_db, function(x) x$twas_result[, c(2,1,14:16,3:13)])), ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+        } else {
+            fwrite(data.frame(), file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+        }
+        # Step 3: reformat for follow up cTWAS analysis
+        if (${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;} &amp; length(twas_results_db)!=0) {
+            if (length(twas_results_db) &gt; 1){
+                twas_results_db[[1]]$twas_data$weights &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$weights))
+                twas_results_db[[1]]$twas_data$susie_weights_intermediate_qced &lt;- do.call(c, lapply(twas_results_db, function(x) x$twas_data$susie_weights_intermediate_qced))
+                studies &lt;- unique(names(find_data(twas_results_db, c(3, &quot;z_gene&quot;))))
+                for (study in studies){
+                    twas_results_db[[1]][[&quot;twas_data&quot;]][[&quot;z_gene&quot;]][[study]] &lt;- do.call(rbind, lapply(twas_results_db, function(x) x$twas_data$z_gene[[study]]))
+                }
+            }
+            saveRDS(twas_results_db[[1]]$twas_data, &quot;${_output[0]:nnn}.twas_data.rds&quot;, compress=&#39;xz&#39;)
+        }
+        if (${&quot;TRUE&quot; if save_mr_result else &quot;FALSE&quot;}) {
+            if(length(twas_results_db)!=0) {
+                fwrite(do.call(rbind, lapply(twas_results_db, function(x) x$mr_result)), file = &quot;${_output[0]:nnn}.mr_result.tsv.gz&quot;, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+            } else {
+                fwrite(data.frame(), file = &quot;${_output[0]:nnn}.mr_result.tsv.gz&quot;, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
             }
         }
-        saveRDS(twas_results_db[[1]]$twas_data, &quot;${_output[0]:nnn}.twas_data.rds&quot;, compress=&#39;xz&#39;)
-    }
-    if (${&quot;TRUE&quot; if save_mr_result else &quot;FALSE&quot;}) {
-        if(length(twas_results_db)!=0) {
-           fwrite(do.call(rbind, lapply(twas_results_db, function(x) x$mr_result)), file = &quot;${_output[0]:nnn}.mr_result.tsv.gz&quot;, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
-        } else {
+    }, error = function(e) {
+        # Error handling: create empty output files and log error
+        message(paste(&quot;Error in TWAS analysis for region ${_filtered_region_info[3]}:&quot;, e$message))
+        
+        # Create empty output files to maintain pipeline consistency
+        fwrite(data.frame(), file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+        if (${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;}) {
+            saveRDS(list(), &quot;${_output[0]:nnn}.twas_data.rds&quot;, compress=&#39;xz&#39;)
+        }
+        if (${&quot;TRUE&quot; if save_mr_result else &quot;FALSE&quot;}) {
             fwrite(data.frame(), file = &quot;${_output[0]:nnn}.mr_result.tsv.gz&quot;, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
         }
-    }
+        
+        # Exit gracefully without stopping the entire pipeline
+        quit(save = &quot;no&quot;, status = 0)
+    })
 </pre></div>
 </div>
 </div>
