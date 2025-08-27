@@ -947,7 +947,7 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n
         # split multiallelic sites into biallelic records 
         ${&#39;bcftools norm -m-any&#39; if not bi_allelic else &#39;bcftools view -m2 -M2&#39;} ${&#39;-v snps&#39; if snp_only else &quot;&quot;} ${_input} |\
         # Fix incorrect or missing REF alleles and warn about them
-        bcftools norm -d exact -N --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
+        bcftools norm -d exact --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
         # Remove ID and replace with CHROM:POS:REF:ALT format
         bcftools annotate -x ID -I +&#39;%CHROM:%POS:%REF:%ALT&#39; | \
         # Annotate with dbSNP rsID
@@ -959,7 +959,7 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n
         # split multiallelic sites into biallelic records 
         ${&#39;bcftools norm -m-any&#39; if not bi_allelic else &#39;bcftools view -m2 -M2&#39;} ${&#39;-v snps&#39; if snp_only else &quot;&quot;} ${_input} |\
         # Fix incorrect or missing REF alleles and warn about them
-        bcftools norm -d exact -N --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
+        bcftools norm -d exact --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
         # Fill missing tags
         bcftools +fill-tags -- -t all,F_MISSING,&#39;VD=sum(FMT/DP)&#39; | \
         # Remove ID and replace with CHROM:POS:REF:ALT format
