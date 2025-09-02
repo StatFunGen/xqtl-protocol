@@ -2668,62 +2668,83 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
         }) %&gt;% bind_rows()  
     }) %&gt;% bind_rows() 
 
-    file_top_loci_rename &lt;- file_top_loci %&gt;% 
-      # Select necessary columns from the original table
-      select(any_of(c(
-        &quot;variant_id&quot;, &quot;pip&quot;, 
-        &quot;cs_coverage_0.95_min_corr&quot;,&quot;cs_coverage_0.7_min_corr&quot;, &quot;cs_coverage_0.5_min_corr&quot;,
-        &quot;cs_coverage_0.95_min_corr_0.8&quot;,&quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;,
-        &quot;cs_coverage_0.95_min_corr_0.5&quot;,&quot;cs_coverage_0.7_min_corr_0.5&quot;, &quot;cs_coverage_0.5_min_corr_0.5&quot;,
-        &quot;study&quot;, &quot;method&quot;, &quot;region&quot;, &quot;conditional_effect&quot;, &quot;lfsr&quot;, &quot;trait&quot;, &quot;maf&quot;
-      ))) %&gt;% 
-      mutate(
-        # Split variant_id into separate components
-        chr = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 1],  # Chromosome
-        pos = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 2],  # Position
-        a1  = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 4],  # Allele 1
-        a2  = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 3],  # Allele 2
-        # Rename and duplicate columns as required
-        variant_ID = variant_id,
-        gene_ID    = region,
-        event_ID   = study,
-        PIP = pip,
-        MAF = maf,
-      )  %&gt;%
-      {
-        if (any(c(&quot;cs_coverage_0.95_min_corr_0.8&quot;, &quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;, 
-                  &quot;cs_coverage_0.95_min_corr_0.5&quot;, &quot;cs_coverage_0.7_min_corr_0.5&quot;, &quot;cs_coverage_0.5_min_corr_0.5&quot;, 
-                  &quot;cs_coverage_0.95_min_corr&quot;, &quot;cs_coverage_0.7_min_corr&quot;, &quot;cs_coverage_0.5_min_corr&quot;) %in% colnames(.))) {
-          mutate(.,
-            cs_coverage_0.95 = if (&quot;cs_coverage_0.95_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr_0.8&quot;) else 
-                               if (&quot;cs_coverage_0.95_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr&quot;) else NA,
+    # Check if file_top_loci is not empty before processing
+    if (!is.null(file_top_loci) &amp;&amp; nrow(file_top_loci) &gt; 0) {
+        file_top_loci_rename &lt;- file_top_loci %&gt;% 
+          # Select necessary columns from the original table
+          select(any_of(c(
+            &quot;variant_id&quot;, &quot;pip&quot;, 
+            &quot;cs_coverage_0.95_min_corr&quot;,&quot;cs_coverage_0.7_min_corr&quot;, &quot;cs_coverage_0.5_min_corr&quot;,
+            &quot;cs_coverage_0.95_min_corr_0.8&quot;,&quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;,
+            &quot;cs_coverage_0.95_min_corr_0.5&quot;,&quot;cs_coverage_0.7_min_corr_0.5&quot;, &quot;cs_coverage_0.5_min_corr_0.5&quot;,
+            &quot;study&quot;, &quot;method&quot;, &quot;region&quot;, &quot;conditional_effect&quot;, &quot;lfsr&quot;, &quot;trait&quot;, &quot;maf&quot;, &quot;betahat&quot;, &quot;sebetahat&quot;, &quot;z&quot;
             
-            cs_coverage_0.7 = if (&quot;cs_coverage_0.7_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr_0.8&quot;) else 
-                              if (&quot;cs_coverage_0.7_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr&quot;) else NA,
+          ))) %&gt;% 
+          mutate(
+            # Split variant_id into separate components
+            chr = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 1],  # Chromosome
+            pos = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 2],  # Position
+            a1  = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 4],  # Allele 1
+            a2  = str_split(variant_id, &quot;:&quot;, simplify = TRUE)[, 3],  # Allele 2
+            # Rename and duplicate columns as required
+            variant_ID = variant_id,
+            gene_ID    = region,
+            event_ID   = study,
+            PIP = pip,
+            MAF = maf,
+            betahat = betahat,
+            sebetahat = sebetahat,
+            z=z,
             
-            cs_coverage_0.5 = if (&quot;cs_coverage_0.5_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr_0.8&quot;) else 
-                              if (&quot;cs_coverage_0.5_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr&quot;) else NA,
-            
-            cs_coverage_0.95_purity0.5 = if (&quot;cs_coverage_0.95_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr_0.5&quot;) else NA,
-            cs_coverage_0.7_purity0.5 = if (&quot;cs_coverage_0.7_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr_0.5&quot;) else NA,
-            cs_coverage_0.5_purity0.5 = if (&quot;cs_coverage_0.5_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr_0.5&quot;) else NA
-          )
-        } else .
-      } %&gt;%
-        # Conditionally add lfsr if the column exists
-      mutate(region_id = basename(&quot;${_input}&quot;) %&gt;% str_split(., &#39;[.]&#39;, simplify = T) %&gt;% .[,2])  %&gt;% 
-      # Conditionally add lfsr if the column exists
-      { if (&quot;lfsr&quot; %in% colnames(.)) mutate(., lfsr = lfsr, context = str_split(event_ID, &#39;:&#39;, simplify = T) %&gt;% .[,1]) else . } %&gt;% 
-      { if (&quot;lfsr&quot; %in% colnames(.) &amp; lfsr_thres != 0) mutate(., event_ID = trait) else . } %&gt;% 
-      # Select and order the final set of columns
-      select(any_of(c(&quot;chr&quot;, &quot;pos&quot;, &quot;a1&quot;, &quot;a2&quot;, &quot;variant_ID&quot;, &quot;MAF&quot;, &quot;gene_ID&quot;, &quot;event_ID&quot;, &quot;cs_coverage_0.95&quot;, &quot;cs_coverage_0.7&quot;, &quot;cs_coverage_0.5&quot;,
-                      &quot;cs_coverage_0.95_purity0.5&quot;, &quot;cs_coverage_0.7_purity0.5&quot;, &quot;cs_coverage_0.5_purity0.5&quot;, &quot;PIP&quot;, &quot;conditional_effect&quot;, 
-                      &quot;lfsr&quot;, &quot;region_id&quot;, &quot;context&quot;${&#39;&quot;,method&quot;&#39; if preset_top_loci else &#39;&#39;}))) %&gt;% 
-      # Sort by chromosome and position (convert pos to numeric if necessary)
-      arrange(chr, as.numeric(pos))
-    # Check if &quot;lfsr&quot; is in column names
-    if (&quot;lfsr&quot; %in% colnames(file_top_loci_rename) &amp; lfsr_thres != 0) file_top_loci_rename &lt;- filter_lfsr(file_top_loci_rename, lfsr_thres = lfsr_thres)
-    fwrite(file_top_loci_rename,&quot;${_output}&quot;)
+          )  %&gt;%
+          {
+            if (any(c(&quot;cs_coverage_0.95_min_corr_0.8&quot;, &quot;cs_coverage_0.7_min_corr_0.8&quot;, &quot;cs_coverage_0.5_min_corr_0.8&quot;, 
+                      &quot;cs_coverage_0.95_min_corr_0.5&quot;, &quot;cs_coverage_0.7_min_corr_0.5&quot;, &quot;cs_coverage_0.5_min_corr_0.5&quot;, 
+                      &quot;cs_coverage_0.95_min_corr&quot;, &quot;cs_coverage_0.7_min_corr&quot;, &quot;cs_coverage_0.5_min_corr&quot;) %in% colnames(.))) {
+              mutate(.,
+                cs_coverage_0.95 = if (&quot;cs_coverage_0.95_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr_0.8&quot;) else 
+                                   if (&quot;cs_coverage_0.95_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr&quot;) else NA,
+
+                cs_coverage_0.7 = if (&quot;cs_coverage_0.7_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr_0.8&quot;) else 
+                                  if (&quot;cs_coverage_0.7_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr&quot;) else NA,
+
+                cs_coverage_0.5 = if (&quot;cs_coverage_0.5_min_corr_0.8&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr_0.8&quot;) else 
+                                  if (&quot;cs_coverage_0.5_min_corr&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr&quot;) else NA,
+
+                cs_coverage_0.95_purity0.5 = if (&quot;cs_coverage_0.95_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.95_min_corr_0.5&quot;) else NA,
+                cs_coverage_0.7_purity0.5 = if (&quot;cs_coverage_0.7_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.7_min_corr_0.5&quot;) else NA,
+                cs_coverage_0.5_purity0.5 = if (&quot;cs_coverage_0.5_min_corr_0.5&quot; %in% colnames(.)) get(&quot;cs_coverage_0.5_min_corr_0.5&quot;) else NA
+              )
+            } else .
+          } %&gt;%
+            # Conditionally add lfsr if the column exists
+          mutate(region_id = basename(&quot;${_input}&quot;) %&gt;% str_split(., &#39;[.]&#39;, simplify = T) %&gt;% .[,2])  %&gt;% 
+          # Conditionally add lfsr if the column exists
+          { if (&quot;lfsr&quot; %in% colnames(.)) mutate(., lfsr = lfsr, context = str_split(event_ID, &#39;:&#39;, simplify = T) %&gt;% .[,1]) else . } %&gt;% 
+          { if (&quot;lfsr&quot; %in% colnames(.) &amp; lfsr_thres != 0) mutate(., event_ID = trait) else . } %&gt;% 
+          # Select and order the final set of columns
+          select(any_of(c(&quot;chr&quot;, &quot;pos&quot;, &quot;a1&quot;, &quot;a2&quot;, &quot;variant_ID&quot;, &quot;MAF&quot;, &quot;betahat&quot;, &quot;sebetahat&quot;, &quot;z&quot;, &quot;gene_ID&quot;, &quot;event_ID&quot;,
+                          &quot;cs_coverage_0.95&quot;, &quot;cs_coverage_0.7&quot;, &quot;cs_coverage_0.5&quot;,
+                          &quot;cs_coverage_0.95_purity0.5&quot;, &quot;cs_coverage_0.7_purity0.5&quot;, &quot;cs_coverage_0.5_purity0.5&quot;, &quot;PIP&quot;, &quot;conditional_effect&quot;, 
+                          &quot;lfsr&quot;, &quot;region_id&quot;, &quot;context&quot;${&#39;&quot;,method&quot;&#39; if preset_top_loci else &#39;&#39;}))) %&gt;% 
+          # Sort by chromosome and position (convert pos to numeric if necessary)
+          arrange(chr, as.numeric(pos))
+        # Check if &quot;lfsr&quot; is in column names
+        if (&quot;lfsr&quot; %in% colnames(file_top_loci_rename) &amp; lfsr_thres != 0) file_top_loci_rename &lt;- filter_lfsr(file_top_loci_rename, lfsr_thres = lfsr_thres)
+        fwrite(file_top_loci_rename,&quot;${_output}&quot;)
+    } else {
+      # Create empty output if input is empty or NULL
+      cat(&quot;Input data is empty. Creating empty output file.\n&quot;)
+
+      # Create an empty data frame with the expected column structure
+      empty_df &lt;- data.frame(
+        chr = character(0),
+        pos = character(0)
+      )
+
+      # Write empty file
+        fwrite(empty_df,&quot;${_output}&quot;)
+    }
 </pre></div>
 </div>
 </div>
