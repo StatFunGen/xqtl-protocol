@@ -1,0 +1,58 @@
+# Generic Model Configuration - User Customizable
+algorithm:
+  name: "catboost"
+  parameter_sets:
+    standard:
+      depth: 6
+      iterations: 100
+      learning_rate: 0.03
+      l2_leaf_reg: 3.0
+      min_data_in_leaf: 10
+      verbose: true
+      loss_function: "Logloss"
+      
+    conservative:
+      depth: 5
+      iterations: 100
+      learning_rate: 0.03
+      l2_leaf_reg: 5.0
+      min_data_in_leaf: 10
+      bagging_temperature: 1.0
+      leaf_estimation_method: "Newton"
+      leaf_estimation_iterations: 10
+      verbose: true
+      loss_function: "Logloss"
+
+feature_weighting:
+  default_weight: 1.0
+  high_priority_patterns:
+    weight: 10.0
+    feature_patterns: ["chrombpnet_positive", "tf_positive", "diff"]
+
+model_variants:
+  baseline:
+    name: "Standard"
+    description: "Standard parameters, no feature weighting"
+    parameter_set: "standard"
+    use_feature_weights: false
+    
+  regularized:
+    name: "Conservative"
+    description: "Conservative parameters to reduce overfitting"
+    parameter_set: "conservative"
+    use_feature_weights: false
+    
+  weighted:
+    name: "Feature-Weighted"
+    description: "Standard parameters with biology-informed weighting"
+    parameter_set: "standard"
+    use_feature_weights: true
+    
+  regularized_weighted:
+    name: "Conservative-Weighted"
+    description: "Conservative parameters with feature weighting"
+    parameter_set: "conservative"
+    use_feature_weights: true
+
+training:
+  evaluation_metrics: ["average_precision_score", "roc_auc_score"]

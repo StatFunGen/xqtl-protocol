@@ -1,0 +1,59 @@
+# Generic Data Configuration - User Customizable
+input_files:
+  gene_constraint:
+    name: "gene_lof"
+    file_path: "../../data/41588_2024_1820_MOESM4_ESM.xlsx"
+    xlsx_sheet: "Supplementary Table 1"
+    include_columns: ["ensg", "post_mean"]
+    column_mapping:
+      source_gene_id: "ensg"
+      target_gene_id: "gene_id"
+      source_value: "post_mean"
+      target_value: "gene_lof"
+
+  population_genetics:
+    name: "maf"
+    file_pattern: "../../data/gnomad_MAF_chr{chromosome}.tsv"
+    column_mapping:
+      variant_id: "variant_id"
+      target_value: "gnomad_MAF"
+
+training_data:
+  base_dir: "../../data/{cohort}/training_data"
+  file_pattern: "annotated_data_{cohort}_{chromosome}.parquet"
+  train_dir_pattern: "train_NPR_{npr_tr}_PIP_{pos_threshold}_{neg_threshold}"
+  test_dir_pattern: "test_NPR_{npr_te}_PIP_{pos_threshold}_{neg_threshold}"
+
+output:
+  base_dir: "../../data/{cohort}/model_results"
+  predictions_dir: "predictions_parquet_catboost"
+
+experiment:
+  sampling_parameters:
+    npr_train: 10
+    npr_test: 10
+  classification_thresholds:
+    train:
+      positive_class_threshold: 0.1
+      negative_class_threshold: 0.01
+    test:
+      positive_class_threshold: 0.9
+      negative_class_threshold: 0.01
+
+system:
+  temp_directory: "/nfs/scratch"
+  random_seeds:
+    torch_seed: 9448
+    numpy_seed: 9448
+    random_seed: 9448
+
+feature_mapping:
+  columns_dict_file: "data/columns_dict.pkl"
+
+features:
+  columns_to_remove: ["abs_distance_TSS", "distance_TSS"]
+  subset_keys: ["distance", "ABC", "celltype", "baseline", "chrombpnet_positive", "diff", "tf_positive"]
+  variant_features: ["length_diff", "is_SNP", "is_indel", "is_insertion", "is_deletion", "gene_lof", "gnomad_MAF"]
+  absolute_value_keys: ["diff", "tf_positive", "chrombpnet_positive"]
+
+metadata_columns: ["variant_id", "pip", "CHR", "BP", "REF", "ALT", "SNP", "label", "weight"]
