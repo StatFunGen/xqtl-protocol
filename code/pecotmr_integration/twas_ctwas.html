@@ -497,8 +497,11 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#twas-region-information">TWAS region information</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-run-twas">iii. Run TWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iv-run-ctwas">iv. Run cTWAS</a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -641,6 +644,7 @@ document.write(`
 <span class="mi">3</span>        <span class="mi">3000</span>     <span class="mi">7000</span>   <span class="n">block3</span>
 </pre></div>
 </div>
+<p>Timing: ~X min</p>
 </section>
 </section>
 <section id="output">
@@ -678,29 +682,39 @@ document.write(`
 <span class="mi">3</span>        <span class="mi">3000</span>     <span class="mi">7000</span>   <span class="n">block3</span>    <span class="n">block3</span><span class="o">.</span><span class="n">rds</span>
 </pre></div>
 </div>
-</section>
-<section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">twas_ctwas</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">twas</span> \
-   <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">twas</span> <span class="o">--</span><span class="n">name</span> <span class="n">test</span> \
-   <span class="o">--</span><span class="n">gwas_meta_data</span> <span class="n">data</span><span class="o">/</span><span class="n">twas</span><span class="o">/</span><span class="n">gwas_meta_test</span><span class="o">.</span><span class="n">tsv</span> \
-   <span class="o">--</span><span class="n">ld_meta_data</span> <span class="n">reference_data</span><span class="o">/</span><span class="n">ADSP_R4_EUR</span><span class="o">/</span><span class="n">ld_meta_file</span><span class="o">.</span><span class="n">tsv</span> \
-   <span class="o">--</span><span class="n">regions</span> <span class="n">data</span><span class="o">/</span><span class="n">twas</span><span class="o">/</span><span class="n">EUR_LD_blocks</span><span class="o">.</span><span class="n">bed</span> \
-   <span class="o">--</span><span class="n">xqtl_meta_data</span> <span class="n">data</span><span class="o">/</span><span class="n">twas</span><span class="o">/</span><span class="n">mwe_twas_pipeline_test_small</span><span class="o">.</span><span class="n">tsv</span> \
-   <span class="o">--</span><span class="n">xqtl_type_table</span> <span class="n">data</span><span class="o">/</span><span class="n">twas</span><span class="o">/</span><span class="n">data_type_table</span><span class="o">.</span><span class="n">txt</span> \
-   <span class="o">--</span><span class="n">rsq_pval_cutoff</span> <span class="mf">0.05</span> <span class="o">--</span><span class="n">rsq_cutoff</span> <span class="mf">0.01</span>    
+<section id="iii-run-twas">
+<h3>iii. Run TWAS<a class="headerlink" href="#iii-run-twas" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/twas_ctwas.ipynb twas \
+   --cwd output/twas --name test \
+   --gwas_meta_data data/twas/gwas_meta_test.tsv \
+   --ld_meta_data reference_data/ADSP_R4_EUR/ld_meta_file.tsv \
+   --regions data/twas/EUR_LD_blocks.bed \
+   --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
+   --xqtl_type_table data/twas/data_type_table.txt \
+   --rsq_pval_cutoff 0.05 --rsq_cutoff 0.01    
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">twas_ctwas</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">ctwas</span> \
-   <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">twas</span> <span class="o">--</span><span class="n">name</span> <span class="n">test</span> \
-   <span class="o">--</span><span class="n">gwas_meta_data</span> <span class="n">data</span><span class="o">/</span><span class="n">twas</span><span class="o">/</span><span class="n">gwas_meta_test</span><span class="o">.</span><span class="n">tsv</span> \
-   <span class="o">--</span><span class="n">ld_meta_data</span> <span class="n">data</span><span class="o">/</span><span class="n">ld_meta_file_with_bim</span><span class="o">.</span><span class="n">tsv</span> \
-   <span class="o">--</span><span class="n">xqtl_meta_data</span> <span class="n">data</span><span class="o">/</span><span class="n">twas</span><span class="o">/</span><span class="n">mwe_twas_pipeline_test_small</span><span class="o">.</span><span class="n">tsv</span> \
-   <span class="o">--</span><span class="n">twas_weight_cutoff</span> <span class="mi">0</span> \
-   <span class="o">--</span><span class="n">chrom</span> <span class="mi">11</span> \
-   <span class="o">--</span><span class="n">regions</span> <span class="n">data</span><span class="o">/</span><span class="n">twas</span><span class="o">/</span><span class="n">EUR_LD_blocks</span><span class="o">.</span><span class="n">bed</span> \
-   <span class="o">--</span><span class="n">region</span><span class="o">-</span><span class="n">name</span> <span class="n">chr10_80126158_82231647</span> <span class="n">chr11_84267999_86714492</span>
+</div>
+</div>
+</section>
+<section id="iv-run-ctwas">
+<h3>iv. Run cTWAS<a class="headerlink" href="#iv-run-ctwas" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/twas_ctwas.ipynb ctwas \
+   --cwd output/twas --name test \
+   --gwas_meta_data data/twas/gwas_meta_test.tsv \
+   --ld_meta_data data/ld_meta_file_with_bim.tsv \
+   --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
+   --twas_weight_cutoff 0 \
+   --chrom 11 \
+   --regions data/twas/EUR_LD_blocks.bed \
+   --region-name chr10_80126158_82231647 chr11_84267999_86714492
 </pre></div>
+</div>
+</div>
 </div>
 <p>Here using <code class="docutils literal notranslate"><span class="pre">--region-name</span></code> we focus the analysis on 2 blocks: format as <code class="docutils literal notranslate"><span class="pre">chr_start_stop</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">xqtl</span><span class="o">-</span><span class="n">protocol</span><span class="o">/</span><span class="n">code</span><span class="o">/</span><span class="n">pecotmr_integration</span><span class="o">/</span><span class="n">twas</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">quantile_twas</span> \
@@ -1897,6 +1911,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
 </div>
 </section>
 </section>
+</section>
 
     <script type="text/x-thebe-config">
     {
@@ -1976,8 +1991,11 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#twas-region-information">TWAS region information</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-run-twas">iii. Run TWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iv-run-ctwas">iv. Run cTWAS</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

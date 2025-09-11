@@ -533,11 +533,9 @@ document.write(`
 <h3>i. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/VCF_QC.html#i-quality-control">QC for VCF files</a><a class="headerlink" href="#i-qc-for-vcf-files" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># We only do this for autosomal variants
-
-echo ./ZOD14598_AD_GRM_WGS_2021-04-29_chr1.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr2.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr3.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr4.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr5.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr6.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr7.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr8.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr9.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr10.recalibrated_variants.vcf.gz  ./ZOD14598_AD_GRM_WGS_2021-04-29_chr11.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr12.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr13.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr14.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr15.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr16.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr17.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr18.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr19.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr20.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr21.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr22.recalibrated_variants.vcf.gz \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>echo ./ZOD14598_AD_GRM_WGS_2021-04-29_chr1.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr2.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr3.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr4.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr5.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr6.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr7.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr8.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr9.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr10.recalibrated_variants.vcf.gz  ./ZOD14598_AD_GRM_WGS_2021-04-29_chr11.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr12.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr13.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr14.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr15.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr16.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr17.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr18.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr19.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr20.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr21.recalibrated_variants.vcf.gz ./ZOD14598_AD_GRM_WGS_2021-04-29_chr22.recalibrated_variants.vcf.gz \
     | tr &#39; &#39; &#39;\n&#39; &gt; /path/to/ZOD14598_AD_GRM_WGS_2021-04-29_vcf_files.txt
-
+# We only do this for autosomal variants
 sos run pipeline/VCF_QC.ipynb qc \
     --genoFile /path/to/ZOD14598_AD_GRM_WGS_2021-04-29_vcf_files.txt \
     --dbsnp-variants /path/to/reference_data/00-All.add_chr.variants.gz \
@@ -551,19 +549,13 @@ sos run pipeline/VCF_QC.ipynb qc \
 </section>
 <section id="ii-merge-separated-bed-files-into-one">
 <h3>ii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.html#ii-vcf-to-plink">Merge separated bed files into one</a><a class="headerlink" href="#ii-merge-separated-bed-files-into-one" title="Link to this heading">#</a></h3>
-<p>Converting VCF to PLINK keeping only the ROSMAP samples.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink \
     --genoFile `ls data/WGS/vcf/wgs.chr*.random.vcf.gz` \
     --cwd output/plink/ 
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb merge_plink \
+
+sos run pipeline/genotype_formatting.ipynb merge_plink \
     --genoFile `ls output/plink/wgs.chr*.random.bed` \
     --name wgs.merged \
     --cwd output/plink/ 
@@ -574,12 +566,6 @@ sos run pipeline/VCF_QC.ipynb qc \
 </section>
 <section id="iii-qc-for-plink-files">
 <h3>iii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/GWAS_QC.html#iii-perform-qc-on-both-rare-and-common-variants">QC for PLINK files</a><a class="headerlink" href="#iii-qc-for-plink-files" title="Link to this heading">#</a></h3>
-<p>Using PLINK-based workflows we:</p>
-<ul class="simple">
-<li><p>Filter out those have more than 10% missing</p></li>
-<li><p>Set HWE cutoff as 1E-8</p></li>
-<li><p>No minor allele filter</p></li>
-</ul>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
@@ -596,7 +582,6 @@ sos run pipeline/VCF_QC.ipynb qc \
 </section>
 <section id="iv-genotype-data-partition-by-chromosome">
 <h3>iv. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.html#iv-partition-genotype-data-by-chromosome">Genotype data partition by chromosome</a><a class="headerlink" href="#iv-genotype-data-partition-by-chromosome" title="Link to this heading">#</a></h3>
-<p>This step is necessary for TensorQTL applications.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
@@ -623,7 +608,6 @@ sos run pipeline/VCF_QC.ipynb qc \
 </section>
 <section id="vi-kinship">
 <h3>vi. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/GWAS_QC.html#vi-kinship-qc">Kinship</a><a class="headerlink" href="#vi-kinship" title="Link to this heading">#</a></h3>
-<p>To accuratly estimate the PCs for the genotype. We split participants based on their kinship coefficients, estimated by KING</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb king \
@@ -644,14 +628,10 @@ sos run pipeline/VCF_QC.ipynb qc \
    --cwd output/genotype/ \
    --genoFile output/genotype/kinship/wgs.merged.plink_qc.wgs.merged.king.unrelated.bed \
    --mac-filter 5 
-</pre></div>
-</div>
-</div>
-</div>
-<p><strong>If <code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">related</span> <span class="pre">individuals</span> <span class="pre">detected</span> <span class="pre">from</span> <span class="pre">*.kin0</span></code> occurs, there is no separate genotype data generated for unrelated individuals. In this case, we need to work from the original genotype data and must use <code class="docutils literal notranslate"><span class="pre">--keep-samples</span></code> to run <code class="docutils literal notranslate"><span class="pre">qc</span></code> to extract samples for PCA.</strong> For example:</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
+
+#If `No related individuals detected from *.kin0` occurs, there is no separate genotype data generated for unrelated individuals. In this case, we need to work from the original genotype data and must use `--keep-samples` to run `qc` to extract samples for PCA.** For example:
+
+sos run pipeline/GWAS_QC.ipynb qc \
    --cwd output/genotype/ \
    --genoFile output/plink/wgs.merged.plink_qc.bed \
    --mac-filter 5 

@@ -483,6 +483,8 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#miniprotocol-timing">Miniprotocol Timing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-compute-mash-prior">i. Compute MASH prior</a></li>
@@ -507,7 +509,12 @@ document.write(`
 <p>The following performs computes a prior independent of the specific analysis method chosen for the data. This foundational step enables the application of various techniques, such as UDR, ED, TED, and initialization with FLASHier, among others. The goal here is to establish a mixture model to extract meaningful signals from the data.</p>
 <p>An earlier version of the approach is outlined in Urbut et al 2019. This workflow implements a few improvements including using additional EBMF methods as well as the new udr (Ultimate deconvolution in R) package to fit the mixture model.</p>
 <p>After priors are calculated, the model is fit and posteriors are calculated for variables of interest, with the objective being conducting a multivariate analysis under the MASH model. The Multivariate adaptive shrinkage (MASH) analysis has improved upon the Urbut et al 2019 paper.</p>
-<p>Input:</p>
+<section id="miniprotocol-timing">
+<h2>Miniprotocol Timing<a class="headerlink" href="#miniprotocol-timing" title="Link to this heading">#</a></h2>
+<p>Timing ~X minutes</p>
+</section>
+<section id="input">
+<h2>Input:<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">--data</span></code>: rds file. For example, <code class="docutils literal notranslate"><span class="pre">str(mwe.rds)</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>List of 10
  $ random.z: num [1:184, 1:6] 1.527 -0.282 0.365 -1.5 0.548 ...
@@ -557,6 +564,7 @@ document.write(`
 <p><code class="docutils literal notranslate"><span class="pre">--vhat-data</span></code>: for mash_fit.ipynb mash, vhat data in an rds file from the mixture_prior.ipynb step</p>
 <p><code class="docutils literal notranslate"><span class="pre">--prior-data</span></code>: for mash_fit.ipynb mash, prior data in an rds file from the mixture_prior.ipynb step</p>
 <p><code class="docutils literal notranslate"><span class="pre">--compute-posterior</span></code>: for mash_fit.ipynb mash, if the posterior probability should be calculated</p>
+</section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
@@ -569,16 +577,22 @@ document.write(`
 <h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
 <section id="i-compute-mash-prior">
 <h3>i. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mixture_prior.html">Compute MASH prior</a><a class="headerlink" href="#i-compute-mash-prior" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mixture_prior</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">ed_bovy</span> \
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mixture_prior</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">ed_bovy</span> \
     <span class="o">--</span><span class="n">output_prefix</span> <span class="n">MWE_ed_bovy</span> \
     <span class="o">--</span><span class="n">data</span> <span class="n">data</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE</span><span class="o">.</span><span class="n">rds</span> \
     <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span> <span class="o">--</span><span class="n">vhat</span> <span class="n">mle</span> 
 </pre></div>
 </div>
+</div>
+</div>
 </section>
 <section id="ii-mash-fit">
 <h3>ii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mash_fit.html#multivariate-analysis-with-mash-model">MASH fit</a><a class="headerlink" href="#ii-mash-fit" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mash_fit</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">mash</span> \
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mash_fit</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">mash</span> \
     <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">prefix</span> <span class="n">MWE_ed_bovy_posterior</span> \
     <span class="o">--</span><span class="n">data</span> <span class="n">data</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE</span><span class="o">.</span><span class="n">rds</span> \
     <span class="o">--</span><span class="n">vhat</span><span class="o">-</span><span class="n">data</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE_ed_bovy</span><span class="o">.</span><span class="n">EE</span><span class="o">.</span><span class="n">V_simple</span><span class="o">.</span><span class="n">rds</span> \
@@ -587,14 +601,20 @@ document.write(`
     <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span> 
 </pre></div>
 </div>
+</div>
+</div>
 </section>
 <section id="iii-generate-plots">
 <h3>iii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mixture_prior.html">Generate Plots</a><a class="headerlink" href="#iii-generate-plots" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mixture_prior</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">plot_U</span> \
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mixture_prior</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">plot_U</span> \
     <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">prefix</span> <span class="n">protocol_example</span><span class="o">.</span><span class="n">mixture_plots</span>  \
     <span class="o">--</span><span class="n">data</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span><span class="o">/</span><span class="n">MWE_ed_bovy</span><span class="o">.</span><span class="n">EE</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">rds</span> \
     <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">multivariate_mixture</span>
 </pre></div>
+</div>
+</div>
 </div>
 </section>
 </section>
@@ -710,6 +730,8 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#miniprotocol-timing">Miniprotocol Timing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-compute-mash-prior">i. Compute MASH prior</a></li>

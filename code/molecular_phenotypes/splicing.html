@@ -483,26 +483,10 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#miniprotocol-timing">Miniprotocol Timing</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#i-splicing-quantification">i. Splicing Quantification</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-leafcutter">a. LeafCutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#intron-usage-ratio-quantification-via-leafcutter">Intron usage ratio quantification via <code class="docutils literal notranslate"><span class="pre">leafCutter</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#b-psichomics">b. Psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#percent-spliced-in-psi-quantification-for-alternative-splicing-events-via-psichomics">Percent Spliced In (PSI) quantification for alternative splicing events via <code class="docutils literal notranslate"><span class="pre">Psichomics</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-splicing-qc-and-normalization">ii. Splicing QC and Normalization</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">a. Leafcutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qc-and-normalization-of-leafcutter-outputs">QC and Normalization of leafCutter outputs</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">b. Psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qc-and-normalization-of-psichomics-outputs">QC and Normalization of psichomics outputs</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-post-processing-for-tensorqtl">iii. Post Processing for TensorQTL</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">a. Leafcutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#post-process-of-leafcutter-outputs-for-them-to-be-tensorqtl-ready">Post-process of leafcutter outputs for them to be TensorQTL ready</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">b. Psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#post-process-of-psichomics-outputs-for-them-to-be-tensorqtl-ready">Post-process of psichomics outputs for them to be TensorQTL ready</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-splicing-quantification-with-leafcutter-intron-usage-ratio-or-psichomics-percent-spliced-in-events">i. Splicing Quantification with Leafcutter (intron usage ratio) or Psichomics (percent spliced in events)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-splicing-qc-and-normalization">ii. Splicing QC and Normalization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-post-processing-for-tensorqtl">iii. Post Processing for TensorQTL</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
@@ -540,108 +524,41 @@ document.write(`
 </section>
 <section id="steps">
 <h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
-</section>
-<section id="i-splicing-quantification">
-<h2>i. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/splicing_calling.html">Splicing Quantification</a><a class="headerlink" href="#i-splicing-quantification" title="Link to this heading">#</a></h2>
-<section id="a-leafcutter">
-<h3>a. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/splicing_calling.html#a-leafcutter">LeafCutter</a><a class="headerlink" href="#a-leafcutter" title="Link to this heading">#</a></h3>
-</section>
-<section id="intron-usage-ratio-quantification-via-leafcutter">
-<h3>Intron usage ratio quantification via <code class="docutils literal notranslate"><span class="pre">leafCutter</span></code><a class="headerlink" href="#intron-usage-ratio-quantification-via-leafcutter" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: a meta data file contains locations of all Aligned.sortedByCoord.out.bam files to be analyzed.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">output</span></code>: a file with intron usage ratios, end with “_intron_usage_perind.counts.gz”</p></li>
-</ul>
+<section id="i-splicing-quantification-with-leafcutter-intron-usage-ratio-or-psichomics-percent-spliced-in-events">
+<h3>i. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/splicing_calling.html">Splicing Quantification with Leafcutter (intron usage ratio) or Psichomics (percent spliced in events)</a><a class="headerlink" href="#i-splicing-quantification-with-leafcutter-intron-usage-ratio-or-psichomics-percent-spliced-in-events" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_calling.ipynb leafcutter \
     --cwd output/leaf_cutter/ \
-    --samples output/rnaseq/xqtl_protocol_data_bam_list \
-    --container containers/leafcutter.sif 
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="b-psichomics">
-<h3>b. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/splicing_calling.html#b-psichomics">Psichomics</a><a class="headerlink" href="#b-psichomics" title="Link to this heading">#</a></h3>
-</section>
-<section id="percent-spliced-in-psi-quantification-for-alternative-splicing-events-via-psichomics">
-<h3>Percent Spliced In (PSI) quantification for alternative splicing events via <code class="docutils literal notranslate"><span class="pre">Psichomics</span></code><a class="headerlink" href="#percent-spliced-in-psi-quantification-for-alternative-splicing-events-via-psichomics" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: a meta data file contains locations of all SJ.out.tab files to be analyzed.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">output</span></code>: psi_raw_data.tsv, contains percent spliced in values for each alternative splicing event</p></li>
-</ul>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_calling.ipynb psichomics \
+    --samples output/rnaseq/xqtl_protocol_data_bam_list 
+
+sos run pipeline/splicing_calling.ipynb psichomics \
     --cwd output/psichomics/ \
     --samples output/rnaseq/xqtl_protocol_data_bam_list \
-    --splicing_annotation hg38_suppa.rds \
-    --container containers/psichomics.sif
+    --splicing_annotation hg38_suppa.rds 
 </pre></div>
 </div>
 </div>
 </div>
-</section>
 </section>
 <section id="ii-splicing-qc-and-normalization">
-<h2>ii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/splicing_normalization.html">Splicing QC and Normalization</a><a class="headerlink" href="#ii-splicing-qc-and-normalization" title="Link to this heading">#</a></h2>
-<section id="id1">
-<h3>a. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/splicing_normalization.html#a-leafcutter">Leafcutter</a><a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
-</section>
-<section id="qc-and-normalization-of-leafcutter-outputs">
-<h3>QC and Normalization of leafCutter outputs<a class="headerlink" href="#qc-and-normalization-of-leafcutter-outputs" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: the “_intron_usage_perind.counts.gz” file from previous step</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">output</span></code>: QC’d and normalized phenotype table end with “qqnorm.txt”
-Be noted that the <code class="docutils literal notranslate"><span class="pre">ratio</span></code> file to be fed into the leafcutter_norm are the one without <code class="docutils literal notranslate"><span class="pre">number</span></code> tag in its filename.</p></li>
-</ul>
+<h3>ii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/splicing_normalization.html">Splicing QC and Normalization</a><a class="headerlink" href="#ii-splicing-qc-and-normalization" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>
-sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
     --cwd output/leaf_cutter/ \
-    --ratios output/leaf_cutter/xqtl_protocol_data_bam_list_intron_usage_perind.counts.gz \
-    --container containers/leafcutter.sif 
+    --ratios output/leaf_cutter/xqtl_protocol_data_bam_list_intron_usage_perind.counts.gz
 
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="id2">
-<h3>b. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/splicing_normalization.html#a-psichomics">Psichomics</a><a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
-</section>
-<section id="qc-and-normalization-of-psichomics-outputs">
-<h3>QC and Normalization of psichomics outputs<a class="headerlink" href="#qc-and-normalization-of-psichomics-outputs" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: the “psi_raw_data.tsv” file from previous step</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">output</span></code>: QC’d and normalized phenotype table end with “qqnorm.txt”</p></li>
-</ul>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb psichomics_norm \
+sos run pipeline/splicing_normalization.ipynb psichomics_norm \
     --cwd psichomics_output \
-    --ratios psichomics_output/psi_raw_data.tsv \
-    --container containers/psichomics.sif
+    --ratios psichomics_output/psi_raw_data.tsv 
 </pre></div>
 </div>
 </div>
 </div>
-</section>
 </section>
 <section id="iii-post-processing-for-tensorqtl">
-<h2>iii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/gene_annotation.html">Post Processing for TensorQTL</a><a class="headerlink" href="#iii-post-processing-for-tensorqtl" title="Link to this heading">#</a></h2>
-<section id="id3">
-<h3>a. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/gene_annotation.html">Leafcutter</a><a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
-</section>
-<section id="post-process-of-leafcutter-outputs-for-them-to-be-tensorqtl-ready">
-<h3>Post-process of leafcutter outputs for them to be TensorQTL ready<a class="headerlink" href="#post-process-of-leafcutter-outputs-for-them-to-be-tensorqtl-ready" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: output of the previous two steps and the gtf file.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">output</span></code>: a file in bed format end with “formated.bed.gz”</p></li>
-</ul>
+<h3>iii. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/gene_annotation.html">Post Processing for TensorQTL</a><a class="headerlink" href="#iii-post-processing-for-tensorqtl" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_leafcutter_isoforms \
@@ -649,29 +566,12 @@ sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
     --intron_count output/leaf_cutter/xqtl_protocol_data_bam_list_intron_usage_perind_numers.counts.gz \
     --phenoFile output/leaf_cutter/xqtl_protocol_data_bam_list_intron_usage_perind.counts.gz_raw_data.qqnorm.txt \
     --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.gtf \
-    --container containers/bioinfo.sif \
     --sample_participant_lookup reference_data/sample_participant_lookup.rnaseq
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="id4">
-<h3>b. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/gene_annotation.html">Psichomics</a><a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
-</section>
-<section id="post-process-of-psichomics-outputs-for-them-to-be-tensorqtl-ready">
-<h3>Post-process of psichomics outputs for them to be TensorQTL ready<a class="headerlink" href="#post-process-of-psichomics-outputs-for-them-to-be-tensorqtl-ready" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>: the “qqnorm.txt” output from the previous step and the gtf file.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">output</span></code>: a file in bed format end with “formated.bed.gz”</p></li>
-</ul>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/code/data_preprocessing/phenotype/gene_annotation.ipynb annotate_psichomics_isoforms \
+
+sos run pipeline/code/data_preprocessing/phenotype/gene_annotation.ipynb annotate_psichomics_isoforms \
     --cwd psichomics_output \
     --phenoFile psichomics_output/psichomics_raw_data_bedded.qqnorm.txt \
-    --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformated.ERCC.gene.gtf \
-    --container containers/bioinfo.sif
+    --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformated.ERCC.gene.gtf 
 </pre></div>
 </div>
 </div>
@@ -752,26 +652,10 @@ sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#miniprotocol-timing">Miniprotocol Timing</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#i-splicing-quantification">i. Splicing Quantification</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-leafcutter">a. LeafCutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#intron-usage-ratio-quantification-via-leafcutter">Intron usage ratio quantification via <code class="docutils literal notranslate"><span class="pre">leafCutter</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#b-psichomics">b. Psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#percent-spliced-in-psi-quantification-for-alternative-splicing-events-via-psichomics">Percent Spliced In (PSI) quantification for alternative splicing events via <code class="docutils literal notranslate"><span class="pre">Psichomics</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-splicing-qc-and-normalization">ii. Splicing QC and Normalization</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">a. Leafcutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qc-and-normalization-of-leafcutter-outputs">QC and Normalization of leafCutter outputs</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">b. Psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qc-and-normalization-of-psichomics-outputs">QC and Normalization of psichomics outputs</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-post-processing-for-tensorqtl">iii. Post Processing for TensorQTL</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">a. Leafcutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#post-process-of-leafcutter-outputs-for-them-to-be-tensorqtl-ready">Post-process of leafcutter outputs for them to be TensorQTL ready</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">b. Psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#post-process-of-psichomics-outputs-for-them-to-be-tensorqtl-ready">Post-process of psichomics outputs for them to be TensorQTL ready</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-splicing-quantification-with-leafcutter-intron-usage-ratio-or-psichomics-percent-spliced-in-events">i. Splicing Quantification with Leafcutter (intron usage ratio) or Psichomics (percent spliced in events)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ii-splicing-qc-and-normalization">ii. Splicing QC and Normalization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-post-processing-for-tensorqtl">iii. Post Processing for TensorQTL</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
