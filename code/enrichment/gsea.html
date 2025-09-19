@@ -481,12 +481,28 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#purpose">1. Purpose</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#input">2. Input</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output">3. Output</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-steps">4. Workflow Steps</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#methods">5. Methods</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#purpose">1. Purpose</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">2. Input</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gene-list-tsv-format">Gene List (TSV format)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">Parameters:</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">3. Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combined-pathway-results-file">Combined Pathway Results File</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-steps">4. Workflow Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-preparation">4.1 Data Preparation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gene-id-conversion">4.2 Gene ID Conversion</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-database-enrichment-analysis">4.3 Multi-Database Enrichment Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#result-standardization">4.4 Result Standardization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-integration-and-output">4.5 Data Integration and Output</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methods">5. Methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#enrichment-analysis-approach">Enrichment Analysis Approach</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gene-mapping-strategy">Gene Mapping Strategy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-standardization">Output Standardization</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a></li>
@@ -505,124 +521,143 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="pathway-analysis">
 <h1>Pathway Analysis<a class="headerlink" href="#pathway-analysis" title="Link to this heading">#</a></h1>
-<section id="description">
-<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>This workflow performs pathway enrichment analysis using the KEGG database and the clusterProfiler package in R.</p>
 <section id="purpose">
-<h3>1. Purpose<a class="headerlink" href="#purpose" title="Link to this heading">#</a></h3>
-<p>This workflow performs pathway enrichment analysis using the KEGG database and the <code class="docutils literal notranslate"><span class="pre">clusterProfiler</span></code> package in R. It identifies biologically significant KEGG pathways associated with groups of genes based on their enrichment in known pathways.</p>
-<p>Key objectives:</p>
+<h2>1. Purpose<a class="headerlink" href="#purpose" title="Link to this heading">#</a></h2>
+<p>This workflow performs comprehensive pathway enrichment analysis using both the KEGG database and Gene Ontology (GO) annotations through the <code class="docutils literal notranslate"><span class="pre">clusterProfiler</span></code> package in R. It identifies biologically significant pathways and functional categories associated with groups of genes based on their enrichment patterns.</p>
+<p><strong>Key objectives:</strong></p>
 <ul class="simple">
-<li><p>Analyze biological significance of gene groups in a pathway context.</p></li>
-<li><p>Perform enrichment analysis for different groups (e.g., cell types, conditions).</p></li>
-<li><p>Generate a summarized output for downstream interpretation.</p></li>
+<li><p>Analyze biological significance of gene groups across multiple pathway databases</p></li>
+<li><p>Perform enrichment analysis for KEGG pathways and all three GO ontologies</p></li>
+<li><p>Generate unified, standardized output for downstream interpretation and comparison</p></li>
+<li><p>Support multi-group comparative analysis (e.g., cell types, conditions, treatments)</p></li>
 </ul>
 </section>
+<hr class="docutils" />
 <section id="input">
-<h3>2. Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h3>
-<ul>
-<li><p><strong>Gene List</strong> (TSV format): A table containing grouped genes.</p>
-<ul>
-<li><p>Columns:</p>
+<h2>2. Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<section id="gene-list-tsv-format">
+<h3>Gene List (TSV format)<a class="headerlink" href="#gene-list-tsv-format" title="Link to this heading">#</a></h3>
+<p>A table containing grouped genes with the following structure:</p>
+<p><strong>Required columns:</strong></p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">group</span></code>: The group/category to which a gene belongs (e.g., <code class="docutils literal notranslate"><span class="pre">Neuron</span></code>, <code class="docutils literal notranslate"><span class="pre">Microglia</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gene_id</span></code>: ENSEMBL gene IDs for the corresponding genes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">group</span></code>: The group/category to which a gene belongs (e.g., <code class="docutils literal notranslate"><span class="pre">AD_A_cauchy</span></code>, <code class="docutils literal notranslate"><span class="pre">TL1_C_cauchy</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gene_id</span></code>: ENSEMBL gene IDs for the corresponding genes</p></li>
 </ul>
-</li>
-<li><p>Example:</p>
-<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="k">group</span><span class="w">       </span><span class="n">gene_id</span>
-<span class="n">Neuron</span><span class="w">      </span><span class="n">ENSG00000139618</span>
-<span class="n">Neuron</span><span class="w">      </span><span class="n">ENSG00000091831</span>
-<span class="n">Microglia</span><span class="w">   </span><span class="n">ENSG00000196839</span>
-<span class="n">Microglia</span><span class="w">   </span><span class="n">ENSG00000081237</span>
+<p><strong>Example:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">group</span>           <span class="n">gene_id</span>
+<span class="n">AD</span>     <span class="n">ENSG00000139618</span>
+<span class="n">AD</span>    <span class="n">ENSG00000091831</span>
+<span class="n">TL1</span>    <span class="n">ENSG00000196839</span>
+<span class="n">TL1</span>   <span class="n">ENSG0000008123</span>
 </pre></div>
 </div>
-</li>
-</ul>
-</li>
-<li><p><strong>Parameters</strong>:</p>
+</section>
+<section id="parameters">
+<h3>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">pvalue_cutoff</span></code>: Cutoff for pathway enrichment significance (default: 1).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">organism</span></code>: KEGG organism code (default: <code class="docutils literal notranslate"><span class="pre">hsa</span></code> for humans).</p></li>
-</ul>
-</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pvalue_cutoff</span></code>: Cutoff for pathway enrichment significance (default: 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">organism</span></code>: KEGG organism code (default: <code class="docutils literal notranslate"><span class="pre">hsa</span></code> for humans)</p></li>
 </ul>
 </section>
+</section>
+<hr class="docutils" />
 <section id="output">
-<h3>3. Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h3>
+<h2>3. Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<section id="combined-pathway-results-file">
+<h3>Combined Pathway Results File<a class="headerlink" href="#combined-pathway-results-file" title="Link to this heading">#</a></h3>
+<p>A compressed RDS file (<code class="docutils literal notranslate"><span class="pre">.rds</span></code>) containing standardized enrichment results from all analyses.</p>
+<p><strong>Key columns in the results:</strong></p>
 <ul class="simple">
-<li><p><strong>Pathway Results File</strong>:</p>
-<ul>
-<li><p>A compressed RDS file (<code class="docutils literal notranslate"><span class="pre">.rds</span></code>) containing enrichment results for all groups.</p></li>
-<li><p>Each group has its pathway results stored in a combined data frame.</p></li>
-<li><p>Columns in the results:</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">ID</span></code>: KEGG pathway ID.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Description</span></code>: KEGG pathway name.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">GeneRatio</span></code>: Ratio of genes in the group that are in the pathway.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">BgRatio</span></code>: Ratio of all genes in the database associated with the pathway.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pvalue</span></code>: Enrichment p-value.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">qvalue</span></code>: Adjusted p-value.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">group</span></code>: Name of the gene group.</p></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ID</span></code>: Pathway/GO term identifier</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Description</span></code>: Pathway/GO term name/description</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">GeneRatio</span></code>: Ratio of input genes found in the pathway/term</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BgRatio</span></code>: Background ratio of all genes in the database for this pathway/term</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pvalue</span></code>: Raw enrichment p-value</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">p.adjust</span></code>: Adjusted p-value (Benjamini-Hochberg)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">qvalue</span></code>: Q-value for FDR control</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">group</span></code>: Name of the gene group analyzed</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">analysis_type</span></code>: Type of analysis (<code class="docutils literal notranslate"><span class="pre">KEGG</span></code> or <code class="docutils literal notranslate"><span class="pre">GO</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ont_category</span></code>: Ontology category (<code class="docutils literal notranslate"><span class="pre">PATHWAY</span></code>, <code class="docutils literal notranslate"><span class="pre">BP</span></code>, <code class="docutils literal notranslate"><span class="pre">CC</span></code>, or <code class="docutils literal notranslate"><span class="pre">MF</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">category</span></code>: High-level category classification</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">subcategory</span></code>: Detailed subcategory classification</p></li>
 </ul>
 </section>
+</section>
+<hr class="docutils" />
 <section id="workflow-steps">
-<h3>4. Workflow Steps<a class="headerlink" href="#workflow-steps" title="Link to this heading">#</a></h3>
-<ol class="arabic simple">
-<li><p><strong>Load Input Data</strong>:</p>
+<h2>4. Workflow Steps<a class="headerlink" href="#workflow-steps" title="Link to this heading">#</a></h2>
+<section id="data-preparation">
+<h3>4.1 Data Preparation<a class="headerlink" href="#data-preparation" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>Read the input TSV file containing grouped ENSEMBL gene IDs.</p></li>
+<li><p>Load input TSV file containing grouped ENSEMBL gene IDs</p></li>
+<li><p>Extract unique groups for systematic processing</p></li>
 </ul>
-</li>
-<li><p><strong>Gene ID Conversion</strong>:</p>
-<ul class="simple">
-<li><p>Convert ENSEMBL gene IDs to ENTREZ IDs using <code class="docutils literal notranslate"><span class="pre">org.Hs.eg.db</span></code>.</p></li>
-<li><p>Omit genes without valid mappings.</p></li>
-</ul>
-</li>
-<li><p><strong>Pathway Enrichment Analysis</strong>:</p>
-<ul class="simple">
-<li><p>Perform KEGG pathway enrichment analysis using the <code class="docutils literal notranslate"><span class="pre">enrichKEGG</span></code> function for each group.</p></li>
-<li><p>Apply the specified <code class="docutils literal notranslate"><span class="pre">pvalue_cutoff</span></code> to filter results.</p></li>
-</ul>
-</li>
-<li><p><strong>Combine Results</strong>:</p>
-<ul class="simple">
-<li><p>Merge the enrichment results for all groups into a single data frame.</p></li>
-</ul>
-</li>
-<li><p><strong>Save Output</strong>:</p>
-<ul class="simple">
-<li><p>Save the combined results as a compressed RDS file for downstream analysis.</p></li>
-</ul>
-</li>
-</ol>
 </section>
-<section id="methods">
-<h3>5. Methods<a class="headerlink" href="#methods" title="Link to this heading">#</a></h3>
+<section id="gene-id-conversion">
+<h3>4.2 Gene ID Conversion<a class="headerlink" href="#gene-id-conversion" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p><strong>Pathway Enrichment Analysis</strong>:</p>
-<ul>
-<li><p>The workflow uses the <code class="docutils literal notranslate"><span class="pre">enrichKEGG</span></code> function from the <code class="docutils literal notranslate"><span class="pre">clusterProfiler</span></code> package.</p></li>
-<li><p>Genes are mapped to KEGG pathways, and statistical tests are performed to identify significantly enriched pathways.</p></li>
-<li><p>Adjusted p-values (<code class="docutils literal notranslate"><span class="pre">qvalue</span></code>) control for multiple testing.</p></li>
+<li><p>Convert ENSEMBL gene IDs to ENTREZ IDs using <code class="docutils literal notranslate"><span class="pre">org.Hs.eg.db</span></code></p></li>
+<li><p>Filter out genes without valid ENTREZ mappings</p></li>
+<li><p>Maintain group associations throughout conversion</p></li>
 </ul>
-</li>
-<li><p><strong>Gene Conversion</strong>:</p>
-<ul>
-<li><p>ENSEMBL IDs are converted to ENTREZ IDs using <code class="docutils literal notranslate"><span class="pre">org.Hs.eg.db</span></code>.</p></li>
-<li><p>Only successfully mapped genes are used for enrichment.</p></li>
+</section>
+<section id="multi-database-enrichment-analysis">
+<h3>4.3 Multi-Database Enrichment Analysis<a class="headerlink" href="#multi-database-enrichment-analysis" title="Link to this heading">#</a></h3>
+<p><strong>KEGG Pathway Analysis:</strong></p>
+<ul class="simple">
+<li><p>Perform KEGG pathway enrichment using <code class="docutils literal notranslate"><span class="pre">enrichKEGG</span></code> function</p></li>
+<li><p>Identify enriched metabolic and signaling pathways</p></li>
 </ul>
-</li>
-<li><p><strong>Output Integration</strong>:</p>
-<ul>
-<li><p>Results are organized into a structured data frame with pathway enrichment statistics for each group.</p></li>
+<p><strong>Gene Ontology Analysis:</strong></p>
+<ul class="simple">
+<li><p><strong>Biological Process (BP)</strong>: Analyze enriched biological processes</p></li>
+<li><p><strong>Cellular Component (CC)</strong>: Identify enriched cellular localizations</p></li>
+<li><p><strong>Molecular Function (MF)</strong>: Examine enriched molecular activities</p></li>
 </ul>
-</li>
+</section>
+<section id="result-standardization">
+<h3>4.4 Result Standardization<a class="headerlink" href="#result-standardization" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Harmonize column structures across all analysis types</p></li>
+<li><p>Add metadata columns for analysis type and ontology category</p></li>
+<li><p>Ensure consistent data formatting for downstream analysis</p></li>
+</ul>
+</section>
+<section id="data-integration-and-output">
+<h3>4.5 Data Integration and Output<a class="headerlink" href="#data-integration-and-output" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Combine all enrichment results into a unified data frame</p></li>
+<li><p>Generate summary statistics by group and analysis type</p></li>
+<li><p>Save results as compressed RDS file</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="methods">
+<h2>5. Methods<a class="headerlink" href="#methods" title="Link to this heading">#</a></h2>
+<section id="enrichment-analysis-approach">
+<h3>Enrichment Analysis Approach<a class="headerlink" href="#enrichment-analysis-approach" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>KEGG Analysis</strong>: Uses <code class="docutils literal notranslate"><span class="pre">enrichKEGG()</span></code> from <code class="docutils literal notranslate"><span class="pre">clusterProfiler</span></code> to test for pathway over-representation</p></li>
+<li><p><strong>GO Analysis</strong>: Uses <code class="docutils literal notranslate"><span class="pre">enrichGO()</span></code> with human annotation database (<code class="docutils literal notranslate"><span class="pre">org.Hs.eg.db</span></code>)</p></li>
+<li><p><strong>Statistical Testing</strong>: Hypergeometric test with multiple testing correction</p></li>
+<li><p><strong>Multiple Testing Correction</strong>: Benjamini-Hochberg FDR adjustment</p></li>
+</ul>
+</section>
+<section id="gene-mapping-strategy">
+<h3>Gene Mapping Strategy<a class="headerlink" href="#gene-mapping-strategy" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Primary conversion: ENSEMBL → ENTREZ using <code class="docutils literal notranslate"><span class="pre">org.Hs.eg.db</span></code></p></li>
+<li><p>Quality control: Remove unmapped genes to ensure analysis accuracy</p></li>
+<li><p>Coverage tracking: Monitor conversion success rates per group</p></li>
+</ul>
+</section>
+<section id="output-standardization">
+<h3>Output Standardization<a class="headerlink" href="#output-standardization" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Unified column schema across all analysis types</p></li>
+<li><p>Consistent metadata annotation for easy filtering and subsetting</p></li>
+<li><p>Hierarchical classification system (category → subcategory → specific term)</p></li>
 </ul>
 </section>
 </section>
@@ -709,7 +744,7 @@ parameter: mem = &#39;16G&#39;
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[pathway_analysis]
 parameter: pvalue_cutoff = 1
 parameter: organism = &#39;hsa&#39;
-output: pathway = f&#39;{cwd:a}/{step_name}/{name}.pathway_results.rds&#39;
+output: pathway_results = f&#39;{cwd:a}/{step_name}/{name}.combined_pathway_results.rds&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
 R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
@@ -717,55 +752,136 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
     library(AnnotationDbi)
     library(clusterProfiler)
     library(dplyr)
+
+    # Parameters
     organism &lt;- &#39;${organism}&#39;
-    print(organism)
     pvalue_cutoff &lt;- ${pvalue_cutoff}
-    print(pvalue_cutoff)
-    # Read input TSV file
-    gene_data &lt;- read.table(&#39;${genes_file}&#39;, 
-                           header = TRUE, 
-                           sep = &quot;\t&quot;, 
-                           stringsAsFactors = FALSE)
-    
-    # Function to convert and perform enrichment for one group
-    process_gene_list &lt;- function(group_genes, group_name) {
-        # Convert ENSEMBL to ENTREZ
+
+    # Read input data
+    gene_data &lt;- read.table(&#39;${genes_file}&#39;, header = TRUE, sep = &quot;\t&quot;, stringsAsFactors = FALSE)
+
+    # ID conversion function
+    convert_ids &lt;- function(gene_list) {
         entrez_ids &lt;- mapIds(org.Hs.eg.db, 
-                           keys = group_genes, 
-                           column = &quot;ENTREZID&quot;, 
-                           keytype = &quot;ENSEMBL&quot;)
-        entrez_ids &lt;- na.omit(unique(entrez_ids))
-        
-        # Perform enrichment
-        enriched &lt;- enrichKEGG(
-            gene = entrez_ids,
-            organism = organism,
-            pvalueCutoff = pvalue_cutoff
-        )
-        
-        # Convert to dataframe and add group information
-        result_df &lt;- as.data.frame(enriched)
-        if(nrow(result_df) &gt; 0) {
-            result_df$group &lt;- group_name
+                        keys = gene_list, 
+                        column = &quot;ENTREZID&quot;, 
+                        keytype = &quot;ENSEMBL&quot;)
+        return(na.omit(unique(entrez_ids)))
+    }
+
+    # Standardize result columns
+    standardize_columns &lt;- function(result_df, analysis_type, ont_category, group_name) {
+        if(is.null(result_df) || nrow(result_df) == 0) {
+            return(data.frame())
         }
+        
+        result_df$group &lt;- group_name
+        result_df$analysis_type &lt;- analysis_type
+        result_df$ont_category &lt;- ont_category
+        
+        # Add category and subcategory based on analysis type
+        if(analysis_type == &quot;KEGG&quot;) {
+            result_df$category &lt;- NA
+            result_df$subcategory &lt;- NA
+        } else {
+            result_df$category &lt;- &quot;Gene Ontology&quot;
+            result_df$subcategory &lt;- switch(ont_category,
+                &quot;BP&quot; = &quot;Biological Process&quot;,
+                &quot;CC&quot; = &quot;Cellular Component&quot;, 
+                &quot;MF&quot; = &quot;Molecular Function&quot;,
+                NA)
+        }
+        
         return(result_df)
     }
-    
-    # Process each group
+
+    # KEGG enrichment
+    perform_kegg &lt;- function(group_genes, group_name) {
+        entrez_ids &lt;- convert_ids(group_genes)
+        if(length(entrez_ids) == 0) return(data.frame())
+        
+        enriched &lt;- tryCatch({
+            enrichKEGG(gene = entrez_ids, organism = organism, pvalueCutoff = pvalue_cutoff)
+        }, error = function(e) NULL)
+        
+        if(is.null(enriched)) return(data.frame())
+        
+        result_df &lt;- as.data.frame(enriched)
+        return(standardize_columns(result_df, &quot;KEGG&quot;, &quot;PATHWAY&quot;, group_name))
+    }
+
+    # GO enrichment
+    perform_go &lt;- function(group_genes, group_name, ont_type) {
+        entrez_ids &lt;- convert_ids(group_genes)
+        if(length(entrez_ids) == 0) return(data.frame())
+        
+        enriched &lt;- tryCatch({
+            enrichGO(gene = entrez_ids, OrgDb = org.Hs.eg.db, ont = ont_type, 
+                    pvalueCutoff = pvalue_cutoff, readable = TRUE)
+        }, error = function(e) NULL)
+        
+        if(is.null(enriched)) return(data.frame())
+        
+        result_df &lt;- as.data.frame(enriched)
+        return(standardize_columns(result_df, &quot;GO&quot;, ont_type, group_name))
+    }
+
+    # Main analysis
     unique_groups &lt;- unique(gene_data$group)
-    all_results &lt;- lapply(unique_groups, function(group_name) {
+    all_results &lt;- list()
+
+    # Process all enrichments
+    for(group_name in unique_groups) {
         group_genes &lt;- gene_data$gene_id[gene_data$group == group_name]
-        process_gene_list(group_genes, group_name)
-    })
-    
+        
+        # KEGG
+        kegg_result &lt;- perform_kegg(group_genes, group_name)
+        if(nrow(kegg_result) &gt; 0) {
+            all_results[[paste0(group_name, &quot;_KEGG&quot;)]] &lt;- kegg_result
+        }
+        
+        # GO analyses
+        for(ont_type in c(&quot;BP&quot;, &quot;CC&quot;, &quot;MF&quot;)) {
+            go_result &lt;- perform_go(group_genes, group_name, ont_type)
+            if(nrow(go_result) &gt; 0) {
+                all_results[[paste0(group_name, &quot;_GO_&quot;, ont_type)]] &lt;- go_result
+            }
+        }
+    }
+
     # Combine results
-    combined_results &lt;- do.call(rbind, all_results)
-    print(&#39;pathway combined_results&#39;)
-    print(head(combined_results))
+    if(length(all_results) &gt; 0) {
+        combined_results &lt;- do.call(rbind, all_results)
+        rownames(combined_results) &lt;- NULL
+    } else {
+        # Create empty standardized dataframe
+        combined_results &lt;- data.frame(
+            category = character(), subcategory = character(),
+            ID = character(), Description = character(),
+            GeneRatio = character(), BgRatio = character(),
+            RichFactor = numeric(), FoldEnrichment = numeric(),
+            zScore = numeric(), pvalue = numeric(),
+            p.adjust = numeric(), qvalue = numeric(),
+            geneID = character(), Count = integer(),
+            group = character(), analysis_type = character(),
+            ont_category = character(),
+            stringsAsFactors = FALSE
+        )
+    }
+
+    # Summary statistics
+    print(&quot;Summary by group:&quot;)
+    print(table(combined_results$group))
+
+    print(&quot;Cross-tabulation by analysis type and ontology:&quot;)
+    print(table(combined_results$analysis_type, combined_results$ont_category))
+
+    print(&quot;First few rows of combined results:&quot;)
+    print(head(combined_results, 3))
+
     # Save results
-    
-    saveRDS(combined_results, &#39;${_output[&#39;pathway&#39;]}&#39;, compress=&#39;xz&#39;)
-    print(paste(&quot;Results saved to:&quot;, &#39;${_output[&#39;pathway&#39;]}&#39;))
+    saveRDS(combined_results, &#39;${_output[&#39;pathway_results&#39;]}&#39;, compress=&#39;xz&#39;)
+    print(paste(&quot;Results saved to:&quot;, &#39;${_output[&#39;pathway_results&#39;]}&#39;))
 </pre></div>
 </div>
 </div>
@@ -837,12 +953,28 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#purpose">1. Purpose</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#input">2. Input</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output">3. Output</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-steps">4. Workflow Steps</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#methods">5. Methods</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#purpose">1. Purpose</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">2. Input</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gene-list-tsv-format">Gene List (TSV format)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">Parameters:</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">3. Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combined-pathway-results-file">Combined Pathway Results File</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-steps">4. Workflow Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-preparation">4.1 Data Preparation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gene-id-conversion">4.2 Gene ID Conversion</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-database-enrichment-analysis">4.3 Multi-Database Enrichment Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#result-standardization">4.4 Result Standardization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-integration-and-output">4.5 Data Integration and Output</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methods">5. Methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#enrichment-analysis-approach">Enrichment Analysis Approach</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gene-mapping-strategy">Gene Mapping Strategy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-standardization">Output Standardization</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a></li>
