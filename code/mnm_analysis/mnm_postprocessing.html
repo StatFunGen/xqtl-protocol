@@ -1753,13 +1753,29 @@ if len(region_name) &gt; 0:
 if len(region_ids) &gt; 0:
     region = region[region[&#39;id&#39;].isin(region_ids)]
 
+def filter_existing_paths(row):
+    existing_paths = [path for path in row if os.path.exists(path)]
+    return existing_paths
+    
 # Function to create list of formatted strings for each row
 def create_formatted_list(row):
+    rid_plain = str(row[&#39;id&#39;])                  # name with chr
+    rid_chr   = f&quot;{row[&#39;chr&#39;]}_{row[&#39;id&#39;]}&quot;     # name without chr
+    
     if len(prefix) &gt; 0:
-        formatted_list = [f&quot;{file_path}/{p}.{row[&#39;id&#39;]}.{suffix}&quot; for p in prefix]
+        candidates_plain = [f&quot;{file_path}/{p}.{rid_plain}.{suffix}&quot; for p in prefix]
+        candidates_chr   = [f&quot;{file_path}/{p}.{rid_chr}.{suffix}&quot;   for p in prefix]
     else:
-        formatted_list = [f&quot;{file_path}/{row[&#39;id&#39;]}.{suffix}&quot;]  # GWAS data do not have prefix     
-    return formatted_list
+        candidates_plain = [f&quot;{file_path}/{rid_plain}.{suffix}&quot;] # GWAS data do not have prefix
+        candidates_chr   = [f&quot;{file_path}/{rid_chr}.{suffix}&quot;]
+    
+    # prioritize plain
+    existing_plain = filter_existing_paths(candidates_plain)
+    if existing_plain:
+        return existing_plain
+    
+    existing_chr = filter_existing_paths(candidates_chr)
+    return existing_chr
 
 # Apply the function to each row
 region[&#39;original_data&#39;] = region.apply(create_formatted_list, axis=1)
@@ -1773,9 +1789,6 @@ def group_by_region(lst, partition):
     # return [lst[(cumsum_vector[i-1] if i &gt; 0 else 0):cumsum_vector[i]] for i in range(len(partition))]
     return partition
 
-def filter_existing_paths(row):
-    existing_paths = [path for path in row if os.path.exists(path)]
-    return existing_paths
 
 def is_file_exported(paths, results_set):
     for path in paths:
@@ -1804,16 +1817,16 @@ if region.empty:
     print(&quot;No regions remain after filtering. Reattempting using concatenated id (chr_id).&quot;)
     # Update the &#39;id&#39; column using the concatenation of the first column (chr) and the original &#39;id&#39;
     region = pd.read_csv(region_file, sep=&#39;\t&#39;, names=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;id&#39;])
-    region[&#39;id&#39;] = region[&#39;chr&#39;] + &quot;_&quot; + region[&#39;id&#39;]
+    region[&#39;id_chr&#39;] = region[&#39;chr&#39;].astype(str) + &quot;_&quot; + region[&#39;id&#39;].astype(str)
     
-    # Reapply region_ids filter if provided
     if len(region_ids) &gt; 0:
-        region = region[region[&#39;id&#39;].isin(region_ids)]
+        region = region[region[&#39;id&#39;].isin(region_ids) | region[&#39;id_chr&#39;].isin(region_ids)]
     
-    # Recreate original_data with the updated id
-    region[&#39;original_data&#39;] = region.apply(create_formatted_list, axis=1)
-    region[&#39;original_data&#39;] = region[&#39;original_data&#39;].apply(filter_existing_paths)
-    region = region[region[&#39;original_data&#39;].map(bool)]
+    if region.empty:
+        print(&quot;Still no regions matched after using id_chr.&quot;)
+    else:
+        region[&#39;original_data&#39;] = region.apply(create_formatted_list, axis=1)
+        region = region[region[&#39;original_data&#39;].map(bool)]
     
     # Reapply exported_file filtering if applicable
     if not exported_file.is_dir():

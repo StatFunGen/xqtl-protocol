@@ -1097,7 +1097,15 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
                     xqtl_type_table$type[sapply(xqtl_type_table$context, function(x) grepl(x, context))]
                 }), 
                 names(twas_weights_results[[gene_db]]$weights)
-            )      
+            )
+           no_type_value &lt;- sapply(names(twas_weights_results[[gene_db]]$data_type), function(x) length(twas_weights_results[[gene_db]]$data_type[[x]])==0)
+           if (any(no_type_value)){
+              aff_contexts &lt;- names(twas_weights_results[[gene_db]]$data_type)[no_type_value]
+              warning(paste(aff_contexts, collapse=&quot;, &quot;), &quot; data type information if not documented in ${xqtl_meta_data}, assigning as undefined. &quot;)
+              for (i in which(no_type_value)) {
+                  if (length(twas_weights_results[[gene_db]]$data_type[[i]])==0) twas_weights_results[[gene_db]]$data_type[[i]] &lt;- &quot;undefined&quot;
+              }
+           }
         } else {
             message(paste(&quot;No valid weights loaded for gene:&quot;, gene_db))
             twas_weights_results[[gene_db]] &lt;- NULL
