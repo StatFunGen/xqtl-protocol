@@ -595,7 +595,9 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>usage: sos run bulk_expression_normalization.ipynb
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/caox2/.pixi/envs/python/lib/python3.12/site-packages/sos/targets.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools&lt;81.
+  import pkg_resources
+usage: sos run bulk_expression_normalization.ipynb
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
@@ -622,9 +624,11 @@ Global Workflow Options:
   --tpm-threshold 0.1 (as float)
   --count-threshold 6 (as int)
   --sample-frac-threshold 0.2 (as float)
-  --normalization-method tmm
-                        Normalization method: TMM (tmm) or quantile
+  --normalization-method &#39;tmm_cpm_voom&#39;
+                        Normalization method: TMM + CPM(voom) (tmm_cpm_voom),
+                        TMM + CPM(edgeR) (tmm_cpm_edger), or quantile
                         normalization (qn)
+  --[no-]quantile-normalize (default to True)
   --job-size 1 (as int)
                         For cluster jobs, number commands to run per job
   --walltime 5h
@@ -659,8 +663,10 @@ parameter: sample_participant_lookup = path
 parameter: tpm_threshold = 0.1
 parameter: count_threshold = 6
 parameter: sample_frac_threshold = 0.2
-# Normalization method: TMM (tmm) or quantile normalization (qn)
-parameter: normalization_method = &#39;tmm&#39;
+# Normalization method: TMM + CPM(voom) (tmm_cpm_voom), TMM + CPM(edgeR) (tmm_cpm_edger), or quantile normalization (qn)
+parameter: normalization_method = &#39;tmm_cpm_voom&#39;
+# Quantile Normalization after rescale
+parameter: quantile_normalize = True
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -681,14 +687,164 @@ parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[normalize]
 # Path to the input molecular phenotype data, should be a processd and indexed bed.gz file, with tabix index.
 input: tpm_gct, counts_gct, annotation_gtf, sample_participant_lookup
-output: f&#39;{cwd:a}/{_input[0]:bnnn}.{normalization_method}.expression.bed.gz&#39;
+output: f&#39;{cwd:a}/{_input[0]:bnnn}.{normalization_method}.{&quot;no_qnorm.&quot; if not quantile_normalize else &quot;&quot;}expression.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
 python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, stdout = f&#39;{_output[0]:nn}.stdout&#39;,container = container, entrypoint = entrypoint
-    import pandas as pd    
-    #read the sample map file
+    import numpy as np
+    import pandas as pd
+    import os
+    import qtl.io
+    import qtl.norm
+    
+    # ============= Function definition (packaged from eqtl_prepare_expression.py) =============
+    # This function is adapted from the GTEx pipeline&#39;s eqtl_prepare_expression.py script
+    # Source: https://github.com/broadinstitute/gtex-pipeline/blob/master/qtl/src/eqtl_prepare_expression.py
+    # 
+    # Modifications from the original script:
+    # 1. Converted command-line interface (argparse) to function parameters for direct Python calling
+    # 2. Encapsulated the main script logic into a callable function
+    # 3. Made all parameters explicit function arguments with appropriate defaults
+    # 4. Preserved all core processing logic and algorithms from the original implementation
+    # 5. Supports three normalization methods:
+    #    - TMM + CPM with voom transformation (tmm_cpm_voom) [default]
+    #    - TMM + CPM with edgeR (tmm_cpm_edger)
+    #    - Quantile normalization (qn)
+    # 6. Added optional inverse normal transformation via the &#39;qnorm&#39; parameter:
+    #    - &#39;qnorm&#39;: Apply inverse normal transformation after primary normalization
+    #    - &#39;none&#39;: Skip inverse normal transformation [default]
+    #
+    # This implementation allows direct function calls within the workflow without external script execution,
+    # maintaining compatibility with the original GTEx pipeline while providing better integration.
+    # =========================================================================================
+    
+    def eqtl_prepare_expression(tpm_gct, counts_gct, annotation_gtf, sample_to_participant,
+                                prefix, output_dir=&#39;.&#39;, sample_ids=None, chrs=None,
+                                convert_tpm=False, tpm_threshold=0.1, count_threshold=6,
+                                sample_frac_threshold=0.2, normalization_method=&#39;tmm_cpm_voom&#39;,
+                                qnorm=&#39;none&#39;, parquet=False):
+        &quot;&quot;&quot;
+        Generate normalized expression BED files for eQTL analyses
+        
+        This function packages the main logic from eqtl_prepare_expression.py
+        &quot;&quot;&quot;
+        
+        # First, define the prepare_expression function (from the original script)
+        def prepare_expression(counts_df, tpm_df, sample_frac_threshold=0.2,
+                             count_threshold=6, tpm_threshold=0.1, mode=&#39;tmm_cpm_voom&#39;, qnorm=&#39;none&#39;):
+            &quot;&quot;&quot;
+            Genes are filtered using the following expression thresholds:
+              TPM &gt;= tpm_threshold in &gt;= sample_frac_threshold * samples
+              read counts &gt;= count_threshold in sample_frac_threshold * samples
+
+            The filtered counts matrix is then normalized using:
+              TMM (mode=&#39;tmm&#39;; default) or
+              quantile normalization (mode=&#39;qn&#39;)
+            &quot;&quot;&quot;
+            # expression thresholds
+            ns = tpm_df.shape[1]
+            mask = (
+                (np.sum(tpm_df &gt;= tpm_threshold, axis=1) &gt;= sample_frac_threshold * ns) &amp;
+                (np.sum(counts_df &gt;= count_threshold, axis=1) &gt;= sample_frac_threshold * ns)
+            ).values
+
+            # apply normalization
+            if mode.lower() == &#39;tmm_cpm_edger&#39;:
+                norm_counts_df = qtl.norm.edger_cpm(counts_df, normalized_lib_sizes=True)
+                norm_counts_df = norm_counts_df[mask]
+            elif mode.lower() == &#39;tmm_cpm_voom&#39;:
+                norm_counts_df = qtl.norm.voom_transform(counts_df)
+                norm_counts_df = norm_counts_df[mask]
+            elif mode.lower() == &#39;qn&#39;:
+                norm_counts_df = qtl.norm.normalize_quantiles(tpm_df.loc[mask])
+            else:
+                raise ValueError(f&#39;Unsupported mode {mode}&#39;)
+
+            # apply quantile normalization
+            if qnorm.lower() == &#39;qnorm&#39;:
+                result_df = qtl.norm.inverse_normal_transform(norm_counts_df)
+            elif qnorm.lower() == &#39;none&#39;:
+                result_df = norm_counts_df
+            else:
+                raise ValueError(f&#39;Unsupported qnorm mode {qnorm}&#39;)
+                
+            return result_df
+        
+        # Main logic (from the original __main__ block)
+        print(&#39;Loading expression data&#39;, flush=True)
+        
+        # Handle sample_ids if provided
+        if sample_ids is not None:
+            if isinstance(sample_ids, str):  # If it&#39;s a file path
+                with open(sample_ids) as f:
+                    sample_ids = f.read().strip().split(&#39;\n&#39;)
+                    print(f&#39;  * Loading {len(sample_ids)} samples&#39;, flush=True)
+        
+        # Load expression data
+        counts_df = qtl.io.read_gct(counts_gct, sample_ids=sample_ids, load_description=False)
+        tpm_df = qtl.io.read_gct(tpm_gct, sample_ids=sample_ids, load_description=False)
+        
+        # Load sample to participant mapping
+        sample_to_participant_s = pd.read_csv(sample_to_participant, sep=&#39;\t&#39;, index_col=0,
+                                              header=None, dtype=str).squeeze(&#39;columns&#39;)
+        
+        # Check inputs
+        if not counts_df.columns.equals(tpm_df.columns):
+            raise ValueError(&#39;Sample IDs in the TPM and read counts files must match.&#39;)
+        missing_ids = ~counts_df.columns.isin(sample_to_participant_s.index)
+        if missing_ids.any():
+            raise ValueError(f&quot;Sample IDs in expression files and participant lookup table must match ({missing_ids.sum()} sample IDs missing from {os.path.basename(sample_to_participant)}).&quot;)
+        
+        # Convert to TPM if requested
+        if convert_tpm:
+            print(&#39;  * Converting to TPM&#39;, flush=True)
+            tpm_df = tpm_df / tpm_df.sum(0) * 1e6
+        
+        # Normalize data
+        print(f&#39;Normalizing data ({normalization_method})&#39;, flush=True)
+        norm_df = prepare_expression(counts_df, tpm_df,
+                                     sample_frac_threshold=sample_frac_threshold,
+                                     count_threshold=count_threshold,
+                                     tpm_threshold=tpm_threshold,
+                                     mode=normalization_method,
+                                     qnorm=qnorm)
+        print(f&#39;  * {counts_df.shape[0]} genes in input tables&#39;, flush=True)
+        print(f&#39;  * {norm_df.shape[0]} genes remain after thresholding&#39;, flush=True)
+        
+        # Change sample IDs to participant IDs
+        norm_df.rename(columns=sample_to_participant_s, inplace=True)
+        
+        # Handle chromosome list
+        if chrs is not None:
+            if isinstance(chrs, str):  # If it&#39;s a file path
+                with open(chrs) as f:
+                    chrs = f.read().strip().split(&#39;\n&#39;)
+        else:
+            chrs = [f&#39;chr{i}&#39; for i in range(1,23)] + [&#39;chrX&#39;]
+        
+        # Prepare BED
+        bed_template_df = qtl.io.gtf_to_tss_bed(annotation_gtf, feature=&#39;transcript&#39;)
+        bed_template_df = bed_template_df[bed_template_df[&#39;chr&#39;].isin(chrs)]
+        bed_df = pd.merge(bed_template_df, norm_df, left_index=True, right_index=True)
+        qtl.io.sort_bed(bed_df, inplace=True)
+        print(f&#39;  * {bed_df.shape[0]} genes remain after selecting chromosomes&#39;, flush=True)
+        
+        # Write output
+        print(&#39;Writing BED file&#39;, flush=True)
+        output_file = os.path.join(output_dir, f&#39;{prefix}.expression.bed.gz&#39;)
+        if not parquet:
+            qtl.io.write_bed(bed_df, output_file)
+        else:
+            output_file = os.path.join(output_dir, f&#39;{prefix}.expression.bed.parquet&#39;)
+            bed_df.to_parquet(output_file)
+        
+        return output_file
+    
+    # ============= Now use the function in your workflow =============
+    
+    # Check for duplicates first
     sample_map = pd.read_table(&quot;${_input[3]}&quot;)
     duplicated = sample_map.loc[sample_map.duplicated(subset=[&#39;participant_id&#39;])]
-
+    
     if duplicated.shape[0] &gt; 0:
         print(&quot;Duplicate samples found. Please remove duplicates from ${_input[3]} before normalizing.&quot;)
         print(&quot;Duplicates:&quot;)
@@ -696,17 +852,41 @@ python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, s
         raise ValueError
     else:
         print(&quot;No duplicates found. Proceeding with normalization...&quot;)
-
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, stdout = f&#39;{_output[0]:nn}.stdout&#39;,container = container, entrypoint = entrypoint
-    for i in {1..22} X Y MT; do echo chr$i; done &gt; ${_output[0]:bnnn}.vcf_chr_list
-    eqtl_prepare_expression ${_input[0]} ${_input[1]} ${_input[2]} \
-        ${_input[3]} ${_output[0]:nnn} \
-        --chrs  ${_output[0]:bnnn}.vcf_chr_list \
-        --tpm_threshold ${tpm_threshold} \
-        --count_threshold ${count_threshold} \
-        --sample_frac_threshold ${sample_frac_threshold} \
-        --normalization_method ${normalization_method} &amp;&amp; \
-    rm -f ${_output[0]:bnnn}.vcf_chr_list
+    
+    # Create chromosome list file
+    chr_file = &quot;${_output[0]:bnnn}.vcf_chr_list&quot;
+    chrs = [f&#39;chr{i}&#39; for i in range(1,23)] + [&#39;chrX&#39;, &#39;chrY&#39;, &#39;chrMT&#39;]
+    with open(chr_file, &#39;w&#39;) as f:
+        for chr in chrs:
+            f.write(chr + &#39;\n&#39;)
+    
+    # Set qnorm parameter based on quantile_normalize flag
+    qnorm_param = &#39;qnorm&#39; if ${quantile_normalize} else &#39;none&#39;
+    
+    # Call the eqtl_prepare_expression function
+    output_file = eqtl_prepare_expression(
+        tpm_gct=&quot;${_input[0]}&quot;,
+        counts_gct=&quot;${_input[1]}&quot;,
+        annotation_gtf=&quot;${_input[2]}&quot;,
+        sample_to_participant=&quot;${_input[3]}&quot;,
+        prefix=&quot;${_output[0]:nnn}&quot;,
+        output_dir=&quot;.&quot;,
+        sample_ids=None,
+        chrs=chr_file,
+        convert_tpm=False,
+        tpm_threshold=${tpm_threshold},
+        count_threshold=${count_threshold},
+        sample_frac_threshold=${sample_frac_threshold},
+        normalization_method=&quot;${normalization_method}&quot;,
+        qnorm=qnorm_param,
+        parquet=False
+    )
+    
+    # Clean up temporary file
+    if os.path.exists(chr_file):
+        os.remove(chr_file)
+    
+    print(f&quot;Preparing expression completed. Output saved to: {output_file}&quot;)
 </pre></div>
 </div>
 </div>
