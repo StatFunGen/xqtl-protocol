@@ -20,13 +20,16 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          run-install: false
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install jupyter-book==1.0.4 ghp-import nbconvert
 
       - name: Build website and manuscript
-        shell: pixi exec --spec coreutils --spec findutils --spec ghp-import --spec grep --spec jupyter-book --spec nbconvert-core --spec rsync -- bash -e {0}
         run: |
           # Build website
           rm -f pipeline/*.ipynb
