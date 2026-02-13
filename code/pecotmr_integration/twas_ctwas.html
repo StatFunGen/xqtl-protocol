@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
@@ -50,7 +50,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
@@ -187,7 +187,6 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../commands_generator/bulk_expression_commands.html">RNA-seq calling and QC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../commands_generator/eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
@@ -286,8 +285,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../xqtl_modifier_score/ems_training.html">xQTL Model Training Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../xqtl_modifier_score/ems_prediction.html">EMS Prediction for xQTL Modifier Scores</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xqtl_modifier_score/scEEMS_Model_Training_Tutorial.html">scEEMS Model Training Tutorial</a></li>
+
 </ul>
 
     </div>
@@ -694,7 +693,8 @@ document.write(`
    --regions data/twas/EUR_LD_blocks.bed \
    --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
    --xqtl_type_table data/twas/data_type_table.txt \
-   --rsq_pval_cutoff 0.05 --rsq_cutoff 0.01    
+   --rsq_pval_cutoff 0.05 --rsq_cutoff 0.01 \
+   --region-name chr11_84267999_86714492
 </pre></div>
 </div>
 </div>
@@ -885,7 +885,7 @@ def extract_regional_data(gwas_meta_data, xqtl_meta_data, regions, region_name, 
         extra_regions_df[&#39;start&#39;] = extra_regions_df[&#39;start&#39;].astype(int)
         extra_regions_df[&#39;stop&#39;] = extra_regions_df[&#39;stop&#39;].astype(int)
         # Add extra regions to regions_df
-        regions_df = pd.concat([regions_df, extra_regions_df])
+        regions_df = extra_regions_df
     # Remove duplicates and reset index
     regions_df = regions_df.drop_duplicates().reset_index(drop=True)
     regions_dict = OrderedDict()
@@ -1006,6 +1006,34 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     library(readr)
 
 
+    # function to update method selection
+    update_twas_method &lt;- function(twas_df, rsq_cutoff =${rsq_cutoff}, rsq_pval_cutoff = ${rsq_pval_cutoff}){
+        if (nrow(twas_df) == 0) {  
+            return(twas_df)
+        } 
+        twas_df$method_selected_original &lt;- twas_df$is_selected_method
+        twas_df_colnames &lt;- colnames(twas_df)
+        twas_df$gene_context &lt;- paste0(twas_df$molecular_id, &quot;_&quot;, twas_df$context)
+        fix_sel &lt;- twas_df$is_selected_method &amp; (is.na(twas_df$twas_z) | is.na(twas_df$twas_pval) | is.infinite(twas_df$twas_pval) |
+                                           is.null(twas_df$twas_z) | is.null(twas_df$twas_pval))
+        if (!any(fix_sel)) return(twas_df) # If nothing to fix, return fast
+        all_group &lt;- paste(twas_df$gene_context, twas_df$gwas_study, sep = &quot; - &quot;) #gene-context-study group
+        fix_groups &lt;- unique(all_group[fix_sel])
+
+        for (fixgroup in fix_groups) {
+            df_idxs &lt;- which(all_group == fixgroup) # idx of gene-context-study group that needs replacement of method selected
+            if (length(df_idxs) == 1) next
+            candidate_idxs &lt;- df_idxs[!is.na(twas_df$twas_z[df_idxs]) &amp; !is.na(twas_df$twas_pval[df_idxs]) &amp; !is.infinite(twas_df$twas_z[df_idxs]) &amp; 
+                             !is.null(twas_df$twas_z[df_idxs]) &amp; !is.null(twas_df$twas_pval[df_idxs]) &amp;
+                             twas_df$rsq_cv[df_idxs] &gt;= rsq_cutoff &amp; twas_df$pval_cv[df_idxs] &lt;= rsq_pval_cutoff] 
+            if (length(candidate_idxs) &lt;= 0 || all(is.na(candidate_idxs))) next
+            best_i &lt;- candidate_idxs[which.max(twas_df$rsq_cv[candidate_idxs])]
+            best_method &lt;- twas_df$method[best_i]
+            twas_df$is_selected_method[df_idxs] &lt;- (twas_df$method[df_idxs] == best_method)
+            message (&quot;Updating method selection for &quot;, fixgroup, &quot;.&quot;)
+        }
+        return(twas_df[, twas_df_colnames])
+    }
 
     # Load metadata and configuration - let these fail if there are issues
     if (${&quot;TRUE&quot; if rename_column else &quot;FALSE&quot;}) {
@@ -1016,6 +1044,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     }
     
     xqtl_meta_df &lt;- fread(&quot;${xqtl_meta_data}&quot;, data.table=FALSE)
+    xqtl_meta_df &lt;- xqtl_meta_df[!duplicated(xqtl_meta_df[, c(&quot;region_id&quot;, &quot;TSS&quot;)]), ]
     xqtl_type_table &lt;- if (isTRUE(file.exists(&quot;${xqtl_type_table}&quot;))) fread(&quot;${xqtl_type_table}&quot;) else NULL
     gene_list &lt;- c(${&#39;, &#39;.join([f&quot;&#39;{gene}&#39;&quot; for gene in _filtered_region_info[4]])})
     
@@ -1043,7 +1072,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
         message(paste(&quot;Error checking weight files:&quot;, e$message))
         return(list())
     })
-    
+
     if(length(weight_db_list_update) &lt;= 0) {
         message(paste0(&quot;No valid weight files for region ${_filtered_region_info[3]}. Creating empty output files.&quot;))
         # Define TWAS result columns (same as in final_results)
@@ -1082,15 +1111,17 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     for (gene_db in names(weight_db_list_update)) {
         weight_dbs &lt;- weight_db_list_update[[gene_db]]
         message(paste(&quot;Processing gene:&quot;, gene_db, &quot;with&quot;, length(weight_dbs), &quot;weight files&quot;))
-        
+        conditions = xqtl_meta_df |&gt; filter(region_id == gene_db) |&gt; pull(contexts)
+
         # Load weights for this gene - let it fail if there are real issues
         twas_weights_results[[gene_db]] = load_twas_weights(
             weight_dbs, 
+            conditions = if(is.na(conditions)) NULL else conditions,
             variable_name_obj = &quot;variant_names&quot;, 
             susie_obj = &quot;susie_weights_intermediate&quot;,
             twas_weights_table = &quot;twas_weights&quot;
         )
-        
+
         if (length(twas_weights_results[[gene_db]]) &gt; 1) {
             twas_weights_results[[gene_db]]$data_type &lt;- setNames(
                 lapply(names(twas_weights_results[[gene_db]]$weights), function(context) {
@@ -1141,45 +1172,51 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     
     message(paste(&quot;Proceeding with TWAS analysis for&quot;, length(twas_weights_results), &quot;batches&quot;))
 
-    # TWAS analysis - allow this to fail with informative errors
-    twas_results_db &lt;- list()
-    for (batch in 1:length(twas_weights_results)){
+      # TWAS analysis - allow this to fail with informative errors
+    twas_results_db &lt;- vector(&quot;list&quot;, length(twas_weights_results))    
+    for (batch in seq_along(twas_weights_results)) {
         message(paste(&quot;Processing batch&quot;, batch, &quot;of&quot;, length(twas_weights_results)))
-        
-        twas_results_db[[batch]] &lt;- twas_pipeline(
-            twas_weights_results[[batch]], 
-            &quot;${ld_meta_data}&quot;, 
-            &quot;${gwas_meta_data}&quot;,  
-            region_block = &quot;${_filtered_region_info[3]}&quot;,
-            rsq_cutoff = ${rsq_cutoff}, 
-            rsq_option = &quot;${rsq_option}&quot;, 
-            rsq_pval_cutoff = ${rsq_pval_cutoff}, 
-            rsq_pval_option = c(${&quot;, &quot;.join([f&#39;&quot;{x}&quot;&#39; for x in rsq_pval_option])}), 
-            mr_pval_cutoff = ${mr_pval_cutoff},
-            mr_coverage_column = &quot;${coverage}&quot;, 
-            output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;},
-            event_filters = event_filters,
-            column_file_path = column_file_path,
-            comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;}
-        )
-        
-        # Report batch results
-        if (!is.null(twas_results_db[[batch]])) {
-            if (!is.null(twas_results_db[[batch]]$twas_result)) {
-                message(paste(&quot;Batch&quot;, batch, &quot;produced&quot;, nrow(twas_results_db[[batch]]$twas_result), &quot;TWAS results&quot;))
-            } else {
-                message(paste(&quot;Batch&quot;, batch, &quot;produced NULL twas_result&quot;))
+        res &lt;- tryCatch(
+            twas_pipeline(
+                twas_weights_results[[batch]], 
+                &quot;${ld_meta_data}&quot;, 
+                &quot;${gwas_meta_data}&quot;,  
+                region_block = &quot;${_filtered_region_info[3]}&quot;,
+                rsq_cutoff = ${rsq_cutoff}, 
+                rsq_option = &quot;${rsq_option}&quot;, 
+                rsq_pval_cutoff = ${rsq_pval_cutoff}, 
+                rsq_pval_option = c(${&quot;, &quot;.join([f&#39;&quot;{x}&quot;&#39; for x in rsq_pval_option])}), 
+                mr_pval_cutoff = ${mr_pval_cutoff},
+                mr_coverage_column = &quot;${coverage}&quot;, 
+                output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;},
+                event_filters = event_filters,
+                column_file_path = column_file_path,
+                comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;}
+            ),
+            error = function(e) {
+                message(paste(&quot;Batch&quot;, batch, &quot;ERROR:&quot;, e$message))
+                return(NULL)
             }
-        } else {
-            message(paste(&quot;Batch&quot;, batch, &quot;produced NULL results&quot;))
+        )
+    
+        # res is NULL → skip safely
+        if (is.null(res) || is.null(res$twas_result)) {
+            message(paste(&quot;Batch&quot;, batch, &quot;returned no results&quot;))
+            twas_results_db[[batch]] &lt;- NULL
+            next
         }
+    
+        message(paste(&quot;Batch&quot;, batch, &quot;produced&quot;, nrow(res$twas_result), &quot;TWAS results&quot;))
+        twas_results_db[[batch]] &lt;- res
     }
+    
+    # Now safely drop NULLs
+    twas_results_db &lt;- Filter(Negate(is.null), twas_results_db)
     
     rm(twas_weights_results)
     gc()
     
-    # Filter and report final results
-    twas_results_db &lt;- Filter(Negate(is.null), twas_results_db)
+    # Report final results
     message(paste(&quot;Final valid batches:&quot;, length(twas_results_db)))
 
     if(length(twas_results_db) != 0){
@@ -1198,9 +1235,16 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
         final_results &lt;- do.call(rbind, lapply(twas_results_db, function(x) {
             if (!is.null(x$twas_result)) x$twas_result[, c(2,1,14:16,3:13)] else data.frame()
         }))
-        
-        message(paste(&quot;Writing&quot;, nrow(final_results), &quot;final TWAS results&quot;))
-        fwrite(final_results, ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+
+        # update methods if twas z-score is NA 
+        final_results &lt;- update_twas_method(final_results) 
+        if (nrow(final_results)==0) {
+            message(&quot;No valid TWAS results to write&quot;)
+            fwrite(data.frame(), file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+        } else {
+            message(paste(&quot;Writing&quot;, nrow(final_results), &quot;final TWAS results&quot;))
+            fwrite(final_results, ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
+        }
     } else {
         message(&quot;No valid TWAS results to write&quot;)
         fwrite(data.frame(), file = ${_output[0]:r}, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
@@ -1547,10 +1591,15 @@ parameter: run_finemapping = False
 parameter: prior_var_structure = &quot;shared_all&quot;
 # A list of regions to be subset for screening and fine-mapping, for example: &quot;10_80126158_82231647&quot;
 parameter: region_name =[]
+parameter: subset_context=[] # only process specified list of contexts for single group cTWAS
 parameter: numThreads = 4
 parameter: multi_group = True
 parameter: merge_regions=False
 parameter: L=5
+# sum of gene PIPs in the region should be larger than this threshold to get selected for finemapping
+parameter: min_nonSNP_PIP=0.5
+# additional name specification for fine-mapping result file names 
+parameter: alias=&quot;NULL&quot;
 import glob
 
 skip_if(run_finemapping == False, &quot; Skip [ctwas_3] fine-mapping. &quot; )
@@ -1582,7 +1631,7 @@ for region in region_name:
         &quot;params&quot;: params
     })
 gwas_study = &#39;c(&#39; + &#39;, &#39;.join(f&#39;&quot;{x}&quot;&#39; for x in gwas_study) + &#39;)&#39;
-
+subset_context = &#39;c(&#39; + &#39;, &#39;.join(f&#39;&quot;{x}&quot;&#39; for x in subset_context) + &#39;)&#39;
 input: region_info_list[_index][&quot;params&quot;], for_each = &quot;region_info_list&quot;
 region_name = region_info_list[_index][&#39;region_name&#39;]
 weight_files = region_info_list[_index][&#39;weights&#39;]
@@ -1610,7 +1659,8 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
     if (${&quot;TRUE&quot; if multi_group else &quot;FALSE&quot;}){
         param &lt;- param[!sapply(names(param), function(x) any(sapply(paste0(gwas_studies, &quot;.&quot;), function(c) grepl(c, x))))] # gwas_study per each prior 
     } else {
-        param &lt;- param[sapply(names(param), function(x) any(sapply(paste0(gwas_studies, &quot;.&quot;), function(c) grepl(c, x))))] # gwas_study x context pair per each prior 
+        param &lt;- param[sapply(names(param), function(x) any(sapply(paste0(gwas_studies, &quot;.&quot;), function(c) grepl(c, x))))] # gwas_study x context pair per each prior
+        param &lt;- param[grepl(${subset_context},names(param))]
     }
 
     region_data_files &lt;- ${&#39;c(&#39; + &#39;, &#39;.join(f&#39;&quot;{x}&quot;&#39; for x in region_data_file) + &#39;)&#39;}
@@ -1618,11 +1668,13 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
     LD_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.LD_map.rds&quot;)
     snp_map &lt;- readRDS(&quot;${cwd}/${step_name.split(&#39;_&#39;)[0]}/${name}.snp_map.${chrom}.rds&quot;)
     names(z_snp_files) &lt;- gsub(&#39;^.*.z_gene_snp.\\s*|\\s*.${chrom}.*$&#39;, &#39;&#39;, z_snp_files)
-
+    alias = ${&quot;NULL&quot; if alias == &quot;NULL&quot; else f&quot;&#39;{alias}&#39;&quot;}
+                       
     ## loop through gwas studies (multigroup) / gwas_study_context groups (single_group)
     for (study in names(param)){
         region_data &lt;- readRDS(region_data_files[grepl(study, region_data_files)])
         finemap_res_file &lt;- file.path(outputdir, paste0(&quot;${name}.ctwas_finemap_res.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.tsv.gz&quot;))
+        if (length(alias)!=0) finemap_res_file &lt;- gsub(&quot;${name}&quot;, &quot;${name}_${alias}&quot;, finemap_res_file)
         susie_alpha_file &lt;- gsub(&quot;.tsv.gz&quot;, &quot;.rds&quot;, gsub(&quot;ctwas_finemap_res&quot;, &quot;ctwas_susie_alpha_res&quot;, finemap_res_file))
         if (nrow(region_data[[study]][[gsub(&quot;chr&quot;, &quot;&quot;, &quot;${region_name}&quot;)]]$z_gene)==0) {
             message(&quot;No z_gene data available for &quot;, study, &quot; in ${region_name}. &quot;)
@@ -1654,12 +1706,13 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
                                               ncore = ${numThreads})
         }
         screen_res &lt;- screen_regions(region_data[[study]][gsub(&quot;chr&quot;, &quot;&quot;, &quot;${region_name}&quot;)],
-                                       group_prior = group_prior, group_prior_var = group_prior_var, min_nonSNP_PIP = 0.5, 
+                                       group_prior = group_prior, group_prior_var = group_prior_var, min_nonSNP_PIP = ${min_nonSNP_PIP}, 
                                        ncore = ${numThreads}, verbose = FALSE, logfile = file.path(outputdir, 
                                        paste0(&quot;${name}.screen_regions.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.log&quot;)))
         screened_region_data &lt;- screen_res$screened_region_data
-        # screen_summary &lt;- screen_res$screen_summary
-        saveRDS(screen_res, file.path(outputdir, paste0(&quot;${name}.screen_regions.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.rds&quot;)))
+        screen_res_file &lt;- paste0(&quot;${name}.screen_regions.${prior_var_structure}.${region_name}.&quot;, study, &quot;.thin${thin}.rds&quot;)
+        if (length(alias)!=0) screen_res_file &lt;- gsub(&quot;${name}&quot;, &quot;${name}_${alias}&quot;,screen_res_file)
+        saveRDS(screen_res, file.path(outputdir, screen_res_file ))
         if (length(screened_region_data)==0) {
             message(&quot;No region selected for &quot;, study, &quot; in ${region_name}. &quot;)
             fwrite(data.frame(), finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
@@ -1715,8 +1768,12 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
           fwrite(finemap_res, finemap_res_file, sep = &quot;\t&quot;, compress = &quot;gzip&quot;)
           saveRDS(susie_alpha_res, susie_alpha_file, compress=&#39;xz&#39;)
         }
-        saveRDS(ld_diag[1:3], file.path(outputdir, paste0(&quot;${name}.ctwas_ld_diag.${prior_var_structure}.${region_name}.&quot;, study,&quot;.thin${thin}.rds&quot;)))
-        pdf(file.path(outputdir, paste0(&quot;${name}.ctwas_ld_diag_plot.${prior_var_structure}.${region_name}.&quot;, study,&quot;.thin${thin}.pdf&quot;)), width = 7, height = 7)
+        ld_diag_file &lt;- paste0(&quot;${name}.ctwas_ld_diag.${prior_var_structure}.${region_name}.&quot;, study,&quot;.thin${thin}.rds&quot;)
+        if (length(alias)!=0) ld_diag_file &lt;- gsub(&quot;${name}&quot;, &quot;${name}_${alias}&quot;,ld_diag_file)
+        ld_diag_plot_file &lt;- gsub(&quot;.ctwas_ld_diag.&quot;, &quot;.ctwas_ld_diag_plot.&quot;, ld_diag_file )
+        ld_diag_plot_file &lt;- gsub(&quot;.rds&quot;, &quot;.pdf&quot;, ld_diag_plot_file )
+        saveRDS(ld_diag[1:3], file.path(outputdir, ld_diag_file))
+        pdf(file.path(outputdir,ld_diag_plot_file), width = 7, height = 7)
         print(ld_diag$plots)
         dev.off()
         message(&quot;Fine-mapping completed for region ${region_name} with &quot;, study, &quot;. &quot;)
