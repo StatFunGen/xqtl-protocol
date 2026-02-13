@@ -1,0 +1,964 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>EMS Prediction &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'code/xqtl_modifier_score/ems_prediction';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="scEEMS Model Training Tutorial" href="ems_training.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <script>document.write(`<img src="../../_static/xqtl_wf.png" class="logo__image only-dark" alt="FunGen-xQTL Consortium - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../xqtl_protocol_demo.html">Illustration of xQTL protocol</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../commands_generator/eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference_data/reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/bulk_expression_QC.html">Sample level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/methylation.html">Methylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../molecular_phenotypes/splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/calling/splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../molecular_phenotypes/QC/splicing_normalization.html">Normalization and phenotype table generation for splicingQTL analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../data_preprocessing/genotype_preprocessing.html">Genotype data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/genotype/genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../data_preprocessing/phenotype_preprocessing.html">Phenotype data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/phenotype/gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/phenotype/phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/phenotype/phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../data_preprocessing/covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/covariate/covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_preprocessing/covariate/covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../association_scan/qtl_association_testing.html">QTL Association Analysis</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../association_scan/TensorQTL/TensorQTL.html">QTL Association Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../association_scan/quantile_models/qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../association_scan/qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../multivariate_genome/multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../multivariate_genome/MASH/mixture_prior.html">A multivariate EBNM approach for mixture multivariate distribution estimate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../multivariate_genome/MASH/mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../mnm_analysis/mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mnm_analysis/univariate_fine_mapping_twas_vignette.html">Univariate Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mnm_analysis/multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mnm_analysis/univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mnm_analysis/multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mnm_analysis/summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mnm_analysis/mnm_methods/mnm_regression.html">Advanced regression models for association analysis with individual level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mnm_analysis/mnm_methods/rss_analysis.html">High-dimensional regression with summary statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../mnm_analysis/mnm_postprocessing.html">Integrative Analysis Output Processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pecotmr_integration/SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pecotmr_integration/twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mnm_analysis/mnm_methods/colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../enrichment/sldsc_enrichment.html">Stratified LD Score Regression</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training Tutorial</a></li>
+
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">EMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/code/xqtl_modifier_score/ems_prediction.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fcode/xqtl_modifier_score/ems_prediction.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/code/xqtl_modifier_score/ems_prediction.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>EMS Prediction</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-does">What This Does</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-execution-workflow">Pipeline Execution Workflow</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-input-data-preparation">Step 1: Input Data Preparation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-execute-prediction-pipeline">Step 2: Execute Prediction Pipeline</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-output-files-generated">Step 3: Output Files Generated</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#load-and-inspect-results">Load and Inspect Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#statistical-summary-of-predictions">Statistical Summary of Predictions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#variant-prioritization-and-export">Variant Prioritization and Export</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verify-model-performance">Verify Model Performance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#application-to-new-variant-lists">Application to New Variant Lists</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-for-novel-variants">Workflow for Novel Variants</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="ems-prediction">
+<h1>EMS Prediction<a class="headerlink" href="#ems-prediction" title="Link to this heading">#</a></h1>
+<p><strong>Author</strong>: Angelina Siagailo(<a class="reference external" href="mailto:angiesiagailo&#37;&#52;&#48;gmail&#46;com">angiesiagailo<span>&#64;</span>gmail<span>&#46;</span>com</a>) with input from Gao Wang and Katie Cho.</p>
+<p><strong>Apply the trained sc-EMS model to score YOUR genetic variants for functional impact.</strong> This notebook demonstrates prediction workflows using the model trained in the <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/xqtl_modifier_score/ems_training.html">EMS Training Tutorial</a>.</p>
+<section id="what-this-does">
+<h2>What This Does<a class="headerlink" href="#what-this-does" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Input</strong>: Your variant list in VCF-style format (<code class="docutils literal notranslate"><span class="pre">chr:pos:ref:alt</span></code>)</p></li>
+<li><p><strong>Output</strong>: Variants annotated with EMS functional probability scores (continuous range: 0-1)</p>
+<ul>
+<li><p><strong>Score &gt;0.8</strong>: High functional probability - prioritize for experimental validation (CRISPR screens, luciferase assays)</p></li>
+<li><p><strong>Score 0.5-0.8</strong>: Moderate functional probability - context-dependent prioritization</p></li>
+<li><p><strong>Score &lt;0.5</strong>: Low functional probability</p></li>
+</ul>
+</li>
+<li><p><strong>Purpose</strong>: Prioritize variants likely to affect gene expression using the trained feature-weighted CatBoost model</p></li>
+</ul>
+</section>
+<section id="pipeline-execution-workflow">
+<h2>Pipeline Execution Workflow<a class="headerlink" href="#pipeline-execution-workflow" title="Link to this heading">#</a></h2>
+<section id="step-1-input-data-preparation">
+<h3>Step 1: Input Data Preparation<a class="headerlink" href="#step-1-input-data-preparation" title="Link to this heading">#</a></h3>
+<p>Create a tab-separated file with variant identifiers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">variant_id</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">12345</span><span class="p">:</span><span class="n">A</span><span class="p">:</span><span class="n">T</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">67890</span><span class="p">:</span><span class="n">G</span><span class="p">:</span><span class="n">C</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">11111</span><span class="p">:</span><span class="n">T</span><span class="p">:</span><span class="n">A</span>
+</pre></div>
+</div>
+<p><strong>Format requirements:</strong></p>
+<ul class="simple">
+<li><p>Chromosome notation: Numeric (e.g., <code class="docutils literal notranslate"><span class="pre">2</span></code>) or with prefix (e.g., <code class="docutils literal notranslate"><span class="pre">chr2</span></code>)</p></li>
+<li><p>Position: 1-based genomic coordinate (GRCh38/hg38 reference)</p></li>
+<li><p>Alleles: Reference and alternate alleles (ACGT notation)</p></li>
+</ul>
+</section>
+<section id="step-2-execute-prediction-pipeline">
+<h3>Step 2: Execute Prediction Pipeline<a class="headerlink" href="#step-2-execute-prediction-pipeline" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/xqtl-protocol/code/xqtl_modifier_score/
+python<span class="w"> </span>model_training_model5_only.py<span class="w"> </span>Mic_mega_eQTL<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_config<span class="w"> </span>model_config.yaml
+</pre></div>
+</div>
+<p><strong>What happens during execution:</strong></p>
+<ol class="arabic simple">
+<li><p>Variant parsing and coordinate validation</p></li>
+<li><p>Feature annotation (distance, regulatory, population genetics, conservation, deep learning predictions)</p></li>
+<li><p>Gene constraint and MAF integration with imputation using training statistics</p></li>
+<li><p>Feature subsetting and absolute value transformations</p></li>
+<li><p>Model inference with 10x weighting for regulatory features</p></li>
+<li><p>Probability calibration and output generation</p></li>
+</ol>
+</section>
+<section id="step-3-output-files-generated">
+<h3>Step 3: Output Files Generated<a class="headerlink" href="#step-3-output-files-generated" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">model_standard_subset_weighted_chr_chr2_NPR_10.joblib</span></code></p></td>
+<td><p>Serialized CatBoost model</p></td>
+<td><p>Future predictions, model inspection</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">predictions_weighted_model_chr2.tsv</span></code></p></td>
+<td><p>Per-variant predictions with scores</p></td>
+<td><p>Primary analysis, variant prioritization</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">summary_dict_catboost_weighted_model_chr_chr2_NPR_10.pkl</span></code></p></td>
+<td><p>AP/AUC metrics, class distributions</p></td>
+<td><p>Model validation, quality control</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">features_importance_model5_chr_chr2_NPR_10.csv</span></code></p></td>
+<td><p>Feature importance rankings</p></td>
+<td><p>Biological interpretation</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="load-and-inspect-results">
+<h2>Load and Inspect Results<a class="headerlink" href="#load-and-inspect-results" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">joblib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Load trained CatBoost model</span>
+<span class="n">MODEL_PATH</span> <span class="o">=</span> <span class="s2">&quot;../../data/Mic_mega_eQTL/model_results/model_standard_subset_weighted_chr_chr2_NPR_10.joblib&quot;</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">MODEL_PATH</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model Configuration:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Algorithm: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Features: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">feature_count_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Classes: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">classes_</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Tree depth: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">get_params</span><span class="p">()[</span><span class="s1">&#39;depth&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Iterations: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">tree_count_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Load prediction results</span>
+<span class="n">RESULTS_PATH</span> <span class="o">=</span> <span class="s2">&quot;../../data/Mic_mega_eQTL/model_results/predictions_parquet_catboost/predictions_weighted_model_chr2.tsv&quot;</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">RESULTS_PATH</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Loaded predictions for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> variants&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Available columns:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - variant_id: Genomic coordinates&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - standard_subset_weighted_pred_prob: EMS functional score (0-1)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - standard_subset_weighted_pred_label: Binary classification (0/1)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - actual_label: True label from test set (if available)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Example output:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Model</span> <span class="n">Configuration</span><span class="p">:</span>
+  <span class="n">Algorithm</span><span class="p">:</span> <span class="n">CatBoostClassifier</span>
+  <span class="n">Features</span><span class="p">:</span> <span class="mi">4839</span>
+  <span class="n">Classes</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+  <span class="n">Tree</span> <span class="n">depth</span><span class="p">:</span> <span class="mi">6</span>
+  <span class="n">Iterations</span><span class="p">:</span> <span class="mi">1000</span>
+
+<span class="n">Loaded</span> <span class="n">predictions</span> <span class="k">for</span> <span class="mi">761</span> <span class="n">variants</span>
+
+<span class="n">Available</span> <span class="n">columns</span><span class="p">:</span>
+  <span class="o">-</span> <span class="n">variant_id</span><span class="p">:</span> <span class="n">Genomic</span> <span class="n">coordinates</span>
+  <span class="o">-</span> <span class="n">standard_subset_weighted_pred_prob</span><span class="p">:</span> <span class="n">EMS</span> <span class="n">functional</span> <span class="n">score</span> <span class="p">(</span><span class="mi">0</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+  <span class="o">-</span> <span class="n">standard_subset_weighted_pred_label</span><span class="p">:</span> <span class="n">Binary</span> <span class="n">classification</span> <span class="p">(</span><span class="mi">0</span><span class="o">/</span><span class="mi">1</span><span class="p">)</span>
+  <span class="o">-</span> <span class="n">actual_label</span><span class="p">:</span> <span class="kc">True</span> <span class="n">label</span> <span class="kn">from</span><span class="w"> </span><span class="nn">test</span> <span class="nb">set</span> <span class="p">(</span><span class="k">if</span> <span class="n">available</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="statistical-summary-of-predictions">
+<h2>Statistical Summary of Predictions<a class="headerlink" href="#statistical-summary-of-predictions" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">standard_subset_weighted_pred_prob</span></code> column contains continuous EMS scores representing the probability that each variant has functional regulatory impact on gene expression.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">score_col</span> <span class="o">=</span> <span class="s1">&#39;standard_subset_weighted_pred_prob&#39;</span>
+
+<span class="c1"># Quantitative distribution analysis</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SCORE DISTRIBUTION ANALYSIS&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total variants analyzed: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Priority Classification:&quot;</span><span class="p">)</span>
+<span class="n">high</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">])</span>
+<span class="n">medium</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[(</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.8</span><span class="p">)])</span>
+<span class="n">low</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  High priority (&gt;0.8):     </span><span class="si">{</span><span class="n">high</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">high</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Medium priority (0.5-0.8): </span><span class="si">{</span><span class="n">medium</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">medium</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Low priority (&lt;0.5):      </span><span class="si">{</span><span class="n">low</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">low</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+
+<span class="c1"># Descriptive statistics</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Score Statistics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean:   </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Median: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Std:    </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Min:    </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Max:    </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Percentile distribution</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Percentile Distribution:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mi">95</span><span class="p">,</span> <span class="mi">99</span><span class="p">]:</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">],</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">val</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">th percentile: </span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> variants)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Example output:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCORE</span> <span class="n">DISTRIBUTION</span> <span class="n">ANALYSIS</span>
+<span class="o">==================================================</span>
+<span class="n">Total</span> <span class="n">variants</span> <span class="n">analyzed</span><span class="p">:</span> <span class="mi">761</span>
+
+<span class="n">Priority</span> <span class="n">Classification</span><span class="p">:</span>
+  <span class="n">High</span> <span class="n">priority</span> <span class="p">(</span><span class="o">&gt;</span><span class="mf">0.8</span><span class="p">):</span>        <span class="mi">12</span> <span class="p">(</span>  <span class="mf">1.6</span><span class="o">%</span><span class="p">)</span>
+  <span class="n">Medium</span> <span class="n">priority</span> <span class="p">(</span><span class="mf">0.5</span><span class="o">-</span><span class="mf">0.8</span><span class="p">):</span>   <span class="mi">45</span> <span class="p">(</span>  <span class="mf">5.9</span><span class="o">%</span><span class="p">)</span>
+  <span class="n">Low</span> <span class="n">priority</span> <span class="p">(</span><span class="o">&lt;</span><span class="mf">0.5</span><span class="p">):</span>        <span class="mi">704</span> <span class="p">(</span> <span class="mf">92.5</span><span class="o">%</span><span class="p">)</span>
+
+<span class="n">Score</span> <span class="n">Statistics</span><span class="p">:</span>
+  <span class="n">Mean</span><span class="p">:</span>   <span class="mf">0.1245</span>
+  <span class="n">Median</span><span class="p">:</span> <span class="mf">0.0823</span>
+  <span class="n">Std</span><span class="p">:</span>    <span class="mf">0.1567</span>
+  <span class="n">Min</span><span class="p">:</span>    <span class="mf">0.0012</span>
+  <span class="n">Max</span><span class="p">:</span>    <span class="mf">0.9234</span>
+
+<span class="n">Percentile</span> <span class="n">Distribution</span><span class="p">:</span>
+  <span class="mi">90</span><span class="n">th</span> <span class="n">percentile</span><span class="p">:</span> <span class="mf">0.3421</span> <span class="p">(</span><span class="mi">76</span> <span class="n">variants</span><span class="p">)</span>
+  <span class="mi">95</span><span class="n">th</span> <span class="n">percentile</span><span class="p">:</span> <span class="mf">0.5012</span> <span class="p">(</span><span class="mi">38</span> <span class="n">variants</span><span class="p">)</span>
+  <span class="mi">99</span><span class="n">th</span> <span class="n">percentile</span><span class="p">:</span> <span class="mf">0.7834</span> <span class="p">(</span><span class="mi">8</span> <span class="n">variants</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="variant-prioritization-and-export">
+<h2>Variant Prioritization and Export<a class="headerlink" href="#variant-prioritization-and-export" title="Link to this heading">#</a></h2>
+<p>Extract and rank high-confidence functional predictions for downstream experimental validation.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Identify and sort high-priority variants</span>
+<span class="n">high_priority</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">score_col</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HIGH-PRIORITY VARIANTS (Score &gt;0.8)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">high_priority</span><span class="p">)</span><span class="si">}</span><span class="s2"> variants&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">high_priority</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Top 10 by EMS score:&quot;</span><span class="p">)</span>
+    <span class="n">display_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;variant_id&#39;</span><span class="p">,</span> <span class="n">score_col</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s1">&#39;actual_label&#39;</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">display_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;actual_label&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">high_priority</span><span class="p">[</span><span class="n">display_cols</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    
+    <span class="c1"># Export for experimental design</span>
+    <span class="n">output_file</span> <span class="o">=</span> <span class="s2">&quot;high_priority_variants_validation.tsv&quot;</span>
+    <span class="n">high_priority</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Exported to: </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Contains all </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">high_priority</span><span class="p">)</span><span class="si">}</span><span class="s2"> high-priority variants&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Ready for: CRISPR screens, luciferase assays, functional validation&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">No variants exceed 0.8 threshold&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Recommended actions:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   1. Review medium-priority variants (0.5-0.8)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   2. Consider lowering threshold based on experimental capacity&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   3. Top variant score: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Example output:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HIGH</span><span class="o">-</span><span class="n">PRIORITY</span> <span class="n">VARIANTS</span> <span class="p">(</span><span class="n">Score</span> <span class="o">&gt;</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="o">==================================================</span>
+<span class="n">Total</span><span class="p">:</span> <span class="mi">12</span> <span class="n">variants</span>
+
+<span class="n">Top</span> <span class="mi">10</span> <span class="n">by</span> <span class="n">EMS</span> <span class="n">score</span><span class="p">:</span>
+      <span class="n">variant_id</span>  <span class="n">standard_subset_weighted_pred_prob</span>  <span class="n">actual_label</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">54321</span><span class="p">:</span><span class="n">A</span><span class="p">:</span><span class="n">G</span>                              <span class="mf">0.9234</span>             <span class="mi">1</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">12345</span><span class="p">:</span><span class="n">T</span><span class="p">:</span><span class="n">C</span>                              <span class="mf">0.9102</span>             <span class="mi">1</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">98765</span><span class="p">:</span><span class="n">C</span><span class="p">:</span><span class="n">A</span>                              <span class="mf">0.8956</span>             <span class="mi">1</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">44444</span><span class="p">:</span><span class="n">G</span><span class="p">:</span><span class="n">T</span>                              <span class="mf">0.8723</span>             <span class="mi">0</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">77777</span><span class="p">:</span><span class="n">A</span><span class="p">:</span><span class="n">C</span>                              <span class="mf">0.8612</span>             <span class="mi">1</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">33333</span><span class="p">:</span><span class="n">T</span><span class="p">:</span><span class="n">G</span>                              <span class="mf">0.8501</span>             <span class="mi">1</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">66666</span><span class="p">:</span><span class="n">C</span><span class="p">:</span><span class="n">T</span>                              <span class="mf">0.8398</span>             <span class="mi">1</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">11111</span><span class="p">:</span><span class="n">G</span><span class="p">:</span><span class="n">A</span>                              <span class="mf">0.8267</span>             <span class="mi">0</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">55555</span><span class="p">:</span><span class="n">A</span><span class="p">:</span><span class="n">T</span>                              <span class="mf">0.8145</span>             <span class="mi">1</span>
+   <span class="mi">2</span><span class="p">:</span><span class="mi">99999</span><span class="p">:</span><span class="n">T</span><span class="p">:</span><span class="n">A</span>                              <span class="mf">0.8034</span>             <span class="mi">1</span>
+
+  <span class="n">Exported</span> <span class="n">to</span><span class="p">:</span> <span class="n">high_priority_variants_validation</span><span class="o">.</span><span class="n">tsv</span>
+   <span class="n">Contains</span> <span class="nb">all</span> <span class="mi">12</span> <span class="n">high</span><span class="o">-</span><span class="n">priority</span> <span class="n">variants</span>
+   <span class="n">Ready</span> <span class="k">for</span><span class="p">:</span> <span class="n">CRISPR</span> <span class="n">screens</span><span class="p">,</span> <span class="n">luciferase</span> <span class="n">assays</span><span class="p">,</span> <span class="n">functional</span> <span class="n">validation</span>
+</pre></div>
+</div>
+</section>
+<section id="verify-model-performance">
+<h2>Verify Model Performance<a class="headerlink" href="#verify-model-performance" title="Link to this heading">#</a></h2>
+<p>Review metrics from the held-out test set to understand model reliability.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load and display performance metrics</span>
+<span class="n">SUMMARY_PATH</span> <span class="o">=</span> <span class="s2">&quot;../../data/Mic_mega_eQTL/model_results/summary_dict_catboost_weighted_model_chr_chr2_NPR_10.pkl&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">SUMMARY_PATH</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MODEL PERFORMANCE ON TEST SET&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;CatBoost&#39;</span><span class="p">][</span><span class="s1">&#39;standard_subset_weighted&#39;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average Precision (AP): </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;AP_test&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AUC-ROC:                </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;AUC_test&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Test Set Composition:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Positive labels (functional eQTLs): </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;CatBoost&#39;</span><span class="p">][</span><span class="s1">&#39;test_num_positive_labels&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Negative labels (non-functional):   </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;CatBoost&#39;</span><span class="p">][</span><span class="s1">&#39;test_num_negative_labels&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">pos_rate</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;CatBoost&#39;</span><span class="p">][</span><span class="s1">&#39;test_num_positive_labels&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;CatBoost&#39;</span><span class="p">][</span><span class="s1">&#39;test_num_positive_labels&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;CatBoost&#39;</span><span class="p">][</span><span class="s1">&#39;test_num_negative_labels&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Positive rate:                       </span><span class="si">{</span><span class="n">pos_rate</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> These metrics reflect performance on 761 held-out chromosome 2 variants&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   with stricter selection criteria (PIP &gt;0.9 for positives) than training data.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Example output:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MODEL</span> <span class="n">PERFORMANCE</span> <span class="n">ON</span> <span class="n">TEST</span> <span class="n">SET</span>
+<span class="o">==================================================</span>
+<span class="n">Average</span> <span class="n">Precision</span> <span class="p">(</span><span class="n">AP</span><span class="p">):</span> <span class="mf">0.5050</span>
+<span class="n">AUC</span><span class="o">-</span><span class="n">ROC</span><span class="p">:</span>                <span class="mf">0.8978</span>
+
+<span class="n">Test</span> <span class="n">Set</span> <span class="n">Composition</span><span class="p">:</span>
+  <span class="n">Positive</span> <span class="n">labels</span> <span class="p">(</span><span class="n">functional</span> <span class="n">eQTLs</span><span class="p">):</span> <span class="mi">68</span>
+  <span class="n">Negative</span> <span class="n">labels</span> <span class="p">(</span><span class="n">non</span><span class="o">-</span><span class="n">functional</span><span class="p">):</span>   <span class="mi">693</span>
+  <span class="n">Positive</span> <span class="n">rate</span><span class="p">:</span>                       <span class="mf">8.9</span><span class="o">%</span>
+
+   <span class="n">These</span> <span class="n">metrics</span> <span class="n">reflect</span> <span class="n">performance</span> <span class="n">on</span> <span class="mi">761</span> <span class="n">held</span><span class="o">-</span><span class="n">out</span> <span class="n">chromosome</span> <span class="mi">2</span> <span class="n">variants</span>
+   <span class="k">with</span> <span class="n">stricter</span> <span class="n">selection</span> <span class="n">criteria</span> <span class="p">(</span><span class="n">PIP</span> <span class="o">&gt;</span><span class="mf">0.9</span> <span class="k">for</span> <span class="n">positives</span><span class="p">)</span> <span class="n">than</span> <span class="n">training</span> <span class="n">data</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="application-to-new-variant-lists">
+<h2>Application to New Variant Lists<a class="headerlink" href="#application-to-new-variant-lists" title="Link to this heading">#</a></h2>
+<section id="workflow-for-novel-variants">
+<h3>Workflow for Novel Variants<a class="headerlink" href="#workflow-for-novel-variants" title="Link to this heading">#</a></h3>
+<p>To score additional variants not included in the original training/test sets:</p>
+<p><strong>1. Prepare input file</strong> matching the format above (<code class="docutils literal notranslate"><span class="pre">chr:pos:ref:alt</span></code>)</p>
+<p><strong>2. Update configuration</strong> (<code class="docutils literal notranslate"><span class="pre">data_config.yaml</span></code>):</p>
+<ul class="simple">
+<li><p>Point <code class="docutils literal notranslate"><span class="pre">training_data.base_dir</span></code> to directory containing your variant annotations</p></li>
+<li><p>Ensure gene constraint file (GeneBayes scores) is accessible</p></li>
+<li><p>Verify MAF file matches your chromosome</p></li>
+</ul>
+<p><strong>3. Execute pipeline</strong> (same command, different input data):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>model_training_model5_only.py<span class="w"> </span><span class="o">[</span>cohort<span class="o">]</span><span class="w"> </span><span class="o">[</span>chromosome<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_config<span class="w"> </span>model_config.yaml
+</pre></div>
+</div>
+<p>The pipeline will:</p>
+<ul class="simple">
+<li><p>Generate all 4,839 genomic features for your variants</p></li>
+<li><p>Apply the same preprocessing (subsetting, absolute values, imputation)</p></li>
+<li><p>Use the trained model for inference</p></li>
+<li><p>Output predictions in identical format</p></li>
+</ul>
+<p><strong>4. Analyze results</strong> using the code blocks above</p>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./code/xqtl_modifier_score"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ems_training.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">scEEMS Model Training Tutorial</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-does">What This Does</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-execution-workflow">Pipeline Execution Workflow</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-input-data-preparation">Step 1: Input Data Preparation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-execute-prediction-pipeline">Step 2: Execute Prediction Pipeline</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-output-files-generated">Step 3: Output Files Generated</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#load-and-inspect-results">Load and Inspect Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#statistical-summary-of-predictions">Statistical Summary of Predictions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#variant-prioritization-and-export">Variant Prioritization and Export</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verify-model-performance">Verify Model Performance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#application-to-new-variant-lists">Application to New Variant Lists</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-for-novel-variants">Workflow for Novel Variants</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
