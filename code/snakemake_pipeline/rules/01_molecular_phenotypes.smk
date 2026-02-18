@@ -1,12 +1,12 @@
 # ============================================================
 # Rule Module 01: Molecular Phenotype Quantification
 # ============================================================
-# Covers: FastQC → FastP trimming → STAR alignment →
-#         RNA-SeQC quantification → Multi-sample QC → TMM normalization
+# Covers: FastQC → STAR alignment + RNA-SeQC quantification →
+#         Multi-sample QC → TMM normalization
 #
 # Mirrors: code/commands_generator/bulk_expression_commands.ipynb
 # SoS notebooks called:
-#   - pipeline/RNA_calling.ipynb (fastqc, fastp_trim_adaptor, STAR_align, rnaseqc_call)
+#   - pipeline/RNA_calling.ipynb (fastqc, rnaseqc_call)
 #   - pipeline/bulk_expression_QC.ipynb (qc)
 #   - pipeline/bulk_expression_normalization.ipynb (normalize)
 # ============================================================
@@ -46,10 +46,12 @@ rule fastqc:
         """
 
 # ------------------------------------
-# Step 1.2 — STAR Alignment + RNA-SeQC quantification
+# Step 1.2 — STAR alignment + RNA-SeQC quantification
 # ------------------------------------
-# Runs STAR alignment (with fastp adapter trimming) and RNA-SeQC gene quantification.
-# Produces per-tissue TPM and read count matrices.
+# The rnaseqc_call step handles STAR alignment internally via fastp trimming.
+# It takes --sample-list (FASTQs), --data-dir, --gtf, and --reference-fasta.
+# Note: --STAR-index is NOT a parameter of rnaseqc_call; STAR index path is
+# embedded in the reference_fasta parameter handling within the SoS notebook.
 rule rnaseqc_call:
     """Align RNA-seq reads with STAR and quantify with RNA-SeQC."""
     input:
@@ -68,10 +70,8 @@ rule rnaseqc_call:
         data_dir     = lambda wc: next(
             t["data_dir"] for t in config["themes"] if t["name"] == wc.theme
         ),
-        star_index   = config["reference"]["star_index"],
         gtf          = config["reference"]["gtf_collapsed"],
         fasta        = config["reference"]["fasta"],
-        adapters     = config["reference"]["adapters"],
         outdir       = "{cwd}/{theme}/molecular_phenotypes",
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
@@ -84,22 +84,19 @@ rule rnaseqc_call:
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
-            --STAR-index {params.star_index} \
             --gtf {params.gtf} \
             --reference-fasta {params.fasta} \
-            --fasta-with-adapters-etc {params.adapters} \
             --container {params.container} \
             --numThreads {threads}
         """
 
 # ------------------------------------
-# Step 1.3 — Multi-sample QC: filter low-expression genes and outlier samples
+# Step 1.3 — Multi-sample QC
 # ------------------------------------
+# Filters low-expression genes and removes outlier samples using RLE
+# and D-statistic methods.
 rule bulk_expression_qc:
-    """
-    Filter genes with low expression and remove outlier samples
-    using RLE and D-statistic methods.
-    """
+    """Filter low-expression genes and remove outlier samples."""
     input:
         tpm_gct    = "{cwd}/{theme}/molecular_phenotypes/{theme}.rnaseqc.gene_tpm.gct.gz",
         counts_gct = "{cwd}/{theme}/molecular_phenotypes/{theme}.rnaseqc.gene_reads.gct.gz",
@@ -136,10 +133,10 @@ rule bulk_expression_qc:
 # Step 1.4 — Normalization: TMM-CPM + quantile normalization
 # ------------------------------------
 # Produces the final phenotype BED file consumed by the QTL pipeline.
+# Note: --sample_participant_lookup uses an underscore (not hyphen) — SoS
+# preserves the underscore for this parameter name.
 rule bulk_expression_normalization:
-    """
-    Normalize expression with TMM-CPM-voom and output BED.gz for QTL analysis.
-    """
+    """Normalize expression with TMM-CPM-voom and output BED.gz for QTL analysis."""
     input:
         tpm_filt   = "{cwd}/{theme}/molecular_phenotypes/{theme}.low_expression_filtered.outlier_removed.tpm.gct.gz",
         count_filt = "{cwd}/{theme}/molecular_phenotypes/{theme}.low_expression_filtered.outlier_removed.geneCount.gct.gz",
@@ -151,11 +148,9 @@ rule bulk_expression_normalization:
         outdir                = "{cwd}/{theme}/molecular_phenotypes",
         gtf                   = config["reference"]["gtf_ercc"],
         norm_method           = config["normalization"]["method"],
-        tpm_threshold         = config["normalization"]["tpm_threshold"],
         count_threshold       = config["normalization"]["count_threshold"],
         sample_frac_threshold = config["normalization"]["sample_frac_threshold"],
-        quantile_normalize    = lambda _: "--quantile-normalize" if config["normalization"]["quantile_normalize"] else "",
-        # The sample-participant lookup maps RNA-seq sample IDs to genotype participant IDs
+        # sample_participant_lookup keeps underscores (verified from actual notebook)
         sample_lookup         = lambda wc: next(
             t.get("sample_participant_lookup", "")
             for t in config["themes"] if t["name"] == wc.theme
@@ -173,12 +168,10 @@ rule bulk_expression_normalization:
             --counts-gct {input.count_filt} \
             --tpm-gct {input.tpm_filt} \
             --annotation-gtf {params.gtf} \
-            --sample-participant-lookup {params.sample_lookup} \
-            --tpm-threshold {params.tpm_threshold} \
+            --sample_participant_lookup {params.sample_lookup} \
             --count-threshold {params.count_threshold} \
             --sample-frac-threshold {params.sample_frac_threshold} \
             --normalization-method {params.norm_method} \
-            {params.quantile_normalize} \
             --container {params.container} \
             --numThreads {threads}
         """

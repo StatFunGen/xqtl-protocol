@@ -9,7 +9,7 @@
 #
 # SoS notebooks called:
 #   - pipeline/VCF_QC.ipynb (qc)
-#   - pipeline/genotype_formatting.ipynb (vcf_to_plink, merge_plink, plink_by_chrom)
+#   - pipeline/genotype_formatting.ipynb (vcf_to_plink, merge_plink, genotype_by_chrom)
 #   - pipeline/GWAS_QC.ipynb (qc_no_prune)
 # ============================================================
 
@@ -141,14 +141,16 @@ rule plink_qc:
 # ------------------------------------
 # Step 2.4 — Split plink genotype files by chromosome
 # ------------------------------------
-# Creates one plink set per chromosome and writes a file-list
-# consumed by TensorQTL.
-rule plink_by_chrom:
+# Creates one plink set per chromosome and writes a file-list consumed by
+# TensorQTL and the fine-mapping steps.
+# Actual SoS step name: genotype_by_chrom (not plink_by_chrom).
+# Output list file: {name}.genotype_by_chrom_files.txt (SoS naming convention).
+rule genotype_by_chrom:
     """Split plink genotype into per-chromosome files for parallel QTL analysis."""
     input:
         bed = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.bed",
     output:
-        chrom_list = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.plink_files_list.txt",
+        chrom_list = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.genotype_by_chrom_files.txt",
     params:
         pipeline_dir = config["pipeline_dir"],
         container    = config["containers"]["bioinfo"],
@@ -160,7 +162,7 @@ rule plink_by_chrom:
         walltime = config["resources"]["genotype_qc"]["walltime"],
     shell:
         """
-        sos run {params.pipeline_dir}/genotype_formatting.ipynb plink_by_chrom \
+        sos run {params.pipeline_dir}/genotype_formatting.ipynb genotype_by_chrom \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --name xqtl_protocol_data.plink_qc \
