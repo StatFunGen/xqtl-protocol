@@ -1,0 +1,213 @@
+# ============================================================
+# xQTL Protocol — Snakemake Pipeline
+# ============================================================
+# Full analysis pipeline from molecular phenotype calling to
+# univariate fine-mapping.
+#
+# Mirrors the behavior of:
+#   code/commands_generator/bulk_expression_commands.ipynb
+#   code/commands_generator/eQTL_analysis_commands.ipynb
+#
+# Stages executed (in order):
+#   1. Molecular phenotype quantification (RNA-seq calling, QC, normalization)
+#   2. Genotype preprocessing (VCF QC, plink conversion, GWAS QC, per-chrom split)
+#   3. Per-tissue sample QC, kinship analysis (KING), and PCA
+#   4. Phenotype partitioning and covariate preparation (merge PCs, hidden factors)
+#   5. CIS-QTL association testing (TensorQTL)
+#   6. Univariate fine-mapping (SuSiE / RSS)
+#
+# Usage:
+#   snakemake --configfile config.yaml --cores <N> [--use-singularity]
+#
+# The pipeline can start from raw FASTQ files (start_from: "fastq") or
+# from a pre-computed normalized expression BED file (start_from: "phenotype_bed").
+#
+# All SoS notebooks are called via `sos run pipeline/Notebook.ipynb step_name`.
+# The `pipeline_dir` config key must point to the xqtl-protocol/pipeline/ directory.
+# ============================================================
+
+configfile: "config.yaml"
+
+# ── Validate required configuration keys ────────────────────────────────────
+required_keys = ["cwd", "pipeline_dir", "themes", "genotype", "reference",
+                 "containers", "chromosomes"]
+for k in required_keys:
+    if k not in config:
+        raise ValueError(f"Required config key '{k}' is missing from config.yaml")
+
+# ── Convenience variables ────────────────────────────────────────────────────
+CWD        = config["cwd"]
+PIPELINE   = config["pipeline_dir"]
+THEMES     = [t["name"] for t in config["themes"]]
+CHROMS     = config["chromosomes"]
+NORM_METHOD = config["normalization"]["method"]
+HF_METHOD  = config["hidden_factors"]["method"]
+
+# ── Helper: resolve the normalized phenotype BED for a given theme ───────────
+def get_phenotype_bed(wc):
+    """Return the normalized phenotype BED.gz path for a theme wildcard."""
+    theme_cfg = next(t for t in config["themes"] if t["name"] == wc.theme)
+    if config["start_from"] == "phenotype_bed":
+        # User supplies a pre-computed BED file
+        bed = theme_cfg.get("phenotype_bed", "")
+        if not bed:
+            raise ValueError(
+                f"Theme '{wc.theme}': start_from is 'phenotype_bed' "
+                "but no phenotype_bed path was provided in config."
+            )
+        return bed
+    else:
+        # BED is produced by the normalization step
+        return (
+            f"{CWD}/{wc.theme}/molecular_phenotypes/"
+            f"{wc.theme}.{NORM_METHOD}.expression.bed.gz"
+        )
+
+
+def get_hidden_factors(wc):
+    """Return the hidden factor covariate file path based on the configured method."""
+    if HF_METHOD == "PEER":
+        return (
+            f"{CWD}/data_preprocessing/{wc.theme}/covariates/"
+            f"{wc.theme}.cov_pca.resid.PEER.gz"
+        )
+    return (
+        f"{CWD}/data_preprocessing/{wc.theme}/covariates/"
+        f"{wc.theme}.cov_pca.resid.Marchenko_PC.gz"
+    )
+
+
+def get_input_plink(wc):
+    """
+    Return the plink BED file to be used as input for genome-wide QC.
+    If the user provides a pre-processed plink file in config (genotype.plink_bed),
+    that file is used directly, bypassing VCF QC and conversion.
+    Otherwise, the pipeline starts from VCF and runs VCF QC + plink conversion.
+    """
+    prebuilt = config["genotype"].get("plink_bed", "")
+    if prebuilt:
+        return prebuilt
+    return f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.converted.bed"
+
+
+# ── Include rule modules ─────────────────────────────────────────────────────
+include: "rules/01_molecular_phenotypes.smk"
+include: "rules/02_genotype_preprocessing.smk"
+include: "rules/03_sample_qc_pca.smk"
+include: "rules/04_phenotype_covariate_prep.smk"
+include: "rules/05_association_testing.smk"
+include: "rules/06_univariate_finemapping.smk"
+
+
+# ============================================================
+# rule all — define the full pipeline target outputs
+# ============================================================
+# Collecting all final outputs across all themes triggers the complete
+# dependency chain from raw data to fine-mapping results.
+# ============================================================
+rule all:
+    """Run the complete xQTL pipeline for all configured themes."""
+    input:
+        # ── Molecular phenotype outputs (skipped if start_from: "phenotype_bed") ──
+        expand(
+            "{cwd}/{theme}/molecular_phenotypes/{theme}.{norm_method}.expression.bed.gz",
+            cwd=CWD,
+            theme=THEMES,
+            norm_method=NORM_METHOD,
+        ) if config["start_from"] == "fastq" else [],
+
+        # ── Genotype preprocessing ──────────────────────────────────────────────
+        f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.plink_files_list.txt",
+
+        # ── Per-tissue PCA ───────────────────────────────────────────────────────
+        expand(
+            "{cwd}/data_preprocessing/{theme}/pca/xqtl_protocol_data.plink_qc.{theme}.pca.projected.rds",
+            cwd=CWD,
+            theme=THEMES,
+        ),
+
+        # ── Hidden factor covariates ─────────────────────────────────────────────
+        expand(
+            "{cwd}/data_preprocessing/{theme}/covariates/{theme}.cov_pca.resid.{hf_method}.gz",
+            cwd=CWD,
+            theme=THEMES,
+            hf_method=HF_METHOD,
+        ),
+
+        # ── TensorQTL CIS association results ───────────────────────────────────
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/TensorQTL.cis.regional_significance.tsv.gz",
+            cwd=CWD,
+            theme=THEMES,
+        ),
+
+        # ── Univariate fine-mapping ──────────────────────────────────────────────
+        expand(
+            "{cwd}/finemapping/{theme}/univariate/.done_finemapping",
+            cwd=CWD,
+            theme=THEMES,
+        ),
+
+        # ── TWAS weights ─────────────────────────────────────────────────────────
+        expand(
+            "{cwd}/finemapping/{theme}/univariate_twas/.done_twas",
+            cwd=CWD,
+            theme=THEMES,
+        ),
+
+        # ── Fine-mapping plots ───────────────────────────────────────────────────
+        expand(
+            "{cwd}/finemapping/{theme}/univariate_plots/.done_plots",
+            cwd=CWD,
+            theme=THEMES,
+        ),
+
+
+# ============================================================
+# Convenience target rules for running individual pipeline stages
+# ============================================================
+
+rule phenotype_calling:
+    """Run only the molecular phenotype calling stage (RNA-seq → normalized BED)."""
+    input:
+        expand(
+            "{cwd}/{theme}/molecular_phenotypes/{theme}.{norm_method}.expression.bed.gz",
+            cwd=CWD, theme=THEMES, norm_method=NORM_METHOD,
+        ),
+
+rule genotype_preprocessing:
+    """Run only the genotype preprocessing stage (VCF QC → per-chrom plink)."""
+    input:
+        f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.plink_files_list.txt",
+
+rule sample_qc_pca:
+    """Run only sample QC and PCA for all themes."""
+    input:
+        expand(
+            "{cwd}/data_preprocessing/{theme}/pca/xqtl_protocol_data.plink_qc.{theme}.pca.projected.rds",
+            cwd=CWD, theme=THEMES,
+        ),
+
+rule covariate_prep:
+    """Run only the covariate preparation stage (merge PCs + hidden factors)."""
+    input:
+        expand(
+            "{cwd}/data_preprocessing/{theme}/covariates/{theme}.cov_pca.resid.{hf_method}.gz",
+            cwd=CWD, theme=THEMES, hf_method=HF_METHOD,
+        ),
+
+rule association_testing:
+    """Run only TensorQTL CIS association testing."""
+    input:
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/TensorQTL.cis.regional_significance.tsv.gz",
+            cwd=CWD, theme=THEMES,
+        ),
+
+rule finemapping:
+    """Run only the univariate fine-mapping stage."""
+    input:
+        expand(
+            "{cwd}/finemapping/{theme}/univariate/.done_finemapping",
+            cwd=CWD, theme=THEMES,
+        ),
