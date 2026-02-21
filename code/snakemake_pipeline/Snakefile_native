@@ -1,0 +1,169 @@
+# ============================================================
+# xQTL Protocol — Snakemake Pipeline (Version 2: native scripts)
+# ============================================================
+# This Snakefile uses standalone R/Python/Bash scripts from the
+# renovated_code/ directory as the execution backend. Snakemake
+# manages the full DAG, cluster job submission (via a profile),
+# and resource allocation. Container dispatch is handled inside
+# each script's bash wrapper.
+#
+# Intended usage:
+#   Run Snakemake from an interactive HPC node with a cluster profile.
+#   Each rule submits a job to the HPC scheduler directly.
+#   The compute node runs the renovated_code/ bash wrapper, which
+#   calls singularity exec and then the R/Python script.
+#
+# Usage (SLURM):
+#   snakemake --snakefile Snakefile_native \
+#             --configfile config.yaml \
+#             --profile profiles/slurm \
+#             --cores 100
+#
+# Usage (PBS/Torque):
+#   snakemake --snakefile Snakefile_native \
+#             --configfile config.yaml \
+#             --profile profiles/pbs \
+#             --cores 100
+#
+# Note: `renovated_code_dir` in config.yaml must point to the
+#   renovated_code/ directory (absolute path or relative to cwd).
+# ============================================================
+
+configfile: "config.yaml"
+
+# ── Validate required configuration keys ────────────────────────────────────
+required_keys = ["cwd", "pipeline_dir", "renovated_code_dir", "themes",
+                 "genotype", "reference", "containers", "chromosomes"]
+for k in required_keys:
+    if k not in config:
+        raise ValueError(f"Required config key '{k}' is missing from config.yaml")
+
+# ── Convenience variables ────────────────────────────────────────────────────
+CWD              = config["cwd"]
+PIPELINE         = config["pipeline_dir"]
+RENOVATED        = config["renovated_code_dir"]
+THEMES           = [t["name"] for t in config["themes"]]
+CHROMS           = config["chromosomes"]
+NORM_METHOD      = config["normalization"]["method"]
+HF_METHOD        = config["hidden_factors"]["method"]
+
+# ── Helper functions (identical to Snakefile_sos) ───────────────────────────
+def get_phenotype_bed(wc):
+    """Return the normalized phenotype BED.gz path for a theme wildcard."""
+    theme_cfg = next(t for t in config["themes"] if t["name"] == wc.theme)
+    if config["start_from"] == "phenotype_bed":
+        bed = theme_cfg.get("phenotype_bed", "")
+        if not bed:
+            raise ValueError(
+                f"Theme '{wc.theme}': start_from is 'phenotype_bed' "
+                "but no phenotype_bed path was provided in config."
+            )
+        return bed
+    return (
+        f"{CWD}/{wc.theme}/molecular_phenotypes/"
+        f"{wc.theme}.{NORM_METHOD}.expression.bed.gz"
+    )
+
+
+def get_hidden_factors(wc):
+    """Return the hidden factor covariate file path based on the configured method."""
+    if HF_METHOD == "PEER":
+        return (
+            f"{CWD}/data_preprocessing/{wc.theme}/covariates/"
+            f"{wc.theme}.PEER.gz"
+        )
+    return (
+        f"{CWD}/data_preprocessing/{wc.theme}/covariates/"
+        f"{wc.theme}.Marchenko_PC.gz"
+    )
+
+
+def get_input_plink(wc):
+    """Return the plink BED file used as input for genome-wide QC."""
+    prebuilt = config["genotype"].get("plink_bed", "")
+    if prebuilt:
+        return prebuilt
+    return f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.converted.bed"
+
+
+# ── Include native-script rule modules ──────────────────────────────────────
+include: "rules/native/01_molecular_phenotypes.smk"
+include: "rules/native/02_genotype_preprocessing.smk"
+include: "rules/native/03_sample_qc_pca.smk"
+include: "rules/native/04_phenotype_covariate_prep.smk"
+include: "rules/native/05_association_testing.smk"
+include: "rules/native/06_univariate_finemapping.smk"
+
+
+# ============================================================
+# rule all — full pipeline targets (shared with SoS version)
+# ============================================================
+rule all:
+    """Run the complete xQTL pipeline for all configured themes."""
+    input:
+        expand(
+            "{cwd}/{theme}/molecular_phenotypes/{theme}.{norm_method}.expression.bed.gz",
+            cwd=CWD, theme=THEMES, norm_method=NORM_METHOD,
+        ) if config["start_from"] == "fastq" else [],
+        f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.genotype_by_chrom_files.txt",
+        expand(
+            "{cwd}/data_preprocessing/{theme}/pca/xqtl_protocol_data.plink_qc.{theme}.pca.projected.rds",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/data_preprocessing/{theme}/covariates/{theme}.{hf_method}.gz",
+            cwd=CWD, theme=THEMES, hf_method=HF_METHOD,
+        ),
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas_plots/.done_plots",
+            cwd=CWD, theme=THEMES,
+        ),
+
+
+# ── Convenience stage targets ────────────────────────────────────────────────
+rule phenotype_calling:
+    input:
+        expand(
+            "{cwd}/{theme}/molecular_phenotypes/{theme}.{norm_method}.expression.bed.gz",
+            cwd=CWD, theme=THEMES, norm_method=NORM_METHOD,
+        ),
+
+rule genotype_preprocessing:
+    input:
+        f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.genotype_by_chrom_files.txt",
+
+rule sample_qc_pca:
+    input:
+        expand(
+            "{cwd}/data_preprocessing/{theme}/pca/xqtl_protocol_data.plink_qc.{theme}.pca.projected.rds",
+            cwd=CWD, theme=THEMES,
+        ),
+
+rule covariate_prep:
+    input:
+        expand(
+            "{cwd}/data_preprocessing/{theme}/covariates/{theme}.{hf_method}.gz",
+            cwd=CWD, theme=THEMES, hf_method=HF_METHOD,
+        ),
+
+rule association_testing:
+    input:
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
+            cwd=CWD, theme=THEMES,
+        ),
+
+rule finemapping:
+    input:
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
