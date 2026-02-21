@@ -25,6 +25,7 @@ rule fastqc:
         ),
         outdir    = "{cwd}/{theme}/molecular_phenotypes/fastqc",
         script    = f"{RENOVATED}/molecular_phenotypes/calling/RNA_calling.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
         mem_mb  = config["resources"]["rna_calling"]["mem_mb"],
@@ -32,7 +33,7 @@ rule fastqc:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} fastqc \
+        bash {params.script} fastqc {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
@@ -65,6 +66,7 @@ rule rnaseqc_call:
         fasta  = config["reference"]["fasta"],
         outdir = "{cwd}/{theme}/molecular_phenotypes",
         script = f"{RENOVATED}/molecular_phenotypes/calling/RNA_calling.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
         mem_mb  = config["resources"]["rna_calling"]["mem_mb"],
@@ -72,7 +74,7 @@ rule rnaseqc_call:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} rnaseqc_call \
+        bash {params.script} rnaseqc_call {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
@@ -103,13 +105,14 @@ rule bulk_expression_qc:
         rle_filter_percent   = config["rnaseq_qc"]["rle_filter_percent"],
         ds_filter_percent    = config["rnaseq_qc"]["ds_filter_percent"],
         script               = f"{RENOVATED}/molecular_phenotypes/qc/bulk_expression_QC.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb  = config["resources"]["default"]["mem_mb"],
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
-        bash {params.script} qc \
+        bash {params.script} qc {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --tpm-gct {input.tpm_gct} \
@@ -145,6 +148,7 @@ rule bulk_expression_normalization:
             for t in config["themes"] if t["name"] == wc.theme
         ),
         script = f"{RENOVATED}/molecular_phenotypes/normalization/bulk_expression_normalization.sh",
+        dry_run     = DRY_RUN_NATIVE,
     wildcard_constraints:
         norm_method = "[a-z_]+",
     threads: config["resources"]["rna_calling"]["threads"]
@@ -153,7 +157,7 @@ rule bulk_expression_normalization:
         runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
-        bash {params.script} normalize \
+        bash {params.script} normalize {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --counts-gct {input.count_filt} \

@@ -29,6 +29,7 @@ GTF=""
 REFERENCE_FASTA=""
 NUM_THREADS=20
 PAIRED_END="true"
+DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -40,6 +41,7 @@ while [[ $# -gt 0 ]]; do
         --reference-fasta)  REFERENCE_FASTA="$2";  shift 2 ;;
         --numThreads)       NUM_THREADS="$2";      shift 2 ;;
         --paired-end)       PAIRED_END="$2";       shift 2 ;;
+        --dry-run)          DRY_RUN=true;          shift ;;
         *) echo "WARN: Unknown flag '$1' — ignored" >&2; shift ;;
     esac
 done
@@ -147,6 +149,29 @@ _rnaseqc_call() {
 }
 
 export -f _fastqc _rnaseqc_call
+
+# ── Dry-run: print parameters and exit ───────────────────────────────────────
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[DRY-RUN] $(basename "$0") $STEP" >&2
+    [[ -n "$CONTAINER" ]] && printf '[DRY-RUN] Container: %s\n' "$CONTAINER" >&2
+    echo "[DRY-RUN] Full command (copy-paste to debug):" >&2
+    printf '  bash %s %s --dry-run \\\n' "$(realpath "$0" 2>/dev/null || echo "$0")" "$STEP" >&2
+    [[ -n "$CONTAINER"       ]] && printf '    --container %s \\\n'       "$CONTAINER"       >&2
+    [[ -n "$SAMPLE_LIST"     ]] && printf '    --sample-list %s \\\n'     "$SAMPLE_LIST"     >&2
+    [[ -n "$DATA_DIR"        ]] && printf '    --data-dir %s \\\n'        "$DATA_DIR"        >&2
+    printf '    --cwd %s \\\n' "$CWD" >&2
+    [[ -n "$GTF"             ]] && printf '    --gtf %s \\\n'             "$GTF"             >&2
+    [[ -n "$REFERENCE_FASTA" ]] && printf '    --reference-fasta %s \\\n' "$REFERENCE_FASTA" >&2
+    printf '    --numThreads %s\n' "$NUM_THREADS" >&2
+    echo "[DRY-RUN] Input file check:" >&2
+    for _f in "$SAMPLE_LIST" "$GTF" "$REFERENCE_FASTA"; do
+        [[ -z "$_f" ]] && continue
+        if [[ -e "$_f" ]]; then printf '  ✓ %s\n' "$_f" >&2
+        else               printf '  ✗ NOT FOUND: %s\n' "$_f" >&2; fi
+    done
+    exit 0
+fi
+
 
 _dispatch() {
     case "$STEP" in

@@ -39,6 +39,7 @@ WINDOW=200
 SHIFT=25
 R2=0.1
 NUM_THREADS=8
+DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -58,6 +59,7 @@ while [[ $# -gt 0 ]]; do
         --shift)            SHIFT="$2";           shift 2 ;;
         --r2)               R2="$2";              shift 2 ;;
         --numThreads)       NUM_THREADS="$2";     shift 2 ;;
+        --dry-run)          DRY_RUN=true;          shift ;;
         *) echo "WARN: Unknown flag '$1' — ignored" >&2; shift ;;
     esac
 done
@@ -219,6 +221,32 @@ _king() {
 }
 
 export -f _qc_no_prune _qc _sample_overlap _king
+
+# ── Dry-run: print parameters and exit ───────────────────────────────────────
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[DRY-RUN] $(basename "$0") $STEP" >&2
+    [[ -n "$CONTAINER" ]] && printf '[DRY-RUN] Container: %s\n' "$CONTAINER" >&2
+    echo "[DRY-RUN] Full command (copy-paste to debug):" >&2
+    printf '  bash %s %s --dry-run \\\n' "$(realpath "$0" 2>/dev/null || echo "$0")" "$STEP" >&2
+    [[ -n "$CONTAINER"     ]] && printf '    --container %s \\\n'     "$CONTAINER"    >&2
+    printf '    --genoFile %s \\\n'       "$GENO_FILE"    >&2
+    [[ -n "$PHENO_FILE"    ]] && printf '    --phenoFile %s \\\n'     "$PHENO_FILE"   >&2
+    printf '    --cwd %s \\\n'            "$CWD"          >&2
+    [[ -n "$NAME"          ]] && printf '    --name %s \\\n'          "$NAME"         >&2
+    [[ -n "$KEEP_SAMPLES"  ]] && printf '    --keep-samples %s \\\n'  "$KEEP_SAMPLES" >&2
+    [[ -n "$KEEP_VARIANTS" ]] && printf '    --keep-variants %s \\\n' "$KEEP_VARIANTS" >&2
+    printf '    --mac-filter %s  --maf-filter %s \\\n' "$MAC_FILTER" "$MAF_FILTER" >&2
+    printf '    --geno-filter %s --mind-filter %s --hwe-filter %s \\\n'            "$GENO_FILTER" "$MIND_FILTER" "$HWE_FILTER" >&2
+    printf '    --numThreads %s\n' "$NUM_THREADS" >&2
+    echo "[DRY-RUN] Input file check:" >&2
+    for _f in "$GENO_FILE" "$PHENO_FILE" "$KEEP_SAMPLES" "$KEEP_VARIANTS"; do
+        [[ -z "$_f" ]] && continue
+        if [[ -e "$_f" ]]; then printf '  ✓ %s\n' "$_f" >&2
+        else               printf '  ✗ NOT FOUND: %s\n' "$_f" >&2; fi
+    done
+    exit 0
+fi
+
 
 # ── Dispatch ─────────────────────────────────────────────────────────────────
 _dispatch() {

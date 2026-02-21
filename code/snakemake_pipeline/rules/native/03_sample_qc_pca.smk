@@ -22,6 +22,7 @@ rule sample_match:
         container = config["containers"]["bioinfo"],
         outdir    = "{cwd}/data_preprocessing/{theme}/genotype_data",
         script    = f"{RENOVATED}/data_preprocessing/genotype/GWAS_QC.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb  = config["resources"]["default"]["mem_mb"],
@@ -29,7 +30,7 @@ rule sample_match:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} genotype_phenotype_sample_overlap \
+        bash {params.script} genotype_phenotype_sample_overlap {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
@@ -53,13 +54,14 @@ rule king_kinship:
         container = config["containers"]["bioinfo"],
         outdir    = "{cwd}/data_preprocessing/{theme}/genotype_data",
         script    = f"{RENOVATED}/data_preprocessing/genotype/GWAS_QC.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb  = config["resources"]["high_mem"]["mem_mb"],
         runtime = config["resources"]["high_mem"]["runtime"],
     shell:
         """
-        bash {params.script} king \
+        bash {params.script} king {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
@@ -86,13 +88,14 @@ rule unrelated_qc:
         ld_shift   = config["genotype_qc"]["ld_shift"],
         ld_r2      = config["genotype_qc"]["ld_r2"],
         script     = f"{RENOVATED}/data_preprocessing/genotype/GWAS_QC.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        bash {params.script} qc \
+        bash {params.script} qc {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.unrelated_bed} \
@@ -118,13 +121,14 @@ rule related_qc:
         outdir     = "{cwd}/data_preprocessing/{theme}/genotype_data",
         mac_filter = config["genotype_qc"]["mac_filter"],
         script     = f"{RENOVATED}/data_preprocessing/genotype/GWAS_QC.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        bash {params.script} qc_no_prune \
+        bash {params.script} qc_no_prune {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.related_bed} \
@@ -149,6 +153,7 @@ rule flashpca:
         maha_k    = config["pca"]["maha_k"],
         maha_prob = config["pca"]["maha_prob"],
         script    = f"{RENOVATED}/data_preprocessing/genotype/PCA.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["pca"]["threads"]
     resources:
         mem_mb  = config["resources"]["pca"]["mem_mb"],
@@ -156,7 +161,7 @@ rule flashpca:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} flashpca \
+        bash {params.script} flashpca {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.pruned_bed} \
@@ -182,13 +187,14 @@ rule project_samples:
         maha_k    = config["pca"]["maha_k"],
         maha_prob = config["pca"]["maha_prob"],
         script    = f"{RENOVATED}/data_preprocessing/genotype/PCA.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["pca"]["threads"]
     resources:
         mem_mb  = config["resources"]["pca"]["mem_mb"],
         runtime = config["resources"]["pca"]["runtime"],
     shell:
         """
-        bash {params.script} project_samples \
+        bash {params.script} project_samples {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.related_qc_bed} \

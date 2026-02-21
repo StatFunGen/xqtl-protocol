@@ -25,6 +25,7 @@ rule tensorqtl_cis:
         mac        = config["association"]["mac_threshold"],
         maf        = config["association"]["maf_threshold"],
         script     = f"{RENOVATED}/association_scan/TensorQTL/TensorQTL.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["tensorqtl"]["threads"]
     resources:
         mem_mb  = config["resources"]["tensorqtl"]["mem_mb"],
@@ -32,7 +33,7 @@ rule tensorqtl_cis:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} cis \
+        bash {params.script} cis {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genotype-file {input.geno_list} \

@@ -35,6 +35,7 @@ rule sample_match:
         pipeline_dir = config["pipeline_dir"],
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/{theme}/genotype_data",
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
@@ -42,7 +43,7 @@ rule sample_match:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb genotype_phenotype_sample_overlap {params.dry_run} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --phenoFile {input.phenotype_bed} \
@@ -69,13 +70,14 @@ rule king_kinship:
         pipeline_dir = config["pipeline_dir"],
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/{theme}/genotype_data",
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["high_mem"]["mem_mb"],
         runtime = config["resources"]["high_mem"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb king \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb king {params.dry_run} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --keep-samples {input.sample_genotypes} \
@@ -105,13 +107,14 @@ rule unrelated_qc:
         ld_window    = config["genotype_qc"]["ld_window"],
         ld_shift     = config["genotype_qc"]["ld_shift"],
         ld_r2        = config["genotype_qc"]["ld_r2"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc {params.dry_run} \
             --cwd {params.outdir} \
             --genoFile {input.unrelated_bed} \
             --mac-filter {params.mac_filter} \
@@ -140,13 +143,14 @@ rule related_qc:
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/{theme}/genotype_data",
         mac_filter   = config["genotype_qc"]["mac_filter"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune {params.dry_run} \
             --cwd {params.outdir} \
             --genoFile {input.related_bed} \
             --keep-variants {input.pruned_in} \
@@ -173,6 +177,7 @@ rule flashpca:
         n_pcs        = config["pca"]["n_pcs"],
         maha_k       = config["pca"]["maha_k"],
         maha_prob    = config["pca"]["maha_prob"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["pca"]["threads"]
     resources:
         mem_mb   = config["resources"]["pca"]["mem_mb"],
@@ -180,7 +185,7 @@ rule flashpca:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/PCA.ipynb flashpca \
+        sos run {params.pipeline_dir}/PCA.ipynb flashpca {params.dry_run} \
             --cwd {params.outdir} \
             --genoFile {input.pruned_bed} \
             --k {params.n_pcs} \
@@ -210,13 +215,14 @@ rule project_samples:
         outdir       = "{cwd}/data_preprocessing/{theme}/pca",
         maha_k       = config["pca"]["maha_k"],
         maha_prob    = config["pca"]["maha_prob"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["pca"]["threads"]
     resources:
         mem_mb   = config["resources"]["pca"]["mem_mb"],
         runtime = config["resources"]["pca"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/PCA.ipynb project_samples \
+        sos run {params.pipeline_dir}/PCA.ipynb project_samples {params.dry_run} \
             --cwd {params.outdir} \
             --genoFile {input.related_qc_bed} \
             --pca-model {input.pca_rds} \

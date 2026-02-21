@@ -28,7 +28,9 @@ opt_list <- list(
               help = "Collinearity tolerance: max fraction of missing covariates per sample"),
   make_option("--mean-impute",  action = "store_true", default = FALSE,
               help = "Mean-impute missing covariate values"),
-  make_option("--numThreads",   type = "integer",   default = 1)
+  make_option("--numThreads",   type = "integer",   default = 1),
+  make_option("--dry-run",      action = "store_true", default = FALSE,
+              help = "Print full command + validate inputs; do not run.")
 )
 
 opt <- parse_args(OptionParser(option_list = opt_list))
@@ -40,6 +42,26 @@ dir.create(opt$cwd, showWarnings = FALSE, recursive = TRUE)
 
 # ── Step: merge_genotype_pc ──────────────────────────────────────────────────
 merge_genotype_pc <- function(opt) {
+  # ── Dry-run: print full command and validate inputs ──────────────────────
+  if (isTRUE(opt$`dry-run`)) {
+    script_path <- tryCatch(normalizePath(sys.frame(0)$filename), error = function(e) "covariate_formatting.R")
+    cat("[DRY-RUN] covariate_formatting.R merge_genotype_pc — would execute:\n")
+    cat(sprintf("  Rscript %s \\\n",              script_path))
+    cat(sprintf("    --step %s \\\n",              opt$step))
+    cat(sprintf("    --pcaFile %s \\\n",           opt$pcaFile))
+    cat(sprintf("    --covFile %s \\\n",           opt$covFile))
+    cat(sprintf("    --k %d \\\n",                 opt$k))
+    cat(sprintf("    --tol-cov %.2f \\\n",         opt$`tol-cov`))
+    cat(sprintf("    --cwd %s\n",                    opt$cwd))
+    cat("\n[DRY-RUN] Input file check:\n")
+    for (f in c(opt$pcaFile, opt$covFile)) {
+      if (is.null(f) || is.na(f)) next
+      status <- if (file.exists(f)) "\u2713" else "\u2717 NOT FOUND"
+      cat(sprintf("  %s  %s\n", status, f))
+    }
+    quit(status = 0)
+  }
+
   cat("=== merge_genotype_pc ===\n")
 
   # Load PCA output

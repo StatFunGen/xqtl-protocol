@@ -22,6 +22,7 @@ rule vcf_qc:
         fasta     = config["reference"]["fasta"],
         dbsnp     = config["reference"]["dbsnp"],
         script    = f"{RENOVATED}/data_preprocessing/genotype/VCF_QC.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
@@ -29,7 +30,7 @@ rule vcf_qc:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} qc \
+        bash {params.script} qc {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.vcf} \
@@ -58,6 +59,7 @@ rule vcf_to_plink:
         outdir    = "{cwd}/data_preprocessing/genotype",
         vcf_list  = "{cwd}/data_preprocessing/genotype/vcf_qc_files.list",
         script    = f"{RENOVATED}/data_preprocessing/genotype/genotype_formatting.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
@@ -67,14 +69,14 @@ rule vcf_to_plink:
         mkdir -p {params.outdir}
         printf '%s\n' {input.vcf_qc} > {params.vcf_list}
         if [ $(wc -l < {params.vcf_list}) -gt 1 ]; then
-            bash {params.script} merge_plink \
+            bash {params.script} merge_plink {params.dry_run} \
                 --container {params.container} \
                 --cwd {params.outdir} \
                 --genoFile {params.vcf_list} \
                 --name xqtl_protocol_data.converted \
                 --numThreads {threads}
         else
-            bash {params.script} vcf_to_plink \
+            bash {params.script} vcf_to_plink {params.dry_run} \
                 --container {params.container} \
                 --cwd {params.outdir} \
                 --genoFile $(cat {params.vcf_list}) \
@@ -103,13 +105,14 @@ rule plink_qc:
         mind_filter = config["genotype_qc"]["mind_filter"],
         hwe_filter  = config["genotype_qc"]["hwe_filter"],
         script      = f"{RENOVATED}/data_preprocessing/genotype/GWAS_QC.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        bash {params.script} qc_no_prune \
+        bash {params.script} qc_no_prune {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
@@ -136,13 +139,14 @@ rule genotype_by_chrom:
         outdir    = "{cwd}/data_preprocessing/genotype",
         chroms    = " ".join(config["chromosomes"]),
         script    = f"{RENOVATED}/data_preprocessing/genotype/genotype_formatting.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        bash {params.script} genotype_by_chrom \
+        bash {params.script} genotype_by_chrom {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \

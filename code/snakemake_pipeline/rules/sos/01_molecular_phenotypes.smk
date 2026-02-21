@@ -29,6 +29,7 @@ rule fastqc:
             t["data_dir"] for t in config["themes"] if t["name"] == wc.theme
         ),
         outdir       = "{cwd}/{theme}/molecular_phenotypes/fastqc",
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
         mem_mb   = config["resources"]["rna_calling"]["mem_mb"],
@@ -36,7 +37,7 @@ rule fastqc:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/RNA_calling.ipynb fastqc \
+        sos run {params.pipeline_dir}/RNA_calling.ipynb fastqc {params.dry_run} \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
@@ -73,6 +74,7 @@ rule rnaseqc_call:
         gtf          = config["reference"]["gtf_collapsed"],
         fasta        = config["reference"]["fasta"],
         outdir       = "{cwd}/{theme}/molecular_phenotypes",
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
         mem_mb   = config["resources"]["rna_calling"]["mem_mb"],
@@ -80,7 +82,7 @@ rule rnaseqc_call:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/RNA_calling.ipynb rnaseqc_call \
+        sos run {params.pipeline_dir}/RNA_calling.ipynb rnaseqc_call {params.dry_run} \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
@@ -111,13 +113,14 @@ rule bulk_expression_qc:
         low_expr_tpm_percent = config["rnaseq_qc"]["low_expr_tpm_percent"],
         rle_filter_percent   = config["rnaseq_qc"]["rle_filter_percent"],
         ds_filter_percent    = config["rnaseq_qc"]["ds_filter_percent"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/bulk_expression_QC.ipynb qc \
+        sos run {params.pipeline_dir}/bulk_expression_QC.ipynb qc {params.dry_run} \
             --cwd {params.outdir} \
             --tpm-gct {input.tpm_gct} \
             --counts-gct {input.counts_gct} \
@@ -155,6 +158,7 @@ rule bulk_expression_normalization:
             t.get("sample_participant_lookup", "")
             for t in config["themes"] if t["name"] == wc.theme
         ),
+        dry_run     = DRY_RUN_SOS,
     wildcard_constraints:
         norm_method = "[a-z_]+",
     threads: config["resources"]["rna_calling"]["threads"]
@@ -163,7 +167,7 @@ rule bulk_expression_normalization:
         runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize \
+        sos run {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize {params.dry_run} \
             --cwd {params.outdir} \
             --counts-gct {input.count_filt} \
             --tpm-gct {input.tpm_filt} \

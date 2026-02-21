@@ -26,6 +26,7 @@ rule merge_pca_covariate:
         tol_cov     = config["covariate"]["tol_cov"],
         mean_impute = lambda _: "--mean-impute" if config["covariate"]["mean_impute"] else "",
         script      = f"{RENOVATED}/data_preprocessing/covariate/covariate_formatting.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb  = config["resources"]["default"]["mem_mb"],
@@ -33,7 +34,7 @@ rule merge_pca_covariate:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} merge_genotype_pc \
+        bash {params.script} merge_genotype_pc {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --pcaFile {input.projected_rds} \
@@ -58,6 +59,7 @@ rule phenotype_by_chrom:
         outdir    = "{cwd}/data_preprocessing/{theme}/phenotype_data",
         chroms    = " ".join(config["chromosomes"]),
         script    = f"{RENOVATED}/data_preprocessing/phenotype/phenotype_formatting.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb  = config["resources"]["default"]["mem_mb"],
@@ -65,7 +67,7 @@ rule phenotype_by_chrom:
     shell:
         """
         mkdir -p {params.outdir}
-        bash {params.script} phenotype_by_chrom \
+        bash {params.script} phenotype_by_chrom {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
@@ -90,13 +92,14 @@ rule marchenko_pc:
         n_factors        = config["hidden_factors"]["n_factors"],
         mean_impute_flag = lambda _: "--mean-impute-missing" if config["covariate"]["mean_impute"] else "",
         script           = f"{RENOVATED}/data_preprocessing/covariate/covariate_hidden_factor.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
         mem_mb  = config["resources"]["hidden_factors"]["mem_mb"],
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        bash {params.script} Marchenko_PC \
+        bash {params.script} Marchenko_PC {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
@@ -123,13 +126,14 @@ rule peer_factors:
         iterations       = config["hidden_factors"]["peer_iterations"],
         convergence_mode = config["hidden_factors"]["peer_convergence"],
         script           = f"{RENOVATED}/data_preprocessing/covariate/covariate_hidden_factor.sh",
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
         mem_mb  = config["resources"]["hidden_factors"]["mem_mb"],
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        bash {params.script} PEER \
+        bash {params.script} PEER {params.dry_run} \
             --container {params.container} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \

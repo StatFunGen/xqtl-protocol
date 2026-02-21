@@ -13,6 +13,7 @@
 #
 # The first positional argument is the step name.
 # --container PATH  Run inside singularity exec PATH (optional).
+# --dry-run         Print the full command that would run; do not execute.
 # All other flags are forwarded to the underlying R/Python script.
 #
 # Interface is kept identical to:
@@ -25,12 +26,15 @@ shift
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONTAINER=""
+DRY_RUN=false
 PASS_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --container)
             CONTAINER="$2"; shift 2 ;;
+        --dry-run)
+            DRY_RUN=true; shift ;;
         *)
             PASS_ARGS+=("$1"); shift ;;
     esac
@@ -39,6 +43,22 @@ done
 _run() {
     local lang="$1"; shift
     local script="$1"; shift
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "[DRY-RUN] $(basename "$0") $STEP" >&2
+        [[ -n "$CONTAINER" ]] && printf '[DRY-RUN] Container: %s\n' "$CONTAINER" >&2
+        echo "[DRY-RUN] Full command (copy-paste to debug):" >&2
+        if [[ -n "$CONTAINER" ]]; then
+            printf '  singularity exec %s \\\n' "$CONTAINER" >&2
+            printf '    %s %s \\\n' "$lang" "$script" >&2
+            printf '    %s \\\n' "${PASS_ARGS[@]}" >&2
+            echo "    --dry-run" >&2
+        else
+            printf '  %s %s \\\n' "$lang" "$script" >&2
+            printf '    %s \\\n' "${PASS_ARGS[@]}" >&2
+            echo "  --dry-run" >&2
+        fi
+        return 0
+    fi
     if [[ -n "$CONTAINER" ]]; then
         singularity exec "$CONTAINER" "$lang" "$script" "${PASS_ARGS[@]}"
     else

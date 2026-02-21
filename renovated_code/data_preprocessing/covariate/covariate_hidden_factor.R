@@ -37,7 +37,9 @@ opt_list <- list(
   make_option("--iteration",             type = "integer",   default = 1000),
   make_option("--convergence-mode",      type = "character", default = "fast",
               help = "PEER convergence mode: fast, medium, slow"),
-  make_option("--numThreads",            type = "integer",   default = 8)
+  make_option("--numThreads",            type = "integer",   default = 8),
+  make_option("--dry-run",               action = "store_true", default = FALSE,
+              help = "Print full command + validate inputs; do not run.")
 )
 
 opt <- parse_args(OptionParser(option_list = opt_list))
@@ -100,6 +102,25 @@ compute_residuals <- function(opt) {
 
 # ── Step: Marchenko_PC ────────────────────────────────────────────────────────
 run_marchenko <- function(opt) {
+  # ── Dry-run ─────────────────────────────────────────────────────────────────
+  if (isTRUE(opt$`dry-run`)) {
+    script_path <- tryCatch(normalizePath(sys.frame(0)$filename), error = function(e) "covariate_hidden_factor.R")
+    cat("[DRY-RUN] covariate_hidden_factor.R Marchenko_PC — would execute:\n")
+    cat(sprintf("  Rscript %s \\\n",    script_path))
+    cat(sprintf("    --step Marchenko_PC \\\n"))
+    cat(sprintf("    --phenoFile %s \\\n", opt$phenoFile))
+    cat(sprintf("    --covFile %s \\\n",   opt$covFile))
+    cat(sprintf("    --N %d \\\n",         opt$N))
+    cat(sprintf("    --cwd %s\n",            opt$cwd))
+    cat("\n[DRY-RUN] Input file check:\n")
+    for (f in c(opt$phenoFile, opt$covFile)) {
+      if (is.null(f) || is.na(f)) next
+      status <- if (file.exists(f)) "\u2713" else "\u2717 NOT FOUND"
+      cat(sprintf("  %s  %s\n", status, f))
+    }
+    quit(status = 0)
+  }
+
   res <- compute_residuals(opt)
   cat("=== Sub-step 2: Marchenko-Pastur PCA ===\n")
 
@@ -143,6 +164,27 @@ run_marchenko <- function(opt) {
 
 # ── Step: PEER ────────────────────────────────────────────────────────────────
 run_peer <- function(opt) {
+  # ── Dry-run ─────────────────────────────────────────────────────────────────
+  if (isTRUE(opt$`dry-run`)) {
+    script_path <- tryCatch(normalizePath(sys.frame(0)$filename), error = function(e) "covariate_hidden_factor.R")
+    cat("[DRY-RUN] covariate_hidden_factor.R PEER — would execute:\n")
+    cat(sprintf("  Rscript %s \\\n",    script_path))
+    cat(sprintf("    --step PEER \\\n"))
+    cat(sprintf("    --phenoFile %s \\\n",  opt$phenoFile))
+    cat(sprintf("    --covFile %s \\\n",    opt$covFile))
+    cat(sprintf("    --N %d \\\n",          opt$N))
+    cat(sprintf("    --iteration %d \\\n",  opt$iteration))
+    cat(sprintf("    --convergence-mode %s \\\n", opt$`convergence-mode`))
+    cat(sprintf("    --cwd %s\n",             opt$cwd))
+    cat("\n[DRY-RUN] Input file check:\n")
+    for (f in c(opt$phenoFile, opt$covFile)) {
+      if (is.null(f) || is.na(f)) next
+      status <- if (file.exists(f)) "\u2713" else "\u2717 NOT FOUND"
+      cat(sprintf("  %s  %s\n", status, f))
+    }
+    quit(status = 0)
+  }
+
   res <- compute_residuals(opt)
   cat("=== Sub-step 2: PEER factor analysis ===\n")
 

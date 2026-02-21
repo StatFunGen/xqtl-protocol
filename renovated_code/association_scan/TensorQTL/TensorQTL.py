@@ -77,6 +77,38 @@ def run_cis(args) -> None:
 
     os.makedirs(args.cwd, exist_ok=True)
 
+    if args.dry_run:
+        import sys as _sys
+        print("[DRY-RUN] TensorQTL.py cis — would execute:")
+        print(f"  python {os.path.abspath(__file__)} \\")
+        print(f"    --step cis \\")
+        print(f"    --genotype-file {args.genotype_file} \\")
+        print(f"    --phenotype-file {args.phenotype_file} \\")
+        print(f"    --covariate-file {args.covariate_file} \\")
+        print(f"    --cwd {args.cwd} \\")
+        print(f"    --window {args.window} --MAC {args.MAC} --maf-threshold {args.maf_threshold} \\")
+        print(f"    --numThreads {args.numThreads}")
+        print("\n[DRY-RUN] Input file check:")
+        for _label, _path in [
+            ("genotype manifest", args.genotype_file),
+            ("phenotype manifest", args.phenotype_file),
+            ("covariate file",    args.covariate_file),
+        ]:
+            _ok = "\u2713" if os.path.isfile(_path) else "\u2717 NOT FOUND"
+            print(f"  {_ok}  {_label}: {_path}")
+            if os.path.isfile(_path):
+                try:
+                    files = read_file_list(_path)
+                    print(f"      ({len(files)} entries)")
+                    for _i, _f in enumerate(files[:3]):
+                        _fok = "\u2713" if os.path.isfile(_f) else "\u2717"
+                        print(f"      {_fok} {_f}")
+                    if len(files) > 3:
+                        print(f"      ... and {len(files)-3} more")
+                except Exception:
+                    pass
+        return
+
     geno_list  = read_file_list(args.genotype_file)
     pheno_list = read_file_list(args.phenotype_file)
 
@@ -189,6 +221,19 @@ def run_trans(args) -> None:
         sys.exit("ERROR: tensorqtl package not installed.")
 
     os.makedirs(args.cwd, exist_ok=True)
+
+    if args.dry_run:
+        print("[DRY-RUN] TensorQTL.py trans — would execute:")
+        print(f"  python {os.path.abspath(__file__)} \\")
+        print(f"    --step trans \\")
+        print(f"    --genotype-file {args.genotype_file} \\")
+        print(f"    --phenotype-file {args.phenotype_file} \\")
+        print(f"    --covariate-file {args.covariate_file} \\")
+        print(f"    --cwd {args.cwd} \\")
+        print(f"    --MAC {args.MAC} --maf-threshold {args.maf_threshold} \\")
+        print(f"    --numThreads {args.numThreads}")
+        return
+
     geno_list     = read_file_list(args.genotype_file)
     pheno_list    = read_file_list(args.phenotype_file)
     covariates_df = load_covariates(args.covariate_file)
@@ -242,6 +287,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--maf-threshold", type=float, default=0.0, metavar="F",
                    help="Minimum MAF filter (0 = no filter)")
     p.add_argument("--numThreads", type=int, default=8)
+    p.add_argument("--dry-run", action="store_true", default=False,
+                   help="Print the full command and validate inputs; do not run TensorQTL.")
     return p
 
 

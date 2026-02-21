@@ -33,6 +33,7 @@ rule susie_twas:
         max_L        = config["finemapping"]["max_L"],
         pip_cutoff   = config["finemapping"]["pip_cutoff"],
         min_twas_maf = config["finemapping"]["maf"],
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["finemapping"]["threads"]
     resources:
         mem_mb  = config["resources"]["finemapping"]["mem_mb"],
@@ -71,6 +72,7 @@ rule finemapping_plots:
         finemapping_dir = "{cwd}/finemapping/{theme}/susie_twas",
         outdir          = "{cwd}/finemapping/{theme}/susie_twas_plots",
         pip_cutoff      = config["finemapping"]["pip_cutoff"],
+        dry_run     = DRY_RUN_NATIVE,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb  = config["resources"]["default"]["mem_mb"],

@@ -52,6 +52,7 @@ rule susie_twas:
         maf           = config["finemapping"]["maf"],
         # min_twas_maf uses underscore (SoS preserves it for this parameter)
         min_twas_maf  = config["finemapping"]["maf"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["finemapping"]["threads"]
     resources:
         mem_mb   = config["resources"]["finemapping"]["mem_mb"],
@@ -59,7 +60,7 @@ rule susie_twas:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/mnm_regression.ipynb susie_twas \
+        sos run {params.pipeline_dir}/mnm_regression.ipynb susie_twas {params.dry_run} \
             --cwd {params.outdir} \
             --genoFile {input.geno_list} \
             --phenoFile {input.pheno_list} \
@@ -91,6 +92,7 @@ rule finemapping_plots:
         finemapping_dir = "{cwd}/finemapping/{theme}/susie_twas",
         outdir          = "{cwd}/finemapping/{theme}/susie_twas_plots",
         pip_cutoff      = config["finemapping"]["pip_cutoff"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
@@ -98,7 +100,7 @@ rule finemapping_plots:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/rss_analysis.ipynb univariate_plot \
+        sos run {params.pipeline_dir}/rss_analysis.ipynb univariate_plot {params.dry_run} \
             --cwd {params.outdir} \
             --finemapping-dir {params.finemapping_dir} \
             --pip-cutoff {params.pip_cutoff} \

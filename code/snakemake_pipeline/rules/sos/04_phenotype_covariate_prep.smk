@@ -44,6 +44,7 @@ rule merge_pca_covariate:
         n_pcs        = config["covariate"]["n_pcs"],
         tol_cov      = config["covariate"]["tol_cov"],
         mean_impute  = lambda _: "--mean-impute" if config["covariate"]["mean_impute"] else "",
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
@@ -51,7 +52,7 @@ rule merge_pca_covariate:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/covariate_formatting.ipynb merge_genotype_pc \
+        sos run {params.pipeline_dir}/covariate_formatting.ipynb merge_genotype_pc {params.dry_run} \
             --cwd {params.outdir} \
             --pcaFile {input.projected_rds} \
             --covFile {input.covariate_file} \
@@ -80,6 +81,7 @@ rule phenotype_by_chrom:
         container    = config["containers"]["rnaquant"],
         outdir       = "{cwd}/data_preprocessing/{theme}/phenotype_data",
         chroms       = " ".join(config["chromosomes"]),
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
@@ -87,7 +89,7 @@ rule phenotype_by_chrom:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/phenotype_formatting.ipynb phenotype_by_chrom \
+        sos run {params.pipeline_dir}/phenotype_formatting.ipynb phenotype_by_chrom {params.dry_run} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --name {wildcards.theme} \
@@ -119,13 +121,14 @@ rule marchenko_pc:
         outdir            = "{cwd}/data_preprocessing/{theme}/covariates",
         n_factors         = config["hidden_factors"]["n_factors"],
         mean_impute_flag  = lambda _: "--mean-impute-missing" if config["covariate"]["mean_impute"] else "",
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
         mem_mb   = config["resources"]["hidden_factors"]["mem_mb"],
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb Marchenko_PC \
+        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb Marchenko_PC {params.dry_run} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \
@@ -157,13 +160,14 @@ rule peer_factors:
         n_factors        = config["hidden_factors"]["n_factors"],
         iterations       = config["hidden_factors"]["peer_iterations"],
         convergence_mode = config["hidden_factors"]["peer_convergence"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
         mem_mb   = config["resources"]["hidden_factors"]["mem_mb"],
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb PEER \
+        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb PEER {params.dry_run} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \

@@ -43,6 +43,7 @@ rule tensorqtl_cis:
         cis_window   = config["association"]["cis_window"],
         mac          = config["association"]["mac_threshold"],
         maf          = config["association"]["maf_threshold"],
+        dry_run     = DRY_RUN_SOS,
     threads: config["resources"]["tensorqtl"]["threads"]
     resources:
         mem_mb   = config["resources"]["tensorqtl"]["mem_mb"],
@@ -50,7 +51,7 @@ rule tensorqtl_cis:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/TensorQTL.ipynb cis \
+        sos run {params.pipeline_dir}/TensorQTL.ipynb cis {params.dry_run} \
             --cwd {params.outdir} \
             --genotype-file {input.geno_list} \
             --phenotype-file {input.pheno_list} \

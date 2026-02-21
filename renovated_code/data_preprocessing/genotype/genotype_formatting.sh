@@ -28,6 +28,7 @@ CWD="output"
 NAME=""
 CHROM=()
 NUM_THREADS=8
+DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -41,6 +42,7 @@ while [[ $# -gt 0 ]]; do
                 CHROM+=("$1"); shift
             done ;;
         --numThreads)   NUM_THREADS="$2";  shift 2 ;;
+        --dry-run)      DRY_RUN=true;      shift ;;
         *) echo "WARN: Unknown flag '$1' — ignored" >&2; shift ;;
     esac
 done
@@ -153,6 +155,25 @@ _genotype_by_chrom() {
 }
 
 export -f _vcf_to_plink _merge_plink _genotype_by_chrom
+
+# ── Dry-run: print parameters and exit ───────────────────────────────────────
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[DRY-RUN] $(basename "$0") $STEP" >&2
+    [[ -n "$CONTAINER" ]] && printf '[DRY-RUN] Container: %s\n' "$CONTAINER" >&2
+    echo "[DRY-RUN] Full command (copy-paste to debug):" >&2
+    printf '  bash %s %s --dry-run \\\n' "$(realpath "$0" 2>/dev/null || echo "$0")" "$STEP" >&2
+    [[ -n "$CONTAINER" ]] && printf '    --container %s \\\n' "$CONTAINER" >&2
+    printf '    --genoFile %s \\\n'   "$GENO_FILE"  >&2
+    printf '    --cwd %s \\\n'        "$CWD"         >&2
+    [[ -n "$NAME" ]] && printf '    --name %s \\\n' "$NAME" >&2
+    [[ ${#CHROM[@]} -gt 0 ]] && printf '    --chrom %s \\\n' "${CHROM[*]}" >&2
+    printf '    --numThreads %s\n'     "$NUM_THREADS" >&2
+    echo "[DRY-RUN] Input file check:" >&2
+    if [[ -e "$GENO_FILE" ]]; then printf '  ✓ %s\n' "$GENO_FILE" >&2
+    else                            printf '  ✗ NOT FOUND: %s\n' "$GENO_FILE" >&2; fi
+    exit 0
+fi
+
 
 # ── Dispatch ─────────────────────────────────────────────────────────────────
 _dispatch() {
