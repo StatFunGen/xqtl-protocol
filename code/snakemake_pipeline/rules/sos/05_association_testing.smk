@@ -51,7 +51,7 @@ rule tensorqtl_cis:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/TensorQTL.ipynb cis {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/TensorQTL.ipynb cis \
             --cwd {params.outdir} \
             --genotype-file {input.geno_list} \
             --phenotype-file {input.pheno_list} \

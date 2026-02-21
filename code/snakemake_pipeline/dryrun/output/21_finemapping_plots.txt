@@ -1,0 +1,18 @@
+=== Checking rss_analysis.ipynb univariate_plot (non-_input params) ===
+INFO: Checking [32munivariate_plot[0m: 
+[91mERROR[0m: [91munivariate_plot (id=5587b8de8dcf9f4b) returns an error.[0m
+[91mERROR[0m: [91m[univariate_plot]: [0]: 
+---------------------------------------------------------------------------
+RuntimeError                              Traceback (most recent call last)
+script_7225817280061879139 in <module>
+----> R(fr"""res = readRDS({_input:r})
+      png({_output[0]:r}, width = 14, height=6, unit='in', res=300)
+      par(mfrow=c(1,2))
+      susieR::susie_plot(res, y= "PIP", pos=list(attr='pos',start=res$pos[1],end=res$pos[length(res$pos)]), add_legend=T, xlab="position")
+
+RuntimeError: Failed to locate interpreter Rscript[0m
+
+=== Snakemake shell block (for reference) ===
+find {finemapping_dir} -name '*.rds' | sort | while IFS= read -r rds; do
+    sos run [-n] rss_analysis.ipynb univariate_plot "$rds" --cwd {outdir} ...
+done

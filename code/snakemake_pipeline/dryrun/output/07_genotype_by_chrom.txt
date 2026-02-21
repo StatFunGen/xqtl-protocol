@@ -1,0 +1,108 @@
+INFO: Checking [32mgenotype_by_chrom_1[0m: 
+HINT: /bin/bash SCRIPT
+echo "input /tmp/xqtl_test/xqtl.plink_qc"
+plink2 \
+    --bfile /tmp/xqtl_test/xqtl.plink_qc \
+    --make-bed \
+    --out /tmp/xqtl_test/output/xqtl.plink_qc.chr1 \
+    --chr chr1 \
+    --threads 4 \
+    --memory 14400.0 \
+    --allow-no-sex
+
+
+
+
+
+
+INFO: [32mgenotype_by_chrom_1[0m (index=0) is [32mcompleted[0m.
+HINT: /bin/bash SCRIPT
+echo "input /tmp/xqtl_test/xqtl.plink_qc"
+plink2 \
+    --bfile /tmp/xqtl_test/xqtl.plink_qc \
+    --make-bed \
+    --out /tmp/xqtl_test/output/xqtl.plink_qc.chr2 \
+    --chr chr2 \
+    --threads 4 \
+    --memory 14400.0 \
+    --allow-no-sex
+
+
+
+
+
+
+INFO: [32mgenotype_by_chrom_1[0m (index=1) is [32mcompleted[0m.
+HINT: /bin/bash SCRIPT
+echo "input /tmp/xqtl_test/xqtl.plink_qc"
+plink2 \
+    --bfile /tmp/xqtl_test/xqtl.plink_qc \
+    --make-bed \
+    --out /tmp/xqtl_test/output/xqtl.plink_qc.chr22 \
+    --chr chr22 \
+    --threads 4 \
+    --memory 14400.0 \
+    --allow-no-sex
+
+
+
+
+
+
+INFO: [32mgenotype_by_chrom_1[0m (index=2) is [32mcompleted[0m.
+INFO: [32mgenotype_by_chrom_1[0m output:   [32m/tmp/xqtl_test/output/xqtl.plink_qc.chr1.bed /tmp/xqtl_test/output/xqtl.plink_qc.chr2.bed... (3 items in 3 groups)[0m
+INFO: Checking [32mgenotype_by_chrom_2[0m: 
+INFO: [32mgenotype_by_chrom_2[0m is [32mcompleted[0m (pending nested workflow).
+INFO: Checking [32mwrite_data_list[0m: 
+HINT: python SCRIPT
+import pandas as pd
+import os, sys
+
+# Extracting the id list outside for better readability
+n = len("bed".split("."))+1
+id_list = [x.split(".")[-n] for x in ['/tmp/xqtl_test/output/xqtl.plink_qc.chr1.bed','/tmp/xqtl_test/output/xqtl.plink_qc.chr2.bed','/tmp/xqtl_test/output/xqtl.plink_qc.chr22.bed']]
+files = ['/tmp/xqtl_test/output/xqtl.plink_qc.chr1.bed','/tmp/xqtl_test/output/xqtl.plink_qc.chr2.bed','/tmp/xqtl_test/output/xqtl.plink_qc.chr22.bed']
+
+# check if some files are empty remove them from the id_list
+non_empty_files = []
+non_empty_ids = []
+
+for file, id in zip(files, id_list):
+    try:
+        # Check if file is empty
+        if os.path.getsize(file) > 0:
+            non_empty_files.append(file)
+            non_empty_ids.append(id)
+        else:
+            print(f"Empty file found: {file}", file=sys.stderr)
+    except OSError as e:
+        print(f"Error accessing file {file}: {e}", file=sys.stderr)
+
+if not non_empty_files:
+    raise ValueError("No non-empty files found. Exiting.")
+
+data_tempt = pd.DataFrame({
+    "#id": non_empty_ids,
+    "#path": non_empty_files
+})
+
+data_tempt.to_csv("/tmp/xqtl_test/output/xqtl.plink_qc.genotype_by_chrom_files.txt", index=False, sep="\t")
+
+
+
+HINT: /bin/bash SCRIPT
+i="/tmp/xqtl_test/output/xqtl.plink_qc.genotype_by_chrom_files.txt"
+output_size=$(ls -lh $i | cut -f 5 -d ' ')
+output_rows=$(cat $i | wc -l | cut -f 1 -d ' ')
+output_column=$(cat $i | head -1 | wc -w)
+output_preview=$(cat $i | grep -v "##" | head | cut -f 1,2,3,4,5,6)
+
+printf "output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_preview:\n%s\n" \
+    "$i" "$output_size" "$output_rows" "$output_column" "$output_preview"
+
+
+
+INFO: [32mwrite_data_list[0m is [32mcompleted[0m.
+INFO: [32mwrite_data_list[0m output:   [32m/tmp/xqtl_test/output/xqtl.plink_qc.genotype_by_chrom_files.txt[0m
+INFO: [32mgenotype_by_chrom_2[0m output:   [32m/tmp/xqtl_test/output/xqtl.plink_qc.genotype_by_chrom_files.txt[0m
+INFO: Workflow genotype_by_chrom (ID=wac6f6ab3561dadce) is tested successfully with 3 completed steps and 5 completed substeps.

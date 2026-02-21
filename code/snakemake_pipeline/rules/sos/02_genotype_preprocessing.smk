@@ -38,7 +38,7 @@ rule vcf_qc:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/VCF_QC.ipynb qc {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/VCF_QC.ipynb qc \
             --cwd {params.outdir} \
             --genoFile {input.vcf} \
             --dbsnp-variants {params.dbsnp} \
@@ -79,7 +79,7 @@ rule vcf_to_plink:
         printf '%s\n' {input.vcf_qc} > {params.vcf_list}
         if [ $(wc -l < {params.vcf_list}) -gt 1 ]; then
             # Multiple VCFs: merge then convert
-            sos run {params.pipeline_dir}/genotype_formatting.ipynb merge_plink {params.dry_run} \
+            sos run {params.dry_run} {params.pipeline_dir}/genotype_formatting.ipynb merge_plink \
                 --cwd {params.outdir} \
                 --genoFile {params.vcf_list} \
                 --name xqtl_protocol_data.converted \
@@ -87,7 +87,7 @@ rule vcf_to_plink:
                 --numThreads {threads}
         else
             # Single VCF: convert directly
-            sos run {params.pipeline_dir}/genotype_formatting.ipynb vcf_to_plink {params.dry_run} \
+            sos run {params.dry_run} {params.pipeline_dir}/genotype_formatting.ipynb vcf_to_plink \
                 --cwd {params.outdir} \
                 --genoFile $(cat {params.vcf_list}) \
                 --name xqtl_protocol_data.converted \
@@ -128,7 +128,7 @@ rule plink_qc:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --name xqtl_protocol_data.plink_qc \
@@ -166,7 +166,7 @@ rule genotype_by_chrom:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/genotype_formatting.ipynb genotype_by_chrom {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/genotype_formatting.ipynb genotype_by_chrom \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --name xqtl_protocol_data.plink_qc \

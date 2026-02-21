@@ -37,7 +37,7 @@ rule fastqc:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/RNA_calling.ipynb fastqc {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/RNA_calling.ipynb fastqc \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
@@ -82,7 +82,7 @@ rule rnaseqc_call:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/RNA_calling.ipynb rnaseqc_call {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/RNA_calling.ipynb rnaseqc_call \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
@@ -120,7 +120,7 @@ rule bulk_expression_qc:
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/bulk_expression_QC.ipynb qc {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/bulk_expression_QC.ipynb qc \
             --cwd {params.outdir} \
             --tpm-gct {input.tpm_gct} \
             --counts-gct {input.counts_gct} \
@@ -167,7 +167,7 @@ rule bulk_expression_normalization:
         runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize \
             --cwd {params.outdir} \
             --counts-gct {input.count_filt} \
             --tpm-gct {input.tpm_filt} \

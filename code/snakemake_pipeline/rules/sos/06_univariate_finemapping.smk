@@ -60,12 +60,16 @@ rule susie_twas:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/mnm_regression.ipynb susie_twas {params.dry_run} \
+        # mnm_regression phenoFile expects the actual per-chrom BED files (not the
+        # file-listing produced by phenotype_by_chrom); extract paths from column 2.
+        PHENO_BEDS=$(awk 'NR>1 {{print $2}}' {input.pheno_list} | tr '\n' ' ')
+        sos run {params.dry_run} {params.pipeline_dir}/mnm_regression.ipynb susie_twas \
             --cwd {params.outdir} \
+            --name {wildcards.theme} \
             --genoFile {input.geno_list} \
-            --phenoFile {input.pheno_list} \
+            --phenoFile $PHENO_BEDS \
             --covFile {input.hidden_factors} \
-            --L {params.L} \
+            --init-L {params.L} \
             --max-L {params.max_L} \
             --pip-cutoff {params.pip_cutoff} \
             --min_twas_maf {params.min_twas_maf} \
@@ -100,11 +104,15 @@ rule finemapping_plots:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/rss_analysis.ipynb univariate_plot {params.dry_run} \
-            --cwd {params.outdir} \
-            --finemapping-dir {params.finemapping_dir} \
-            --pip-cutoff {params.pip_cutoff} \
-            --container {params.container} \
-            --numThreads {threads}
+        # rss_analysis.ipynb univariate_plot takes each SuSiE RDS file as positional
+        # input (_input in SoS) and outputs a PNG.  We find all RDS files produced
+        # by susie_twas and call the step once per file.
+        find {params.finemapping_dir} -name "*.rds" | sort | while IFS= read -r rds; do
+            sos run {params.dry_run} {params.pipeline_dir}/rss_analysis.ipynb univariate_plot \
+                "$rds" \
+                --cwd {params.outdir} \
+                --container {params.container} \
+                --numThreads {threads}
+        done
         touch {output.plots_done}
         """

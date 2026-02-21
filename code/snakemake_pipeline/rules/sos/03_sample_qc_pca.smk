@@ -43,7 +43,7 @@ rule sample_match:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb genotype_phenotype_sample_overlap {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --phenoFile {input.phenotype_bed} \
@@ -77,7 +77,7 @@ rule king_kinship:
         runtime = config["resources"]["high_mem"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb king {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb king \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --keep-samples {input.sample_genotypes} \
@@ -114,7 +114,7 @@ rule unrelated_qc:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb qc \
             --cwd {params.outdir} \
             --genoFile {input.unrelated_bed} \
             --mac-filter {params.mac_filter} \
@@ -150,7 +150,7 @@ rule related_qc:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
             --cwd {params.outdir} \
             --genoFile {input.related_bed} \
             --keep-variants {input.pruned_in} \
@@ -185,7 +185,7 @@ rule flashpca:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/PCA.ipynb flashpca {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/PCA.ipynb flashpca \
             --cwd {params.outdir} \
             --genoFile {input.pruned_bed} \
             --k {params.n_pcs} \
@@ -222,7 +222,7 @@ rule project_samples:
         runtime = config["resources"]["pca"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/PCA.ipynb project_samples {params.dry_run} \
+        sos run {params.dry_run} {params.pipeline_dir}/PCA.ipynb project_samples \
             --cwd {params.outdir} \
             --genoFile {input.related_qc_bed} \
             --pca-model {input.pca_rds} \

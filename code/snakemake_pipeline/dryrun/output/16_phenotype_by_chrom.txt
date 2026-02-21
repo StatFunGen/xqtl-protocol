@@ -1,0 +1,79 @@
+INFO: Checking [32mphenotype_by_chrom_1[0m: 
+HINT: /bin/bash SCRIPT
+zcat /tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz | head -1 > /tmp/xqtl_test/output/AC.chr1.bed
+tabix /tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz chr1 >> /tmp/xqtl_test/output/AC.chr1.bed 
+bgzip -f /tmp/xqtl_test/output/AC.chr1.bed
+tabix -p bed /tmp/xqtl_test/output/AC.chr1.bed.gz -f
+
+
+HINT: /bin/bash SCRIPT
+stdout=/tmp/xqtl_test/output/AC.chr1.bed.stdout
+for i in /tmp/xqtl_test/output/AC.chr1.bed.gz ; do 
+echo "output_info: $i " >> $stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> $stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> $stdout;
+echo "output_column:" `zcat $i | grep -v "##"   | head -1 | wc -w `   >> $stdout;
+echo "output_headerow:" `zcat $i | grep "##" | wc -l `   >> $stdout;
+echo "output_preview:"   >> $stdout;
+zcat $i  | grep -v "##" | head  | cut -f 1,2,3,4,5,6   >> $stdout ; done
+
+
+
+INFO: [32mphenotype_by_chrom_1[0m (index=0) is [32mcompleted[0m.
+HINT: /bin/bash SCRIPT
+zcat /tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz | head -1 > /tmp/xqtl_test/output/AC.chr22.bed
+tabix /tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz chr22 >> /tmp/xqtl_test/output/AC.chr22.bed 
+bgzip -f /tmp/xqtl_test/output/AC.chr22.bed
+tabix -p bed /tmp/xqtl_test/output/AC.chr22.bed.gz -f
+
+
+HINT: /bin/bash SCRIPT
+stdout=/tmp/xqtl_test/output/AC.chr22.bed.stdout
+for i in /tmp/xqtl_test/output/AC.chr22.bed.gz ; do 
+echo "output_info: $i " >> $stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> $stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> $stdout;
+echo "output_column:" `zcat $i | grep -v "##"   | head -1 | wc -w `   >> $stdout;
+echo "output_headerow:" `zcat $i | grep "##" | wc -l `   >> $stdout;
+echo "output_preview:"   >> $stdout;
+zcat $i  | grep -v "##" | head  | cut -f 1,2,3,4,5,6   >> $stdout ; done
+
+
+
+INFO: [32mphenotype_by_chrom_1[0m (index=1) is [32mcompleted[0m.
+HINT: /bin/bash SCRIPT
+zcat /tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz | head -1 > /tmp/xqtl_test/output/AC.chr2.bed
+tabix /tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz chr2 >> /tmp/xqtl_test/output/AC.chr2.bed 
+bgzip -f /tmp/xqtl_test/output/AC.chr2.bed
+tabix -p bed /tmp/xqtl_test/output/AC.chr2.bed.gz -f
+
+
+HINT: /bin/bash SCRIPT
+stdout=/tmp/xqtl_test/output/AC.chr2.bed.stdout
+for i in /tmp/xqtl_test/output/AC.chr2.bed.gz ; do 
+echo "output_info: $i " >> $stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> $stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> $stdout;
+echo "output_column:" `zcat $i | grep -v "##"   | head -1 | wc -w `   >> $stdout;
+echo "output_headerow:" `zcat $i | grep "##" | wc -l `   >> $stdout;
+echo "output_preview:"   >> $stdout;
+zcat $i  | grep -v "##" | head  | cut -f 1,2,3,4,5,6   >> $stdout ; done
+
+
+
+INFO: [32mphenotype_by_chrom_1[0m (index=2) is [32mcompleted[0m.
+INFO: [32mphenotype_by_chrom_1[0m output:   [32m/tmp/xqtl_test/output/AC.chr1.bed.gz /tmp/xqtl_test/output/AC.chr22.bed.gz... (3 items in 3 groups)[0m
+INFO: Checking [32mphenotype_by_chrom_2[0m: 
+[91mERROR[0m: [91mphenotype_by_chrom_2 (id=860e79bc8a38d8ad) returns an error.[0m
+[91mERROR[0m: [91m[phenotype_by_chrom_2]: [0]: 
+---------------------------------------------------------------------------
+EmptyDataError                            Traceback (most recent call last)
+script_551523251772970731 in <module>
+      chrom_df.to_csv(_output[0],index = 0,sep = "\t")
+      chrom_df["#chr"] = [f'chr{x}' for x in chrom]
+----> phenoFile = pd.read_csv(phenoFile,sep = "\t", usecols = [0,1,2,3]).merge(chrom_df[["#chr","#dir"]],left_on = "#chr",right_on = "#chr").rename(columns={"#dir": "path"})
+      phenoFile.to_csv(_output[1], index = 0, sep = "\t")
+      
+      
+
+EmptyDataError: No columns to parse from file[0m

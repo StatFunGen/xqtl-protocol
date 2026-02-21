@@ -1,0 +1,119 @@
+INFO: Input samples are paired-end sequences.
+INFO: Checking [32mrnaseqc_call_1[0m: 
+HINT: /bin/bash SCRIPT
+cd /tmp/xqtl_test/output && \
+rnaseqc \
+    /tmp/xqtl_test/ERCC.gtf \
+    /tmp/xqtl_test/output/sample1.Aligned.sortedByCoord.out.bam \
+    /tmp/xqtl_test/output  \
+    --stranded fr \
+    --detection-threshold 5 --mapping-quality 255 
+
+
+
+HINT: /bin/bash SCRIPT
+mv /tmp/xqtl_test/output/sample1.Aligned.sortedByCoord.out.bam.gene_tpm.gct /tmp/xqtl_test/output/sample1.rnaseqc.gene_tpm.gct
+mv /tmp/xqtl_test/output/sample1.Aligned.sortedByCoord.out.bam.gene_reads.gct /tmp/xqtl_test/output/sample1.rnaseqc.gene_reads.gct
+mv /tmp/xqtl_test/output/sample1.Aligned.sortedByCoord.out.bam.exon_reads.gct /tmp/xqtl_test/output/sample1.rnaseqc.exon_reads.gct
+mv /tmp/xqtl_test/output/sample1.Aligned.sortedByCoord.out.bam.metrics.tsv /tmp/xqtl_test/output/sample1.rnaseqc.metrics.tsv
+gzip /tmp/xqtl_test/output/sample1.rnaseqc.gene_tpm.gct /tmp/xqtl_test/output/sample1.rnaseqc.gene_reads.gct /tmp/xqtl_test/output/sample1.rnaseqc.exon_reads.gct
+
+
+
+INFO: [32mrnaseqc_call_1[0m is [32mcompleted[0m.
+INFO: [32mrnaseqc_call_1[0m output:   [32m/tmp/xqtl_test/output/sample1.rnaseqc.gene_tpm.gct.gz /tmp/xqtl_test/output/sample1.rnaseqc.gene_reads.gct.gz... (4 items)[0m
+INFO: Checking [32mrnaseqc_call_2[0m: 
+HINT: python SCRIPT
+import pandas as pd
+import os
+def make_gct(gct_path):
+    # sample_name
+    sample_name = ".".join(os.path.basename(gct_path).split(".")[:-4])
+    # read_input
+    pre_gct = pd.read_csv(gct_path,sep = "\t",
+                          skiprows= 2,index_col="Name").drop("Description",axis = 1)
+    pre_gct.index.name = "gene_ID"
+    pre_gct.columns = [sample_name]
+    return(pre_gct)
+
+def merge_gct(gct_path_list):
+    gct = pd.DataFrame()
+    for gct_path in gct_path_list:
+        #check duplicated indels and remove them.
+        gct_col = make_gct(gct_path)
+        gct = gct.merge(gct_col,right_index=True,left_index = True,how = "outer")
+    return gct
+
+input_list = ['/tmp/xqtl_test/output/sample1.rnaseqc.gene_tpm.gct.gz','/tmp/xqtl_test/output/sample1.rnaseqc.gene_reads.gct.gz','/tmp/xqtl_test/output/sample1.rnaseqc.exon_reads.gct.gz','/tmp/xqtl_test/output/sample1.rnaseqc.metrics.tsv']
+tpm_list = input_list[0::4]
+gc_list = input_list[1::4]
+ec_list = input_list[2::4]
+gct_path_list_list = [tpm_list,gc_list,ec_list]
+output_path = ['/tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_tpm.gct.gz','/tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_readsCount.gct.gz','/tmp/xqtl_test/output/AC_bam_list.rnaseqc.exon_readsCount.gct.gz','/tmp/xqtl_test/output/AC_bam_list.rnaseqc.metrics.tsv'][0:3]
+for i in range(0,len(output_path)):
+    output = merge_gct(gct_path_list_list[i])
+    output.to_csv(output_path[i], sep = "\t")
+metrics_list = input_list[3::4]
+with open("/tmp/xqtl_test/output/AC_bam_list.rnaseqc.metrics_output_list", "w") as f:
+    f.write('\n'.join(metrics_list))
+
+
+input_files_tsv = "/tmp/xqtl_test/output/AC_bam_list.rnaseqc.metrics_output_list"
+prefix = "/tmp/xqtl_test/output/AC_bam_list.rnaseqc"
+
+
+
+
+annotation_headers = ""
+
+annotation_tsvs = []
+output_dir = "."
+
+
+if len(annotation_headers)==1 and annotation_headers[0]=='':
+    annotation_headers = []
+
+path_s = pd.read_csv(input_files_tsv, sep='\t', index_col=0, header=None, names=['sample_id','metrics_path']).squeeze("columns")
+if path_s.isnull().all():  # ID not provided
+    path_s = pd.Series(path_s.index, index=[os.path.split(i)[1].split('.metrics.tsv')[0] for i in path_s.index])
+
+# check format
+df = pd.read_csv(path_s.iloc[0], sep='\t', header=None)
+if df.shape[0]==2:  # RNA-SeQC v1.1.9
+    dfs = [pd.read_csv(i, sep='\t') for i in path_s]
+elif df.shape[1]==2:  # RNA-SeQC v2
+    dfs = [pd.read_csv(i, sep='\t', header=None, index_col=0).T for i in path_s]
+else:
+    raise ValueError('Unrecognized input format (shape {}).'.format(df.shape))
+metrics_df = pd.concat(dfs, axis=0)
+metrics_df.index = metrics_df['Sample']
+
+# add optional annotations as additional columns
+for h,tsv in zip(annotation_headers, annotation_tsvs):
+    annotation_df = pd.read_csv(tsv, sep='\t', index_col=0, header=None, names=['sample_id',h])
+    metrics_df[h] = annotation_df.loc[metrics_df.index, h]
+
+metrics_df.to_csv(os.path.join(output_dir, prefix+'.metrics.tsv'), sep='\t', index=False, float_format='%.8g')
+
+
+INFO: [32mrnaseqc_call_2[0m is [32mcompleted[0m.
+INFO: [32mrnaseqc_call_2[0m output:   [32m/tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_tpm.gct.gz /tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_readsCount.gct.gz... (4 items)[0m
+INFO: Checking [32mrnaseqc_call_3[0m: 
+HINT: report:
+extra_fn_clean_exts:
+    - '_rsem'
+fn_ignore_dirs:
+    - '*_STARpass1'
+
+[91mERROR[0m: [91mrnaseqc_call_3 (id=42d616f568a6e1f2) returns an error.[0m
+[91mERROR[0m: [91m[rnaseqc_call_3]: [0]: 
+---------------------------------------------------------------------------
+RuntimeError                              Traceback (most recent call last)
+script_4973525858612476159 in <module>
+----> report("extra_fn_clean_exts:\n    - '_rsem'\nfn_ignore_dirs:\n    - '*_STARpass1'\n", output = f"{_output:n}.multiqc_config.yml")
+      bash(fr"""multiqc {_input:d} -v -n {_output:b} -o {_output:d} -c {_output:n}.multiqc_config.yml
+      
+      """, container=container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', entrypoint=entrypoint)
+
+RuntimeError: Output target /tmp/xqtl_test/output/AC_bam_list.rnaseqc.multiqc_report.multiqc_config.yml does not exist after completion of action report
+[rnaseqc_call]: Exits with 1 pending step (rnaseqc_call_4)[0m

@@ -1,0 +1,22 @@
+INFO: Checking [32mget_analysis_regions[0m: 
+[91mERROR[0m: [91mget_analysis_regions (id=7ab0deb5fba479d2) returns an error.[0m
+[91mERROR[0m: [91m[get_analysis_regions (regional_data)]: [0]: 
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+script_31865693867662866 in process_cis_files
+      
+              if not pheno_df.empty:
+---->             pheno_df.iloc[:, 4] = adapt_file_path_all(pheno_df, pheno_df.columns[4], f"{pheno_path:a}")
+                  pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)
+                  accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
+      
+script_31865693867662866 in <module>
+          meta_data = process_trans_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, customized_association_windows)
+      else:
+---->     meta_data = process_cis_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, preload_id_map(phenoIDFile))
+      
+      if not meta_data.empty:
+          meta_data = meta_data.merge(geno_meta_data, on='#chr', how='inner')
+
+TypeError: stat: path should be string, bytes, os.PathLike or integer, not float
+[susie_twas]: Exits with 1 pending step (susie_twas)[0m

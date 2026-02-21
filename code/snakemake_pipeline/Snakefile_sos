@@ -41,6 +41,10 @@ CHROMS      = config["chromosomes"]
 NORM_METHOD = config["normalization"]["method"]
 HF_METHOD   = config["hidden_factors"]["method"]
 
+# ── Dry-run flag (propagated to every sos run call) ─────────────────────────
+# SoS: "sos run -n notebook.ipynb step ..."  — prints plan, runs nothing (-n must precede the notebook path)
+DRY_RUN_SOS = "-n" if config.get("dry_run", False) else ""
+
 # ── Helper: resolve the normalized phenotype BED for a given theme ───────────
 def get_phenotype_bed(wc):
     """Return the normalized phenotype BED.gz path for a theme wildcard."""
