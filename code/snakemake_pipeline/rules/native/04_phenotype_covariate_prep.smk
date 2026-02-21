@@ -1,33 +1,15 @@
 # ============================================================
-# Rule Module 04: Phenotype & Covariate Preparation
+# Rule Module 04: Phenotype & Covariate Preparation (native scripts)
 # ============================================================
-# Covers:
-#   - Merge genotype PCs with fixed covariates
-#   - Partition phenotype BED by chromosome
-#   - Compute hidden confounding factors (Marchenko PCA or PEER)
-#
-# Mirrors: eQTL_analysis_commands.ipynb stages:
-#   phenotype_partition_by_chrom → merge_pca_covariate → factor
-#
-# SoS notebooks called:
-#   - pipeline/phenotype_formatting.ipynb (phenotype_by_chrom)
-#   - pipeline/covariate_formatting.ipynb (merge_genotype_pc)
-#   - pipeline/covariate_hidden_factor.ipynb (Marchenko_PC, PEER)
-#
-# NOTE on hidden factors:
-#   When you run `sos run covariate_hidden_factor.ipynb Marchenko_PC` (or PEER),
-#   the SoS workflow internally runs a shared *_1 step that computes residuals
-#   from the merged covariates, then runs the factor step on those residuals.
-#   There is therefore NO separate compute_residual rule — the factor rules
-#   take the original phenotype BED + merged covariates as input directly.
+# Calls renovated_code/ shell wrappers instead of SoS notebooks.
+# Interface flags are identical to the SoS versions.
 # ============================================================
+
+RENOVATED = config["renovated_code_dir"]
 
 # ------------------------------------
 # Step 4.1 — Merge genotype PCs with fixed covariates
 # ------------------------------------
-# Combines the projected PCA scores with the user-supplied covariate file
-# (sex, age, batch variables, etc.) into a single covariate matrix.
-# Actual SoS step name: merge_genotype_pc (not merge_pca_covariate).
 rule merge_pca_covariate:
     """Merge projected genotype PCs with phenotype-level fixed covariates."""
     input:
@@ -38,37 +20,33 @@ rule merge_pca_covariate:
     output:
         merged_cov = "{cwd}/data_preprocessing/{theme}/covariates/xqtl_protocol_data.plink_qc.{theme}.pca.gz",
     params:
-        pipeline_dir = config["pipeline_dir"],
-        container    = config["containers"]["bioinfo"],
-        outdir       = "{cwd}/data_preprocessing/{theme}/covariates",
-        n_pcs        = config["covariate"]["n_pcs"],
-        tol_cov      = config["covariate"]["tol_cov"],
-        mean_impute  = lambda _: "--mean-impute" if config["covariate"]["mean_impute"] else "",
+        container   = config["containers"]["bioinfo"],
+        outdir      = "{cwd}/data_preprocessing/{theme}/covariates",
+        n_pcs       = config["covariate"]["n_pcs"],
+        tol_cov     = config["covariate"]["tol_cov"],
+        mean_impute = lambda _: "--mean-impute" if config["covariate"]["mean_impute"] else "",
+        script      = f"{RENOVATED}/data_preprocessing/covariate/covariate_formatting.sh",
     threads: config["resources"]["default"]["threads"]
     resources:
-        mem_mb   = config["resources"]["default"]["mem_mb"],
+        mem_mb  = config["resources"]["default"]["mem_mb"],
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/covariate_formatting.ipynb merge_genotype_pc \
+        bash {params.script} merge_genotype_pc \
+            --container {params.container} \
             --cwd {params.outdir} \
             --pcaFile {input.projected_rds} \
             --covFile {input.covariate_file} \
             --k {params.n_pcs} \
             --tol-cov {params.tol_cov} \
             {params.mean_impute} \
-            --container {params.container} \
             --numThreads {threads}
         """
 
 # ------------------------------------
 # Step 4.2 — Partition phenotype BED file by chromosome
 # ------------------------------------
-# Splits the normalized expression BED file into per-chromosome files,
-# then writes a file-list used by TensorQTL for parallel CIS analysis.
-# Actual SoS step name: phenotype_by_chrom (not partition_by_chrom).
-# The SoS notebook produces: {name}.phenotype_by_chrom_files.txt
 rule phenotype_by_chrom:
     """Partition phenotype BED.gz into per-chromosome files for TensorQTL."""
     input:
@@ -76,36 +54,29 @@ rule phenotype_by_chrom:
     output:
         chrom_list = "{cwd}/data_preprocessing/{theme}/phenotype_data/{theme}.phenotype_by_chrom_files.txt",
     params:
-        pipeline_dir = config["pipeline_dir"],
-        container    = config["containers"]["rnaquant"],
-        outdir       = "{cwd}/data_preprocessing/{theme}/phenotype_data",
-        chroms       = " ".join(config["chromosomes"]),
+        container = config["containers"]["rnaquant"],
+        outdir    = "{cwd}/data_preprocessing/{theme}/phenotype_data",
+        chroms    = " ".join(config["chromosomes"]),
+        script    = f"{RENOVATED}/data_preprocessing/phenotype/phenotype_formatting.sh",
     threads: config["resources"]["default"]["threads"]
     resources:
-        mem_mb   = config["resources"]["default"]["mem_mb"],
+        mem_mb  = config["resources"]["default"]["mem_mb"],
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/phenotype_formatting.ipynb phenotype_by_chrom \
+        bash {params.script} phenotype_by_chrom \
+            --container {params.container} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --name {wildcards.theme} \
             --chrom {params.chroms} \
-            --container {params.container} \
             --numThreads {threads}
         """
 
 # ------------------------------------
-# Step 4.3a — Hidden factor analysis: Marchenko-Pastur PCA (default)
+# Step 4.3a — Hidden factor analysis: Marchenko-Pastur PCA
 # ------------------------------------
-# Calling `sos run covariate_hidden_factor.ipynb Marchenko_PC` runs two
-# internal sub-steps:
-#   *_1: regress merged covariates out of phenotype → residual BED
-#   Marchenko_PC_2: apply Marchenko-Pastur law to residuals → PC factor file
-# Both steps run automatically when you invoke the Marchenko_PC workflow.
-# Note: step name is Marchenko_PC (capital PC), NOT Marchenko_pc.
-# Note: --mean-impute-missing is the flag name (not --mean-impute).
 rule marchenko_pc:
     """Estimate hidden confounding factors via Marchenko-Pastur PCA."""
     input:
@@ -114,35 +85,30 @@ rule marchenko_pc:
     output:
         hidden_factors = "{cwd}/data_preprocessing/{theme}/covariates/{theme}.Marchenko_PC.gz",
     params:
-        pipeline_dir      = config["pipeline_dir"],
-        container         = config["containers"]["pcatools"],
-        outdir            = "{cwd}/data_preprocessing/{theme}/covariates",
-        n_factors         = config["hidden_factors"]["n_factors"],
-        mean_impute_flag  = lambda _: "--mean-impute-missing" if config["covariate"]["mean_impute"] else "",
+        container        = config["containers"]["pcatools"],
+        outdir           = "{cwd}/data_preprocessing/{theme}/covariates",
+        n_factors        = config["hidden_factors"]["n_factors"],
+        mean_impute_flag = lambda _: "--mean-impute-missing" if config["covariate"]["mean_impute"] else "",
+        script           = f"{RENOVATED}/data_preprocessing/covariate/covariate_hidden_factor.sh",
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
-        mem_mb   = config["resources"]["hidden_factors"]["mem_mb"],
+        mem_mb  = config["resources"]["hidden_factors"]["mem_mb"],
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb Marchenko_PC \
+        bash {params.script} Marchenko_PC \
+            --container {params.container} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \
             --N {params.n_factors} \
             {params.mean_impute_flag} \
-            --container {params.container} \
             --numThreads {threads}
         """
 
 # ------------------------------------
-# Step 4.3b — Hidden factor analysis: PEER (alternative method)
+# Step 4.3b — Hidden factor analysis: PEER
 # ------------------------------------
-# Calling `sos run covariate_hidden_factor.ipynb PEER` runs:
-#   *_1: regress merged covariates out of phenotype → residual BED
-#   PEER_2: PEER factor analysis → .PEER_MODEL.hd5
-#   PEER_3: Extract PEER factors → .PEER.gz
-# All three steps run automatically when you invoke the PEER workflow.
 rule peer_factors:
     """Estimate hidden confounding factors via PEER factor analysis."""
     input:
@@ -151,25 +117,25 @@ rule peer_factors:
     output:
         hidden_factors = "{cwd}/data_preprocessing/{theme}/covariates/{theme}.PEER.gz",
     params:
-        pipeline_dir     = config["pipeline_dir"],
         container        = config["containers"]["peer"],
         outdir           = "{cwd}/data_preprocessing/{theme}/covariates",
         n_factors        = config["hidden_factors"]["n_factors"],
         iterations       = config["hidden_factors"]["peer_iterations"],
         convergence_mode = config["hidden_factors"]["peer_convergence"],
+        script           = f"{RENOVATED}/data_preprocessing/covariate/covariate_hidden_factor.sh",
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
-        mem_mb   = config["resources"]["hidden_factors"]["mem_mb"],
+        mem_mb  = config["resources"]["hidden_factors"]["mem_mb"],
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb PEER \
+        bash {params.script} PEER \
+            --container {params.container} \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \
             --N {params.n_factors} \
             --iteration {params.iterations} \
-            --convergence_mode {params.convergence_mode} \
-            --container {params.container} \
+            --convergence-mode {params.convergence_mode} \
             --numThreads {threads}
         """

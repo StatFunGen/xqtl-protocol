@@ -33,7 +33,7 @@ rule vcf_qc:
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
-        walltime = config["resources"]["genotype_qc"]["walltime"],
+        runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -70,7 +70,7 @@ rule vcf_to_plink:
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
-        walltime = config["resources"]["genotype_qc"]["walltime"],
+        runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -122,7 +122,7 @@ rule plink_qc:
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
-        walltime = config["resources"]["genotype_qc"]["walltime"],
+        runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
@@ -159,7 +159,7 @@ rule genotype_by_chrom:
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
-        walltime = config["resources"]["genotype_qc"]["walltime"],
+        runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/genotype_formatting.ipynb genotype_by_chrom \

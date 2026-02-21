@@ -46,7 +46,7 @@ rule tensorqtl_cis:
     threads: config["resources"]["tensorqtl"]["threads"]
     resources:
         mem_mb   = config["resources"]["tensorqtl"]["mem_mb"],
-        walltime = config["resources"]["tensorqtl"]["walltime"],
+        runtime = config["resources"]["tensorqtl"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}

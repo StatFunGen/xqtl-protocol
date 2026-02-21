@@ -104,7 +104,7 @@ merge_genotype_pc <- function(opt) {
   # Output filename derived from pcaFile basename
   bname    <- sub("\\.pca\\.projected\\.rds$", "", basename(opt$pcaFile))
   out_file <- file.path(opt$cwd, paste0(bname, ".pca.gz"))
-  write_tsv(merged, gzfile(out_file))
+  write_tsv(merged, out_file)   # readr detects .gz and compresses automatically
   cat(sprintf("Output: %s (%d covariates × %d samples)\n",
               out_file, nrow(merged), length(keep_samples)))
 }

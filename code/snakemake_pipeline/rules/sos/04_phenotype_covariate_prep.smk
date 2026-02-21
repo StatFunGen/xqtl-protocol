@@ -47,7 +47,7 @@ rule merge_pca_covariate:
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
-        walltime = config["resources"]["default"]["walltime"],
+        runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -83,7 +83,7 @@ rule phenotype_by_chrom:
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
-        walltime = config["resources"]["default"]["walltime"],
+        runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -122,7 +122,7 @@ rule marchenko_pc:
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
         mem_mb   = config["resources"]["hidden_factors"]["mem_mb"],
-        walltime = config["resources"]["hidden_factors"]["walltime"],
+        runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb Marchenko_PC \
@@ -160,7 +160,7 @@ rule peer_factors:
     threads: config["resources"]["hidden_factors"]["threads"]
     resources:
         mem_mb   = config["resources"]["hidden_factors"]["mem_mb"],
-        walltime = config["resources"]["hidden_factors"]["walltime"],
+        runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb PEER \

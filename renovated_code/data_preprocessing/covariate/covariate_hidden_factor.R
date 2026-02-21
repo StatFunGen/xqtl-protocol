@@ -58,7 +58,7 @@ compute_residuals <- function(opt) {
   coord_cols <- colnames(pheno)[1:4]
   sample_cols <- colnames(pheno)[-(1:4)]
   mat <- as.matrix(pheno[, sample_cols])
-  class(mat) <- "numeric"
+  storage.mode(mat) <- "numeric"
   rownames(mat) <- pheno[[1]]   # use first column (chr:start:end:id) as rowID
 
   # Mean-impute if requested
@@ -103,8 +103,6 @@ run_marchenko <- function(opt) {
   res <- compute_residuals(opt)
   cat("=== Sub-step 2: Marchenko-Pastur PCA ===\n")
 
-  suppressPackageStartupMessages(library(RMTstat))
-
   mat <- res$residuals
   n   <- ncol(mat)
   p   <- nrow(mat)
@@ -138,7 +136,7 @@ run_marchenko <- function(opt) {
 
   # Write output
   out_file <- file.path(opt$cwd, paste0(bname, ".Marchenko_PC.gz"))
-  write_tsv(factors, gzfile(out_file))
+  write_tsv(factors, out_file)   # readr detects .gz and compresses automatically
   cat(sprintf("Output: %s (%d factors × %d samples)\n",
               out_file, n_factors, ncol(mat)))
 }
@@ -175,12 +173,13 @@ run_peer <- function(opt) {
 
   cat("=== Sub-step 3: Extract PEER factors ===\n")
   factors_mat <- t(PEER_getX(model))   # factors × samples
-  rownames(factors_mat) <- paste0("peer_factor_", seq_len(nrow(factors_mat)))
+  # Use Hidden_Factor_PC prefix to match the SoS notebook (mofapy2/MOFA2) naming
+  rownames(factors_mat) <- paste0("Hidden_Factor_PC", seq_len(nrow(factors_mat)))
   colnames(factors_mat) <- colnames(mat)
 
   factors_df <- cbind(ID = rownames(factors_mat), as.data.frame(factors_mat))
   out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
-  write_tsv(factors_df, gzfile(out_file))
+  write_tsv(factors_df, out_file)   # readr detects .gz and compresses automatically
   cat(sprintf("Output: %s (%d factors × %d samples)\n",
               out_file, nrow(factors_mat), ncol(mat)))
 }

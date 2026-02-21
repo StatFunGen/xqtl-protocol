@@ -55,7 +55,7 @@ rule susie_twas:
     threads: config["resources"]["finemapping"]["threads"]
     resources:
         mem_mb   = config["resources"]["finemapping"]["mem_mb"],
-        walltime = config["resources"]["finemapping"]["walltime"],
+        runtime = config["resources"]["finemapping"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -94,7 +94,7 @@ rule finemapping_plots:
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
-        walltime = config["resources"]["default"]["walltime"],
+        runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}

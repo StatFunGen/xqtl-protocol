@@ -38,7 +38,7 @@ rule sample_match:
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
-        walltime = config["resources"]["default"]["walltime"],
+        runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -72,7 +72,7 @@ rule king_kinship:
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["high_mem"]["mem_mb"],
-        walltime = config["resources"]["high_mem"]["walltime"],
+        runtime = config["resources"]["high_mem"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/GWAS_QC.ipynb king \
@@ -108,7 +108,7 @@ rule unrelated_qc:
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
-        walltime = config["resources"]["genotype_qc"]["walltime"],
+        runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/GWAS_QC.ipynb qc \
@@ -143,7 +143,7 @@ rule related_qc:
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
         mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
-        walltime = config["resources"]["genotype_qc"]["walltime"],
+        runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
@@ -176,7 +176,7 @@ rule flashpca:
     threads: config["resources"]["pca"]["threads"]
     resources:
         mem_mb   = config["resources"]["pca"]["mem_mb"],
-        walltime = config["resources"]["pca"]["walltime"],
+        runtime = config["resources"]["pca"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -213,7 +213,7 @@ rule project_samples:
     threads: config["resources"]["pca"]["threads"]
     resources:
         mem_mb   = config["resources"]["pca"]["mem_mb"],
-        walltime = config["resources"]["pca"]["walltime"],
+        runtime = config["resources"]["pca"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/PCA.ipynb project_samples \

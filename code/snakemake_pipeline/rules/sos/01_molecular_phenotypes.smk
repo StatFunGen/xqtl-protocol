@@ -32,7 +32,7 @@ rule fastqc:
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
         mem_mb   = config["resources"]["rna_calling"]["mem_mb"],
-        walltime = config["resources"]["rna_calling"]["walltime"],
+        runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -76,7 +76,7 @@ rule rnaseqc_call:
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
         mem_mb   = config["resources"]["rna_calling"]["mem_mb"],
-        walltime = config["resources"]["rna_calling"]["walltime"],
+        runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
@@ -114,7 +114,7 @@ rule bulk_expression_qc:
     threads: config["resources"]["default"]["threads"]
     resources:
         mem_mb   = config["resources"]["default"]["mem_mb"],
-        walltime = config["resources"]["default"]["walltime"],
+        runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/bulk_expression_QC.ipynb qc \
@@ -160,7 +160,7 @@ rule bulk_expression_normalization:
     threads: config["resources"]["rna_calling"]["threads"]
     resources:
         mem_mb   = config["resources"]["rna_calling"]["mem_mb"],
-        walltime = config["resources"]["rna_calling"]["walltime"],
+        runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
         sos run {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize \

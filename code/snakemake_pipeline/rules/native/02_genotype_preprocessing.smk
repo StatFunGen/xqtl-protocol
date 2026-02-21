@@ -1,23 +1,15 @@
 # ============================================================
-# Rule Module 02: Genotype Preprocessing
+# Rule Module 02: Genotype Preprocessing (native scripts)
 # ============================================================
-# Covers: VCF QC → Plink conversion → GWAS QC (per-sample and per-variant) →
-#         Merge plink files → Split by chromosome
-#
-# Mirrors: eQTL_analysis_commands.ipynb stages:
-#   VCF_QC → merge_plink → plink_QC → plink_per_chrom → plink_to_vcf
-#
-# SoS notebooks called:
-#   - pipeline/VCF_QC.ipynb (qc)
-#   - pipeline/genotype_formatting.ipynb (vcf_to_plink, merge_plink, genotype_by_chrom)
-#   - pipeline/GWAS_QC.ipynb (qc_no_prune)
+# Calls renovated_code/ shell wrappers instead of SoS notebooks.
+# Interface flags are identical to the SoS versions.
 # ============================================================
 
+RENOVATED = config["renovated_code_dir"]
+
 # ------------------------------------
-# Step 2.1 — VCF QC: normalize, annotate, and filter variants
+# Step 2.1 — VCF QC
 # ------------------------------------
-# Performs left-normalization, chromosome renaming, dbSNP annotation,
-# and basic variant-level quality control.
 rule vcf_qc:
     """Run VCF quality control: left-normalization, dbSNP annotation, variant filtering."""
     input:
@@ -25,24 +17,24 @@ rule vcf_qc:
     output:
         vcf_qc = "{cwd}/data_preprocessing/genotype/vcf_qc_{vcf_idx}.add_chr.leftnorm.filtered.vcf.gz",
     params:
-        pipeline_dir = config["pipeline_dir"],
-        container    = config["containers"]["bioinfo"],
-        outdir       = "{cwd}/data_preprocessing/genotype",
-        fasta        = config["reference"]["fasta"],
-        dbsnp        = config["reference"]["dbsnp"],
+        container = config["containers"]["bioinfo"],
+        outdir    = "{cwd}/data_preprocessing/genotype",
+        fasta     = config["reference"]["fasta"],
+        dbsnp     = config["reference"]["dbsnp"],
+        script    = f"{RENOVATED}/data_preprocessing/genotype/VCF_QC.sh",
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
-        mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
+        mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/VCF_QC.ipynb qc \
+        bash {params.script} qc \
+            --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.vcf} \
             --dbsnp-variants {params.dbsnp} \
             --reference-genome {params.fasta} \
-            --container {params.container} \
             --numThreads {threads}
         """
 
@@ -62,34 +54,31 @@ rule vcf_to_plink:
         bim = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.converted.bim",
         fam = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.converted.fam",
     params:
-        pipeline_dir = config["pipeline_dir"],
-        container    = config["containers"]["bioinfo"],
-        outdir       = "{cwd}/data_preprocessing/genotype",
-        # Write VCF paths to a temporary list file consumed by the SoS notebook
-        vcf_list     = "{cwd}/data_preprocessing/genotype/vcf_qc_files.list",
+        container = config["containers"]["bioinfo"],
+        outdir    = "{cwd}/data_preprocessing/genotype",
+        vcf_list  = "{cwd}/data_preprocessing/genotype/vcf_qc_files.list",
+        script    = f"{RENOVATED}/data_preprocessing/genotype/genotype_formatting.sh",
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
-        mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
+        mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
         printf '%s\n' {input.vcf_qc} > {params.vcf_list}
         if [ $(wc -l < {params.vcf_list}) -gt 1 ]; then
-            # Multiple VCFs: merge then convert
-            sos run {params.pipeline_dir}/genotype_formatting.ipynb merge_plink \
+            bash {params.script} merge_plink \
+                --container {params.container} \
                 --cwd {params.outdir} \
                 --genoFile {params.vcf_list} \
                 --name xqtl_protocol_data.converted \
-                --container {params.container} \
                 --numThreads {threads}
         else
-            # Single VCF: convert directly
-            sos run {params.pipeline_dir}/genotype_formatting.ipynb vcf_to_plink \
+            bash {params.script} vcf_to_plink \
+                --container {params.container} \
                 --cwd {params.outdir} \
                 --genoFile $(cat {params.vcf_list}) \
                 --name xqtl_protocol_data.converted \
-                --container {params.container} \
                 --numThreads {threads}
         fi
         """
@@ -97,11 +86,6 @@ rule vcf_to_plink:
 # ------------------------------------
 # Step 2.3 — Genome-wide GWAS QC
 # ------------------------------------
-# Applies MAF/MAC, missingness, and HWE filters across all samples.
-# This is a pre-filter before tissue-specific kinship analysis.
-# Input is either:
-#   (a) The converted plink file produced by vcf_to_plink (default), or
-#   (b) A pre-existing plink file from config["genotype"]["plink_bed"].
 rule plink_qc:
     """Apply genome-wide GWAS QC filters (MAF, MAC, missingness, HWE)."""
     input:
@@ -111,21 +95,22 @@ rule plink_qc:
         bim = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.bim",
         fam = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.fam",
     params:
-        pipeline_dir = config["pipeline_dir"],
-        container    = config["containers"]["bioinfo"],
-        outdir       = "{cwd}/data_preprocessing/genotype",
-        mac_filter   = config["genotype_qc"]["mac_filter"],
-        maf_filter   = config["genotype_qc"]["maf_filter"],
-        geno_filter  = config["genotype_qc"]["geno_filter"],
-        mind_filter  = config["genotype_qc"]["mind_filter"],
-        hwe_filter   = config["genotype_qc"]["hwe_filter"],
+        container   = config["containers"]["bioinfo"],
+        outdir      = "{cwd}/data_preprocessing/genotype",
+        mac_filter  = config["genotype_qc"]["mac_filter"],
+        maf_filter  = config["genotype_qc"]["maf_filter"],
+        geno_filter = config["genotype_qc"]["geno_filter"],
+        mind_filter = config["genotype_qc"]["mind_filter"],
+        hwe_filter  = config["genotype_qc"]["hwe_filter"],
+        script      = f"{RENOVATED}/data_preprocessing/genotype/GWAS_QC.sh",
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
-        mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
+        mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
+        bash {params.script} qc_no_prune \
+            --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --name xqtl_protocol_data.plink_qc \
@@ -134,17 +119,12 @@ rule plink_qc:
             --geno-filter {params.geno_filter} \
             --mind-filter {params.mind_filter} \
             --hwe-filter {params.hwe_filter} \
-            --container {params.container} \
             --numThreads {threads}
         """
 
 # ------------------------------------
 # Step 2.4 — Split plink genotype files by chromosome
 # ------------------------------------
-# Creates one plink set per chromosome and writes a file-list consumed by
-# TensorQTL and the fine-mapping steps.
-# Actual SoS step name: genotype_by_chrom (not plink_by_chrom).
-# Output list file: {name}.genotype_by_chrom_files.txt (SoS naming convention).
 rule genotype_by_chrom:
     """Split plink genotype into per-chromosome files for parallel QTL analysis."""
     input:
@@ -152,21 +132,21 @@ rule genotype_by_chrom:
     output:
         chrom_list = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.genotype_by_chrom_files.txt",
     params:
-        pipeline_dir = config["pipeline_dir"],
-        container    = config["containers"]["bioinfo"],
-        outdir       = "{cwd}/data_preprocessing/genotype",
-        chroms       = " ".join(config["chromosomes"]),
+        container = config["containers"]["bioinfo"],
+        outdir    = "{cwd}/data_preprocessing/genotype",
+        chroms    = " ".join(config["chromosomes"]),
+        script    = f"{RENOVATED}/data_preprocessing/genotype/genotype_formatting.sh",
     threads: config["resources"]["genotype_qc"]["threads"]
     resources:
-        mem_mb   = config["resources"]["genotype_qc"]["mem_mb"],
+        mem_mb  = config["resources"]["genotype_qc"]["mem_mb"],
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/genotype_formatting.ipynb genotype_by_chrom \
+        bash {params.script} genotype_by_chrom \
+            --container {params.container} \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --name xqtl_protocol_data.plink_qc \
             --chrom {params.chroms} \
-            --container {params.container} \
             --numThreads {threads}
         """

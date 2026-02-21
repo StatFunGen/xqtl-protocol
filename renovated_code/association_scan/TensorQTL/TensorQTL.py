@@ -13,13 +13,10 @@ Flags are kept identical to the SoS notebook parameter names.
 import argparse
 import os
 import sys
-import glob
-import gzip
-import subprocess
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def read_file_list(path: str) -> list:
@@ -33,7 +30,7 @@ def load_covariates(cov_file: str) -> pd.DataFrame:
     Load covariate file.
     Expected format: rows = covariates/factors, cols = samples.
     First column is the covariate name/ID.
-    Returns DataFrame: samples × covariates.
+    Returns DataFrame: samples × covariates (transposed for TensorQTL).
     """
     df = pd.read_csv(cov_file, sep="\t", index_col=0,
                      compression="gzip" if cov_file.endswith(".gz") else None)
@@ -43,17 +40,28 @@ def load_covariates(cov_file: str) -> pd.DataFrame:
 def load_phenotype_bed(bed_gz: str):
     """
     Load a phenotype BED.gz file.
-    Returns (phenotype_df, phenotype_pos_df).
-    phenotype_df: genes × samples
-    phenotype_pos_df: DataFrame with columns chr, tss
+    Returns (phenotype_df, phenotype_pos_df) matching TensorQTL expected format:
+      phenotype_df:     DataFrame indexed by phenotype_id, cols = sample_ids
+      phenotype_pos_df: DataFrame indexed by phenotype_id, cols = ['chr', 'tss']
     """
     df = pd.read_csv(bed_gz, sep="\t", index_col=3,
                      compression="gzip" if bed_gz.endswith(".gz") else None)
     pos_df = df.iloc[:, :3].copy()
     pos_df.columns = ["chr", "start", "end"]
     pos_df["tss"] = pos_df["start"]
-    pheno_df = df.iloc[:, 4:].astype(float)
+    pheno_df = df.iloc[:, 3:].astype(float)
     return pheno_df, pos_df[["chr", "tss"]]
+
+
+def apply_mac_filter(genotype_df: pd.DataFrame, variant_df: pd.DataFrame,
+                     n_samples: int, mac_min: int):
+    """Return genotype_df and variant_df with variants below mac_min removed."""
+    if mac_min <= 0:
+        return genotype_df, variant_df
+    ac = genotype_df.sum(axis=1)
+    mac = np.minimum(ac, 2 * n_samples - ac)
+    keep = mac >= mac_min
+    return genotype_df[keep], variant_df[keep]
 
 
 def run_cis(args) -> None:
@@ -62,8 +70,7 @@ def run_cis(args) -> None:
     Requires TensorQTL Python package.
     """
     try:
-        import tensorqtl
-        from tensorqtl import cis, post
+        from tensorqtl import genotypeio, cis, post
     except ImportError:
         sys.exit("ERROR: tensorqtl package not installed. "
                  "Install via: pip install tensorqtl")
@@ -75,12 +82,17 @@ def run_cis(args) -> None:
 
     covariates_df = load_covariates(args.covariate_file)
 
-    # Map genotype files to chromosome
-    geno_by_chrom  = {Path(f).stem.split(".")[-1]: f for f in geno_list}
-    pheno_by_chrom = {}
+    # Map files to chromosome by parsing the filename stem
+    geno_by_chrom: dict = {}
+    for f in geno_list:
+        # strip .bed; the last dot-separated token is the chromosome
+        stem = Path(f).stem  # e.g. xqtl_protocol_data.plink_qc.chr1
+        chrom = stem.split(".")[-1]
+        geno_by_chrom[chrom] = f.replace(".bed", "")  # plink prefix without .bed
+
+    pheno_by_chrom: dict = {}
     for f in pheno_list:
-        # Phenotype files named: {name}.{chrom}.bed.gz
-        stem = Path(f).stem.replace(".bed", "")
+        stem = Path(f).stem.replace(".bed", "")  # strip .bed.gz → .bed → stem
         chrom = stem.split(".")[-1]
         pheno_by_chrom[chrom] = f
 
@@ -89,63 +101,77 @@ def run_cis(args) -> None:
         sys.exit("ERROR: No matching chromosomes between genotype and phenotype lists.")
     print(f"Running cis-QTL on {len(chroms)} chromosomes: {chroms}", flush=True)
 
-    nominal_results  = []
     permutation_results = []
 
     for chrom in chroms:
         print(f"\n=== {chrom} ===", flush=True)
-        geno_prefix = geno_by_chrom[chrom].replace(".bed", "")
+        geno_prefix = geno_by_chrom[chrom]
         pheno_file  = pheno_by_chrom[chrom]
 
-        pr = tensorqtl.genotypeio.PlinkReader(geno_prefix)
+        # Load genotype using the correct TensorQTL API
+        genotype_df, variant_df = genotypeio.load_genotypes(geno_prefix, dosages=True)
         pheno_df, pheno_pos_df = load_phenotype_bed(pheno_file)
 
-        # Align samples
-        shared = pr.fam.index.intersection(pheno_df.columns).intersection(covariates_df.index)
+        # Align samples across genotype, phenotype, and covariates
+        shared = (genotype_df.columns
+                  .intersection(pheno_df.columns)
+                  .intersection(covariates_df.index))
+        shared = list(shared)
+        if not shared:
+            print(f"  WARNING: No shared samples for {chrom}, skipping.", flush=True)
+            continue
+
         pheno_df     = pheno_df[shared]
         covariates_t = covariates_df.loc[shared]
-
-        # MAC/MAF filter
-        genotype_df, variant_df = pr.get_all_genotypes(return_df=True)
         genotype_df  = genotype_df[shared]
-        mac          = (genotype_df.sum(axis=1).clip(0, 2 * len(shared) - genotype_df.sum(axis=1).clip(0)).min(axis=0))
 
-        # Nominal pass
-        nominal_df = cis.map_nominal(
+        # Apply MAC filter
+        genotype_df, variant_df = apply_mac_filter(
+            genotype_df, variant_df, n_samples=len(shared), mac_min=args.MAC)
+
+        # Nominal pass — writes {cwd}/{chrom}.cis_qtl_pairs.{chr}.parquet
+        # map_nominal writes output to disk; it does not return a DataFrame
+        nominal_prefix = chrom
+        cis.map_nominal(
             genotype_df, variant_df, pheno_df, pheno_pos_df,
+            nominal_prefix,
             covariates_df=covariates_t,
             window=args.window,
             maf_threshold=args.maf_threshold,
+            run_eigenmt=True,
+            output_dir=args.cwd,
         )
-        nominal_out = os.path.join(args.cwd, f"{chrom}.cis_qtl_pairs.parquet")
-        nominal_df.to_parquet(nominal_out)
-        nominal_results.append(nominal_out)
-        print(f"  Nominal: {len(nominal_df)} pairs → {nominal_out}", flush=True)
+        print(f"  Nominal pass complete → {args.cwd}/{nominal_prefix}.cis_qtl_pairs.*.parquet",
+              flush=True)
 
-        # Permutation pass
+        # Permutation pass — returns a DataFrame
         perm_df = cis.map_cis(
             genotype_df, variant_df, pheno_df, pheno_pos_df,
             covariates_df=covariates_t,
             window=args.window,
             maf_threshold=args.maf_threshold,
-            nperm=1000,
+            seed=999,
         )
         perm_out = os.path.join(args.cwd, f"{chrom}.cis_qtl.txt.gz")
         perm_df.to_csv(perm_out, sep="\t", index=True, compression="gzip")
         permutation_results.append(perm_out)
         print(f"  Permutation: {len(perm_df)} phenotypes → {perm_out}", flush=True)
 
-    # Aggregate permutation results and compute q-values
+    if not permutation_results:
+        print("No permutation results produced.", flush=True)
+        return
+
+    # Aggregate permutation results across chromosomes
     print("\n=== Aggregating permutation results ===", flush=True)
     all_perm = pd.concat([pd.read_csv(f, sep="\t", index_col=0)
                           for f in permutation_results])
     all_perm_out = os.path.join(args.cwd, "all_chroms.cis_qtl.txt.gz")
     all_perm.to_csv(all_perm_out, sep="\t", index=True, compression="gzip")
+    print(f"All permutation results: {all_perm_out}", flush=True)
 
-    # BH correction for q-values
+    # Compute q-values using tensorqtl.post
     try:
-        from tensorqtl import post as tpost
-        sig_df = tpost.calculate_qvalues(all_perm, qvalue_cutoff=0.05)
+        sig_df = post.calculate_qvalues(all_perm, qvalue_cutoff=0.05)
         sig_out = os.path.join(args.cwd, "all_chroms.cis_qtl.signif_pairs.txt.gz")
         sig_df.to_csv(sig_out, sep="\t", index=True, compression="gzip")
         print(f"Significant pairs: {sig_out}", flush=True)
@@ -158,23 +184,29 @@ def run_cis(args) -> None:
 def run_trans(args) -> None:
     """Run trans-QTL genome-wide association scan."""
     try:
-        import tensorqtl
-        from tensorqtl import trans
+        from tensorqtl import genotypeio, trans
     except ImportError:
         sys.exit("ERROR: tensorqtl package not installed.")
 
     os.makedirs(args.cwd, exist_ok=True)
-    geno_list  = read_file_list(args.genotype_file)
-    pheno_list = read_file_list(args.phenotype_file)
+    geno_list     = read_file_list(args.genotype_file)
+    pheno_list    = read_file_list(args.phenotype_file)
     covariates_df = load_covariates(args.covariate_file)
 
     for geno_f, pheno_f in zip(sorted(geno_list), sorted(pheno_list)):
-        chrom = Path(geno_f).stem.split(".")[-1]
-        pr = tensorqtl.genotypeio.PlinkReader(geno_f.replace(".bed", ""))
-        pheno_df, pheno_pos_df = load_phenotype_bed(pheno_f)
-        shared = pr.fam.index.intersection(pheno_df.columns).intersection(covariates_df.index)
-        genotype_df, variant_df = pr.get_all_genotypes(return_df=True)
+        chrom      = Path(geno_f).stem.split(".")[-1]
+        geno_prefix = geno_f.replace(".bed", "")
+
+        genotype_df, variant_df = genotypeio.load_genotypes(geno_prefix, dosages=True)
+        pheno_df, _ = load_phenotype_bed(pheno_f)
+
+        shared = (genotype_df.columns
+                  .intersection(pheno_df.columns)
+                  .intersection(covariates_df.index))
+        shared = list(shared)
         genotype_df = genotype_df[shared]
+        genotype_df, variant_df = apply_mac_filter(
+            genotype_df, variant_df, n_samples=len(shared), mac_min=args.MAC)
 
         trans_df = trans.map_trans(
             genotype_df, variant_df, pheno_df[shared],

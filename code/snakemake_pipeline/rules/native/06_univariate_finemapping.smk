@@ -1,38 +1,21 @@
 # ============================================================
-# Rule Module 06: Univariate Fine-mapping (SuSiE via mnm_regression)
+# Rule Module 06: Univariate Fine-mapping (native scripts)
 # ============================================================
-# Covers: Univariate SuSiE fine-mapping + TWAS weight estimation
+# NOTE: Native scripts for mnm_regression and rss_analysis are not yet
+# implemented in renovated_code/. Rules here fall back to the SoS backend
+# until standalone scripts are added. Remove the fallback sos run lines
+# and replace with the renovated script path once available.
 #
-# Mirrors: eQTL_analysis_commands.ipynb and mnm_regression.ipynb
-#
-# SoS notebook called:
-#   - pipeline/mnm_regression.ipynb (susie_twas)
-#
-# Design note:
-#   rss_analysis.ipynb is for LD-reference-panel-based RSS fine-mapping
-#   (i.e., when you only have summary statistics + an external LD panel).
-#   For genotype-based fine-mapping (the default in this protocol), the
-#   correct notebook is mnm_regression.ipynb::susie_twas, which takes the
-#   same genotype/phenotype/covariate inputs as TensorQTL and runs SuSiE
-#   directly on individual-level data.
-#
-# Dependency:
-#   tensorqtl_cis (done file) → susie_twas → finemapping_plots
+# Expected future script locations:
+#   {renovated_code_dir}/mnm_analysis/mnm_regression.sh
+#   {renovated_code_dir}/mnm_analysis/rss_analysis.sh
 # ============================================================
+
+RENOVATED = config["renovated_code_dir"]
 
 # ------------------------------------
 # Step 6.1 — Univariate SuSiE fine-mapping + TWAS weights
 # ------------------------------------
-# Runs SuSiE on each cis-QTL region (defined by the TensorQTL output)
-# and simultaneously estimates TWAS weights via cross-validation.
-#
-# Inputs:
-#   --genoFile:    genotype_by_chrom_files.txt  (per-chrom plink list)
-#   --phenoFile:   phenotype_by_chrom_files.txt (per-chrom BED list)
-#   --covFile:     hidden factor file (Marchenko PC or PEER)
-#   tensorqtl_done: ensures TensorQTL finishes before fine-mapping
-#
-# Output: sentinel done file; actual RDS results are in {outdir}/susie_twas/
 rule susie_twas:
     """Run univariate SuSiE fine-mapping and compute TWAS weights for all loci."""
     input:
@@ -43,22 +26,22 @@ rule susie_twas:
     output:
         done = "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
     params:
-        pipeline_dir  = config["pipeline_dir"],
-        container     = config["containers"]["susie"],
-        outdir        = "{cwd}/finemapping/{theme}/susie_twas",
-        L             = config["finemapping"]["L"],
-        max_L         = config["finemapping"]["max_L"],
-        pip_cutoff    = config["finemapping"]["pip_cutoff"],
-        maf           = config["finemapping"]["maf"],
-        # min_twas_maf uses underscore (SoS preserves it for this parameter)
-        min_twas_maf  = config["finemapping"]["maf"],
+        pipeline_dir = config["pipeline_dir"],   # SoS fallback until native script exists
+        container    = config["containers"]["susie"],
+        outdir       = "{cwd}/finemapping/{theme}/susie_twas",
+        L            = config["finemapping"]["L"],
+        max_L        = config["finemapping"]["max_L"],
+        pip_cutoff   = config["finemapping"]["pip_cutoff"],
+        min_twas_maf = config["finemapping"]["maf"],
     threads: config["resources"]["finemapping"]["threads"]
     resources:
-        mem_mb   = config["resources"]["finemapping"]["mem_mb"],
+        mem_mb  = config["resources"]["finemapping"]["mem_mb"],
         runtime = config["resources"]["finemapping"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
+        # TODO: replace with native script when available:
+        #   bash {RENOVATED}/mnm_analysis/mnm_regression.sh susie_twas ...
         sos run {params.pipeline_dir}/mnm_regression.ipynb susie_twas \
             --cwd {params.outdir} \
             --genoFile {input.geno_list} \
@@ -76,28 +59,27 @@ rule susie_twas:
 # ------------------------------------
 # Step 6.2 — Fine-mapping credible set plots
 # ------------------------------------
-# Generates PIP lollipop plots for each credible set identified during
-# SuSiE fine-mapping. Uses the univariate_plot step from rss_analysis.ipynb,
-# which reads the RDS output from susie_twas.
 rule finemapping_plots:
     """Generate PIP plots for fine-mapped credible sets."""
     input:
-        done     = "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+        done = "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
     output:
         plots_done = "{cwd}/finemapping/{theme}/susie_twas_plots/.done_plots",
     params:
-        pipeline_dir    = config["pipeline_dir"],
+        pipeline_dir    = config["pipeline_dir"],   # SoS fallback until native script exists
         container       = config["containers"]["susie"],
         finemapping_dir = "{cwd}/finemapping/{theme}/susie_twas",
         outdir          = "{cwd}/finemapping/{theme}/susie_twas_plots",
         pip_cutoff      = config["finemapping"]["pip_cutoff"],
     threads: config["resources"]["default"]["threads"]
     resources:
-        mem_mb   = config["resources"]["default"]["mem_mb"],
+        mem_mb  = config["resources"]["default"]["mem_mb"],
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
         mkdir -p {params.outdir}
+        # TODO: replace with native script when available:
+        #   bash {RENOVATED}/mnm_analysis/rss_analysis.sh univariate_plot ...
         sos run {params.pipeline_dir}/rss_analysis.ipynb univariate_plot \
             --cwd {params.outdir} \
             --finemapping-dir {params.finemapping_dir} \
