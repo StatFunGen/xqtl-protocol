@@ -3,7 +3,7 @@
 # Tests: low-expression filter + RLE/D-statistic outlier removal
 PIPE=/home/user/xqtl-protocol/pipeline
 T=/tmp/xqtl_test
-sos run -n $PIPE/bulk_expression_QC.ipynb qc \
+sos run $PIPE/bulk_expression_QC.ipynb qc \
     --cwd $T/output \
     --tpm-gct $T/AC.rnaseqc.gene_tpm.gct.gz \
     --counts-gct $T/AC.rnaseqc.gene_reads.gct.gz \
@@ -11,4 +11,5 @@ sos run -n $PIPE/bulk_expression_QC.ipynb qc \
     --low-expr-TPM-percent 0.2 \
     --RLEFilterPercent 0.05 \
     --DSFilterPercent 0.05 \
-    --numThreads 4
+    --numThreads 4 \
+    -n

@@ -9,11 +9,12 @@
 # Until that rule exists, the sos call needs both --sample-list AND --bam-list.
 PIPE=/home/user/xqtl-protocol/pipeline
 T=/tmp/xqtl_test
-sos run -n $PIPE/RNA_calling.ipynb rnaseqc_call \
+sos run $PIPE/RNA_calling.ipynb rnaseqc_call \
     --cwd $T/output \
     --sample-list $T/AC_sample_fastq.list \
     --data-dir $T/fastq_AC \
     --bam-list $T/AC_bam_list.txt \
     --gtf $T/ERCC.gtf \
     --reference-fasta $T/ref.fasta \
-    --numThreads 4
+    --numThreads 4 \
+    -n

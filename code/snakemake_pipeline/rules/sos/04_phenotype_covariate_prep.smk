@@ -52,7 +52,7 @@ rule merge_pca_covariate:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.dry_run} {params.pipeline_dir}/covariate_formatting.ipynb merge_genotype_pc \
+        sos run {params.pipeline_dir}/covariate_formatting.ipynb merge_genotype_pc \
             --cwd {params.outdir} \
             --pcaFile {input.projected_rds} \
             --covFile {input.covariate_file} \
@@ -60,7 +60,7 @@ rule merge_pca_covariate:
             --tol-cov {params.tol_cov} \
             {params.mean_impute} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -89,13 +89,13 @@ rule phenotype_by_chrom:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.dry_run} {params.pipeline_dir}/phenotype_formatting.ipynb phenotype_by_chrom \
+        sos run {params.pipeline_dir}/phenotype_formatting.ipynb phenotype_by_chrom \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --name {wildcards.theme} \
             --chrom {params.chroms} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -128,14 +128,14 @@ rule marchenko_pc:
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/covariate_hidden_factor.ipynb Marchenko_PC \
+        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb Marchenko_PC \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \
             --N {params.n_factors} \
             {params.mean_impute_flag} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -167,7 +167,7 @@ rule peer_factors:
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/covariate_hidden_factor.ipynb PEER \
+        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb PEER \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \
@@ -175,5 +175,5 @@ rule peer_factors:
             --iteration {params.iterations} \
             --convergence_mode {params.convergence_mode} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """

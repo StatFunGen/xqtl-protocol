@@ -10,7 +10,7 @@ T=/tmp/xqtl_test
 
 PHENO_BEDS=$(awk 'NR>1 {print $2}' $T/phenotype_by_chrom_files.txt | tr '\n' ' ')
 
-sos run -n $PIPE/mnm_regression.ipynb susie_twas \
+sos run $PIPE/mnm_regression.ipynb susie_twas \
     --cwd $T/output \
     --name AC \
     --genoFile $T/genotype_by_chrom_files.txt \
@@ -20,4 +20,5 @@ sos run -n $PIPE/mnm_regression.ipynb susie_twas \
     --max-L 10 \
     --pip-cutoff 0.025 \
     --min_twas_maf 0.0025 \
-    --numThreads 4
+    --numThreads 4 \
+    -n

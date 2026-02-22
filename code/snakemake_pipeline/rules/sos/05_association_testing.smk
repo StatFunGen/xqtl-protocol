@@ -51,7 +51,7 @@ rule tensorqtl_cis:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.dry_run} {params.pipeline_dir}/TensorQTL.ipynb cis \
+        sos run {params.pipeline_dir}/TensorQTL.ipynb cis \
             --cwd {params.outdir} \
             --genotype-file {input.geno_list} \
             --phenotype-file {input.pheno_list} \
@@ -60,6 +60,6 @@ rule tensorqtl_cis:
             --MAC {params.mac} \
             --maf-threshold {params.maf} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         touch {output.done}
         """

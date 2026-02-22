@@ -37,12 +37,12 @@ rule fastqc:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.dry_run} {params.pipeline_dir}/RNA_calling.ipynb fastqc \
+        sos run {params.pipeline_dir}/RNA_calling.ipynb fastqc \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         touch {output.done}
         """
 
@@ -82,14 +82,14 @@ rule rnaseqc_call:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.dry_run} {params.pipeline_dir}/RNA_calling.ipynb rnaseqc_call \
+        sos run {params.pipeline_dir}/RNA_calling.ipynb rnaseqc_call \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
             --gtf {params.gtf} \
             --reference-fasta {params.fasta} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -120,7 +120,7 @@ rule bulk_expression_qc:
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/bulk_expression_QC.ipynb qc \
+        sos run {params.pipeline_dir}/bulk_expression_QC.ipynb qc \
             --cwd {params.outdir} \
             --tpm-gct {input.tpm_gct} \
             --counts-gct {input.counts_gct} \
@@ -129,7 +129,7 @@ rule bulk_expression_qc:
             --RLEFilterPercent {params.rle_filter_percent} \
             --DSFilterPercent {params.ds_filter_percent} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -167,7 +167,7 @@ rule bulk_expression_normalization:
         runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize \
+        sos run {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize \
             --cwd {params.outdir} \
             --counts-gct {input.count_filt} \
             --tpm-gct {input.tpm_filt} \
@@ -177,5 +177,5 @@ rule bulk_expression_normalization:
             --sample-frac-threshold {params.sample_frac_threshold} \
             --normalization-method {params.norm_method} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """

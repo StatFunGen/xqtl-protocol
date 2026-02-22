@@ -3,7 +3,7 @@
 # Tests: TMM-CPM-voom normalization to produce a BED.gz phenotype matrix
 PIPE=/home/user/xqtl-protocol/pipeline
 T=/tmp/xqtl_test
-sos run -n $PIPE/bulk_expression_normalization.ipynb normalize \
+sos run $PIPE/bulk_expression_normalization.ipynb normalize \
     --cwd $T/output \
     --counts-gct $T/AC.low_expr.count.gct.gz \
     --tpm-gct $T/AC.low_expr.tpm.gct.gz \
@@ -12,4 +12,5 @@ sos run -n $PIPE/bulk_expression_normalization.ipynb normalize \
     --count-threshold 6 \
     --sample-frac-threshold 0.2 \
     --normalization-method tmm_cpm_voom \
-    --numThreads 4
+    --numThreads 4 \
+    -n

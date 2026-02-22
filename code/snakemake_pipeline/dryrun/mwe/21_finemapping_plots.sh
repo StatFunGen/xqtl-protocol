@@ -20,9 +20,10 @@ PIPE=/home/user/xqtl-protocol/pipeline
 T=/tmp/xqtl_test
 
 echo "=== Checking rss_analysis.ipynb univariate_plot (non-_input params) ==="
-sos run -n $PIPE/rss_analysis.ipynb univariate_plot \
+sos run $PIPE/rss_analysis.ipynb univariate_plot \
     --cwd $T/output \
-    --numThreads 4 2>&1 || true
+    --numThreads 4 2>&1 || true \
+    -n
 echo
 echo "=== Snakemake shell block (for reference) ==="
 echo "find {finemapping_dir} -name '*.rds' | sort | while IFS= read -r rds; do"

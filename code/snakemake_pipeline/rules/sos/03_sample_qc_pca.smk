@@ -43,13 +43,13 @@ rule sample_match:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --phenoFile {input.phenotype_bed} \
             --name xqtl_protocol_data.plink_qc.{wildcards.theme} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -77,13 +77,13 @@ rule king_kinship:
         runtime = config["resources"]["high_mem"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb king \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb king \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --keep-samples {input.sample_genotypes} \
             --name xqtl_protocol_data.plink_qc.{wildcards.theme} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -114,7 +114,7 @@ rule unrelated_qc:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb qc \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc \
             --cwd {params.outdir} \
             --genoFile {input.unrelated_bed} \
             --mac-filter {params.mac_filter} \
@@ -122,7 +122,7 @@ rule unrelated_qc:
             --shift {params.ld_shift} \
             --r2 {params.ld_r2} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -150,13 +150,13 @@ rule related_qc:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
+        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
             --cwd {params.outdir} \
             --genoFile {input.related_bed} \
             --keep-variants {input.pruned_in} \
             --mac-filter {params.mac_filter} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -185,14 +185,14 @@ rule flashpca:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.dry_run} {params.pipeline_dir}/PCA.ipynb flashpca \
+        sos run {params.pipeline_dir}/PCA.ipynb flashpca \
             --cwd {params.outdir} \
             --genoFile {input.pruned_bed} \
             --k {params.n_pcs} \
             --maha-k {params.maha_k} \
             --prob {params.maha_prob} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
 
 # ------------------------------------
@@ -222,12 +222,12 @@ rule project_samples:
         runtime = config["resources"]["pca"]["runtime"],
     shell:
         """
-        sos run {params.dry_run} {params.pipeline_dir}/PCA.ipynb project_samples \
+        sos run {params.pipeline_dir}/PCA.ipynb project_samples \
             --cwd {params.outdir} \
             --genoFile {input.related_qc_bed} \
             --pca-model {input.pca_rds} \
             --maha-k {params.maha_k} \
             --prob {params.maha_prob} \
             --container {params.container} \
-            --numThreads {threads}
+            --numThreads {threads} {params.dry_run}
         """
