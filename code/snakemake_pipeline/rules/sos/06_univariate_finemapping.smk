@@ -46,6 +46,7 @@ rule susie_twas:
         pipeline_dir  = config["pipeline_dir"],
         container     = config["containers"]["susie"],
         outdir        = "{cwd}/finemapping/{theme}/susie_twas",
+        cis_window    = config["association"]["cis_window"],
         L             = config["finemapping"]["L"],
         max_L         = config["finemapping"]["max_L"],
         pip_cutoff    = config["finemapping"]["pip_cutoff"],
@@ -60,15 +61,24 @@ rule susie_twas:
     shell:
         """
         mkdir -p {params.outdir}
-        # mnm_regression phenoFile expects the actual per-chrom BED files (not the
-        # file-listing produced by phenotype_by_chrom); extract paths from column 2.
+        # TODO: DESIGN BUG — mnm_regression's get_analysis_regions step calls
+        # process_cis_files(), which treats column 4 of each phenotype BED as a
+        # FILE PATH to per-region phenotype data (not an expression value).
+        # The per-chrom expression BEDs from phenotype_by_chrom have float
+        # expression values in column 4, causing a TypeError at runtime.
+        # A data-prep rule that converts expression BEDs to the mnm BED format
+        # (col4 = path to per-region file) must be added upstream of this rule.
+        # For now, extract paths from column 2 of the file-listing as a placeholder.
         PHENO_BEDS=$(awk 'NR>1 {{print $2}}' {input.pheno_list} | tr '\n' ' ')
+        N_PHENO=$(awk 'END{{print NR-1}}' {input.pheno_list})
+        COV_FILES=$(python3 -c "print(' '.join(['{input.hidden_factors}'] * $N_PHENO))")
         sos run {params.pipeline_dir}/mnm_regression.ipynb susie_twas \
             --cwd {params.outdir} \
             --name {wildcards.theme} \
             --genoFile {input.geno_list} \
             --phenoFile $PHENO_BEDS \
-            --covFile {input.hidden_factors} \
+            --covFile $COV_FILES \
+            --cis-window {params.cis_window} \
             --init-L {params.L} \
             --max-L {params.max_L} \
             --pip-cutoff {params.pip_cutoff} \

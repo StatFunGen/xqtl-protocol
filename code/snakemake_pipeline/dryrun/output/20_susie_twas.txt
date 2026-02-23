@@ -1,22 +1,15 @@
 INFO: Checking [32mget_analysis_regions[0m: 
-[91mERROR[0m: [91mget_analysis_regions (id=7ab0deb5fba479d2) returns an error.[0m
-[91mERROR[0m: [91m[get_analysis_regions (regional_data)]: [0]: 
+INFO: [32mget_analysis_regions[0m is [32mcompleted[0m.
+INFO: [32mget_analysis_regions[0m output:   [32mregional_data[0m
+INFO: Checking [32msusie_twas[0m: 
+[91mERROR[0m: [91msusie_twas (id=4e21684c6c3e83af) returns an error.[0m
+[91mERROR[0m: [91m[susie_twas]: [0]: 
 ---------------------------------------------------------------------------
-TypeError                                 Traceback (most recent call last)
-script_8713977840572194179 in process_cis_files
-      
-              if not pheno_df.empty:
----->             pheno_df.iloc[:, 4] = adapt_file_path_all(pheno_df, pheno_df.columns[4], f"{pheno_path:a}")
-                  pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)
-                  accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
-      
-script_8713977840572194179 in <module>
-          meta_data = process_trans_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, customized_association_windows)
-      else:
----->     meta_data = process_cis_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, preload_id_map(phenoIDFile))
-      
-      if not meta_data.empty:
-          meta_data = meta_data.merge(geno_meta_data, on='#chr', how='inner')
+RuntimeError                              Traceback (most recent call last)
+script_3452645351346914390 in <module>
+----> R(fr"""options(warn=1)
+      library(pecotmr)
+      phenotype_files = c({",".join(['"%s"' % x.absolute() for x in _input[1:len(_input)//2+1]])})
+      covariate_files = c({",".join(['"%s"' % x.absolute() for x in _input[len(_input)//2+1:]])})
 
-TypeError: stat: path should be string, bytes, os.PathLike or integer, not float
-[susie_twas]: Exits with 1 pending step (susie_twas)[0m
+RuntimeError: Failed to locate interpreter Rscript[0m
