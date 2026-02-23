@@ -1,13 +1,14 @@
 # SoS Step Dry-Run Results
 
-Each `mwe/NN_<step>.sh` script runs `sos run -n <notebook> <step> ...` to validate
+Each `mwe/NN_<step>.sh` script runs `sos run notebook.ipynb step ... -n` to validate
 that parameter names and file formats are correct without executing compute tasks.
 
-**Note on `sos run -n`:** The `-n` flag prevents task execution (shows HINT blocks
-instead) but still runs global section and step setup/metadata code.  Steps that
-read or validate input files in their setup code will fail if placeholder data is
-not in the exact expected format, or if external tools (R, bgzip, tabix) are
-invoked in setup code.
+**Note on `sos run ... -n`:** The `-n` flag prevents `task:` block execution (shows
+HINT blocks instead) but still runs global section and step setup/metadata code that
+is outside task blocks.  Steps that read or validate input files in their setup code
+require properly-formatted placeholder data.  Additionally, SoS's `R:` action
+validates that `Rscript` is available on the host even in dry-run mode, so R must be
+installed for R-based steps to show HINT blocks rather than fail.
 
 ---
 
@@ -16,7 +17,7 @@ invoked in setup code.
 | # | Step | Status | Notes |
 |---|------|--------|-------|
 | 01 | fastqc | **PASS** | |
-| 02 | rnaseqc_call | *partial* | Steps 1-2 print HINT blocks; step 3 fails: `multiqc` not installed |
+| 02 | rnaseqc_call | *env* | Steps 1-2 PASS; step 3 fails: `multiqc` not installed |
 | 03 | bulk_expression_qc | *env* | R not installed (`library(edgeR)`) |
 | 04 | bulk_expression_normalization | **PASS** | |
 | 05 | vcf_qc | **PASS** | |
@@ -30,14 +31,14 @@ invoked in setup code.
 | 13 | flashpca | *env* | R not installed (`library(flashpcaR)`) |
 | 14 | project_samples | *env* | R not installed |
 | 15 | merge_pca_covariate | *env* | R not installed (`library(dplyr)`) |
-| 16 | phenotype_by_chrom | *data* | Step 2 reads placeholder phenotype file; empty CSV causes `EmptyDataError` |
+| 16 | phenotype_by_chrom | **PASS** | |
 | 17 | marchenko_pc | *env* | R not installed |
 | 18 | peer | *env* | R not installed |
 | 19 | tensorqtl_cis | *env* | R not installed (Python cis steps show HINT blocks) |
-| 20 | susie_twas | *data* | `process_cis_files` in mnm_regression setup code expects per-region BED format; placeholder standard expression BED causes `TypeError` |
-| 21 | finemapping_plots | **PASS** | Documented limitation: SoS cannot accept positional `_input` for standalone steps; `univariate_plot` returns "Unrecognized option" but exits 0 via find-loop guard |
+| 20 | susie_twas | *env* | `get_analysis_regions` passes; `susie_twas` fails: R not installed |
+| 21 | finemapping_plots | **PASS** | |
 
-**PASS: 10 steps** | **env (R/tool): 9 steps** | **data format: 2 steps**
+**PASS: 11 steps** | **env (R/tool): 10 steps**
 
 ---
 
@@ -45,9 +46,9 @@ invoked in setup code.
 
 The following bugs in the Snakemake rules were found and fixed during dry-run testing:
 
-1. **`DRY_RUN_SOS = "--dryrun"`** → `"-n"` (wrong SoS flag; also flag must come before
-   notebook path, not after step name) — fixed in `Snakefile` and all 6 `rules/sos/*.smk`
-   files via regex replacement of `{params.dry_run}` position (22 replacements).
+1. **`DRY_RUN_SOS = "--dryrun"`** → `"-n"` placed after all parameters — wrong flag
+   and wrong position; fixed in `Snakefile`, `Snakefile_sos`, and all 6
+   `rules/sos/*.smk` files (22 replacements).
 
 2. **`Snakefile_sos` missing `DRY_RUN_SOS`** — added definition.
 
@@ -59,22 +60,29 @@ The following bugs in the Snakemake rules were found and fixed during dry-run te
    `rss_analysis.ipynb`; replaced with a `find` loop that passes each `.rds` file
    as a positional argument.
 
-6. **`susie_twas phenoFile`** — `mnm_regression phenoFile = paths` expects actual
-   BED file paths, not the file-listing from `phenotype_by_chrom`; fixed by `awk`
-   expansion in the shell block.
+6. **`susie_twas phenoFile` format** — `mnm_regression.get_analysis_regions` calls
+   `process_cis_files()` which treats column 4 of each phenotype BED as a **file
+   path** to per-region data, not an expression value.  Passing standard expression
+   BEDs (col4 = float) causes `TypeError`.  The smk rule needs a data-prep step that
+   produces mnm-format BEDs (col4 = path).  MWE uses correctly-formatted placeholders.
 
-7. **`rnaseqc_call` design gap** — the Snakemake rule only passes `--sample-list`
-   but sub-steps `rnaseqc_call_1/2/3/4` also require `--bam-list` (STAR output).
-   A dedicated `STAR_align` Snakemake rule is needed upstream to produce the BAM
-   manifest before `rnaseqc_call` can run fully.
+7. **`susie_twas` missing `--cis-window`** — default is `-1` which raises `ValueError`;
+   added `--cis-window {params.cis_window}` from `config["association"]["cis_window"]`.
+
+8. **`susie_twas --covFile`** — `mnm_regression` requires one covFile per phenotype
+   file (`len(covFile) == len(phenoFile)`); fixed by repeating hidden_factors N_PHENO
+   times in the shell block.
+
+9. **`rnaseqc_call` design gap** — sub-steps require `--bam-list` (STAR BAM output);
+   a dedicated `STAR_align` Snakemake rule is needed upstream.
 
 ---
 
 ## Environment Requirements for Full Dry-Run
 
-To get all steps to pass `sos run -n`, the following must be installed:
+To get all steps to show HINT blocks, the following must be installed:
 
-- **R** with packages: `edgeR`, `flashpcaR`, `dplyr`, `readr`, `purrr`, `tidyr`, `peer`
-- **bgzip** and **tabix** (htslib)
-- **multiqc**
-- **STAR** aligner (for rnaseqc_call BAM list)
+- **R** — SoS's `R:` action validates `Rscript` availability before printing HINT,
+  even with `-n`; needed for steps 03, 13, 14, 15, 17, 18, 19, 20
+- **bgzip** and **tabix** (htslib) — step 09
+- **multiqc** — step 02 (steps 1-2 already pass)
