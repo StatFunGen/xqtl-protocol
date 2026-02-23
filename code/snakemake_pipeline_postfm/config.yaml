@@ -1,0 +1,164 @@
+# ============================================================
+# xQTL Post-Finemapping Pipeline — Example Configuration
+# ============================================================
+# Copy this file to config.yaml (or keep as-is) and adjust
+# every path / flag for your environment.
+#
+# Run the pipeline with:
+#   snakemake --configfile config.yaml --cores <N> [--use-singularity]
+# ============================================================
+
+# ── Working / output directory ───────────────────────────────────────────────
+cwd: "/path/to/output"
+
+# ── xqtl-protocol pipeline directory (contains *.ipynb notebooks) ───────────
+pipeline_dir: "/path/to/xqtl-protocol/pipeline"
+
+# ── Input: root folder that holds per-theme finemapping results ──────────────
+# Expected layout: {finemapping_dir}/{theme}/susie_twas/*.rds
+# This matches the default output of rule susie_twas in the main pipeline.
+finemapping_dir: "/path/to/finemapping"
+
+# ── Set to true to print commands without executing them ─────────────────────
+dry_run: false
+
+# ── Themes (tissues / cell-types / molecular phenotype groups) ───────────────
+# Each entry must have a "name" key that matches the subdirectory name inside
+# finemapping_dir.  All other keys are optional overrides.
+themes:
+  - name: "AC"
+
+    # Optional: override the default susie_twas subdirectory for this theme.
+    # Defaults to {finemapping_dir}/{name}/susie_twas when left empty.
+    finemapping_subdir: ""
+
+    # ── Per-theme individual-level data paths (needed by ColocBoost) ─────────
+    # Point to the same files used during the main pipeline run.
+    geno_file:  ""   # path to genotype_by_chrom_files.txt
+    pheno_file: ""   # path to {theme}.phenotype_by_chrom_files.txt
+    cov_file:   ""   # path to hidden-factor covariate file
+
+    # ── Per-theme GWAS analysis inputs (optional; override global gwas block) ─
+    # Leave all empty to inherit from the global gwas block below.
+    gwas:
+      xqtl_meta_data: ""   # TSV: study_id, context, region, rds_path
+      gwas_meta_data: ""   # TSV: study_id, chrom, sumstats_path, n_sample
+      ld_meta_data:   ""   # TSV: chrom, start, end, ld_path
+      region_list:    ""   # BED file with analysis regions
+
+
+# ── Containers (Singularity/Apptainer image URIs) ───────────────────────────
+containers:
+  susie:   "oras://ghcr.io/statfungen/stephenslab_apptainer:latest"
+  bioinfo: "oras://ghcr.io/statfungen/bioinfo_apptainer:latest"
+
+
+# ── Post-processing parameters ───────────────────────────────────────────────
+postprocessing:
+  pip_thres:  0.05   # PIP threshold for credible-set variant export
+  lfsr_thres: 0.01   # Local false sign rate threshold
+  cs_size:    3      # Minimum number of variants per credible set to export
+
+
+# ── GWAS-dependent analyses (TWAS, SuSiE-ENLOC, ColocBoost) ─────────────────
+# Set enabled: true and fill in the path fields to activate these rules.
+gwas:
+  enabled: false
+
+  # Global metadata paths — used for all themes unless overridden per-theme.
+  # xqtl_meta_data: TSV with columns study_id, context, region, rds_path
+  #   pointing to the per-region susie_twas *.rds finemapping results.
+  xqtl_meta_data: ""
+
+  # gwas_meta_data: TSV with columns study_id, chrom, sumstats_path,
+  #   column_mapping_file, n_sample.
+  gwas_meta_data: ""
+
+  # ld_meta_data: TSV with columns chrom, start, end, ld_path
+  #   (pre-computed LD reference matrices).
+  ld_meta_data: ""
+
+  # region_list: BED file defining the genomic regions to analyse.
+  region_list: ""
+
+  # ColocBoost fine-mapping QC thresholds
+  colocboost:
+    maf: 0.0025
+    mac: 5
+
+
+# ── Enrichment analyses ──────────────────────────────────────────────────────
+enrichment:
+
+  # ── EOO Annotation Enrichment ─────────────────────────────────────────────
+  annotation:
+    enabled: false
+    # TSV with CHR, BP columns followed by binary annotation columns (0/1).
+    baseline_anno_path: ""
+
+  # ── KEGG Pathway Enrichment (GSEA) ────────────────────────────────────────
+  pathway:
+    enabled: false
+    # TSV with columns [group, gene_id]; leave empty to auto-derive
+    # from the top-loci export.
+    genes_file: ""
+    organism: "hsa"   # KEGG organism code (hsa = Homo sapiens)
+
+  # ── Stratified LD Score Regression (S-LDSC) ───────────────────────────────
+  # Also requires gwas.enabled: true (needs GWAS summary statistics).
+  sldsc:
+    enabled: false
+
+    # List of annotation names to run; each becomes an {annotation_name}
+    # wildcard.  Must match the annotation columns in annotation_file.
+    annotation_names:
+      - "H3K27ac"
+      - "open_chromatin"
+
+    # Annotation file: BED/TSV with binary annotation columns
+    annotation_file: ""
+
+    # Reference annotation file (e.g., baseline annotations from LDSC)
+    reference_anno_file: ""
+
+    # Genome reference file (PLINK BED prefix for LD computation)
+    genome_ref_file: ""
+
+    # PolyFun installation path (required by sldsc_enrichment.ipynb)
+    polyfun_path: ""
+
+    # GWAS summary statistics directory and trait list
+    sumstat_dir:     ""   # directory containing per-trait munged sumstats
+    all_traits_file: ""   # TSV listing all GWAS traits to test
+
+    # Pre-computed baseline LD scores and regression weights
+    baseline_ld_dir: ""
+    weights_dir:     ""
+
+
+# ── Compute resources ────────────────────────────────────────────────────────
+resources:
+  default:
+    threads: 8
+    mem_mb:  16000
+    runtime: 720     # minutes
+
+  twas:
+    threads: 8
+    mem_mb:  32000
+    runtime: 1440
+
+  coloc:
+    threads: 8
+    mem_mb:  32000
+    runtime: 1440
+
+  colocboost:
+    threads: 8
+    mem_mb:  32000
+    runtime: 1440
+
+  enrichment:
+    threads: 8
+    mem_mb:  16000
+    runtime: 720
