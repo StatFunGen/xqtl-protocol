@@ -1,13 +1,239 @@
 INFO: Checking [32mcomputing residual on merged covariates[0m: 
-[91mERROR[0m: [91mcomputing residual on merged covariates (id=5f49125bcebdda67) returns an error.[0m
-[91mERROR[0m: [91m[PEER_1]: [0]: 
----------------------------------------------------------------------------
-RuntimeError                              Traceback (most recent call last)
-script_8824646157087055021 in <module>
-----> R(fr"""
-      mean_impute <- function(d){{
-        f <- apply(d, 2, function(x) mean(x, na.rm = TRUE))
-        for (i in 1:length(f)) d[,i][which(is.na(d[,i]))] <- f[i]
+HINT: Rscript SCRIPT
 
-RuntimeError: Failed to locate interpreter Rscript
-[PEER]: Exits with 2 pending steps (PEER_2, PEER_3)[0m
+mean_impute <- function(d){
+  f <- apply(d, 2, function(x) mean(x, na.rm = TRUE))
+  for (i in 1:length(f)) d[,i][which(is.na(d[,i]))] <- f[i]
+  return(d)
+}
+
+library(dplyr)
+library(readr)
+pheno = read_delim('/tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz',delim = "\t")
+covariate= read_delim('/tmp/xqtl_test/merged_cov.gz',delim = "\t") 
+
+# Extract samples in both files (Outliers will be removed in here as they are no longer presented in the header of factor)
+extraction_sample_list <- intersect(colnames(pheno), colnames(covariate)) 
+
+
+if(length(extraction_sample_list) == 0){
+  stop("No samples are overlapped in two files!")
+}
+
+## Report sample counts:
+print(paste((ncol(pheno) - 4), "samples are in the phenotype file", sep = " "))
+print(paste((ncol(covariate) - 1), "samples are in the covariate file", sep = " "))
+
+## Report identical samples:
+print(paste(length(extraction_sample_list), "samples overlap between phenotype & covariate files and are included in the analysis:", sep = " "))
+print(extraction_sample_list)
+
+## Report non-overlapping samples :
+covariate_missing = covariate %>% select(-all_of('#id')) %>% select(-all_of(extraction_sample_list))
+print(paste(ncol(covariate_missing), "samples in the covariate file are missing from the phenotype file:", sep = " "))
+print(colnames(covariate_missing))
+
+pheno_missing = pheno %>% select(-c(1:4)) %>% select(-all_of(extraction_sample_list))
+print(paste(ncol(pheno_missing), "samples in the phenotype file are missing from the covariate file:", sep = " "))
+print(colnames(pheno_missing))
+
+# Subset the data:
+covariate = covariate[,extraction_sample_list]%>%as.matrix()%>%t()
+pheno_id = pheno%>%select(1:4)
+pheno = pheno%>%select(all_of(rownames(covariate)))%>%as.matrix()%>%t()
+if (F) {
+  pheno = mean_impute(pheno)
+} else {
+  if(sum(is.na(pheno)) > 0){ stop("NA in phenotype input is not allowed!") }
+}
+# Get residual 
+pheno_resid = .lm.fit(x = cbind(1,covariate), y = pheno)$residuals
+pheno_output = cbind(pheno_id, pheno_resid%>%t())
+pheno_output%>%write_delim("/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed",delim = "\t")
+
+
+
+HINT: /bin/bash SCRIPT
+bgzip -f /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed
+tabix -p bed /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz
+
+stdout=/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.stdout 
+for i in /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz ; do 
+echo "output_info: $i " >> $stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> $stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> $stdout;
+echo "output_column:" `zcat $i | head -1 | wc -w `   >> $stdout;
+echo "output_preview:"   >> $stdout;
+zcat $i | head  | cut -f 1,2,3,4,5,6   >> $stdout ; done
+
+
+
+INFO: [32mcomputing residual on merged covariates[0m is [32mcompleted[0m.
+INFO: [32mcomputing residual on merged covariates[0m output:   [32m/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz[0m
+INFO: Checking [32mPEER_2[0m: 
+HINT: python SCRIPT
+from mofapy2.run.entry_point import entry_point
+import pandas as pd
+import os
+## Force the number of threads used in numpy.
+os.environ["OMP_NUM_THREADS"] = "4" # export OMP_NUM_THREADS=4
+os.environ["OPENBLAS_NUM_THREADS"] = "4" # export OPENBLAS_NUM_THREADS=4 
+os.environ["MKL_NUM_THREADS"] = "4" # export MKL_NUM_THREADS=6
+import numpy as np
+## Data
+data = pd.read_csv('/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz',"\t",index_col = 3).drop(["#chr","start","end"],axis = 1)
+# initialise the entry point
+ent = entry_point()
+# Guess number of factor
+# Suggest the number of factors to use if no input value
+num_factor = 0
+if num_factor == 0:
+    if len(data.columns) < 150:
+        num_factor = 15
+    elif len(data.columns) < 250:
+        num_factor = 30
+    elif len(data.columns) < 350:
+        num_factor = 45
+    else:
+        num_factor = 60
+# Set data
+# MOFA is a multi-view and multi-group inference framework. 
+# If usig only a single view and a single group (as in PEER), the data needs to be embedded into a nested list
+ent.set_data_matrix([[data.transpose()]],samples_names=[data.columns.values.tolist()], features_names=[data.index.values.tolist()])
+ent.set_model_options(factors= num_factor , spikeslab_weights=False, ard_weights=False)
+ent.set_train_options(iter=1000, convergence_mode="fast" , startELBO=1, freqELBO=1,tolerance=0.001, gpu_mode=False, verbose=True, seed=42)
+ent.build()
+ent.run()
+ent.save('/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER_MODEL.hd5')
+## To fix issue https://github.com/statfungen/xqtl-protocol/issues/420
+import h5py
+right_name = [x.encode("UTF-8") for x in  ent.data_opts["features_names"][0]] 
+new_hd5 = h5py.File('/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER_MODEL.hd5', "r+")
+del new_hd5["features/view0"]
+new_hd5["features"].create_dataset("view0", data=np.array(right_name))
+new_hd5.close()
+
+
+
+INFO: [32mPEER_2[0m is [32mcompleted[0m.
+INFO: [32mPEER_2[0m output:   [32m/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER_MODEL.hd5[0m
+INFO: Checking [32mPEER_3[0m: 
+HINT: Rscript SCRIPT
+####################
+## Load libraries ##
+####################
+
+library(MOFA2)
+library(dplyr)
+library(readr)
+################
+## Load model ##
+################
+
+file <- "/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER_MODEL.hd5"
+model <- load_model(file)
+
+####################################
+## (Optional) add sample metadata ##
+####################################
+
+# Important: 
+# (1) the row names in the sample metadata data.frame have to match the sample names in the MOFA model
+# (2) the sample name has to contain at least two columns: 
+# 		- sample: sample names
+#		- group: group name. Only required for multi-group inference. In your case just set the entire column to the same value
+
+# Load metadata
+
+# stopifnot(all(samples(model)[[1]]==metadata$sample))
+# samples_metadata(model) <- metadata
+
+###############################
+## (Optional) Subset factors ##
+###############################
+
+# We can remove factors that explain little variance (in this case, we require at least 0.01%)
+# r2 <- model@cache$variance_explained$r2_per_factor
+# factors <- sapply(r2, function(x) x[,1]>0.0001)
+# model <- subset_factors(model, which(apply(factors,1,sum) >= 1))
+
+# fetch factors in matrix format, with dimensions (nfactors,nsamples)
+factors <- get_factors(model)[[1]]
+dim(factors)
+factors = as_tibble(t(factors),rownames = "#id")
+covPath = "/tmp/xqtl_test/merged_cov.gz"
+options(readr.show_col_types = FALSE)
+covDF <- read_delim(covPath, delim = '\t')
+commonMPSamples <- intersect(colnames(covDF), colnames(factors))      
+(rbind(covDF[, commonMPSamples], factors[, commonMPSamples])%>%write_delim("/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.gz","\t"))
+# Plot save to vcf
+pdf("/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.diag.pdf")
+#############################
+## Plot variance explained ##
+#############################
+
+# Plot variance explained using individual factors
+plot_variance_explained(model, factors="all")
+plot_variance_explained(model, factors=c(1,2,3))
+
+# Plot total variance explained using all factors
+plot_variance_explained(model, plot_total = TRUE)[[2]]
+
+########################
+## Plot factor values ##
+########################
+
+plot_factor(model, factor = 1)
+plot_factors(model, factor = c(1,2))
+
+###########################
+## Plot feature loadings ##
+###########################
+
+# The weights or loadings provide a score for each gene on each factor. 
+# Genes with no association with the factor are expected to have values close to zero
+# Genes with strong association with the factor are expected to have large absolute values. 
+# The sign of the loading indicates the direction of the effect: a positive loading indicates that the feature is more active in the cells with positive factor values, and viceversa.
+
+# Plot the distribution of loadings for Factor 1.
+plot_weights(model,
+  view = 1,
+  factor = 1,
+  nfeatures = 10,     # Top number of features to highlight
+  scale = T           # Scale loadings from -1 to 1
+)
+
+# If you are not interested in the full distribution, but just on the top loadings:
+plot_top_weights(model, 
+  view = 1, 
+  factor = 1, 
+  nfeatures = 10,
+  scale = T
+)
+
+######################################
+## Plot correlation between factors ##
+######################################
+
+plot_factor_cor(model)
+
+###################
+## Fetch factors ##
+###################
+invisible(dev.off())
+
+
+HINT: /bin/bash SCRIPT
+for i in /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.gz ; do 
+echo "output_info $i " >> /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.stdout;
+echo "output_column:" `zcat $i | head -1 | wc -w `   >> /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.stdout;
+echo "output_preview:"   >> /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.stdout;
+zcat $i | head  | cut -f 1,2,3,4,5,6   >> /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.stdout ; done
+
+
+
+INFO: [32mPEER_3[0m is [32mcompleted[0m.
+INFO: [32mPEER_3[0m output:   [32m/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.gz /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.PEER.diag.pdf[0m
+INFO: Workflow PEER (ID=w6ff69ac1934a4b85) is tested successfully with 3 completed steps.

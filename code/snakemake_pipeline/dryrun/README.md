@@ -17,28 +17,28 @@ installed for R-based steps to show HINT blocks rather than fail.
 | # | Step | Status | Notes |
 |---|------|--------|-------|
 | 01 | fastqc | **PASS** | |
-| 02 | rnaseqc_call | *env* | Steps 1-2 PASS; step 3 fails: `multiqc` not installed |
-| 03 | bulk_expression_qc | *env* | R not installed (`library(edgeR)`) |
+| 02 | rnaseqc_call | *design* | Steps 1-2 PASS; step 3 fails: `report()` action runs outside `task:` block and requires real STAR BAM input (see design gap 9) |
+| 03 | bulk_expression_qc | **PASS** | |
 | 04 | bulk_expression_normalization | **PASS** | |
 | 05 | vcf_qc | **PASS** | |
 | 06 | vcf_to_plink | **PASS** | |
 | 07 | genotype_by_chrom | **PASS** | |
 | 08 | plink_qc | **PASS** | |
-| 09 | sample_match | *env* | `bgzip`/`tabix` not installed |
+| 09 | sample_match | **PASS** | |
 | 10 | king_kinship | **PASS** | |
 | 11 | unrelated_qc | **PASS** | |
 | 12 | related_qc | **PASS** | |
-| 13 | flashpca | *env* | R not installed (`library(flashpcaR)`) |
-| 14 | project_samples | *env* | R not installed |
-| 15 | merge_pca_covariate | *env* | R not installed (`library(dplyr)`) |
+| 13 | flashpca | **PASS** | |
+| 14 | project_samples | **PASS** | |
+| 15 | merge_pca_covariate | **PASS** | |
 | 16 | phenotype_by_chrom | **PASS** | |
-| 17 | marchenko_pc | *env* | R not installed |
-| 18 | peer | *env* | R not installed |
-| 19 | tensorqtl_cis | *env* | R not installed (Python cis steps show HINT blocks) |
-| 20 | susie_twas | *env* | `get_analysis_regions` passes; `susie_twas` fails: R not installed |
+| 17 | marchenko_pc | **PASS** | |
+| 18 | peer | **PASS** | |
+| 19 | tensorqtl_cis | **PASS** | |
+| 20 | susie_twas | **PASS** | |
 | 21 | finemapping_plots | **PASS** | |
 
-**PASS: 11 steps** | **env (R/tool): 10 steps**
+**PASS: 20 steps** | **design gap: 1 step (02)**
 
 ---
 
@@ -80,9 +80,16 @@ The following bugs in the Snakemake rules were found and fixed during dry-run te
 
 ## Environment Requirements for Full Dry-Run
 
-To get all steps to show HINT blocks, the following must be installed:
+The following tools must be installed to reproduce the results above (20/21 PASS).
+All three are now present in the test environment:
 
-- **R** — SoS's `R:` action validates `Rscript` availability before printing HINT,
-  even with `-n`; needed for steps 03, 13, 14, 15, 17, 18, 19, 20
-- **bgzip** and **tabix** (htslib) — step 09
-- **multiqc** — step 02 (steps 1-2 already pass)
+- **R** (≥ 4.3) — SoS's `R:` action validates `Rscript` availability before printing
+  HINT, even with `-n`; needed for steps 03, 13, 14, 15, 17, 18, 19, 20
+- **bgzip** and **tabix** (htslib) — step 09 declares them via `input: executable()`
+  which SoS resolves before `-n` takes effect
+- **multiqc** — step 02 steps 1-2; step 3 still fails due to design gap (see above)
+
+The one remaining failure (step 02 step 3) is a pipeline design gap, not an
+environment issue: `RNA_calling.ipynb` calls `report()` outside a `task:` block,
+so it executes even under `-n` and requires real STAR BAM input files that a
+dedicated upstream `STAR_align` rule must produce.

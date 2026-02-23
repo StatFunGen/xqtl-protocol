@@ -1,12 +1,92 @@
 INFO: Checking [32mmerge_genotype_pc[0m: 
-[91mERROR[0m: [91mmerge_genotype_pc (id=c56a8bc57f8c0cf6) returns an error.[0m
-[91mERROR[0m: [91m[merge_genotype_pc]: [0]: 
----------------------------------------------------------------------------
-RuntimeError                              Traceback (most recent call last)
-script_3404915845431912758 in <module>
-----> R(fr"""library("dplyr")
-      library("readr")
-      library("data.table")
-      
+HINT: Rscript SCRIPT
+library("dplyr")
+library("readr")
+library("data.table")
 
-RuntimeError: Failed to locate interpreter Rscript[0m
+compute_missing <- function(mtx){
+  miss <- sum(is.na(mtx))/length(mtx)
+  return(miss)
+}
+
+mean_impute <- function(mtx){
+  f <- apply(mtx, 2, function(x) mean(x,na.rm = TRUE))
+  for (i in 1:length(f)) mtx[,i][which(is.na(mtx[,i]))] <- f[i]
+  return(mtx)
+}
+
+filter_mtx <- function(X, missing_rate_thresh) {
+    rm_col <- which(apply(X, 2, compute_missing) > missing_rate_thresh)
+    if (length(rm_col)) X <- X[, -rm_col]
+    return(mean_impute(X))
+}  
+
+if (TRUE) {
+  pca_output = readRDS("/tmp/xqtl_test/AC.pca.projected.rds")$pc_scores
+} else {
+  pca_putput = fread("/tmp/xqtl_test/AC.pca.projected.rds")
+}
+
+mtx = pca_output%>%select(contains("PC"))%>%t()
+colnames(mtx) <- pca_output$IID
+## Keep only the number of PCs specified
+mtx = mtx[1:20,]
+mtx = mtx%>%as_tibble(rownames = "#id")
+## Load covariates
+covt = transpose(fread("/tmp/xqtl_test/AC.covariates.cov.gz", head=T), keep.names="#id", make.names=1) %>% as_tibble()
+
+## Retaining only the overlapped samples with genotype
+overlap = intersect(colnames(covt),colnames(mtx))
+
+## Report sample counts:
+print(paste(ncol(covt) - 1, "samples are in the covariate file", sep = " "))
+print(paste(ncol(mtx), "samples are in the PCA file", sep = " "))
+
+## Report identical samples:
+print(paste(length(overlap) - 1, "samples overlap between covariate & PCA files and are included in the analysis:", sep = " "))
+print(overlap[!overlap == '#id'])
+
+## Report non-overlapping samples:
+cov_missing = covt %>% select(-all_of(overlap))
+print(paste(ncol(cov_missing), "samples in the covariate file are missing from the PCA file:", sep = " "))
+print(colnames(cov_missing))
+
+pca_missing = mtx %>% select(-all_of(overlap))
+print(paste(ncol(pca_missing), "samples in the PCA file are missing from the covariate file:", sep = " "))
+print(colnames(pca_missing))
+
+## Removal of outlier if needed
+if (FALSE){
+      outlier = fread(".", head = FALSE)$V2 %>% as_tibble()
+      overlap = setdiff(overlap,outlier)
+      }
+covt = covt%>%select(all_of(overlap))
+
+mtx = mtx%>%select(all_of(overlap))
+output = bind_rows(covt,mtx)
+
+## Handle missingess in covariates
+if(0.3 == -1){if(sum(is.na(output)) > 0 ){ stop("NA in covariates input: Check input file or set parameter tol_cov to allow for removing missing values; mean_impute to allow for imputing missing values")}}
+output = output%>%as.data.frame
+rownames(output) = output$`#id`
+output = filter_mtx(output[,2:ncol(output)],0.3)%>%as_tibble(rownames = "#id")
+output%>%write_delim("/tmp/xqtl_test/output/AC.covariates.cov.AC.pca.projected.gz","\t")
+
+
+
+HINT: /bin/bash SCRIPT
+stdout=/tmp/xqtl_test/output/AC.covariates.cov.AC.pca.projected.stdout 
+for i in /tmp/xqtl_test/output/AC.covariates.cov.AC.pca.projected.gz ; do 
+echo "output_info: $i " >> $stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> $stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> $stdout;
+echo "output_column:" `zcat $i | head -1 | wc -w `   >> $stdout;
+echo "output_preview:"   >> $stdout;
+zcat $i | head  | cut -f 1,2,3,4,5,6   >> $stdout ; done
+
+
+
+
+INFO: [32mmerge_genotype_pc[0m is [32mcompleted[0m.
+INFO: [32mmerge_genotype_pc[0m output:   [32m/tmp/xqtl_test/output/AC.covariates.cov.AC.pca.projected.gz[0m
+INFO: Workflow merge_genotype_pc (ID=w075095e2082de9c8) is tested successfully with 1 completed step.
