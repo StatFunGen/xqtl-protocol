@@ -1,5 +1,5 @@
 INFO: Input samples are paired-end sequences.
-INFO: Checking [32mrnaseqc_call_1[0m: 
+INFO: Checking rnaseqc_call_1: 
 HINT: /bin/bash SCRIPT
 cd /tmp/xqtl_test/output && \
 rnaseqc \
@@ -20,9 +20,9 @@ gzip /tmp/xqtl_test/output/sample1.rnaseqc.gene_tpm.gct /tmp/xqtl_test/output/sa
 
 
 
-INFO: [32mrnaseqc_call_1[0m is [32mcompleted[0m.
-INFO: [32mrnaseqc_call_1[0m output:   [32m/tmp/xqtl_test/output/sample1.rnaseqc.gene_tpm.gct.gz /tmp/xqtl_test/output/sample1.rnaseqc.gene_reads.gct.gz... (4 items)[0m
-INFO: Checking [32mrnaseqc_call_2[0m: 
+INFO: rnaseqc_call_1 is completed.
+INFO: rnaseqc_call_1 output:   /tmp/xqtl_test/output/sample1.rnaseqc.gene_tpm.gct.gz /tmp/xqtl_test/output/sample1.rnaseqc.gene_reads.gct.gz... (4 items)
+INFO: Checking rnaseqc_call_2: 
 HINT: python SCRIPT
 import pandas as pd
 import os
@@ -96,24 +96,159 @@ for h,tsv in zip(annotation_headers, annotation_tsvs):
 metrics_df.to_csv(os.path.join(output_dir, prefix+'.metrics.tsv'), sep='\t', index=False, float_format='%.8g')
 
 
-INFO: [32mrnaseqc_call_2[0m is [32mcompleted[0m.
-INFO: [32mrnaseqc_call_2[0m output:   [32m/tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_tpm.gct.gz /tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_readsCount.gct.gz... (4 items)[0m
-INFO: Checking [32mrnaseqc_call_3[0m: 
-HINT: report:
+INFO: rnaseqc_call_2 is completed.
+INFO: rnaseqc_call_2 output:   /tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_tpm.gct.gz /tmp/xqtl_test/output/AC_bam_list.rnaseqc.gene_readsCount.gct.gz... (4 items)
+INFO: Checking rnaseqc_call_3: 
+HINT: /bin/bash SCRIPT
+cat > /tmp/xqtl_test/output/AC_bam_list.rnaseqc.multiqc_report.multiqc_config.yml << 'MULTIQC_EOF'
 extra_fn_clean_exts:
     - '_rsem'
 fn_ignore_dirs:
     - '*_STARpass1'
+MULTIQC_EOF
+multiqc /tmp/xqtl_test/output /tmp/xqtl_test/output /tmp/xqtl_test/output /tmp/xqtl_test/output -v -n AC_bam_list.rnaseqc.multiqc_report.html -o /tmp/xqtl_test/output -c /tmp/xqtl_test/output/AC_bam_list.rnaseqc.multiqc_report.multiqc_config.yml
 
-[91mERROR[0m: [91mrnaseqc_call_3 (id=42d616f568a6e1f2) returns an error.[0m
-[91mERROR[0m: [91m[rnaseqc_call_3]: [0]: 
----------------------------------------------------------------------------
-RuntimeError                              Traceback (most recent call last)
-script_6201137078330106768 in <module>
-----> report("extra_fn_clean_exts:\n    - '_rsem'\nfn_ignore_dirs:\n    - '*_STARpass1'\n", output = f"{_output:n}.multiqc_config.yml")
-      bash(fr"""multiqc {_input:d} -v -n {_output:b} -o {_output:d} -c {_output:n}.multiqc_config.yml
-      
-      """, container=container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', entrypoint=entrypoint)
 
-RuntimeError: Output target /tmp/xqtl_test/output/AC_bam_list.rnaseqc.multiqc_report.multiqc_config.yml does not exist after completion of action report
-[rnaseqc_call]: Exits with 1 pending step (rnaseqc_call_4)[0m
+
+INFO: rnaseqc_call_3 is completed.
+INFO: rnaseqc_call_3 output:   /tmp/xqtl_test/output/AC_bam_list.rnaseqc.multiqc_report.html
+INFO: Checking rnaseqc_call_4: 
+HINT: Rscript SCRIPT
+## Define Function
+readPicard.alignment_summary_metrics <- function (source) {
+  stopifnot(length(source) == 1)
+  stopifnot(file.exists(source))
+  isDir <- file.info(source)$isdir
+  if (isDir) {
+    files <- system(paste("find -L", source, "-name \"*.alignment_summary_metrics\""), intern=TRUE)
+    stopifnot(length(files) > 0)
+    samples <- gsub(".alignment_summary_metrics", "", basename(files), fixed=TRUE)
+  } else {
+    files <- source
+    samples <- gsub(".alignment_summary_metrics", "", basename(files), fixed=TRUE)
+  }
+
+  metrics <- list()
+  for (i in 1:length(files)) {
+    m <- read.table(files[i], header=TRUE, sep="\t", comment.char="#", stringsAsFactors=FALSE, nrows=1+1)
+    metrics[[i]] <- data.frame(Sample=samples[i],
+                               File=files[i],
+                               PF_READS=sum(m$PF_READS[1:2]),
+                               PF_READS_ALIGNED=sum(m$PF_READS_ALIGNED[1:2]),
+                               PCT_PF_READS_ALIGNED=sum(m$PF_READS_ALIGNED[1:2])/sum(m$PF_READS[1:2]),
+                               stringsAsFactors=FALSE)
+  }
+  metrics <- do.call(rbind, metrics)
+  row.names(metrics) <- metrics$Sample
+
+  return(metrics)
+}
+
+readPicard.rna_metrics <- function(source) {
+
+  stopifnot(length(source) == 1)
+  stopifnot(file.exists(source))
+  isDir <- file.info(source)$isdir
+  if (isDir) {
+    files <- system(paste("find -L", source, "-name \"*.rna_metrics\""), intern=TRUE)
+    stopifnot(length(files) > 0)
+    samples <- gsub(".rna_metrics", "", basename(files), fixed=TRUE)
+  } else {
+    files <- source
+    samples <- gsub(".rna_metrics", "", basename(files), fixed=TRUE)
+  }
+
+  metrics <- list()
+  for (i in 1:length(files)) {
+    m <- read.table(files[i], header=TRUE, sep="\t", comment.char="#", stringsAsFactors=FALSE, nrows=1)
+    metrics[[i]] <- data.frame(Sample=samples[i],
+                               File=files[i],
+                               PCT_RIBOSOMAL_BASES=m$PCT_RIBOSOMAL_BASES,
+                               PCT_CODING_BASES=m$PCT_CODING_BASES,
+                               PCT_UTR_BASES=m$PCT_UTR_BASES,
+                               PCT_INTRONIC_BASES=m$PCT_INTRONIC_BASES,
+                               PCT_INTERGENIC_BASES=m$PCT_INTERGENIC_BASES,
+                               PCT_MRNA_BASES=m$PCT_MRNA_BASES,
+                               PCT_USABLE_BASES=m$PCT_USABLE_BASES,
+                               MEDIAN_CV_COVERAGE=m$MEDIAN_CV_COVERAGE,
+                               MEDIAN_5PRIME_BIAS=m$MEDIAN_5PRIME_BIAS,
+                               MEDIAN_3PRIME_BIAS=m$MEDIAN_3PRIME_BIAS,
+                               MEDIAN_5PRIME_TO_3PRIME_BIAS=m$MEDIAN_5PRIME_TO_3PRIME_BIAS,
+                               stringsAsFactors=FALSE)
+  }
+  metrics <- do.call(rbind, metrics)
+  row.names(metrics) <- metrics$Sample
+
+  return(metrics)
+}
+
+
+readPicard.duplicate_metrics <- function(source) {
+
+  stopifnot(length(source) == 1)
+  stopifnot(file.exists(source))
+  #pattern_suffix <- ifelse(""!="","_wasp_qc","")
+  #pattern_suffix <- ifelse(""!="","_wasp_qc","")
+  pattern <- paste0('*.Aligned.sortedByCoord.out',ifelse(""!="","_wasp","_nowasp"),ifelse(""!="","_qc","_noqc"),'.md.metrics')
+  substitute <- paste0('.Aligned.sortedByCoord.out',ifelse(""!="","_wasp","_nowasp"),ifelse(""!="","_qc","_noqc"),'.md.metrics')
+  #substitute <- paste0('.Aligned.sortedByCoord.out',pattern_suffix,'.md.metrics')
+  #f'{cwd}/{_sample_id}.Aligned.toTranscriptome.out{"_wasp" if wasp else "_nowasp"}{"_qc" if wasp else "_noqc"}.bam'
+  isDir <- file.info(source)$isdir
+  if (isDir) {
+    files <- system(paste("find -L", source, "-name",pattern), intern=TRUE)
+    stopifnot(length(files) > 0)
+    samples <- gsub(substitute, "", basename(files), fixed=TRUE)
+  } else {
+    files <- source
+    samples <- gsub(substitute, "", basename(files), fixed=TRUE)
+  }
+
+  metrics <- list()
+  for (i in 1:length(files)) {
+    m <- read.table(files[i], header=TRUE, sep="\t", comment.char="#", stringsAsFactors=FALSE, nrows=1)
+    metrics[[i]] <- data.frame(Sample=samples[i],
+                               File=files[i],
+                               PERCENT_DUPLICATION=m$PERCENT_DUPLICATION,
+                               ESTIMATED_LIBRARY_SIZE=m$ESTIMATED_LIBRARY_SIZE,
+                               stringsAsFactors=FALSE)
+  }
+  metrics <- do.call(rbind, metrics)
+  row.names(metrics) <- metrics$Sample
+
+  return(metrics)
+}
+
+
+readPicard <- function(source) {
+  metrics.aln <- readPicard.alignment_summary_metrics(source)
+  metrics.rna <- readPicard.rna_metrics(source)
+  metrics.dup <- readPicard.duplicate_metrics(source)
+
+  stopifnot(all(row.names(metrics.aln) %in% row.names(metrics.rna)) &
+            all(row.names(metrics.rna) %in% row.names(metrics.dup)) &
+            all(row.names(metrics.dup) %in% row.names(metrics.aln)))
+
+  metrics.aln$File <- NULL
+  metrics.rna$File <- NULL
+  metrics.dup$File <- NULL
+  metrics.rna$Sample <- NULL
+  metrics.dup$Sample <- NULL
+
+  metrics <- cbind(metrics.aln, metrics.rna[row.names(metrics.aln), ])
+  metrics <- cbind(metrics, metrics.dup[row.names(metrics.aln), ])
+
+  return(metrics)
+}
+
+## Execution  
+sourcePicard = '/tmp/xqtl_test/output'
+
+Picard_qualityMetrics <- readPicard(sourcePicard)
+write.table(Picard_qualityMetrics, file="/tmp/xqtl_test/output/AC_bam_list.rnaseqc.picard.aggregated_quality.metrics.tsv",col.names=TRUE, row.names=FALSE, quote=FALSE)
+
+
+
+
+INFO: rnaseqc_call_4 is completed.
+INFO: rnaseqc_call_4 output:   /tmp/xqtl_test/output/AC_bam_list.rnaseqc.picard.aggregated_quality.metrics.tsv
+INFO: Workflow rnaseqc_call (ID=wa86969e4738e98ab) is tested successfully with 4 completed steps.

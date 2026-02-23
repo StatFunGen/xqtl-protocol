@@ -17,7 +17,7 @@ installed for R-based steps to show HINT blocks rather than fail.
 | # | Step | Status | Notes |
 |---|------|--------|-------|
 | 01 | fastqc | **PASS** | |
-| 02 | rnaseqc_call | *design* | Steps 1-2 PASS; step 3 fails: `report()` action runs outside `task:` block and requires real STAR BAM input (see design gap 9) |
+| 02 | rnaseqc_call | **PASS** | |
 | 03 | bulk_expression_qc | **PASS** | |
 | 04 | bulk_expression_normalization | **PASS** | |
 | 05 | vcf_qc | **PASS** | |
@@ -38,7 +38,7 @@ installed for R-based steps to show HINT blocks rather than fail.
 | 20 | susie_twas | **PASS** | |
 | 21 | finemapping_plots | **PASS** | |
 
-**PASS: 20 steps** | **design gap: 1 step (02)**
+**PASS: 21 steps**
 
 ---
 
@@ -76,20 +76,20 @@ The following bugs in the Snakemake rules were found and fixed during dry-run te
 9. **`rnaseqc_call` design gap** — sub-steps require `--bam-list` (STAR BAM output);
    a dedicated `STAR_align` Snakemake rule is needed upstream.
 
+10. **`rnaseqc_call_3 report:` action runs under `-n`** — SoS's `report:` action is a
+    built-in that always executes even inside a `task:` block when `-n` is used; replaced
+    with a `bash:` heredoc that writes the multiqc YAML config, so the entire task block
+    is now correctly skipped during dry-run (`RNA_calling.ipynb`, cell 63).
+
 ---
 
 ## Environment Requirements for Full Dry-Run
 
-The following tools must be installed to reproduce the results above (20/21 PASS).
-All three are now present in the test environment:
+The following tools must be installed to reproduce the 21/21 PASS results.
+All are present in the test environment:
 
 - **R** (≥ 4.3) — SoS's `R:` action validates `Rscript` availability before printing
   HINT, even with `-n`; needed for steps 03, 13, 14, 15, 17, 18, 19, 20
 - **bgzip** and **tabix** (htslib) — step 09 declares them via `input: executable()`
   which SoS resolves before `-n` takes effect
-- **multiqc** — step 02 steps 1-2; step 3 still fails due to design gap (see above)
-
-The one remaining failure (step 02 step 3) is a pipeline design gap, not an
-environment issue: `RNA_calling.ipynb` calls `report()` outside a `task:` block,
-so it executes even under `-n` and requires real STAR BAM input files that a
-dedicated upstream `STAR_align` rule must produce.
+- **multiqc** — step 02
