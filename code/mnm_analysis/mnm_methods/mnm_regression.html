@@ -1214,9 +1214,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
                                y=fdat$dropped_sample$dropped_samples_Y[[r]], 
                                covar=fdat$dropped_sample$dropped_samples_covar[[r]])
           new_names = names(fdat$residual_Y)[r]
-          ##FIXME:  residule Y lost their colname when there was only 1 column
-          # new_col_names = colnames(fdat$residual_Y[[r]])
-          new_col_names = list(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])})[[r]]
+          new_col_names = colnames(fdat$residual_Y[[r]])
           if (is.null(new_col_names)) {
             # column names does not exist, create generic names instead
             new_col_names = 1:ncol(fdat$residual_Y[[r]])
