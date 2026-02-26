@@ -711,6 +711,8 @@ parameter: indel = True
 parameter: min_twas_maf = 0.01
 parameter: screen_threshold = 0.01
 parameter: ld_reference_meta_file = path()
+# Only focus on a subset of variants
+parameter: keep_variants = path()
 # Analysis environment settings
 parameter: container = &quot;&quot;
 import re
@@ -800,12 +802,12 @@ def preload_id_map(id_map_files):
     id_maps = {}
     for id_map_file in id_map_files:
         if id_map_file is not None and os.path.isfile(id_map_file):
-            df = pd.read_csv(id_map_file, sep=&#39;\s+&#39;, header=None, comment=&#39;#&#39;, names=[&#39;old_ID&#39;, &#39;new_ID&#39;])
+            df = pd.read_csv(id_map_file, sep=r&#39;\s+&#39;, header=None, comment=&#39;#&#39;, names=[&#39;old_ID&#39;, &#39;new_ID&#39;])
             id_maps[id_map_file] = df.set_index(&#39;old_ID&#39;)[&#39;new_ID&#39;].to_dict()
     return id_maps
 
 def load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps):
-    pheno_df = pd.read_csv(pheno_path, sep=&quot;\s+&quot;, header=0)
+    pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0)
     pheno_df[&#39;Original_ID&#39;] = pheno_df[&#39;ID&#39;]
     if id_map_path in preloaded_id_maps:
         id_map = preloaded_id_maps[id_map_path]
@@ -814,7 +816,12 @@ def load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps):
 
 def filter_by_region_ids(data, region_ids):
     if region_ids is not None and len(region_ids) &gt; 0:
-        data = data[data[&#39;ID&#39;].isin(region_ids)]
+        # Check both ID (mapped) and Original_ID (unmapped) to handle phenoIDFile cases
+        # where region_name uses the original ID but ID column has been mapped
+        if &#39;Original_ID&#39; in data.columns:
+            data = data[data[&#39;ID&#39;].isin(region_ids) | data[&#39;Original_ID&#39;].isin(region_ids)]
+        else:
+            data = data[data[&#39;ID&#39;].isin(region_ids)]
     return data
 
 def custom_join(series):
@@ -862,7 +869,9 @@ def process_cis_files(pheno_files, cov_files, phenotype_names, pheno_id_files, r
         pheno_df = load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps)
         pheno_df = filter_by_region_ids(pheno_df, region_ids)
         if not pheno_df.empty:
-            pheno_df.iloc[:, 4] = adapt_file_path_all(pheno_df, pheno_df.columns[4], f&quot;{pheno_path:a}&quot;)
+            # Use &#39;path&#39; column by name to handle both 5-col (#chr,start,end,ID,path)
+            # and 6-col (#chr,start,end,ID,strand,path) region_list formats
+            pheno_df[&#39;path&#39;] = adapt_file_path_all(pheno_df, &#39;path&#39;, f&quot;{pheno_path:a}&quot;)
             pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)           
             accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
 
@@ -888,7 +897,7 @@ def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files,
     for pheno_path, cov_path, phenotype_name, id_map_path in zip(pheno_files, cov_files, phenotype_names, pheno_id_files):
         if not os.path.isfile(cov_path):
             raise FileNotFoundError(f&quot;No valid path found for file: {cov_path}&quot;)
-        pheno_df = pd.read_csv(pheno_path, sep=&quot;\s+&quot;, header=0, names=[&#39;Original_ID&#39;, &#39;path&#39;])
+        pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0, names=[&#39;Original_ID&#39;, &#39;path&#39;])
         if not pheno_df.empty:
             pheno_df.iloc[:, -1] = adapt_file_path_all(pheno_df, pheno_df.columns[-1], f&quot;{pheno_path:a}&quot;)
             pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)
@@ -899,7 +908,7 @@ def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files,
             pheno_df[&#39;end&#39;] = 0
             if id_map_path is not None:
                 # Filter pheno_df by specific association-window and phenotype pairs
-                association_analysis_pair = pd.read_csv(id_map_path, sep=&#39;\s+&#39;, header=None, comment=&#39;#&#39;, names=[&#39;ID&#39;, &#39;Original_ID&#39;])
+                association_analysis_pair = pd.read_csv(id_map_path, sep=r&#39;\s+&#39;, header=None, comment=&#39;#&#39;, names=[&#39;ID&#39;, &#39;Original_ID&#39;])
                 pheno_df = pd.merge(pheno_df, association_analysis_pair, on=[&#39;ID&#39;, &#39;Original_ID&#39;])
             accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
 
@@ -910,7 +919,7 @@ def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files,
 if f&quot;{genoFile:x}&quot; == &quot;.bed&quot;:
     geno_meta_data = pd.DataFrame([(&quot;chr&quot;+str(x), f&quot;{genoFile:a}&quot;) for x in range(1,23)] + [(&quot;chrX&quot;, f&quot;{genoFile:a}&quot;)], columns=[&#39;#chr&#39;, &#39;geno_path&#39;])
 else:
-    geno_meta_data = pd.read_csv(f&quot;{genoFile:a}&quot;, sep = &quot;\s+&quot;, header=0)
+    geno_meta_data = pd.read_csv(f&quot;{genoFile:a}&quot;, sep = r&quot;\s+&quot;, header=0)
     geno_meta_data.iloc[:, 1] = adapt_file_path_all(geno_meta_data, geno_meta_data.columns[1], f&quot;{genoFile:a}&quot;)
     geno_meta_data.columns = [&#39;#chr&#39;, &#39;geno_path&#39;]
     geno_meta_data[&#39;#chr&#39;] = geno_meta_data[&#39;#chr&#39;].apply(lambda x: str(x) if str(x).startswith(&#39;chr&#39;) else f&#39;chr{x}&#39;)
@@ -1006,6 +1015,15 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
       message(paste(length(keep_samples), &quot;samples are selected to be loaded for analysis&quot;))
     }
 
+    # Load variant filter list if provided
+    keep_variants_list = NULL
+    if (${&quot;TRUE&quot; if keep_variants.is_file() else &quot;FALSE&quot;}) {
+      keep_variants_list = trimws(readLines(${keep_variants:ar}))
+      # Remove empty lines
+      keep_variants_list = keep_variants_list[keep_variants_list != &quot;&quot;]
+      message(paste(length(keep_variants_list), &quot;variants are specified to be kept for analysis&quot;))
+    }
+
     # Load regional association data
     tryCatch({
     fdat = load_regional_association_data(genotype = ${_input[0]:anr},
@@ -1047,13 +1065,13 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
     condition_names = vector()
     r = 1
     while (r&lt;=length(fdat$Y)) {
-        X &lt;- fdat$X_data[[r]]  
+        X &lt;- fdat$X_data[[r]]
         Y &lt;- fdat$Y[[r]]
         if (is.null(dim(Y))) {
             Y &lt;- matrix(Y, nrow = length(Y), ncol = 1)
         }
-        colnames(Y) &lt;- extract_region_name[[r]] 
-        Z &lt;- fdat$covar[[r]]     
+        colnames(Y) &lt;- extract_region_name[[r]]
+        Z &lt;- fdat$covar[[r]]
         # Update condition names first
         new_names = names(fdat$residual_Y)[r]
         new_col_names = list(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])})[[r]]
@@ -1063,44 +1081,45 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
         if(!(identical(new_names, new_col_names))) {
             new_names = paste(new_names, new_col_names, sep=&quot;_&quot;)
         }
-                
+
         column_results &lt;- lapply(1:ncol(Y), function(i) {
             Y_col &lt;- matrix(Y[,i], ncol=1)
             colnames(Y_col) &lt;- colnames(Y)[i]
-            
+
             qr_results = quantile_twas_weight_pipeline(
-                X = X, 
+                X = X,
                 Y = Y_col,
-                Z = Z, 
+                Z = Z,
                 ld_reference_meta_file=${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
                 maf = fdat$maf[[r]],
-                twas_maf_cutoff = ${min_twas_maf},                                            
+                twas_maf_cutoff = ${min_twas_maf},
                 region_id = paste0(colnames(Y_col), &quot;_&quot;, names(fdat$residual_Y)[r]),
                 quantile_qtl_tau_list = seq(0.05, 0.95, by = 0.05),
                 quantile_twas_tau_list = seq(0.01, 0.99, by = 0.01),
-                screen_threshold = ${screen_threshold}
+                screen_threshold = ${screen_threshold},
+                keep_variants = keep_variants_list
             )
-            
+
             if (!is.null(qr_results$message)) {
                 message(qr_results$message)
             }
-            
+
             qr_results$region_info = region_info
             qr_results$maf = fdat$maf[[r]]
-            
+
             return(qr_results)
         })
-        
+
         fitted &lt;- c(fitted, column_results)
         condition_names &lt;- c(condition_names, new_names)
-        
+
         if (length(new_names) &gt; 0) {
             message(&quot;Analysis completed for: &quot;, paste(new_names, collapse=&quot;,&quot;))
         }
-        
+
         # Release memory
         fdat$residual_X[[r]] &lt;- NA
-        fdat$residual_Y[[r]] &lt;- NA      
+        fdat$residual_Y[[r]] &lt;- NA
         r = r + 1
     }
 

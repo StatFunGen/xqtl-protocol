@@ -991,6 +991,8 @@ parameter: batch_load_memory = 500
 parameter: event_filter_rules = path()
 parameter: comment_string = &quot;NULL&quot;
 parameter: rename_column = False
+stop_if(len(filtered_regional_xqtl_files) == 0,  
+        &quot;No regions with overlapping xQTL weights found; skipping TWAS step.&quot;)
 input: filtered_regional_xqtl_files, group_by = lambda x: group_by_region(x, filtered_regional_xqtl_files), group_with = &quot;filtered_region_info&quot;
 output_files = [f&#39;{cwd:a}/{step_name}/{name}.{_filtered_region_info[3]}.twas.tsv.gz&#39;]
 if save_ctwas_data:
