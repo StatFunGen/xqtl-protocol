@@ -1,0 +1,168 @@
+# ============================================================
+# xQTL Protocol — Snakemake Pipeline (Route 3: SoS + modular scripts)
+# ============================================================
+# Route 3 combines the best of Route 1 (SoS) and Route 2 (native scripts):
+#
+#   Route 1 (SoS):     Snakemake → sos run notebook.ipynb step
+#                      Task blocks contain inline R/Python code.
+#
+#   Route 2 (Native):  Snakemake → bash renovated_code/script.sh step
+#                      No SoS; pure shell dispatch.
+#
+#   Route 3 (this):    Snakemake → sos run route3/notebooks/notebook.ipynb step
+#                      Task blocks call renovated_code/script.sh instead of
+#                      running inline code — SoS manages resources/containers,
+#                      modular scripts do the computation.
+#
+# All notebook documentation, parameter definitions, and workflow structure
+# are preserved from the original SoS notebooks. Only the task execution
+# blocks are replaced with script calls.
+#
+# Usage:
+#   snakemake --snakefile route3/Snakefile --configfile config.yaml --cores 1
+#
+# Config requirements: same as Snakefile_sos, plus:
+#   renovated_code_dir: /abs/path/to/renovated_code   # modular script root
+# ============================================================
+
+configfile: "../config.yaml"
+
+# ── Validate required configuration keys ────────────────────────────────────
+required_keys = ["cwd", "renovated_code_dir", "themes", "genotype",
+                 "reference", "containers", "chromosomes"]
+for k in required_keys:
+    if k not in config:
+        raise ValueError(f"Required config key '{k}' is missing from config.yaml")
+
+# ── Convenience variables ────────────────────────────────────────────────────
+CWD            = config["cwd"]
+NOTEBOOKS      = str(Path(workflow.snakefile).parent / "notebooks")
+RENOVATED      = config["renovated_code_dir"]
+THEMES         = [t["name"] for t in config["themes"]]
+CHROMS         = config["chromosomes"]
+NORM_METHOD    = config["normalization"]["method"]
+HF_METHOD      = config["hidden_factors"]["method"]
+
+# ── Dry-run flag ─────────────────────────────────────────────────────────────
+DRY_RUN_SOS = "-n" if config.get("dry_run", False) else ""
+
+# ── Helper functions (identical to Snakefile_sos) ────────────────────────────
+def get_phenotype_bed(wc):
+    """Return the normalized phenotype BED.gz path for a theme wildcard."""
+    theme_cfg = next(t for t in config["themes"] if t["name"] == wc.theme)
+    if config.get("start_from", "") == "phenotype_bed":
+        bed = theme_cfg.get("phenotype_bed", "")
+        if not bed:
+            raise ValueError(
+                f"Theme '{wc.theme}': start_from is 'phenotype_bed' "
+                "but no phenotype_bed path was provided in config."
+            )
+        return bed
+    return (
+        f"{CWD}/{wc.theme}/molecular_phenotypes/"
+        f"{wc.theme}.{NORM_METHOD}.expression.bed.gz"
+    )
+
+
+def get_hidden_factors(wc):
+    """Return the hidden factor covariate file path based on the configured method."""
+    if HF_METHOD == "PEER":
+        return (
+            f"{CWD}/data_preprocessing/{wc.theme}/covariates/"
+            f"{wc.theme}.PEER.gz"
+        )
+    return (
+        f"{CWD}/data_preprocessing/{wc.theme}/covariates/"
+        f"{wc.theme}.Marchenko_PC.gz"
+    )
+
+
+def get_input_plink(wc):
+    """Return the plink BED file used as input for genome-wide QC."""
+    prebuilt = config["genotype"].get("plink_bed", "")
+    if prebuilt:
+        return prebuilt
+    return f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.converted.bed"
+
+
+# ── Include Route 3 rule modules ─────────────────────────────────────────────
+include: "rules/01_molecular_phenotypes.smk"
+include: "rules/02_genotype_preprocessing.smk"
+include: "rules/03_sample_qc_pca.smk"
+include: "rules/04_phenotype_covariate_prep.smk"
+include: "rules/05_association_testing.smk"
+include: "rules/06_univariate_finemapping.smk"
+
+
+# ============================================================
+# rule all — full pipeline targets
+# ============================================================
+rule all:
+    """Run the complete xQTL pipeline (Route 3) for all configured themes."""
+    input:
+        expand(
+            "{cwd}/{theme}/molecular_phenotypes/{theme}.{norm_method}.expression.bed.gz",
+            cwd=CWD, theme=THEMES, norm_method=NORM_METHOD,
+        ) if config.get("start_from", "") == "fastq" else [],
+        f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.genotype_by_chrom_files.txt",
+        expand(
+            "{cwd}/data_preprocessing/{theme}/pca/xqtl_protocol_data.plink_qc.{theme}.pca.projected.rds",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/data_preprocessing/{theme}/covariates/{theme}.{hf_method}.gz",
+            cwd=CWD, theme=THEMES, hf_method=HF_METHOD,
+        ),
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas_plots/.done_plots",
+            cwd=CWD, theme=THEMES,
+        ),
+
+
+# ── Convenience stage targets ─────────────────────────────────────────────────
+rule phenotype_calling:
+    input:
+        expand(
+            "{cwd}/{theme}/molecular_phenotypes/{theme}.{norm_method}.expression.bed.gz",
+            cwd=CWD, theme=THEMES, norm_method=NORM_METHOD,
+        ),
+
+rule genotype_preprocessing:
+    input:
+        f"{CWD}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.genotype_by_chrom_files.txt",
+
+rule sample_qc_pca:
+    input:
+        expand(
+            "{cwd}/data_preprocessing/{theme}/pca/xqtl_protocol_data.plink_qc.{theme}.pca.projected.rds",
+            cwd=CWD, theme=THEMES,
+        ),
+
+rule covariate_prep:
+    input:
+        expand(
+            "{cwd}/data_preprocessing/{theme}/covariates/{theme}.{hf_method}.gz",
+            cwd=CWD, theme=THEMES, hf_method=HF_METHOD,
+        ),
+
+rule association_testing:
+    input:
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
+            cwd=CWD, theme=THEMES,
+        ),
+
+rule finemapping:
+    input:
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
