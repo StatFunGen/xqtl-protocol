@@ -45,12 +45,26 @@ config.setdefault("phenotype_preprocessing", {
 })
 
 # ── Convenience variables ────────────────────────────────────────────────────
+from pathlib import Path as _Path
+
 CWD         = config["cwd"]
 PIPELINE    = config["pipeline_dir"]
 THEMES      = [t["name"] for t in config["themes"]]
 CHROMS      = config["chromosomes"]
 NORM_METHOD = config["normalization"]["method"]
 HF_METHOD   = config["hidden_factors"]["method"]
+
+# Route 3: SoS wrapper notebooks that call modular scripts instead of inline code.
+# rules/sos/*.smk use these to redirect sos run calls to route3/notebooks/.
+_SNAKEFILE_DIR   = _Path(workflow.snakefile).parent
+ROUTE3_NOTEBOOKS = config.get(
+    "route3_notebooks_dir",
+    str(_SNAKEFILE_DIR / "route3" / "notebooks"),
+)
+RENOVATED_CODE = config.get(
+    "renovated_code_dir",
+    str(_SNAKEFILE_DIR.parent.parent / "renovated_code"),
+)
 
 # ── Dry-run flags (propagated to every external call) ───────────────────────
 # SoS: "sos run notebook.ipynb step ... -n"  — prints plan, runs nothing (-n goes after all parameters)

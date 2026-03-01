@@ -202,7 +202,7 @@ def copy_notebook_as_is(nb_name):
 # Notebook-specific transformations
 # ---------------------------------------------------------------------------
 
-# 1. RNA_calling.ipynb  — bash-only (STAR / FastQC CLI tools)
+# 1. RNA_calling.ipynb  — bash (STAR/FastQC CLI), python3 (GCT merge), Rscript (Picard aggregation)
 def transform_RNA_calling():
     transform_notebook("RNA_calling.ipynb", {
         r'^\[fastqc\]': (
@@ -232,6 +232,34 @@ def transform_RNA_calling():
             "f'{_output[0]:n}.stderr'",
             "f'{_output[0]:n}.stdout'",
             "bash",
+        ),
+        # rnaseqc_call_2: merge per-sample GCT outputs + aggregate metrics (Python)
+        r'^\[rnaseqc_call_2\]': (
+            "molecular_phenotypes/calling/RNA_calling.py",
+            "rnaseqc_merge",
+            [
+                '--cwd "${cwd}"',
+                '--name "${bam_list:bn}"',
+                '--input ${" ".join([str(x) for x in _input])}',
+            ],
+            "f'{_output[0]:n}.stderr'",
+            "f'{_output[0]:n}.stdout'",
+            "python3",
+        ),
+        # rsem_call_4 / rnaseqc_call_4: aggregate Picard alignment/RNA/dup metrics (R)
+        r'^\[rsem_call_4, rnaseqc_call_4\]': (
+            "molecular_phenotypes/calling/RNA_calling.R",
+            "aggregate_picard_qc",
+            [
+                '--input-dir "${_input[-1]:d}"',
+                '--output "${_output}"',
+                '--is-paired-end ${is_paired_end}',
+                '${"--wasp" if varVCFfile else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
         ),
     })
 
@@ -302,7 +330,7 @@ def transform_genotype_formatting():
     })
 
 
-# 4. GWAS_QC.ipynb  — bash-only (PLINK / KING CLI tools)
+# 4. GWAS_QC.ipynb  — bash-only (PLINK / KING CLI tools) + Rscript for king_2
 def transform_GWAS_QC():
     transform_notebook("GWAS_QC.ipynb", {
         r'^\[qc_no_prune': (
@@ -352,6 +380,19 @@ def transform_GWAS_QC():
             "f'{_output}.stderr'",
             "f'{_output}.stdout'",
             "bash",
+        ),
+        # king_2: kinship-based sample removal (complex graph + plinkQC R code)
+        r'^\[king_2': (
+            "data_preprocessing/genotype/GWAS_QC.R",
+            "king_2",
+            [
+                '--input "${_input}"',
+                '--output "${_output}"',
+                '--kinship ${kinship}',
+            ],
+            "f'{_output}.stderr'",
+            "f'{_output}.stdout'",
+            "rscript",
         ),
         r'^\[genotype_phenotype_sample_overlap\]': (
             "data_preprocessing/genotype/GWAS_QC.sh",
@@ -881,12 +922,23 @@ def transform_mnm_regression():
     })
 
 
-# 14. rss_analysis.ipynb — Rscript univariate_rss.R
+# 14. rss_analysis.ipynb — Rscript univariate_rss.R / univariate_plot.R
 #     [get_analysis_regions] is orchestration-only — kept as-is.
-#     [univariate_rss] has an R task block -> call univariate_rss.R directly.
-#     [univariate_plot] is a simple R visualisation block — kept as-is.
+#     [univariate_rss]  -> call univariate_rss.R directly.
+#     [univariate_plot] -> call univariate_plot.R directly.
 def transform_rss_analysis():
     transform_notebook("rss_analysis.ipynb", {
+        r'^\[univariate_plot\]': (
+            "pecotmr_integration/univariate_plot.R",
+            None,  # single-purpose script — no --step flag
+            [
+                '--input "${_input}"',
+                '--output "${_output[0]}"',
+            ],
+            "f'{_output[0]:n}.stderr'",
+            "f'{_output[0]:n}.stdout'",
+            "rscript",
+        ),
         r'^\[univariate_rss\]': (
             "pecotmr_integration/univariate_rss.R",
             None,

@@ -6,7 +6,7 @@
 # Mirrors: eQTL_analysis_commands.ipynb and mnm_regression.ipynb
 #
 # SoS notebook called:
-#   - pipeline/mnm_regression.ipynb (susie_twas)
+#   - route3/notebooks/mnm_regression.ipynb (susie_twas)
 #
 # Design note:
 #   rss_analysis.ipynb is for LD-reference-panel-based RSS fine-mapping
@@ -43,7 +43,8 @@ rule susie_twas:
     output:
         done = "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
     params:
-        pipeline_dir  = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container     = config["containers"]["susie"],
         outdir        = "{cwd}/finemapping/{theme}/susie_twas",
         cis_window    = config["association"]["cis_window"],
@@ -72,7 +73,7 @@ rule susie_twas:
         PHENO_BEDS=$(awk 'NR>1 {{print $2}}' {input.pheno_list} | tr '\n' ' ')
         N_PHENO=$(awk 'END{{print NR-1}}' {input.pheno_list})
         COV_FILES=$(python3 -c "print(' '.join(['{input.hidden_factors}'] * $N_PHENO))")
-        sos run {params.pipeline_dir}/mnm_regression.ipynb susie_twas \
+        sos run {params.notebooks_dir}/mnm_regression.ipynb susie_twas \
             --cwd {params.outdir} \
             --name {wildcards.theme} \
             --genoFile {input.geno_list} \
@@ -84,6 +85,7 @@ rule susie_twas:
             --pip-cutoff {params.pip_cutoff} \
             --min_twas_maf {params.min_twas_maf} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         touch {output.done}
         """
@@ -101,7 +103,8 @@ rule finemapping_plots:
     output:
         plots_done = "{cwd}/finemapping/{theme}/susie_twas_plots/.done_plots",
     params:
-        pipeline_dir    = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container       = config["containers"]["susie"],
         finemapping_dir = "{cwd}/finemapping/{theme}/susie_twas",
         outdir          = "{cwd}/finemapping/{theme}/susie_twas_plots",
@@ -118,10 +121,11 @@ rule finemapping_plots:
         # input (_input in SoS) and outputs a PNG.  We find all RDS files produced
         # by susie_twas and call the step once per file.
         find {params.finemapping_dir} -name "*.rds" | sort | while IFS= read -r rds; do
-            sos run {params.pipeline_dir}/rss_analysis.ipynb univariate_plot \
+            sos run {params.notebooks_dir}/rss_analysis.ipynb univariate_plot \
                 "$rds" \
                 --cwd {params.outdir} \
                 --container {params.container} \
+                --renovated-code-dir {params.renovated_dir} \
                 --numThreads {threads} {params.dry_run}
         done
         touch {output.plots_done}

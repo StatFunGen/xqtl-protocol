@@ -6,9 +6,9 @@
 #
 # Mirrors: code/commands_generator/bulk_expression_commands.ipynb
 # SoS notebooks called:
-#   - pipeline/RNA_calling.ipynb (fastqc, rnaseqc_call)
-#   - pipeline/bulk_expression_QC.ipynb (qc)
-#   - pipeline/bulk_expression_normalization.ipynb (normalize)
+#   - route3/notebooks/RNA_calling.ipynb (fastqc, rnaseqc_call)
+#   - route3/notebooks/bulk_expression_QC.ipynb (qc)
+#   - route3/notebooks/bulk_expression_normalization.ipynb (normalize)
 # ============================================================
 
 # ------------------------------------
@@ -23,7 +23,8 @@ rule fastqc:
     output:
         done = "{cwd}/{theme}/molecular_phenotypes/fastqc/.done_fastqc",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["rnaquant"],
         data_dir     = lambda wc: next(
             t["data_dir"] for t in config["themes"] if t["name"] == wc.theme
@@ -37,11 +38,12 @@ rule fastqc:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/RNA_calling.ipynb fastqc \
+        sos run {params.notebooks_dir}/RNA_calling.ipynb fastqc \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         touch {output.done}
         """
@@ -66,7 +68,8 @@ rule rnaseqc_call:
         exon_gct   = "{cwd}/{theme}/molecular_phenotypes/{theme}.rnaseqc.exon_reads.gct.gz",
         metrics    = "{cwd}/{theme}/molecular_phenotypes/{theme}.rnaseqc.metrics.tsv",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["rnaquant"],
         data_dir     = lambda wc: next(
             t["data_dir"] for t in config["themes"] if t["name"] == wc.theme
@@ -82,13 +85,14 @@ rule rnaseqc_call:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/RNA_calling.ipynb rnaseqc_call \
+        sos run {params.notebooks_dir}/RNA_calling.ipynb rnaseqc_call \
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
             --gtf {params.gtf} \
             --reference-fasta {params.fasta} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -106,7 +110,8 @@ rule bulk_expression_qc:
         tpm_filt   = "{cwd}/{theme}/molecular_phenotypes/{theme}.low_expression_filtered.outlier_removed.tpm.gct.gz",
         count_filt = "{cwd}/{theme}/molecular_phenotypes/{theme}.low_expression_filtered.outlier_removed.geneCount.gct.gz",
     params:
-        pipeline_dir         = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container            = config["containers"]["rnaquant"],
         outdir               = "{cwd}/{theme}/molecular_phenotypes",
         low_expr_tpm         = config["rnaseq_qc"]["low_expr_tpm"],
@@ -120,7 +125,7 @@ rule bulk_expression_qc:
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/bulk_expression_QC.ipynb qc \
+        sos run {params.notebooks_dir}/bulk_expression_QC.ipynb qc \
             --cwd {params.outdir} \
             --tpm-gct {input.tpm_gct} \
             --counts-gct {input.counts_gct} \
@@ -129,6 +134,7 @@ rule bulk_expression_qc:
             --RLEFilterPercent {params.rle_filter_percent} \
             --DSFilterPercent {params.ds_filter_percent} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -146,7 +152,8 @@ rule bulk_expression_normalization:
     output:
         phenotype_bed = "{cwd}/{theme}/molecular_phenotypes/{theme}.{norm_method}.expression.bed.gz",
     params:
-        pipeline_dir          = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container             = config["containers"]["rnaquant"],
         outdir                = "{cwd}/{theme}/molecular_phenotypes",
         gtf                   = config["reference"]["gtf_ercc"],
@@ -167,7 +174,7 @@ rule bulk_expression_normalization:
         runtime = config["resources"]["rna_calling"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/bulk_expression_normalization.ipynb normalize \
+        sos run {params.notebooks_dir}/bulk_expression_normalization.ipynb normalize \
             --cwd {params.outdir} \
             --counts-gct {input.count_filt} \
             --tpm-gct {input.tpm_filt} \
@@ -177,5 +184,6 @@ rule bulk_expression_normalization:
             --sample-frac-threshold {params.sample_frac_threshold} \
             --normalization-method {params.norm_method} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """

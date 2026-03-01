@@ -10,9 +10,9 @@
 #   phenotype_partition_by_chrom → merge_pca_covariate → factor
 #
 # SoS notebooks called:
-#   - pipeline/phenotype_formatting.ipynb (phenotype_by_chrom)
-#   - pipeline/covariate_formatting.ipynb (merge_genotype_pc)
-#   - pipeline/covariate_hidden_factor.ipynb (Marchenko_PC, PEER)
+#   - route3/notebooks/phenotype_formatting.ipynb (phenotype_by_chrom)
+#   - route3/notebooks/covariate_formatting.ipynb (merge_genotype_pc)
+#   - route3/notebooks/covariate_hidden_factor.ipynb (Marchenko_PC, PEER)
 #
 # NOTE on hidden factors:
 #   When you run `sos run covariate_hidden_factor.ipynb Marchenko_PC` (or PEER),
@@ -38,7 +38,8 @@ rule merge_pca_covariate:
     output:
         merged_cov = "{cwd}/data_preprocessing/{theme}/covariates/xqtl_protocol_data.plink_qc.{theme}.pca.gz",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/{theme}/covariates",
         n_pcs        = config["covariate"]["n_pcs"],
@@ -52,7 +53,7 @@ rule merge_pca_covariate:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/covariate_formatting.ipynb merge_genotype_pc \
+        sos run {params.notebooks_dir}/covariate_formatting.ipynb merge_genotype_pc \
             --cwd {params.outdir} \
             --pcaFile {input.projected_rds} \
             --covFile {input.covariate_file} \
@@ -60,6 +61,7 @@ rule merge_pca_covariate:
             --tol-cov {params.tol_cov} \
             {params.mean_impute} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -77,7 +79,8 @@ rule phenotype_by_chrom:
     output:
         chrom_list = "{cwd}/data_preprocessing/{theme}/phenotype_data/{theme}.phenotype_by_chrom_files.txt",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["rnaquant"],
         outdir       = "{cwd}/data_preprocessing/{theme}/phenotype_data",
         chroms       = " ".join(config["chromosomes"]),
@@ -89,12 +92,13 @@ rule phenotype_by_chrom:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/phenotype_formatting.ipynb phenotype_by_chrom \
+        sos run {params.notebooks_dir}/phenotype_formatting.ipynb phenotype_by_chrom \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --name {wildcards.theme} \
             --chrom {params.chroms} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -116,7 +120,8 @@ rule marchenko_pc:
     output:
         hidden_factors = "{cwd}/data_preprocessing/{theme}/covariates/{theme}.Marchenko_PC.gz",
     params:
-        pipeline_dir      = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container         = config["containers"]["pcatools"],
         outdir            = "{cwd}/data_preprocessing/{theme}/covariates",
         n_factors         = config["hidden_factors"]["n_factors"],
@@ -128,13 +133,14 @@ rule marchenko_pc:
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb Marchenko_PC \
+        sos run {params.notebooks_dir}/covariate_hidden_factor.ipynb Marchenko_PC \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \
             --N {params.n_factors} \
             {params.mean_impute_flag} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -154,7 +160,8 @@ rule peer_factors:
     output:
         hidden_factors = "{cwd}/data_preprocessing/{theme}/covariates/{theme}.PEER.gz",
     params:
-        pipeline_dir     = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container        = config["containers"]["peer"],
         outdir           = "{cwd}/data_preprocessing/{theme}/covariates",
         n_factors        = config["hidden_factors"]["n_factors"],
@@ -167,7 +174,7 @@ rule peer_factors:
         runtime = config["resources"]["hidden_factors"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/covariate_hidden_factor.ipynb PEER \
+        sos run {params.notebooks_dir}/covariate_hidden_factor.ipynb PEER \
             --cwd {params.outdir} \
             --phenoFile {input.phenotype_bed} \
             --covFile {input.merged_cov} \
@@ -175,5 +182,6 @@ rule peer_factors:
             --iteration {params.iterations} \
             --convergence_mode {params.convergence_mode} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """

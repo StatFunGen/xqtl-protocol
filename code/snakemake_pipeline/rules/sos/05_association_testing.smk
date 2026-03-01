@@ -6,7 +6,7 @@
 # Mirrors: eQTL_analysis_commands.ipynb stage: TensorQTL
 #
 # SoS notebooks called:
-#   - pipeline/TensorQTL.ipynb (cis)
+#   - route3/notebooks/TensorQTL.ipynb (cis)
 #
 # Note: get_hidden_factors() and get_phenotype_bed() are defined in the main
 # Snakefile and are available to all included rule modules.
@@ -37,7 +37,8 @@ rule tensorqtl_cis:
     output:
         done = "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["tensorqtl"],
         outdir       = "{cwd}/association_scan/{theme}/TensorQTL",
         cis_window   = config["association"]["cis_window"],
@@ -51,7 +52,7 @@ rule tensorqtl_cis:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/TensorQTL.ipynb cis \
+        sos run {params.notebooks_dir}/TensorQTL.ipynb cis \
             --cwd {params.outdir} \
             --genotype-file {input.geno_list} \
             --phenotype-file {input.pheno_list} \
@@ -60,6 +61,7 @@ rule tensorqtl_cis:
             --MAC {params.mac} \
             --maf-threshold {params.maf} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         touch {output.done}
         """

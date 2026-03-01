@@ -8,9 +8,9 @@
 #   VCF_QC → merge_plink → plink_QC → plink_per_chrom → plink_to_vcf
 #
 # SoS notebooks called:
-#   - pipeline/VCF_QC.ipynb (qc)
-#   - pipeline/genotype_formatting.ipynb (vcf_to_plink, merge_plink, genotype_by_chrom)
-#   - pipeline/GWAS_QC.ipynb (qc_no_prune)
+#   - route3/notebooks/VCF_QC.ipynb (qc)
+#   - route3/notebooks/genotype_formatting.ipynb (vcf_to_plink, merge_plink, genotype_by_chrom)
+#   - route3/notebooks/GWAS_QC.ipynb (qc_no_prune)
 # ============================================================
 
 # ------------------------------------
@@ -25,7 +25,8 @@ rule vcf_qc:
     output:
         vcf_qc = "{cwd}/data_preprocessing/genotype/vcf_qc_{vcf_idx}.add_chr.leftnorm.filtered.vcf.gz",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/genotype",
         fasta        = config["reference"]["fasta"],
@@ -38,12 +39,13 @@ rule vcf_qc:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.pipeline_dir}/VCF_QC.ipynb qc \
+        sos run {params.notebooks_dir}/VCF_QC.ipynb qc \
             --cwd {params.outdir} \
             --genoFile {input.vcf} \
             --dbsnp-variants {params.dbsnp} \
             --reference-genome {params.fasta} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -63,7 +65,8 @@ rule vcf_to_plink:
         bim = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.converted.bim",
         fam = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.converted.fam",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/genotype",
         # Write VCF paths to a temporary list file consumed by the SoS notebook
@@ -79,19 +82,21 @@ rule vcf_to_plink:
         printf '%s\n' {input.vcf_qc} > {params.vcf_list}
         if [ $(wc -l < {params.vcf_list}) -gt 1 ]; then
             # Multiple VCFs: merge then convert
-            sos run {params.pipeline_dir}/genotype_formatting.ipynb merge_plink \
+            sos run {params.notebooks_dir}/genotype_formatting.ipynb merge_plink \
                 --cwd {params.outdir} \
                 --genoFile {params.vcf_list} \
                 --name xqtl_protocol_data.converted \
                 --container {params.container} \
+                --renovated-code-dir {params.renovated_dir} \
                 --numThreads {threads} {params.dry_run}
         else
             # Single VCF: convert directly
-            sos run {params.pipeline_dir}/genotype_formatting.ipynb vcf_to_plink \
+            sos run {params.notebooks_dir}/genotype_formatting.ipynb vcf_to_plink \
                 --cwd {params.outdir} \
                 --genoFile $(cat {params.vcf_list}) \
                 --name xqtl_protocol_data.converted \
                 --container {params.container} \
+                --renovated-code-dir {params.renovated_dir} \
                 --numThreads {threads} {params.dry_run}
         fi
         """
@@ -113,7 +118,8 @@ rule plink_qc:
         bim = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.bim",
         fam = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.fam",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/genotype",
         mac_filter   = config["genotype_qc"]["mac_filter"],
@@ -128,7 +134,7 @@ rule plink_qc:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/GWAS_QC.ipynb qc_no_prune \
+        sos run {params.notebooks_dir}/GWAS_QC.ipynb qc_no_prune \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --name xqtl_protocol_data.plink_qc \
@@ -138,6 +144,7 @@ rule plink_qc:
             --mind-filter {params.mind_filter} \
             --hwe-filter {params.hwe_filter} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -155,7 +162,8 @@ rule genotype_by_chrom:
     output:
         chrom_list = "{cwd}/data_preprocessing/genotype/xqtl_protocol_data.plink_qc.genotype_by_chrom_files.txt",
     params:
-        pipeline_dir = config["pipeline_dir"],
+        notebooks_dir    = ROUTE3_NOTEBOOKS,
+        renovated_dir    = RENOVATED_CODE,
         container    = config["containers"]["bioinfo"],
         outdir       = "{cwd}/data_preprocessing/genotype",
         chroms       = " ".join(config["chromosomes"]),
@@ -166,11 +174,12 @@ rule genotype_by_chrom:
         runtime = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.pipeline_dir}/genotype_formatting.ipynb genotype_by_chrom \
+        sos run {params.notebooks_dir}/genotype_formatting.ipynb genotype_by_chrom \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --name xqtl_protocol_data.plink_qc \
             --chrom {params.chroms} \
             --container {params.container} \
+            --renovated-code-dir {params.renovated_dir} \
             --numThreads {threads} {params.dry_run}
         """
