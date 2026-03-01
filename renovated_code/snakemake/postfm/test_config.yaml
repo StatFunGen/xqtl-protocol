@@ -1,0 +1,78 @@
+cwd: "/tmp/xqtl_postfm/output"
+pipeline_dir: "/home/user/xqtl-protocol/pipeline"
+finemapping_dir: "/tmp/xqtl_postfm/finemapping"
+dry_run: true
+
+themes:
+  - name: "AC"
+    finemapping_subdir: ""
+    geno_file:  "/tmp/xqtl_postfm/geno_files.txt"
+    pheno_file: "/tmp/xqtl_postfm/pheno_files.txt"
+    cov_file:   "/tmp/xqtl_postfm/AC.covariates.gz"
+    gwas:
+      xqtl_meta_data: ""
+      gwas_meta_data: ""
+      ld_meta_data:   ""
+      region_list:    ""
+
+containers:
+  susie:   "oras://ghcr.io/statfungen/stephenslab_apptainer:latest"
+  bioinfo: "oras://ghcr.io/statfungen/bioinfo_apptainer:latest"
+
+postprocessing:
+  pip_thres:  0.05
+  lfsr_thres: 0.01
+  cs_size:    3
+
+gwas:
+  enabled: true
+  xqtl_meta_data: "/tmp/xqtl_postfm/xqtl_meta.tsv"
+  gwas_meta_data: "/tmp/xqtl_postfm/gwas_meta.tsv"
+  ld_meta_data:   "/tmp/xqtl_postfm/ld_meta.tsv"
+  region_list:    "/tmp/xqtl_postfm/regions.bed"
+  colocboost:
+    maf: 0.0025
+    mac: 5
+
+enrichment:
+  annotation:
+    enabled: true
+    baseline_anno_path: "/tmp/xqtl_postfm/baseline.tsv"
+  pathway:
+    enabled: true
+    genes_file: ""
+    organism: "hsa"
+  sldsc:
+    enabled: true
+    annotation_names:
+      - "H3K27ac"
+    annotation_file:    "/tmp/xqtl_postfm/annotation.tsv"
+    reference_anno_file: "/tmp/xqtl_postfm/ref_anno.tsv"
+    genome_ref_file:    "/tmp/xqtl_postfm/genome_ref"
+    polyfun_path:       "/tmp/polyfun"
+    sumstat_dir:        "/tmp/xqtl_postfm/sumstats"
+    all_traits_file:    "/tmp/xqtl_postfm/traits.tsv"
+    baseline_ld_dir:    "/tmp/xqtl_postfm/baseline_ld"
+    weights_dir:        "/tmp/xqtl_postfm/weights"
+
+resources:
+  default:
+    threads: 8
+    mem_mb:  16000
+    runtime: 720
+  twas:
+    threads: 8
+    mem_mb:  32000
+    runtime: 1440
+  coloc:
+    threads: 8
+    mem_mb:  32000
+    runtime: 1440
+  colocboost:
+    threads: 8
+    mem_mb:  32000
+    runtime: 1440
+  enrichment:
+    threads: 8
+    mem_mb:  16000
+    runtime: 720

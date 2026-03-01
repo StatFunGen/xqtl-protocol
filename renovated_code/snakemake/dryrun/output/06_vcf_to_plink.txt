@@ -1,0 +1,45 @@
+INFO: Checking [32mvcf_to_plink[0m: 
+HINT: /bin/bash SCRIPT
+echo "dosage False"
+if [ False = True ]; then
+    plink2 --vcf /tmp/xqtl_test/genotype.vcf.gz dosage=DS \
+    --not-chr X \
+    --allow-extra-chr \
+    --double-id \
+    --max-alleles 2 \
+    --set-all-var-ids '@:#:$r:$a' \
+    --new-id-max-allele-len 24 \
+     \
+     \
+    --make-pgen --out /tmp/xqtl_test/output/genotype   \
+    --threads 4 \
+    --memory 14400.0 --output-chr chrMT  
+else
+    plink2 --vcf /tmp/xqtl_test/genotype.vcf.gz \
+        --vcf-half-call m \
+        --vcf-require-gt \
+        --allow-extra-chr \
+        --double-id \
+         \
+         \
+        --make-bed --out /tmp/xqtl_test/output/genotype   \
+        --threads 4 \
+        --memory 14400.0 --output-chr chrMT  
+fi
+
+
+
+
+
+HINT: /bin/bash SCRIPT
+stdout=/tmp/xqtl_test/output/genotype.stdout
+for i in /tmp/xqtl_test/output/genotype.bed ; do 
+    echo "output_info: $i " >> $stdout;
+    echo "output_size: $(ls -lh "$i" | awk '{print $5}')" >> $stdout;
+done
+
+
+
+INFO: [32mvcf_to_plink[0m is [32mcompleted[0m.
+INFO: [32mvcf_to_plink[0m output:   [32m/tmp/xqtl_test/output/genotype.bed[0m
+INFO: Workflow vcf_to_plink (ID=w5da2b2a2bdff2f0e) is tested successfully with 1 completed step.

@@ -1,0 +1,366 @@
+INFO: Checking [32mcis_1[0m: 
+HINT: python SCRIPT
+import pandas as pd
+import numpy as np
+import os
+import tensorqtl
+from tensorqtl import genotypeio, cis
+from scipy.stats import chi2
+import multiprocessing as mp
+from tqdm import tqdm
+
+## Define paths
+plink_prefix_path = '/tmp/xqtl_test/xqtl.plink_qc.chr1'
+expression_bed = '/tmp/xqtl_test/AC.chr1.bed.gz'
+
+covariates_file = "/tmp/xqtl_test/AC.Marchenko_PC.gz"
+window = 1000000
+interaction = ""
+## Load Data
+phenotype_df, phenotype_pos_df = tensorqtl.read_phenotype_bed(expression_bed)
+phenotype_id = phenotype_pos_df.index.name
+
+## Analyze only the regions listed
+if False:
+    region = pd.read_csv("/home/user/xqtl-protocol/code/snakemake_pipeline/dryrun", comment="#", header=None, sep="\t" )
+    phenotype_column = 1 if len(region.columns) == 1 else  4
+    keep_region = region.iloc[:,phenotype_column-1].to_list()
+    phenotype_df = phenotype_df[phenotype_df.index.isin(keep_region)]
+    phenotype_pos_df = phenotype_pos_df[phenotype_pos_df.index.isin(keep_region)]
+covariates_df = pd.read_csv(covariates_file, sep='\t', index_col=0).T
+genotype_df, variant_df = genotypeio.load_genotypes(plink_prefix_path, dosages = True)
+
+
+## use custom sample list to subset the covariates data
+if False:
+    sample_list = pd.read_csv("/home/user/xqtl-protocol/code/snakemake_pipeline/dryrun", comment="#", header=None, names=["sample_id"], sep="\t")
+    covariates_df.loc[sample_list.sample_id]
+
+# Read interaction files or extract from covariates file.
+var_interaction = interaction
+interaction_s = []
+if os.path.isfile(interaction):
+    # update var_interaction and interaction_s
+    interaction_s = pd.read_csv(interaction, sep='\t', index_col=0)
+    interaction_s = interaction_s[interaction_s.index.isin(covariates_df.index)] 
+    var_interaction = interaction_s.columns[0] # interaction name
+# check if the interaction term in interaction table is in covariates file, if yes and interaction_s not yet loaded then, extract it out from covariates file
+if var_interaction in covariates_df.columns:
+    # only load from covariate if it has not been loaded yet
+    if len(interaction_s) == 0:
+        interaction_s = covariates_df[var_interaction].to_frame()
+    covariates_df = covariates_df.drop(columns=[var_interaction])
+if len(interaction) and len(interaction_s) == 0:
+    raise ValueError(f"Cannot find interaction variable or file {interaction}")
+
+# drop samples that with missing value in iteraction
+if len(interaction_s):
+    interaction_s = interaction_s.dropna() 
+
+## Retaining only common samples
+phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, covariates_df.index)]
+phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, genotype_df.columns)] 
+
+if len(interaction_s):
+    phenotype_df = phenotype_df[np.intersect1d(phenotype_df.columns, interaction_s.index)]
+    interaction_s = interaction_s[interaction_s.index.isin(phenotype_df.columns)]    
+    interaction_s = interaction_s.loc[phenotype_df.columns]
+
+covariates_df = covariates_df.transpose()[np.intersect1d(phenotype_df.columns, covariates_df.index)].transpose()
+
+## To simplify things, there should really not be "chr" prefix
+phenotype_pos_df.chr = phenotype_pos_df.chr.astype(str).str.replace("chr", "")
+variant_df.chrom =  variant_df.chrom.astype("str").str.replace("chr", "") 
+
+## use custom cis windows list
+if False:
+    cis_list = pd.read_csv("/home/user/xqtl-protocol/code/snakemake_pipeline/dryrun", comment="#", header=None, names=["chr","start","end",phenotype_id], sep="\t")
+    cis_list.chr = cis_list.chr.astype(str).str.replace("chr", "")  ## Again to simplify things for chr format concordance.
+    if cis_list[['chr', 'ID']].duplicated().sum() != 0: # if cis_list is not unique using identifier ['#chr', 'ID']
+            cis_list = cis_list.groupby(['ID', 'chr']).agg({ # use union start-end position and make cis_list unique
+                'start': 'min',
+                'end': 'max'
+            }).reset_index()
+
+            cis_list = cis_list[['chr', 'start', 'end', 'ID']]
+            #cis_list = cis_list.set_index('chr')
+
+    phenotype_pos_df = phenotype_pos_df.reset_index() #move the phenotype id index to a new column of the dataframe
+    phenotype_df = phenotype_df.reset_index()
+    # Ensure phenotype_pos_df is a subset of cis_list based on ['#chr', 'ID']
+    original_count = len(phenotype_pos_df)
+    phenotype_pos_df = phenotype_pos_df[phenotype_pos_df.set_index(['chr', 'ID']).index.isin(cis_list.set_index([cis_list.columns[0],cis_list.columns[3]]).index)] 
+    phenotype_df = phenotype_df[phenotype_df.set_index('ID').index.isin(cis_list.set_index(cis_list.columns[3]).index)] 
+    phenotype_df = phenotype_df.set_index('ID')
+    removed_count = original_count - len(phenotype_pos_df)
+    print(f"{removed_count} rows were removed from phenotype_pos_df")
+
+    # Merge the dataframes on 'chr' and 'ID', including 'start' and 'end'
+    phenotype_pos_df = phenotype_pos_df.merge(cis_list[['chr', 'ID', 'start', 'end']], 
+                                    left_on = ["chr",phenotype_id],
+                                    right_on = [cis_list.columns[0],cis_list.columns[3]],
+                                    suffixes=('_pheno', ''))
+
+    # Function to decide whether to keep or rename columns: 
+    # If 'start' and 'end' values are the same in both dataframes, we keep the original columns without suffixes; 
+    # If they're different, we name columns from cis_list with '_cis' suffixes and keep the name still for columns from phentype_pos_df.
+    # #in some cases (gene expression for eQTLs) the phenotype_id may be in the cis_list file
+    def rename_if_different(row, col):
+        if row[f'{col}'] == row[f'{col}_pheno']:
+            return row[col]
+        else:
+            return pd.Series({f'{col}_pheno': row[f'{col}_pheno'], f'{col}_cis': row[col]})
+
+    # Apply the renaming logic
+    for col in ['start', 'end']:
+        if f'{col}_pheno' in phenotype_pos_df.columns:# this condition is to not execute when the original phenotype_pos_df don't have start, end but pos column.
+            temp = phenotype_pos_df.apply(lambda row: rename_if_different(row, col), axis=1)
+            phenotype_pos_df = phenotype_pos_df.drop(columns=[f'{col}_pheno']).join(temp)
+            print(f"Dropped columns due to value mismatch: {col}_pheno")
+
+    phenotype_pos_df = phenotype_pos_df.set_index(phenotype_id)[["chr","start","end"]] # The final phenotype_pos_df will have three columns(chr, start, end) and index is the phenotype ID
+
+    if len(phenotype_df.index) != len(phenotype_pos_df.index):
+        raise ValueError("cannot uniquely match all the phentoype data in the input to the customized cis windows provided")
+    window = 0 # In the updated tensorQTL, by default if there is a customized cis window, the actual cis window will be start - window & end + window, so it is necessary to change the window parameter to 0
+
+## Read phenotype group if availble
+if False:
+    group_s = pd.read_csv('.', sep='\t', header=None, index_col=0).squeeze()
+else:
+    group_s = None
+
+## cis-QTL mapping: nominal associations for all variant-phenotype pairs
+if not (False and False):
+    if len(interaction_s):
+        cis.map_nominal(genotype_df, variant_df, 
+                phenotype_df, 
+                phenotype_pos_df, 
+                '/tmp/xqtl_test/output/AC.chr1',
+                covariates_df=covariates_df,
+                interaction_df=interaction_s, 
+                maf_threshold_interaction=0.0,
+                window=window,
+                group_s=group_s,
+                run_eigenmt=True)
+    else:
+        cis.map_nominal(genotype_df, variant_df,
+            phenotype_df,
+            phenotype_pos_df,
+            '/tmp/xqtl_test/output/AC.chr1',
+            covariates_df=covariates_df, 
+            window=window, 
+            maf_threshold=0.0,
+            run_eigenmt=False,
+            group_s=group_s)
+
+## Load the parquet and save it as txt
+pairs_df = pd.read_parquet('/tmp/xqtl_test/output/AC.chr1.cis_qtl_pairs.1.parquet')
+## Remove rows whose 'pval_gi' is null for following t_pval_conversion
+if len(interaction_s):
+    pairs_df = pairs_df.dropna(subset=['pval_gi'])
+# print general information of parquet
+print('Output Information:')
+print("This is the file containing the immediate output of TensorQTL's map_nominal function ")
+print(os.path.getsize('/tmp/xqtl_test/output/AC.chr1.cis_qtl_pairs.1.parquet'))
+
+## Adds the group columns to pairs_df, if there is group_s use group_s, else use phenotype_id
+if group_s is not None:
+    pairs_df = pairs_df.merge(pd.DataFrame( {"molecular_trait_object_id": group_s}),left_on = "phenotype_id", right_index = True)
+else:
+    pairs_df["molecular_trait_object_id"] = pairs_df.phenotype_id
+## if pos in phenotype_pos_df(start distance and end distance are the same), 
+## add the column 'end_distance' with the same value as 'start_distance' to avoid mismatch of column and names
+if 'end_distance' not in pairs_df.columns:
+    # Get the position of 'start_distance' column
+    start_pos = pairs_df.columns.get_loc('start_distance')
+    # Create a new DataFrame with the same values as start_distance
+    new_df = pairs_df.copy()
+    # Insert end_distance column after start_distance
+    new_df.insert(start_pos + 1, 'end_distance', pairs_df['start_distance'])
+    pairs_df = new_df
+
+# rename columns
+column_map = {'phenotype_id': 'molecular_trait_id'}
+
+if len(interaction_s):
+    # calculate genomic inflation factor lambda on interaction 
+    lambda_col_interaction = pairs_df.groupby("molecular_trait_object_id").apply(lambda x: chi2.ppf(1. - np.median(x.pval_gi), 1)/chi2.ppf(0.5,1))
+    column_map.update({
+        'pval_g': 'pvalue', 'b_g': 'bhat', 'b_g_se': 'se',
+        'pval_i': f'pvalue_{var_interaction}',
+        'b_i': f'bhat_{var_interaction}',
+        'b_i_se': f'sebhat_{var_interaction}',
+        'pval_gi': f'pvalue_{var_interaction}_interaction',
+        'b_gi': f'bhat_{var_interaction}_interaction',
+        'b_gi_se': f'sebhat_{var_interaction}_interaction'
+    })
+else:
+    column_map.update({'pval_nominal': 'pvalue', 'slope': 'bhat', 'slope_se': 'sebhat'})
+if False:
+    column_map.update({'start_distance': 'cis_window_start_distance', 'end_distance': 'cis_window_end_distance'})
+else:
+    column_map.update({'start_distance': 'tss_distance', 'end_distance': 'tes_distance'})
+pairs_df.rename(columns=column_map, inplace=True)
+pairs_df["n"] = len(phenotype_df.columns.values)
+pairs_df = variant_df.merge(pairs_df, right_on='variant_id', left_index=True)
+pairs_df.rename(columns={'a1': 'a2', 'a0': 'a1'}, inplace=True)
+# sort the table if chrom and pos is not in ascending order
+if not all(pairs_df['pos'].iloc[i] <= pairs_df['pos'].iloc[i+1] for i in range(len(pairs_df)-1)):
+    pairs_df = pairs_df.sort_values(by=['chrom', 'pos'])
+# save file
+pairs_df.to_csv('/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.pairs.tsv', sep='\t', index = None)
+# print general information of pairs_df
+print('Output Information:')
+print("Output Rows:", len(pairs_df))
+print("Output Columns:", pairs_df.columns.tolist())
+print("Output Preview:", pairs_df.iloc[1:5, 1:10])
+
+if True:
+    # calculate genomic inflation factor lambda for main variant effect 
+    lambda_col = pairs_df.groupby("molecular_trait_object_id").apply(lambda x: chi2.ppf(1. - np.median(x.pvalue), 1)/chi2.ppf(0.5,1))
+    cis_df = cis.map_cis(genotype_df, 
+                        variant_df, 
+                        phenotype_df,
+                        phenotype_pos_df,
+                        covariates_df=covariates_df, 
+                        seed=999, 
+                        window=window, 
+                        maf_threshold = 0.0,
+                        group_s=group_s)
+    cis_df.index.name = "molecular_trait_id"
+    ## Add groups columns for eQTL analysis
+    if "group_id" not in cis_df.columns:
+        cis_df["group_id"] = cis_df.index
+        cis_df["group_size"] = 1
+    cis_df.rename(columns={"group_id": "molecular_trait_object_id", "group_size": "n_traits", 
+                    'start_distance': 'tss_distance', 'end_distance': 'tes_distance',
+                    "num_var": "n_variants", "pval_nominal": "p_nominal", 
+                    'slope': 'bhat', 'slope_se': 'sebhat',
+                    "pval_true_df": "p_true_df", "pval_perm": "p_perm", "pval_beta": "p_beta"}, inplace = True)
+    cis_df = cis_df.assign(genomic_inflation = lambda dataframe : dataframe["molecular_trait_object_id"].map(lambda molecular_trait_object_id:lambda_col[molecular_trait_object_id]))
+    # merge cis_df with variant_df
+    cis_df = variant_df.merge(cis_df, right_on='variant_id', left_index=True)
+    cis_df.rename(columns={'a1': 'a2', 'a0': 'a1'}, inplace=True)
+    # sort the table if chrom and pos is not in ascending order
+    if not all(cis_df['pos'].iloc[i] <= cis_df['pos'].iloc[i+1] for i in range(len(cis_df)-1)):
+        cis_df = cis_df.sort_values(by=['chrom', 'pos'])
+    # save file
+    cis_df.to_csv(str('/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl')+str('.regional.tsv'), sep='\t', index = None)
+    # print general information of cis_df
+    print('Output Information:')
+    print("Output Rows:", len(cis_df))
+    print("Output Columns:", cis_df.columns.tolist())
+    print("Output Preview:", cis_df.iloc[0:5, 0:10])
+
+
+
+HINT: Rscript SCRIPT
+library(purrr)
+library(tidyr)
+library(readr)
+library(dplyr)
+library(qvalue)
+
+pairs_df = read_delim('/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.pairs.tsv', delim = '\t')
+compute_qvalues <- function(pvalues) {
+    tryCatch({
+        if(length(pvalues) < 2) {
+            return(pvalues)
+        } else {
+            return(qvalue(pvalues)$qvalues)
+        }
+    }, error = function(e) {
+        message("Too few p-values to calculate qvalue, fall back to BH")
+        qvalue(pvalues, pi0 = 1)$qvalues
+    })
+}
+
+var_interaction <- ""
+# Check if 'interaction' is a file
+if (file.exists(var_interaction)) {
+    # Read the file into 'interaction_s' dataframe
+    interaction_s <- read.delim(var_interaction, row.names = 1)
+    # Update 'var_interaction' to the first column name of 'interaction_s'
+    var_interaction <- names(interaction_s)[1]
+}
+
+if (is.null(var_interaction) || var_interaction == "") {
+    pairs_df = pairs_df %>% group_by(molecular_trait_id) %>% mutate(qvalue = compute_qvalues(pvalue))
+} else {
+    pairs_df = pairs_df %>% group_by(molecular_trait_id) %>% mutate(qvalue_main = compute_qvalues(pvalue), qvalue_interaction = compute_qvalues(pvalue__interaction))         
+}
+
+pairs_df %>% write_delim('/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.pairs.tsv',"\t")
+
+
+
+HINT: /bin/bash SCRIPT
+bgzip --compress-level 9 /tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.pairs.tsv 
+tabix -S 1 -s 1 -b 2 -e 2 /tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.pairs.tsv.gz
+
+
+
+HINT: /bin/bash SCRIPT
+bgzip --compress-level 9 /tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.regional.tsv
+tabix -S 1 -s 1 -b 2 -e 2 /tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.regional.tsv.gz
+
+
+
+INFO: [32mcis_1[0m is [32mcompleted[0m.
+INFO: [32mcis_1[0m output:   [32m/tmp/xqtl_test/output/AC.chr1.cis_qtl_pairs.1.parquet /tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.pairs.tsv.gz... (3 items)[0m
+INFO: Checking [32mcis_2[0m: 
+HINT: Rscript SCRIPT
+library("purrr")
+library("tidyr")
+library("dplyr")
+library("readr")
+library("qvalue")
+emprical_pd = tibble(map(c('/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl.regional.tsv.gz'), ~read_delim(.x,"\t")))%>%unnest()
+emprical_pd["q_beta"] = tryCatch(qvalue(emprical_pd$p_beta)$qvalue, error = function(e){print("Too few pvalue to calculate qvalue, fall back to BH") 
+                                                                                          qvalue(emprical_pd$p_beta,pi0 = 1 )$qvalue})  
+
+emprical_pd["q_perm"] = tryCatch(qvalue(emprical_pd$p_perm)$qvalue, error = function(e){print("Too few pvalue to calculate qvalue, fall back to BH") 
+                                                                                          qvalue(emprical_pd$p_perm,pi0 = 1 )$qvalue})
+emprical_pd["fdr_beta"] = p.adjust(emprical_pd$p_beta,"fdr")    
+emprical_pd["fdr_perm"] = p.adjust(emprical_pd$p_perm,"fdr")   
+
+
+# Calculate the global nominal p-value threshold based on q_beta at FDR 0.05
+if (!all(is.na(emprical_pd$p_beta))) {
+  lb <- emprical_pd %>% 
+    filter(q_beta <= 0.05) %>% 
+    pull(p_beta) %>% 
+    sort()
+
+  ub <- emprical_pd %>% 
+    filter(q_beta > 0.05) %>% 
+    pull(p_beta) %>% 
+    sort()
+
+  if (length(lb) > 0) {
+    lb_val <- tail(lb, 1)
+    threshold <- if (length(ub) > 0) (lb_val + head(ub, 1)) / 2 else lb_val
+    message(sprintf("min p-value threshold @ FDR 0.05: %g", threshold))
+
+    emprical_pd <- emprical_pd %>% 
+      mutate(p_nominal_threshold = qbeta(threshold, beta_shape1, beta_shape2))
+  }
+}
+
+summary = tibble("fdr_perm_0.05" =  sum(emprical_pd["fdr_perm"] < 0.05), 
+                  "fdr_beta_0.05" = sum(emprical_pd["fdr_beta"] < 0.05),
+                  "q_perm_0.05" = sum(emprical_pd["q_perm"] < 0.05),
+                  "q_beta_0.05" = sum(emprical_pd["q_beta"] < 0.05),
+                  "fdr_perm_0.01" =  sum(emprical_pd["fdr_perm"] < 0.01), 
+                  "fdr_beta_0.01" = sum(emprical_pd["fdr_beta"] < 0.01),
+                  "q_perm_0.01" = sum(emprical_pd["q_perm"] < 0.01),
+                  "q_beta_0.01" = sum(emprical_pd["q_beta"] < 0.01)  )
+emprical_pd%>%write_delim("/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl_regional_significance.tsv.gz","\t")
+summary%>%write_delim("/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl_regional_significance.summary.txt","\t")
+
+
+
+INFO: [32mcis_2[0m is [32mcompleted[0m.
+INFO: [32mcis_2[0m output:   [32m/tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl_regional_significance.tsv.gz /tmp/xqtl_test/output/AC.chr1_chr1.cis_qtl_regional_significance.summary.txt[0m
+INFO: Workflow cis (ID=w0c9d0354540ca310) is tested successfully with 2 completed steps.
