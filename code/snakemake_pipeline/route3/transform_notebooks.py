@@ -58,6 +58,9 @@ def make_bash_block(script_rel, step_cmd, params, stderr_expr, stdout_expr,
 
     For rscript/python3 runners the container is handled by SoS via the
     `container = container` block option, so no --container flag is added.
+
+    When step_cmd is None, no --step flag is added (for single-purpose scripts
+    like susie_twas.R, mnm.R, fsusie.R, univariate_rss.R).
     """
     block = ('bash: expand= "${ }", stderr = ' + stderr_expr
              + ', stdout = ' + stdout_expr
@@ -68,10 +71,12 @@ def make_bash_block(script_rel, step_cmd, params, stderr_expr, stdout_expr,
         block += '        --container "${container}" \\\n'
     elif runner == "rscript":
         block += '    Rscript ${renovated_code_dir}/' + script_rel + ' \\\n'
-        block += '        --step ' + step_cmd + ' \\\n'
+        if step_cmd is not None:
+            block += '        --step ' + step_cmd + ' \\\n'
     elif runner == "python3":
         block += '    python3 ${renovated_code_dir}/' + script_rel + ' \\\n'
-        block += '        --step ' + step_cmd + ' \\\n'
+        if step_cmd is not None:
+            block += '        --step ' + step_cmd + ' \\\n'
     else:
         raise ValueError(f"Unknown runner: {runner!r}")
 
@@ -757,6 +762,174 @@ def transform_bulk_expression_normalization():
     })
 
 
+# 13. mnm_regression.ipynb — Rscript susie_twas.R / mnm.R / fsusie.R
+#     [get_analysis_regions] is orchestration-only (no task:) — kept as-is.
+#     [susie_twas], [mnm], [fsusie] each have an R task block -> call scripts directly.
+#     [mnm_genes] and [mvfsusie] are kept as-is (complex / WIP).
+def transform_mnm_regression():
+    # Common params shared across susie_twas and mnm steps
+    _common = [
+        '--genotype ${_input[0]:a}',
+        '--phenotype "${",".join([str(x.absolute()) for x in _input[1:len(_input)//2+1]])}"',
+        '--covariate "${",".join([str(x.absolute()) for x in _input[len(_input)//2+1:]])}"',
+        '--region "${_meta_info[0]}"',
+        '--window "${_meta_info[1]}"',
+        '--region-name "${_meta_info[2]}"',
+        '--extract-region-names "${"|".join([x if isinstance(x,str) else ",".join(x) for x in _meta_info[3]])}"',
+        '--conditions "${",".join(_meta_info[4:])}"',
+        '--skip-analysis-pip-cutoff "${",".join(skip_analysis_pip_cutoff)}"',
+        '--maf ${maf}',
+        '--mac ${mac}',
+        '--imiss ${imiss}',
+        '${"--indel" if indel else ""}',
+        '${"--keep-samples " + str(keep_samples) if keep_samples.is_file() else ""}',
+        '${"--keep-variants " + str(keep_variants) if not keep_variants.is_dir() else ""}',
+        '${"--save-data" if save_data else ""}',
+        '--pip-cutoff ${pip_cutoff}',
+        '--coverage "${",".join([str(x) for x in coverage])}"',
+        '--seed ${seed}',
+        '--cwd ${cwd:a}',
+    ]
+
+    transform_notebook("mnm_regression.ipynb", {
+        r'^\[susie_twas\]': (
+            "mnm_analysis/mnm_methods/susie_twas.R",
+            None,   # no --step flag (single-purpose script)
+            _common + [
+                '${"--skip-fine-mapping" if skip_fine_mapping else ""}',
+                '${"--skip-twas-weights" if skip_twas_weights else ""}',
+                '${"--trans-analysis" if trans_analysis else ""}',
+                '--init-l ${init_L}',
+                '--max-l ${max_L}',
+                '--max-cv-variants ${max_cv_variants}',
+                '--twas-cv-folds ${twas_cv_folds}',
+                '--twas-cv-threads ${twas_cv_threads}',
+                '--min-twas-maf ${min_twas_maf}',
+                '--min-twas-xvar ${min_twas_xvar}',
+                '${"--ld-reference-meta-file " + str(ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else ""}',
+                '--output-prefix ${_output[0]:nn}',
+            ],
+            'f"{_output[0]:nn}.susie_twas.stderr"',
+            'f"{_output[0]:nn}.susie_twas.stdout"',
+            "rscript",
+        ),
+        r'^\[mnm\]': (
+            "mnm_analysis/mnm_methods/mnm.R",
+            None,
+            _common + [
+                '${"--skip-fine-mapping" if skip_fine_mapping else ""}',
+                '${"--skip-twas-weights" if skip_twas_weights else ""}',
+                '--xvar-cutoff ${xvar_cutoff}',
+                '--mvsusie-max-iter ${mvsusie_max_iter}',
+                '--mrmash-max-iter ${mrmash_max_iter}',
+                '--max-cv-variants ${max_cv_variants}',
+                '--twas-cv-folds ${twas_cv_folds}',
+                '--twas-cv-threads ${twas_cv_threads}',
+                '${"--ld-reference-meta-file " + str(ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else ""}',
+                '${"--mixture-prior " + str(mixture_prior) if mixture_prior.is_file() else ""}',
+                '${"--mixture-prior-cv " + str(mixture_prior_cv) if mixture_prior_cv.is_file() else ""}',
+                '--prior-weights-min ${prior_weights_min}',
+                '${"--prior-canonical-matrices" if prior_canonical_matrices else ""}',
+                '${"--sample-partition " + str(sample_partition) if sample_partition.is_file() else ""}',
+                '--output-prefix ${_output[0]:nn}',
+            ],
+            'f"{_output[0]:nn}.mnm.stderr"',
+            'f"{_output[0]:nn}.mnm.stdout"',
+            "rscript",
+        ),
+        r'^\[fsusie\]': (
+            "mnm_analysis/mnm_methods/fsusie.R",
+            None,
+            [
+                '--genotype ${_input[0]:a}',
+                '--phenotype "${",".join([str(x.absolute()) for x in _input[1:len(_input)//2+1]])}"',
+                '--covariate "${",".join([str(x.absolute()) for x in _input[len(_input)//2+1:]])}"',
+                '--region "${_meta_info[0]}"',
+                '--window "${_meta_info[1]}"',
+                '--region-name "${_meta_info[2]}"',
+                '--conditions "${",".join(_meta_info[4:])}"',
+                '--maf ${maf}',
+                '--mac ${mac}',
+                '--imiss ${imiss}',
+                '${"--indel" if indel else ""}',
+                '${"--keep-samples " + str(keep_samples) if keep_samples.is_file() else ""}',
+                '${"--keep-variants " + str(keep_variants) if not keep_variants.is_dir() else ""}',
+                '--prior "${prior}"',
+                '--max-snp-em ${max_SNP_EM}',
+                '--max-scale ${max_scale}',
+                '--min-purity ${min_purity}',
+                '--epigenetics-mark-threshold ${epigenetics_mark_treshold}',
+                '--susie-top-pc ${susie_top_pc}',
+                '--post-processing "${post_processing}"',
+                '${"--small-sample-correction" if small_sample_correction else ""}',
+                '--pip-cutoff ${pip_cutoff}',
+                '--coverage "${",".join([str(x) for x in coverage])}"',
+                '--init-l ${init_L}',
+                '--max-l ${max_L}',
+                '${"--skip-twas-weights" if skip_twas_weights else ""}',
+                '--max-cv-variants ${max_cv_variants}',
+                '--twas-cv-folds ${twas_cv_folds}',
+                '--twas-cv-threads ${twas_cv_threads}',
+                '${"--save-data" if save_data else ""}',
+                '--output-prefix ${_output:n}',
+                '--cwd ${cwd:a}',
+            ],
+            'f"{_output:n}.stderr"',
+            'f"{_output:n}.stdout"',
+            "rscript",
+        ),
+    })
+
+
+# 14. rss_analysis.ipynb — Rscript univariate_rss.R
+#     [get_analysis_regions] is orchestration-only — kept as-is.
+#     [univariate_rss] has an R task block -> call univariate_rss.R directly.
+#     [univariate_plot] is a simple R visualisation block — kept as-is.
+def transform_rss_analysis():
+    transform_notebook("rss_analysis.ipynb", {
+        r'^\[univariate_rss\]': (
+            "pecotmr_integration/univariate_rss.R",
+            None,
+            [
+                '--ld-meta-data ${ld_meta_data}',
+                '--studies "${",".join(regional_data["GWAS"].keys())}"',
+                '--sumstat-paths "${",".join([regional_data["GWAS"][x][regional_data["regions"][_regions][0]][0] for x in regional_data["GWAS"].keys()])}"',
+                '--column-file-paths "${",".join([str(regional_data["GWAS"][x][regional_data["regions"][_regions][0]][1]) for x in regional_data["GWAS"].keys()])}"',
+                '--n-samples "${",".join([str(regional_data["GWAS"][x][regional_data["regions"][_regions][0]][2]) for x in regional_data["GWAS"].keys()])}"',
+                '--n-cases "${",".join([str(regional_data["GWAS"][x][regional_data["regions"][_regions][0]][3]) for x in regional_data["GWAS"].keys()])}"',
+                '--n-controls "${",".join([str(regional_data["GWAS"][x][regional_data["regions"][_regions][0]][4]) for x in regional_data["GWAS"].keys()])}"',
+                '--region "chr${_regions.replace(":", "_")}"',
+                '${"--skip-regions " + ",".join(skip_regions) if skip_regions else ""}',
+                '${"--extract-region-name " + extract_region_name if extract_region_name != "NULL" else ""}',
+                '${"--region-name-col " + region_name_col if region_name_col != "NULL" else ""}',
+                '${"--compute-ld-from-genotype" if compute_LD_from_genotype else ""}',
+                '--imiss ${imiss}',
+                '--maf ${maf}',
+                '--L ${L}',
+                '--max-l ${max_L}',
+                '--l-step ${l_step}',
+                '--pip-cutoff ${pip_cutoff}',
+                '--skip-analysis-pip-cutoff ${skip_analysis_pip_cutoff}',
+                '--coverage "${",".join([str(x) for x in coverage])}"',
+                '${"--finemapping-method " + finemapping_method if finemapping_method else ""}',
+                '${"--impute" if impute else ""}',
+                '--rcond ${rcond}',
+                '--lamb ${lamb}',
+                '--r2-threshold ${R2_threshold}',
+                '--minimum-ld ${minimum_ld}',
+                '${"--qc-method " + qc_method if qc_method else ""}',
+                '${"--comment-string " + comment_string if comment_string != "NULL" else ""}',
+                '${"--diagnostics" if diagnostics else ""}',
+                '--output-prefix ${_output:nn}',
+                '--output ${_output}',
+            ],
+            'f"{_output:n}.stderr"',
+            'f"{_output:n}.stdout"',
+            "rscript",
+        ),
+    })
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -800,11 +973,11 @@ if __name__ == "__main__":
     print("\n12. bulk_expression_normalization.ipynb")
     transform_bulk_expression_normalization()
 
-    print("\n13. mnm_regression.ipynb (global transform only)")
-    transform_notebook("mnm_regression.ipynb", {})
+    print("\n13. mnm_regression.ipynb")
+    transform_mnm_regression()
 
-    print("\n14. rss_analysis.ipynb (global transform only)")
-    transform_notebook("rss_analysis.ipynb", {})
+    print("\n14. rss_analysis.ipynb")
+    transform_rss_analysis()
 
     print("\n=== Verification ===")
     expected = [
