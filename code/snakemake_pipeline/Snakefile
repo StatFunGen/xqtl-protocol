@@ -35,6 +35,15 @@ for k in required_keys:
     if k not in config:
         raise ValueError(f"Required config key '{k}' is missing from config.yaml")
 
+# Supply a default phenotype_preprocessing block so configs that predate this
+# feature (or omit the section) still work without errors.
+config.setdefault("phenotype_preprocessing", {
+    "run_imputation":    False,
+    "impute_method":     "gEBMF",
+    "num_factor":        60,
+    "qc_prior_to_impute": True,
+})
+
 # ── Convenience variables ────────────────────────────────────────────────────
 CWD         = config["cwd"]
 PIPELINE    = config["pipeline_dir"]
@@ -61,7 +70,16 @@ def get_phenotype_bed(wc):
                 "but no phenotype_bed path was provided in config."
             )
         return bed
-    # BED is produced by the normalization step
+    if config["start_from"] == "raw_phenotype":
+        # After annotate_coord the BED is {theme}.bed.gz.
+        # If imputation is enabled the downstream file is {theme}.bed.imputed.bed.gz
+        # (SoS names it by stripping the last extension of the input, which for
+        # "{theme}.bed.gz" gives "{theme}.bed", then appends ".imputed.bed.gz").
+        base = f"{CWD}/{wc.theme}/phenotype_preprocessing"
+        if config["phenotype_preprocessing"].get("run_imputation", False):
+            return f"{base}/{wc.theme}.bed.imputed.bed.gz"
+        return f"{base}/{wc.theme}.bed.gz"
+    # BED is produced by the normalization step (fastq path)
     return (
         f"{CWD}/{wc.theme}/molecular_phenotypes/"
         f"{wc.theme}.{NORM_METHOD}.expression.bed.gz"
@@ -99,6 +117,7 @@ def get_input_plink(wc):
 
 
 # ── Include rule modules ─────────────────────────────────────────────────────
+include: "rules/00_phenotype_preprocessing.smk"
 include: "rules/01_molecular_phenotypes.smk"
 include: "rules/02_genotype_preprocessing.smk"
 include: "rules/03_sample_qc_pca.smk"
@@ -158,6 +177,24 @@ rule all:
 # ============================================================
 # Convenience stage targets
 # ============================================================
+
+rule phenotype_preprocessing:
+    """Run only the raw phenotype preprocessing stage (annotate_coord + optional imputation)."""
+    input:
+        # annotated BED (always produced)
+        expand(
+            "{cwd}/{theme}/phenotype_preprocessing/{theme}.bed.gz",
+            cwd=CWD, theme=THEMES,
+        ) if config["start_from"] == "raw_phenotype" else [],
+        # imputed BED (only when run_imputation: true)
+        expand(
+            "{cwd}/{theme}/phenotype_preprocessing/{theme}.bed.imputed.bed.gz",
+            cwd=CWD, theme=THEMES,
+        ) if (
+            config["start_from"] == "raw_phenotype"
+            and config["phenotype_preprocessing"].get("run_imputation", False)
+        ) else [],
+
 
 rule phenotype_calling:
     """Run only the molecular phenotype calling stage."""

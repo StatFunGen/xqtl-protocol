@@ -37,8 +37,11 @@ renovated_code_dir: "/path/to/xqtl-protocol/renovated_code"
 # ------------------------------------
 # Starting point of the pipeline
 # Options:
-#   "fastq"         - start from raw FASTQ files (runs RNA calling)
-#   "phenotype_bed" - start from pre-computed normalized BED.gz phenotype file
+#   "fastq"           - start from raw FASTQ files (runs RNA-seq calling)
+#   "phenotype_bed"   - start from a pre-computed normalized BED.gz file
+#   "raw_phenotype"   - start from a raw molecular phenotype matrix
+#                       (protein, ATAC, methylation, etc.); runs
+#                       annotate_coord → (optional imputation) → phenotype_by_chrom
 # ------------------------------------
 start_from: "fastq"
 
@@ -54,6 +57,11 @@ themes:
     paired_end: true                               # Whether reads are paired-end
     # --- Pre-computed phenotype (used only if start_from: "phenotype_bed") ---
     phenotype_bed: ""                              # Path to {name}.tmm_cpm_voom.expression.bed.gz
+    # --- Raw phenotype matrix (used only if start_from: "raw_phenotype") ---
+    raw_phenotype_file: ""                         # Path to raw matrix (.csv, .tsv, .bed.gz, etc.)
+    phenotype_id_column: "gene_id"                 # ID column: gene_id, gene_name, SOMAseqID, etc.
+    molecular_trait_type: "gene"                   # Trait type: gene, protein, or atac
+    sample_participant_lookup: "."                 # Optional: maps expression IDs → genotype IDs
     # --- Covariates (sex, age, etc., not including genotype PCs) ---
     covariate_file: "/path/to/AC.covariates.cov.gz"
     # --- Optional: restrict to a subset of genes/regions ---
@@ -65,6 +73,10 @@ themes:
   #   data_dir: "/path/to/fastq_data/DLPFC"
   #   paired_end: true
   #   phenotype_bed: ""
+  #   raw_phenotype_file: ""
+  #   phenotype_id_column: "gene_id"
+  #   molecular_trait_type: "gene"
+  #   sample_participant_lookup: "."
   #   covariate_file: "/path/to/DLPFC.covariates.cov.gz"
   #   phenotype_group: ""
 
@@ -149,6 +161,20 @@ normalization:
   count_threshold: 6        # Read count filter threshold
   sample_frac_threshold: 0.2 # Fraction of samples with expression above threshold
   quantile_normalize: true  # Apply quantile normalization after TMM
+
+# ------------------------------------
+# Phenotype Preprocessing Parameters
+# (used only when start_from: "raw_phenotype")
+# ------------------------------------
+phenotype_preprocessing:
+  # Whether to run missing value imputation after coordinate annotation
+  run_imputation: false
+  # Imputation method: gEBMF, EBMF, missforest, knn, soft, mean, lod
+  impute_method: "gEBMF"
+  # Number of latent factors for EBMF-based methods
+  num_factor: 60
+  # Remove features with >40% missing or >95% zeros before imputation
+  qc_prior_to_impute: true
 
 # ------------------------------------
 # Covariate Processing Parameters
