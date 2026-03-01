@@ -1,0 +1,73 @@
+INFO: Checking [32mbasic QC filters[0m: Filter SNPs and select individuals
+HINT: /bin/bash SCRIPT
+plink2 \
+  --bfile /tmp/xqtl_test/AC.unrelated \
+  --allow-extra-chr \
+   \
+   \
+  --mac 5.0 \
+   \
+  --geno 0.1  \
+  --hwe 1e-15 \
+  --mind 0.1  \
+   \
+   \
+   \
+   \
+  --make-bed \
+   \
+   \
+  --out /tmp/xqtl_test/output/AC.unrelated.plink_qc \
+  --threads 4 \
+  --memory 14400.0 --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
+
+
+
+HINT: /bin/bash SCRIPT
+i="/tmp/xqtl_test/output/AC.unrelated.plink_qc.bed"
+output_size=$(ls -lh $i | cut -f 5 -d ' ')
+printf "output_info: %s\noutput_size: %s\n" "$i" "$output_size" >> /tmp/xqtl_test/output/AC.unrelated.plink_qc.stdout
+
+
+
+INFO: [32mbasic QC filters[0m is [32mcompleted[0m.
+INFO: [32mbasic QC filters[0m output:   [32m/tmp/xqtl_test/output/AC.unrelated.plink_qc.bed[0m
+INFO: Checking [32mLD pruning[0m: LD prunning and remove related individuals (both ind of a pair) Plink2 has multi-threaded calculation for LD prunning
+HINT: /bin/bash SCRIPT
+plink2 \
+--bfile /tmp/xqtl_test/output/AC.unrelated.plink_qc \
+--allow-extra-chr \
+--rm-dup force-first \
+--indep-pairwise 200 25 0.1  \
+--out /tmp/xqtl_test/output/AC.unrelated.plink_qc \
+--threads 4 \
+--memory 14400.0
+
+plink2 \
+--bfile /tmp/xqtl_test/output/AC.unrelated.plink_qc \
+--allow-extra-chr \
+--extract /tmp/xqtl_test/output/AC.unrelated.plink_qc.prune.in \
+--make-bed \
+--out /tmp/xqtl_test/output/AC.unrelated.plink_qc.prune \
+--threads 4 \
+--memory 14400.0
+
+
+
+HINT: /bin/bash SCRIPT
+i="/tmp/xqtl_test/output/AC.unrelated.plink_qc.prune.bed"
+output_size=$(ls -lh $i | cut -f 5 -d ' ')
+printf "output_info: %s\noutput_size: %s\n" "$i" "$output_size" >> /tmp/xqtl_test/output/AC.unrelated.plink_qc.prune.stdout
+i="/tmp/xqtl_test/output/AC.unrelated.plink_qc.prune.in"
+output_size=$(ls -lh $i | cut -f 5 -d ' ')
+output_rows=$(zcat $i | wc -l | cut -f 1 -d ' ')
+output_column=$(zcat $i | head -1 | wc -w)
+output_preview=$(cat $i | grep -v "##" | head | cut -f 1,2,3,4,5,6) 
+printf "output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_preview:\n%s\n" \
+    "$i" "$output_size" "$output_rows" "$output_column" "$output_preview" >> /tmp/xqtl_test/output/AC.unrelated.plink_qc.prune.in.stdout
+
+
+
+INFO: [32mLD pruning[0m is [32mcompleted[0m.
+INFO: [32mLD pruning[0m output:   [32m/tmp/xqtl_test/output/AC.unrelated.plink_qc.prune.bed /tmp/xqtl_test/output/AC.unrelated.plink_qc.prune.in[0m
+INFO: Workflow qc (ID=w1c4c037e16a97f3d) is tested successfully with 2 completed steps.

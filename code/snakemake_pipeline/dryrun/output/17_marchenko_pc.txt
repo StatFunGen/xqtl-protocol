@@ -1,0 +1,131 @@
+INFO: Checking [32mcomputing residual on merged covariates[0m: 
+HINT: Rscript SCRIPT
+
+mean_impute <- function(d){
+  f <- apply(d, 2, function(x) mean(x, na.rm = TRUE))
+  for (i in 1:length(f)) d[,i][which(is.na(d[,i]))] <- f[i]
+  return(d)
+}
+
+library(dplyr)
+library(readr)
+pheno = read_delim('/tmp/xqtl_test/AC.tmm_cpm_voom.expression.bed.gz',delim = "\t")
+covariate= read_delim('/tmp/xqtl_test/merged_cov.gz',delim = "\t") 
+
+# Extract samples in both files (Outliers will be removed in here as they are no longer presented in the header of factor)
+extraction_sample_list <- intersect(colnames(pheno), colnames(covariate)) 
+
+
+if(length(extraction_sample_list) == 0){
+  stop("No samples are overlapped in two files!")
+}
+
+## Report sample counts:
+print(paste((ncol(pheno) - 4), "samples are in the phenotype file", sep = " "))
+print(paste((ncol(covariate) - 1), "samples are in the covariate file", sep = " "))
+
+## Report identical samples:
+print(paste(length(extraction_sample_list), "samples overlap between phenotype & covariate files and are included in the analysis:", sep = " "))
+print(extraction_sample_list)
+
+## Report non-overlapping samples :
+covariate_missing = covariate %>% select(-all_of('#id')) %>% select(-all_of(extraction_sample_list))
+print(paste(ncol(covariate_missing), "samples in the covariate file are missing from the phenotype file:", sep = " "))
+print(colnames(covariate_missing))
+
+pheno_missing = pheno %>% select(-c(1:4)) %>% select(-all_of(extraction_sample_list))
+print(paste(ncol(pheno_missing), "samples in the phenotype file are missing from the covariate file:", sep = " "))
+print(colnames(pheno_missing))
+
+# Subset the data:
+covariate = covariate[,extraction_sample_list]%>%as.matrix()%>%t()
+pheno_id = pheno%>%select(1:4)
+pheno = pheno%>%select(all_of(rownames(covariate)))%>%as.matrix()%>%t()
+if (F) {
+  pheno = mean_impute(pheno)
+} else {
+  if(sum(is.na(pheno)) > 0){ stop("NA in phenotype input is not allowed!") }
+}
+# Get residual 
+pheno_resid = .lm.fit(x = cbind(1,covariate), y = pheno)$residuals
+pheno_output = cbind(pheno_id, pheno_resid%>%t())
+pheno_output%>%write_delim("/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed",delim = "\t")
+
+
+
+HINT: /bin/bash SCRIPT
+bgzip -f /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed
+tabix -p bed /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz
+
+stdout=/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.stdout 
+for i in /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz ; do 
+echo "output_info: $i " >> $stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> $stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> $stdout;
+echo "output_column:" `zcat $i | head -1 | wc -w `   >> $stdout;
+echo "output_preview:"   >> $stdout;
+zcat $i | head  | cut -f 1,2,3,4,5,6   >> $stdout ; done
+
+
+
+INFO: [32mcomputing residual on merged covariates[0m is [32mcompleted[0m.
+INFO: [32mcomputing residual on merged covariates[0m output:   [32m/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz[0m
+INFO: Checking [32mMarchenko_PC_2[0m: 
+HINT: Rscript SCRIPT
+library("dplyr")
+library("readr")
+library("PCAtools")
+library('BiocSingular')
+residExpPath  = "/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.residual.bed.gz"
+covPath = "/tmp/xqtl_test/merged_cov.gz"
+residExpDF <- read_delim(residExpPath, show_col_types=FALSE)
+covDF <- read_delim(covPath, show_col_types=FALSE)
+commonMPSamples <- intersect(colnames(covDF), colnames(residExpDF))
+covDFcommon <- cbind(covDF[, 1], covDF[, commonMPSamples])
+
+residExpPC <- pca(
+    residExpDF[,commonMPSamples], # The first four columns are: chr, start, end, and gene_id; so we skip those.
+    scale = TRUE,
+    center = TRUE,
+    BSPARAM = ExactParam())
+
+# Choose the number of PC
+MPPCNum <- 0
+if (T) {
+    M <- apply(residExpDF[, commonMPSamples], 1, function(X){ (X - mean(X))/sqrt(var(X))});
+    residSigma2 <- var(as.vector(M));
+    paste('sigma2:', residSigma2)
+    MPPCNum <- chooseMarchenkoPastur(
+    .dim = dim(residExpDF[, commonMPSamples]), var.explained=residExpPC$sdev^2, noise=residSigma2)
+}
+if (F) {
+    MPPCNum <- jackstraw::permutationPA(data.matrix(residExpDF[, commonMPSamples]), B = 100, threshold = 0.05, verbose = F)$r
+}
+if (MPPCNum == 0) stop("Invalid choice of methods to choose K for PCA: Marchenko")
+
+MPPCsDF <- as.data.frame(residExpPC$rotated[, 1:MPPCNum])
+MPColMatrix <-  matrix(c(rep('Hidden_Factor_PC', times=MPPCNum), seq(1, MPPCNum)), ncol=2, nrow=MPPCNum)
+colnames(MPPCsDF) <- apply(MPColMatrix, 1, function(X){return(paste0(X[1], X[2]))})
+# Add #id Column
+MPPCsDF <- as.data.frame(t(MPPCsDF))
+MPPCsDF$id <- rownames(MPPCsDF)
+MPPCsDF <- MPPCsDF %>% select(id, everything()) %>% rename("#id" = "id")
+write_delim((rbind(covDFcommon, MPPCsDF)), "/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.Marchenko_PC.gz", "\t")
+
+
+
+HINT: /bin/bash SCRIPT
+stdout=/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.Marchenko_PC.stdout
+for i in /tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.Marchenko_PC.gz ; do 
+echo "output_info $i " >> $stdout;
+echo "output_size:" `ls -lh $i | cut -f 5  -d  " "`   >> $stdout;
+echo "output_rows:" `zcat $i | wc -l  | cut -f 1 -d " "`   >> $stdout;
+echo "output_column:" `zcat $i | head -1 | wc -w `   >> $stdout;
+echo "output_preview:"   >> $stdout;
+zcat $i | head  | cut -f 1,2,3,4,5,6   >> $stdout ; done
+
+
+
+INFO: [32mMarchenko_PC_2[0m is [32mcompleted[0m.
+INFO: [32mMarchenko_PC_2[0m output:   [32m/tmp/xqtl_test/output/AC.tmm_cpm_voom.expression.merged_cov.Marchenko_PC.gz[0m
+INFO: Workflow Marchenko_PC (ID=w96b8457caca5989e) is tested successfully with 2 completed steps.

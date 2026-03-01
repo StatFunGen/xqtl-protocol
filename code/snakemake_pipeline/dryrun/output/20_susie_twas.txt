@@ -1,0 +1,241 @@
+INFO: Checking [32mget_analysis_regions[0m: 
+INFO: [32mget_analysis_regions[0m is [32mcompleted[0m.
+INFO: [32mget_analysis_regions[0m output:   [32mregional_data[0m
+INFO: Checking [32msusie_twas[0m: 
+HINT: Rscript SCRIPT
+options(warn=1)
+library(pecotmr)
+phenotype_files = c("/tmp/xqtl_test/mnm_pheno/ENSG00000001.1.bed.gz")
+covariate_files = c("/tmp/xqtl_test/AC.Marchenko_PC.gz")
+conditions = c("AC.chr1.mnm.bed")
+pip_cutoff_to_skip = list('AC.chr1.mnm.bed'=0.0,'AC.chr2.mnm.bed'=0.0,'AC.chr22.mnm.bed'=0.0)
+pip_cutoff_to_skip = unlist(c(pip_cutoff_to_skip[conditions]))
+# extract subset of samples
+keep_samples = NULL
+if (FALSE) {
+  keep_samples = unlist(strsplit(readLines('/home/user/xqtl-protocol/code/snakemake_pipeline/dryrun'), "\\s+"))
+  message(paste(length(keep_samples), "samples are selected to be loaded for analysis"))
+}
+# Load regional association data
+tryCatch({
+    fdat = load_regional_univariate_data(genotype = '/tmp/xqtl_test/xqtl.plink_qc.chr1',
+                                          phenotype = phenotype_files,
+                                          covariate = covariate_files,
+                                          region = 'chr1:1000-2000',
+                                          association_window = "chr1:0-502000",
+                                          conditions = conditions,
+                                          maf_cutoff = 0.0025,
+                                          mac_cutoff = 5,
+                                          imiss_cutoff = 1.0,
+                                          keep_indel = TRUE,
+                                          keep_samples = keep_samples,
+                                          keep_variants = NULL, # use "not keep_variants.is_dir()" in case user input filename is wrong without realizing
+                                          extract_region_name = list(c('ENSG00000001.1')),
+                                          phenotype_header = 4,
+                                          region_name_col = 4,
+                                          scale_residuals = FALSE)
+}, NoSNPsError = function(e) {
+    message("Error: ", paste(e$message, "ENSG00000001.1@chr1:0-502000"))
+    data_dir <- paste0("/tmp/xqtl_test/output", "/data/")
+    if (!dir.exists(data_dir)) {
+        dir.create(data_dir, recursive = TRUE)
+    }
+    saveRDS(list(ENSG00000001.1 = e$message),
+            paste0(data_dir, "AC.chr1_ENSG00000001.1.univariate_data.rds"), 
+            compress='xz')
+    quit(save="no")
+})
+# save data-set
+if (FALSE) {
+    saveRDS(list(ENSG00000001.1 = fdat), 
+                paste0("/tmp/xqtl_test/output", "/data/", "AC.chr1_ENSG00000001.1.univariate_data.rds"), 
+                compress='xz')
+}
+if (TRUE) {
+  if ("ENSG00000001.1" != "('ENSG00000001.1',)") {
+      region_name = c("ENSG00000001.1", c(c('ENSG00000001.1')))
+  } else {
+      region_name = "ENSG00000001.1"
+  }
+
+  region_info = list(region_coord=parse_region("chr1:1000-2000"), grange=parse_region("chr1:0-502000"), region_name=region_name)
+
+  finemapping_result = list()
+  preset_variants_result = list()
+  condition_names = vector()
+  empty_elements_cnt = 0
+  r = 1
+
+  while (r<=length(fdat$residual_Y)) {
+      # Update condition names
+      dropped_samples = list(X=fdat$dropped_sample$dropped_samples_X[[r]], 
+                           y=fdat$dropped_sample$dropped_samples_Y[[r]], 
+                           covar=fdat$dropped_sample$dropped_samples_covar[[r]])
+      new_names = names(fdat$residual_Y)[r]
+      ##FIXME:  residule Y lost their colname when there was only 1 column
+      # new_col_names = colnames(fdat$residual_Y[[r]])
+      new_col_names = list(c('ENSG00000001.1'))[[r]]
+      if (is.null(new_col_names)) {
+        # column names does not exist, create generic names instead
+        new_col_names = 1:ncol(fdat$residual_Y[[r]])
+      }
+      # if the name is different as region name ie, these original ID the same as gene ID, then give the new name
+      if(!(identical(new_names, new_col_names)))
+      new_names = paste(new_names, new_col_names, sep="_") # DLPFC_iso1 DLPFC_iso2
+
+      out <- list()
+      # Run the first round focused on fine-mapping with many variants included
+      # fine-mapping with complete data-set
+      if (TRUE) {
+          out$finemapping <- lapply(1:ncol(fdat$residual_Y[[r]]), function(i) {
+                              set.seed(999)
+                              rs <- univariate_analysis_pipeline( X=fdat$residual_X[[r]], 
+                                                                  Y=fdat$residual_Y[[r]][,i,drop=FALSE],
+                                                                  maf=fdat$maf[[r]], 
+                                                                  X_scalar=fdat$residual_X_scalar[[r]], 
+                                                                  Y_scalar=if (fdat$residual_Y_scalar[[r]] == 1) 1 else fdat$residual_Y_scalar[[r]][,i,drop=FALSE],
+                                                                  X_variance=fdat$X_variance[[r]],
+                                                                  other_quantities = list(dropped_samples = dropped_samples),
+                                                                  # filters
+                                                                  imiss_cutoff = 1.0,
+                                                                  maf_cutoff = NULL,
+                                                                  xvar_cutoff = 0,
+                                                                  ld_reference_meta_file = NULL,
+                                                                  pip_cutoff_to_skip = pip_cutoff_to_skip[r],
+                                                                  # methods parameter configuration
+                                                                  init_L = 5,
+                                                                  max_L = 10,
+                                                                  l_step = 5,
+                                                                  # fine-mapping results summary
+                                                                  signal_cutoff = 0.025,
+                                                                  coverage = c(0.95,0.7,0.5),
+                                                                  # TWAS weights and CV for TWAS weights
+                                                                  twas_weights = FALSE, 
+                                                                  max_cv_variants=-1,
+                                                                  cv_folds=5,
+                                                                  cv_threads = 5
+                                                              )
+                                                              return(rs)
+                                                              })
+      }
+      if (TRUE) {
+          common_cols = intersect(colnames(fdat$X), colnames(fdat$residual_X[[r]]))
+          X_r = fdat$X[rownames(fdat$residual_X[[r]]), common_cols, drop=F]
+          maf = fdat$maf[[r]][common_cols]
+          # Run the second round focused on TWAS using selected variants
+          out$twas_models <- lapply(1:ncol(fdat$residual_Y[[r]]), function(i) {
+                              set.seed(999)
+                              rs <- univariate_analysis_pipeline(X=X_r, # use original X matrix for TWAS model: 1) to be comparable to multivariate analysis in CV; 2) to avoid overfitting in CV
+                                                              Y=fdat$residual_Y[[r]][,i,drop=FALSE],
+                                                              maf=maf, 
+                                                              X_scalar=fdat$residual_X_scalar[[r]], 
+                                                              Y_scalar=if (fdat$residual_Y_scalar[[r]] == 1) 1 else fdat$residual_Y_scalar[[r]][,i,drop=FALSE],
+                                                              X_variance=fdat$X_variance[[r]],
+                                                              other_quantities = list(dropped_samples = dropped_samples),
+                                                              # filters
+                                                              imiss_cutoff = 1.0,
+                                                              maf_cutoff = 0.0025,
+                                                              xvar_cutoff = 0.01,
+                                                              ld_reference_meta_file=NULL,
+                                                              pip_cutoff_to_skip = pip_cutoff_to_skip[r],
+                                                              # methods parameter configuration
+                                                              init_L = 5,
+                                                              max_L = 10,
+                                                              l_step = 5,
+                                                              # fine-mapping results summary
+                                                              signal_cutoff = 0.025,
+                                                              coverage = c(0.95,0.7,0.5),
+                                                              # TWAS weights and CV for TWAS weights
+                                                              twas_weights = TRUE, 
+                                                              max_cv_variants=-1,
+                                                              cv_folds=5,
+                                                              cv_threads = 5
+                                                              )
+                                                              return(rs)
+                                                              })
+      }
+
+      empty_elements_idx <- unique(do.call(c, lapply(out, function(results) which(sapply(results, function(x) is.list(x) && length(x) == 0)))))
+      if (length(empty_elements_idx)>0) {
+        empty_elements_cnt <- empty_elements_cnt + length(empty_elements_idx)
+        if (!is.null(out$finemapping)) {
+            out$finemapping <- out$finemapping[-empty_elements_idx]
+        }
+        if (!is.null(out$twas_models)) {
+            out$twas_models <- out$twas_models[-empty_elements_idx]
+        }
+        new_names <- new_names[-empty_elements_idx]
+      }
+      if (!is.null(out$finemapping)) {
+          finemapping_result = c(finemapping_result, out$finemapping)
+      }
+      if (!is.null(out$twas_models)) {
+          preset_variants_result = c(preset_variants_result, out$twas_models)
+      }
+      condition_names = c(condition_names, new_names)
+      if (length(new_names)>0) {
+        message("Analysis completed for: ", paste(new_names, collapse=","))
+      }
+      # original data no longer relevant, set to NA to release memory
+      fdat$residual_X[[r]] <- NA
+      fdat$residual_Y[[r]] <- NA
+      r = r + 1
+  }
+  # Reorganize outputs
+  # The BVSR model in this case contain different versions of SuSiE fits
+  # preset_variants_result
+  # Clean up TWAS weights output
+  twas_output <- list()
+  if (length(preset_variants_result)>0) {
+      names(preset_variants_result) <- condition_names
+      for (r in condition_names) {
+        twas_output[[r]] <- preset_variants_result[[r]]$twas_weights_result
+        preset_variants_result[[r]]$twas_weights_result <- NULL
+        twas_output[[r]]$variant_names <- preset_variants_result[[r]]$variant_names
+        twas_output[[r]]$region_info <- region_info
+        preset_variants_result[[r]]$region_info <- region_info
+      }
+  }
+  # Clean up fine-mapping output
+  finemapping_output <- list()
+  if (length(finemapping_result)>0) {
+      names(finemapping_result) <- condition_names
+  }
+  for (r in condition_names) {
+      if (r %in% names(finemapping_result)) {
+          finemapping_output[[r]] <- finemapping_result[[r]]
+          finemapping_output[[r]]$region_info <- region_info
+          finemapping_output[[r]]$susie_fitted <- NULL
+      }
+      if (r %in% names(preset_variants_result)) {
+          finemapping_output[[r]]$preset_variants_result <- preset_variants_result[[r]]
+      }
+  } 
+  if (empty_elements_cnt>0) {
+      msg = paste0(empty_elements_cnt, " analysis are skipped for failing to pass initial screen for potential association signals", sep="")
+      message(msg)
+      if(length(finemapping_output)==0){
+        finemapping_output = msg
+      }
+      if(length(twas_output)==0){
+        twas_output = msg
+      }
+  }
+
+  if (TRUE){
+    saveRDS(list("ENSG00000001.1" = finemapping_output), 
+          paste0("/tmp/xqtl_test/output", "/fine_mapping/", "AC.chr1_ENSG00000001.1.univariate_bvsr.rds"),
+          compress='xz')
+  }
+  if (TRUE) {
+     saveRDS(list("ENSG00000001.1" = twas_output), 
+                                       paste0("/tmp/xqtl_test/output", "/twas_weights/", "AC.chr1_ENSG00000001.1.univariate_twas_weights.rds"), 
+                                       compress='xz')
+  }
+}
+
+
+
+INFO: [32msusie_twas[0m is [32mcompleted[0m.
+INFO: [32msusie_twas[0m output:   [32m/tmp/xqtl_test/output/fine_mapping/AC.chr1_ENSG00000001.1.univariate_bvsr.rds /tmp/xqtl_test/output/twas_weights/AC.chr1_ENSG00000001.1.univariate_twas_weights.rds[0m
+INFO: Workflow susie_twas (ID=w3ce6b175780a9ac6) is tested successfully with 2 completed steps.

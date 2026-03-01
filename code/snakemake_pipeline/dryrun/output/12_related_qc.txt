@@ -1,0 +1,35 @@
+INFO: Checking [32mqc_no_prune[0m: Filter SNPs and select individuals
+HINT: /bin/bash SCRIPT
+plink2 \
+  --bfile /tmp/xqtl_test/AC.related \
+  --allow-extra-chr \
+   \
+   \
+  --mac 5.0 \
+   \
+  --geno 0.1  \
+  --hwe 1e-15 \
+  --mind 0.1  \
+   \
+   \
+   \
+  --extract /tmp/xqtl_test/AC.unrelated.plink_qc.prune.in \
+  --make-bed \
+   \
+   \
+  --out /tmp/xqtl_test/output/AC.related.plink_qc.extracted \
+  --threads 4 \
+  --memory 14400.0 --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
+
+
+
+HINT: /bin/bash SCRIPT
+i="/tmp/xqtl_test/output/AC.related.plink_qc.extracted.bed"
+output_size=$(ls -lh $i | cut -f 5 -d ' ')
+printf "output_info: %s\noutput_size: %s\n" "$i" "$output_size" >> /tmp/xqtl_test/output/AC.related.plink_qc.extracted.stdout
+
+
+
+INFO: [32mqc_no_prune[0m is [32mcompleted[0m.
+INFO: [32mqc_no_prune[0m output:   [32m/tmp/xqtl_test/output/AC.related.plink_qc.extracted.bed[0m
+INFO: Workflow qc_no_prune (ID=wf12e09ae03231ca0) is tested successfully with 1 completed step.

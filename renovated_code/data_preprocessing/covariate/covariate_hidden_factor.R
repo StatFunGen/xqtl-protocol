@@ -1,0 +1,364 @@
+#!/usr/bin/env Rscript
+# ============================================================
+# covariate_hidden_factor.R
+# Mirrors: code/data_preprocessing/covariate/covariate_hidden_factor.ipynb
+#
+# Steps (selected via --step):
+#   compute_residual — regress covariates out of phenotype (notebook [*_1])
+#   Marchenko_PC     — Marchenko-Pastur PCA on residual file (notebook [Marchenko_PC_2])
+#   PEER_fit         — PEER factor model fitting (notebook [PEER_2])
+#   PEER_extract     — extract PEER factors from model (notebook [PEER_3])
+#
+# Legacy combined steps (kept for backward compatibility):
+#   Marchenko_PC_full — compute_residual + Marchenko_PC in one call
+#   PEER              — compute_residual + PEER_fit + PEER_extract in one call
+#
+# Flags are kept identical to the SoS notebook parameter names.
+# ============================================================
+
+suppressPackageStartupMessages({
+  library(optparse)
+  library(dplyr)
+  library(readr)
+})
+
+opt_list <- list(
+  make_option("--step",                  type = "character", default = NULL),
+  make_option("--cwd",                   type = "character", default = "output"),
+  # Inputs for compute_residual / legacy combined steps
+  make_option("--phenoFile",             type = "character", default = NULL,
+              help = "Input phenotype BED.gz file"),
+  make_option("--covFile",               type = "character", default = NULL,
+              help = "Merged covariate file (output of covariate_formatting.R)"),
+  # Input for Marchenko_PC / PEER_fit sub-steps
+  make_option("--residFile",             type = "character", default = NULL,
+              help = "[Marchenko_PC / PEER_fit] Residual phenotype .bed.gz from compute_residual"),
+  # Input for PEER_extract
+  make_option("--modelFile",             type = "character", default = NULL,
+              help = "[PEER_extract] PEER model .rds file from PEER_fit"),
+  make_option("--N",                     type = "integer",   default = 0,
+              help = "Number of hidden factors (0 = auto-determine)"),
+  make_option("--mean-impute-missing",   action = "store_true", default = FALSE,
+              help = "Mean-impute missing phenotype values before residualization"),
+  # PEER-specific
+  make_option("--iteration",             type = "integer",   default = 1000),
+  make_option("--convergence-mode",      type = "character", default = "fast",
+              help = "PEER convergence mode: fast, medium, slow"),
+  make_option("--numThreads",            type = "integer",   default = 8),
+  make_option("--dry-run",               action = "store_true", default = FALSE,
+              help = "Print full command + validate inputs; do not run.")
+)
+
+opt <- parse_args(OptionParser(option_list = opt_list))
+if (is.null(opt$step)) stop("--step is required")
+
+dir.create(opt$cwd, showWarnings = FALSE, recursive = TRUE)
+
+# bname is derived per-function below (phenoFile may be NULL for sub-steps)
+
+# ── Shared: compute residual phenotype ───────────────────────────────────────
+compute_residuals <- function(opt) {
+  cat("=== Sub-step 1: compute residuals ===\n")
+
+  # Read phenotype BED
+  pheno <- read_tsv(opt$phenoFile, col_types = cols(.default = "c"), show_col_types = FALSE)
+  coord_cols <- colnames(pheno)[1:4]
+  sample_cols <- colnames(pheno)[-(1:4)]
+  mat <- as.matrix(pheno[, sample_cols])
+  storage.mode(mat) <- "numeric"
+  rownames(mat) <- pheno[[1]]   # use first column (chr:start:end:id) as rowID
+
+  # Mean-impute if requested
+  if (isTRUE(opt$`mean-impute-missing`)) {
+    row_means <- rowMeans(mat, na.rm = TRUE)
+    for (i in seq_len(nrow(mat))) {
+      na_idx <- is.na(mat[i, ])
+      if (any(na_idx)) mat[i, na_idx] <- row_means[i]
+    }
+  }
+
+  # Read covariates (rows = covariates, cols = samples)
+  cov_df <- read_tsv(opt$covFile, col_types = cols(.default = "d"),
+                     show_col_types = FALSE)
+  id_col <- colnames(cov_df)[1]
+  cov_samples <- setdiff(colnames(cov_df), id_col)
+  shared <- intersect(sample_cols, cov_samples)
+  cat(sprintf("Shared samples for residualization: %d\n", length(shared)))
+
+  mat_sub <- mat[, shared, drop = FALSE]
+  cov_mat <- as.matrix(t(cov_df[, shared, drop = FALSE]))
+  colnames(cov_mat) <- cov_df[[id_col]]
+
+  # Regress out covariates row-wise
+  cat("Regressing out covariates...\n")
+  residuals <- t(apply(mat_sub, 1, function(y) {
+    if (all(is.na(y))) return(y)
+    fit <- tryCatch(lm.fit(cbind(1, cov_mat), y), error = function(e) NULL)
+    if (is.null(fit)) return(y)
+    resid(fit)
+  }))
+  colnames(residuals) <- shared
+
+  # Reconstruct BED with residuals
+  resid_df <- bind_cols(pheno[, coord_cols], as.data.frame(residuals)[, shared])
+  list(residuals = residuals, resid_df = resid_df,
+       coord = pheno[, coord_cols], shared = shared)
+}
+
+# ── Step: Marchenko_PC ────────────────────────────────────────────────────────
+run_marchenko <- function(opt) {
+  # ── Dry-run ─────────────────────────────────────────────────────────────────
+  if (isTRUE(opt$`dry-run`)) {
+    script_path <- tryCatch(normalizePath(sys.frame(0)$filename), error = function(e) "covariate_hidden_factor.R")
+    cat("[DRY-RUN] covariate_hidden_factor.R Marchenko_PC — would execute:\n")
+    cat(sprintf("  Rscript %s \\\n",    script_path))
+    cat(sprintf("    --step Marchenko_PC \\\n"))
+    cat(sprintf("    --phenoFile %s \\\n", opt$phenoFile))
+    cat(sprintf("    --covFile %s \\\n",   opt$covFile))
+    cat(sprintf("    --N %d \\\n",         opt$N))
+    cat(sprintf("    --cwd %s\n",            opt$cwd))
+    cat("\n[DRY-RUN] Input file check:\n")
+    for (f in c(opt$phenoFile, opt$covFile)) {
+      if (is.null(f) || is.na(f)) next
+      status <- if (file.exists(f)) "\u2713" else "\u2717 NOT FOUND"
+      cat(sprintf("  %s  %s\n", status, f))
+    }
+    quit(status = 0)
+  }
+
+  res <- compute_residuals(opt)
+  cat("=== Sub-step 2: Marchenko-Pastur PCA ===\n")
+
+  mat <- res$residuals
+  n   <- ncol(mat)
+  p   <- nrow(mat)
+
+  # SVD
+  sv  <- svd(mat / sqrt(n - 1), nu = 0)
+  eig <- sv$d^2
+
+  # Marchenko-Pastur upper edge
+  gamma <- p / n
+  lambda_plus <- (1 + sqrt(gamma))^2
+
+  if (opt$N == 0) {
+    # Auto-determine: keep components above the MP upper edge
+    n_factors <- sum(eig > lambda_plus)
+    cat(sprintf("Marchenko-Pastur threshold = %.4f, selecting %d factors\n",
+                lambda_plus, n_factors))
+    if (n_factors == 0) {
+      cat("WARNING: No factors above MP threshold. Using 1.\n")
+      n_factors <- 1L
+    }
+  } else {
+    n_factors <- opt$N
+    cat(sprintf("Using user-specified N = %d factors\n", n_factors))
+  }
+
+  # PCA with n_factors
+  pca_res <- prcomp(t(mat), center = TRUE, scale. = FALSE, rank. = n_factors)
+  factors <- as.data.frame(t(pca_res$x))  # factors × samples
+  factors <- cbind(ID = rownames(factors), factors)
+
+  # Write output
+  bname    <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
+  out_file <- file.path(opt$cwd, paste0(bname, ".Marchenko_PC.gz"))
+  write_tsv(factors, out_file)   # readr detects .gz and compresses automatically
+  cat(sprintf("Output: %s (%d factors × %d samples)\n",
+              out_file, n_factors, ncol(mat)))
+}
+
+# ── Step: PEER ────────────────────────────────────────────────────────────────
+run_peer <- function(opt) {
+  # ── Dry-run ─────────────────────────────────────────────────────────────────
+  if (isTRUE(opt$`dry-run`)) {
+    script_path <- tryCatch(normalizePath(sys.frame(0)$filename), error = function(e) "covariate_hidden_factor.R")
+    cat("[DRY-RUN] covariate_hidden_factor.R PEER — would execute:\n")
+    cat(sprintf("  Rscript %s \\\n",    script_path))
+    cat(sprintf("    --step PEER \\\n"))
+    cat(sprintf("    --phenoFile %s \\\n",  opt$phenoFile))
+    cat(sprintf("    --covFile %s \\\n",    opt$covFile))
+    cat(sprintf("    --N %d \\\n",          opt$N))
+    cat(sprintf("    --iteration %d \\\n",  opt$iteration))
+    cat(sprintf("    --convergence-mode %s \\\n", opt$`convergence-mode`))
+    cat(sprintf("    --cwd %s\n",             opt$cwd))
+    cat("\n[DRY-RUN] Input file check:\n")
+    for (f in c(opt$phenoFile, opt$covFile)) {
+      if (is.null(f) || is.na(f)) next
+      status <- if (file.exists(f)) "\u2713" else "\u2717 NOT FOUND"
+      cat(sprintf("  %s  %s\n", status, f))
+    }
+    quit(status = 0)
+  }
+
+  res <- compute_residuals(opt)
+  cat("=== Sub-step 2: PEER factor analysis ===\n")
+
+  suppressPackageStartupMessages(library(peer))
+
+  mat <- res$residuals
+  n_samples  <- ncol(mat)
+  n_features <- nrow(mat)
+
+  n_factors <- if (opt$N == 0) {
+    min(n_samples, 25L)   # PEER default heuristic
+  } else {
+    opt$N
+  }
+  cat(sprintf("Running PEER with %d factors, %d iterations\n",
+              n_factors, opt$iteration))
+
+  model <- PEER()
+  PEER_setPhenoMean(model, t(mat))
+  PEER_setNk(model, n_factors)
+  PEER_setMaxIter(model, opt$iteration)
+  PEER_update(model)
+
+  # Save PEER model
+  bname      <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
+  saveRDS(model, file.path(opt$cwd, paste0(bname, ".PEER_MODEL.rds")))
+
+  cat("=== Sub-step 3: Extract PEER factors ===\n")
+  factors_mat <- t(PEER_getX(model))   # factors × samples
+  # Use Hidden_Factor_PC prefix to match the SoS notebook (mofapy2/MOFA2) naming
+  rownames(factors_mat) <- paste0("Hidden_Factor_PC", seq_len(nrow(factors_mat)))
+  colnames(factors_mat) <- colnames(mat)
+
+  factors_df <- cbind(ID = rownames(factors_mat), as.data.frame(factors_mat))
+  out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
+  write_tsv(factors_df, out_file)
+  cat(sprintf("Output: %s (%d factors × %d samples)\n",
+              out_file, nrow(factors_mat), ncol(mat)))
+}
+
+# ── Sub-step helpers ──────────────────────────────────────────────────────────
+
+# compute_residual: standalone step matching notebook [*_1]
+run_compute_residual <- function(opt) {
+  if (is.null(opt$phenoFile)) stop("--phenoFile is required for compute_residual")
+  if (is.null(opt$covFile))   stop("--covFile is required for compute_residual")
+  res <- compute_residuals(opt)
+  bname <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
+  out_file <- file.path(opt$cwd,
+                        paste0(bname, ".compute_residual.bed.gz"))
+  write_tsv(res$resid_df, out_file)
+  cat(sprintf("compute_residual output: %s (%d genes × %d samples)\n",
+              out_file, nrow(res$residuals), ncol(res$residuals)))
+}
+
+# Marchenko_PC sub-step: takes residFile, matching notebook [Marchenko_PC_2]
+run_marchenko_from_resid <- function(opt) {
+  if (is.null(opt$residFile)) stop("--residFile is required for Marchenko_PC")
+  cat("=== Marchenko_PC (from residual file) ===\n")
+  suppressPackageStartupMessages(library(readr))
+  resid_df  <- read_tsv(opt$residFile, col_types = cols(.default = "c"),
+                        show_col_types = FALSE)
+  coord_cols <- colnames(resid_df)[1:4]
+  sample_cols <- colnames(resid_df)[-(1:4)]
+  residuals <- as.matrix(resid_df[, sample_cols])
+  storage.mode(residuals) <- "numeric"
+
+  bname <- sub("\\.compute_residual\\.bed\\.gz$", "",
+               sub("\\.bed\\.gz$", "", basename(opt$residFile)))
+
+  n   <- ncol(residuals)
+  p   <- nrow(residuals)
+  sv  <- svd(residuals / sqrt(n - 1), nu = 0)
+  eig <- sv$d^2
+  gamma      <- p / n
+  lambda_plus <- (1 + sqrt(gamma))^2
+
+  if (opt$N == 0) {
+    n_factors <- sum(eig > lambda_plus)
+    cat(sprintf("Marchenko-Pastur threshold = %.4f, selecting %d factors\n",
+                lambda_plus, n_factors))
+    if (n_factors == 0) { cat("WARNING: No factors above MP threshold. Using 1.\n"); n_factors <- 1L }
+  } else {
+    n_factors <- opt$N
+    cat(sprintf("Using user-specified N = %d factors\n", n_factors))
+  }
+
+  pca_res <- prcomp(t(residuals), center = TRUE, scale. = FALSE, rank. = n_factors)
+  factors <- as.data.frame(t(pca_res$x))
+  factors <- cbind(ID = rownames(factors), factors)
+  out_file <- file.path(opt$cwd, paste0(bname, ".Marchenko_PC.gz"))
+  write_tsv(factors, out_file)
+  cat(sprintf("Output: %s (%d factors × %d samples)\n",
+              out_file, n_factors, ncol(residuals)))
+}
+
+# PEER_fit sub-step: takes residFile, matching notebook [PEER_2]
+run_peer_fit <- function(opt) {
+  if (is.null(opt$residFile)) stop("--residFile is required for PEER_fit")
+  cat("=== PEER_fit (from residual file) ===\n")
+  suppressPackageStartupMessages({
+    library(readr)
+    library(peer)
+  })
+  resid_df   <- read_tsv(opt$residFile, col_types = cols(.default = "c"),
+                         show_col_types = FALSE)
+  sample_cols <- colnames(resid_df)[-(1:4)]
+  mat        <- as.matrix(resid_df[, sample_cols])
+  storage.mode(mat) <- "numeric"
+
+  bname <- sub("\\.compute_residual\\.bed\\.gz$", "",
+               sub("\\.bed\\.gz$", "", basename(opt$residFile)))
+
+  n_factors <- if (opt$N == 0) min(ncol(mat), 25L) else opt$N
+  cat(sprintf("Running PEER_fit with %d factors, %d iterations\n",
+              n_factors, opt$iteration))
+
+  model <- PEER()
+  PEER_setPhenoMean(model, t(mat))
+  PEER_setNk(model, n_factors)
+  PEER_setMaxIter(model, opt$iteration)
+  PEER_update(model)
+
+  model_file <- file.path(opt$cwd, paste0(bname, ".PEER_MODEL.rds"))
+  saveRDS(model, model_file)
+  cat(sprintf("PEER model saved: %s\n", model_file))
+}
+
+# PEER_extract sub-step: takes modelFile, matching notebook [PEER_3]
+run_peer_extract <- function(opt) {
+  if (is.null(opt$modelFile)) stop("--modelFile is required for PEER_extract")
+  cat("=== PEER_extract (from model file) ===\n")
+  suppressPackageStartupMessages({
+    library(readr)
+    library(peer)
+  })
+  model <- readRDS(opt$modelFile)
+
+  bname <- sub("\\.PEER_MODEL\\.rds$", "", basename(opt$modelFile))
+  factors_mat <- t(PEER_getX(model))
+  rownames(factors_mat) <- paste0("Hidden_Factor_PC", seq_len(nrow(factors_mat)))
+
+  factors_df <- cbind(ID = rownames(factors_mat), as.data.frame(factors_mat))
+  out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
+  write_tsv(factors_df, out_file)
+  cat(sprintf("Output: %s (%d factors × %d samples)\n",
+              out_file, nrow(factors_mat), ncol(factors_mat)))
+}
+
+# ── Dispatch ─────────────────────────────────────────────────────────────────
+switch(opt$step,
+  # Fine-grained sub-steps (matching notebook structure)
+  compute_residual = run_compute_residual(opt),
+  Marchenko_PC     = run_marchenko_from_resid(opt),
+  PEER_fit         = run_peer_fit(opt),
+  PEER_extract     = run_peer_extract(opt),
+  # Legacy combined steps (backward compatibility)
+  Marchenko_PC_full = {
+    if (is.null(opt$phenoFile)) stop("--phenoFile is required")
+    if (is.null(opt$covFile))   stop("--covFile is required")
+    run_marchenko(opt)
+  },
+  PEER = {
+    if (is.null(opt$phenoFile)) stop("--phenoFile is required")
+    if (is.null(opt$covFile))   stop("--covFile is required")
+    run_peer(opt)
+  },
+  stop(sprintf(
+    "Unknown step '%s'. Available: compute_residual, Marchenko_PC, PEER_fit, PEER_extract",
+    opt$step))
+)

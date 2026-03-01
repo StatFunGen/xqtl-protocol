@@ -1,0 +1,228 @@
+INFO: Checking [32mbasic check and low expression filtering[0m: 
+HINT: Rscript SCRIPT
+# Load packages
+library(dplyr)
+library(readr)
+library(tibble)
+library(purrr)
+## Setting inputs
+low_expr_TPM <- 0.1
+low_expr_TPM_percent <- 0.2
+## QC
+### Data integrity check. The input file should has sample ID as column name; the first column is gene ID
+TPM_data <- read_tsv('/tmp/xqtl_test/AC.rnaseqc.gene_tpm.gct.gz', col_names = TRUE, comment = "#")%>%as.data.frame()
+names(TPM_data)[1] <- "feature"
+if( sum(duplicated(TPM_data$feature)) > 0){
+  message("feature (e.g. gene names) should be in the first column. Please remove duplicated feature IDs, Exit!")
+  quit(save = "no", status = 1, runLast = FALSE)
+}else{
+  rownames(TPM_data) <- TPM_data$feature
+  TPM_data = TPM_data[,-1]
+  loaded_sample_count <- ncol(TPM_data)
+}
+#### NA check
+if(sum(is.na(TPM_data)) > 0 ){      
+  message(paste0("NA is not allowed in the data, there are ",sum(is.na(TPM_data))," NAs, Exit!"))
+  quit(save = "no", status = 1, runLast = FALSE)}
+#### make sure every expr column is in numeric type
+matrix_check <- map(TPM_data, is.numeric) %>% unlist
+if(sum(!matrix_check) > 0){
+  message("The following column(s) in expression matrix is/are NOT in numeric type. Plese check, Proceed by excluding those samples")
+  message(paste(names(matrix_check)[!matrix_check], collapse = "; "))
+  TPM_data = TPM_data[,matrix_check]
+}
+message("Gene expression profiles loaded successfully!")
+message(paste(nrow(TPM_data), "genes and", ncol(TPM_data), "samples are loaded from", '/tmp/xqtl_test/AC.rnaseqc.gene_tpm.gct.gz', sep = " "))
+
+#### Filter out low exp genes
+keep_genes_idx <- (rowMeans(TPM_data>low_expr_TPM)>low_expr_TPM_percent) 
+TPM_data = TPM_data[keep_genes_idx,]
+message(paste(sum(1 - keep_genes_idx), "genes are filtered by filter: >", low_expr_TPM_percent*100, "% samples have expression values <", low_expr_TPM))
+message(paste(sum(keep_genes_idx), "genes left, saving output to /tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.tpm.gct.gz."))
+TPM_data%>%as_tibble(rownames = "gene_ID")%>%write_delim("/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.tpm.gct.gz","\t")
+
+
+
+INFO: [32mbasic check and low expression filtering[0m is [32mcompleted[0m.
+INFO: [32mbasic check and low expression filtering[0m output:   [32m/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.tpm.gct.gz[0m
+INFO: Checking [32mremove outliers[0m: 
+HINT: Rscript SCRIPT
+library(RColorBrewer)
+library(ape)
+library(reshape2)
+library(dplyr)
+library(readr)
+## Setting parameters
+RLEFilterPercent <-0.05
+DSFilterPercent <- 0.05
+### Hcluster parameter
+pvalues.cut <- 0.05
+topk_genes <- 100
+cluster_percent <- 0.6
+treesNum <- 5
+## Define functions to accomodate rank deficient covariance matrices in https://github.com/statfungen/xqtl-protocol/issues/307
+mahalanobis = function (x, center, cov, inverted = FALSE, ...) 
+    {
+        x <- if (is.vector(x)) 
+            matrix(x, ncol = length(x))
+        else as.matrix(x)
+        if (!isFALSE(center)) 
+            x <- sweep(x, 2L, center)
+        if (!inverted) 
+            cov <- MASS::ginv(cov, ...)
+        setNames(rowSums(x %*% cov * x), rownames(x))
+    }
+
+## laod Data
+TPM_data <- read_tsv('/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.tpm.gct.gz', col_names = TRUE, comment = "#")%>%as.data.frame()
+rownames(TPM_data) <- TPM_data$gene_ID
+TPM_data = TPM_data[,-1]
+RLEFilterLength <- RLEFilterPercent*ncol(TPM_data)
+DSFilter <- DSFilterPercent*ncol(TPM_data)
+
+## Outlier detection
+
+### RLE
+# https://github.com/stormlovetao/eQTLQC/blob/86dcc388c8da7f1bd5b223f4b9b26f09c907eb15/Sample/src/report.Rmd#L71
+log_offset <- 0.0001
+logtpm = log10(TPM_data%>%as.matrix + log_offset)
+rle=logtpm-apply(logtpm, 1, median) # change "/" to "-" so that we got log(fold-change) which centered on 0 on the RLE plot.
+iqr = apply(rle,2,IQR)
+rle=melt( rle , variable.name = "Sample",value.name ="TPM", id="feature")
+names(rle) <- c("feature","Sample","TPM")
+rle_IQR <- rle %>% group_by(Sample) %>% summarise(IQR = IQR(TPM))
+rle_IQR_range <- rle_IQR$IQR %>% range %>% abs() %>% max()
+rle_IQR_range <- 2*rle_IQR_range %>% ceiling()
+bymedian <- with(rle, reorder(Sample, TPM, IQR))  # sort by IQR
+par(mar=c(3,3,3,3))
+pdf(file = "/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.RLEplot.pdf")
+boxplot(TPM ~ bymedian, data=rle, outline=F, ylim = c(-rle_IQR_range, rle_IQR_range), las=2, boxwex=1, col='gray', cex.axis=0.3, main="RLE plot before QC", xlab="", ylab="Residual expression levels", frame=F)
+dev.off()
+ExpPerSample <- nrow(TPM_data)
+RLEFilterList <- unique(levels(bymedian)[((length(levels(bymedian))-(RLEFilterLength))+1):(length(levels(bymedian))+1)])
+RLEFilterList <- as.character(RLEFilterList)
+message(paste0("The right most ", RLEFilterPercent*100, "% samples (N = ", length(RLEFilterList), ") are marked as candidate outliers in this step:") )
+for (x in 1:length(RLEFilterList)){
+  message(RLEFilterList[x])
+}
+
+### hcluster  
+sampleDists <- 1 - cor(logtpm, method='spearman')
+hc <- hclust(as.dist(sampleDists), method = "complete")
+hcphy <- as.phylo(hc)
+
+pdf(file = "/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.preQC_cluster.pdf")
+plot(hcphy, type = "unrooted", cex=.2, lab4ut='axial',underscore = T, main="Sample clustering before QC (Spearman - Cor.)")
+dev.off()
+# https://github.com/stormlovetao/eQTLQC/blob/86dcc388c8da7f1bd5b223f4b9b26f09c907eb15/Sample/src/report.Rmd#L102
+log_offset <- 1
+logtpm = log10(TPM_data%>%as.matrix + log_offset)
+ntop <- topk_genes
+Pvars <- apply(logtpm, 1, var)
+select <- order(Pvars, decreasing =TRUE)[seq_len(min(ntop, length(Pvars)))]
+MD_matrix <- logtpm[select, ]
+MahalanobisDistance = mahalanobis(t(MD_matrix), colMeans(t(MD_matrix)), cov(t(MD_matrix))) 
+# Note: t(MD_matrix)=sample_row*gene_column, Manhalanobis() returns one vector with length=row number
+pvalues = pchisq(MahalanobisDistance, df=nrow(MD_matrix), lower.tail=F)
+pvalues.adjust = p.adjust(pvalues, method ="bonferroni") # adjusted pvalues for each sample
+pvalues.low <- pvalues.adjust[pvalues.adjust<pvalues.cut]
+
+HCoutliers <- character()
+for(x in c(1:treesNum)){
+  trees <- cutree(hc,k=x)
+  idx <- c(1:x)#which tree is checking
+  for(i in idx)
+  {
+    group <- hc$labels[which(trees == i)]
+    if(sum(group %in% names(pvalues.low))/length(group) >= cluster_percent)
+    {
+      HCoutliers <- union(HCoutliers,group)
+    }
+  }
+}
+
+message(paste(length(HCoutliers), "samples are marked as candidate outlier(s) in this step.", sep = " "))
+if(length(HCoutliers)>0){
+  message("Sample outliers are marked in red as follows:")
+  for (x in 1:length(HCoutliers)){
+      message(HCoutliers[x])
+  }
+  co1 = hc$labels%in%HCoutliers
+  co1[which(co1 == "FALSE")]<-"gray0"
+  co1[which(co1 == "TRUE")]<-"red"
+  par(mar=c(3,3,3,3))
+
+pdf(file = "/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.cluster.pdf")
+plot(hcphy, tip.col = co1, type = "unrooted", cex=.2, lab4ut='axial',underscore = T, main="Label Outliers in Red")
+Xcol = c("gray0", "red")
+Xtext = c("Normal Sample", "Outliers")
+legend('bottomleft',pch=21,Xtext, col='white',pt.bg=Xcol, cex=1)
+dev.off()
+}else{
+  message("No outlier detected.")
+}
+
+### D-s
+D = apply(1-sampleDists, 1, median)
+pdf(file = "/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.D_stat_hist.pdf")
+hist(D, breaks=100, ylab="Number of samples", xlab="D-statistic", main="Histogram of Sample D-statistics before data QC")
+dev.off()
+
+DSFilter <- sort(D)[DSFilter]
+D<-as.data.frame(D)
+D<-data.frame(Sample = rownames(D),D = D$D)
+D_filterList = D%>%filter(D <= DSFilter)
+D_filterList <- D_filterList$Sample
+D_filterList<-as.character(D_filterList)
+message(paste0("The right most ", DSFilterPercent*100, "% samples (N=", length(D_filterList), ") are marked as candidate outliers in this step:") )
+for (x in 1:length(D_filterList)){
+  message(D_filterList[x])
+}
+
+## Outliers are the intersect of three candidates list
+outliersList <- intersect(RLEFilterList,intersect(HCoutliers,D_filterList))
+message("Outliers:")
+for (x in 1:length(outliersList)){
+  message(outliersList[x])
+}
+outliersIndex <- which(colnames(logtpm) %in% outliersList)
+if(!length(outliersIndex) == 0){
+    TPM_data <- TPM_data[,-outliersIndex]
+}
+## Add 2 header lines, https://github.com/getzlab/rnaseqc/blob/286f99dfd4164d33014241dd4f3149da0cddf5bf/src/RNASeQC.cpp#L426
+cat(paste("#1.2\n#", nrow(TPM_data), ncol(TPM_data), "\n"), file='/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct', append=FALSE)
+TPM_data%>%as_tibble(rownames = "gene_ID")%>%write_delim('/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct',delim = "\t",col_names = T, append = T)
+
+
+
+HINT: /bin/bash SCRIPT
+gzip -f --best /tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct
+
+
+
+INFO: [32mremove outliers[0m is [32mcompleted[0m.
+INFO: [32mremove outliers[0m output:   [32m/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz[0m
+INFO: Checking [32mremove gene and samples from raw counts[0m: 
+HINT: Rscript SCRIPT
+library("dplyr")
+library("readr")
+# Reason to use read.table: 1.accomodate both " " and "\t"
+tpm = read_delim('/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz', "\t", col_names = T, comment = "#")
+geneCount = read_delim('/tmp/xqtl_test/AC.rnaseqc.gene_reads.gct.gz', "\t" ,col_names = T, comment = "#")
+## Make geneCount consistant with tpm, remove gene by filter() and remove samples by select()
+geneCount = geneCount%>%filter(gene_ID %in% tpm$gene_ID)%>%select(colnames(tpm))
+## Add 2 header lines, https://github.com/getzlab/rnaseqc/blob/286f99dfd4164d33014241dd4f3149da0cddf5bf/src/RNASeQC.cpp#L426
+cat(paste("#1.2\n#", nrow(geneCount), ncol(geneCount) - 1, "\n"), file='/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct', append=FALSE)
+## Save each file with 3 header line
+geneCount%>%write_delim('/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct',delim = "\t",col_names = T, append = T)
+
+
+
+HINT: /bin/bash SCRIPT
+gzip -f --best /tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct
+
+
+
+INFO: [32mremove gene and samples from raw counts[0m is [32mcompleted[0m.
+INFO: [32mremove gene and samples from raw counts[0m output:   [32m/tmp/xqtl_test/output/AC.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct.gz[0m
+INFO: Workflow qc (ID=we554c23cbc57f0fc) is tested successfully with 3 completed steps.
