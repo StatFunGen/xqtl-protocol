@@ -1925,12 +1925,13 @@ R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[rsem_call_3,rnaseqc_call_3]
 output: f&#39;{_input[0]:nnn}.multiqc_report.html&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-report: output = f&quot;{_output:n}.multiqc_config.yml&quot;
-  extra_fn_clean_exts:
-      - &#39;_rsem&#39;
-  fn_ignore_dirs:
-      - &#39;*_STARpass1&#39;
 bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    cat &gt; ${_output:n}.multiqc_config.yml &lt;&lt; &#39;MULTIQC_EOF&#39;
+    extra_fn_clean_exts:
+        - &#39;_rsem&#39;
+    fn_ignore_dirs:
+        - &#39;*_STARpass1&#39;
+    MULTIQC_EOF
     multiqc ${_input:d} -v -n ${_output:b} -o ${_output:d} -c ${_output:n}.multiqc_config.yml
 </pre></div>
 </div>
