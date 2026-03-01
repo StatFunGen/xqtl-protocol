@@ -4,11 +4,17 @@ Transform SoS pipeline notebooks into Route 3 SoS wrapper notebooks.
 For each target notebook:
   - All markdown cells are copied unchanged.
   - Code cells without `task:` blocks are copied unchanged.
-  - The [global] code cell is copied unchanged but with an extra parameter line inserted
+  - The [global] code cell gets an extra parameter line inserted
     after the first line (`[global]`).
-  - Code cells WITH `task:` blocks: keep everything up to and including the `task:` line,
-    then replace ALL language blocks (bash:, python3:, R:, python:) with ONE new `bash:`
-    block that calls the corresponding modular script.
+  - Code cells WITH `task:` blocks: keep everything up to and including
+    the `task:` line, then replace ALL language blocks (bash:, python3:,
+    R:, python:) with ONE new `bash:` block that calls the corresponding
+    modular script directly:
+      * R scripts  -> Rscript  ${renovated_code_dir}/script.R  --step STEP ...
+      * Python scripts -> python3 ${renovated_code_dir}/script.py --step STEP ...
+      * Bash-only (CLI wrappers) -> bash ${renovated_code_dir}/script.sh STEP ...
+  - Simple bash task cells that only call CLI tools (tabix, samtools, etc.)
+    are NOT transformed — they remain as-is.
 """
 
 import json
@@ -17,9 +23,13 @@ import re
 import shutil
 from pathlib import Path
 
-SRC = Path("/home/user/xqtl-protocol/pipeline")
 DST = Path("/home/user/xqtl-protocol/code/snakemake_pipeline/route3/notebooks")
 DST.mkdir(parents=True, exist_ok=True)
+
+# Primary source: existing route3 notebooks (already have the right structure).
+# Fallback source: pipeline/ notebooks (for notebooks not yet in route3/notebooks/).
+SRC = DST
+SRC_PIPELINE = Path("/home/user/xqtl-protocol/pipeline")
 
 RENOV_PARAM = "parameter: renovated_code_dir = path('renovated_code')  # override with --renovated-code-dir\n"
 
@@ -36,19 +46,35 @@ def src_to_list(text):
     return result
 
 
-def find_first_lang_block_pos(src):
-    """Return the start position of the first language block line."""
-    m = re.search(r'^[ \t]*(bash|python3?|R)\s*:', src, re.MULTILINE)
-    return m.start() if m else -1
+def make_bash_block(script_rel, step_cmd, params, stderr_expr, stdout_expr,
+                    runner="bash"):
+    """
+    Build a replacement bash block string.
 
+    runner:
+      "bash"    -> bash ${renovated_code_dir}/script.sh STEP --container ...
+      "rscript" -> Rscript ${renovated_code_dir}/script.R --step STEP ...
+      "python3" -> python3 ${renovated_code_dir}/script.py --step STEP ...
 
-def make_bash_block(script_rel, step_cmd, params, stderr_expr, stdout_expr):
-    """Build a replacement bash block string."""
-    # We need the literal string: bash: expand= "${ }", ...
-    # Using concatenation to avoid f-string brace interpretation issues.
-    block = 'bash: expand= "${ }", stderr = ' + stderr_expr + ', stdout = ' + stdout_expr + ', container = container, entrypoint = entrypoint\n'
-    block += '    bash ${renovated_code_dir}/' + script_rel + ' ' + step_cmd + ' \\\n'
-    block += '        --container "${container}" \\\n'
+    For rscript/python3 runners the container is handled by SoS via the
+    `container = container` block option, so no --container flag is added.
+    """
+    block = ('bash: expand= "${ }", stderr = ' + stderr_expr
+             + ', stdout = ' + stdout_expr
+             + ', container = container, entrypoint = entrypoint\n')
+
+    if runner == "bash":
+        block += '    bash ${renovated_code_dir}/' + script_rel + ' ' + step_cmd + ' \\\n'
+        block += '        --container "${container}" \\\n'
+    elif runner == "rscript":
+        block += '    Rscript ${renovated_code_dir}/' + script_rel + ' \\\n'
+        block += '        --step ' + step_cmd + ' \\\n'
+    elif runner == "python3":
+        block += '    python3 ${renovated_code_dir}/' + script_rel + ' \\\n'
+        block += '        --step ' + step_cmd + ' \\\n'
+    else:
+        raise ValueError(f"Unknown runner: {runner!r}")
+
     for p in params[:-1]:
         block += f'        {p} \\\n'
     if params:
@@ -57,57 +83,53 @@ def make_bash_block(script_rel, step_cmd, params, stderr_expr, stdout_expr):
 
 
 def transform_global_cell(src):
-    """Insert renovated_code_dir parameter after the [global] line."""
+    """Insert renovated_code_dir parameter after the [global] line (idempotent)."""
+    if "renovated_code_dir" in src:
+        return src  # already present — nothing to do
     lines = src.split("\n")
     result = []
     inserted = False
-    for i, line in enumerate(lines):
+    for line in lines:
         result.append(line)
         if not inserted and line.strip() == "[global]":
-            # Insert after this line
             result.append(RENOV_PARAM.rstrip("\n"))
             inserted = True
     return "\n".join(result)
 
 
-def transform_task_cell(src, script_rel, step_cmd, params, stderr_expr, stdout_expr):
+def transform_task_cell(src, script_rel, step_cmd, params,
+                        stderr_expr, stdout_expr, runner="bash"):
     """
     Keep everything up to and including the `task:` line,
     then replace all language blocks with a single bash block.
     """
-    # Find the task: line
     task_match = re.search(r'^[ \t]*task\s*:', src, re.MULTILINE)
     if task_match is None:
-        return src  # no task block, return as-is
+        return src
 
-    # Find the end of the task: line
     task_line_end = src.index('\n', task_match.start()) + 1
-
-    # Keep everything up to and including the task line
     prefix = src[:task_line_end]
-
-    # Build the new bash block
-    bash_block = make_bash_block(script_rel, step_cmd, params, stderr_expr, stdout_expr)
-
+    bash_block = make_bash_block(script_rel, step_cmd, params,
+                                 stderr_expr, stdout_expr, runner)
     return prefix + bash_block
 
 
-def copy_notebook_as_is(nb_name):
-    """Copy a notebook file unchanged."""
-    src_path = SRC / nb_name
-    dst_path = DST / nb_name
-    shutil.copy2(src_path, dst_path)
-    print(f"  [COPY AS-IS] {nb_name}")
-
-
-def transform_notebook(nb_name, step_transforms):
+def transform_notebook(nb_name, step_transforms, src_dir=None):
     """
     Transform a notebook.
 
-    step_transforms: dict mapping step_header_pattern -> (script_rel, step_cmd, params, stderr_expr, stdout_expr)
-      where step_header_pattern is a regex pattern that matches the step header line.
+    step_transforms: dict mapping step_header_pattern ->
+      (script_rel, step_cmd, params, stderr_expr, stdout_expr)
+      or a 6-tuple with runner as 6th element:
+      (script_rel, step_cmd, params, stderr_expr, stdout_expr, runner)
+
+    src_dir: override the source directory (default: SRC = route3/notebooks/).
+             Use SRC_PIPELINE for notebooks not yet present in route3/notebooks/.
+
+    Cells whose step header does NOT match any pattern keep their
+    original source unchanged (including simple bash cells).
     """
-    src_path = SRC / nb_name
+    src_path = (src_dir or SRC) / nb_name
     dst_path = DST / nb_name
 
     with open(src_path) as f:
@@ -122,30 +144,36 @@ def transform_notebook(nb_name, step_transforms):
 
         src = ''.join(cell['source'])
 
-        # Check if this is the global cell
+        # Handle [global] cell
         if re.match(r'\s*\[global\]', src):
             new_src = transform_global_cell(src)
             cell['source'] = src_to_list(new_src)
             new_cells.append(cell)
             continue
 
-        # Check if this cell has a task: block
+        # Only consider cells with a task: block
         if not re.search(r'^[ \t]*task\s*:', src, re.MULTILINE):
             new_cells.append(cell)
             continue
 
-        # Check if any step transform pattern matches
         matched = False
-        for pattern, (script_rel, step_cmd, params, stderr_expr, stdout_expr) in step_transforms.items():
+        for pattern, transform_spec in step_transforms.items():
             if re.search(pattern, src, re.MULTILINE):
-                new_src = transform_task_cell(src, script_rel, step_cmd, params, stderr_expr, stdout_expr)
+                script_rel   = transform_spec[0]
+                step_cmd     = transform_spec[1]
+                params       = transform_spec[2]
+                stderr_expr  = transform_spec[3]
+                stdout_expr  = transform_spec[4]
+                runner       = transform_spec[5] if len(transform_spec) > 5 else "bash"
+                new_src = transform_task_cell(src, script_rel, step_cmd, params,
+                                              stderr_expr, stdout_expr, runner)
                 cell['source'] = src_to_list(new_src)
                 matched = True
                 print(f"  [TRANSFORM] step pattern '{pattern}' in {nb_name}")
                 break
 
         if not matched:
-            # No matching transform, keep as-is
+            # No matching transform — cell kept as-is (simple bash, etc.)
             pass
 
         new_cells.append(cell)
@@ -157,14 +185,21 @@ def transform_notebook(nb_name, step_transforms):
     print(f"  [DONE] {nb_name}")
 
 
+def copy_notebook_as_is(nb_name):
+    """Copy a notebook file unchanged (legacy — prefer transform_notebook with {})."""
+    src_path = SRC / nb_name
+    dst_path = DST / nb_name
+    shutil.copy2(src_path, dst_path)
+    print(f"  [COPY AS-IS] {nb_name}")
+
+
 # ---------------------------------------------------------------------------
 # Notebook-specific transformations
 # ---------------------------------------------------------------------------
 
-# 1. RNA_calling.ipynb
+# 1. RNA_calling.ipynb  — bash-only (STAR / FastQC CLI tools)
 def transform_RNA_calling():
     transform_notebook("RNA_calling.ipynb", {
-        # [fastqc] step
         r'^\[fastqc\]': (
             "molecular_phenotypes/calling/RNA_calling.sh",
             "fastqc",
@@ -176,8 +211,8 @@ def transform_RNA_calling():
             ],
             "f'{_output[0]:n}.stderr'",
             "f'{_output[0]:n}.stdout'",
+            "bash",
         ),
-        # [rnaseqc_call_1] step
         r'^\[rnaseqc_call_1\]': (
             "molecular_phenotypes/calling/RNA_calling.sh",
             "rnaseqc_call",
@@ -191,14 +226,14 @@ def transform_RNA_calling():
             ],
             "f'{_output[0]:n}.stderr'",
             "f'{_output[0]:n}.stdout'",
+            "bash",
         ),
     })
 
 
-# 2. VCF_QC.ipynb
+# 2. VCF_QC.ipynb  — bash-only (BCFTools / GATK CLI tools)
 def transform_VCF_QC():
     transform_notebook("VCF_QC.ipynb", {
-        # [qc_1 (variant preprocessing)]
         r'^\[qc_1': (
             "data_preprocessing/genotype/VCF_QC.sh",
             "qc",
@@ -211,11 +246,12 @@ def transform_VCF_QC():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "bash",
         ),
     })
 
 
-# 3. genotype_formatting.ipynb
+# 3. genotype_formatting.ipynb  — bash-only (PLINK CLI tools)
 def transform_genotype_formatting():
     transform_notebook("genotype_formatting.ipynb", {
         r'^\[vcf_to_plink\]': (
@@ -229,6 +265,7 @@ def transform_genotype_formatting():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "bash",
         ),
         r'^\[merge_plink\]': (
             "data_preprocessing/genotype/genotype_formatting.sh",
@@ -241,6 +278,7 @@ def transform_genotype_formatting():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "bash",
         ),
         r'^\[genotype_by_chrom_1\]': (
             "data_preprocessing/genotype/genotype_formatting.sh",
@@ -254,14 +292,14 @@ def transform_genotype_formatting():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "bash",
         ),
     })
 
 
-# 4. GWAS_QC.ipynb
+# 4. GWAS_QC.ipynb  — bash-only (PLINK / KING CLI tools)
 def transform_GWAS_QC():
     transform_notebook("GWAS_QC.ipynb", {
-        # [qc_no_prune, qc_1 (basic QC filters)]
         r'^\[qc_no_prune': (
             "data_preprocessing/genotype/GWAS_QC.sh",
             "qc_no_prune",
@@ -278,8 +316,8 @@ def transform_GWAS_QC():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "bash",
         ),
-        # [qc_2 (LD pruning)]
         r'^\[qc_2': (
             "data_preprocessing/genotype/GWAS_QC.sh",
             "qc",
@@ -294,8 +332,8 @@ def transform_GWAS_QC():
             ],
             "f'{_output[0]:n}.stderr'",
             "f'{_output[0]:n}.stdout'",
+            "bash",
         ),
-        # [king_1]
         r'^\[king_1\]': (
             "data_preprocessing/genotype/GWAS_QC.sh",
             "king",
@@ -308,8 +346,8 @@ def transform_GWAS_QC():
             ],
             "f'{_output}.stderr'",
             "f'{_output}.stdout'",
+            "bash",
         ),
-        # [genotype_phenotype_sample_overlap]
         r'^\[genotype_phenotype_sample_overlap\]': (
             "data_preprocessing/genotype/GWAS_QC.sh",
             "genotype_phenotype_sample_overlap",
@@ -322,15 +360,16 @@ def transform_GWAS_QC():
             ],
             "f'{_output[0]:n}.stderr'",
             "f'{_output[0]:n}.stdout'",
+            "bash",
         ),
     })
 
 
-# 5. PCA.ipynb
+# 5. PCA.ipynb  — Rscript PCA.R
 def transform_PCA():
     transform_notebook("PCA.ipynb", {
         r'^\[flashpca_1\]': (
-            "data_preprocessing/genotype/PCA.sh",
+            "data_preprocessing/genotype/PCA.R",
             "flashpca",
             [
                 '--cwd "${cwd}"',
@@ -341,9 +380,10 @@ def transform_PCA():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "rscript",
         ),
         r'^\[project_samples_1\]': (
-            "data_preprocessing/genotype/PCA.sh",
+            "data_preprocessing/genotype/PCA.R",
             "project_samples",
             [
                 '--cwd "${cwd}"',
@@ -354,15 +394,16 @@ def transform_PCA():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "rscript",
         ),
     })
 
 
-# 6. covariate_formatting.ipynb
+# 6. covariate_formatting.ipynb  — Rscript covariate_formatting.R
 def transform_covariate_formatting():
     transform_notebook("covariate_formatting.ipynb", {
         r'^\[merge_genotype_pc\]': (
-            "data_preprocessing/covariate/covariate_formatting.sh",
+            "data_preprocessing/covariate/covariate_formatting.R",
             "merge_genotype_pc",
             [
                 '--cwd "${cwd}"',
@@ -375,35 +416,43 @@ def transform_covariate_formatting():
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "rscript",
         ),
     })
 
 
 # 7. phenotype_formatting.ipynb
+#    [phenotype_by_chrom_1] and [phenotype_by_region_1] are SIMPLE BASH
+#    (tabix / bgzip) — they are NOT transformed.
+#    [gct_extract_samples] has R code — call Rscript phenotype_formatting.R
 def transform_phenotype_formatting():
     transform_notebook("phenotype_formatting.ipynb", {
-        r'^\[phenotype_by_chrom_1\]': (
-            "data_preprocessing/phenotype/phenotype_formatting.sh",
-            "phenotype_by_chrom",
+        r'^\[gct_extract_samples\]': (
+            "data_preprocessing/phenotype/phenotype_formatting.R",
+            "gct_extract_samples",
             [
                 '--cwd "${cwd}"',
-                '--phenoFile "${phenoFile}"',
-                '--name "${name}"',
-                '--chrom ${_chrom}',
+                '--phenoFile "${_input[0]}"',
+                '--keep-samples "${keep_samples}"',
                 '--numThreads ${numThreads}',
             ],
-            "f'{_output:n}.stderr'",
-            "f'{_output:n}.stdout'",
+            "f'{_output:nn}.stderr'",
+            "f'{_output:nn}.stdout'",
+            "rscript",
         ),
     })
 
 
-# 8. covariate_hidden_factor.ipynb
+# 8. covariate_hidden_factor.ipynb  — Rscript covariate_hidden_factor.R
+#    Sub-steps match the notebook's structure:
+#      [*_1]            -> compute_residual
+#      [Marchenko_PC_2] -> Marchenko_PC
+#      [PEER_2]         -> PEER_fit
+#      [PEER_3]         -> PEER_extract
 def transform_covariate_hidden_factor():
     transform_notebook("covariate_hidden_factor.ipynb", {
-        # [*_1(computing residual ...)] - matches any step name as first sub-step
         r'^\[\*_1': (
-            "data_preprocessing/covariate/covariate_hidden_factor.sh",
+            "data_preprocessing/covariate/covariate_hidden_factor.R",
             "compute_residual",
             [
                 '--cwd "${cwd}"',
@@ -414,22 +463,23 @@ def transform_covariate_hidden_factor():
             ],
             "f'{_output:nn}.stderr'",
             "f'{_output:nn}.stdout'",
+            "rscript",
         ),
-        # [Marchenko_PC_2, PCA_2]
         r'^\[Marchenko_PC_2': (
-            "data_preprocessing/covariate/covariate_hidden_factor.sh",
+            "data_preprocessing/covariate/covariate_hidden_factor.R",
             "Marchenko_PC",
             [
                 '--cwd "${cwd}"',
                 '--residFile "${_input}"',
+                '--N ${N}',
                 '--numThreads ${numThreads}',
             ],
             "f'{_output:n}.stderr'",
             "f'{_output:n}.stdout'",
+            "rscript",
         ),
-        # [PEER_2]
         r'^\[PEER_2\]': (
-            "data_preprocessing/covariate/covariate_hidden_factor.sh",
+            "data_preprocessing/covariate/covariate_hidden_factor.R",
             "PEER_fit",
             [
                 '--cwd "${cwd}"',
@@ -441,10 +491,10 @@ def transform_covariate_hidden_factor():
             ],
             "f'{_output[0]}.stderr'",
             "f'{_output[0]}.stdout'",
+            "rscript",
         ),
-        # [PEER_3]
         r'^\[PEER_3\]': (
-            "data_preprocessing/covariate/covariate_hidden_factor.sh",
+            "data_preprocessing/covariate/covariate_hidden_factor.R",
             "PEER_extract",
             [
                 '--cwd "${cwd}"',
@@ -453,15 +503,16 @@ def transform_covariate_hidden_factor():
             ],
             "f'{_output[0]:n}.stderr'",
             "f'{_output[0]:n}.stdout'",
+            "rscript",
         ),
     })
 
 
-# 9. TensorQTL.ipynb
+# 9. TensorQTL.ipynb  — python3 TensorQTL.py
 def transform_TensorQTL():
     transform_notebook("TensorQTL.ipynb", {
         r'^\[cis_1\]': (
-            "association_scan/TensorQTL/TensorQTL.sh",
+            "association_scan/TensorQTL/TensorQTL.py",
             "cis",
             [
                 '--cwd "${cwd}"',
@@ -475,9 +526,10 @@ def transform_TensorQTL():
             ],
             'f\'${_output["nominal"]:nnn}.stderr\'',
             'f\'${_output["nominal"]:nnn}.stdout\'',
+            "python3",
         ),
         r'^\[cis_2\]': (
-            "association_scan/TensorQTL/TensorQTL.sh",
+            "association_scan/TensorQTL/TensorQTL.py",
             "cis_postprocess",
             [
                 '--cwd "${cwd}"',
@@ -485,9 +537,10 @@ def transform_TensorQTL():
             ],
             "f'{_output[0]}.stderr'",
             "f'{_output[0]}.stdout'",
+            "python3",
         ),
         r'^\[trans\]': (
-            "association_scan/TensorQTL/TensorQTL.sh",
+            "association_scan/TensorQTL/TensorQTL.py",
             "trans",
             [
                 '--cwd "${cwd}"',
@@ -498,6 +551,208 @@ def transform_TensorQTL():
             ],
             "f'{_output[0]}.stderr'",
             "f'{_output[0]}.stdout'",
+            "python3",
+        ),
+    })
+
+
+# 10. phenotype_imputation.ipynb  — Rscript phenotype_imputation.R
+#     Source: pipeline/ (not yet in route3/notebooks/)
+#     [missxgboost] depends on a custom xgb_imp.R file and is kept as-is.
+def transform_phenotype_imputation():
+    transform_notebook("phenotype_imputation.ipynb", {
+        r'^\[EBMF\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "EBMF",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '${"--qc-prior-to-impute" if qc_prior_to_impute else ""}',
+                '--prior "${prior}"',
+                '--varType "${varType}"',
+                '--num-factor ${num_factor}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        r'^\[gEBMF\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "gEBMF",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '${"--qc-prior-to-impute" if qc_prior_to_impute else ""}',
+                '--num-factor ${num_factor}',
+                '--nCores ${nCores}',
+                '--backfit-iter ${backfit_iter}',
+                '${"--save-flash" if save_flash else ""}',
+                '${"--null-check" if null_check else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        r'^\[missforest\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "missforest",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '${"--qc-prior-to-impute" if qc_prior_to_impute else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        r'^\[knn\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "knn",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '${"--qc-prior-to-impute" if qc_prior_to_impute else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        r'^\[soft\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "soft",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '${"--qc-prior-to-impute" if qc_prior_to_impute else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        r'^\[mean\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "mean",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '${"--qc-prior-to-impute" if qc_prior_to_impute else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        r'^\[lod\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "lod",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '${"--qc-prior-to-impute" if qc_prior_to_impute else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        r'^\[bed_filter_na\]': (
+            "data_preprocessing/phenotype/phenotype_imputation.R",
+            "bed_filter_na",
+            [
+                '--cwd "${cwd}"',
+                '--phenoFile "${_input}"',
+                '--rank-max ${rank_max}',
+                '--lambda-hyp ${lambda_hyp}',
+                '--impute-method "${impute_method}"',
+                '--tol-missing ${tol_missing}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:n}.stderr'",
+            "f'{_output:n}.stdout'",
+            "rscript",
+        ),
+        # [missxgboost] requires a custom xgb_imp.R file — kept as-is (no transform)
+    }, src_dir=SRC_PIPELINE)
+
+
+# 11. bulk_expression_QC.ipynb  — Rscript bulk_expression_QC.R
+def transform_bulk_expression_QC():
+    transform_notebook("bulk_expression_QC.ipynb", {
+        r'^\[qc_1': (
+            "molecular_phenotypes/QC/bulk_expression_QC.R",
+            "qc_1",
+            [
+                '--cwd "${cwd}"',
+                '--tpm-gct "${_input}"',
+                '--low-expr-TPM ${low_expr_TPM}',
+                '--low-expr-TPM-percent ${low_expr_TPM_percent}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:nnn}.stderr'",
+            "f'{_output:nnn}.log'",
+            "rscript",
+        ),
+        r'^\[qc_2': (
+            "molecular_phenotypes/QC/bulk_expression_QC.R",
+            "qc_2",
+            [
+                '--cwd "${cwd}"',
+                '--tpm-gct "${_input}"',
+                '--RLEFilterPercent ${RLEFilterPercent}',
+                '--DSFilterPercent ${DSFilterPercent}',
+                '--topk-genes ${topk_genes}',
+                '--cluster-percent ${cluster_percent}',
+                '--pvalue-cutoff ${pvalue_cutoff}',
+                '--cluster-level ${cluster_level}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:nnn}.stderr'",
+            "f'{_output:nnn}.log'",
+            "rscript",
+        ),
+        r'^\[qc_3': (
+            "molecular_phenotypes/QC/bulk_expression_QC.R",
+            "qc_3",
+            [
+                '--cwd "${cwd}"',
+                '--tpm-gct "${_input}"',
+                '--counts-gct "${counts_gct}"',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output:nn}.stderr'",
+            "f'{_output:nn}.stdout'",
+            "rscript",
+        ),
+    })
+
+
+# 12. bulk_expression_normalization.ipynb  — python3 bulk_expression_normalization.py
+def transform_bulk_expression_normalization():
+    transform_notebook("bulk_expression_normalization.ipynb", {
+        r'^\[normalize\]': (
+            "molecular_phenotypes/QC/bulk_expression_normalization.py",
+            "normalize",
+            [
+                '--cwd "${cwd}"',
+                '--tpm-gct "${_input[0]}"',
+                '--counts-gct "${_input[1]}"',
+                '--annotation-gtf "${_input[2]}"',
+                '--sample-participant-lookup "${_input[3]}"',
+                '--tpm-threshold ${tpm_threshold}',
+                '--count-threshold ${count_threshold}',
+                '--sample-frac-threshold ${sample_frac_threshold}',
+                '--normalization-method "${normalization_method}"',
+                '${"--quantile-normalize" if quantile_normalize else ""}',
+                '--numThreads ${numThreads}',
+            ],
+            "f'{_output[0]:nn}.stderr'",
+            "f'{_output[0]:nn}.stdout'",
+            "python3",
         ),
     })
 
@@ -536,17 +791,20 @@ if __name__ == "__main__":
     print("\n9. TensorQTL.ipynb")
     transform_TensorQTL()
 
-    print("\n10. mnm_regression.ipynb (copy as-is)")
-    copy_notebook_as_is("mnm_regression.ipynb")
+    print("\n10. phenotype_imputation.ipynb  (source: pipeline/)")
+    transform_phenotype_imputation()
 
-    print("\n11. rss_analysis.ipynb (copy as-is)")
-    copy_notebook_as_is("rss_analysis.ipynb")
+    print("\n11. bulk_expression_QC.ipynb")
+    transform_bulk_expression_QC()
 
-    print("\n12. bulk_expression_QC.ipynb (copy as-is)")
-    copy_notebook_as_is("bulk_expression_QC.ipynb")
+    print("\n12. bulk_expression_normalization.ipynb")
+    transform_bulk_expression_normalization()
 
-    print("\n13. bulk_expression_normalization.ipynb (copy as-is)")
-    copy_notebook_as_is("bulk_expression_normalization.ipynb")
+    print("\n13. mnm_regression.ipynb (global transform only)")
+    transform_notebook("mnm_regression.ipynb", {})
+
+    print("\n14. rss_analysis.ipynb (global transform only)")
+    transform_notebook("rss_analysis.ipynb", {})
 
     print("\n=== Verification ===")
     expected = [
@@ -559,10 +817,11 @@ if __name__ == "__main__":
         "phenotype_formatting.ipynb",
         "covariate_hidden_factor.ipynb",
         "TensorQTL.ipynb",
-        "mnm_regression.ipynb",
-        "rss_analysis.ipynb",
+        "phenotype_imputation.ipynb",
         "bulk_expression_QC.ipynb",
         "bulk_expression_normalization.ipynb",
+        "mnm_regression.ipynb",
+        "rss_analysis.ipynb",
     ]
     all_ok = True
     for name in expected:
@@ -574,6 +833,6 @@ if __name__ == "__main__":
             all_ok = False
 
     if all_ok:
-        print("\nAll 13 notebooks created successfully!")
+        print("\nAll 14 notebooks created successfully!")
     else:
         print("\nSome notebooks are missing!")

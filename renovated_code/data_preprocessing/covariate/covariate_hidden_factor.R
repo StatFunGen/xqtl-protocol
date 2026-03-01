@@ -4,14 +4,14 @@
 # Mirrors: code/data_preprocessing/covariate/covariate_hidden_factor.ipynb
 #
 # Steps (selected via --step):
-#   Marchenko_PC — residualize phenotype, then apply Marchenko-Pastur PCA
-#   PEER         — residualize phenotype, then run PEER factor analysis
+#   compute_residual — regress covariates out of phenotype (notebook [*_1])
+#   Marchenko_PC     — Marchenko-Pastur PCA on residual file (notebook [Marchenko_PC_2])
+#   PEER_fit         — PEER factor model fitting (notebook [PEER_2])
+#   PEER_extract     — extract PEER factors from model (notebook [PEER_3])
 #
-# Internal sub-steps (run automatically):
-#   *_1: compute residual phenotype by regressing out merged covariates
-#   Marchenko_PC_2: apply Marchenko-Pastur law to choose # factors, run PCA
-#   PEER_2: run PEER model fitting
-#   PEER_3: extract PEER factors
+# Legacy combined steps (kept for backward compatibility):
+#   Marchenko_PC_full — compute_residual + Marchenko_PC in one call
+#   PEER              — compute_residual + PEER_fit + PEER_extract in one call
 #
 # Flags are kept identical to the SoS notebook parameter names.
 # ============================================================
@@ -25,10 +25,17 @@ suppressPackageStartupMessages({
 opt_list <- list(
   make_option("--step",                  type = "character", default = NULL),
   make_option("--cwd",                   type = "character", default = "output"),
+  # Inputs for compute_residual / legacy combined steps
   make_option("--phenoFile",             type = "character", default = NULL,
               help = "Input phenotype BED.gz file"),
   make_option("--covFile",               type = "character", default = NULL,
               help = "Merged covariate file (output of covariate_formatting.R)"),
+  # Input for Marchenko_PC / PEER_fit sub-steps
+  make_option("--residFile",             type = "character", default = NULL,
+              help = "[Marchenko_PC / PEER_fit] Residual phenotype .bed.gz from compute_residual"),
+  # Input for PEER_extract
+  make_option("--modelFile",             type = "character", default = NULL,
+              help = "[PEER_extract] PEER model .rds file from PEER_fit"),
   make_option("--N",                     type = "integer",   default = 0,
               help = "Number of hidden factors (0 = auto-determine)"),
   make_option("--mean-impute-missing",   action = "store_true", default = FALSE,
@@ -43,13 +50,11 @@ opt_list <- list(
 )
 
 opt <- parse_args(OptionParser(option_list = opt_list))
-if (is.null(opt$step))     stop("--step is required")
-if (is.null(opt$phenoFile)) stop("--phenoFile is required")
-if (is.null(opt$covFile))   stop("--covFile is required")
+if (is.null(opt$step)) stop("--step is required")
 
 dir.create(opt$cwd, showWarnings = FALSE, recursive = TRUE)
 
-bname <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
+# bname is derived per-function below (phenoFile may be NULL for sub-steps)
 
 # ── Shared: compute residual phenotype ───────────────────────────────────────
 compute_residuals <- function(opt) {
@@ -156,6 +161,7 @@ run_marchenko <- function(opt) {
   factors <- cbind(ID = rownames(factors), factors)
 
   # Write output
+  bname    <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
   out_file <- file.path(opt$cwd, paste0(bname, ".Marchenko_PC.gz"))
   write_tsv(factors, out_file)   # readr detects .gz and compresses automatically
   cat(sprintf("Output: %s (%d factors × %d samples)\n",
@@ -209,8 +215,7 @@ run_peer <- function(opt) {
   PEER_update(model)
 
   # Save PEER model
-  model_file <- file.path(opt$cwd, paste0(bname, ".PEER_MODEL.hd5"))
-  # Note: PEER's HDF5 save is model-specific; save as RDS instead
+  bname      <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
   saveRDS(model, file.path(opt$cwd, paste0(bname, ".PEER_MODEL.rds")))
 
   cat("=== Sub-step 3: Extract PEER factors ===\n")
@@ -221,14 +226,139 @@ run_peer <- function(opt) {
 
   factors_df <- cbind(ID = rownames(factors_mat), as.data.frame(factors_mat))
   out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
-  write_tsv(factors_df, out_file)   # readr detects .gz and compresses automatically
+  write_tsv(factors_df, out_file)
   cat(sprintf("Output: %s (%d factors × %d samples)\n",
               out_file, nrow(factors_mat), ncol(mat)))
 }
 
+# ── Sub-step helpers ──────────────────────────────────────────────────────────
+
+# compute_residual: standalone step matching notebook [*_1]
+run_compute_residual <- function(opt) {
+  if (is.null(opt$phenoFile)) stop("--phenoFile is required for compute_residual")
+  if (is.null(opt$covFile))   stop("--covFile is required for compute_residual")
+  res <- compute_residuals(opt)
+  bname <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
+  out_file <- file.path(opt$cwd,
+                        paste0(bname, ".compute_residual.bed.gz"))
+  write_tsv(res$resid_df, out_file)
+  cat(sprintf("compute_residual output: %s (%d genes × %d samples)\n",
+              out_file, nrow(res$residuals), ncol(res$residuals)))
+}
+
+# Marchenko_PC sub-step: takes residFile, matching notebook [Marchenko_PC_2]
+run_marchenko_from_resid <- function(opt) {
+  if (is.null(opt$residFile)) stop("--residFile is required for Marchenko_PC")
+  cat("=== Marchenko_PC (from residual file) ===\n")
+  suppressPackageStartupMessages(library(readr))
+  resid_df  <- read_tsv(opt$residFile, col_types = cols(.default = "c"),
+                        show_col_types = FALSE)
+  coord_cols <- colnames(resid_df)[1:4]
+  sample_cols <- colnames(resid_df)[-(1:4)]
+  residuals <- as.matrix(resid_df[, sample_cols])
+  storage.mode(residuals) <- "numeric"
+
+  bname <- sub("\\.compute_residual\\.bed\\.gz$", "",
+               sub("\\.bed\\.gz$", "", basename(opt$residFile)))
+
+  n   <- ncol(residuals)
+  p   <- nrow(residuals)
+  sv  <- svd(residuals / sqrt(n - 1), nu = 0)
+  eig <- sv$d^2
+  gamma      <- p / n
+  lambda_plus <- (1 + sqrt(gamma))^2
+
+  if (opt$N == 0) {
+    n_factors <- sum(eig > lambda_plus)
+    cat(sprintf("Marchenko-Pastur threshold = %.4f, selecting %d factors\n",
+                lambda_plus, n_factors))
+    if (n_factors == 0) { cat("WARNING: No factors above MP threshold. Using 1.\n"); n_factors <- 1L }
+  } else {
+    n_factors <- opt$N
+    cat(sprintf("Using user-specified N = %d factors\n", n_factors))
+  }
+
+  pca_res <- prcomp(t(residuals), center = TRUE, scale. = FALSE, rank. = n_factors)
+  factors <- as.data.frame(t(pca_res$x))
+  factors <- cbind(ID = rownames(factors), factors)
+  out_file <- file.path(opt$cwd, paste0(bname, ".Marchenko_PC.gz"))
+  write_tsv(factors, out_file)
+  cat(sprintf("Output: %s (%d factors × %d samples)\n",
+              out_file, n_factors, ncol(residuals)))
+}
+
+# PEER_fit sub-step: takes residFile, matching notebook [PEER_2]
+run_peer_fit <- function(opt) {
+  if (is.null(opt$residFile)) stop("--residFile is required for PEER_fit")
+  cat("=== PEER_fit (from residual file) ===\n")
+  suppressPackageStartupMessages({
+    library(readr)
+    library(peer)
+  })
+  resid_df   <- read_tsv(opt$residFile, col_types = cols(.default = "c"),
+                         show_col_types = FALSE)
+  sample_cols <- colnames(resid_df)[-(1:4)]
+  mat        <- as.matrix(resid_df[, sample_cols])
+  storage.mode(mat) <- "numeric"
+
+  bname <- sub("\\.compute_residual\\.bed\\.gz$", "",
+               sub("\\.bed\\.gz$", "", basename(opt$residFile)))
+
+  n_factors <- if (opt$N == 0) min(ncol(mat), 25L) else opt$N
+  cat(sprintf("Running PEER_fit with %d factors, %d iterations\n",
+              n_factors, opt$iteration))
+
+  model <- PEER()
+  PEER_setPhenoMean(model, t(mat))
+  PEER_setNk(model, n_factors)
+  PEER_setMaxIter(model, opt$iteration)
+  PEER_update(model)
+
+  model_file <- file.path(opt$cwd, paste0(bname, ".PEER_MODEL.rds"))
+  saveRDS(model, model_file)
+  cat(sprintf("PEER model saved: %s\n", model_file))
+}
+
+# PEER_extract sub-step: takes modelFile, matching notebook [PEER_3]
+run_peer_extract <- function(opt) {
+  if (is.null(opt$modelFile)) stop("--modelFile is required for PEER_extract")
+  cat("=== PEER_extract (from model file) ===\n")
+  suppressPackageStartupMessages({
+    library(readr)
+    library(peer)
+  })
+  model <- readRDS(opt$modelFile)
+
+  bname <- sub("\\.PEER_MODEL\\.rds$", "", basename(opt$modelFile))
+  factors_mat <- t(PEER_getX(model))
+  rownames(factors_mat) <- paste0("Hidden_Factor_PC", seq_len(nrow(factors_mat)))
+
+  factors_df <- cbind(ID = rownames(factors_mat), as.data.frame(factors_mat))
+  out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
+  write_tsv(factors_df, out_file)
+  cat(sprintf("Output: %s (%d factors × %d samples)\n",
+              out_file, nrow(factors_mat), ncol(factors_mat)))
+}
+
 # ── Dispatch ─────────────────────────────────────────────────────────────────
 switch(opt$step,
-  Marchenko_PC = run_marchenko(opt),
-  PEER         = run_peer(opt),
-  stop(sprintf("Unknown step '%s'. Available: Marchenko_PC, PEER", opt$step))
+  # Fine-grained sub-steps (matching notebook structure)
+  compute_residual = run_compute_residual(opt),
+  Marchenko_PC     = run_marchenko_from_resid(opt),
+  PEER_fit         = run_peer_fit(opt),
+  PEER_extract     = run_peer_extract(opt),
+  # Legacy combined steps (backward compatibility)
+  Marchenko_PC_full = {
+    if (is.null(opt$phenoFile)) stop("--phenoFile is required")
+    if (is.null(opt$covFile))   stop("--covFile is required")
+    run_marchenko(opt)
+  },
+  PEER = {
+    if (is.null(opt$phenoFile)) stop("--phenoFile is required")
+    if (is.null(opt$covFile))   stop("--covFile is required")
+    run_peer(opt)
+  },
+  stop(sprintf(
+    "Unknown step '%s'. Available: compute_residual, Marchenko_PC, PEER_fit, PEER_extract",
+    opt$step))
 )
