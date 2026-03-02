@@ -713,6 +713,8 @@ parameter: screen_threshold = 0.01
 parameter: ld_reference_meta_file = path()
 # Only focus on a subset of variants
 parameter: keep_variants = path()
+parameter: marginal_beta_calculate = True
+parameter: twas_weight_calculate = True
 # Analysis environment settings
 parameter: container = &quot;&quot;
 import re
@@ -1097,7 +1099,9 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                 quantile_qtl_tau_list = seq(0.05, 0.95, by = 0.05),
                 quantile_twas_tau_list = seq(0.01, 0.99, by = 0.01),
                 screen_threshold = ${screen_threshold},
-                keep_variants = keep_variants_list
+                keep_variants = keep_variants_list,
+                marginal_beta_calculate = ${&quot;TRUE&quot; if marginal_beta_calculate else &quot;FALSE&quot;},
+                twas_weight_calculate = ${&quot;TRUE&quot; if twas_weight_calculate else &quot;FALSE&quot;}t
             )
 
             if (!is.null(qr_results$message)) {
