@@ -1020,7 +1020,8 @@ sos run pipeline/twas_ctwas.ipynb twas \
    --regions data/twas/EUR_LD_blocks.bed \
    --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
    --xqtl_type_table data/twas/data_type_table.txt \
-   --rsq_pval_cutoff 0.05 --rsq_cutoff 0.01
+   --rsq_pval_cutoff 0.05 --rsq_cutoff 0.01 \
+   --region-name chr11_84267999_86714492
 
 ```
 
