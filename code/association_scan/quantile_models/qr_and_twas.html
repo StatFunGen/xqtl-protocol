@@ -696,11 +696,12 @@ parameter: mac = 5
 parameter: indel = True
 parameter: min_twas_maf = 0.01
 parameter: screen_threshold = 0.01
+parameter: qrank_screen_calculate = True
+parameter: marginal_beta_calculate = True
+parameter: twas_weight_calculate = True
 parameter: ld_reference_meta_file = path()
 # Only focus on a subset of variants
 parameter: keep_variants = path()
-parameter: marginal_beta_calculate = True
-parameter: twas_weight_calculate = True
 # Analysis environment settings
 parameter: container = &quot;&quot;
 import re
@@ -984,6 +985,7 @@ task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, 
 R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
     options(warn=1)
     library(pecotmr)
+    library(readr)
     start_time_total &lt;- proc.time()
     
     phenotype_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1:len(_input)//2+1]])})
@@ -1005,11 +1007,63 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
 
     # Load variant filter list if provided
     keep_variants_list = NULL
+    keep_variants_per_context = FALSE
+    keep_variants_region_data = NULL
     if (${&quot;TRUE&quot; if keep_variants.is_file() else &quot;FALSE&quot;}) {
-      keep_variants_list = trimws(readLines(${keep_variants:ar}))
-      # Remove empty lines
-      keep_variants_list = keep_variants_list[keep_variants_list != &quot;&quot;]
-      message(paste(length(keep_variants_list), &quot;variants are specified to be kept for analysis&quot;))
+      keep_variants_path = ${keep_variants:ar}
+
+      # Read input: RDS or text/tsv
+      if (grepl(&quot;\\.rds$&quot;, keep_variants_path, ignore.case = TRUE)) {
+        keep_variants_data = readRDS(keep_variants_path)
+        # Ensure it&#39;s a data.frame/data.table
+        if (!is.data.frame(keep_variants_data)) {
+          # If RDS contains a vector, treat as simple variant list
+          keep_variants_list = as.character(keep_variants_data)
+          keep_variants_list = keep_variants_list[keep_variants_list != &quot;&quot;]
+          message(paste(length(keep_variants_list), &quot;variants are specified to be kept for analysis (from RDS vector)&quot;))
+          keep_variants_data = NULL
+        }
+      } else {
+        keep_variants_data = data.table::fread(keep_variants_path, header = TRUE)
+      }
+
+      if (!is.null(keep_variants_data)) {
+        # Fix column name if first column is &quot;#chr&quot;
+        if (&quot;#chr&quot; %in% names(keep_variants_data)) {
+          names(keep_variants_data)[names(keep_variants_data) == &quot;#chr&quot;] &lt;- &quot;chr&quot;
+        }
+
+        if (ncol(keep_variants_data) == 1) {
+          # Single column: treat as simple variant_id list (old behavior)
+          keep_variants_list = trimws(as.character(keep_variants_data[[1]]))
+          keep_variants_list = keep_variants_list[keep_variants_list != &quot;&quot;]
+          message(paste(length(keep_variants_list), &quot;variants are specified to be kept for analysis&quot;))
+        } else if (all(c(&quot;context&quot;, &quot;molecular_trait_object_id&quot;, &quot;variant_id&quot;) %in% names(keep_variants_data))) {
+          # Multi-column format: filter by context and molecular_trait_object_id
+          # For genotype loading: use union of all matching variants across all contexts
+          current_region = &quot;${_meta_info[2]}&quot;
+          current_contexts = conditions
+          keep_variants_region_data = keep_variants_data[
+            keep_variants_data$molecular_trait_object_id == current_region &amp;
+            keep_variants_data$context %in% current_contexts, ]
+          keep_variants_list = unique(as.character(keep_variants_region_data$variant_id))
+          keep_variants_list = keep_variants_list[keep_variants_list != &quot;&quot;]
+          # Flag for per-context filtering in the loop
+          keep_variants_per_context = TRUE
+          message(paste(length(keep_variants_list), &quot;variants matched for region&quot;, current_region,
+                        &quot;across&quot;, length(current_contexts), &quot;contexts (per-context filtering enabled)&quot;))
+          if (length(keep_variants_list) == 0) {
+            message(&quot;No matching variants found, proceeding without variant filter&quot;)
+            keep_variants_list = NULL
+            keep_variants_per_context = FALSE
+          }
+        } else {
+          # Fallback: treat first column as variant_id list
+          keep_variants_list = trimws(as.character(keep_variants_data[[1]]))
+          keep_variants_list = keep_variants_list[keep_variants_list != &quot;&quot;]
+          message(paste(length(keep_variants_list), &quot;variants are specified to be kept for analysis (from first column)&quot;))
+        }
+      }
     }
 
     # Load regional association data
@@ -1073,6 +1127,20 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
         column_results &lt;- lapply(1:ncol(Y), function(i) {
             Y_col &lt;- matrix(Y[,i], ncol=1)
             colnames(Y_col) &lt;- colnames(Y)[i]
+            # Determine per-context variant list
+            current_keep_variants = keep_variants_list
+            if (keep_variants_per_context &amp;&amp; !is.null(keep_variants_region_data)) {
+              ctx_name = names(fdat$residual_Y)[r]
+              ctx_filtered = keep_variants_region_data[keep_variants_region_data$context == ctx_name, ]
+              if (nrow(ctx_filtered) &gt; 0) {
+                current_keep_variants = unique(as.character(ctx_filtered$variant_id))
+                current_keep_variants = current_keep_variants[current_keep_variants != &quot;&quot;]
+                message(paste(length(current_keep_variants), &quot;variants for context&quot;, ctx_name))
+              } else {
+                current_keep_variants = NULL
+                message(paste(&quot;No context-specific variants for&quot;, ctx_name, &quot;- no variant filter applied&quot;))
+              }
+            }
 
             qr_results = quantile_twas_weight_pipeline(
                 X = X,
@@ -1085,9 +1153,10 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                 quantile_qtl_tau_list = seq(0.05, 0.95, by = 0.05),
                 quantile_twas_tau_list = seq(0.01, 0.99, by = 0.01),
                 screen_threshold = ${screen_threshold},
-                keep_variants = keep_variants_list,
+                keep_variants = current_keep_variants,
                 marginal_beta_calculate = ${&quot;TRUE&quot; if marginal_beta_calculate else &quot;FALSE&quot;},
-                twas_weight_calculate = ${&quot;TRUE&quot; if twas_weight_calculate else &quot;FALSE&quot;}
+                twas_weight_calculate = ${&quot;TRUE&quot; if twas_weight_calculate else &quot;FALSE&quot;},
+                qrank_screen_calculate = ${&quot;TRUE&quot; if qrank_screen_calculate else &quot;FALSE&quot;}
             )
 
             if (!is.null(qr_results$message)) {
