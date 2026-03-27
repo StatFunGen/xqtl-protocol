@@ -1378,6 +1378,8 @@ parameter: prior_canonical_matrices = False
 parameter: sample_partition = path() 
 parameter: mvsusie_max_iter = 200
 parameter: mrmash_max_iter = 5000
+parameter: min_twas_maf = 0.01
+parameter: min_twas_xvar = 0.01
 depends: sos_variable(&quot;regional_data&quot;)
 # Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
 stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
@@ -1479,8 +1481,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
                       other_quantities = list(dropped_samples = fdat$dropped_samples),
                       # filters
                       imiss_cutoff = ${imiss}, 
-                      maf_cutoff = ${maf},
-                      xvar_cutoff = ${xvar_cutoff},
+                      maf_cutoff = ${min_twas_maf},
+                      xvar_cutoff = ${min_twas_xvar},
                       ld_reference_meta_file = ${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
                       pip_cutoff_to_skip = pip_cutoff_to_skip,
                       # methods parameter configuration
