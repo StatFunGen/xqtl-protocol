@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -812,8 +813,6 @@ parameter: name = &quot;demo&quot;
 ## Path to work directory where output locates
 ## Containers that contains the necessary packages
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 50
 # Wall clock time expected
@@ -840,7 +839,7 @@ parameter: rds_path = paths
 input: rds_path, group_by = 1
 output: f&quot;{cwd}/{_input:bn}.variant.tsv&quot;,f&quot;{cwd}/{_input:bn}.lbf.tsv&quot;,f&quot;{cwd}/{_input:bn}.effect.tsv&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container
     library(&quot;dplyr&quot;)
     library(&quot;tibble&quot;)
     library(&quot;purrr&quot;)
@@ -1033,7 +1032,7 @@ parameter: rds_path = paths
 input: rds_path, group_by = 1
 output: f&quot;{cwd}/{_input:bn}.variant.tsv&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container
     library(&quot;dplyr&quot;)
     library(&quot;tibble&quot;)
     library(&quot;purrr&quot;)
@@ -1080,7 +1079,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr
 parameter: name = f&#39;{_input[0]:b}&#39;.split(&quot;.&quot;)[0]
 input: group_by = &quot;all&quot;
 output: f&quot;{cwd}/{name}.all_variants.tsv&quot;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     head -1 ${_input[0]} &gt; ${_output}
     cat ${_input[0]:d}/*variant.tsv | grep -v cs_order &gt;&gt; ${_output}
 </pre></div>
@@ -1095,7 +1094,7 @@ tsv_list  = pd.DataFrame({&quot;lbf_path&quot; : [str(x) for x in tsv_path]})
 chromosome = list(set([f&#39;{x.split(&quot;.&quot;)[-5].split(&quot;_&quot;)[0].replace(&quot;chr&quot;,&quot;&quot;)}&#39;  for x in tsv_list.lbf_path ])) ## Add chr if there is no chr prefix. This is to accomodata chr XY and M
 input: tsv_path, for_each = &quot;chromosome&quot;
 output: f&#39;{cwd}/{_input[0]:bnnnnnnn}.chr{_chromosome}.unisusie_rss.lbf.tsv&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container, entrypoint = entrypoint
+bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container
         head -1 ${_input[0]} &gt; ${_output}
         cat ${_input[0]:d}/*.chr${_chromosome}_*lbf.tsv | grep -v cs_index &gt;&gt; ${_output}
         
@@ -1115,7 +1114,7 @@ file_type = [x.split(&quot;.&quot;)[0] for x in file_type ]
 plot_list = plot_list.to_dict(&quot;records&quot;)
 input: plot_list, group_by = len(file_type)
 output: f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.{str(_input[0]).split(&quot;.&quot;)[-5]}.pip_landscape_plot.rds&#39;,f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.{str(_input[0]).split(&quot;.&quot;)[-5]}.pip_landscape_plot.pdf&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;) 
     library(&quot;ggplot2&quot;)
@@ -1182,7 +1181,7 @@ file_type = [x.split(&quot;.&quot;)[0] for x in file_type ]
 plot_list = plot_list.to_dict(&quot;records&quot;)
 input: plot_list
 output: f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR.rds&#39;,f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR.pdf&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;) 
     library(&quot;ggplot2&quot;)
@@ -1218,7 +1217,7 @@ plot_list = plot_list.to_dict(&quot;records&quot;)
 parameter: trait_to_select =  1 
 input: plot_list
 output: f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR_{file_type[trait_to_select-1]}_cs.rds&#39;,f&#39;{cwd}/{&quot;_&quot;.join(file_type)}.UpSetR_{file_type[trait_to_select-1]}_cs.pdf&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container
 
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;) 
@@ -1265,7 +1264,7 @@ parameter: annotation_rds = path
 input: SNP_list
 output: f&#39;{cwd}/{_input:b}.annotated.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;) 
     library(&quot;purrr&quot;)
@@ -1290,7 +1289,7 @@ parameter: SNP_list = path
 parameter: annotation_rds = path
 output: f&#39;{cwd}/{_input:b}.annotated_rev.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;) 
     library(&quot;purrr&quot;)
@@ -1310,7 +1309,7 @@ parameter: annot_tibble = path(&quot;~/Annotatr_builtin_annotation_tibble.tsv&qu
 input: rds_path, group_by = 1
 output: f&#39;{cwd}/{_input:bn}.estimated_effect.tsv&#39;,f&#39;{cwd}/{_input:bn}.estimated_effect.pdf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container
     library(&quot;stringr&quot;)
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;) 
@@ -1365,7 +1364,7 @@ parameter: rds_path = paths
 input: rds_path, group_by = 1
 output: f&#39;{cwd}/{_input:bn}.affected_region.tsv&#39;,f&#39;{cwd}/{_input:bn}.affected_region.pdf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = f&quot;{_output[0]}.stderr&quot;, container = container
     library(&quot;stringr&quot;)
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;) 
@@ -1469,7 +1468,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]}.stdout&quot;, stderr = 
 input: group_with = &quot;genoFile&quot;
 output: f&quot;{_input:n}.vcf.bgz&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = f&quot;{_output:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = f&quot;{_output:nn}.stderr&quot;, container = container
    ## Define create_vcf function
            create_vcf = function (chrom, pos, nea, ea, snp = NULL, ea_af = NULL, effect = NULL, 
         se = NULL, pval = NULL, name = NULL,cs = NULL, pip = NULL) 
@@ -1577,7 +1576,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = 
 input: group_with = &quot;genoFile&quot;
 output: f&quot;{_input:n}.vcf.bgz&quot;
 task: trunk_workers = 1, trunk_size = 1, walltime = &#39;2h&#39;, mem = &#39;55G&#39;, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = f&quot;{_output:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = f&quot;{_output:nn}.stderr&quot;, container = container
    ## Define create_vcf function
            create_vcf = function (chrom, pos, nea, ea, snp = NULL, ea_af = NULL, effect = NULL, 
         se = NULL, pval = NULL, name = NULL,cs = NULL, pip = NULL) 
@@ -1835,7 +1834,7 @@ stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39; All files have been expo
 input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
 output: f&quot;{cwd}/{name}_cache/{name}_{_meta_info[3]}.tsv&quot;
 task: trunk_workers = job_size, walltime = walltime, trunk_size = job_size, mem = mem, cores = numThreads, tags = f&#39;{_output:bn}&#39;
-R: expand = &quot;${ }&quot;,stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;,stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     library(tidyverse)
     library(data.table)
     library(susieR)
@@ -2491,7 +2490,7 @@ input: group_by = &#39;all&#39;
 output: f&quot;{cwd}/{name}.{&#39;block_results_db&#39; if gwas else &#39;cis_results_db&#39;}.tsv&quot; 
 # stop_if(_input[0] not in locals().keys(), &#39;All files have been exported already&#39;) #FIXME should we remove to a separate file. sothat we can stop globally as above
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = 1, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     if [ -e &quot;${_output:ad}/${name}_cache/&quot; ]; then
         sed &#39;s/^chr/#chr/&#39; `ls ${_output:ad}/${name}_cache/*tsv |head -n1` | head -n 1 &gt; ${_output:an}.temp
         tail -n +2 -q ${_output:ad}/${name}_cache/*.tsv &gt;&gt; ${_output:an}.temp
@@ -2506,7 +2505,7 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:
         echo &quot;All files have been exported already&quot;
     fi
     
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     if (file.exists(paste0(${_output:anr},&quot;.temp&quot;))) {
         library(tidyverse)
         meta &lt;- read_delim(paste0(${_output:anr},&quot;.temp&quot;), delim = &#39;\t&#39;)
@@ -2533,7 +2532,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
 parameter: step1_only = False
 
 skip_if(step1_only)
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;, entrypoint=entrypoint   
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;   
     rm -rf &quot;${_input:ad}/${name}_cache/&quot;
     rm -rf ${_input:an}.temp
 </pre></div>
@@ -2553,11 +2552,11 @@ parameter: step1_only = False
 skip_if(step1_only)
 output: f&quot;{cwd}/{name}.union_export.tsv.gz&quot; 
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = 1, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;, entrypoint=entrypoint   
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;   
     rm -rf &quot;${_input:ad}/${name}_cache/&quot;
     rm -rf ${_input:an}.temp
 
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     library(tidyverse)
     library(data.table)
 
@@ -2600,7 +2599,7 @@ parameter: cache_path=path
 parameter: output_file = str
 parameter: remove_cache = False
 output: f&quot;{cache_path:d}/{output_file}&quot; 
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;, entrypoint=entrypoint   
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;   
     head -n 1 -q ${cache_path}/*.tsv | sed &#39;s/^chr/#chr/&#39; | head -n 1 &gt; ${_output}
     tail -n +2 -q ${cache_path}/*.tsv &gt;&gt; ${_output}
     if ${&quot;true&quot; if remove_cache else &quot;false&quot;}; then
@@ -2623,7 +2622,7 @@ parameter: lfsr_thres = 0.01
 input: f&quot;{export_path}/{prefix}.{fsusie_prefix}{region}.{suffix}&quot; 
 output: f&quot;{cwd:a}/{prefix}.{region}.toploci.bed.gz&quot; 
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     library(tidyverse)
     library(data.table)
     lfsr_thres &lt;- as.numeric(${lfsr_thres})
@@ -2845,7 +2844,7 @@ stop_if(len(regional_data[&#39;qtl_data&#39;]) == 0, f&#39;No file left for anal
 input: regional_data[&quot;qtl_data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;qtl_data&quot;]), group_with = &quot;meta_info&quot;
 output: f&quot;{cwd}/gwas_qtl/cache/{name}_gwas_batch_meta_{_meta_info[3]}.tsv&quot;
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     library(tidyverse)
     library(plyr)
     library(data.table)
@@ -2967,7 +2966,7 @@ skip_if(step1_only)
 input: group_by = &#39;all&#39;
 output: f&quot;{cwd}/{name}.overlapped.gwas.tsv&quot;
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     library(data.table)
     exp_path &lt;- ${_input[0]:adr}
     meta_files &lt;- c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input])})
@@ -2978,7 +2977,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
     fwrite(exp_combined, gsub(&quot;tsv&quot;,&quot;export.csv.gz&quot;,&quot;${_output}&quot;))
     fwrite(meta_combined, &quot;${_output}&quot;, sep = &#39;\t&#39;)
   
-#bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+#bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     # rm -rf ${_input[0]:adr}
 </pre></div>
 </div>

@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -479,6 +480,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-anlaysis">xQTL only anlaysis</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#v-colocboost">v. Colocboost</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vi-colocboost-with-gwas">vi. Colocboost with GWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vii-colocboost-with-multiple-ld-references-multi-ancestry">vii. Colocboost with multiple LD references (multi-ancestry)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
@@ -520,11 +522,12 @@
 </section>
 <section id="example-summary-statistics-and-ld-reference">
 <h3>Example summary statistics and LD reference<a class="headerlink" href="#example-summary-statistics-and-ld-reference" title="Link to this heading">#</a></h3>
-<p>See <a class="reference internal" href="rss_analysis.html"><span class="doc std std-doc">this page</span></a> for example inputs of these information.</p>
+<p>See <a class="reference internal" href="rss_analysis.html"><span class="doc std std-doc">rss_analysis</span></a> for LD reference formats (pre-computed blocks and PLINK genotype files),
+per-study LD reference via the <code class="docutils literal notranslate"><span class="pre">ld_meta_data</span></code> column in GWAS meta-data, and mixture LD panels.</p>
 </section>
 <section id="about-indels">
 <h3>About indels<a class="headerlink" href="#about-indels" title="Link to this heading">#</a></h3>
-<p>Option <code class="docutils literal notranslate"><span class="pre">--no-indel</span></code> will remove indel from analysis. FIXME: Gao need to provide more guidelines how to deal with indels in practice.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--no-indel</span></code> to remove indel variants from analysis. This applies to both individual-level genotype loading and summary statistics QC. Default keeps indels.</p>
 </section>
 </section>
 <section id="output">
@@ -631,6 +634,37 @@ sos run pipeline/colocboost.ipynb colcoboost  \
 </pre></div>
 </div>
 </section>
+<section id="vii-colocboost-with-multiple-ld-references-multi-ancestry">
+<h3>vii. Colocboost with multiple LD references (multi-ancestry)<a class="headerlink" href="#vii-colocboost-with-multiple-ld-references-multi-ancestry" title="Link to this heading">#</a></h3>
+<p>When GWAS studies come from different populations, each can use its own LD reference.
+Add an <code class="docutils literal notranslate"><span class="pre">ld_meta_data</span></code> column to the GWAS meta-data file to specify per-study LD:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># gwas_meta_multi.tsv</span>
+<span class="n">study_id</span>  <span class="n">chrom</span>  <span class="n">file_path</span>    <span class="n">column_mapping_file</span>  <span class="n">n_sample</span>  <span class="n">n_case</span>  <span class="n">n_control</span>  <span class="n">ld_meta_data</span>
+<span class="n">AD_EUR</span>    <span class="mi">0</span>      <span class="n">ad_eur</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">111326</span>  <span class="mi">677663</span>     <span class="n">ld_ref_EUR</span><span class="o">.</span><span class="n">tsv</span>
+<span class="n">PD_EUR</span>    <span class="mi">0</span>      <span class="n">pd_eur</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">123455</span>    <span class="mi">0</span>       <span class="mi">0</span>          <span class="n">ld_ref_EUR</span><span class="o">.</span><span class="n">tsv</span>
+<span class="n">AD_AFR</span>    <span class="mi">0</span>      <span class="n">ad_afr</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">21982</span>   <span class="mi">41944</span>      <span class="n">ld_ref_AFR</span><span class="o">.</span><span class="n">tsv</span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Multi-ancestry: per-study LD reference specified in gwas_meta_multi.tsv
+sos run pipeline/colocboost.ipynb colocboost \
+    --name colocboost_multi_ld \
+    --cwd output/colocboost_multi_ld \
+    --genoFile output/plink/wgs.merged.bed \
+    --phenoFile output/phenotype/pheno.bed.gz \
+    --covFile output/covariate/cov.gz \
+    --customized-association-windows reference_data/TAD/TADB_enhanced_cis.bed \
+    --ld-meta-data reference_data/ld_EUR.tsv \
+    --gwas-meta-data data/colocboost/gwas_meta_multi.tsv \
+    --separate-gwas --xqtl-coloc \
+    --region-name ENSG00000239945 \
+    --phenotype-names trait_A
+</pre></div>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
@@ -718,7 +752,6 @@ Global Workflow Options:
                         Name of phenotypes
   --[no-]trans-analysis (default to False)
                         And indicator whether it is trans-analysis, ie, not using phenotypic coordinate information
-  --seed 999 (as int)
   --imiss 1.0 (as float)
                         remove a variant if it has more than imiss missing individual level data
   --maf 0.0025 (as float)
@@ -754,7 +787,6 @@ Global Workflow Options:
   --ld-data-name  (as list)
   --container &#39;&#39;
                         Analysis environment settings
-  --entrypoint &#39;&#39;
   --job-size 200 (as int)
                         For cluster jobs, number commands to run per job
   --walltime 1h
@@ -789,6 +821,7 @@ parameter: phenoIDFile = paths()
 parameter: covFile = paths
 # Summary statistics interface, see `rss_analysis.ipynb` for details
 parameter: gwas_meta_data = path()
+# Default LD reference. Can be overridden per-study via ld_meta_data column in gwas_meta_data.
 parameter: ld_meta_data = path()
 parameter: gwas_name = []
 parameter: gwas_data = []
@@ -816,7 +849,6 @@ parameter: save_data = False
 parameter: phenotype_names = [f&#39;{x:bn}&#39; for x in phenoFile]
 # And indicator whether it is trans-analysis, ie, not using phenotypic coordinate information
 parameter: trans_analysis = False
-parameter: seed = 999
 
 # remove a variant if it has more than imiss missing individual level data
 parameter: imiss = 1.0
@@ -851,11 +883,10 @@ parameter: extract_sumstats_region_name = &quot;NULL&quot;
 # Either an index number in str format or &quot;NULL&quot; as a string
 parameter: sumstats_region_name_col = &quot;NULL&quot;
 parameter: comment_string = &quot;NULL&quot;
-parameter: ld_data_name = []
+# Maps each GWAS study to an LD reference name. If empty, all studies use the first LD reference.
 
 # Analysis environment settings
 parameter: container = &quot;&quot;
-parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 200
 # Wall clock time expected
@@ -1300,7 +1331,6 @@ def resolve_region_names(region_name, customized_association_windows=None, regio
     
     return region_dict
 
-def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping, ld_data_name, region_name=None, region_list=None):
     &quot;&quot;&quot;
     Extracts data from GWAS metadata files and additional GWAS data provided. 
     Uses the same region information as load_regional_data to ensure consistent
@@ -1346,18 +1376,9 @@ def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping,
     check_required_columns(gwas_df, required_gwas_columns)
     gwas_dict = OrderedDict()
 
-    # Handle ld_data_name for study_id modifications
-    if len(ld_data_name) == 1:
         # If one LD name provided, apply to all studies
-        gwas_df[&#39;study_id&#39;] = ld_data_name[0] + &#39;_&#39; + gwas_df[&#39;study_id&#39;]
-    elif len(ld_data_name) &gt; 1:
         # If multiple LD names provided, ensure they match the number of studies
-        if len(ld_data_name) != gwas_df.shape[0]:
-            raise ValueError(f&quot;ld_data_name length ({len(ld_data_name)}) must match the number of studies ({gwas_df.shape[0]})&quot;)
         # Apply specific LD name to each study using vectorized operations
-        gwas_df[&#39;study_id&#39;] = [f&quot;{ld}_{sid}&quot; for ld, sid in zip(ld_data_name, gwas_df[&#39;study_id&#39;])]
-        ###### FIXME: if multiple LD names provided, ensure they match the number of studies also match the ld_meta_data.
-        ###### FIXME: this is also need a match file, ld_meta_data should be unique then save computational for loading LD.
         
     # Process additional GWAS data from vectors
     for name, data, mapping in zip(gwas_name, gwas_data, column_mapping or [None]*len(gwas_name)):
@@ -1390,7 +1411,7 @@ def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping,
                 existing_entry = gwas_dict[row[&#39;study_id&#39;]][chrom]
                 raise ValueError(f&quot;Duplicate chromosome specification for study_id {row[&#39;study_id&#39;]}, chrom {chrom}. &quot;
                                  f&quot;Conflicting entries: {existing_entry} and {[file_path, mapping_file]}&quot;)
-            gwas_dict[row[&#39;study_id&#39;]][chrom] = [file_path, mapping_file, n_sample, n_case, n_control]
+            gwas_dict[row[&#39;study_id&#39;]][chrom] = [file_path, mapping_file, n_sample, n_case, n_control, row.get(&#39;ld_meta_data&#39;, str(ld_meta_data))]
 
     # Process region_list and region_name
     region_dict = dict()
@@ -1445,7 +1466,6 @@ def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping,
 if gwas_meta_data.is_file():
     # Load GWAS data with region keys formatted to match regional_data[&quot;meta_info&quot;]
     # Using the same region_list and region_name as load_regional_data ensures consistency
-    gwas_dict, region_dict = load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping, ld_data_name, region_name, region_list)
     regional_rss_data = dict([(&quot;GWAS&quot;, gwas_dict), (&quot;regions&quot;, region_dict)])
     
     # The keys in regional_rss_data[&quot;regions&quot;] are now formatted as &quot;chr:start-end&quot;
@@ -1500,7 +1520,7 @@ if separate_gwas and &quot;GWAS&quot; in regional_rss_data and regional_rss_data
    
 output: output_files
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&quot;, stderr = f&quot;{_output[0]:nn}.colocboost.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&quot;, stderr = f&quot;{_output[0]:nn}.colocboost.stderr&quot;, container = container
     options(warn=1)
     
     library(colocboost)
@@ -1535,7 +1555,6 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
     # - summary statistics
     sumstat_path_list = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][0] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,})
     column_file_path_list = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][1] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,})
-    LD_meta_file_path_list = &quot;${ld_meta_data}&quot;
     # Replace _regions with _meta_info[1] which is the association window region
     n_samples = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][2] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
     n_cases = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][3] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
@@ -1550,28 +1569,23 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
     qc_method = ${&quot;NULL&quot; if qc_method == &quot;NULL&quot; else &quot;&#39;%s&#39;&quot; % qc_method}
     impute = ${&quot;TRUE&quot; if impute else &quot;FALSE&quot;}
     impute_opts = list(rcond = ${rcond}, R2_threshold = ${R2_threshold}, minimum_ld = ${minimum_ld}, lamb=${lamb})
-    ### FIXME: there is no remove_indels in rss analysis pipline should we ignore this?
-    remove_indels = FALSE
+    keep_indel = ${&quot;TRUE&quot; if indel else &quot;FALSE&quot;}
   
     # Summary stats data - Using the 2nd element (association window) from _meta_info directly
     studies = c(${&#39;, &#39;.join([&#39;&quot;{}&quot;&#39;.format(item) for item in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else [])})
-    ld_data_name &lt;- c(${&#39;, &#39;.join([&#39;&quot;{}&quot;&#39;.format(item) for item in ld_data_name] if &quot;GWAS&quot; in regional_rss_data else [])})
-
-    ### FIXME when we have multiple LD reference in the future we need to revisit this
+    # Build LD-to-study mapping from per-study ld_meta_data in GWAS metadata.
+    # Each study&#39;s ld_meta_data path comes from the GWAS meta TSV (index [5]).
+    # Falls back to --ld-meta-data default when the column is absent.
     match_LD_sumstat &lt;- list()
+    study_ld_paths &lt;- c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % regional_rss_data[&quot;GWAS&quot;][x][regional_rss_data[&quot;regions&quot;][_meta_info[1]][0]][5] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else [])})
+    names(study_ld_paths) &lt;- studies
+    for (ld_path in unique(study_ld_paths)) {
+      match_LD_sumstat[[ld_path]] &lt;- names(study_ld_paths)[study_ld_paths == ld_path]
+    }
+    LD_meta_file_path_list &lt;- unique(study_ld_paths)
+
+
     # If we have any LD data names
-    if (length(ld_data_name) &gt; 0) {
-      if (length(ld_data_name) == 1) {
-        match_LD_sumstat[[ld_data_name[1]]] &lt;- studies
-      } else {
-        # Otherwise, match studies to their respective LD references
-        # Assuming 1:1 ordered matching which is completed due to the previous python codes preprocessed
-        for (ld in unique(ld_data_name)) {
-          # Find which positions have this LD name
-          matches &lt;- which(ld_data_name == ld)
-          # Assign matching studies to this LD
-          match_LD_sumstat[[ld]] &lt;- studies[matches]
-        }
       }
     }
     # About analysis
@@ -1646,6 +1660,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
                                         pip_cutoff_to_skip_ind = pip_cutoff_to_skip_ind,
                                         # - sumstat QC
                                         pip_cutoff_to_skip_sumstat = pip_cutoff_to_skip_sumstat,
+                                        keep_indel = keep_indel,
                                         qc_method = qc_method,
                                         impute = impute, 
                                         impute_opts = impute_opts)
@@ -1755,6 +1770,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-anlaysis">xQTL only anlaysis</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#v-colocboost">v. Colocboost</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vi-colocboost-with-gwas">vi. Colocboost with GWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vii-colocboost-with-multiple-ld-references-multi-ancestry">vii. Colocboost with multiple LD references (multi-ancestry)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>

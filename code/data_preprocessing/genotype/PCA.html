@@ -184,7 +184,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -902,8 +903,6 @@ parameter: maha_k = 5
 parameter: homogeneous = False
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -989,7 +988,7 @@ input: genoFile
 plink_command = get_plink_command_prefix(_input)
 output: f&#39;{cwd}/{genoFile:bn}.pca.eigenvec&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     plink2 ${plink_command} ${_input:n} --out ${_output:n} --pca ${k}
 </pre></div>
 </div>
@@ -1014,7 +1013,7 @@ parameter: stand = &quot;binom2&quot;
 input: genoFile, phenoFile
 output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     # Load required libraries
     library(flashpcaR)
     library(dplyr)
@@ -1075,7 +1074,7 @@ R: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.
     # save results
     saveRDS(dat, ${_output:r})
   
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -1102,7 +1101,7 @@ parameter: pca_model = f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name e
 input: genoFile, phenoFile, pca_model
 output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.pca.projected.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     # Load required libraries
     library(dplyr)
     library(flashpcaR)
@@ -1149,7 +1148,7 @@ R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.std
     # save results
     saveRDS(dat, ${_output:r})
   
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -1185,7 +1184,7 @@ output: f&#39;{cwd}/{_input:bn}.pc.png&#39;,
         f&#39;{cwd}/{_input:bn}.scree.png&#39;,
         f&#39;{cwd}/{_input:bn}.scree.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: container = container, volumes = [f&quot;{outlier_file:ad}:{outlier_file:ad}&quot;], expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+R: container = container, volumes = [f&quot;{outlier_file:ad}:{outlier_file:ad}&quot;], expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     library(dplyr)
     library(ggplot2)
     library(gridExtra)
@@ -1270,7 +1269,7 @@ R: container = container, volumes = [f&quot;{outlier_file:ad}:{outlier_file:ad}&
     PVE_output = tibble(PCs = 1:length(PVE), PVE = PVE, PVE_cum = PVE_cum )
     PVE_output%&gt;%readr::write_delim(${_output[2]:r},&quot;\t&quot;)
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39; , container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39; , container = container
         stdout=$[_output[0]:n].stdout
         for i in $[_output[2]] ; do 
         echo &quot;output_info $i &quot; &gt;&gt; $stdout;
@@ -1305,7 +1304,7 @@ output: distance=f&#39;{_input:n}.mahalanobis.rds&#39;,
         qqplot_mahalanobis=f&#39;{_input:n}.mahalanobis_qq.png&#39;,
         hist_mahalanobis=f&#39;{_input:n}.mahalanobis_hist.png&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container = container, expand = &quot;${ }&quot;, entrypoint=entrypoint
+bash: container = container, expand = &quot;${ }&quot;
     echo &#39;&#39;&#39;---
     theme: base-theme
     style: |
@@ -1318,7 +1317,7 @@ bash: container = container, expand = &quot;${ }&quot;, entrypoint=entrypoint
     ---    
     &#39;&#39;&#39; &gt; ${_output[2]}
     
-R: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+R: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     # Load required libraries
     library(dplyr)
     library(ggplot2)
@@ -1381,7 +1380,7 @@ R: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n
     saveRDS(res,${_output[0]:r})
     write.table(res$outliers, ${_output[1]:r}, sep=&quot;\t&quot;, quote=FALSE, row.names=FALSE, col.names=FALSE)
   
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
         stdout=$[_output[0]:n].stdout
         for i in $[_output[0]] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;

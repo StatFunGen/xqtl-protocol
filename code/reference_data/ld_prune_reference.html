@@ -65,7 +65,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'code/reference_data/ld_prune_reference';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Generating LD Reference Panel" href="ld_reference_generation.html" />
+    <link rel="next" title="RSS LD Sketch Pipeline" href="rss_ld_sketch.html" />
     <link rel="prev" title="Generation of Topologically Associated Domains and their Boundaries" href="generalized_TADB.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -184,7 +184,8 @@
 <li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -538,8 +539,6 @@
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>global<span class="o">]</span>
 parameter:<span class="w"> </span><span class="nv">cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>path<span class="o">(</span><span class="s2">&quot;output&quot;</span><span class="o">)</span>
 parameter:<span class="w"> </span><span class="nv">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;&#39;</span>
-import<span class="w"> </span>re
-parameter:<span class="w"> </span><span class="nv">entrypoint</span><span class="o">=</span><span class="w"> </span><span class="o">(</span><span class="s1">&#39;micromamba run -a &quot;&quot; -n&#39;</span><span class="w"> </span>+<span class="w"> </span><span class="s1">&#39; &#39;</span><span class="w"> </span>+<span class="w"> </span>re.sub<span class="o">(</span>r<span class="s1">&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;</span>,<span class="w"> </span><span class="s1">&#39;&#39;</span>,<span class="w"> </span>container.split<span class="o">(</span><span class="s1">&#39;/&#39;</span><span class="o">)[</span>-1<span class="o">]))</span><span class="w"> </span><span class="k">if</span><span class="w"> </span>container<span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
 parameter:<span class="w"> </span><span class="nv">job_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
 parameter:<span class="w"> </span><span class="nv">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1h&quot;</span>
 parameter:<span class="w"> </span><span class="nv">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;80G&quot;</span>
@@ -565,7 +564,7 @@ import<span class="w"> </span>pandas<span class="w"> </span>as<span class="w"> <
 input:<span class="w"> </span>input_files,<span class="w"> </span><span class="nv">group_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>,<span class="w"> </span><span class="nv">group_with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;input_blocks&quot;</span>
 output:<span class="w"> </span><span class="nv">prune</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{cwd}/{step_name[:-2]}/{_input_blocks}.prune.in&#39;</span>
 task:<span class="w"> </span><span class="nv">trunk_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>,<span class="w"> </span><span class="nv">trunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>job_size,<span class="w"> </span><span class="nv">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>walltime,<span class="w"> </span><span class="nv">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>mem,<span class="w"> </span><span class="nv">cores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>numThreads,<span class="w"> </span><span class="nv">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{step_name}_{_output:bn}&#39;</span>
-bash:<span class="w"> </span><span class="nv">container</span><span class="o">=</span>container,<span class="w"> </span><span class="nv">expand</span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="p"> </span><span class="si">}</span><span class="s2">&quot;</span>,<span class="w"> </span><span class="nv">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stderr&#39;</span>,<span class="w"> </span><span class="nv">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stdout&#39;</span>,<span class="w"> </span><span class="nv">entrypoint</span><span class="o">=</span>entrypoint
+bash:<span class="w"> </span><span class="nv">container</span><span class="o">=</span>container,<span class="w"> </span><span class="nv">expand</span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="p"> </span><span class="si">}</span><span class="s2">&quot;</span>,<span class="w"> </span><span class="nv">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stderr&#39;</span>,<span class="w"> </span><span class="nv">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stdout&#39;</span>
 <span class="w">    </span>plink2<span class="w"> </span><span class="se">\</span>
 <span class="w">        </span>--bfile<span class="w">  </span><span class="si">${</span><span class="nv">_input</span><span class="p">:</span><span class="nv">anr</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
 <span class="w">        </span>--indep-pairwise<span class="w">  </span><span class="si">${</span><span class="nv">window</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">shift</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">r2</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
@@ -581,7 +580,7 @@ bash:<span class="w"> </span><span class="nv">container</span><span class="o">=<
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>LD_pruning_2<span class="o">]</span>
 input:<span class="w"> </span><span class="nv">group_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;all&quot;</span>
 output:<span class="w"> </span>f<span class="s1">&#39;{cwd}/{step_name[:-2]}/LD_pruned_variants.txt&#39;</span>
-R:<span class="w"> </span><span class="nv">expand</span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="p"> </span><span class="si">}</span><span class="s2">&quot;</span>,<span class="w"> </span><span class="nv">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stderr&#39;</span>,<span class="w"> </span><span class="nv">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stdout&#39;</span>,<span class="w"> </span><span class="nv">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>container,<span class="w"> </span><span class="nv">entrypoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>entrypoint
+R:<span class="w"> </span><span class="nv">expand</span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="p"> </span><span class="si">}</span><span class="s2">&quot;</span>,<span class="w"> </span><span class="nv">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stderr&#39;</span>,<span class="w"> </span><span class="nv">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="s1">&#39;{_output:n}.stdout&#39;</span>,<span class="w"> </span><span class="nv">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>container
 <span class="w">    </span>library<span class="o">(</span>data.table<span class="o">)</span>
 <span class="w">    </span>library<span class="o">(</span>dplyr<span class="o">)</span>
 <span class="w">    </span>library<span class="o">(</span>stringr<span class="o">)</span>
@@ -673,11 +672,11 @@ head<span class="o">(</span>random_variants<span class="o">)</span>
       </div>
     </a>
     <a class="right-next"
-       href="ld_reference_generation.html"
+       href="rss_ld_sketch.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Generating LD Reference Panel</p>
+        <p class="prev-next-title">RSS LD Sketch Pipeline</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

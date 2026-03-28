@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -611,7 +612,6 @@ Global Workflow Options:
                         Work directory &amp; output directory
   --container &#39;&#39;
                         The filename namefor output data
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
   --job-size 1 (as int)
                         For cluster jobs, number commands to run per job
@@ -663,8 +663,6 @@ import os
 parameter: cwd = path(&quot;output&quot;)
 # The filename namefor output data
 parameter: container = &#39;&#39;
-import re
-parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -695,12 +693,12 @@ chrom = list(set(chrom))
 input: phenoFile, for_each = &quot;chrom&quot;
 output: f&#39;{cwd}/{name}.{_chrom}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container, entrypoint=entrypoint
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
     zcat $[_input] | head -1 &gt; $[_output:n]
     tabix $[_input] $[_chrom] &gt;&gt; $[_output:n] 
     bgzip -f $[_output:n]
     tabix -p bed $[_output] -f
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -738,7 +736,7 @@ parameter: TAD_list = path
 parameter: phenotype_per_tad = 2 # This is the minimum number of epigenomics marker for a tadb to be considered having a functions.
 input: phenoFile,TAD_list
 output: f&#39;{cwd}/{_input[0]:b}.{_input[1]:b}.{phenotype_per_tad}_pheno_per_region.region_list&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
     library(tidyverse)
 
     tabix_region &lt;- function(file, region){
@@ -753,7 +751,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
                                         path = ${_input[0]:ar},  
                                         keep = map_lgl( region,~tabix_region(${_input[0]:ar}, .x)%&gt;%nrow &gt;= ${phenotype_per_tad} )) 
     TAD_list%&gt;%filter(keep)%&gt;%select(`#chr`,start,end,ID = index, path)%&gt;%write_delim(${_output:ar},&quot;\t&quot;)
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -777,13 +775,13 @@ chrom = list(set(chrom))
 input: phenoFile, for_each = &quot;chrom&quot;
 output: f&#39;{cwd:a}/{name}.{_chrom}.gct&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container, entrypoint=entrypoint
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
     zcat $[_input] | head -1 &gt; $[_output:n]
     tabix $[_input] $[_chrom] &gt;&gt; $[_output:n] 
     cat   $[_output:n] |  awk &#39;{$1=$2=$3=&quot;&quot;; print $0}&#39; &gt;&gt; $[_output]
     rm $[_output:n]
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -823,11 +821,11 @@ chrom = extract_chrom(regions)
 input: phenoFile, for_each = &quot;regions&quot;
 output: f&#39;{cwd}/{region_list:bn}_phenotype_by_region/{name}.{_regions[3]}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container, entrypoint=entrypoint
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
     tabix -h  $[_input] $[_regions[0]]:$[_regions[1]]-$[_regions[2]] &gt; $[_output:n]
     bgzip -f $[_output:n]
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; 
         echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;` 
@@ -862,7 +860,7 @@ parameter: phenoFile = paths
 input: phenoFile , group_by = 1
 output: f&#39;{cwd}/{_input:bn}.subsetted.bam&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     samtools view -b ${_input} ${region} &gt; ${_output}
 </pre></div>
 </div>

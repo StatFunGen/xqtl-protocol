@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -750,8 +751,6 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 from sos.utils import expand_size
 cwd = path(f&#39;{cwd:a}&#39;)
 </pre></div>
@@ -839,7 +838,7 @@ if os.path.isfile(f&#39;{ratios:dd}/black_list.txt&#39;):
 input: ratios, group_by = &#39;all&#39;
 output: f&#39;{ratios}_phenotype_file_list.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint = entrypoint
+python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     # code in [leafcutter_norm_1] and [leafcutter_norm_3] is modified from 
     # https://github.com/davidaknowles/leafcutter/blob/master/scripts/prepare_phenotype_table.py
     import sys
@@ -1024,7 +1023,7 @@ file_inv = [x[1] for x in molecular_pheno_chr_inv]
 input: file_inv # This design is necessary to avoid using for_each, as sos can not take chr number as an input.
 output: f&#39;{_input[0]:n}_raw_data.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     head -1 ${_input[0]:r}  &gt; ${_output}
     cat ${_input:r} | grep -v &quot;#Chr&quot; &gt;&gt; ${_output}
 </pre></div>
@@ -1059,7 +1058,7 @@ else:
 input: input_file
 output: f&#39;{_input:n}.qqnorm.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint = entrypoint
+python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     import numpy as np
     import pandas as pd
     from sklearn import preprocessing
@@ -1119,7 +1118,7 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
     # write normalized table
     output.to_csv(f&#39;${_input:n}.qqnorm.txt&#39;, sep=&quot;\t&quot;, index=None)
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     if ${&#39;true&#39; if bgzip else &#39;false&#39;}; then
         # Compress the sorted BED file
         bgzip -c &quot;${_output}&quot; &gt; &quot;${_output:n}.bed.gz&quot;
@@ -1146,7 +1145,7 @@ parameter: ratios = path
 input: ratios, group_by = &#39;all&#39;
 output: f&#39;{cwd}/psichomics_raw_data_bedded.txt&#39; 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint = entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     library(psichomics)
     library(data.table)
 
@@ -1179,7 +1178,7 @@ parameter: na_rate = 0.4
 parameter: min_variance = 0.001
 output: f&#39;{_input:n}.qqnorm.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint = entrypoint
+python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     import numpy as np
     import pandas as pd
     from sklearn import preprocessing

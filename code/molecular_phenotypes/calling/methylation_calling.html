@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -669,8 +670,6 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 cwd = path(f&#39;{cwd:a}&#39;)
 </pre></div>
 </div>
@@ -763,7 +762,7 @@ parameter: n_cores = 1
 input: sample_sheet
 output: f&#39;{cwd}/{_input:bn}.sesame.rds&#39;,f&#39;{cwd}/{_input:bn}.sesame.beta.tsv&#39;,f&#39;{cwd}/{_input:bn}.sesame.M.tsv&#39;,f&#39;{cwd}/{_input:bn}.sample_qcs.sesame.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     library(sesame)
     library(data.table)
     setDTthreads(threads = 0)
@@ -829,7 +828,7 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout =
 
     message(&quot;sesame analysis completed!&quot;)
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
         stdout=$[_output[0]:n].stdout
         for i in $[_output[0]] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -886,7 +885,7 @@ parameter: hg_build = 38
 input: sample_sheet
 output: f&#39;{cwd}/{_input:bn}.minfi.rds&#39;,f&#39;{cwd}/{_input:bn}.minfi.beta.tsv&#39;,f&#39;{cwd}/{_input:bn}.minfi.M.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     ## load libraries
     library(dplyr)
     library(readr)
@@ -962,7 +961,7 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout =
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[*_2]
 output: f&#39;{_input[1]:n}.bed.gz&#39;, f&#39;{_input[2]:n}.bed.gz&#39;, f&#39;{_input[0]:n}.gene_id.annot.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     library(sesame)
     library(tibble)
     library(dplyr)
@@ -982,14 +981,14 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout =
     M%&gt;%readr::write_delim(&quot;${_output[1]:n}&quot;,&quot;\t&quot;)
     probe_annot%&gt;%write_delim(&quot;${_output[2]}&quot;,&quot;\t&quot;)
   
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     bgzip -f ${_output[0]:n} 
     tabix ${_output[0]}
     bgzip -f ${_output[1]:n} 
     tabix ${_output[1]}
     rm -f ${_output[0]:n} ${_output[1]:n}
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
         stdout=$[_output[0]:n].stdout
         for i in $[_output[0]] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;

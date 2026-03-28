@@ -184,7 +184,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -742,8 +743,6 @@ parameter: regions = path()
 parameter: region_name = []
 parameter: name = f&quot;{xqtl_meta_data:bn}.{gwas_meta_data:bn}&quot;
 parameter: container = &#39;&#39;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 parameter: job_size = 100
 parameter: walltime = &quot;5m&quot;
 parameter: mem = &quot;8G&quot;
@@ -990,7 +989,7 @@ if save_mr_result:
     output_files.append(f&#39;{cwd:a}/{step_name}/{name}.{_filtered_region_info[3]}.mr_result.tsv.gz&#39;)
 output: output_files
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr = f&quot;{_output[0]:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr = f&quot;{_output[0]:n}.stderr&quot;, container = container
 
     library(dplyr)
     library(data.table)
@@ -1327,7 +1326,7 @@ name_suffix = f&#39;&quot;{name_suffix}&quot;&#39; if name_suffix else &#39;NULL
 input: twas_files, group_by = lambda x: group_by_region(x, twas_files),  group_with=dict(region_names=region_blocks_per_chrom)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 R: expand = &#39;${ }&#39;, stdout = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_data.{chrom}.thin{thin}.stdout&quot;, 
-stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_data.{chrom}.thin{thin}.stderr&quot;, container = container, entrypoint = entrypoint
+stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_data.{chrom}.thin{thin}.stderr&quot;, container = container
 
     library(data.table)
     library(ctwas) # multigroup_ctwas
@@ -1530,7 +1529,7 @@ else:
 input: input_pattern, group_by=&quot;all&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 R: expand = &#39;${ }&#39;, stdout = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_param_est.{prior_var_structure}.thin{thin}.stdout&quot;, 
-stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_param_est.{prior_var_structure}.thin{thin}.stderr&quot;, container = container, entrypoint = entrypoint
+stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_param_est.{prior_var_structure}.thin{thin}.stderr&quot;, container = container
     
     library(ctwas)
     library(data.table)
@@ -1634,7 +1633,7 @@ chrom = region_name.split(&quot;_&quot;)[0]
 depends: region_data_file, f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.snp_map.{chrom}.rds&quot;,f&quot;{cwd}/{step_name.split(&#39;_&#39;)[0]}/{name}.LD_map.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 R: expand = &#39;${ }&#39;, stdout = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_res.{prior_var_structure}.{region_name}.thin{thin}.stdout&quot;, 
-stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_res.{prior_var_structure}.{region_name}.thin{thin}.stderr&quot;, container = container, entrypoint = entrypoint
+stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_res.{prior_var_structure}.{region_name}.thin{thin}.stderr&quot;, container = container
 
     library(ctwas)
     library(pecotmr)
@@ -1831,7 +1830,7 @@ if save_mr_result:
     output_files.append(f&#39;{cwd:a}/{step_name}/{name}.{_filtered_region_info[3]}.quantile_mr_result.tsv.gz&#39;)
 output: output_files
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr = f&quot;{_output[0]:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr = f&quot;{_output[0]:n}.stderr&quot;, container = container
 
     library(dplyr)
     library(data.table)

@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -620,8 +621,6 @@ parameter: tpm_gct = path
 parameter: counts_gct = path()
 parameter: cwd = path(&quot;output&quot;)
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 cwd = path(f&#39;{cwd:a}&#39;)
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
@@ -644,7 +643,7 @@ parameter: low_expr_TPM_percent = 0.2
 input: tpm_gct
 output: f&#39;{cwd}/{_input:bnnn}.low_expression_filtered.tpm.gct.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;,container = container, entrypoint = entrypoint
+R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;,container = container
     # Load packages
     library(dplyr)
     library(readr)
@@ -701,7 +700,7 @@ parameter: pvalue_cutoff = 0.05
 parameter: cluster_level = 5
 output: f&#39;{cwd}/{_input:bnnn}.outlier_removed.tpm.gct.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container, entrypoint = entrypoint
+R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container
     library(RColorBrewer)
     library(ape)
     library(reshape2)
@@ -848,7 +847,7 @@ R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout =
     cat(paste(&quot;#1.2\n#&quot;, nrow(TPM_data), ncol(TPM_data), &quot;\n&quot;), file=$[_output:nr], append=FALSE)
     TPM_data%&gt;%as_tibble(rownames = &quot;gene_ID&quot;)%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
   
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container, entrypoint = entrypoint
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container
     gzip -f --best $[_output:n]
 </pre></div>
 </div>
@@ -865,7 +864,7 @@ bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdou
 stop_if(not counts_gct.is_file())
 output: f&#39;{cwd}/{_input:bnnn}.geneCount.gct.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint = entrypoint
+R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;)
     # Reason to use read.table: 1.accomodate both &quot; &quot; and &quot;\t&quot;
@@ -878,7 +877,7 @@ R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = 
     ## Save each file with 3 header line
     geneCount%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
 
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container, entrypoint = entrypoint
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container
     gzip -f --best $[_output:n]
 </pre></div>
 </div>

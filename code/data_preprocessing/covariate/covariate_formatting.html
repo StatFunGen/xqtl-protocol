@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -591,7 +592,6 @@ Global Workflow Options:
                         Number of threads
   --container &#39;&#39;
                         Software container option
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
 
 Sections
@@ -638,7 +638,6 @@ parameter: mem = &quot;2G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
-parameter: entrypoint=&quot;&quot;
 cwd = path(f&quot;{cwd:a}&quot;)
 </pre></div>
 </div>
@@ -666,7 +665,7 @@ stop_if(remove_outliers and not outliersFile.is_file(), msg = &quot;No outliers 
 input: pcaFile, covFile
 output:  f&#39;{cwd:a}/{name}.gz&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         library(&quot;dplyr&quot;)
         library(&quot;readr&quot;)
         library(&quot;data.table&quot;)
@@ -739,7 +738,7 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
         output = filter_mtx(output[,2:ncol(output)],$[tol_cov])%&gt;%as_tibble(rownames = &quot;#id&quot;)
         output%&gt;%write_delim(&quot;$[_output]&quot;,&quot;\t&quot;)
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout 
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;

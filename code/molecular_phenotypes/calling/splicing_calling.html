@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -826,8 +827,6 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 from sos.utils import expand_size
 cwd = path(f&#39;{cwd:a}&#39;)
 
@@ -922,7 +921,7 @@ parameter: max_intron_len = 500000
 input: bam_data, group_by = 1, group_with = &quot;strandness&quot;
 output: f&#39;{cwd}/{_input:bn}.junc&#39; 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     samtools index ${_input}
     regtools junctions extract -a ${anchor_len} -m ${min_intron_len} -M ${max_intron_len} -s ${_strandness} ${_input} -o ${_output}
 </pre></div>
@@ -941,7 +940,7 @@ parameter: min_clu_ratio = 0.001
 input: group_by = &#39;all&#39;
 output: f&#39;{cwd}/{samples:bn}_intron_usage_perind.counts.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     rm -f ${_output:nn}.junc
     for i in ${_input:r}; do
     echo $i &gt;&gt; ${_output:nn}.junc ; done
@@ -956,7 +955,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 input: group_by = &#39;all&#39;
 output: f&#39;{cwd}/{samples:bn}_intron_usage_perind.junc&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     rm -f ${_output:r}
     for i in ${_input:r}; do
     echo $i &gt;&gt; ${_output:r} ; done
@@ -990,7 +989,7 @@ genes = NULL
 input: SJtab_data
 output: f&#39;{cwd}/psichomics_junctions.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint = entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     library(&quot;psichomics&quot;)
     library(&quot;dplyr&quot;)
     library(&quot;tidyr&quot;)
@@ -1066,7 +1065,7 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
 parameter: splicing_annotation = path
 output: f&#39;{cwd}/psi_raw_data.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint = entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     library(&quot;psichomics&quot;)
     library(&quot;dplyr&quot;)
     library(&quot;tidyr&quot;)

@@ -184,7 +184,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -806,7 +807,6 @@ Global Workflow Options:
                         Software container option
   --varVCFfile &#39;&#39;
                         VarVCFfile for data preparation for wasp_filtering
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
   --[no-]uncompressed (default to False)
                         Whether the fasta/fastq file is compressed or not.
@@ -947,8 +947,6 @@ parameter: numThreads = 8
 parameter: container = &quot;&quot;
 # VarVCFfile for data preparation for wasp_filtering
 parameter: varVCFfile = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 from sos.utils import expand_size
 cwd = path(f&#39;{cwd:a}&#39;)
 ## Whether the fasta/fastq file is compressed or not.
@@ -1014,7 +1012,7 @@ env.logger.info(f&#39;Input samples are {&quot;paired-end&quot; if is_paired_end
 input: raw_reads, group_by = 1
 output: f&#39;{cwd}/{_input:bn}.1.fastq&#39;,f&#39;{cwd}/{_input:bn}.2.fastq&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     samtools sort -n ${_input} -o ${_output[0]:nn}.sorted.bam
     bedtools bamtofastq -i ${_output[0]:nn}.sorted.bam -fq ${_output[0]} -fq2 ${_output[1]}
 </pre></div>
@@ -1042,7 +1040,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 input: raw_reads, group_by =  1
 output: f&#39;{cwd}/{_input:bn}_fastqc.html&#39;,f&#39;{cwd}/{_input:bn}_fastqc.zip&#39; 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     fastqc ${_input} -o ${_output[0]:d}
 </pre></div>
 </div>
@@ -1100,7 +1098,7 @@ warn_if(fasta_with_adapters_etc.is_file(),msg = &quot;Use input fasta and adapto
 input: raw_reads, group_by = is_paired_end + 1 , group_with = &quot;sample_id&quot;
 output: [f&#39;{cwd}/{path(x):bn}.trimmed.fq.gz&#39; for x in _input]
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
         fastp -i ${f&#39;{_input[0]} -I {_input[1]}&#39; if is_paired_end else _input} -o ${ f&#39;{_output[0]} -O {_output[1]}&#39; if is_paired_end else _output } \
             ${f&#39;--adapter_fasta {fasta_with_adapters_etc}&#39; if fasta_with_adapters_etc.is_file() else &quot;--detect_adapter_for_pe&quot;}  -V -h ${_output[0]:n}.html -j ${_output[0]:n}.json -w ${numThreads} \
             --length_required ${min_len}  -W ${window_size} -M ${required_quality} -5 -3 --cut_front_mean_quality ${leading} --cut_tail_mean_quality ${leading}
@@ -1172,7 +1170,7 @@ parameter: min_len = 50
 input: raw_reads, group_by = is_paired_end + 1 , group_with = &quot;sample_id&quot;
 output: ([ f&#39;{cwd}/{_sample_id}_paired_{_input[0]:bn}.gz&#39;, f&#39;{cwd}/{_sample_id}_unpaired_{_input[0]:bn}.gz&#39;,  f&#39;{cwd}/{_sample_id}_paired_{_input[1]:bn}.gz&#39;,f&#39;{cwd}/{_sample_id}_unpaired_{_input[1]:bn}.gz&#39; ] if is_paired_end else f&#39;{cwd}/{_sample_id}_trimmed_{_input:bn}.gz&#39;)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     trimmomatic -Xmx${java_mem} ${&quot;PE&quot; if is_paired_end else &quot;SE&quot;}  -threads ${numThreads} \
         ${_input:r}  ${_output:r} \
         ILLUMINACLIP:${fasta_with_adapters_etc}:${seed_mismatches}:${palindrome_clip_threshold}:${simple_clip_threshold} \
@@ -1251,7 +1249,7 @@ if _read_length == 0:
 else:
     print(&quot;Using read length specified in the sample list&quot;)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = star_mem, cores = numThreads
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     
     # Remove previous output files
     rm -rf $[cwd]/$[_sample_id].*.out.*.gz
@@ -1432,7 +1430,7 @@ output: picard_metrics = f&#39;{cwd}/{_sample_id}.alignment_summary_metrics&#39;
         bigwig = f&#39;{_input[0]:n}.md.bw&#39;,
         output_summary = f&#39;{cwd}/{_sample_id}.bam_file_meta&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     # Record start timestamp for CollectMultipleMetrics
     start_time=$(date +%s)
     echo &quot;CollectMultipleMetrics started at: $(date)&quot;
@@ -1455,7 +1453,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
     echo &quot;CollectMultipleMetrics ended at: $(date)&quot;
     echo &quot;CollectMultipleMetrics runtime: $runtime seconds&quot;
 
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n}.stderr&#39;, stdout = f&#39;{_output[-1]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n}.stderr&#39;, stdout = f&#39;{_output[-1]:n}.stdout&#39;
     start_time=$(date +%s)
     echo &quot;MarkDuplicates started at: $(date)&quot;
     set -e
@@ -1481,7 +1479,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]
     echo &quot;MarkDuplicates ended at: $(date)&quot;
     echo &quot;MarkDuplicates runtime: $runtime seconds&quot;
 
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;
     set -e
     # Get only lines with rRNA and transcript_id from the GTF file
     cat ${gtf} | grep rRNA | grep transcript_id &gt; ${cwd}/$(basename ${gtf}).tmp.${_input[&quot;cord_bam_wasp_qc&quot;]:bnnnn}  # To avoid data racing problem, modification was made here to change the output location to the output path
@@ -1489,7 +1487,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
     # Extract header from the BAM file
     samtools view -H ${_input[&quot;cord_bam_wasp_qc&quot;]}  &gt; ${_input[&quot;cord_bam_wasp_qc&quot;]}.RI
 
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;, entrypoint=entrypoint
+python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;
         import os
         import pandas as pd
         from collections import defaultdict
@@ -1521,7 +1519,7 @@ python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0
         RI = pd.DataFrame(data={&#39;chr&#39;:chrom, &#39;start&#39;:start, &#39;end&#39;:end, &#39;strand&#39;:strand,&#39;transcript_id&#39; : transcript_id })
         RI.to_csv(&quot;${_input[&quot;cord_bam_wasp_qc&quot;]}.RI&quot;, index = 0, header = 0, mode = &quot;a&quot;,sep = &quot;\t&quot; )
 
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;
     # Record start timestamp for CollectRnaSeqMetrics
     start_time=$(date +%s)
     echo &quot;CollectRnaSeqMetrics started at: $(date)&quot;
@@ -1543,7 +1541,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
     echo &quot;CollectRnaSeqMetrics ended at: $(date)&quot;
     echo &quot;CollectRnaSeqMetrics runtime: $runtime seconds&quot;
 
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.bw.stderr&#39;, stdout = f&#39;{_output[0]:n}.bw.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.bw.stderr&#39;, stdout = f&#39;{_output[0]:n}.bw.stdout&#39;
     generate_bigwig() {
         # Check if enough arguments are provided
         if [[ $# -ne 1 ]]; then
@@ -1588,7 +1586,7 @@ input: group_by = &quot;all&quot;
 depends: sos_variable(&quot;strand&quot;)
 output: f&#39;{cwd}/{sample_list:bn}.bam_file_list&#39;
 task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = 1
-python: container=container, expand= &quot;${ }&quot;, entrypoint=entrypoint
+python: container=container, expand= &quot;${ }&quot;
 
     import pandas as pd
 
@@ -1662,7 +1660,7 @@ output: f&#39;{cwd}/{_sample_id}.rnaseqc.gene_tpm.gct.gz&#39;,
         f&#39;{cwd}/{_sample_id}.rnaseqc.metrics.tsv&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     cd ${cwd} &amp;&amp; \
     rnaseqc \
         ${gtf:a} \
@@ -1671,7 +1669,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
         ${(&quot;--stranded &quot; + _strand_list) if _strand_list != &quot;unstranded&quot; else &quot;&quot;} \
         ${f&#39;--detection-threshold {detection_threshold}&#39;} ${f&#39;--mapping-quality {mapping_quality}&#39;} ${ &#39;&#39; if is_paired_end else &#39;-u&#39;}
 
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     mv ${_output[0]:d}/${_input:b}.gene_tpm.gct ${_output[0]:n}
     mv ${_output[0]:d}/${_input:b}.gene_reads.gct ${_output[1]:n}
     mv ${_output[0]:d}/${_input:b}.exon_reads.gct ${_output[2]:n}
@@ -1692,7 +1690,7 @@ output: f&#39;{cwd}/{bam_list:bn}.rnaseqc.gene_tpm.gct.gz&#39;,
         f&#39;{cwd}/{bam_list:bn}.rnaseqc.exon_readsCount.gct.gz&#39;,
         f&#39;{cwd}/{bam_list:bn}.rnaseqc.metrics.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     import pandas as pd
     import os
     def make_gct(gct_path):
@@ -1763,7 +1761,7 @@ python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0
         metrics_df[h] = annotation_df.loc[metrics_df.index, h]
 
     metrics_df.to_csv(os.path.join(output_dir, prefix+&#39;.metrics.tsv&#39;), sep=&#39;\t&#39;, index=False, float_format=&#39;%.8g&#39;)
-#bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+#bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
 #    aggregate_rnaseqc_metrics  ${_output[3]:n}_output_list ${_output[3]:nn}
 </pre></div>
 </div>
@@ -1808,7 +1806,7 @@ trans_bam_list = [f&#39;{cwd}/{x}&#39; for x in trans_bam_list_inv]
 input: trans_bam_list, group_by = 1, group_with = {&quot;sample_id&quot;, &quot;strand_list&quot;} 
 output: f&#39;{cwd}/{_sample_id}.rsem.isoforms.results&#39;, f&#39;{cwd}/{_sample_id}.rsem.genes.results&#39;,f&#39;{cwd}/{_sample_id}.rsem.stat/{_sample_id}.rsem.cnt&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     run_RSEM ${RSEM_index:a} ${_input:a} ${_sample_id} \
         -o ${_output[0]:d} \
         --max_frag_len ${max_frag_len} \
@@ -1836,19 +1834,19 @@ output: f&#39;{cwd}/{bam_list:bn}.rsem_transcripts_expected_count.txt.gz&#39;,
         f&#39;{cwd}/{bam_list:bn}.rsem.aggregated_quality.metrics.tsv&#39;
 
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     input_list = [${_input:r,}]
     with open(&#39;${cwd}/${bam_list:bn}.rsem.isoforms_output_list&#39;, &quot;w&quot;) as f:
         f.write(&#39;\n&#39;.join(input_list[0::3]))
     with open(&#39;${cwd}/${bam_list:bn}.rsem.genes_output_list&#39;, &quot;w&quot;) as f:
         f.write(&#39;\n&#39;.join(input_list[1::3]))
 
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
          aggregate_rsem_results ${cwd}/${bam_list:bn}.rsem.isoforms_output_list {expected_count,TPM,FPKM,IsoPct} ${_output[0]:nnn} -o ${cwd}
          aggregate_rsem_results ${cwd}/${bam_list:bn}.rsem.genes_output_list {expected_count,TPM,FPKM} ${_output[1]:nnn} -o ${cwd}
 # -o to specify the output-dir(writable);the defualt is cwd of the sos command-/home/username/data(read-only)
 
-R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n}.stderr&#39;, stdout = f&#39;{_output[-1]:n}.stdout&#39;, entrypoint=entrypoint
+R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n}.stderr&#39;, stdout = f&#39;{_output[-1]:n}.stdout&#39;
      readRSEM.cnt &lt;- function (source) {
             # RSEM .cnt files gives statistics about the (transcriptome) alignment passed to RSEM:
             # Row 1: N0 (# unalignable reads);
@@ -1916,7 +1914,7 @@ report: output = f&quot;{_output:n}.multiqc_config.yml&quot;
       - &#39;_rsem&#39;
   fn_ignore_dirs:
       - &#39;*_STARpass1&#39;
-bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     multiqc ${_input:d} -v -n ${_output:b} -o ${_output:d} -c ${_output:n}.multiqc_config.yml
 </pre></div>
 </div>
@@ -1928,7 +1926,7 @@ bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.
 # Path to flat reference file, for computing QC metric
 output: f&#39;{_input[0]:nn}.picard.aggregated_quality.metrics.tsv&#39;# it will be outputed in a very &#39;deep&#39; directory with {cwd}/
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     ## Define Function
     readPicard.alignment_summary_metrics &lt;- function (source) {
       stopifnot(length(source) == 1)
@@ -2093,7 +2091,7 @@ input: output_from(&quot;STAR_align_1&quot;), group_by = 2, group_with = {&quot;
 output: cord_bam_wasp_qc = f&#39;{cwd}/{_sample_id}.Aligned.sortedByCoord.out{&quot;_wasp&quot; if wasp else &quot;_nowasp&quot;}{&quot;_qc&quot; if wasp else &quot;_noqc&quot;}.bam&#39;,
         trans_bam_wasp_qc = f&#39;{cwd}/{_sample_id}.Aligned.toTranscriptome.out{&quot;_wasp&quot; if wasp else &quot;_nowasp&quot;}{&quot;_qc&quot; if wasp else &quot;_noqc&quot;}.bam&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
 
     # WASP-based QC filtering function
     wasp_filter() {

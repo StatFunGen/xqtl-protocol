@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -467,7 +468,10 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-study-ld-reference">Per-study LD reference</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal working example</a></li>
 </ul>
@@ -551,12 +555,28 @@
 <li><p><strong>Format</strong>: Single TSV file with columns: <code class="docutils literal notranslate"><span class="pre">#chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p></li>
 <li><p><strong>Two supported formats</strong>:</p>
 <ol class="arabic simple">
-<li><p><strong>Pre-computed LD blocks</strong> (<code class="docutils literal notranslate"><span class="pre">.cor.xz</span></code>): Many rows per chromosome with block boundaries in <code class="docutils literal notranslate"><span class="pre">start</span></code>/<code class="docutils literal notranslate"><span class="pre">end</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> as comma-separated <code class="docutils literal notranslate"><span class="pre">ld_file,bim_file</span></code>.</p></li>
-<li><p><strong>PLINK genotype files</strong>: One row per chromosome with <code class="docutils literal notranslate"><span class="pre">start=0</span></code>, <code class="docutils literal notranslate"><span class="pre">end=0</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> pointing to a per-chromosome PLINK prefix. LD is computed on the fly. The genotype matrix X is passed directly to <code class="docutils literal notranslate"><span class="pre">susie_rss</span></code> (z+X interface), enabling <code class="docutils literal notranslate"><span class="pre">stochastic_ld_sample</span></code> diagnostics.</p></li>
+<li><p><strong>Pre-computed LD blocks</strong> (<code class="docutils literal notranslate"><span class="pre">.cor.xz</span></code>): Many rows per chromosome, each with specific block boundaries in <code class="docutils literal notranslate"><span class="pre">start</span></code>/<code class="docutils literal notranslate"><span class="pre">end</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> as comma-separated <code class="docutils literal notranslate"><span class="pre">ld_file,bim_file</span></code>.</p></li>
+<li><p><strong>PLINK genotype files</strong>: One row per chromosome with <code class="docutils literal notranslate"><span class="pre">start=0</span></code>, <code class="docutils literal notranslate"><span class="pre">end=0</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> pointing to a per-chromosome PLINK prefix (<code class="docutils literal notranslate"><span class="pre">.pgen/.pvar[.zst]/.psam</span></code> or <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>). LD is computed on the fly.</p></li>
 </ol>
 </li>
 </ul>
+<section id="per-study-ld-reference">
+<h3>Per-study LD reference<a class="headerlink" href="#per-study-ld-reference" title="Link to this heading">#</a></h3>
+<p>Each study can use a different LD reference by adding an <code class="docutils literal notranslate"><span class="pre">ld_meta_data</span></code> column to the GWAS meta-data file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">study_id</span>  <span class="n">chrom</span>  <span class="n">file_path</span>    <span class="n">column_mapping_file</span>  <span class="n">n_sample</span>  <span class="n">n_case</span>  <span class="n">n_control</span>  <span class="n">ld_meta_data</span>
+<span class="n">AD_EUR</span>    <span class="mi">0</span>      <span class="n">ad_eur</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">111326</span>  <span class="mi">677663</span>     <span class="n">ld_ref_EUR</span><span class="o">.</span><span class="n">tsv</span>
+<span class="n">AD_AFR</span>    <span class="mi">0</span>      <span class="n">ad_afr</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">21982</span>   <span class="mi">41944</span>      <span class="n">ld_ref_AFR</span><span class="o">.</span><span class="n">tsv</span>
+<span class="n">AD_ADM</span>    <span class="mi">0</span>      <span class="n">ad_adm</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">50000</span>   <span class="mi">100000</span>     <span class="n">ld_EUR</span><span class="o">.</span><span class="n">tsv</span><span class="p">,</span><span class="n">ld_AFR</span><span class="o">.</span><span class="n">tsv</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Single path: single LD panel for the study.</p></li>
+<li><p>Comma-separated paths: mixture LD panel – each loaded as genotype X and passed as <code class="docutils literal notranslate"><span class="pre">X=list(X1,</span> <span class="pre">X2,</span> <span class="pre">...)</span></code> to <code class="docutils literal notranslate"><span class="pre">susie_rss</span></code>.</p></li>
+<li><p>Empty or absent: falls back to <code class="docutils literal notranslate"><span class="pre">--ld-meta-data</span></code> CLI default.</p></li>
+<li><p>Paths are resolved relative to the GWAS meta-data TSV directory.</p></li>
+</ul>
 <p>IV. For analyzing specific genomic regions, you can specify them using the <code class="docutils literal notranslate"><span class="pre">--region-names</span></code> option in the ‘chr:start-end’ format, where multiple regions are accepted. Alternatively, you may provide a file containing a list of regions through the <code class="docutils literal notranslate"><span class="pre">--region-list</span></code> option, also adhering to the ‘chr:start-end’ format. When both <code class="docutils literal notranslate"><span class="pre">--region-names</span></code> and <code class="docutils literal notranslate"><span class="pre">--region-list</span></code> are provided, union of these options will be used to analyze. In cases where neither option is specified, the analysis defaults to encompass all regions specified in the LD reference metadata. Use –comment_string to specify the comment symbol in the original names, enclosing your option in quotation marks (e.g., –comment_string “#”). The default is no comment symbol.</p>
+</section>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
@@ -610,7 +630,6 @@ parameter: stochastic_ld_sample = &quot;NULL&quot;
 parameter: container = &#39;&#39;
 parameter: skip_regions = []
 import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 parameter: job_size = 5
 parameter: walltime = &quot;10h&quot;
 parameter: mem = &quot;16G&quot;
@@ -729,7 +748,7 @@ def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping,
                 existing_entry = gwas_dict[row[&#39;study_id&#39;]][chrom]
                 raise ValueError(f&quot;Duplicate chromosome specification for study_id {row[&#39;study_id&#39;]}, chrom {chrom}. &quot;
                                  f&quot;Conflicting entries: {existing_entry} and {[file_path, mapping_file]}&quot;)
-            gwas_dict[row[&#39;study_id&#39;]][chrom] = [file_path, mapping_file, n_sample, n_case, n_control]
+            gwas_dict[row[&#39;study_id&#39;]][chrom] = [file_path, mapping_file, n_sample, n_case, n_control, row.get(&#39;ld_meta_data&#39;, str(ld_meta_data))]
 
     # Process region_list and region_name
     region_dict = dict()
@@ -802,7 +821,7 @@ regions = list(regional_data[&#39;regions&#39;].keys())
 input: for_each = &quot;regions&quot;
 output: f&#39;{cwd:a}/{step_name}/{&quot;%s&quot; % qc_method.upper() if qc_method else &quot;noQC&quot;}{&quot;_RAISS_imputed&quot; if impute else &quot;&quot;}.chr{_regions.replace(&quot;:&quot;, &quot;_&quot;)}.univariate{&quot;_%s&quot; % finemapping_method if finemapping_method else &quot;&quot;}.rds&#39; if not diagnostics else f&#39;{cwd:a}/{step_name}/Automated_QC.chr{_regions.replace(&quot;:&quot;, &quot;_&quot;)}.univariate.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     library(pecotmr)
     library(dplyr)
     library(data.table)
@@ -822,14 +841,19 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
         extract_region_name = &quot;${extract_region_name}&quot;
     }
 
-    # Load LD data: PLINK sources return genotype X, pre-computed returns R.
-    LD_data &lt;- load_LD_matrix(&quot;${ld_meta_data}&quot;,
-      &#39;${&quot;chr%s:%s-%s&quot; % (regional_data[&#39;regions&#39;][_regions][0], regional_data[&#39;regions&#39;][_regions][1], regional_data[&#39;regions&#39;][_regions][2])}&#39;,
-      return_genotype = &quot;auto&quot;)
-
+    # Per-study LD: each study can specify its own LD reference via
+    # ld_meta_data column in GWAS meta TSV. Comma-separated = mixture panel.
+    # load_study_LD from pecotmr: single path -&gt; auto, comma-separated -&gt; mixture X=list()
+    study_ld_paths &lt;- c(${&#39;,&#39;.join([&#39;&quot;&#39; + str(regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][5]) + &#39;&quot;&#39; for x in regional_data[&#39;GWAS&#39;].keys()] if &#39;GWAS&#39; in regional_data else [])})
+    ld_cache &lt;- list()
 
     res = setNames(replicate(length(studies), list(), simplify = FALSE), studies)
     for (r in 1:length(res)) {
+        # Load study-specific LD (cached to avoid reloading for same panel)
+        ld_key &lt;- study_ld_paths[r]
+        if (is.null(ld_cache[[ld_key]])) ld_cache[[ld_key]] &lt;- load_study_LD(ld_key, &#39;${&quot;chr%s:%s-%s&quot; % (regional_data[&quot;regions&quot;][_regions][0], regional_data[&quot;regions&quot;][_regions][1], regional_data[&quot;regions&quot;][_regions][2])}&#39;)
+        LD_data &lt;- ld_cache[[ld_key]]
+
         tryCatch({
         res[[r]] = rss_analysis_pipeline(sumstat_path = sumstat_paths[r], column_file_path = column_file_paths[r],
                                         LD_data = LD_data, extract_region_name = extract_region_name, region_name_col = ${region_name_col}, n_sample = as.numeric(n_samples[r]), n_case = as.numeric(n_cases[r]), 
@@ -865,7 +889,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[univariate_plot]
 output: pip_plot = f&quot;{cwd}/{_input:bn}.png&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = &#39;12h&#39;, mem = &#39;20G&#39;, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint = entrypoint
+R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     res = readRDS(${_input:r})
     png(${_output[0]:r}, width = 14, height=6, unit=&#39;in&#39;, res=300)
     par(mfrow=c(1,2))
@@ -945,7 +969,10 @@ R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-study-ld-reference">Per-study LD reference</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal working example</a></li>
 </ul>

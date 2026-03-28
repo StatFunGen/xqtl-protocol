@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -705,8 +706,6 @@ parameter: ld_reference_meta_file = path()
 parameter: keep_variants = path()
 # Analysis environment settings
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 200
 # Wall clock time expected
@@ -983,7 +982,7 @@ meta_info = regional_data[&#39;meta_info&#39;]
 input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
 output: f&#39;{cwd:a}/{step_name}/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.univariate_qr_twas_weights.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     options(warn=1)
     library(pecotmr)
     library(readr)

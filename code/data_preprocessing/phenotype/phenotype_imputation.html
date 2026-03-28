@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -590,7 +591,6 @@
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">20</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
   <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
-  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">&#39;&#39;</span>
 
 <span class="n">Sections</span>
   <span class="n">EBMF</span><span class="p">:</span>
@@ -643,8 +643,6 @@ parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 20
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -659,7 +657,7 @@ parameter: num_factor = &#39;60&#39;
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    library(&quot;flashier&quot;)
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
@@ -717,11 +715,11 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
       }
     } 
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -746,7 +744,7 @@ parameter: null_check = False
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    library(&quot;flashier&quot;)
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
@@ -808,11 +806,11 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
   
     write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot;)
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -832,7 +830,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    library(flashier)
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
@@ -860,11 +858,11 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     # If ’variables’ the data is split into pieces of the size equal to the number of cores registered in the parallel backend.
     write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -884,7 +882,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    source(&#39;./xgb_imp.R&#39;)
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
@@ -911,10 +909,10 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     pheno_imp &lt;- xgboost_imputation(as.matrix(pheno_NAs))
     write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -934,7 +932,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    library(impute)
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
@@ -962,10 +960,10 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     pheno_imp &lt;- impute.knn(as.matrix(pheno_NAs), rowmax = 1)$data
     write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -985,7 +983,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    library(softImpute)
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
@@ -1014,10 +1012,10 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     pheno_imp &lt;- complete(as.matrix(pheno_NAs),fit)
     write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -1037,7 +1035,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
    library(&quot;dplyr&quot;)
@@ -1065,10 +1063,10 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     }    
     write_delim(cbind(pheno_qc[, 1:4], Yfill), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -1088,7 +1086,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
    library(&quot;dplyr&quot;)
@@ -1116,10 +1114,10 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     }
     write_delim(cbind(pheno_qc[, 1:4], Yfill), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -1145,7 +1143,7 @@ parameter: tol_missing = 0.05
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:nn}.filter_na.{impute_method}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
    library(&quot;dplyr&quot;)
    library(&quot;tibble&quot;)
    library(&quot;readr&quot;)
@@ -1189,10 +1187,10 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     bed_filtered = inner_join(bed[,1:4],tbl_filtered)
     bed_filtered%&gt;%write_delim(&quot;${_output:n}&quot;, &quot;\t&quot; )
   
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
     bgzip -f ${_output:n}
     tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;

@@ -182,7 +182,8 @@
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -1083,8 +1084,6 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 cwd = path(f&#39;{cwd:a}&#39;)
 from sos.utils import expand_size
 </pre></div>
@@ -1145,7 +1144,7 @@ parameter: gff3_file = path
 input: gff3_file
 output: f&#39;{cwd}/{_input:bn}.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint = entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
         gffread ${_input} -T -o ${_output}
 </pre></div>
 </div>
@@ -1167,7 +1166,7 @@ parameter: hg_reference = path
 input: hg_reference
 output:  f&#39;{cwd}/{_input:bn}.noALT_noHLA_noDecoy.fasta&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     with open(&#39;${_input}&#39;, &#39;r&#39;) as fasta:
         contigs = fasta.read()
         contigs = contigs.split(&#39;&gt;&#39;)
@@ -1189,7 +1188,7 @@ python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout 
 parameter: ercc_reference = path
 output: f&#39;{cwd}/{_input:bn}_ERCC.fasta&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     sed &#39;s/ERCC-/ERCC_/g&#39; ${ercc_reference} &gt; ${ercc_reference:n}.patched.fa
     cat ${_input} ${ercc_reference:n}.patched.fa &gt; ${_output}
 </pre></div>
@@ -1201,7 +1200,7 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[hg_reference_3 (index the fasta file)]
 output: f&#39;{cwd}/{_input:bn}.dict&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     samtools faidx ${_input}
     picard CreateSequenceDictionary \
         R=${_input} \
@@ -1228,7 +1227,7 @@ parameter: hg_gtf = path
 input: hg_reference, hg_gtf
 output: f&#39;{cwd}/{_input[1]:bn}.reformatted.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     library(&quot;readr&quot;)
     library(&quot;stringr&quot;)
     library(&quot;dplyr&quot;)
@@ -1265,7 +1264,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#
 parameter: stranded = bool
 output: f&#39;{_input:n}{&quot;.collapse_only&quot; if stranded else &quot;&quot;}.gene.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     collapse_annotation.py ${&quot;--collapse_only&quot; if stranded else &quot;&quot;} ${_input} ${_output}
 </pre></div>
 </div>
@@ -1278,7 +1277,7 @@ parameter: ercc_gtf = path
 input: ercc_gtf
 output: f&#39;{cwd}/{_input:bn}.genes.patched.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     with open(&#39;${_input}&#39;) as exon_gtf, open(&#39;${_output}&#39;, &#39;w&#39;) as gene_gtf:
         for line in exon_gtf:
             f = line.strip().split(&#39;\t&#39;)
@@ -1318,7 +1317,7 @@ python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout 
 input: output_from(&quot;hg_gtf_1&quot;), output_from(&quot;hg_gtf_2&quot;), output_from(&quot;ercc_gtf&quot;)
 output: f&#39;{cwd}/{_input[0]:bn}.ERCC.gtf&#39;, f&#39;{cwd}/{_input[1]:bn}.ERCC.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
     cat ${_input[0]} ${_input[2]} &gt; ${_output[0]}
     cat ${_input[1]} ${_input[2]} &gt; ${_output[1]}
 </pre></div>
@@ -1360,7 +1359,7 @@ output: f&quot;{cwd}/STAR_Index/chrName.txt&quot;,
         f&quot;{cwd}/STAR_Index/chrLength.txt&quot;, 
         f&quot;{cwd}/STAR_Index/Genome&quot;, f&quot;{cwd}/STAR_Index/chrNameLength.txt&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output[0]:bd}&#39;, cores = numThreads
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[1]:n}.stderr&#39;, stdout = f&#39;{_output[1]:n}.stdout&#39;, entrypoint = entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[1]:n}.stderr&#39;, stdout = f&#39;{_output[1]:n}.stdout&#39;
     STAR --runMode genomeGenerate \
          --genomeDir ${_output[0]:d} \
          --genomeFastaFiles ${_input[0]} \
@@ -1397,7 +1396,7 @@ output: f&quot;{cwd}/RSEM_Index/rsem_reference.n2g.idx.fa&quot;, f&quot;{cwd}/RS
         f&quot;{cwd}/RSEM_Index/rsem_reference.chrlist&quot;, f&quot;{cwd}/RSEM_Index/rsem_reference.seq&quot;, 
         f&quot;{cwd}/RSEM_Index/rsem_reference.transcripts.fa&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output[0]:bd}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[1]:n}.stderr&#39;, stdout = f&#39;{_output[1]:n}.stdout&#39;, entrypoint = entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[1]:n}.stderr&#39;, stdout = f&#39;{_output[1]:n}.stdout&#39;
     rsem-prepare-reference \
             ${_input[0]} \
             ${_output[1]:n} \
@@ -1422,7 +1421,7 @@ parameter: hg_gtf = path
 input: hg_gtf
 output: f&#39;{_input:n}.ref.flat&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output[0]:bd}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint = entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     gtfToGenePred ${_input}  ${_output}.tmp -genePredExt -geneNameAsName2
     awk -F&#39;\t&#39; -v OFS=&quot;\t&quot; &#39;{$1=$12 OFS $1;}7&#39; ${_output}.tmp | cut -f 1-11 &gt; ${_output}
     rm ${_output}.tmp
@@ -1441,7 +1440,7 @@ parameter: hg_gtf = path
 input: hg_gtf
 output: f&#39;{cwd}/hg38.{_input:bn}_SE_strict.ioe&#39; # The stderr file must not shared the same start with the output file
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{cwd}/{_input:bn}.stderr&#39;, stdout = f&#39;{cwd}/{_input:bn}.stdout&#39;, entrypoint = entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{cwd}/{_input:bn}.stderr&#39;, stdout = f&#39;{cwd}/{_input:bn}.stdout&#39;
     suppa.py generateEvents -i ${_input} -o ${cwd}/hg38.${_input:bn} -f ioe -e SE SS MX RI FL
 </pre></div>
 </div>
@@ -1453,7 +1452,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{cwd}/{_inpu
 parameter: hg_gtf = path
 output: f&#39;{cwd}/{hg_gtf:bn}.SUPPA_annotation.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint = entrypoint
+R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     library(&quot;psichomics&quot;)
     suppa &lt;- parseSuppaAnnotation(&quot;${_input:d}&quot;, genome=&quot;hg38&quot;) 
     annot &lt;- prepareAnnotationFromEvents(suppa)
@@ -1484,7 +1483,7 @@ parameter: hgrc_db = path
 input: hg_gtf, hgrc_db
 output: f&#39;{cwd}/psichomics_hg38_annotation.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint = entrypoint
+R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     library(&quot;psichomics&quot;)
     library(&quot;purrr&quot;)
     library(&quot;dplyr&quot;)
@@ -1639,7 +1638,7 @@ parameter: TAD_genotype = path
 input: TAD_list, region_list
 output:f&#39;{cwd:a}/{region_list:bn}.annotation&#39; 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint = entrypoint
+python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     import pandas as pd
     import numpy as np
     #tad = pd.read_csv(&quot;${_input[0]}&quot;,&quot;\t&quot;,header = None)

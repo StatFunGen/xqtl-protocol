@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -739,7 +740,6 @@ Global Workflow Options:
                         Number of threads
   --container &#39;&#39;
                         Software container option
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
 
 Sections
@@ -834,7 +834,6 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 20
 # Software container option
 parameter: container = &quot;&quot;
-parameter: entrypoint= &quot;&quot;
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = path(f&quot;{cwd:a}&quot;)
@@ -932,7 +931,7 @@ task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, 
 
 plink_command = get_plink_command_prefix(genoFile)
 
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     plink2 \
       ${plink_command} ${_input:n} \
       --make-king-table \
@@ -945,7 +944,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.st
       --threads ${numThreads} \
       --memory ${int(expand_size(mem) * 0.9)/1e6} 
     
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     i=&quot;${_output}&quot;
     output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
     output_rows=$(cat $i | wc -l | cut -f 1 -d &#39; &#39;)
@@ -968,7 +967,7 @@ with open(_output, &#39;a&#39;):
     pass
 done_if(len(related_id) == 0, msg = f&quot;No related individuals detected from {_input}.&quot;)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint=entrypoint
+R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
 
     # By Rui Dong and Derek Lamb, Columbia Neurology
     # This function enhances the standard plinkQC::relatednessFilter approach through:
@@ -1302,7 +1301,7 @@ R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stde
     cat(&quot;There are&quot;, nrow(dat), &quot;related individuals using a kinship threshold of ${kinship}\n&quot;)
     write.table(dat, ${_output:r}, quote=FALSE, row.names=FALSE, col.names=FALSE)
     
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
     i=&quot;${_output}&quot;
     output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
     output_rows=$(cat $i | wc -l | cut -f 1 -d &#39; &#39;)
@@ -1328,7 +1327,7 @@ output_ext = get_output_extension(output_format)
 output: unrelated_bed = f&#39;{cwd}/{_input[0]:bn}.unrelated{output_ext}&#39;,
         related_bed = f&#39;{cwd}/{_input[0]:bn}.related{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     plink2 \
       ${plink_command} ${_input[1]:n} \
       --remove ${_input[0]} \
@@ -1397,7 +1396,7 @@ make_command = get_make_command(output_format) if not meta_only else &quot;--wri
 output_ext = get_output_extension(output_format) if not meta_only else &quot;.snplist&quot;
 output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot; + name) if name else &quot;&quot;}.plink_qc{&quot;.extracted&quot; if keep_variants.is_file() else &quot;&quot;}{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     plink2 \
       ${plink_command} ${_input:n} \
       --allow-extra-chr \
@@ -1419,7 +1418,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.
       --threads ${numThreads} \
       --memory ${int(expand_size(mem) * 0.9)/1e6} --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
         
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     i=&quot;${_output}&quot;
     output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
     printf &quot;output_info: %s\noutput_size: %s\n&quot; &quot;$i&quot; &quot;$output_size&quot; &gt;&gt; ${_output:n}.stdout
@@ -1444,7 +1443,7 @@ make_command = get_make_command(output_format)
 output_ext = get_output_extension(output_format, is_prune=True)
 output: bed=f&#39;{cwd}/{_input:bn}{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     plink2 \
     ${plink_command} ${_input:n} \
     --allow-extra-chr \
@@ -1463,7 +1462,7 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
     --threads ${numThreads} \
     --memory ${int(expand_size(mem) * 0.9)/1e6}
     
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     i=&quot;${_output[0]}&quot;
     output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
     printf &quot;output_info: %s\noutput_size: %s\n&quot; &quot;$i&quot; &quot;$output_size&quot; &gt;&gt; ${_output[0]:n}.stdout
@@ -1497,7 +1496,7 @@ depends: executable(&#39;tabix&#39;), executable(&#39;bgzip&#39;)
 input: genoFile, phenoFile
 output: f&#39;{cwd:a}/{path(_input[1]):bn}.sample_overlap.txt&#39;, f&#39;{cwd:a}/{path(_input[1]):bn}.sample_genotypes.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     # Load required libraries
     library(dplyr)
     library(readr)

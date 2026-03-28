@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -660,7 +661,6 @@ Global Workflow Options:
   --numThreads 1 (as int)
                         Number of threads
   --container &#39;&#39;
-  --entrypoint &#39;&#39;
 
 Sections
   region_list_generation:
@@ -733,7 +733,6 @@ parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 1
 parameter: container = &quot;&quot;
-parameter: entrypoint= &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -990,7 +989,7 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
         
 
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
         stdout=$[_output[0]:n].stdout
         for i in $[_output[0]] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -1024,7 +1023,7 @@ input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.bed.gz&#39;,
         f&#39;{cwd:a}/{_input:bn}.region_list.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-R:  expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39; ,container = container, entrypoint=entrypoint
+R:  expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39; ,container = container
 
     library(biomaRt)
     library(dplyr)
@@ -1071,7 +1070,7 @@ R:  expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout 
     write_tsv(my_gene_bed, path = &quot;$[_output[0]:n]&quot;, na = &quot;NA&quot;, append = FALSE, col_names = TRUE, quote_escape = &quot;double&quot;)
 
 
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;,container = container, entrypoint=entrypoint
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;,container = container
     bgzip -f $[_output[0]:n]
     tabix -p bed $[_output[0]] -f
 </pre></div>
@@ -1255,7 +1254,7 @@ parameter: overlap_ratio = 0.8
 input: intron_count, annotation_gtf
 output: f&#39;{cwd}/{_input[0]:b}.exon_list&#39;, f&#39;{cwd}/{_input[0]:b}.leafcutter.clusters_to_genes.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     import pandas as pd
     import qtl.annotation
 
@@ -1296,7 +1295,7 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
     exon_df.to_csv(${_output[0]:r}, sep=&#39;\t&#39;, index=False)
     
     
-R:expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R:expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     suppressMessages(library(dplyr, quietly=TRUE))
     suppressMessages(library(stringr, quietly=TRUE))
     suppressMessages(library(foreach, quietly=TRUE))
@@ -1394,7 +1393,7 @@ R:expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = 
     }
     write.table(m, ${_output[1]:r}, sep = &quot;\t&quot;, quote=FALSE, row.names=FALSE)
   
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
         stdout=$[_output[0]:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
@@ -1415,7 +1414,7 @@ parameter: sample_participant_lookup = path()
 input: phenoFile, annotation_gtf,output_from(&quot;map_leafcutter_cluster_to_gene&quot;)
 output: f&#39;{cwd:a}/{_input[0]:bn}.formated.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.phenotype_group.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     import pandas as pd
     import numpy as np
     import qtl.io
@@ -1480,7 +1479,7 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
     group_s_df.columns = [&#39;ID&#39;, &#39;gene&#39;]
     group_s_df.to_csv(${_output[1]:r}, sep=&#39;\t&#39;, index=False, header=True)
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
         stdout=$[_output[0]:n].stdout
 
         rm $[_input[1]:rn].tmp$[_input[1]:rx]
@@ -1516,7 +1515,7 @@ parameter: sample_participant_lookup = path()
 input: phenoFile, annotation_gtf
 output: f&#39;{cwd:a}/{_input[0]:bn}.formated.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.phenotype_group.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     import pandas as pd
     import numpy as np
     import qtl.io
@@ -1557,11 +1556,11 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
     bed_output.to_csv(${_output[0]:nr},&quot;\t&quot;,index = False)
     phenotype_group.to_csv(${_output[1]:r},&quot;\t&quot;,index = False,header=False)
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     bgzip -f ${_output[0]:n}
     tabix ${_output[0]}
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
         stdout=$[_output[0]:n].stdout
         for i in $[_output[0]] ; do 
         echo &quot;output_info: $i &quot; &gt;&gt; $stdout;

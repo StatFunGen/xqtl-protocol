@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -563,8 +564,6 @@ Sections
 parameter: cwd = path(&quot;output&quot;)
 # The filename name for output data
 parameter: container = &#39;&#39;
-import re
-parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -666,7 +665,7 @@ with open(_output, &#39;w&#39;) as f:
 [grm_2]
 output: f&#39;{_input:nn}.grm.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
    gcta64 \
    --mbfile $[_input] \
    --make-grm-gz \
@@ -684,7 +683,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 [grm_3]
 output: f&#39;{_input:nn}.apex.grm&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
 
     # Load necessary libraries
     library(dplyr)
@@ -718,7 +717,7 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#3
 [grm_4]
 input: group_by = &quot;all&quot;
 output: f&#39;{cwd}/{path(list(genotypes.values())[1]):bnn}.loco_grm_list.txt&#39;
-R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
 
     # Load necessary libraries
     library(dplyr)

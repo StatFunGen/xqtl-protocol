@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -728,7 +729,6 @@ Global Workflow Options:
                         requried.
   --container &#39;&#39;
                         Software container option
-  --entrypoint (&#39;micromamba run -n&#39; + &#39; &#39; + container.split(&#39;/&#39;)[-1][:-4] + &quot; --no-capture-output&quot;) if container.endswith(&#39;.sif&#39;) else &quot;&quot;
 
   --[no-]add-chr (default to False)
                         use this function to edit memory string for PLINK input
@@ -800,8 +800,6 @@ parameter: walltime = &#39;24h&#39;
 parameter: mem = &#39;60G&#39;
 # Software container option
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint=&quot;&quot;
 #whether things like DP in the vcf header should be ignored when filtering.
 parameter: skip_vcf_header_filtering = False
 # use this function to edit memory string for PLINK input
@@ -873,7 +871,7 @@ genoFile = get_genotype_file(genoFile)
 input: genoFile
 output: f&#39;{_input:nn}.add_chr.vcf.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, entrypoint=entrypoint
+bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;
     for i in {1..22} X Y MT; do echo &quot;$i chr$i&quot;; done &gt; ${_output:nn}.chr_name_conv.txt
     bcftools annotate --rename-chrs ${_output:nn}.chr_name_conv.txt ${_input} -Oz -o ${_output}
     tabix -p vcf ${_output}
@@ -888,7 +886,7 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n
 input: genoFile
 output: f&quot;{cwd}/{_input:bnn}.variants.gz&quot;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     # Extract specific fields from the VCF file using bcftools
     bcftools query -f&#39;%CHROM\t%POS\t%ID\t%REF\t%ALT\n&#39; ${_input} | \
     awk &#39;BEGIN { 
@@ -926,7 +924,7 @@ parameter: snp_only = False
 input: genoFile, group_by = 1
 output: f&#39;{cwd}/{_input:bnn}.{&quot;leftnorm&quot; if not bi_allelic else &quot;biallelic&quot;}{&quot;.snp&quot; if snp_only else &quot;&quot;}.vcf.gz&#39;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     
     if [ &quot;${skip_vcf_header_filtering}&quot; = &quot;True&quot; ]; then
         printf &quot;not filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
@@ -956,7 +954,7 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n
 
     fi
     
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     for i in ${_output} ; do 
         # Capture file metadata
         output_info=&quot;$i&quot;
@@ -997,7 +995,7 @@ parameter: AB_indel = 0.2
 parameter: hwe_filter = 0.0
 output: f&quot;{_input:nn}.bcftools_qc.vcf.gz&quot;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
 
     if [ &quot;${skip_vcf_header_filtering}&quot; = &quot;True&quot; ]; then
         printf &quot;not filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
@@ -1031,7 +1029,7 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n
         -Oz --threads ${numThreads} -o ${_output}
     fi
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     for i in ${_output} ; do 
         # Capture file metadata
         output_info=&quot;$i&quot;
@@ -1058,7 +1056,7 @@ output: f&quot;{cwd}/{_input:bnn}.novel_variant_sumstats&quot;,
         f&quot;{cwd}/{_input:bnn}.novel_variant.snipsift_tstv&quot;,
         f&quot;{cwd}/{_input:bnn}.known_variant.snipsift_tstv&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
 
     # Compute statistics for novel variants (RSID is missing)
     bcftools stats -i &#39;RSID=&quot;.&quot;&#39; -v ${_input} &gt; ${_output[0]}
@@ -1074,7 +1072,7 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0
     bcftools filter -i &#39;RSID!=&quot;.&quot;&#39; ${_input} | \
         SnpSift tstv - &gt; ${_output[3]}
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
     for i in ${_output} ; do 
         # Capture file metadata
         output_info=&quot;$i&quot;

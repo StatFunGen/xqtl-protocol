@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -704,8 +705,6 @@ parameter: walltime = &quot;5h&quot;
 parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 1
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 data = data.absolute()
 cwd = cwd.absolute()
 if len(output_prefix) == 0:
@@ -730,7 +729,7 @@ def sort_uniq(seq):
 input: data
 output: f&quot;{cwd}/{output_prefix}.flash.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     dat = readRDS(${_input:r})
     dat = mashr::mash_set_data(dat$strong.b, Shat=dat$strong.s, alpha=${1 if effect_model == &#39;EZ&#39; else 0}, zero_Bhat_Shat_reset = 1E3)
     res = mashr::cov_flash(dat, factors=&quot;default&quot;, remove_singleton=${&quot;TRUE&quot; if &quot;canonical&quot; in mixture_components else &quot;FALSE&quot;}, output_model=&quot;${_output:n}.model.rds&quot;)
@@ -746,7 +745,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
 input: data
 output: f&quot;{cwd}/{output_prefix}.flash_nonneg.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     dat = readRDS(${_input:r})
     dat = mashr::mash_set_data(dat$strong.b, Shat=dat$strong.s, alpha=${1 if effect_model == &#39;EZ&#39; else 0}, zero_Bhat_Shat_reset = 1E3)
     res = mashr::cov_flash(dat, factors=&quot;nonneg&quot;, remove_singleton=${&quot;TRUE&quot; if &quot;canonical&quot; in mixture_components else &quot;FALSE&quot;}, output_model=&quot;${_output:n}.model.rds&quot;)
@@ -764,7 +763,7 @@ parameter: npc = 2
 input: data
 output: f&quot;{cwd}/{output_prefix}.pca.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     dat = readRDS(${_input:r})
     dat = mashr::mash_set_data(dat$strong.b, Shat=dat$strong.s, alpha=${1 if effect_model == &#39;EZ&#39; else 0}, zero_Bhat_Shat_reset = 1E3)
     res = mashr::cov_pca(dat, ${npc})
@@ -779,7 +778,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
 input: data
 output: f&quot;{cwd}/{output_prefix}.canonical.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     library(&quot;mashr&quot;)
     dat = readRDS(${_input:r})
     dat = mashr::mash_set_data(dat$strong.b, Shat=dat$strong.s, alpha=${1 if effect_model == &#39;EZ&#39; else 0}, zero_Bhat_Shat_reset = 1E3)
@@ -799,7 +798,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
 input: data
 output: f&#39;{vhat_data:nn}.V_identity.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     dat = readRDS(${_input:r})
     saveRDS(diag(ncol(dat$random.b)), ${_output:r})
 </pre></div>
@@ -813,7 +812,7 @@ R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&
 input: data
 output: f&#39;{vhat_data:nn}.V_simple.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     library(mashr)
     dat = readRDS(${_input:r})
     vhat = estimate_null_correlation_simple(mash_set_data(dat$null.b, Shat=dat$null.s, alpha=${1 if effect_model == &#39;EZ&#39; else 0}, zero_Bhat_Shat_reset = 1E3))
@@ -834,7 +833,7 @@ parameter: max_iter = 6
 input: data, prior_data
 output: f&#39;{vhat_data:nn}.V_mle.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     library(mashr)
     dat = readRDS(${_input[0]:r})
     # choose random subset
@@ -867,7 +866,7 @@ depends: R_library(&quot;CorShrink&quot;)
 input: data, for_each = &#39;genes&#39;
 output: f&#39;{vhat_data:nn}/{vhat_data:bnn}_V_corshrink_{_genes}.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     source(${util_script:r})
     CorShrink_sum = function(gene, database, z_thresh = 2){
       print(gene)
@@ -910,7 +909,7 @@ input: data, for_each = &#39;genes&#39;
 output: f&#39;{vhat_data:nn}/{vhat_data:bnn}_V_simple_{_genes}.rds&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     source(${util_script:r})
     simple_V = function(gene, database, z_thresh = 2){
       print(gene)
@@ -951,7 +950,7 @@ input: group_by = &#39;all&#39;
 output: f&quot;{vhat_data:nn}.V_{step_name.rsplit(&#39;_&#39;,1)[0]}.rds&quot;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     library(parallel)
     files = sapply(c(${genes:r,}), function(g) paste0(c(${_input[0]:adr}), &#39;/&#39;, g, &#39;.rds&#39;), USE.NAMES=FALSE)
     V = mclapply(files, function(i){ readRDS(i) }, mc.cores = 1)
@@ -975,7 +974,7 @@ parameter: unconstrained_prior = &quot;ted&quot;
 input:[data, vhat_data if vhat != &quot;mle&quot; else f&#39;{vhat_data:nn}.V_simple.rds&#39;] 
 output: prior_data
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     library(stringr)
     library(udr)
     library(mashr)
@@ -1020,7 +1019,7 @@ parameter: ud_tol_lik = 1e-3
 input: [data, vhat_data if vhat != &quot;mle&quot; else f&#39;{vhat_data:nn}.V_simple.rds&#39;] + [f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components]
 output: prior_data
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     library(stringr)
     rds_files = c(${_input:r,})
     dat = readRDS(rds_files[1])
@@ -1061,7 +1060,7 @@ parameter: ed_tol = 1e-6
 input: [data, vhat_data if vhat != &quot;mle&quot; else f&#39;{vhat_data:nn}.V_simple.rds&#39;] + [f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components]
 output: prior_data
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
     library(mashr)
     rds_files = c(${_input:r,})
     dat = readRDS(rds_files[1])
@@ -1097,7 +1096,7 @@ parameter: remove_label = False
 parameter: name = &quot;&quot;
 input: data
 output: f&#39;{cwd:a}/{_input:bn}{(&quot;_&quot; + name.replace(&quot;$&quot;, &quot;_&quot;)) if name != &quot;&quot; else &quot;&quot;}.pdf&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
     library(reshape2)
     library(ggplot2)
     plot_sharing = function(X, col = &#39;black&#39;, to_cor=FALSE, title=&quot;&quot;, remove_names=F) {

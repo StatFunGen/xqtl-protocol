@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -661,7 +662,6 @@ output from <code class="docutils literal notranslate"><span class="pre">fine_ma
 
                         <span class="n">It</span> <span class="ow">is</span> <span class="n">required</span> <span class="n">to</span> <span class="nb">input</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">analysis</span>
   <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
-  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">&#39;&#39;</span>
   <span class="o">--</span><span class="n">job</span><span class="o">-</span><span class="n">size</span> <span class="mi">200</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">For</span> <span class="n">cluster</span> <span class="n">jobs</span><span class="p">,</span> <span class="n">number</span> <span class="n">commands</span> <span class="n">to</span> <span class="n">run</span> <span class="n">per</span> <span class="n">job</span>
   <span class="o">--</span><span class="n">walltime</span> <span class="mi">5</span><span class="n">m</span>
@@ -731,7 +731,6 @@ parameter: region_name = []
 parameter: name = f&quot;{xqtl_meta_data:bnn}.{gwas_meta_data:bnn}&quot;
 parameter: container = &quot;&quot;
 import re
-parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 200
 # Wall clock time expected
@@ -1044,7 +1043,7 @@ meta = regional_data[&#39;conditions&#39;]
 input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta&quot;
 output: f&#39;{cwd:a}/{name}.{_meta[0]}.enrichment.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     library(tidyverse)
     library(pecotmr)
     # RDS files for GWAS data
@@ -1078,7 +1077,7 @@ input: overlapped_regional_data[&quot;data&quot;], group_by = lambda x: group_by
 # output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta[0]}.coloc.rds&#39;
 output: f&#39;{cwd:a}/{step_name}/{name}.{_meta[0]}.coloc.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     library(tidyverse)
     library(pecotmr)
     library(coloc) 

@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -830,8 +831,6 @@ parameter: max_cv_variants = -1
 parameter: ld_reference_meta_file = path()
 # Analysis environment settings
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 200
 # Wall clock time expected
@@ -1130,7 +1129,7 @@ else:
     f&#39;{cwd:a}/twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.univariate_twas_weights.rds&#39;]
 output: output_files
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&quot;, stderr = f&quot;{_output[0]:nn}.susie_twas.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&quot;, stderr = f&quot;{_output[0]:nn}.susie_twas.stderr&quot;, container = container
     options(warn=1)
     library(pecotmr)
     phenotype_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1:len(_input)//2+1]])})
@@ -1407,7 +1406,7 @@ else:
                     f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_twas_weights.rds&#39;]   
 output: output_files
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm.stderr&quot;, container = container
 
     library(pecotmr)
     
@@ -1578,7 +1577,7 @@ else:
     f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_twas_weights.rds&#39;]    
 output: output_files
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm_genes.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm_genes.stderr&quot;, container = container
 
     library(data.table)
     library(dplyr)
@@ -1848,7 +1847,7 @@ meta_info = regional_data[&#39;meta_info&#39;]
 input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
 output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0].replace(&quot;:&quot;, &quot;_&quot;).replace(&quot;-&quot;, &quot;_&quot;)}.fsusie_{prior}_{post_processing}_{&quot;_top_pc_weights&quot; if not skip_twas_weights else &quot;&quot;}.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     options(warn=1)
     # extract subset of samples
     keep_samples = NULL
@@ -1985,7 +1984,7 @@ meta_info = regional_data[&#39;meta_info&#39;]
 input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
 output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0]}.mvfsusie_{prior}.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     # Load regional association data
     fdat = load_regional_association_data(genotype = ${_input[0]:anr},
                                           phenotype = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1::2]])}),

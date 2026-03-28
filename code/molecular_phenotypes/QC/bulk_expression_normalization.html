@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -624,7 +625,6 @@ Global Workflow Options:
   --numThreads 20 (as int)
                         Number of threads
   --container &#39;&#39;
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
 
 Sections
@@ -662,8 +662,6 @@ parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 20
 parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -675,7 +673,7 @@ parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39
 input: tpm_gct, counts_gct, annotation_gtf, sample_participant_lookup
 output: f&#39;{cwd:a}/{_input[0]:bnnn}.{normalization_method}.{&quot;no_qnorm.&quot; if not quantile_normalize else &quot;&quot;}expression.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, stdout = f&#39;{_output[0]:nn}.stdout&#39;,container = container, entrypoint = entrypoint
+python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, stdout = f&#39;{_output[0]:nn}.stdout&#39;,container = container
     import numpy as np
     import pandas as pd
     import os

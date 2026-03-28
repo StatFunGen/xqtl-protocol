@@ -182,7 +182,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_reference_generation.html">Generating LD Reference Panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
 </ul>
 </details></li>
 </ul>
@@ -790,7 +791,6 @@ Global Workflow Options:
                         Number of threads
   --container &#39;&#39;
                         Software container option
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
 
 Sections
@@ -854,7 +854,6 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
-parameter: entrypoint= &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -866,7 +865,7 @@ parameter: mean_impute_missing = False
 input: phenoFile, covFile
 output: f&#39;{cwd}/{name}.residual.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39; , container = container, entrypoint = entrypoint
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39; , container = container
 
     mean_impute &lt;- function(d){
       f &lt;- apply(d, 2, function(x) mean(x, na.rm = TRUE))
@@ -918,7 +917,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = 
     pheno_output = cbind(pheno_id, pheno_resid%&gt;%t())
     pheno_output%&gt;%write_delim(&quot;${_output:n}&quot;,delim = &quot;\t&quot;)
   
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container
     bgzip -f ${_output:n}
     tabix -p bed ${_output}
 
@@ -943,7 +942,7 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout
 parameter: choose_k_method = &quot;Marchenko&quot;
 output: f&#39;{cwd}/{_input:bnnn}.{choose_k_method}_PC.gz&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint = entrypoint
+R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;)
     library(&quot;PCAtools&quot;)
@@ -984,7 +983,7 @@ R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.std
     MPPCsDF &lt;- MPPCsDF %&gt;% select(id, everything()) %&gt;% rename(&quot;#id&quot; = &quot;id&quot;)
     write_delim((rbind(covDFcommon, MPPCsDF)), &quot;${_output}&quot;, &quot;\t&quot;)
 
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
         stdout=$[_output:n].stdout
         for i in $[_output] ; do 
         echo &quot;output_info $i &quot; &gt;&gt; $stdout;
@@ -1024,7 +1023,7 @@ parameter: convergence_mode = &quot;fast&quot;
 # input is the residual file from the first step
 output: f&#39;{cwd:a}/{_input:bnn}.PEER_MODEL.hd5&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, entrypoint = entrypoint
+python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
     from mofapy2.run.entry_point import entry_point
     import pandas as pd
     import os
@@ -1074,7 +1073,7 @@ python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[PEER_3]
 output: f&#39;{cwd:a}/{_input:bnn}.PEER.gz&#39;, f&#39;{cwd:a}/{_input:bnn}.PEER.diag.pdf&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint = entrypoint
+R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     ####################
     ## Load libraries ##
     ####################
@@ -1177,7 +1176,7 @@ R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}
     ## Fetch factors ##
     ###################
     invisible(dev.off())
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
         for i in $[_output[0]] ; do 
         echo &quot;output_info $i &quot; &gt;&gt; $[_output[0]:n].stdout;
         echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $[_output[0]:n].stdout;
@@ -1209,7 +1208,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 import time
 output: f&#39;{cwd:a}/{_input:bn}.fake.vcf.gz&#39;
 #task: trunk_workers = 1,trunk_size = job_size , walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint = entrypoint
+R: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;)
     ## Add fake header
@@ -1219,7 +1218,7 @@ R: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stder
     colnames(pheno)[1:3] = c(&quot;#CHROM&quot;,&quot;POS&quot;,&quot;ID&quot;) 
     pheno = cbind(pheno[1:3]%&gt;%mutate(REF = &quot;A&quot;, ALT = &quot;C&quot;, QUAL = &quot;.&quot;,FILTER = &quot;.&quot;, INFO = &quot;PR&quot;, FORMAT = &quot;GT&quot;),pheno[,5:ncol(pheno)])
     pheno%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, entrypoint = entrypoint
+bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
     bgzip -f $[_output:n]
     tabix -p vcf $[_output]
 </pre></div>
@@ -1248,7 +1247,7 @@ if N == 0:
 input: output_from(1), output_from(2)
 output: f&#39;{cwd:a}/{_input[0]:bnn}.BiCV.gz&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, entrypoint = entrypoint
+bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
     apex factor \
         --out $[_output[0]:nn] \
         --iter $[iteration] \
