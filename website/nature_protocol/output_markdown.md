@@ -71,8 +71,6 @@ To build a list of TADB-enhanced cis windows, we start with the cis window of ea
 
 
 
-
-Our LD reference panel is generated from ADSP GCAD non-Hispanic white samples. Missing variants are mean imputed before correlations are calculated between variants. The cyvcf2 package is used to calculate dosage while applying a minor allele frequency threshold of 0.05%, a minor allele count threshold of 5, and a missingness threshold of 5%.
 #### Molecular Phenotypes (Step 2)
 ##### A.  RNA-seq expression
 
@@ -1105,6 +1103,7 @@ sos run pipeline/colocboost.ipynb colocboost \
 
 
 
+#### gwas_meta_multi.tsv
 ### 8. Enrichment and Validation
 
 #### Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife
