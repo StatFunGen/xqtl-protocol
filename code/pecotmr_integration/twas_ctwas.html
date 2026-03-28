@@ -677,6 +677,7 @@
    --cwd output/twas --name test \
    --gwas_meta_data data/twas/gwas_meta_test.tsv \
    --ld_meta_data reference_data/ADSP_R4_EUR/ld_meta_file.tsv \
+   --ld_reference_sample_size 17000 \
    --regions data/twas/EUR_LD_blocks.bed \
    --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
    --xqtl_type_table data/twas/data_type_table.txt \
@@ -695,6 +696,7 @@
    --cwd output/twas --name test \
    --gwas_meta_data data/twas/gwas_meta_test.tsv \
    --ld_meta_data data/ld_meta_file_with_bim.tsv \
+   --ld_reference_sample_size 17000 \
    --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
    --twas_weight_cutoff 0 \
    --chrom 11 \
@@ -729,6 +731,7 @@ parameter: cwd = path(&quot;output/&quot;)
 parameter: gwas_meta_data = path()
 parameter: xqtl_meta_data = path()
 parameter: ld_meta_data = path()
+parameter: ld_reference_sample_size = 17000
 parameter: xqtl_type_table = &#39;&#39;
 parameter: gwas_name = []
 parameter: gwas_data = []
@@ -1171,6 +1174,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
                 &quot;${ld_meta_data}&quot;, 
                 &quot;${gwas_meta_data}&quot;,  
                 region_block = &quot;${_filtered_region_info[3]}&quot;,
+                ld_reference_sample_size = ${ld_reference_sample_size},
                 rsq_cutoff = ${rsq_cutoff}, 
                 rsq_option = &quot;${rsq_option}&quot;, 
                 rsq_pval_cutoff = ${rsq_pval_cutoff}, 
@@ -1383,11 +1387,11 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     max_pos &lt;- fread(&quot;${ld_meta_data}&quot;, data.table=FALSE)
     max_pos &lt;- max(max_pos$end[max_pos[,1]==&quot;${chrom}&quot;])
     region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = 0, end = max_pos+1)
-    snp_map &lt;- load_ld_snp_info(&quot;${ld_meta_data}&quot;, region_of_interest)
-    ld_variants &lt;- paste0(&quot;chr&quot;, unlist(lapply(snp_map, function(x) x$id)))
+    snp_map &lt;- get_ref_variant_info(&quot;${ld_meta_data}&quot;, region_of_interest)
+    ld_variants &lt;- paste0(&quot;chr&quot;, snp_map$id)
     ld_variants &lt;- ld_variants[!duplicated(ld_variants)]
 
-    regions_data &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;, names(snp_map))
+    regions_data &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;)
     region_info &lt;- regions_data$region_info
     LD_map &lt;- regions_data$LD_info
     if (!is.null(${name_suffix})) name &lt;- paste0(&quot;${name}_&quot;, ${name_suffix})  else name &lt;- &quot;${name}&quot;
@@ -1435,13 +1439,13 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
             region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = min(find_data(weight_list_sub, c(2, &quot;p0&quot;))), end =  max(find_data(weight_list_sub, c(2, &quot;p1&quot;))))
             rm(weight_list_sub);gc()
             LD_list &lt;- load_LD_matrix(&quot;${ld_meta_data}&quot;, region_of_interest)
-            dup_idx &lt;- which(duplicated(LD_list$combined_LD_variants))
-            LD_list &lt;- LD_list[&#39;combined_LD_matrix&#39;]  
-            if (length(dup_idx) &gt;= 1) LD_list$combined_LD_matrix &lt;- LD_list$combined_LD_matrix[-dup_idx, -dup_idx]
+            dup_idx &lt;- which(duplicated(LD_list$LD_variants))
+            LD_list &lt;- LD_list[&#39;LD_matrix&#39;]  
+            if (length(dup_idx) &gt;= 1) LD_list$LD_matrix &lt;- LD_list$LD_matrix[-dup_idx, -dup_idx]
             for (study in names(weight_list)){
                 sub_idx &lt;- which(gsub(&quot;\\|.*$&quot;, &quot;&quot;, names(weight_list[[study]])) %in% region_genes)
                 for (context in names(weight_list[[study]][sub_idx])){
-                    twas_df &lt;- twas_analysis(weight_list[[study]][[context]]$wgt, z_snp[[study]], LD_list$combined_LD_matrix, rownames(weight_list[[study]][[context]]$wgt))[[1]]
+                    twas_df &lt;- twas_analysis(weight_list[[study]][[context]]$wgt, z_snp[[study]], LD_list$LD_matrix, rownames(weight_list[[study]][[context]]$wgt))[[1]]
                     z_gene[[study]]$z[z_gene[[study]]$id==context &amp;z_gene[[study]]$gwas_study==study] &lt;- twas_df$z 
                 }
             }
@@ -1778,7 +1782,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
             selected_boundary_genes &lt;- boundary_genes[boundary_genes$id %in% high_PIP_genes, , drop=FALSE]
             if (nrow(selected_boundary_genes)!=0){
                 message(&quot;Fine-mapping for merged region for ${region_name} with &quot;, study, &quot;. &quot;)
-                region_info &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;, names(snp_map))$region_info
+                region_info &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;)$region_info
                 merge_region_res &lt;- merge_region_data(selected_boundary_genes,
                                                region_data[[study]],
                                                region_info = region_info,
@@ -1924,6 +1928,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
                                     ld_meta_file_path = &quot;${ld_meta_data}&quot;, 
                                     gwas_meta_file = &quot;${gwas_meta_data}&quot;, 
                                     region_block = &quot;${_filtered_region_info[3]}&quot;, 
+                                    ld_reference_sample_size = ${ld_reference_sample_size}, 
                                     quantile_twas = TRUE,  
                                     output_twas_data = ${&quot;TRUE&quot; if save_ctwas_data else &quot;FALSE&quot;} )
 

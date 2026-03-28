@@ -548,14 +548,13 @@
 </div>
 <p>III. <strong>LD Reference Metadata File</strong></p>
 <ul class="simple">
-<li><p><strong>Format</strong>: Single TSV file.</p></li>
-<li><p><strong>Contents</strong>:</p>
-<ul>
-<li><p>Columns: <code class="docutils literal notranslate"><span class="pre">#chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, path to the LD matrix, genomic build.</p></li>
-<li><p>LD matrix path format: comma-separated, first entry is the LD matrix, second is the bim file.</p></li>
-</ul>
+<li><p><strong>Format</strong>: Single TSV file with columns: <code class="docutils literal notranslate"><span class="pre">#chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p></li>
+<li><p><strong>Two supported formats</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Pre-computed LD blocks</strong> (<code class="docutils literal notranslate"><span class="pre">.cor.xz</span></code>): Many rows per chromosome with block boundaries in <code class="docutils literal notranslate"><span class="pre">start</span></code>/<code class="docutils literal notranslate"><span class="pre">end</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> as comma-separated <code class="docutils literal notranslate"><span class="pre">ld_file,bim_file</span></code>.</p></li>
+<li><p><strong>PLINK genotype files</strong>: One row per chromosome with <code class="docutils literal notranslate"><span class="pre">start=0</span></code>, <code class="docutils literal notranslate"><span class="pre">end=0</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> pointing to a per-chromosome PLINK prefix. LD is computed on the fly. The genotype matrix X is passed directly to <code class="docutils literal notranslate"><span class="pre">susie_rss</span></code> (z+X interface), enabling <code class="docutils literal notranslate"><span class="pre">stochastic_ld_sample</span></code> diagnostics.</p></li>
+</ol>
 </li>
-<li><p><strong>Documentation</strong>: Refer to our LD reference preparation document for detailed information (Tosin pending update).</p></li>
 </ul>
 <p>IV. For analyzing specific genomic regions, you can specify them using the <code class="docutils literal notranslate"><span class="pre">--region-names</span></code> option in the ‘chr:start-end’ format, where multiple regions are accepted. Alternatively, you may provide a file containing a list of regions through the <code class="docutils literal notranslate"><span class="pre">--region-list</span></code> option, also adhering to the ‘chr:start-end’ format. When both <code class="docutils literal notranslate"><span class="pre">--region-names</span></code> and <code class="docutils literal notranslate"><span class="pre">--region-list</span></code> are provided, union of these options will be used to analyze. In cases where neither option is specified, the analysis defaults to encompass all regions specified in the LD reference metadata. Use –comment_string to specify the comment symbol in the original names, enclosing your option in quotation marks (e.g., –comment_string “#”). The default is no comment symbol.</p>
 </section>
@@ -589,6 +588,7 @@
     --cwd output/rss_analysis \
     --skip_analysis_pip_cutoff 0 \
     --skip_regions 6:25000000-35000000 \
+    --stochastic_ld_sample &quot;NULL&quot; \
     --region_name 22:49355984-50799822
     
 </pre></div>
@@ -606,6 +606,7 @@ parameter: gwas_data = []
 parameter: column_mapping = []
 parameter: region_list = path()
 parameter: region_name = []
+parameter: stochastic_ld_sample = &quot;NULL&quot;
 parameter: container = &#39;&#39;
 parameter: skip_regions = []
 import re
@@ -790,8 +791,6 @@ parameter: qc_method = &quot;&quot;
 parameter: finemapping_method = &quot;single_effect&quot;
 parameter: extract_region_name = &quot;NULL&quot;
 parameter: region_name_col = &quot;NULL&quot;
-# compute LD from genotype
-parameter: compute_LD_from_genotype = False
 # remove a variant if it has more than imiss missing individual level data
 parameter: imiss = 1.0
 # MAF cutoff
@@ -823,24 +822,10 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
         extract_region_name = &quot;${extract_region_name}&quot;
     }
 
-    if( ${&quot;TRUE&quot; if compute_LD_from_genotype else &quot;FALSE&quot;}){
-    geno_path = readr::read_delim(&quot;${ld_meta_data}&quot;,&quot;\t&quot;)%&gt;% filter(`#chr` == &quot;${regional_data[&#39;regions&#39;][_regions][0]}&quot;, 
-                                                                    start == &quot;${regional_data[&#39;regions&#39;][_regions][1]}&quot;, 
-                                                                      end == &quot;${regional_data[&#39;regions&#39;][_regions][2]}&quot;)%&gt;%pull(path)%&gt;%stringr::str_replace(&quot;.bed&quot;,&quot;&quot;)
-    LD_data = pecotmr:::filter_X(
-                            load_genotype_region(geno_path, 
-                                        &#39;${&quot;chr%s:%s-%s&quot; % (regional_data[&#39;regions&#39;][_regions][0], regional_data[&#39;regions&#39;][_regions][1], regional_data[&#39;regions&#39;][_regions][2])}&#39;),
-                            missing_rate_thresh = ${imiss}, maf_thresh=${maf})%&gt;%
-                            cor
-
-    ## When we compute LD from genotype adhoc, there could be snp with conventional Ref/Alt allele like  4:185875956:C:&lt;INS:ME:ALU&gt;, which will break the allele_qc function in the following steps.
-    ## The additional filtering remove these unconventional allele and keep only SNP that wont break the allele_qc function, which depends on the fact that there is exactly three &quot;:&quot; in the snp ID.
-    correct_variants &lt;-  rownames(LD_data)[sapply( rownames(LD_data), function(x) sum(strsplit(x, &quot;&quot;, fixed = TRUE)[[1]] == &quot;:&quot;) == 3)]
-    LD_data = LD_data[correct_variants,correct_variants]
-    LD_data = list(combined_LD_matrix  = LD_data, combined_LD_variants  = rownames(LD_data) )
-     } else { 
-    LD_data = load_LD_matrix(&quot;${ld_meta_data}&quot;, &#39;${&quot;chr%s:%s-%s&quot; % (regional_data[&#39;regions&#39;][_regions][0], regional_data[&#39;regions&#39;][_regions][1], regional_data[&#39;regions&#39;][_regions][2])}&#39;)
-    }    
+    # Load LD data: PLINK sources return genotype X, pre-computed returns R.
+    LD_data &lt;- load_LD_matrix(&quot;${ld_meta_data}&quot;,
+      &#39;${&quot;chr%s:%s-%s&quot; % (regional_data[&#39;regions&#39;][_regions][0], regional_data[&#39;regions&#39;][_regions][1], regional_data[&#39;regions&#39;][_regions][2])}&#39;,
+      return_genotype = &quot;auto&quot;)
 
 
     res = setNames(replicate(length(studies), list(), simplify = FALSE), studies)
@@ -855,6 +840,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                                         finemapping_method = ${&quot;NULL&quot; if len(finemapping_method) == 0 else &quot;&#39;%s&#39;&quot; % finemapping_method}, 
                                         finemapping_opts = list(init_L = ${L}, max_L = ${max_L}, l_step = ${l_step}, coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}), signal_cutoff = ${pip_cutoff}),
                                         pip_cutoff_to_skip = ${skip_analysis_pip_cutoff}, comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;},
+                                        stochastic_ld_sample = ${stochastic_ld_sample},
                                         diagnostics = ${&quot;TRUE&quot; if diagnostics else &quot;FALSE&quot;}
                                         )
         fwrite(res[[r]]$rss_data_analyzed, file = paste0(&quot;${_output:nn}.&quot;, extract_region_name, studies[r], &quot;.sumstats.tsv.gz&quot;), sep = &quot;\t&quot;, col.names = TRUE, row.names = FALSE, quote = FALSE, compress = &quot;gzip&quot;)
