@@ -697,13 +697,18 @@ parameter: mac = 5
 parameter: indel = True
 parameter: min_twas_maf = 0.01
 parameter: screen_threshold = 0.01
-parameter: qrank_screen_calculate = True
-parameter: marginal_beta_calculate = True
-parameter: twas_weight_calculate = True
-parameter: vqtl_calculate = True
+parameter: screen_method = &quot;qvalue&quot;
+parameter: screen_significant = True
+parameter: pre_filter_by_pqr = False
+parameter: initial_corr_filter_cutoff = 0.8
+parameter: full_rank_corr_filter_cutoff = &quot;seq(0.75, 0.5, by = -0.05)&quot;
 parameter: ld_reference_meta_file = path()
 # Only focus on a subset of variants
 parameter: keep_variants = path()
+parameter: marginal_beta_calculate = True
+parameter: twas_weight_calculate = True
+parameter: qrank_screen_calculate = True
+parameter: vqtl_calculate = True
 # Analysis environment settings
 parameter: container = &quot;&quot;
 # For cluster jobs, number commands to run per job
@@ -1042,9 +1047,11 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
           # Multi-column format: filter by context and molecular_trait_object_id
           # For genotype loading: use union of all matching variants across all contexts
           current_region = &quot;${_meta_info[2]}&quot;
+          original_region_ids = c(${&quot;,&quot;.join([(&quot;&#39;%s&#39;&quot; % x) if isinstance(x, str) else &quot;,&quot;.join([&quot;&#39;%s&#39;&quot; % i for i in x]) for x in _meta_info[3]])})
+          all_region_ids = unique(c(current_region, original_region_ids))
           current_contexts = conditions
           keep_variants_region_data = keep_variants_data[
-            keep_variants_data$molecular_trait_object_id == current_region &amp;
+            keep_variants_data$molecular_trait_object_id %in% all_region_ids &amp;
             keep_variants_data$context %in% current_contexts, ]
           keep_variants_list = unique(as.character(keep_variants_region_data$variant_id))
           keep_variants_list = keep_variants_list[keep_variants_list != &quot;&quot;]
@@ -1053,9 +1060,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
           message(paste(length(keep_variants_list), &quot;variants matched for region&quot;, current_region,
                         &quot;across&quot;, length(current_contexts), &quot;contexts (per-context filtering enabled)&quot;))
           if (length(keep_variants_list) == 0) {
-            message(&quot;No matching variants found, proceeding without variant filter&quot;)
-            keep_variants_list = NULL
-            keep_variants_per_context = FALSE
+            message(&quot;No matching variants found for this region, marginal coef will be skipped for contexts without variants&quot;)
           }
         } else {
           # Fallback: treat first column as variant_id list
@@ -1137,8 +1142,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                 current_keep_variants = current_keep_variants[current_keep_variants != &quot;&quot;]
                 message(paste(length(current_keep_variants), &quot;variants for context&quot;, ctx_name))
               } else {
-                current_keep_variants = NULL
-                message(paste(&quot;No context-specific variants for&quot;, ctx_name, &quot;- no variant filter applied&quot;))
+                current_keep_variants = character(0)
+                message(paste(&quot;No context-specific variants for&quot;, ctx_name, &quot;- skipping marginal coef fitting&quot;))
               }
             }
 
@@ -1152,7 +1157,12 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                 region_id = paste0(colnames(Y_col), &quot;_&quot;, names(fdat$residual_Y)[r]),
                 quantile_qtl_tau_list = seq(0.05, 0.95, by = 0.05),
                 quantile_twas_tau_list = seq(0.01, 0.99, by = 0.01),
+                screen_method = &quot;${screen_method}&quot;,
                 screen_threshold = ${screen_threshold},
+                screen_significant = ${&quot;TRUE&quot; if screen_significant else &quot;FALSE&quot;},
+                pre_filter_by_pqr = ${&quot;TRUE&quot; if pre_filter_by_pqr else &quot;FALSE&quot;},
+                initial_corr_filter_cutoff = ${initial_corr_filter_cutoff},
+                full_rank_corr_filter_cutoff = ${full_rank_corr_filter_cutoff},
                 keep_variants = current_keep_variants,
                 marginal_beta_calculate = ${&quot;TRUE&quot; if marginal_beta_calculate else &quot;FALSE&quot;},
                 twas_weight_calculate = ${&quot;TRUE&quot; if twas_weight_calculate else &quot;FALSE&quot;},
