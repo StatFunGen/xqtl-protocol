@@ -1294,7 +1294,7 @@ and removes all per-block intermediate directories.</p>
     <span class="c1"># Step 2: Merge all per-block pgens -&gt; one per-chrom pgen</span>
     <span class="err">$</span><span class="p">[</span><span class="n">plink2_bin</span><span class="p">]</span> \
         <span class="o">--</span><span class="n">pmerge</span><span class="o">-</span><span class="nb">list</span> <span class="s2">&quot;$</span><span class="si">{merge_list}</span><span class="s2">&quot;</span> <span class="n">pfile</span> \
-        <span class="o">--</span><span class="n">make</span><span class="o">-</span><span class="n">pgen</span> <span class="n">vzs</span> \
+        <span class="o">--</span><span class="n">make</span><span class="o">-</span><span class="n">pgen</span> \
         <span class="o">--</span><span class="n">sort</span><span class="o">-</span><span class="nb">vars</span> \
         <span class="o">--</span><span class="n">out</span>  <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">&quot;</span>
 
@@ -1313,8 +1313,7 @@ and removes all per-block intermediate directories.</p>
     <span class="c1"># Extract ID, MIN, and MAX from the concatenated .afreq (columns 2, 7, 8)</span>
     <span class="n">awk</span> <span class="s1">&#39;NR &gt; 1 {print $2, $7, $8}&#39;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.afreq&quot;</span> <span class="o">&gt;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.recovery_params&quot;</span>
 
-    <span class="c1"># Decompress the .pvar.zst </span>
-    <span class="err">$</span><span class="p">[</span><span class="n">plink2_bin</span><span class="p">]</span> <span class="o">--</span><span class="n">zst</span><span class="o">-</span><span class="n">decompress</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.pvar.zst&quot;</span> <span class="o">&gt;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.pvar.tmp&quot;</span>
+    <span class="n">cp</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.pvar&quot;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.pvar.tmp&quot;</span>
 
     <span class="n">awk</span> <span class="s1">&#39;NR==FNR {min[$1]=$2; max[$1]=$3; next} </span>
          <span class="o">/^</span><span class="c1">#/ {print $0 &quot;\tU_MIN\tU_MAX&quot;; next} </span>
@@ -1322,7 +1321,12 @@ and removes all per-block intermediate directories.</p>
 <span class="s1">         &quot;$</span><span class="si">{final_prefix}</span><span class="s1">.recovery_params&quot; &quot;$</span><span class="si">{final_prefix}</span><span class="s1">.pvar.tmp&quot; &gt; &quot;$</span><span class="si">{final_prefix}</span><span class="s1">.pvar&quot;</span>
 
     <span class="c1"># Replace the compressed file with the updated text file</span>
-    <span class="n">rm</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.pvar.tmp&quot;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.pvar.zst&quot;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.recovery_params&quot;</span>
+    <span class="n">rm</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.pvar.tmp&quot;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.recovery_params&quot;</span>
+
+    <span class="n">awk</span> <span class="s1">&#39;{print $1,$2,$3,$4,$5,$6}&#39;</span> <span class="n">OFS</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span> \
+        <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.afreq&quot;</span> <span class="o">&gt;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.afreq.tmp&quot;</span>
+    
+    <span class="n">mv</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.afreq.tmp&quot;</span> <span class="s2">&quot;$</span><span class="si">{final_prefix}</span><span class="s2">.afreq&quot;</span>
 
 
 <span class="n">R</span><span class="p">:</span> <span class="n">expand</span> <span class="o">=</span> <span class="s2">&quot;$[ ]&quot;</span>
