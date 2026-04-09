@@ -1223,6 +1223,9 @@ parameter: phenotype_group = path()
 parameter: chromosome = []
 # Minor allele count cutoff
 parameter: MAC = 0
+# Specify genotype chromosome for trans analysis (e.g. --trans-geno-chromosome 5)
+# When set, trans step loads this genotype chrom instead of the one from input_files
+parameter: trans_geno_chromosome = &quot;&quot;
 
 # Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp
 # This parameter will be set to zero if `customized_cis_windows` is provided.
@@ -1742,7 +1745,7 @@ parameter: permutation = False
 parameter: pval = 0.0
 
 input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
-output: nominal = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_%s&quot; % input_chroms[_index] if input_chroms[_index] != 0 else &quot;&quot;}.trans_qtl{&quot;_p_%.0e&quot; % pval if pval &gt; 0.0 else &quot;&quot;}.pairs.tsv.gz&#39;
+output: nominal = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_chr%s&quot; % input_chroms[_index] if input_chroms[_index] != 0 else &quot;&quot;}{&quot;_geno_chr%s&quot; % trans_geno_chromosome if trans_geno_chromosome else &quot;&quot;}.trans_qtl{&quot;_p_%.0e&quot; % pval if pval &gt; 0.0 else &quot;&quot;}.pairs.tsv.gz&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;,container =container
@@ -1769,7 +1772,7 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
 
     ## Analyze only the regions listed
     if $[region_list.is_file()]:
-        region = pd.read_csv(&quot;$[region_list:a]&quot;)
+        region = pd.read_csv(&quot;$[region_list:a]&quot;, comment=&quot;#&quot;, header=None, sep=&quot;\t&quot;)
         phenotype_column = 1 if len(region.columns) == 1 else $[region_list_phenotype_column]
         keep_region = region.iloc[:, phenotype_column-1].astype(str).str.strip().to_list()
         phenotype_df = phenotype_df[phenotype_df.index.isin(keep_region)]
@@ -1821,7 +1824,39 @@ python: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdou
             covariates_df = covariates_df[keep_cols]
        
 
+    ## If trans_geno_chromosome is specified, load that genotype chrom instead
+    trans_geno_chrom = &quot;$[trans_geno_chromosome]&quot;
+    if trans_geno_chrom:
+        trans_geno_chrom = trans_geno_chrom.replace(&quot;chr&quot;, &quot;&quot;)
+        geno_file_str = &quot;$[genotype_file:a]&quot;
+        if geno_file_str.endswith(&quot;.bed&quot;) or geno_file_str.endswith(&quot;.pgen&quot;):
+            # Single plink file: load as-is, will filter variants by chrom after loading
+            print(f&quot;Trans mode: will filter genotype to chr{trans_geno_chrom} after loading&quot;)
+        else:
+            # Manifest file: find the plink file for the specified chromosome
+            geno_list_df = pd.read_csv(geno_file_str, sep=&quot;\t&quot;)
+            geno_list_df[&quot;#id&quot;] = [x.replace(&quot;chr&quot;,&quot;&quot;) for x in geno_list_df[&quot;#id&quot;].astype(str)]
+            geno_row = geno_list_df[geno_list_df[&quot;#id&quot;] == trans_geno_chrom]
+            if len(geno_row) == 0:
+                raise ValueError(f&quot;No genotype file found for chromosome {trans_geno_chrom}&quot;)
+            geno_plink = geno_row[&quot;#path&quot;].values[0]
+            if geno_plink.endswith(&quot;.bed&quot;):
+                geno_plink = geno_plink[:-4]
+            elif geno_plink.endswith(&quot;.pgen&quot;):
+                geno_plink = geno_plink[:-5]
+            plink_prefix_path = geno_plink
+            print(f&quot;Trans mode: overriding genotype to chr{trans_geno_chrom} from {plink_prefix_path}&quot;)
+
     genotype_df, variant_df = genotypeio.load_genotypes(plink_prefix_path, dosages = True) 
+
+    ## Filter genotype to specified chromosome if trans_geno_chrom is set
+    if trans_geno_chrom:
+        chrom_filter = variant_df[&quot;chrom&quot;].astype(str).str.replace(&quot;chr&quot;, &quot;&quot;) == trans_geno_chrom
+        if chrom_filter.sum() == 0:
+            raise ValueError(f&quot;No variants found for chromosome {trans_geno_chrom} in genotype data&quot;)
+        variant_df = variant_df[chrom_filter]
+        genotype_df = genotype_df.loc[variant_df.index]
+        print(f&quot;Trans mode: filtered to {len(variant_df)} variants on chr{trans_geno_chrom}&quot;)
     ## use custom sample list to subset the covariates data
     if $[keep_sample.is_file()]:
         sample_list = pd.read_csv(&quot;$[keep_sample:a]&quot;, comment=&quot;#&quot;, header=None, names=[&quot;sample_id&quot;], sep=&quot;\t&quot;)
