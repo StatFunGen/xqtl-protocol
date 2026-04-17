@@ -1336,6 +1336,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     
     # load genome-wide data across all regions
     gwas_meta_data &lt;- fread(&quot;${gwas_meta_data}&quot;,data.table=FALSE)
+    if(!&#39;sample_size&#39; %in% colnames(gwas_meta_data)) stop(&#39;Please add column `sample_size` information for each GWAS study in --gwas_meta_data. &#39;)
     gwas_studies &lt;- if (length(${gwas_study})!=0) ${gwas_study} else unique(gwas_meta_data$study_id)
     gwas_files &lt;- gwas_meta_data[gwas_meta_data$chrom == readr::parse_number(&quot;${chrom}&quot;) &amp; gwas_meta_data$study_id %in% gwas_studies,, drop=FALSE]
     gwas_files &lt;- setNames(gwas_files$file_path, gwas_files$study_id)
@@ -1387,7 +1388,7 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
     max_pos &lt;- max(max_pos$end[max_pos[,1]==&quot;${chrom}&quot;])
     region_of_interest &lt;- data.frame(chrom = &quot;${chrom}&quot;, start = 0, end = max_pos+1)
     snp_map &lt;- get_ref_variant_info(&quot;${ld_meta_data}&quot;, region_of_interest)
-    ld_variants &lt;- paste0(&quot;chr&quot;, snp_map$id)
+    ld_variants &lt;- ifelse(grepl(&quot;^chr&quot;, snp_map$id), snp_map$id, paste0(&quot;chr&quot;, snp_map$id))
     ld_variants &lt;- ld_variants[!duplicated(ld_variants)]
 
     regions_data &lt;- get_ctwas_meta_data(&quot;${ld_meta_data}&quot;)
@@ -1427,6 +1428,10 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
         z_snp[[study]] &lt;- harmonize_gwas(gwas_files[study], query_region=paste0(readr::parse_number(&quot;${chrom}&quot;), &quot;:0-&quot;, max_pos+1), ld_variants, c(&quot;beta&quot;, &quot;z&quot;), match_min_prop = 0)
         z_snp[[study]] &lt;- z_snp[[study]][, colnames(z_snp[[study]])[colnames(z_snp[[study]]) %in% c(&quot;chrom&quot;, &quot;pos&quot;, &quot;variant_id&quot;, &quot;A1&quot;, &quot;A2&quot;, &quot;z&quot;, &quot;beta&quot;, &quot;n_sample&quot;,&quot;n_case&quot;, &quot;n_control&quot;, &quot;effect_allele_frequency&quot;)]]
         z_snp[[study]] &lt;- z_snp[[study]][, c(&quot;chrom&quot;, &quot;pos&quot;, colnames(z_snp[[study]])[!colnames(z_snp[[study]]) %in% c(&quot;chrom&quot;, &quot;pos&quot;)])]
+        z_snp[[&#39;sample_size&#39;]][[study]]&lt;- as.integer(unique(na.omit(gwas_meta_data$sample_size[gwas_meta_data$study_id==study])))
+        if(length(z_snp[[&#39;sample_size&#39;]][[study]]!=1) | z_snp[[&#39;sample_size&#39;]][[study]] &lt;=0 ) {
+            stop(&quot;Please check sample size provided for &quot;, study, &quot; at --gwas_meta_data. &quot;)
+        }
     }
     # if weight variants are trimmed, load LD and re-compute twas z score 
     if (${twas_weight_cutoff}!=0 | ${cs_min_cor}!=0 | ${min_pip_cutoff}!=0 | ${max_num_variants}!=Inf ) {
@@ -1495,7 +1500,8 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_region_da
           saveRDS(boundary_genes, boundary_gene_file, compress=&#39;xz&#39;)   
       }
       saveRDS(weight_list[[study]], file.path(outputdir, paste0(name,&quot;.ctwas_weights.&quot;, study, &quot;.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
-      saveRDS(list(z_snp=z_snp[[study]], z_gene=z_gene[[study]]), file.path(outputdir,  paste0(name, &quot;.z_gene_snp.&quot;, study, &quot;.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
+      saveRDS(list(z_snp=z_snp[[study]], z_gene=z_gene[[study]], gwas_n=z_snp[[&#39;sample_size&#39;]][[study]]), 
+              file.path(outputdir,  paste0(name, &quot;.z_gene_snp.&quot;, study, &quot;.${chrom}.rds&quot;)), compress=&#39;xz&#39;)
       weight_list[[study]] &lt;- NULL
       z_gene[[study]] &lt;- NULL
       z_snp[[study]] &lt;- NULL
@@ -1588,6 +1594,8 @@ parameter: numThreads = 4
 parameter: multi_group = True
 parameter: merge_regions=False
 parameter: L=5
+# p_diff_thresh: p-value cutoff for identifying problematic SNPs with significant difference between observed z-scores and estimated values.
+parameter: p_diff_thresh=5e-8
 # sum of gene PIPs in the region should be larger than this threshold to get selected for finemapping
 parameter: min_nonSNP_PIP=0.5
 # additional name specification for fine-mapping result file names 
@@ -1734,8 +1742,8 @@ stderr = f&quot;{cwd:a}/{step_name.split(&#39;_&#39;)[0]}/{name}.ctwas_finemap_r
         ld_diag &lt;- diagnose_LD_mismatch_susie(region_ids = gsub(&quot;chr&quot;, &quot;&quot;, &quot;${region_name}&quot;), 
                                   z_snp = z_snp,
                                   LD_map = LD_map, 
-                                  gwas_n = nrow(z_snp),
-                                  p_diff_thresh = 5e-8,
+                                  gwas_n = z_snp_list$gwas_n, # gwas sample size 
+                                  p_diff_thresh = ${p_diff_thresh},
                                   ncore = ${numThreads},
                                   LD_format = &quot;custom&quot;,
                                   LD_loader_fun = ctwas_ld_loader,
