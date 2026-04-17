@@ -468,7 +468,6 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#at-a-glance">At a Glance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#before-you-start">Before You Start</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-sos-in-a-conda-environment">Step 1. Install SoS in a Conda Environment</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-install-the-xqtl-software-stack-with-pixi">Step 2. Install the xQTL Software Stack with pixi</a></li>
@@ -477,15 +476,15 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-run-your-first-workflow">Step 5. Run Your First Workflow</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-data">1. Reference Data</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#molecular-phenotypes">2. Molecular Phenotypes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-pre-processing">3. Data Pre-processing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#molecular-phenotype-quantification">2. Molecular Phenotype Quantification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-pre-processing">3. Data Pre-Processing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qtl-association-testing">4. QTL Association Testing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multivariate-mixture-model">5. Multivariate Mixture Model</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multiomics-regression-models">6. Multiomics Regression Models</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multiomics-regression-models-fine-mapping">6. Multiomics Regression Models (Fine-mapping)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-integration">7. GWAS Integration</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#enrichment-and-validation">8. Enrichment and Validation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-modifier-score-ems">9. xQTL Modifier Score (EMS)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-generator-shortcut">Command Generator (shortcut)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-generator">10. Command Generator</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#software-environment">Software Environment</a><ul class="nav section-nav flex-column">
@@ -508,45 +507,10 @@
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
 <p><strong>The FunGen-xQTL protocol is a reproducible, end-to-end pipeline for molecular quantitative trait loci (QTL) analysis</strong> — from raw genotypes and phenotypes through discovery, fine-mapping, and integration with GWAS.</p>
 <p>This page is a guided on-ramp. A minimal toy dataset of <strong>49 de-identified samples</strong> is used throughout the examples so you can try every pipeline end-to-end before running on real data. In about an hour you’ll install the environment, clone the repo, download the demo dataset, and run your first cis-QTL scan.</p>
-<a class="reference internal image-reference" href="../_images/complete_workflow.png"><img alt="FunGen-xQTL analysis workflow" class="align-center" src="../_images/complete_workflow.png" style="width: 90%;" />
-</a>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><strong>New to the consortium?</strong> Start with <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/README.html#how-to-use-the-resource">How to use the resource</a> on the homepage for the big-picture background, then come back here to set up.</p>
 </div>
-<hr class="docutils" />
-<section id="at-a-glance">
-<h2>At a Glance<a class="headerlink" href="#at-a-glance" title="Link to this heading">#</a></h2>
-<p>The protocol is modular. Each numbered pipeline is a self-contained <a class="reference external" href="https://vatlab.github.io/sos-docs/">SoS (Script of Scripts)</a> notebook that can run independently or be chained into the full workflow.</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Stage</p></th>
-<th class="head"><p>What it does</p></th>
-<th class="head"><p>Key pipelines</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><strong>1. Preprocess</strong></p></td>
-<td><p>Clean, normalize, and align inputs</p></td>
-<td><p>phenotype QC, genotype QC, covariate generation</p></td>
-</tr>
-<tr class="row-odd"><td><p><strong>2. Discover</strong></p></td>
-<td><p>Scan for QTLs</p></td>
-<td><p>TensorQTL (cis/trans), APEX (interactions)</p></td>
-</tr>
-<tr class="row-even"><td><p><strong>3. Fine-map</strong></p></td>
-<td><p>Identify credible causal variants</p></td>
-<td><p>SuSiE, mvSuSiE, fSuSiE</p></td>
-</tr>
-<tr class="row-odd"><td><p><strong>4. Integrate</strong></p></td>
-<td><p>Link QTLs to disease and biology</p></td>
-<td><p>coloc, cTWAS, GWAS integration, enrichment</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>Full details with links to every mini-protocol are further down in <a class="reference internal" href="#analysis"><span class="xref myst">Analysis</span></a>. For now, let’s get you set up.</p>
-</section>
 <hr class="docutils" />
 <section id="before-you-start">
 <h2>Before You Start<a class="headerlink" href="#before-you-start" title="Link to this heading">#</a></h2>
@@ -588,7 +552,7 @@
 <h2>Step 1. Install SoS in a Conda Environment<a class="headerlink" href="#step-1-install-sos-in-a-conda-environment" title="Link to this heading">#</a></h2>
 <p>The protocol’s pipelines are written as <a class="reference external" href="https://vatlab.github.io/sos-docs/">SoS (Script of Scripts)</a> workflows. First, create a dedicated conda environment and install SoS along with its language modules. Full installation reference: <a class="reference external" href="https://vatlab.github.io/sos-docs/running.html#Conda-installation">SoS Conda installation guide</a>.</p>
 <p>If you don’t have conda yet, install <a class="reference external" href="https://github.com/conda-forge/miniforge">Miniforge</a> (recommended) or <a class="reference external" href="https://www.anaconda.com/download">Anaconda</a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create and activate a new environment for SoS</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create and activate a new environment</span>
 conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>sos<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12<span class="w"> </span>-y
 conda<span class="w"> </span>activate<span class="w"> </span>sos
 
@@ -675,7 +639,6 @@ jupyter<span class="w"> </span>kernelspec<span class="w"> </span>list<span class
 pixi<span class="w"> </span>--version
 </pre></div>
 </div>
-<p>You should see a version number. If not, open a fresh terminal.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p><strong>On HPC</strong>, run the installer from a compute node with at least 50 GB of memory, not the login node. The install process can be memory-intensive and may be killed on login nodes:</p>
@@ -773,111 +736,147 @@ bsub<span class="w"> </span>-Is<span class="w"> </span>-M<span class="w"> </span
 </section>
 <section id="analysis">
 <h2>Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h2>
-<p>With the environment set up, here’s the full protocol in order. Each link is a self-contained mini-protocol; all commands in them should be executed from the command line with <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span> <span class="pre">pipeline/&lt;name&gt;.ipynb</span> <span class="pre">...</span></code>.</p>
+<p>Please visit <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/">the homepage of the protocol website</a> for the general background on this resource, in particular the <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/README.html#how-to-use-the-resource">How to use the resource</a> section. To perform a complete analysis from molecular phenotype quantification to xQTL discovery, conduct your analysis in the order listed below. Each link contains a mini-protocol for a specific task, and all commands should be executed from the command line.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p><strong>Minimum Working Example (MWE) — new users, start here.</strong></p>
-<p>Every module in the repo ships a minimal <code class="docutils literal notranslate"><span class="pre">MWE</span></code>-prefixed test dataset under <a class="reference external" href="https://www.synapse.org/#!Synapse:syn36416559/files/">Synapse <code class="docutils literal notranslate"><span class="pre">syn36416559</span></code></a>. To go end-to-end on the demo data, run these <strong>five</strong> pipelines in order and skip everything else on the first pass:</p>
+<p><strong>Minimum Working Example — new users, start here.</strong></p>
+<p>Every module ships a minimal test dataset (prefixed with <code class="docutils literal notranslate"><span class="pre">MWE</span></code>) under <a class="reference external" href="https://www.synapse.org/#!Synapse:syn36416559/files/">Synapse <code class="docutils literal notranslate"><span class="pre">syn36416559</span></code></a>. To go end-to-end on the demo data, run these five pipelines in order and skip everything else on the first pass:</p>
 <ol class="arabic simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data.html"><code class="docutils literal notranslate"><span class="pre">reference_data.ipynb</span></code></a> — pull the standardized reference files</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/bulk_expression.html"><code class="docutils literal notranslate"><span class="pre">bulk_expression.ipynb</span></code></a> — quantify gene expression (MWE default)</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype_preprocessing.html"><code class="docutils literal notranslate"><span class="pre">genotype_preprocessing.ipynb</span></code></a> → <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype_preprocessing.html"><code class="docutils literal notranslate"><span class="pre">phenotype_preprocessing.ipynb</span></code></a> → <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate_preprocessing.html"><code class="docutils literal notranslate"><span class="pre">covariate_preprocessing.ipynb</span></code></a> — QC + normalization</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_testing.html"><code class="docutils literal notranslate"><span class="pre">qtl_association_testing.ipynb</span></code></a> — run cis-QTL with TensorQTL</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_miniprotocol.html"><code class="docutils literal notranslate"><span class="pre">mnm_miniprotocol.ipynb</span></code></a> — single-trait fine-mapping + TWAS with SuSiE</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data.html"><code class="docutils literal notranslate"><span class="pre">reference_data.ipynb</span></code></a> — prepare standardized reference files</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/bulk_expression.html"><code class="docutils literal notranslate"><span class="pre">bulk_expression.ipynb</span></code></a> — quantify gene expression</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype_preprocessing.html"><code class="docutils literal notranslate"><span class="pre">genotype_preprocessing.ipynb</span></code></a> → <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype_preprocessing.html"><code class="docutils literal notranslate"><span class="pre">phenotype_preprocessing.ipynb</span></code></a> → <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate_preprocessing.html"><code class="docutils literal notranslate"><span class="pre">covariate_preprocessing.ipynb</span></code></a> — QC and normalization</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_testing.html"><code class="docutils literal notranslate"><span class="pre">qtl_association_testing.ipynb</span></code></a> — cis-QTL with TensorQTL</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_miniprotocol.html"><code class="docutils literal notranslate"><span class="pre">mnm_miniprotocol.ipynb</span></code></a> — fine-mapping + TWAS with SuSiE</p></li>
 </ol>
-<p>Once this pass completes cleanly, branch out to the additional modules below (methylation, splicing, multivariate mixture, GWAS integration, enrichment, EMS) based on what your project needs.</p>
+<p>Once this pass completes, branch out to the additional modules below based on what your project needs.</p>
 </div>
 <section id="reference-data">
 <h3>1. Reference Data<a class="headerlink" href="#reference-data" title="Link to this heading">#</a></h3>
-<p>Before quantifying phenotypes, set up the standardized reference files — genomes, gene annotations, variant annotations, LD maps, and topologically associated domains.</p>
+<p>Multiple reference data files are required before molecular phenotypes are quantified — reference genomes, gene annotations, variant annotations, linkage disequilibrium data and topologically associated domains.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data.html">Reference data setup</a> — main entry point ⭐ <em>MWE</em></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data_preparation.html">Reference data preparation</a> — detailed preparation steps</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/generalized_TADB.html">Generalized TAD-B</a> — TAD boundaries for analysis windows</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/ld_prune_reference.html">LD reference pruning</a> and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/rss_ld_sketch.html">RSS LD sketching</a> — advanced LD utilities</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data.html">Reference data</a> — overview and required input files ⭐ <em>MWE</em></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data_preparation.html">Reference data preparation</a> — downloading and standardizing reference files</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/generalized_TADB.html">Generalized TAD boundaries</a> — topologically associating domain annotations</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/ld_prune_reference.html">LD reference pruning</a> — pruned LD reference panels</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/rss_ld_sketch.html">RSS LD sketching</a> — LD matrix sketches for summary-statistics methods</p></li>
 </ul>
 </section>
-<section id="molecular-phenotypes">
-<h3>2. Molecular Phenotypes<a class="headerlink" href="#molecular-phenotypes" title="Link to this heading">#</a></h3>
-<p>We support bulk RNA-seq, DNA methylation, and alternative splicing phenotypes. Each path has its own calling, QC, and normalization steps.</p>
+<section id="molecular-phenotype-quantification">
+<h3>2. Molecular Phenotype Quantification<a class="headerlink" href="#molecular-phenotype-quantification" title="Link to this heading">#</a></h3>
+<p>Molecular phenotypic data is required for the generation of QTLs. We support bulk RNA-Seq, methylation and splicing phenotypes. Quantification of gene expression is conducted with either RNA-SeQC for gene-level counts, or RSEM for transcript-level counts. Quantification of alternative splicing events is conducted with leafcutter2 to identify alternatively excised introns. Quantification of DNA methylation is done using SeSAMe. Each phenotype then undergoes phenotype-specific quality control and normalization.</p>
 <ul class="simple">
-<li><p><strong>Bulk RNA-seq</strong> — <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/bulk_expression.html">bulk_expression mini-protocol</a> ⭐ <em>MWE</em>, with sub-modules for <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/RNA_calling.html">RNA calling</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/bulk_expression_QC.html">QC</a>, and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/bulk_expression_normalization.html">normalization</a></p></li>
-<li><p><strong>DNA methylation</strong> — <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/methylation.html">methylation mini-protocol</a> with <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/methylation_calling.html">methylation calling via SeSAMe</a></p></li>
-<li><p><strong>Alternative splicing</strong> — <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/splicing.html">splicing mini-protocol</a> with <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/splicing_calling.html">splicing calling via leafcutter2</a> and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/splicing_normalization.html">normalization</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/bulk_expression.html">Gene expression (RNA-seq)</a> — RNA-SeQC or RSEM ⭐ <em>MWE</em></p>
+<ul>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/RNA_calling.html">RNA calling</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/bulk_expression_QC.html">Expression QC</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/bulk_expression_normalization.html">Normalization</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/splicing.html">Alternative splicing</a> — leafcutter2</p>
+<ul>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/splicing_calling.html">Splicing calling</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/splicing_normalization.html">Splicing normalization</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/methylation.html">DNA methylation</a> — SeSAMe</p>
+<ul>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/methylation_calling.html">Methylation calling</a></p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="data-pre-processing">
-<h3>3. Data Pre-processing<a class="headerlink" href="#data-pre-processing" title="Link to this heading">#</a></h3>
+<h3>3. Data Pre-Processing<a class="headerlink" href="#data-pre-processing" title="Link to this heading">#</a></h3>
+<p>Preprocessing of genotype data begins with the application of variant filters using bcftools. VCF files are then converted to plink format so that kinship analyses may be performed to identify unrelated individuals. Genetic principal components are then generated for unrelated samples and genotype files are formatted for QTL analysis. Preprocessing of phenotypic data begins with annotation of features, followed by imputation of missing entries and formatting. Preprocessing of covariates merges phenotypic data with genetic principal components, then computes hidden factors to use as additional covariates.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype_preprocessing.html">Genotype preprocessing</a> ⭐ <em>MWE</em> — VCF QC, GWAS QC, PCA, GRM, plink formatting</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype_preprocessing.html">Phenotype preprocessing</a> ⭐ <em>MWE</em> — gene annotation, imputation, formatting</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate_preprocessing.html">Covariate preprocessing</a> ⭐ <em>MWE</em> — merge genetic PCs with phenotypes, compute hidden factors</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype_preprocessing.html">Genotype preprocessing</a> ⭐ <em>MWE</em></p>
+<ul>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/VCF_QC.html">VCF QC</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/GWAS_QC.html">GWAS QC</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/PCA.html">PCA</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/GRM.html">GRM</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.html">Genotype formatting</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype_preprocessing.html">Phenotype preprocessing</a> ⭐ <em>MWE</em></p>
+<ul>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/gene_annotation.html">Gene annotation</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/phenotype_imputation.html">Phenotype imputation</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/phenotype_formatting.html">Phenotype formatting</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate_preprocessing.html">Covariate preprocessing</a> ⭐ <em>MWE</em></p>
+<ul>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate/covariate_formatting.html">Covariate formatting</a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate/covariate_hidden_factor.html">Hidden factor estimation</a></p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="qtl-association-testing">
 <h3>4. QTL Association Testing<a class="headerlink" href="#qtl-association-testing" title="Link to this heading">#</a></h3>
+<p>QTL association analysis is conducted with TensorQTL. We include options for cis or trans analysis, with options to include interaction terms. Hierarchical multiple testing may then be applied to adjust p-values.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_testing.html">QTL association testing</a> ⭐ <em>MWE</em> — <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/TensorQTL/TensorQTL.html">TensorQTL</a> scans (cis, trans, interaction) and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/quantile_models/qr_and_twas.html">quantile regression QTL</a></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_postprocessing.html">Association postprocessing</a> — hierarchical multiple testing and p-value adjustment</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_testing.html">QTL association testing</a> ⭐ <em>MWE</em></p>
+<ul>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/TensorQTL/TensorQTL.html">TensorQTL</a> — cis/trans scans with optional interaction terms</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/quantile_models/qr_and_twas.html">Quantile regression QTL &amp; TWAS</a> — non-linear genotype-phenotype effects</p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_postprocessing.html">Association post-processing</a> — hierarchical multiple testing correction</p></li>
 </ul>
 </section>
 <section id="multivariate-mixture-model">
 <h3>5. Multivariate Mixture Model<a class="headerlink" href="#multivariate-mixture-model" title="Link to this heading">#</a></h3>
-<p>Learn a data-driven mixture prior across contexts/tissues for multivariate fine-mapping.</p>
+<p>For multi-context or multi-tissue analyses, we provide a multivariate mixture model framework based on MASH. This learns a data-driven mixture prior across contexts and estimates effect sizes and posterior probabilities for sharing of eQTLs across tissues.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/multivariate_mixture_vignette.html">Multivariate mixture vignette</a> — overview</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mixture_prior.html">Mixture prior with MASH</a> and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mash_fit.html">MASH fit</a> — data-driven prior estimation</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/multivariate_mixture_vignette.html">Multivariate mixture vignette</a> — overview and walkthrough</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mixture_prior.html">Mixture prior estimation (MASH)</a> — learn data-driven covariance matrices</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mash_fit.html">MASH model fitting</a> — fit the model and compute posterior summaries</p></li>
 </ul>
 </section>
-<section id="multiomics-regression-models">
-<h3>6. Multiomics Regression Models<a class="headerlink" href="#multiomics-regression-models" title="Link to this heading">#</a></h3>
-<p>Fine-mapping and multi-context regression — the core of the post-discovery analysis.</p>
+<section id="multiomics-regression-models-fine-mapping">
+<h3>6. Multiomics Regression Models (Fine-mapping)<a class="headerlink" href="#multiomics-regression-models-fine-mapping" title="Link to this heading">#</a></h3>
+<p>Our pipeline includes multiple methods for fine-mapping of QTLs. Univariate fine-mapping and TWAS with SuSiE generates TWAS weights and credible sets. Regression with summary statistics allows inclusion of GWAS summary stats in SuSiE fine-mapping. Univariate fine-mapping of functional data uses epigenomic annotations with fSuSiE.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_miniprotocol.html">Multi-omic regression mini-protocol</a> ⭐ <em>MWE</em> — start here</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/univariate_fine_mapping_twas_vignette.html">Univariate fine-mapping + TWAS with SuSiE</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_miniprotocol.html">Fine-mapping mini-protocol</a> — recommended starting point ⭐ <em>MWE</em></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/univariate_fine_mapping_twas_vignette.html">Univariate fine-mapping &amp; TWAS (SuSiE)</a></p></li>
 <li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/multivariate_multigene_fine_mapping_vignette.html">Multivariate multi-gene fine-mapping</a></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/univariate_fine_mapping_fsusie_vignette.html">Univariate fine-mapping with fSuSiE</a> — functional / epigenomic data</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/multivariate_fine_mapping_vignette.html">Multivariate fine-mapping vignette</a></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/summary_stats_finemapping_vignette.html">Summary-statistics fine-mapping</a></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/mnm_regression.html">Multi-omic multi-trait regression</a> and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/rss_analysis.html">RSS analysis</a></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_postprocessing.html">MNM postprocessing</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/summary_stats_finemapping_vignette.html">Summary statistics fine-mapping</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/univariate_fine_mapping_fsusie_vignette.html">Functional fine-mapping (fSuSiE)</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/multivariate_fine_mapping_vignette.html">Multivariate fine-mapping (mvSuSiE)</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/mnm_regression.html">Multiomics regression</a> and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/rss_analysis.html">RSS analysis</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_postprocessing.html">MNM post-processing</a></p></li>
 </ul>
 </section>
 <section id="gwas-integration">
 <h3>7. GWAS Integration<a class="headerlink" href="#gwas-integration" title="Link to this heading">#</a></h3>
-<p>Link xQTL signals to disease-associated loci.</p>
+<p>We include methods for colocalization analysis, starting with the generation of prior probabilities followed by pairwise colocalization of xQTL and GWAS fine-mapping results to identify shared causal variants. We also include TWAS and cTWAS to identify genes associated with complex traits.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/pecotmr_integration/SuSiE_enloc.html">SuSiE-enloc colocalization</a> — pairwise colocalization of xQTL and GWAS fine-mapping</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/pecotmr_integration/twas_ctwas.html">TWAS / cTWAS</a> — causal TWAS for complex traits</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/colocboost.html">Colocboost</a> — shared-variant discovery across multiple molecular traits</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/pecotmr_integration/SuSiE_enloc.html">Colocalization (SuSiE-enloc)</a> — pairwise xQTL-GWAS colocalization</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/pecotmr_integration/twas_ctwas.html">TWAS &amp; cTWAS</a> — genes associated with complex traits</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/colocboost.html">ColocBoost</a> — shared-variant discovery across molecular traits</p></li>
 </ul>
 </section>
 <section id="enrichment-and-validation">
 <h3>8. Enrichment and Validation<a class="headerlink" href="#enrichment-and-validation" title="Link to this heading">#</a></h3>
+<p>We utilize an excess of overlap method to evaluate the enrichment of significant variants within specific genomic annotations. Pathway enrichment analysis identifies biological pathways that are statistically overrepresented in a given gene set. Stratified LD Score Regression (S-LDSC) quantifies the contribution of genomic functional annotations to heritability of complex traits. By integrating GWAS summary statistics with genome annotations, S-LDSC distinguishes true polygenic signals from confounding effects.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/eoo_enrichment.html">Excess-of-overlap enrichment</a> — significance of variants in annotation sets</p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/gsea.html">Pathway enrichment (GSEA)</a></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/gregor.html">GREGOR</a> — annotation-based enrichment for significant variants</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/eoo_enrichment.html">Excess-of-overlap enrichment</a> — variant enrichment in genomic annotations</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/gsea.html">Gene set enrichment (GSEA)</a> — overrepresented biological pathways</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/gregor.html">GREGOR</a> — annotation-based enrichment for regulatory variants</p></li>
 <li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/sldsc_enrichment.html">Stratified LD Score Regression</a> — heritability partitioning by annotation</p></li>
 </ul>
 </section>
 <section id="xqtl-modifier-score-ems">
 <h3>9. xQTL Modifier Score (EMS)<a class="headerlink" href="#xqtl-modifier-score-ems" title="Link to this heading">#</a></h3>
-<p>Train and apply a per-variant score for prioritizing regulatory variants.</p>
+<p>The xQTL modifier score framework trains a per-variant model for prioritizing regulatory variants.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/xqtl_modifier_score/ems_training.html">EMS training</a></p></li>
-<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/xqtl_modifier_score/ems_prediction.html">EMS prediction</a></p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/xqtl_modifier_score/ems_training.html">EMS training</a> — fit the model using functional annotation features</p></li>
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/xqtl_modifier_score/ems_prediction.html">EMS prediction</a> — score new variants</p></li>
 </ul>
 </section>
-<section id="command-generator-shortcut">
-<h3>Command Generator (shortcut)<a class="headerlink" href="#command-generator-shortcut" title="Link to this heading">#</a></h3>
-<p>Want to skip writing SoS commands by hand? The <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/commands_generator/eQTL_analysis_commands.html">eQTL analysis command generator</a> produces the full pipeline from a single configuration file — great for reproducing a run or sharing a recipe.</p>
+<section id="command-generator">
+<h3>10. Command Generator<a class="headerlink" href="#command-generator" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/commands_generator/eQTL_analysis_commands.html">eQTL analysis command generator</a> — produce full pipeline commands from a single configuration file</p></li>
+</ul>
 </section>
 </section>
 <hr class="docutils" />
 <section id="software-environment">
 <h2>Software Environment<a class="headerlink" href="#software-environment" title="Link to this heading">#</a></h2>
-<p>Every protocol on this site runs inside the pixi environment configured in Steps 1–2. Once pixi and SoS are installed, each example “just works” — no per-pipeline container, no manual dependency wrangling.</p>
+<p>Every protocol on this site runs inside the pixi environment configured in Steps 1-2. Once pixi and SoS are installed, each example “just works” — no per-pipeline container, no manual dependency wrangling.</p>
 <p>Need something extra? Install it into the right pixi environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Python package (into the shared python env)</span>
 pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>--environment<span class="w"> </span>python<span class="w"> </span>&lt;package&gt;
@@ -907,7 +906,7 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
 </div>
 <p><strong><code class="docutils literal notranslate"><span class="pre">pixi:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></strong> — open a new terminal, or re-source your shell rc file (<code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">~/.bashrc</span></code> on Linux/HPC, <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">~/.zshrc</span></code> on macOS).</p>
 <p><strong>Installer killed on HPC</strong> — you’re on a login node. Request a compute node with ≥ 50 GB memory and re-run.</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">sos:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></strong> — Step 2 didn’t complete. Re-run the <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">global</span> <span class="pre">install</span></code> command for SoS.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">sos:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></strong> — Step 1 didn’t complete. Re-run the <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span></code> command for SoS.</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">ModuleNotFoundError</span></code> during a pipeline</strong> — install the missing package into pixi’s python env with the command above.</p>
 <p>Still stuck? <a class="reference external" href="https://github.com/StatFunGen/xqtl-protocol/issues">Open an issue</a> with the command you ran and the full error output.</p>
 </section>
@@ -986,7 +985,6 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#at-a-glance">At a Glance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#before-you-start">Before You Start</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-sos-in-a-conda-environment">Step 1. Install SoS in a Conda Environment</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-install-the-xqtl-software-stack-with-pixi">Step 2. Install the xQTL Software Stack with pixi</a></li>
@@ -995,15 +993,15 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-run-your-first-workflow">Step 5. Run Your First Workflow</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-data">1. Reference Data</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#molecular-phenotypes">2. Molecular Phenotypes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-pre-processing">3. Data Pre-processing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#molecular-phenotype-quantification">2. Molecular Phenotype Quantification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-pre-processing">3. Data Pre-Processing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qtl-association-testing">4. QTL Association Testing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multivariate-mixture-model">5. Multivariate Mixture Model</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multiomics-regression-models">6. Multiomics Regression Models</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multiomics-regression-models-fine-mapping">6. Multiomics Regression Models (Fine-mapping)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-integration">7. GWAS Integration</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#enrichment-and-validation">8. Enrichment and Validation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-modifier-score-ems">9. xQTL Modifier Score (EMS)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-generator-shortcut">Command Generator (shortcut)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-generator">10. Command Generator</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#software-environment">Software Environment</a><ul class="nav section-nav flex-column">
