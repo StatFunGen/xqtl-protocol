@@ -1331,6 +1331,7 @@ def resolve_region_names(region_name, customized_association_windows=None, regio
     
     return region_dict
 
+def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping, region_name, region_list):
     &quot;&quot;&quot;
     Extracts data from GWAS metadata files and additional GWAS data provided. 
     Uses the same region information as load_regional_data to ensure consistent
@@ -1466,6 +1467,7 @@ def resolve_region_names(region_name, customized_association_windows=None, regio
 if gwas_meta_data.is_file():
     # Load GWAS data with region keys formatted to match regional_data[&quot;meta_info&quot;]
     # Using the same region_list and region_name as load_regional_data ensures consistency
+    gwas_dict, region_dict = load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping, region_name, region_list)
     regional_rss_data = dict([(&quot;GWAS&quot;, gwas_dict), (&quot;regions&quot;, region_dict)])
     
     # The keys in regional_rss_data[&quot;regions&quot;] are now formatted as &quot;chr:start-end&quot;
@@ -1586,8 +1588,6 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
 
 
     # If we have any LD data names
-      }
-    }
     # About analysis
     xqtl_coloc = ${&quot;TRUE&quot; if xqtl_coloc else &quot;FALSE&quot;}
     joint_gwas = ${&quot;TRUE&quot; if joint_gwas else &quot;FALSE&quot;}
@@ -1678,6 +1678,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
       saveRDS(list(&quot;${_meta_info[2]}&quot; = res$joint_gwas), &quot;${_output[0]:ann}.cb_xqtl_joint_gwas.rds&quot;, compress=&#39;xz&#39;)
     }
     if (separate_gwas) {
+      if (any(is.na(names(res$separate_gwas))) || is.null(names(res$separate_gwas))) { names(res$separate_gwas) &lt;- studies[seq_along(res$separate_gwas)] }
       for (name in names(res$separate_gwas)) {
           res$separate_gwas[[name]]$region_info &lt;- region_info
           res$separate_gwas[[name]]$computing_time &lt;- computing_time
