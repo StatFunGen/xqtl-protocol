@@ -1533,13 +1533,21 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout 
     phenoFile &lt;- read_delim(${_input[1]:ar}, col_names=TRUE)
     if (${&quot;TRUE&quot; if sample_participant_lookup.is_file() else &quot;FALSE&quot;}) {
         sample_lookup &lt;- fread(${sample_participant_lookup:ar}, header=TRUE)
-        colnames(sample_lookup) &lt;- c(&quot;sample_id&quot;, &quot;genotype_id&quot;) # FIXME: This is for the old lookup table with columns c(&quot;sample_id&quot;, &quot;participant_id&quot;)
-        # rename phenotype file according to lookup file
-        colnames(phenoFile)[-c(1:4)] &lt;- phenoFile %&gt;%
-          colnames() %&gt;%
-          .[-c(1:4)] %&gt;%
-          match(sample_lookup$sample_id) %&gt;%
-          sample_lookup$genotype_id[.]
+        if (all(c(&quot;sample_id&quot;, &quot;genotype_id&quot;) %in% colnames(sample_lookup))) {
+            sample_lookup &lt;- sample_lookup[, .(sample_id, genotype_id)]
+        } else if (all(c(&quot;sample_id&quot;, &quot;participant_id&quot;) %in% colnames(sample_lookup))) {
+            sample_lookup &lt;- sample_lookup[, .(sample_id, genotype_id = participant_id)]
+        } else {
+            sample_lookup &lt;- sample_lookup[, 1:2]
+            colnames(sample_lookup) &lt;- c(&quot;sample_id&quot;, &quot;genotype_id&quot;)
+        }
+        sample_lookup &lt;- unique(sample_lookup)
+        pheno_sample_ids &lt;- colnames(phenoFile)[-c(1:4)]
+        renamed_genotype_ids &lt;- sample_lookup$genotype_id[match(pheno_sample_ids, sample_lookup$sample_id)]
+        if (any(is.na(renamed_genotype_ids))) {
+            stop(&quot;Some phenotype samples could not be mapped to genotype IDs using sample_participant_lookup&quot;)
+        }
+        colnames(phenoFile)[-c(1:4)] &lt;- renamed_genotype_ids
       output_file &lt;- paste0(${phenoFile:nnr}, &#39;.rename_sample.bed&#39;)
       # rename phenotype file
       phenoFile$start &lt;- as.integer(phenoFile$start) 
@@ -1555,9 +1563,11 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout 
         colnames(sample_lookup) &lt;- c(&quot;genotype_id&quot;, &quot;sample_id&quot;)
     }
     sample_lookup &lt;- sample_lookup %&gt;%
+    transmute(genotype_id = genotype_id, sample_id = sample_id) %&gt;%
+    distinct() %&gt;%
     filter(
         genotype_id %in% genoFam$V2,
-        sample_id %in% colnames(phenoFile)
+        genotype_id %in% colnames(phenoFile)
     )
     
     genoFam %&gt;%

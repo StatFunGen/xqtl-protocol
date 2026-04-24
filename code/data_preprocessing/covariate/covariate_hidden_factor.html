@@ -974,7 +974,7 @@ R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.std
     }
     if (MPPCNum == 0) stop(&quot;Invalid choice of methods to choose K for PCA: ${choose_k_method}&quot;)
 
-    MPPCsDF &lt;- as.data.frame(residExpPC$rotated[, 1:MPPCNum])
+    MPPCsDF &lt;- as.data.frame(residExpPC$rotated[, 1:MPPCNum, drop = FALSE])
     MPColMatrix &lt;-  matrix(c(rep(&#39;Hidden_Factor_PC&#39;, times=MPPCNum), seq(1, MPPCNum)), ncol=2, nrow=MPPCNum)
     colnames(MPPCsDF) &lt;- apply(MPColMatrix, 1, function(X){return(paste0(X[1], X[2]))})
     # Add #id Column

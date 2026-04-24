@@ -953,6 +953,13 @@ cwd = path(f&#39;{cwd:a}&#39;)
 parameter: uncompressed = False
 import os
 import pandas as pd
+def fastqc_output_base(target):
+    target = target[0] if hasattr(target, &#39;__getitem__&#39;) and not isinstance(target, (str, bytes, os.PathLike)) else target
+    name = os.path.basename(str(target))
+    for suffix in (&quot;.fastq.gz&quot;, &quot;.fq.gz&quot;, &quot;.fastq&quot;, &quot;.fq&quot;, &quot;.bam&quot;, &quot;.sam&quot;, &quot;.cram&quot;):
+        if name.endswith(suffix):
+            return name[:-len(suffix)]
+    return os.path.splitext(name)[0]
 ## FIX: The way to get sample needs to be revamped to 1. Accomodate rf/fr as column 2. accomodate single end read (Only 2 fq/samples)
 sample_inv = pd.read_csv(sample_list,sep = &quot;\t&quot;)
 
@@ -976,14 +983,21 @@ if &quot;read_length&quot; in sample_inv.columns:
     sample_inv = sample_inv.drop(&quot;read_length&quot; , axis = 1)
     
 
+## Read columns follow the documented fq1/fq2 contract; fall back only for legacy one/two-read-column sample sheets
+file_columns = [x for x in [&quot;fq1&quot;, &quot;fq2&quot;] if x in sample_inv.columns]
+if len(file_columns) == 0:
+    legacy_file_columns = [x for x in sample_inv.columns if x != &quot;ID&quot;]
+    stop_if(len(legacy_file_columns) == 0 or len(legacy_file_columns) &gt; 2,
+        msg = &quot;Sample list must contain fq1 and optional fq2 columns, or a legacy ID + one/two read-column layout after removing strand/read_length&quot;)
+    file_columns = legacy_file_columns
+
 ## Extract sample_id
-sample_inv_list = sample_inv.values.tolist()
+sample_inv_list = sample_inv[[&quot;ID&quot;] + file_columns].values.tolist()
 sample_id = [x[0] for x in sample_inv_list]
 
-    
 ## Get the file name for single/paired end data
 file_inv = [x[1:] for x in sample_inv_list]
-file_inv = [item for sublist in file_inv for item in sublist]
+file_inv = [item for sublist in file_inv for item in sublist if pd.notna(item) and str(item).strip() != &quot;&quot;]
 
 raw_reads = [f&#39;{data_dir}/{x}&#39; for x in file_inv]
 
@@ -1038,7 +1052,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[fastqc]
 input: raw_reads, group_by =  1
-output: f&#39;{cwd}/{_input:bn}_fastqc.html&#39;,f&#39;{cwd}/{_input:bn}_fastqc.zip&#39; 
+output: f&#39;{cwd}/{fastqc_output_base(_input)}_fastqc.html&#39;,f&#39;{cwd}/{fastqc_output_base(_input)}_fastqc.zip&#39; 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
     fastqc ${_input} -o ${_output[0]:d}
