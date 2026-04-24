@@ -468,14 +468,23 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-run-the-fine-mapping-and-twas-with-susie">i. Run the Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-a-region">What is a “region”?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-prepare-the-phenotype-manifest-and-association-windows-bed">Step 1 – Prepare the phenotype manifest and association-windows BED</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-run-susie-twas">Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output format</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#name-chrom-id-univariate-bvsr-rds"><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_bvsr.rds</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#name-chrom-id-univariate-twas-weights-rds"><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_twas_weights.rds</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#name-chrom-id-univariate-data-rds-save-data"><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_data.rds</span></code> (<code class="docutils literal notranslate"><span class="pre">--save-data</span></code>)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expected-results">Expected Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-pitfalls">Common pitfalls</a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -489,510 +498,223 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="univariate-fine-mapping-and-twas-with-susie">
 <h1>Univariate Fine-Mapping and TWAS with SuSiE<a class="headerlink" href="#univariate-fine-mapping-and-twas-with-susie" title="Link to this heading">#</a></h1>
-<section id="description">
-<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>Our pipeline is capable of performing univariate fine-mapping with SuSiE with TWAS weights. The TWAS portion makes use of TWAS weights, linkage disequilibrium data and GWAS summary statistics. Preset variants used are taken from the linkage disequilibrium data and used only for TWAS. TWAS cross validation tell us which of the four methods (enet, lasso, mrash, SuSiE) are best to use. By default, we limit to under 5000 variants for cross validation. In cross validation, the data is split into five parts. Training is done on four parts, and prediction is done on the fifth. Linear regression is used to assess the results and get r squared and pvalues.</p>
-<p>Fine mapping with SuSiE follows the formulat y=xb+e where x has many highly correlated variables due to linkage disequilibrium. Therefore, true effects (b), are very sparse. The SuSiE wrapper looks for five independent signals in each region to increase convergence speed. However, if five signals are found, then the the upper limit is increased. SuSiE does not allow for the inclusion of covariates. Therefore, covariates are regressed in.</p>
-</section>
-<section id="input">
-<h2>Input:<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code>: path to a plink bed file containing genotypes.<br />
-<code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>: at least one tab delimited file containing chr, start, end, ID and path for the regions. For example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#chr    start   end     ID      path
-chr12   389272  389273  ENSG00000120647 $PATH/Ast.log2cpm.bed.gz
-chr12   389319  389320  ENSG00000073614 $PATH/Ast.log2cpm.bed.gz
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code>: at least one tab delimited file containing covariates in the rows and samples in the columns.<br />
-<code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>: a tab delimited file containing chr, start, end, and gene_id. For example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr    start   end     gene_id</span>
-<span class="n">chr1</span>    <span class="mi">0</span>       <span class="mi">6480000</span> <span class="n">ENSG00000008128</span>
-<span class="n">chr1</span>    <span class="mi">0</span>       <span class="mi">6480000</span> <span class="n">ENSG00000008130</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">----phenotype-names</span></code>: the names of the phenotypes if multiple are included. There should be one for each phenotype file you include.<br />
-<code class="docutils literal notranslate"><span class="pre">--max-cv-variants</span></code>: maximum number of variants for cross-validation.<br />
-<code class="docutils literal notranslate"><span class="pre">--ld_reference_meta_file</span></code>: path to file containing chrom, start, end and path for linkage disequilibrium region information. For example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#chrom  start   end     path
-chr1    101384274       104443097       $PATH/chr1_101384274_104443097.cor.xz.bim
-chr1    104443097       106225286       $PATH/chr1_104443097_106225286.cor.xz.bim
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">--region-name</span></code>: if you only wish to analyze one region, then include the gene_id of a region found in the <code class="docutils literal notranslate"><span class="pre">customized-association-windows</span></code> file</p>
-</section>
-<section id="output">
-<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>This pipeline performs per-region univariate fine-mapping with SuSiE and computes TWAS
+weights, via the <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> workflow of <code class="docutils literal notranslate"><span class="pre">pipeline/mnm_regression.ipynb</span></code>. For each
+region the workflow fits SuSiE on the covariate-residualized phenotype × genotype
+matrix and then cross-validates five prediction models (<strong>enet</strong>, <strong>lasso</strong>,
+<strong>bayes_r</strong>, <strong>mrash</strong>, <strong>susie</strong>) to pick TWAS weights.</p>
+<p>SuSiE searches for up to five independent signals per region; if all five are found,
+the cap is raised. SuSiE itself does not accept covariates, so covariates are regressed
+out of both the phenotype and the genotype matrix beforehand.</p>
+<section id="what-is-a-region">
+<h3>What is a “region”?<a class="headerlink" href="#what-is-a-region" title="Link to this heading">#</a></h3>
+<p>A region is <strong>one row in the phenotype manifest</strong> (<code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>) plus its association
+window (from <code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>, or a symmetric <code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> around
+<code class="docutils literal notranslate"><span class="pre">start/end</span></code>). One <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> call fits one SuSiE + TWAS model per region.</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">*.univariate_bvrs.rds</span></code></p></li>
+<li><p><strong>Gene-based phenotypes.</strong> Manifest row = one gene; window = gene’s containing TAD (or
+± cis-window around the TSS).</p></li>
+<li><p><strong>Peak-based phenotypes (caQTL, mQTL).</strong> Manifest row = one peak/CpG; window = the
+peak’s containing <a class="reference internal" href="#./../reference_data/generalized_TADB.html"><span class="xref myst">extended-TAD</span></a>. A peak is
+2–5 kb and cannot serve as its own window.</p></li>
 </ul>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt; str(readRDS(&quot;/restricted/projectnb/xqtl/xqtl_protocol/toy_xqtl_protocol/output/mnm_regression/susie_twas/fine_mapping/test_susie_twas.chr11_ENSG00000073921.univariate_bvsr.rds&quot;))
-List of 1
- $ ENSG00000073921:List of 1
-  ..$ test_pheno_ENSG00000073921:List of 10
-  .. ..$ variant_names         : chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. ..$ analysis_script       : chr &quot;options(warn=1)\nlibrary(pecotmr)\nphenotype_files = c(\&quot;/restricted/projectnb/xqtl/xqtl_protocol/toy_xqtl_prot&quot;| __truncated__
-  .. ..$ other_quantities      :List of 1
-  .. .. ..$ dropped_samples:List of 3
-  .. .. .. ..$ X    : NULL
-  .. .. .. ..$ y    : NULL
-  .. .. .. ..$ covar: NULL
-  .. ..$ sumstats              :List of 5
-  .. .. ..$ betahat  : Named num [1:9970] 0.00479 0.00573 0.09947 0.02035 0.02035 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ sebetahat: Named num [1:9970] 0.0563 0.0568 0.0791 0.0551 0.0551 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ z_scores : Named num [1:9970] 0.085 0.101 1.258 0.369 0.369 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ p_values : Named num [1:9970] 0.932 0.92 0.208 0.712 0.712 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ q_values : Named num [1:9970] 0.922 0.92 0.633 0.859 0.859 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. ..$ sample_names          : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. ..$ top_loci              :&#39;data.frame&#39;:	3 obs. of  9 variables:
-  .. .. ..$ variant_id      : chr [1:3] &quot;chr11:85179671:G:A&quot; &quot;chr11:85266101:G:C&quot; &quot;chr11:85314573:G:A&quot;
-  .. .. ..$ betahat         : num [1:3] -0.743 -0.747 -0.747
-  .. .. ..$ sebetahat       : num [1:3] 0.147 0.147 0.147
-  .. .. ..$ z               : num [1:3] -5.06 -5.1 -5.1
-  .. .. ..$ maf             : num [1:3] 0.0235 0.0233 0.0233
-  .. .. ..$ pip             : num [1:3] 0.292 0.349 0.349
-  .. .. ..$ cs_coverage_0.95: num [1:3] 1 1 1
-  .. .. ..$ cs_coverage_0.7 : num [1:3] 1 1 1
-  .. .. ..$ cs_coverage_0.5 : num [1:3] 0 1 1
-  .. ..$ susie_result_trimmed  :List of 12
-  .. .. ..$ pip                   : num [1:9970] 0.000431 0.00043 0.000673 0.000431 0.000431 ...
-  .. .. ..$ sets                  :List of 5
-  .. .. .. ..$ cs                :List of 1
-  .. .. .. .. ..$ L1: int [1:3] 653 910 1069
-  .. .. .. ..$ purity            :&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. .. ..$ min.abs.corr   : num 1
-  .. .. .. .. ..$ mean.abs.corr  : num 1
-  .. .. .. .. ..$ median.abs.corr: num 1
-  .. .. .. ..$ cs_index          : int 1
-  .. .. .. ..$ coverage          : num 0.989
-  .. .. .. ..$ requested_coverage: num 0.95
-  .. .. ..$ cs_corr               : logi NA
-  .. .. ..$ sets_secondary        :List of 2
-  .. .. .. ..$ coverage_0.7:List of 2
-  .. .. .. .. ..$ sets   :List of 5
-  .. .. .. .. .. ..$ cs                :List of 1
-  .. .. .. .. .. .. ..$ L1: int [1:3] 653 910 1069
-  .. .. .. .. .. ..$ purity            :&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. .. .. .. ..$ min.abs.corr   : num 1
-  .. .. .. .. .. .. ..$ mean.abs.corr  : num 1
-  .. .. .. .. .. .. ..$ median.abs.corr: num 1
-  .. .. .. .. .. ..$ cs_index          : int 1
-  .. .. .. .. .. ..$ coverage          : num 0.989
-  .. .. .. .. .. ..$ requested_coverage: num 0.7
-  .. .. .. .. ..$ cs_corr: logi NA
-  .. .. .. ..$ coverage_0.5:List of 2
-  .. .. .. .. ..$ sets   :List of 5
-  .. .. .. .. .. ..$ cs                :List of 1
-  .. .. .. .. .. .. ..$ L1: int [1:2] 910 1069
-  .. .. .. .. .. ..$ purity            :&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. .. .. .. ..$ min.abs.corr   : num 1
-  .. .. .. .. .. .. ..$ mean.abs.corr  : num 1
-  .. .. .. .. .. .. ..$ median.abs.corr: num 1
-  .. .. .. .. .. ..$ cs_index          : int 1
-  .. .. .. .. .. ..$ coverage          : num 0.697
-  .. .. .. .. .. ..$ requested_coverage: num 0.5
-  .. .. .. .. ..$ cs_corr: logi NA
-  .. .. ..$ alpha                 : num [1:8, 1:9970] 1.52e-07 6.35e-05 6.05e-05 5.93e-05 5.99e-05 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : NULL
-  .. .. .. .. ..$ : chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ lbf_variable          : num [1:8, 1:9970] -1.697 -0.402 -0.437 -0.451 -0.444 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : NULL
-  .. .. .. .. ..$ : chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ V                     : num [1:8] 0.019 0.00097 0.0011 0.00115 0.00112 ...
-  .. .. ..$ niter                 : int 10
-  .. .. ..$ max_L                 : int 8
-  .. .. ..$ X_column_scale_factors: Named num [1:9970] 0.517 0.512 0.366 0.528 0.528 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ mu                    : num [1:8, 1:9970] 0.00227 0.00643 0.00672 0.00683 0.00677 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : NULL
-  .. .. .. .. ..$ : chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..$ mu2                   : num [1:8, 1:9970] 0.000638 0.000432 0.000455 0.000464 0.00046 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : NULL
-  .. .. .. .. ..$ : chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  .. .. ..- attr(*, &quot;class&quot;)= chr &quot;susie&quot;
-  .. ..$ total_time_elapsed    : &#39;proc_time&#39; Named num [1:5] 32.189 0.339 43.517 0 0
-  .. .. ..- attr(*, &quot;names&quot;)= chr [1:5] &quot;user.self&quot; &quot;sys.self&quot; &quot;elapsed&quot; &quot;user.child&quot; ...
-  .. ..$ region_info           :List of 3
-  .. .. ..$ region_coord:&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. ..$ chrom: chr &quot;11&quot;
-  .. .. .. ..$ start: int 85957174
-  .. .. .. ..$ end  : int 86069881
-  .. .. ..$ grange      :&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. ..$ chrom: chr &quot;11&quot;
-  .. .. .. ..$ start: int 84957175
-  .. .. .. ..$ end  : int 87360000
-  .. .. ..$ region_name : chr [1:2] &quot;ENSG00000073921&quot; &quot;ENSG00000073921&quot;
-  .. ..$ preset_variants_result:List of 9
-  .. .. ..$ susie_fitted        :List of 22
-  .. .. .. ..$ alpha                 : num [1:8, 1:6454] 0.00015 0.000148 0.000148 0.000148 0.000149 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ mu                    : num [1:8, 1:6454] 0.000134 0.000169 0.000177 0.000169 0.000152 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ mu2                   : num [1:8, 1:6454] 5.39e-05 6.83e-05 7.19e-05 6.85e-05 6.13e-05 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ Xr                    : num [1:150] 0.000696 -0.000919 -0.002423 -0.00093 0.000305 ...
-  .. .. .. ..$ KL                    : num [1:8] 0.0345 0.0445 0.047 0.0446 0.0395 ...
-  .. .. .. ..$ lbf                   : num [1:8] 0.000194 0.000317 0.000353 0.000319 0.000253 ...
-  .. .. .. ..$ lbf_variable          : num [1:8, 1:6454] -0.0334 -0.0427 -0.045 -0.0428 -0.0381 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ sigma2                : num 0.124
-  .. .. .. ..$ V                     : num [1:8] 5.76e-05 7.44e-05 7.87e-05 7.46e-05 6.61e-05 ...
-  .. .. .. ..$ pi                    : num [1:6454] 0.000155 0.000155 0.000155 0.000155 0.000155 ...
-  .. .. .. ..$ null_index            : num 0
-  .. .. .. ..$ correct_zR_discrepancy:List of 5
-  .. .. .. .. ..$ to_correct          : logi FALSE
-  .. .. .. .. ..$ outlier_index       : logi(0) 
-  .. .. .. .. ..$ is_init             : logi TRUE
-  .. .. .. .. ..$ outlier_stabilize   : num 5
-  .. .. .. .. ..$ outlier_stable_count: num 0
-  .. .. .. ..$ force_iterate         : logi FALSE
-  .. .. .. ..$ converged             : logi TRUE
-  .. .. .. ..$ elbo                  : num [1:3] -56.5 -56.5 -56.5
-  .. .. .. ..$ niter                 : int 3
-  .. .. .. ..$ intercept             : num -0.00273
-  .. .. .. ..$ fitted                : Named num [1:150] 0.000696 -0.000919 -0.002423 -0.00093 0.000305 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. ..$ sets                  :List of 3
-  .. .. .. .. ..$ cs                : NULL
-  .. .. .. .. ..$ coverage          : NULL
-  .. .. .. .. ..$ requested_coverage: num 0.95
-  .. .. .. ..$ pip                   : Named num [1:6454] 0.0012 0.00124 0.0012 0.0012 0.0012 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ X_column_scale_factors: Named num [1:6454] 0.664 0.438 0.677 0.702 0.677 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ time_elapsed          : &#39;proc_time&#39; Named num [1:5] 0.851 0.008 0.861 0 0
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:5] &quot;user.self&quot; &quot;sys.self&quot; &quot;elapsed&quot; &quot;user.child&quot; ...
-  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;susie&quot;
-  .. .. ..$ variant_names       : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. ..$ analysis_script     : chr &quot;options(warn=1)\nlibrary(pecotmr)\nphenotype_files = c(\&quot;/restricted/projectnb/xqtl/xqtl_protocol/toy_xqtl_prot&quot;| __truncated__
-  .. .. ..$ other_quantities    :List of 1
-  .. .. .. ..$ dropped_samples:List of 3
-  .. .. .. .. ..$ X    : NULL
-  .. .. .. .. ..$ y    : NULL
-  .. .. .. .. ..$ covar: NULL
-  .. .. ..$ sumstats            :List of 5
-  .. .. .. ..$ betahat  : Named num [1:6454] 0.0029 0.06935 0.01237 -0.00911 0.01237 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ sebetahat: Named num [1:6454] 0.0438 0.0661 0.0429 0.0414 0.0429 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ z_scores : Named num [1:6454] 0.0662 1.0485 0.288 -0.22 0.288 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ p_values : Named num [1:6454] 0.947 0.294 0.773 0.826 0.773 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ q_values : Named num [1:6454] 0.998 0.892 0.991 0.998 0.991 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. ..$ sample_names        : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. ..$ susie_result_trimmed:List of 12
-  .. .. .. ..$ pip                   : num [1:6454] 0.0012 0.00124 0.0012 0.0012 0.0012 ...
-  .. .. .. ..$ sets                  :List of 3
-  .. .. .. .. ..$ cs                : NULL
-  .. .. .. .. ..$ coverage          : NULL
-  .. .. .. .. ..$ requested_coverage: num 0.95
-  .. .. .. ..$ cs_corr               : logi NA
-  .. .. .. ..$ sets_secondary        :List of 2
-  .. .. .. .. ..$ coverage_0.7:List of 2
-  .. .. .. .. .. ..$ sets   :List of 3
-  .. .. .. .. .. .. ..$ cs                : NULL
-  .. .. .. .. .. .. ..$ coverage          : NULL
-  .. .. .. .. .. .. ..$ requested_coverage: num 0.7
-  .. .. .. .. .. ..$ cs_corr: logi NA
-  .. .. .. .. ..$ coverage_0.5:List of 2
-  .. .. .. .. .. ..$ sets   :List of 3
-  .. .. .. .. .. .. ..$ cs                : NULL
-  .. .. .. .. .. .. ..$ coverage          : NULL
-  .. .. .. .. .. .. ..$ requested_coverage: num 0.5
-  .. .. .. .. .. ..$ cs_corr: logi NA
-  .. .. .. ..$ alpha                 : num [1:8, 1:6454] 0.00015 0.000148 0.000148 0.000148 0.000149 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ lbf_variable          : num [1:8, 1:6454] -0.0334 -0.0427 -0.045 -0.0428 -0.0381 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ V                     : num [1:8] 5.76e-05 7.44e-05 7.87e-05 7.46e-05 6.61e-05 ...
-  .. .. .. ..$ niter                 : int 3
-  .. .. .. ..$ max_L                 : int 8
-  .. .. .. ..$ X_column_scale_factors: Named num [1:6454] 0.664 0.438 0.677 0.702 0.677 ...
-  .. .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ mu                    : num [1:8, 1:6454] 0.000134 0.000169 0.000177 0.000169 0.000152 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..$ mu2                   : num [1:8, 1:6454] 5.39e-05 6.83e-05 7.19e-05 6.85e-05 6.13e-05 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;susie&quot;
-  .. .. ..$ total_time_elapsed  : &#39;proc_time&#39; Named num [1:5] 10.991 0.012 11.046 0 0
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:5] &quot;user.self&quot; &quot;sys.self&quot; &quot;elapsed&quot; &quot;user.child&quot; ...
-  .. .. ..$ region_info         :List of 3
-  .. .. .. ..$ region_coord:&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. .. ..$ chrom: chr &quot;11&quot;
-  .. .. .. .. ..$ start: int 85957174
-  .. .. .. .. ..$ end  : int 86069881
-  .. .. .. ..$ grange      :&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. .. ..$ chrom: chr &quot;11&quot;
-  .. .. .. .. ..$ start: int 84957175
-  .. .. .. .. ..$ end  : int 87360000
-  .. .. .. ..$ region_name : chr [1:2] &quot;ENSG00000073921&quot; &quot;ENSG00000073921&quot;
-</pre></div>
-</div>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">*.univariate_data.rds</span></code></p></li>
-</ul>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt; str(readRDS(&quot;output/mnm_regression/susie_twas/data/test_susie_twas.chr11_ENSG00000073921.univariate_data.rds&quot;))
-List of 1
- $ ENSG00000073921:List of 10
-  ..$ residual_Y       :List of 1
-  .. ..$ test_pheno: num [1:150, 1] 0.1241 0.2981 -0.6054 0.0435 0.0388 ...
-  .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  ..$ residual_X       :List of 1
-  .. ..$ : num [1:150, 1:9970] -0.2386 -0.8293 0.4173 0.7408 -0.0231 ...
-  .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. ..$ : chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  ..$ residual_Y_scalar: num 1
-  ..$ residual_X_scalar: num 1
-  ..$ dropped_sample   :List of 3
-  .. ..$ X    :List of 1
-  .. .. ..$ : chr(0) 
-  .. ..$ Y    :List of 1
-  .. .. ..$ : chr &quot;strand&quot;
-  .. ..$ covar:List of 1
-  .. .. ..$ : chr(0) 
-  ..$ maf              :List of 1
-  .. ..$ : Named num [1:9970] 0.33 0.327 0.103 0.343 0.343 ...
-  .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  ..$ X                : num [1:150, 1:9970] 0 0 1 1 1 0 0 1 1 1 ...
-  .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. ..$ : chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-  ..$ chrom            : chr &quot;chr11&quot;
-  ..$ grange           : chr [1:2] &quot;85957174&quot; &quot;86069881&quot;
-  ..$ X_variance       :List of 1
-  .. ..$ : Named num [1:9970] 0.267 0.262 0.134 0.279 0.279 ...
-  .. .. ..- attr(*, &quot;names&quot;)= chr [1:9970] &quot;chr11:84957209:G:C&quot; &quot;chr11:84957879:A:G&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; ...
-</pre></div>
-</div>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">*.univariate_twas_weights.rds</span></code></p></li>
-</ul>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt; str(readRDS(&quot;/restricted/projectnb/xqtl/xqtl_protocol/toy_xqtl_protocol/output/mnm_regression/susie_twas/twas_weights/test_susie_twas.chr11_ENSG00000073921.univariate_twas_weights.rds&quot;))
-List of 1
- $ ENSG00000073921:List of 1
-  ..$ test_pheno_ENSG00000073921:List of 7
-  .. ..$ susie_weights_intermediate:List of 4
-  .. .. ..$ mu                    : num [1:8, 1:6454] 0.000134 0.000169 0.000177 0.000169 0.000152 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : NULL
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. ..$ lbf_variable          : num [1:8, 1:6454] -0.0334 -0.0427 -0.045 -0.0428 -0.0381 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : NULL
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. ..$ X_column_scale_factors: Named num [1:6454] 0.664 0.438 0.677 0.702 0.677 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. ..$ pip                   : Named num [1:6454] 0.0012 0.00124 0.0012 0.0012 0.0012 ...
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. ..$ twas_weights              :List of 6
-  .. .. ..$ enet_weights   : num [1:6454, 1] 0 0 0 0 0 0 0 0 0 0 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ lasso_weights  : num [1:6454, 1] 0 0 0 0 0 0 0 0 0 0 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ bayes_r_weights: num [1:6454, 1] 4.31e-05 4.73e-04 2.44e-04 -8.48e-05 2.30e-04 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ bayes_l_weights: num [1:6454, 1] 2.04e-05 3.66e-04 1.03e-04 -1.54e-04 3.47e-04 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ mrash_weights  : num [1:6454, 1] 6.01e-05 2.05e-04 7.02e-05 -4.71e-05 7.02e-05 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ susie_weights  : num [1:6454, 1] 2.55e-07 5.89e-06 1.00e-06 -7.53e-07 1.00e-06 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. ..$ twas_predictions          :List of 6
-  .. .. ..$ enet_predicted   : num [1:150, 1] 0 0 0 0 0 0 0 0 0 0 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ lasso_predicted  : num [1:150, 1] 0 0 0 0 0 0 0 0 0 0 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ bayes_r_predicted: num [1:150, 1] 0.1971 0.1333 -0.0176 0.1234 0.2194 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ bayes_l_predicted: num [1:150, 1] 0.20151 0.13565 -0.00533 0.13823 0.23318 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ mrash_predicted  : num [1:150, 1] 0.08183 0.05465 -0.00379 0.05346 0.09283 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ susie_predicted  : num [1:150, 1] 0.003423 0.001808 0.000304 0.001797 0.003032 ...
-  .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. ..$ twas_cv_result            :List of 4
-  .. .. ..$ sample_partition:&#39;data.frame&#39;:	150 obs. of  2 variables:
-  .. .. .. ..$ Sample: chr [1:150] &quot;sample108&quot; &quot;sample52&quot; &quot;sample103&quot; &quot;sample29&quot; ...
-  .. .. .. ..$ Fold  : int [1:150] 1 1 1 1 1 1 1 1 1 1 ...
-  .. .. ..$ prediction      :List of 4
-  .. .. .. ..$ bayes_r_predicted: num [1:150, 1] 0.3606 -0.0263 0.0687 0.0989 0.1158 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. .. ..$ bayes_l_predicted: num [1:150, 1] 0.2274 -0.0389 0.0379 0.0513 0.0706 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. .. ..$ mrash_predicted  : num [1:150, 1] 0.0692 -0.0021 0.0183 0.0231 0.0353 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. .. ..$ susie_predicted  : num [1:150, 1] 0.05794 -0.00105 -0.01131 0 0 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr [1:150] &quot;sample0&quot; &quot;sample1&quot; &quot;sample10&quot; &quot;sample100&quot; ...
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. ..$ performance     :List of 4
-  .. .. .. ..$ bayes_r_performance: num [1, 1:6] 0.022483 0.000505 -0.006248 0.784784 0.40514 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. .. .. .. ..$ : chr [1:6] &quot;corr&quot; &quot;rsq&quot; &quot;adj_rsq&quot; &quot;pval&quot; ...
-  .. .. .. ..$ bayes_l_performance: num [1, 1:6] -8.04e-03 6.47e-05 -6.69e-03 9.22e-01 3.91e-01 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. .. .. .. ..$ : chr [1:6] &quot;corr&quot; &quot;rsq&quot; &quot;adj_rsq&quot; &quot;pval&quot; ...
-  .. .. .. ..$ mrash_performance  : num [1, 1:6] 0.05206 0.00271 -0.00403 0.52697 0.35394 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. .. .. .. ..$ : chr [1:6] &quot;corr&quot; &quot;rsq&quot; &quot;adj_rsq&quot; &quot;pval&quot; ...
-  .. .. .. ..$ susie_performance  : num [1, 1:6] -0.03878 0.0015 -0.00524 0.6375 0.35463 ...
-  .. .. .. .. ..- attr(*, &quot;dimnames&quot;)=List of 2
-  .. .. .. .. .. ..$ : chr &quot;ENSG00000073921&quot;
-  .. .. .. .. .. ..$ : chr [1:6] &quot;corr&quot; &quot;rsq&quot; &quot;adj_rsq&quot; &quot;pval&quot; ...
-  .. .. ..$ time_elapsed    : &#39;proc_time&#39; Named num [1:5] 188.023 0.581 189.175 0 0
-  .. .. .. ..- attr(*, &quot;names&quot;)= chr [1:5] &quot;user.self&quot; &quot;sys.self&quot; &quot;elapsed&quot; &quot;user.child&quot; ...
-  .. ..$ total_time_elapsed        : &#39;proc_time&#39; Named num [1:5] 242.761 0.972 249.471 0.013 0.024
-  .. .. ..- attr(*, &quot;names&quot;)= chr [1:5] &quot;user.self&quot; &quot;sys.self&quot; &quot;elapsed&quot; &quot;user.child&quot; ...
-  .. ..$ variant_names             : chr [1:6454] &quot;chr11:84957209:G:C&quot; &quot;chr11:84958236:C:A&quot; &quot;chr11:84958954:T:C&quot; &quot;chr11:84959602:T:C&quot; ...
-  .. ..$ region_info               :List of 3
-  .. .. ..$ region_coord:&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. ..$ chrom: chr &quot;11&quot;
-  .. .. .. ..$ start: int 85957174
-  .. .. .. ..$ end  : int 86069881
-  .. .. ..$ grange      :&#39;data.frame&#39;:	1 obs. of  3 variables:
-  .. .. .. ..$ chrom: chr &quot;11&quot;
-  .. .. .. ..$ start: int 84957175
-  .. .. .. ..$ end  : int 87360000
-  .. .. ..$ region_name : chr [1:2] &quot;ENSG00000073921&quot; &quot;ENSG00000073921&quot;
-</pre></div>
-</div>
 </section>
-<section id="minimal-working-example-steps">
-<h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
-<section id="i-run-the-fine-mapping-and-twas-with-susie">
-<h3>i. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/mnm_regression.html#i-susie-with-twas-weights-from-multiple-methods">Run the Fine-Mapping and TWAS with SuSiE</a><a class="headerlink" href="#i-run-the-fine-mapping-and-twas-with-susie" title="Link to this heading">#</a></h3>
+<section id="step-1-prepare-the-phenotype-manifest-and-association-windows-bed">
+<h3>Step 1 – Prepare the phenotype manifest and association-windows BED<a class="headerlink" href="#step-1-prepare-the-phenotype-manifest-and-association-windows-bed" title="Link to this heading">#</a></h3>
+<p>The pipeline expects two derived files per experiment:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pheno_manifest.tsv</span></code> — 5 columns (<code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span> <span class="pre">path</span></code>), one row per region.
+<code class="docutils literal notranslate"><span class="pre">path</span></code> points to a bgzipped+tabixed phenotype BED restricted to that region.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">association_windows.bed</span></code> — 4 columns (<code class="docutils literal notranslate"><span class="pre">chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span></code>), one row per region.
+<code class="docutils literal notranslate"><span class="pre">start/end</span></code> define the cis search window; <code class="docutils literal notranslate"><span class="pre">ID</span></code> must match a row in the manifest.</p></li>
+</ul>
+<p>For gene-based phenotypes these files are produced by the standard phenotype
+preprocessing + <a class="reference internal" href="#./../reference_data/generalized_TADB.html"><span class="xref myst">TADB generation</span></a> steps.</p>
+<p>For peak-based phenotypes (caQTL, mQTL) you can derive both from the raw peak BED with
+the helper below; it renames the peak-ID header, splits the multi-sample BED into one
+bgz+tbi per peak, writes the manifest, and annotates each peak with its smallest
+containing extended-TAD.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">mnm_regression</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">susie_twas</span> \
-    <span class="o">--</span><span class="n">name</span> <span class="n">test_susie_twas</span> \
-    <span class="o">--</span><span class="n">genoFile</span> <span class="n">output</span><span class="o">/</span><span class="n">genotype_by_chrom</span><span class="o">/</span><span class="n">wgs</span><span class="o">.</span><span class="n">merged</span><span class="o">.</span><span class="n">plink_qc</span><span class="mf">.1</span><span class="o">.</span><span class="n">bed</span> \
-    <span class="o">--</span><span class="n">phenoFile</span> <span class="n">output</span><span class="o">/</span><span class="n">phenotype</span><span class="o">/</span><span class="n">phenotype_by_chrom_for_cis</span><span class="o">/</span><span class="n">bulk_rnaseq</span><span class="o">.</span><span class="n">phenotype_by_chrom_files</span><span class="o">.</span><span class="n">region_list</span><span class="o">.</span><span class="n">txt</span> \
-    <span class="o">--</span><span class="n">covFile</span> <span class="n">output</span><span class="o">/</span><span class="n">covariate</span><span class="o">/</span><span class="n">bulk_rnaseq_tmp_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">outlier_removed</span><span class="o">.</span><span class="n">tmm</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">covariates</span><span class="o">.</span><span class="n">wgs</span><span class="o">.</span><span class="n">merged</span><span class="o">.</span><span class="n">plink_qc</span><span class="o">.</span><span class="n">plink_qc</span><span class="o">.</span><span class="n">prune</span><span class="o">.</span><span class="n">pca</span><span class="o">.</span><span class="n">Marchenko_PC</span><span class="o">.</span><span class="n">gz</span> \
-    <span class="o">--</span><span class="n">customized</span><span class="o">-</span><span class="n">association</span><span class="o">-</span><span class="n">windows</span> <span class="n">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">TADB_enhanced_cis</span><span class="o">.</span><span class="n">bed</span> \
-    <span class="o">--</span><span class="n">phenotype</span><span class="o">-</span><span class="n">names</span> <span class="n">test_pheno</span> \
-    <span class="o">--</span><span class="nb">max</span><span class="o">-</span><span class="n">cv</span><span class="o">-</span><span class="n">variants</span> <span class="mi">5000</span> <span class="o">--</span><span class="n">ld_reference_meta_file</span> <span class="n">data</span><span class="o">/</span><span class="n">ld_meta_file_with_bim</span><span class="o">.</span><span class="n">tsv</span> \
-    <span class="o">--</span><span class="n">region</span><span class="o">-</span><span class="n">name</span> <span class="n">ENSG00000049246</span> <span class="n">ENSG00000054116</span> <span class="n">ENSG00000116678</span> \
-    <span class="o">--</span><span class="n">save</span><span class="o">-</span><span class="n">data</span> \
-    <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">mnm_regression</span><span class="o">/</span><span class="n">susie_twas</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>code/misc/preprocess/prepare_peak_inputs.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;raw_peaks.bed.gz&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;extended_TADB.bed&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;out_dir&gt;
+
+<span class="c1"># Produces:</span>
+<span class="c1">#   &lt;out_dir&gt;/pheno_manifest.tsv</span>
+<span class="c1">#   &lt;out_dir&gt;/association_windows.bed</span>
+<span class="c1">#   &lt;out_dir&gt;/peaks_split/&lt;ID&gt;.bed.gz{,.tbi}</span>
 </pre></div>
 </div>
 </div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">get_analysis_regions</span><span class="p">:</span> 
-<span class="n">Loading</span> <span class="n">customized</span> <span class="n">association</span> <span class="n">analysis</span> <span class="n">window</span> <span class="kn">from</span><span class="w"> </span><span class="nn">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">TADB_enhanced_cis</span><span class="o">.</span><span class="n">bed</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">get_analysis_regions</span> <span class="n">output</span><span class="p">:</span>   <span class="n">regional_data</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">susie_twas</span><span class="p">:</span> 
-<span class="n">INFO</span><span class="p">:</span> <span class="n">susie_twas</span> <span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">susie_twas</span> <span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">susie_twas</span> <span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">susie_twas</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">mnm_regression</span><span class="o">/</span><span class="n">susie_twas</span><span class="o">/</span><span class="n">fine_mapping</span><span class="o">/</span><span class="n">test_susie_twas</span><span class="o">.</span><span class="n">chr1_ENSG00000049246</span><span class="o">.</span><span class="n">univariate_bvsr</span><span class="o">.</span><span class="n">rds</span> <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">mnm_regression</span><span class="o">/</span><span class="n">susie_twas</span><span class="o">/</span><span class="n">twas_weights</span><span class="o">/</span><span class="n">test_susie_twas</span><span class="o">.</span><span class="n">chr1_ENSG00000049246</span><span class="o">.</span><span class="n">univariate_twas_weights</span><span class="o">.</span><span class="n">rds</span><span class="o">...</span> <span class="p">(</span><span class="mi">6</span> <span class="n">items</span> <span class="ow">in</span> <span class="mi">3</span> <span class="n">groups</span><span class="p">)</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">susie_twas</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">w487c342397d09ccb</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">2</span> <span class="n">completed</span> <span class="n">steps</span> <span class="ow">and</span> <span class="mi">4</span> <span class="n">completed</span> <span class="n">substeps</span><span class="o">.</span>
+</section>
+<section id="step-2-run-susie-twas">
+<h3>Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code><a class="headerlink" href="#step-2-run-susie-twas" title="Link to this heading">#</a></h3>
+<p><strong>Gene-based example</strong> (3 genes, default bulk-RNA-seq preprocessing):</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w">        </span>test_susie_twas<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w">         </span>output/mnm_regression/susie_twas<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genoFile<span class="w">    </span>output/genotype_by_chrom/wgs.merged.plink_qc.1.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenoFile<span class="w">   </span>output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--covFile<span class="w">     </span>output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--customized-association-windows<span class="w"> </span>reference_data/TAD/TADB_enhanced_cis.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenotype-names<span class="w"> </span>test_pheno<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--max-cv-variants<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ld_reference_meta_file<span class="w"> </span>data/ld_meta_file_with_bim.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--region-name<span class="w"> </span>ENSG00000049246<span class="w"> </span>ENSG00000054116<span class="w"> </span>ENSG00000116678<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save-data
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Peak-based example</strong> (caQTL; 10 chr22 peaks, 1,287 samples):</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w">        </span>example_10peaks_twas<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w">         </span>output/susie_twas_out<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genoFile<span class="w">    </span>input/example.chr22.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenoFile<span class="w">   </span>output/inputs_ready/pheno_manifest.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--covFile<span class="w">     </span>input/example_covariates.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--customized-association-windows<span class="w"> </span>output/inputs_ready/association_windows.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenotype-names<span class="w"> </span>caQTL<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--max-cv-variants<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save-data
+</pre></div>
+</div>
+</div>
+</div>
+<p>Expected log (both cases):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>INFO: Running get_analysis_regions:
+Loading customized association analysis window from &lt;windows_bed&gt;
+INFO: get_analysis_regions is completed.
+INFO: get_analysis_regions output:   regional_data
+INFO: Running susie_twas:
+INFO: susie_twas (index=0) is completed.
+INFO: susie_twas (index=1) is completed.
+...
+INFO: susie_twas output:   &lt;cwd&gt;/fine_mapping/&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_bvsr.rds
+                           &lt;cwd&gt;/twas_weights/&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_twas_weights.rds
+                           ...  (2 × N_regions items)
+INFO: Workflow susie_twas is executed successfully.
 </pre></div>
 </div>
 </section>
 </section>
-<section id="anticipated-results">
-<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
-<p>Univariate finemapping will produce a file containing results for the top hits and a file containing twas weights produced by susie.</p>
-<p><code class="docutils literal notranslate"><span class="pre">ROSMAP_mega_eQTL.chr11_ENSG00000073921.univariate_bvrs.rds</span></code>:</p>
+<section id="command-interface">
+<h2>Command Interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span>-h
+</pre></div>
+</div>
+</div>
+</div>
+<p>Flags consumed by <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code>:</p>
 <ul class="simple">
-<li><p>For each gene of interest and phenotype, this file contains:</p>
-<ol class="arabic simple">
-<li><p>susie_fitted</p></li>
-<li><p>variant_names</p></li>
-<li><p>analysis_script</p></li>
-<li><p>other quantities - information on dropped samples, if any</p></li>
-<li><p>summary statistics (beta and se) for each variant</p></li>
-<li><p>sample names</p></li>
-<li><p>summary statistics for top loci</p></li>
-<li><p>susie results trimmed - includes pip, sets, cs_corr, sets_secondary, alpha, lbf_variable, V, niter, X_column_scale_factors, mu, mu2</p></li>
-<li><p>total time elapsed</p></li>
-<li><p>region info</p></li>
-<li><p>preset_variants_results</p></li>
-</ol>
-</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> — path to a PLINK1 <code class="docutils literal notranslate"><span class="pre">.bed</span></code> file (pass the <code class="docutils literal notranslate"><span class="pre">.bed</span></code> path, not the prefix).
+FID/IID in the <code class="docutils literal notranslate"><span class="pre">.fam</span></code> must match the phenotype/covariate sample IDs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> — 5-column <code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span> <span class="pre">path</span></code> manifest. One row per region; <code class="docutils literal notranslate"><span class="pre">path</span></code>
+points at a bgzipped+tabixed phenotype BED restricted to that region. Pass multiple
+files for multi-condition analyses.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> — tab-delimited, literal <code class="docutils literal notranslate"><span class="pre">ID</span></code> header in column 1; covariate names in rows,
+sample IDs across the header row.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> — 4-column <code class="docutils literal notranslate"><span class="pre">chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span></code> BED. Required unless
+<code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> is non-negative.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> — symmetric cis radius (bp) around each region’s <code class="docutils literal notranslate"><span class="pre">start/end</span></code>. Default
+<code class="docutils literal notranslate"><span class="pre">-1</span></code> (forces the customized-windows path).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--phenotype-names</span></code> — condition name(s), one per <code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--max-cv-variants</span></code> — cap on variants used in cross-validation (default 5,000).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--ld_reference_meta_file</span></code> — summary-stats / RSS mode only; omit for individual-level.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--region-name</span></code> — restrict to one or more region IDs for sanity checks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--save-data</span></code> — also emit <code class="docutils literal notranslate"><span class="pre">*.univariate_data.rds</span></code> with the residualized X/Y matrices.</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">ROSMAP_mega_eQTL.chr11_ENSG00000073921.univariate_data.rds</span></code> (from the –save-data argument):</p>
+</section>
+<section id="output-format">
+<h2>Output format<a class="headerlink" href="#output-format" title="Link to this heading">#</a></h2>
+<p>Per region the workflow writes two RDS files (three with <code class="docutils literal notranslate"><span class="pre">--save-data</span></code>), keyed by
+region <code class="docutils literal notranslate"><span class="pre">ID</span></code> and phenotype condition.</p>
+<section id="name-chrom-id-univariate-bvsr-rds">
+<h3><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_bvsr.rds</span></code><a class="headerlink" href="#name-chrom-id-univariate-bvsr-rds" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>For each gene of interest, contains residuals for each sample and phenotype</p></li>
-<li><p>see <a class="reference external" href="https://github.com/statfungen/pecotmr/blob/68d87ca1d0a059022bf4e55339621cbddc8993cc/R/file_utils.R#L461">pecotmr code</a> for description at <code class="docutils literal notranslate"><span class="pre">load_regional_association_data</span></code> function</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">variant_names</span></code> — variant IDs kept after QC.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">analysis_script</span></code> — the R script that was <code class="docutils literal notranslate"><span class="pre">source()</span></code>d (provenance).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">other_quantities$dropped_samples</span></code> — per-matrix sample drops.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sumstats</span></code> — <code class="docutils literal notranslate"><span class="pre">betahat</span></code>, <code class="docutils literal notranslate"><span class="pre">sebetahat</span></code>, <code class="docutils literal notranslate"><span class="pre">z_scores</span></code>, <code class="docutils literal notranslate"><span class="pre">p_values</span></code>, <code class="docutils literal notranslate"><span class="pre">q_values</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sample_names</span></code> — samples actually used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">top_loci</span></code> — data frame: <code class="docutils literal notranslate"><span class="pre">variant_id,</span> <span class="pre">betahat,</span> <span class="pre">sebetahat,</span> <span class="pre">z,</span> <span class="pre">maf,</span> <span class="pre">pip,</span> <span class="pre">cs_coverage_0.95</span> <span class="pre">/</span> <span class="pre">0.7</span> <span class="pre">/</span> <span class="pre">0.5</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">susie_result_trimmed</span></code> — trimmed SuSiE fit: <code class="docutils literal notranslate"><span class="pre">pip,</span> <span class="pre">sets,</span> <span class="pre">cs_corr,</span> <span class="pre">sets_secondary,</span> <span class="pre">alpha,</span> <span class="pre">lbf_variable,</span> <span class="pre">V,</span> <span class="pre">niter,</span> <span class="pre">X_column_scale_factors,</span> <span class="pre">mu,</span> <span class="pre">mu2</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">total_time_elapsed</span></code> — <code class="docutils literal notranslate"><span class="pre">proc_time</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">region_info</span></code> — <code class="docutils literal notranslate"><span class="pre">region_coord</span></code> (chrom/start/end), <code class="docutils literal notranslate"><span class="pre">grange</span></code> (expanded window), <code class="docutils literal notranslate"><span class="pre">region_name</span></code> (the manifest <code class="docutils literal notranslate"><span class="pre">ID</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">preset_variants_result</span></code> — SuSiE fit on the preset-variant subset used for TWAS.</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">ROSMAP_mega_eQTL.chr11_ENSG00000073921.univariate_twas_weights.rds</span></code>:</p>
+</section>
+<section id="name-chrom-id-univariate-twas-weights-rds">
+<h3><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_twas_weights.rds</span></code><a class="headerlink" href="#name-chrom-id-univariate-twas-weights-rds" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>For each gene of interest and phenotype, this file contains:</p>
-<ol class="arabic simple">
-<li><p>twas_weights - weights for enet, lasso, bayes r, mrash and susie methods</p></li>
-<li><p>twas_predictions - twas predictions for enet, lasso, bayes r, mrash and susie methods</p></li>
-<li><p>twas_cv_result</p></li>
-<li><p>total_time_elapsed</p></li>
-<li><p>variant_names</p></li>
-<li><p>region_info</p></li>
-</ol>
-</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">susie_weights_intermediate</span></code> — <code class="docutils literal notranslate"><span class="pre">mu,</span> <span class="pre">lbf_variable,</span> <span class="pre">X_column_scale_factors,</span> <span class="pre">pip</span></code> on the preset variant set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">twas_weights</span></code> — per-method weights: <code class="docutils literal notranslate"><span class="pre">enet_weights,</span> <span class="pre">lasso_weights,</span> <span class="pre">bayes_r_weights,</span> <span class="pre">bayes_l_weights,</span> <span class="pre">mrash_weights,</span> <span class="pre">susie_weights</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">twas_predictions</span></code> — same six methods, each a (sample × condition) matrix.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">twas_cv_result</span></code> — <code class="docutils literal notranslate"><span class="pre">sample_partition</span></code> (fold assignment), <code class="docutils literal notranslate"><span class="pre">prediction</span></code>, <code class="docutils literal notranslate"><span class="pre">performance</span></code> (per method: <code class="docutils literal notranslate"><span class="pre">corr,</span> <span class="pre">rsq,</span> <span class="pre">adj_rsq,</span> <span class="pre">pval,</span> <span class="pre">...</span></code>), <code class="docutils literal notranslate"><span class="pre">time_elapsed</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">total_time_elapsed</span></code>, <code class="docutils literal notranslate"><span class="pre">variant_names</span></code>, <code class="docutils literal notranslate"><span class="pre">region_info</span></code>.</p></li>
 </ul>
+</section>
+<section id="name-chrom-id-univariate-data-rds-save-data">
+<h3><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_data.rds</span></code> (<code class="docutils literal notranslate"><span class="pre">--save-data</span></code>)<a class="headerlink" href="#name-chrom-id-univariate-data-rds-save-data" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">residual_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">residual_X</span></code> — phenotype/genotype residualized for covariates.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">residual_Y_scalar</span></code>, <code class="docutils literal notranslate"><span class="pre">residual_X_scalar</span></code> — rescaling factors.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dropped_sample</span></code> — per-matrix drops.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">maf</span></code> — named numeric (<code class="docutils literal notranslate"><span class="pre">variant_id</span> <span class="pre">→</span> <span class="pre">maf</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code> — raw genotype matrix (sample × variant).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">grange</span></code>, <code class="docutils literal notranslate"><span class="pre">X_variance</span></code>.</p></li>
+</ul>
+<p>See <a class="reference external" href="https://github.com/statfungen/pecotmr/blob/68d87ca1d0a059022bf4e55339621cbddc8993cc/R/file_utils.R#L461"><code class="docutils literal notranslate"><span class="pre">load_regional_association_data</span></code> in pecotmr</a>
+for the full struct.</p>
+</section>
+</section>
+<section id="expected-results">
+<h2>Expected Results<a class="headerlink" href="#expected-results" title="Link to this heading">#</a></h2>
+<p>Quick sanity check — inspect cross-validation performance for the first region:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Rscript<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;</span>
+<span class="s1">fp &lt;- &quot;output/mnm_regression/susie_twas/twas_weights/test_susie_twas.chr1_ENSG00000049246.univariate_twas_weights.rds&quot;</span>
+<span class="s1">x  &lt;- readRDS(fp)</span>
+<span class="s1">cat(&quot;methods:&quot;, names(x[[1]][[1]]$twas_weights), &quot;\n&quot;)</span>
+<span class="s1">print(x[[1]][[1]]$twas_cv_result$performance)</span>
+<span class="s1">&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Interpretation:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">twas_weights$&lt;method&gt;</span></code> — use for TWAS (<code class="docutils literal notranslate"><span class="pre">Z</span> <span class="pre">≈</span> <span class="pre">weights</span> <span class="pre">·</span> <span class="pre">LD</span> <span class="pre">·</span> <span class="pre">GWAS</span> <span class="pre">z-scores</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">twas_cv_result$performance</span></code> — pick the method with highest <code class="docutils literal notranslate"><span class="pre">adj_rsq</span></code> before applying.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">top_loci</span></code> in <code class="docutils literal notranslate"><span class="pre">univariate_bvsr.rds</span></code> — lead variants and credible-set coverages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">susie_result_trimmed$sets$cs</span></code> — indices of variants in each 95% credible set.</p></li>
+</ul>
+<section id="common-pitfalls">
+<h3>Common pitfalls<a class="headerlink" href="#common-pitfalls" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Sample-ID drift.</strong> The phenotype BED’s header columns (5+), the bfile FID/IID, and
+the covariate TSV header must all be drawn from the same set. Sos does not warn on
+missing samples — it silently drops them and may report zero overlap.</p></li>
+<li><p><strong>Empty regions.</strong> If a region has no variants in its association window (e.g. the
+manifest points at a window with no bfile coverage) sos marks it completed with an
+empty output. Verify the expected file count in the <code class="docutils literal notranslate"><span class="pre">INFO:</span> <span class="pre">susie_twas</span> <span class="pre">output:</span></code> line.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> vs <code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>.</strong> Either/or. If both are
+passed the customized windows win. Pass <code class="docutils literal notranslate"><span class="pre">--cis-window</span> <span class="pre">-1</span></code> to force the customized
+path explicitly.</p></li>
+</ul>
+</section>
 </section>
 </section>
 
@@ -1005,16 +727,16 @@ List of 1
         },
         codeMirrorConfig: {
             theme: "abcdef",
-            mode: "python"
+            mode: "bash"
         },
         kernelOptions: {
-            name: "python3",
+            name: "bash",
             path: "./code/mnm_analysis"
         },
         predefinedOutput: true
     }
     </script>
-    <script>kernelName = 'python3'</script>
+    <script>kernelName = 'bash'</script>
 
                 </article>
               
@@ -1062,14 +784,23 @@ List of 1
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-run-the-fine-mapping-and-twas-with-susie">i. Run the Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-a-region">What is a “region”?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-prepare-the-phenotype-manifest-and-association-windows-bed">Step 1 – Prepare the phenotype manifest and association-windows BED</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-run-susie-twas">Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output format</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#name-chrom-id-univariate-bvsr-rds"><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_bvsr.rds</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#name-chrom-id-univariate-twas-weights-rds"><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_twas_weights.rds</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#name-chrom-id-univariate-data-rds-save-data"><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_data.rds</span></code> (<code class="docutils literal notranslate"><span class="pre">--save-data</span></code>)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#expected-results">Expected Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-pitfalls">Common pitfalls</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
