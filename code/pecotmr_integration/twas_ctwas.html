@@ -472,7 +472,7 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-twas">Step 1: TWAS</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-variant-selection-for-imputable-genes-via-the-best-prediction-methods">Step 2: Variant Selection for Imputable Genes via the Best Prediction Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-model-selection-for-imputable-genes-via-the-best-prediction-methods">Step 2: Model Selection for Imputable Genes via the Best Prediction Methods</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-ctwas-analysis">Step 3: cTWAS analysis</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-mr-for-candidate-genes">Step 4: MR for candidate genes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-quantile-twas-analysis">Step 5: Quantile TWAS analysis</a></li>
@@ -486,7 +486,11 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-run-twas">iii. Run TWAS</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iv-run-ctwas">iv. Run cTWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iv-run-ctwas">iv. Run cTWAS</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ctwas-output">cTWAS output</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iiv-quantile-twas">iiv. Quantile TWAS</a></li>
 </ul>
 </li>
 </ul>
@@ -524,18 +528,32 @@
 <li><p>For each gene, filter TWAS results by keeping the best model selected by CV. Drop the genes that don’t show good evidence of TWAS prediction weights.</p></li>
 </ol>
 </section>
-<section id="step-2-variant-selection-for-imputable-genes-via-the-best-prediction-methods">
-<h3>Step 2: Variant Selection for Imputable Genes via the Best Prediction Methods<a class="headerlink" href="#step-2-variant-selection-for-imputable-genes-via-the-best-prediction-methods" title="Link to this heading">#</a></h3>
+<section id="step-2-model-selection-for-imputable-genes-via-the-best-prediction-methods">
+<h3>Step 2: Model Selection for Imputable Genes via the Best Prediction Methods<a class="headerlink" href="#step-2-model-selection-for-imputable-genes-via-the-best-prediction-methods" title="Link to this heading">#</a></h3>
 <ol class="arabic simple">
 <li><p>Determine if the gene is imputable at each context based on the twas_cv performance by adjusted <span class="math notranslate nohighlight">\(r^2\)</span> (&gt;=0.01) and p-values (&lt;0.05).</p></li>
-<li><p>The imputable gene-context pair will go through variant selection step. Maximum 10 variants with top pip selected from either <code class="docutils literal notranslate"><span class="pre">top_loci</span></code> table or SuSiE CS set.</p></li>
+<li><p>The imputable gene-context pair will go through variant selection step.</p></li>
 <li><p>Harmonize weights against LD reference and udpate SuSiE weight.</p></li>
 <li><p>Extract weights by best model for the context then by the variant names were selected from the previous step</p></li>
+<li><p>Output harmonized essential input data for causal TWAS(cTWAS) fine-mapping if <code class="docutils literal notranslate"><span class="pre">save_ctwas_data</span></code> was set to TRUE</p></li>
 </ol>
 </section>
 <section id="step-3-ctwas-analysis">
 <h3>Step 3: cTWAS analysis<a class="headerlink" href="#step-3-ctwas-analysis" title="Link to this heading">#</a></h3>
-<p><strong>FIXME: add more documentation here</strong></p>
+<ol class="arabic simple">
+<li><p>R package installation is required to run cTWAS section.</p>
+<ul class="simple">
+<li><p>remotes::install_github(“xinhe-lab/ctwas”,ref = “multigroup”)</p></li>
+</ul>
+</li>
+<li><p>Assemble on selected best performing TWAS prediction model, TWAS gene Z scores, GWAS SNP z scores, and load LD reference region information for by region cTWAS input.</p>
+<ul class="simple">
+<li><p>A variant selection is performed on variants based on <code class="docutils literal notranslate"><span class="pre">top_loci</span></code> table, SuSiE CS set, or twas weights effect size if any of <code class="docutils literal notranslate"><span class="pre">twas_weight_cutoff</span></code> (default=0), <code class="docutils literal notranslate"><span class="pre">cs_min_cor</span></code> (default=0), <code class="docutils literal notranslate"><span class="pre">min_pip_cutoff</span></code> (default=0), or <code class="docutils literal notranslate"><span class="pre">max_num_variants</span></code> (default=Inf) is specified other than their default value.</p></li>
+</ul>
+</li>
+<li><p>Estimate global group prior using from all regions</p></li>
+<li><p>Screen for regions with evidence of causal indication and perform cTWAS/M-cTWAS fine-mapping regions passed screening.</p></li>
+</ol>
 </section>
 <section id="step-4-mr-for-candidate-genes">
 <h3>Step 4: MR for candidate genes<a class="headerlink" href="#step-4-mr-for-candidate-genes" title="Link to this heading">#</a></h3>
@@ -645,29 +663,16 @@
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">TSS</span></code>: Transcription start site</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code>: start and end position of the gene from the <a class="reference external" href="https://github.com/cumc/xqtl-analysis/blob/main/resource/TADB_enhanced_cis.coding.bed">extended TADB window</a> for cis-finemapping</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">is_imputable</span></code>: status for wether this gene-context pair has  cross-validated performance with r-square &gt; 0.01 and pvalue &lt; 0.05 in at least one method for expression level prediction.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_imputable</span></code>: status for wether this gene-context pair has cross-validated performance with r-square &gt; 0.01 and pvalue &lt; 0.05 in at least one method for expression level prediction.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">rsq_cv</span></code>: cross validation test of r-square for a method.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pval_cv</span></code>: cross-validation test of predictive performance p-value for a method.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">is_selected_method</span></code>: status of being best performing method (for each gene–context pair), we pick the best model with highest cross validation r-square with cross validation pvalue &lt; 0.05</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_selected_method</span></code>: status of whether being best performing method (for each gene–context pair), we pick the best model with highest cross validation r-square with cross validation pvalue &lt; 0.05</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">block</span></code>: The LD region where the gene’s transcription start site (TSS) is located, based on <a class="reference external" href="https://github.com/cumc/xqtl-data/blob/main/descriptor/reference_data/ld_reference.md">predefined LD blocks</a>.</p></li>
 </ul>
-<p>If <code class="docutils literal notranslate"><span class="pre">twas_z</span></code> is <code class="docutils literal notranslate"><span class="pre">NA</span></code> it means the context is not imputable for the method of choice</p>
-<p>II. a list of  <code class="docutils literal notranslate"><span class="pre">refined_twas_weights_data</span></code> per block, in RDS format, of this structure:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ region_id
-   $ gene 
-      $ context
-        $ selected_model
-        $ is_imputable 
-        $ selected_top_variants
-        $ selected_model_weights
-
-</pre></div>
-</div>
 <p>The twas result table will only contain imputatable genes. It should come with a meta-data file like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chrom</span>    <span class="n">start</span>    <span class="n">end</span>    <span class="n">block_id</span>  <span class="n">refined_twas_db</span>
-<span class="mi">1</span>        <span class="mi">1000</span>     <span class="mi">5000</span>   <span class="n">block1</span>    <span class="n">block1</span><span class="o">.</span><span class="n">rds</span>
-<span class="mi">2</span>        <span class="mi">2000</span>     <span class="mi">6000</span>   <span class="n">block2</span>    <span class="n">block2</span><span class="o">.</span><span class="n">rds</span>
-<span class="mi">3</span>        <span class="mi">3000</span>     <span class="mi">7000</span>   <span class="n">block3</span>    <span class="n">block3</span><span class="o">.</span><span class="n">rds</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">chr</span>	<span class="n">molecular_id</span>	<span class="n">TSS</span>	       <span class="n">start</span>	   <span class="n">end</span>	     <span class="n">context</span>	     <span class="n">gwas_study</span>	   <span class="n">method</span>  <span class="n">is_imputable</span> <span class="n">is_selected_method</span>  <span class="n">rsq_cv</span>  <span class="n">pval_cv</span>   <span class="n">twas_z</span> <span class="n">twas_pval</span>  <span class="nb">type</span>   <span class="n">block</span>	
+<span class="mi">1</span>   <span class="n">ENSG00000060718</span> <span class="mi">103108871</span>  <span class="mi">101000000</span>  <span class="mi">104000000</span> <span class="n">AC_DeJager_eQTL</span>  <span class="n">Bellenguez_EADB_2022</span>  <span class="n">bayes_r</span>  <span class="n">TRUE</span>          <span class="n">TRUE</span>	      <span class="mf">0.25</span>   <span class="mf">3.39e-39</span>	<span class="mf">0.39</span>    <span class="mf">0.69</span>      <span class="n">eQTL</span>	 <span class="n">chr1_101384274_104443097</span>
+<span class="mi">10</span>  <span class="n">ENSG00000048740</span> <span class="mi">10798396</span>   <span class="mi">9320000</span>	  <span class="mi">12336675</span>  <span class="n">Ast_DeJager_eQTL</span> <span class="n">Bellenguez_EADI_2022</span>  <span class="n">enet</span>     <span class="n">TRUE</span>          <span class="n">FALSE</span>	      <span class="mf">0.16</span>   <span class="mf">2.72e-17</span>  <span class="o">-</span><span class="mf">0.21</span>	<span class="mf">0.83</span>      <span class="n">eQTL</span>	 <span class="n">chr10_10500888_12817813</span>
 </pre></div>
 </div>
 <section id="iii-run-twas">
@@ -675,7 +680,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/twas_ctwas.ipynb twas \
-   --cwd output/twas --name test \
+   --cwd ./output --name test \
    --gwas_meta_data data/twas/gwas_meta_test.tsv \
    --ld_meta_data reference_data/ADSP_R4_EUR/ld_meta_file.tsv \
    --ld_reference_sample_size 17000 \
@@ -693,20 +698,67 @@
 <h3>iv. Run cTWAS<a class="headerlink" href="#iv-run-ctwas" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/twas_ctwas.ipynb ctwas \
-   --cwd output/twas --name test \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Step1: region data assembly
+sos run pipeline/twas_ctwas.ipynb ctwas \
+   --cwd ./output --name test --name_suffix TEST2 \
+   --thin 1 --prior_var_structure shared_all \
    --gwas_meta_data data/twas/gwas_meta_test.tsv \
    --ld_meta_data data/ld_meta_file_with_bim.tsv \
-   --ld_reference_sample_size 17000 \
    --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
    --twas_weight_cutoff 0 \
-   --chrom 11 \
    --regions data/twas/EUR_LD_blocks.bed \
-   --region-name chr10_80126158_82231647 chr11_84267999_86714492
+   --chrom 11 --gwas_study Bellenguez_2022 
 </pre></div>
 </div>
 </div>
 </div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Step2: estimate global parameters for either specific context group (single group: `--no-multi_group`) or shared group (multi-group: `--multi_group`)
+sos run pipeline/twas_ctwas.ipynb ctwas \
+   --run_param_est --skip_assembly --thin 1 \
+   --prior_var_structure shared_all \
+   --cwd ./output --name test --name_suffix TEST2 \
+   --gwas_meta_data data/twas/gwas_meta_test.tsv \
+   --ld_meta_data data/ld_meta_file_with_bim.tsv \
+   --regions data/twas/EUR_LD_blocks.bed \
+   --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
+   --gwas_study Bellenguez_2022
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Step3: cTWAS causal fine-mapping for a specific region 
+sos run pipeline/twas_ctwas.ipynb ctwas \
+    --run_finemapping --skip_assembly \
+    --prior_var_structure shared_all \
+    --cwd ./output \
+    --name test --name_suffix TEST \
+    --gwas_meta_data data/twas/gwas_meta_test.tsv \
+    --ld_meta_data data/ld_meta_file_with_bim.tsv \
+    --regions data/twas/EUR_LD_blocks.bed \
+    --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
+    --gwas_study Bellenguez_2022 \
+    --region-name chr15_63051119_66680537
+</pre></div>
+</div>
+</div>
+</div>
+<section id="ctwas-output">
+<h4>cTWAS output<a class="headerlink" href="#ctwas-output" title="Link to this heading">#</a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">id</span>	                                <span class="n">molecular_id</span>	<span class="nb">type</span>	<span class="n">context</span>	             <span class="n">group</span>	                <span class="n">region_id</span>	       <span class="n">z</span>	                <span class="n">susie_pip</span>	<span class="n">mu</span>	<span class="n">cs</span>
+<span class="n">ENSG00000148429</span><span class="o">|</span><span class="n">eQTL_Inh_DeJager_eQTL</span>	<span class="n">ENSG00000148429</span>	<span class="n">eQTL</span>	<span class="n">Inh_DeJager_eQTL</span>	<span class="n">Inh_DeJager_eQTL</span><span class="o">|</span><span class="n">eQTL</span>	<span class="mi">10_10500888_12817813</span>	<span class="o">-</span><span class="mf">6.20856901762341</span>	<span class="mf">0.0712177905257367</span>	<span class="o">-</span><span class="mf">5.91566120772632</span>	<span class="n">L1</span>
+<span class="n">ENSG00000065665</span><span class="o">|</span><span class="n">eQTL_Ast_DeJager_eQTL</span>	<span class="n">ENSG00000065665</span>	<span class="n">eQTL</span>	<span class="n">Ast_DeJager_eQTL</span>	<span class="n">Ast_DeJager_eQTL</span><span class="o">|</span><span class="n">eQTL</span>	<span class="mi">10_10500888_12817813</span>	<span class="o">-</span><span class="mf">0.0382795446825138</span>	<span class="mf">1.09919484625465e-09</span>	<span class="o">-</span><span class="mf">0.0364735926885864</span>
+<span class="mi">10</span><span class="p">:</span><span class="mi">10504379</span><span class="p">:</span><span class="n">T</span><span class="p">:</span><span class="n">C</span>                  	<span class="mi">10</span><span class="p">:</span><span class="mi">10504379</span><span class="p">:</span><span class="n">T</span><span class="p">:</span><span class="n">C</span>	 <span class="n">SNP</span>	<span class="n">SNP</span>	                <span class="n">SNP</span>	                <span class="mi">10_10500888_12817813</span>	<span class="mf">1.03614457831325</span>	<span class="mf">4.16455758767142e-12</span>	<span class="mf">0.987261359280169</span>
+<span class="n">ENSG00000134463</span><span class="o">|</span><span class="n">pQTL_DLPFC_Bennett_pQTL</span>	<span class="n">ENSG00000134463</span>	<span class="n">pQTL</span>	<span class="n">DLPFC_Bennett_pQTL</span>	<span class="n">DLPFC_Bennett_pQTL</span><span class="o">|</span><span class="n">pQTL</span>	<span class="mi">10_10500888_12817813</span>	<span class="mf">0.40824562102498</span>	<span class="mf">1.76596504086746e-09</span>	<span class="mf">0.388985413010046</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="iiv-quantile-twas">
+<h3>iiv. Quantile TWAS<a class="headerlink" href="#iiv-quantile-twas" title="Link to this heading">#</a></h3>
 <p>Here using <code class="docutils literal notranslate"><span class="pre">--region-name</span></code> we focus the analysis on 2 blocks: format as <code class="docutils literal notranslate"><span class="pre">chr_start_stop</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">xqtl</span><span class="o">-</span><span class="n">protocol</span><span class="o">/</span><span class="n">code</span><span class="o">/</span><span class="n">pecotmr_integration</span><span class="o">/</span><span class="n">twas</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">quantile_twas</span> \
    <span class="o">--</span><span class="n">cwd</span> <span class="o">/</span><span class="n">output</span><span class="o">/</span> <span class="o">--</span><span class="n">name</span> <span class="n">test</span> \
@@ -2048,7 +2100,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-twas">Step 1: TWAS</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-variant-selection-for-imputable-genes-via-the-best-prediction-methods">Step 2: Variant Selection for Imputable Genes via the Best Prediction Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-model-selection-for-imputable-genes-via-the-best-prediction-methods">Step 2: Model Selection for Imputable Genes via the Best Prediction Methods</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-ctwas-analysis">Step 3: cTWAS analysis</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-mr-for-candidate-genes">Step 4: MR for candidate genes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-quantile-twas-analysis">Step 5: Quantile TWAS analysis</a></li>
@@ -2062,7 +2114,11 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iii-run-twas">iii. Run TWAS</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iv-run-ctwas">iv. Run cTWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iv-run-ctwas">iv. Run cTWAS</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ctwas-output">cTWAS output</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iiv-quantile-twas">iiv. Quantile TWAS</a></li>
 </ul>
 </li>
 </ul>

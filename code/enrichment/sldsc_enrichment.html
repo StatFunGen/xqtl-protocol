@@ -902,6 +902,8 @@ with \)</span>B = 200$, used as the per-trait input to cross-trait meta-analysis
 <section id="joint-tau">
 <h5>1.2 joint tau<a class="headerlink" href="#joint-tau" title="Link to this heading">#</a></h5>
 <p>with more than one annotation as the input</p>
+<p><code class="docutils literal notranslate"><span class="pre">--snp_list</span> <span class="pre">&lt;file&gt;</span></code> is <strong>optional</strong> and <strong>orthogonal to single/joint</strong>: it restricts which SNP <em>rows</em> are written to the <code class="docutils literal notranslate"><span class="pre">.l2.ldscore</span></code> output (HM3-style restriction) — it does <strong>not</strong> change the LD-score <em>values</em> of retained SNPs (the r²-window still uses all <code class="docutils literal notranslate"><span class="pre">.bim</span></code> SNPs), nor <code class="docutils literal notranslate"><span class="pre">.l2.M</span></code> / <code class="docutils literal notranslate"><span class="pre">.l2.M_5_50</span></code>. With <code class="docutils literal notranslate"><span class="pre">--snp_list</span></code> the step runs polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc.py</span> <span class="pre">--print-snps</span></code> and emits <code class="docutils literal notranslate"><span class="pre">.l2.ldscore.gz</span></code> (without it: <code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code> → <code class="docutils literal notranslate"><span class="pre">.l2.ldscore.parquet</span></code>), and the target annot is normalized to the plink <code class="docutils literal notranslate"><span class="pre">.bim</span></code>. Downstream <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> / <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> <strong>commands are unchanged</strong> — they just read whichever <code class="docutils literal notranslate"><span class="pre">.l2.ldscore.{gz,parquet}</span></code> exists; the regression runs on the intersection sumstats ∩ baseline ∩ weights ∩ target, so for the HM3 restriction to take full effect the baseline &amp; weights LD scores should also be HM3-restricted.</p>
+<p><strong>Which polyfun script &amp; what to align.</strong> <code class="docutils literal notranslate"><span class="pre">--snp_list</span></code> present → step 1 runs <code class="docutils literal notranslate"><span class="pre">ldsc.py</span> <span class="pre">--l2</span> <span class="pre">--print-snps</span></code> (output <code class="docutils literal notranslate"><span class="pre">.l2.ldscore.gz</span></code>); absent → <code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code> (output <code class="docutils literal notranslate"><span class="pre">.l2.ldscore.parquet</span></code>). <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code> requires the target annot to line up with the plink <code class="docutils literal notranslate"><span class="pre">.bim</span></code> — <strong>same SNP set and same row order</strong>. The pipeline handles this internally (<code class="docutils literal notranslate"><span class="pre">normalize_for_ldsc</span></code> re-expands the annot onto the <code class="docutils literal notranslate"><span class="pre">.bim</span></code> rows, filling 0), but if you assemble inputs by hand, keep the <strong>plink <code class="docutils literal notranslate"><span class="pre">.bim</span></code>, <code class="docutils literal notranslate"><span class="pre">.frq</span></code>, target annot, and baseline annot all on the same reference panel with consistent SNP set/order</strong>: target and baseline annot row counts must match (polyfun hstacks them), and the <code class="docutils literal notranslate"><span class="pre">.frq</span></code> MAF filter (<code class="docutils literal notranslate"><span class="pre">--frqfile-chr</span></code>, m50) plus the by-SNP merge in <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> both assume a consistent panel. Mixing panels (e.g. 1000G plink with an ADSP-derived annot, or a <code class="docutils literal notranslate"><span class="pre">.frq</span></code> whose row count/order differs from the annot) is the most common source of wrong <code class="docutils literal notranslate"><span class="pre">Prop_SNPs</span></code> / Enrichment.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Annotation prep: an annotation_file with multiple `path*` columns yields
@@ -962,6 +964,7 @@ sos run pipeline/sldsc_enrichment.ipynb get_heritability \
     --annotation-name my_analysis \
     --cwd output/heritability \
     --maf-cutoff 0.05
+# (allm variant: use --maf-cutoff 0 — no MAF filter; polyfun then uses --not-M-5-50)
 </pre></div>
 </div>
 </div>
@@ -975,6 +978,7 @@ sos run pipeline/sldsc_enrichment.ipynb get_heritability \
 joint subdirectory) and calls <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline()</span></code>
 to produce per-trait standardized tables and the default random-effects
 meta across all traits.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--target-categories-label</span></code> (same order as <code class="docutils literal notranslate"><span class="pre">--target-categories</span></code>) to give the target annotations friendly names in the output — e.g. <code class="docutils literal notranslate"><span class="pre">--target-categories</span> <span class="pre">ANNOT_1_0</span> <span class="pre">ANNOT_2_0</span> <span class="pre">--target-categories-label</span> <span class="pre">quantile_eQTL</span> <span class="pre">eQTL</span></code> makes the <code class="docutils literal notranslate"><span class="pre">target</span></code> column read <code class="docutils literal notranslate"><span class="pre">quantile_eQTL</span></code> / <code class="docutils literal notranslate"><span class="pre">eQTL</span></code> instead of <code class="docutils literal notranslate"><span class="pre">ANNOT_1_0</span></code> / <code class="docutils literal notranslate"><span class="pre">ANNOT_2_0</span></code> (the original names are kept in <code class="docutils literal notranslate"><span class="pre">params$target_categories_orig</span></code>). Omit it to keep the polyfun <code class="docutils literal notranslate"><span class="pre">.results</span></code> names.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Post-processing: read all polyfun outputs (single-target + joint, all traits)
@@ -982,16 +986,25 @@ meta across all traits.</p>
 # pecotmr::sldsc_postprocessing_pipeline. Single and joint target subdirectories
 # are auto-detected from &lt;annotation_name&gt;_single_&lt;i&gt; and &lt;annotation_name&gt;_joint.
 
+# --target-categories: the joint-run target columns as they appear in the .results &quot;Category&quot;
+#   column. The 2-target joint dir here has columns ANNOT_1, ANNOT_2 (compute_ldscores.py keeps
+#   the annot col names) and polyfun appends &quot;_0&quot; (target = ref-ld file 0) -&gt; &quot;ANNOT_1_0&quot;, &quot;ANNOT_2_0&quot;.
+#   (Single-target dirs would be &quot;ANNOT_0&quot;; with --snp_list/ldsc.py and a single annot it is &quot;L2_0&quot;.)
+#   You can drop --target-categories entirely to auto-detect from the joint-run results.
+# --target-categories-label (optional, same order as --target-categories): friendly display
+#   names; renames the &quot;target&quot; column in the output (originals kept in params$target_categories_orig).
 sos run pipeline/sldsc_enrichment.ipynb postprocess \
     --traits-file data/all_traits.txt \
-    --heritability-cwd output/polyfun/heritability \
-    --target-categories anno1 anno2 \
-    --target-anno-dir output/polyfun/ldscores/my_analysis_joint \
+    --heritability-cwd output/heritability \
+    --target-categories ANNOT_1_0 ANNOT_2_0 \
+    --target-categories-label quantile_eQTL eQTL \
+    --target-anno-dir output/my_analysis_joint \
     --frqfile-dir data/ADSP/frq \
     --plink-name ADSP_chr \
     --annotation-name my_analysis \
     --cwd output/sldsc_postprocess \
     --maf-cutoff 0.05
+# (allm variant: use --maf-cutoff 0 — no MAF filter; polyfun then uses --not-M-5-50)
 </pre></div>
 </div>
 </div>
@@ -1008,7 +1021,7 @@ sos run pipeline/sldsc_enrichment.ipynb meta_subset \
     --postprocess-rds output/sldsc_postprocess/my_analysis.sldsc_postprocess.rds \
     --subset-traits-file data/neuro_traits.txt \
     --subset-name neuro \
-    --target-categories anno1 anno2 \
+    --target-categories ANNOT_1_0 ANNOT_2_0 \
     --annotation-name my_analysis \
     --cwd output/sldsc_postprocess
 </pre></div>
@@ -1053,7 +1066,6 @@ parameter: plink_name = &quot;ADSP_chr&quot;
 parameter: weights_dir = path()  # Directory containing LD weights (computed against our panel)
 parameter: baseline_name = &quot;baseline_chr&quot;  # Prefix of baseline annotation files
 parameter: weight_name = &quot;weights_chr&quot;  # Prefix of LD weights files
-parameter: Mref = -1 # Reference number of SNPs in our panel (MAF &gt; maf_cutoff). If &gt; 0, use provided value; if &lt;= 0, auto-calculate from ldscore files
 parameter: n_blocks = 200
 
 # Number of threads
@@ -1098,6 +1110,33 @@ parameter: mem = &#39;16G&#39;
 #               Run on a NEW annotation_file with the K selected annotations
 #               -&gt; 1 joint dir with the conditional model.
 
+#
+# --- snplist (--snp_list) vs no-snplist: which polyfun script, output format,
+#     column name, and the CM requirement ---
+#   --snp_list given  -&gt; ldsc.py --l2 --print-snps   -&gt; output .l2.ldscore.gz
+#   --snp_list absent -&gt; compute_ldscores.py         -&gt; output .l2.ldscore.parquet
+#
+#   LD-score column name (this is what becomes the .results &quot;Category&quot; in
+#   [get_heritability], with a &quot;_&lt;ref-ld-index&gt;&quot; suffix appended there):
+#     * compute_ldscores.py  ALWAYS keeps the annot column name(s):
+#         single annot column &quot;ANNOT&quot;          -&gt; ldscore column &quot;ANNOT&quot;
+#         joint  annot columns &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...  -&gt; &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...
+#     * ldsc.py --l2 has a quirk: with EXACTLY ONE annotation (n_annot == 1) it
+#       HARD-CODES the ldscore column name to &quot;L2&quot; and DROPS the annot&#39;s original
+#       column name. With &gt;=2 annotations it uses &quot;&lt;annot_name&gt;L2&quot;
+#       (&quot;ANNOT_1L2&quot;,&quot;ANNOT_2L2&quot;,...).
+#     =&gt; a single-target snplist run reports &quot;L2_0&quot; in .results, while a
+#        single-target no-snplist run reports &quot;ANNOT_0&quot;.  [postprocess] auto-
+#        detects either; only matters if you pass --target-categories explicitly.
+#
+#   CM column requirement for snplist:  ldsc.py --l2 --print-snps requires the
+#   target annot to (a) carry a &quot;CM&quot; (centimorgan) column and (b) line up with
+#   the plink .bim (same SNP set, same row order). This step handles both
+#   internally (normalize_for_ldsc: takes CM from the .bim 4th column, re-expands
+#   the annot onto the .bim rows, filling 0). Therefore the plink .bim files MUST
+#   carry genetic-map (cM) positions when using --ld-wind-cm (the default);
+#   if your .bim has 0 in the cM column, switch to --ld-wind-kb instead.
+#
 parameter: compute_single = True
 parameter: compute_joint = True
 parameter: score_column = 3
@@ -1481,6 +1520,25 @@ bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:
 # `target_anno_dirs` is the list produced by [make_annotation_files_ldscore]:
 # typically N _single_&lt;i&gt; directories plus optionally one _joint directory.
 
+#
+# --- about the &quot;.results&quot; Category column and the &quot;_0 / _1&quot; suffix ---
+# Each (trait, target_dir) pair is ONE polyfun call; its `ldsc.py --ref-ld-chr`
+# always gets exactly two LD-score sources, in this order:
+#     &quot;&lt;target_dir&gt;/&lt;target&gt;.&quot;   (index 0)  ,  &quot;&lt;baseline_dir&gt;/&lt;baseline&gt;&quot;   (index 1)
+# With --overlap-annot, every annotation column in the .results &quot;Category&quot; is
+# named  &lt;ldscore_column_name&gt;_&lt;ref-ld-index&gt;:
+#     index 0 = the target file   -&gt; &quot;ANNOT_0&quot;  (no-snplist; compute_ldscores.py keeps the annot col name)
+#                                  -&gt; &quot;L2_0&quot;    (snplist + single annot; ldsc.py hard-codes &quot;L2&quot;, see below)
+#                                  -&gt; &quot;ANNOT_1_0&quot;,&quot;ANNOT_2_0&quot;      (no-snplist joint dir, N&gt;=2 annot cols)
+#                                  -&gt; &quot;ANNOT_1L2_0&quot;,&quot;ANNOT_2L2_0&quot;  (snplist joint dir, N&gt;=2 -&gt; &quot;&lt;name&gt;L2&quot;)
+#     index 1 = the baseline file -&gt; &quot;base_1&quot;,&quot;Coding_UCSC_1&quot;, ...  (the 97 baseline annots)
+# So in this pipeline the suffix is only ever 0 (target) or 1 (baseline); it would
+# continue 0,1,2,... only if you handed `ldsc.py --ref-ld-chr` more than two sources.
+# (Why ANNOT_0 vs L2_0: see the [make_annotation_files_ldscore] header — ldsc.py&#39;s
+#  &quot;n_annot == 1 -&gt; column name &#39;L2&#39;&quot; quirk vs compute_ldscores.py keeping the annot
+#  column name.)  [postprocess] auto-detects the target Category; if you instead pass
+# --target-categories, the names must match this column exactly.
+#
 parameter: target_anno_dirs = paths()
 parameter: all_traits = []
 
@@ -1583,6 +1641,10 @@ bash: expand = &quot;${ }&quot;
 parameter: traits_file = path()             # text file: one trait sumstats filename per line
 parameter: heritability_cwd = path()        # parent directory of [get_heritability] outputs (contains &lt;annotation_name&gt;_single_&lt;i&gt;/ subdirs and optionally &lt;annotation_name&gt;_joint/)
 parameter: target_categories = []           # target annotation names. Auto-detected from the joint-run results if empty.
+parameter: target_categories_label = []     # optional display names, same order as target_categories;
+                                            # when given, every &quot;target&quot; column / tau*-block colname in
+                                            # the output RDS is renamed to these (params$target_categories
+                                            # holds the labels, params$target_categories_orig the originals).
 parameter: target_anno_dir = path()         # directory of target .annot.gz files used for sd_C and binary detection (typically the joint dir, since it carries all target columns)
 
 input: traits_file
@@ -1594,6 +1656,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
 
     traits &lt;- readLines(&quot;${traits_file}&quot;)
     target_cats &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % c for c in target_categories)})
+    target_lab  &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % c for c in target_categories_label)})
 
     # Auto-detect single-target and joint-target output directories.
     her_root  &lt;- &quot;${heritability_cwd}&quot;
@@ -1628,7 +1691,8 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
         frqfile_dir           = &quot;${frqfile_dir}&quot;,
         plink_name            = &quot;${plink_name}&quot;,
         maf_cutoff            = ${maf_cutoff},
-        target_categories     = if (length(target_cats) &gt; 0) target_cats else NULL
+        target_categories     = if (length(target_cats) &gt; 0) target_cats else NULL,
+        target_labels         = if (length(target_lab)  &gt; 0) target_lab  else NULL
     )
 
     saveRDS(res, &quot;${_output[0]}&quot;)
@@ -1647,6 +1711,9 @@ parameter: postprocess_rds = path()           # output of [postprocess]
 parameter: subset_traits_file = path()        # text file: one trait id per line, subset of those passed to [postprocess]
 parameter: subset_name = str                  # label used in the output filename
 parameter: target_categories = []             # target annotation names to meta on; if empty, uses all from postprocess output
+# If [postprocess] was run with --target-categories-label, the cached RDS already
+# carries the display names (params$target_categories = the labels), so leave
+# --target-categories empty here (or pass the labels, not the original ANNOT_* names).
 
 input: postprocess_rds, subset_traits_file
 output: f&quot;{cwd:a}/{annotation_name}.{subset_name}.meta.rds&quot;
