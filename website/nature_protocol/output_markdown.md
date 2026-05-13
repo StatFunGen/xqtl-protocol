@@ -71,8 +71,6 @@ To build a list of TADB-enhanced cis windows, we start with the cis window of ea
 
 
 
-
-Our LD reference panel is generated from ADSP GCAD non-Hispanic white samples. Missing variants are mean imputed before correlations are calculated between variants. The cyvcf2 package is used to calculate dosage while applying a minor allele frequency threshold of 0.05%, a minor allele count threshold of 5, and a missingness threshold of 5%.
 #### Molecular Phenotypes (Step 2)
 ##### A.  RNA-seq expression
 
@@ -158,12 +156,6 @@ We perform QTL association testing using TensorQTL [[cf. Taylor-Weiner et al (20
 #### Multiomics Regression Models (Step 6)
 ##### A.  Integrative Analysis with High-Dimensional Regression
 
-
-Our pipeline is capable of performing univariate fine-mapping with SuSiE with TWAS weights. The TWAS portion makes use of TWAS weights, linkage disequilibrium data and GWAS summary statistics. Preset variants used are taken from the linkage disequilibrium data and used only for TWAS. TWAS cross validation tell us which of the four methods (enet, lasso, mrash, SuSiE) are best to use. By default, we limit to under 5000 variants for cross validation. In cross validation, the data is split into five parts. Training is done on four parts, and prediction is done on the fifth. Linear regression is used to assess the results and get r squared and pvalues. 
-
-
-
-Fine mapping with SuSiE follows the formulat y=xb+e where x has many highly correlated variables due to linkage disequilibrium. Therefore, true effects (b), are very sparse. The SuSiE wrapper looks for five independent signals in each region to increase convergence speed. However, if five signals are found, then the the upper limit is increased. SuSiE does not allow for the inclusion of covariates. Therefore, covariates are regressed in.
 
 Multi gene fine-mapping and TWAS may also be conducted with our pipeline. This considers multiple genes jointly within specific TAD windows.
 
@@ -1014,33 +1006,15 @@ Timing: ~X min
 ```python
 
 sos run pipeline/twas_ctwas.ipynb twas \
-   --cwd output/twas --name test \
+   --cwd ./output --name test \
    --gwas_meta_data data/twas/gwas_meta_test.tsv \
    --ld_meta_data reference_data/ADSP_R4_EUR/ld_meta_file.tsv \
+   --ld_reference_sample_size 17000 \
    --regions data/twas/EUR_LD_blocks.bed \
    --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
    --xqtl_type_table data/twas/data_type_table.txt \
    --rsq_pval_cutoff 0.05 --rsq_cutoff 0.01 \
    --region-name chr11_84267999_86714492
-
-```
-
-
-
-##### iv. Run cTWAS
-
-
-```python
-
-sos run pipeline/twas_ctwas.ipynb ctwas \
-   --cwd output/twas --name test \
-   --gwas_meta_data data/twas/gwas_meta_test.tsv \
-   --ld_meta_data data/ld_meta_file_with_bim.tsv \
-   --xqtl_meta_data data/twas/mwe_twas_pipeline_test_small.tsv \
-   --twas_weight_cutoff 0 \
-   --chrom 11 \
-   --regions data/twas/EUR_LD_blocks.bed \
-   --region-name chr10_80126158_82231647 chr11_84267999_86714492
 
 ```
 
@@ -1103,6 +1077,7 @@ sos run pipeline/colocboost.ipynb colocboost \
 
 
 
+#### gwas_meta_multi.tsv
 ### 8. Enrichment and Validation
 
 #### Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife
