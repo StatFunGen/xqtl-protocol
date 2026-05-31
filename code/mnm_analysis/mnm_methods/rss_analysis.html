@@ -603,12 +603,12 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/rss_analysis.ipynb univariate_rss \
     --ld-meta-data reference_data/ADSP_R4_EUR/ld_meta_file.tsv \
     --gwas-meta-data data/mnm_regression/gwas_meta_data.txt \
-    --qc_method &quot;rss_qc&quot; --impute \
+    --qc_method &quot;slalom&quot; --impute \
     --finemapping_method &quot;susie_rss&quot; \
     --cwd output/rss_analysis \
     --skip_analysis_pip_cutoff 0 \
     --skip_regions 6:25000000-35000000 \
-    --stochastic_ld_sample &quot;NULL&quot; \
+    --ld-reference-size 10000 \
     --region_name 22:49355984-50799822
     
 </pre></div>
@@ -626,7 +626,8 @@ parameter: gwas_data = []
 parameter: column_mapping = []
 parameter: region_list = path()
 parameter: region_name = []
-parameter: stochastic_ld_sample = &quot;NULL&quot;
+parameter: ld_reference_size = 10000
+parameter: ld_mismatch_correction = False
 parameter: container = &#39;&#39;
 parameter: skip_regions = []
 import re
@@ -790,21 +791,20 @@ regional_data = dict([(&quot;GWAS&quot;, gwas_dict), (&quot;regions&quot;, regio
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[univariate_rss]
-parameter: L = 5
-parameter: max_L = 10
+parameter: L = 15
+parameter: L_greedy = 5
 # If available the column that indicates sample size within the sumstats
 # filtering threshold for raiss imputation
 parameter: rcond = 0.01
 parameter: lamb = 0.01
 parameter: R2_threshold = 0.6
-parameter: l_step = 5
 parameter: pip_cutoff = 0.025
 parameter: skip_analysis_pip_cutoff = 0.025
 parameter: minimum_ld = 5
 parameter: coverage = [0.95, 0.7, 0.5]
 # Whether to impute the sumstat for all the snp in LD but not in sumstat.
 parameter: impute = False 
-# summary stats QC methods: rss_qc, dentist, slalom
+# summary stats QC methods: slalom, dentist
 parameter: qc_method = &quot;&quot;
 # analysis method: single_effect, susie_rss, bayesian_conditional_regression
 parameter: finemapping_method = &quot;single_effect&quot;
@@ -862,9 +862,10 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                                         impute = ${&quot;TRUE&quot; if impute else &quot;FALSE&quot;},
                                         impute_opts = list(rcond = ${rcond}, R2_threshold = ${R2_threshold}, minimum_ld = ${minimum_ld}, lamb=${lamb}),
                                         finemapping_method = ${&quot;NULL&quot; if len(finemapping_method) == 0 else &quot;&#39;%s&#39;&quot; % finemapping_method}, 
-                                        finemapping_opts = list(init_L = ${L}, max_L = ${max_L}, l_step = ${l_step}, coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}), signal_cutoff = ${pip_cutoff}),
+                                        finemapping_opts = list(L = ${L}, L_greedy = ${L_greedy}, coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}), signal_cutoff = ${pip_cutoff}),
                                         pip_cutoff_to_skip = ${skip_analysis_pip_cutoff}, comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;},
-                                        stochastic_ld_sample = ${stochastic_ld_sample},
+                                        R_finite = ${ld_reference_size},
+                                        R_mismatch = ${&#39;&quot;eb&quot;&#39; if ld_mismatch_correction else &quot;NULL&quot;},
                                         diagnostics = ${&quot;TRUE&quot; if diagnostics else &quot;FALSE&quot;}
                                         )
         fwrite(res[[r]]$rss_data_analyzed, file = paste0(&quot;${_output:nn}.&quot;, extract_region_name, studies[r], &quot;.sumstats.tsv.gz&quot;), sep = &quot;\t&quot;, col.names = TRUE, row.names = FALSE, quote = FALSE, compress = &quot;gzip&quot;)

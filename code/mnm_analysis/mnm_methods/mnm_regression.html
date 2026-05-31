@@ -796,10 +796,10 @@ parameter: trans_analysis = False
 parameter: seed = 999
 
 # association analysis paramters
-# initial number of single effects for SuSiE
-parameter: init_L = 8
+# initial greedy number of single effects for SuSiE
+parameter: L_greedy = 8
 # maximum number of single effects to use for SuSiE
-parameter: max_L = 30
+parameter: L = 30
 # remove a variant if it has more than imiss missing individual level data
 parameter: imiss = 1.0
 # MAF and variance of X cutoff
@@ -1174,8 +1174,12 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
     })
     # save data-set
     if (${&quot;TRUE&quot; if save_data else &quot;FALSE&quot;}) {
+        data_dir &lt;- paste0(&quot;${cwd:a}&quot;, &quot;/data/&quot;)
+        if (!dir.exists(data_dir)) {
+            dir.create(data_dir, recursive = TRUE)
+        }
         saveRDS(list(${_meta_info[2]} = fdat), 
-                    paste0(&quot;${cwd:a}&quot;, &quot;/data/&quot;, &quot;${_output[0]:bnn}.univariate_data.rds&quot;), 
+                    paste0(data_dir, &quot;${_output[0]:bnn}.univariate_data.rds&quot;), 
                     compress=&#39;xz&#39;)
     }
     if (${&quot;FALSE&quot; if skip_fine_mapping and skip_twas_weights else &quot;TRUE&quot;}) {
@@ -1185,7 +1189,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
           region_name = &quot;${_meta_info[2]}&quot;
       }
 
-      region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
+      region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), analysis_region = &quot;${_meta_info[1]}&quot;, grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
 
       finemapping_result = list()
       preset_variants_result = list()
@@ -1220,7 +1224,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
                                                                       X_scalar=fdat$residual_X_scalar[[r]], 
                                                                       Y_scalar=if (fdat$residual_Y_scalar[[r]] == 1) 1 else fdat$residual_Y_scalar[[r]][,i,drop=FALSE],
                                                                       X_variance=fdat$X_variance[[r]],
-                                                                      other_quantities = list(dropped_samples = dropped_samples),
+                                                                      region = region_info$analysis_region,
+                                                                      other_quantities = list(dropped_samples = dropped_samples, condition_id = names(fdat$residual_Y)[r]),
                                                                       # filters
                                                                       imiss_cutoff = ${imiss},
                                                                       maf_cutoff = NULL,
@@ -1228,9 +1233,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
                                                                       ld_reference_meta_file = NULL,
                                                                       pip_cutoff_to_skip = pip_cutoff_to_skip[r],
                                                                       # methods parameter configuration
-                                                                      init_L = ${init_L},
-                                                                      max_L = ${max_L},
-                                                                      l_step = 5,
+                                                                      L_greedy = ${L_greedy},
+                                                                      L = ${L},
                                                                       # fine-mapping results summary
                                                                       signal_cutoff = ${pip_cutoff},
                                                                       coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
@@ -1256,7 +1260,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
                                                                   X_scalar=fdat$residual_X_scalar[[r]], 
                                                                   Y_scalar=if (fdat$residual_Y_scalar[[r]] == 1) 1 else fdat$residual_Y_scalar[[r]][,i,drop=FALSE],
                                                                   X_variance=fdat$X_variance[[r]],
-                                                                  other_quantities = list(dropped_samples = dropped_samples),
+                                                                  region = region_info$analysis_region,
+                                                                  other_quantities = list(dropped_samples = dropped_samples, condition_id = names(fdat$residual_Y)[r]),
                                                                   # filters
                                                                   imiss_cutoff = ${imiss},
                                                                   maf_cutoff = ${min_twas_maf},
@@ -1264,9 +1269,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
                                                                   ld_reference_meta_file=${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
                                                                   pip_cutoff_to_skip = pip_cutoff_to_skip[r],
                                                                   # methods parameter configuration
-                                                                  init_L = ${init_L},
-                                                                  max_L = ${max_L},
-                                                                  l_step = 5,
+                                                                  L_greedy = ${L_greedy},
+                                                                  L = ${L},
                                                                   # fine-mapping results summary
                                                                   signal_cutoff = ${pip_cutoff},
                                                                   coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
@@ -1465,7 +1469,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
 
       context_regions &lt;- list(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])})
       names(context_regions) &lt;- colnames(fdat$residual_Y)
-      region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
+      region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), analysis_region = &quot;${_meta_info[1]}&quot;, grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
 
       dd_prior &lt;- if (${mixture_prior:r} == &#39;.&#39; || ${mixture_prior:r} == &#39;&#39;) NULL else readRDS(${mixture_prior:r})
       dd_prior_cv &lt;- if (${mixture_prior_cv:r} == &#39;.&#39; || ${mixture_prior_cv:r} == &#39;&#39;) NULL else readRDS(${mixture_prior_cv:r})
@@ -1477,6 +1481,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
                       Y = fdat$residual_Y,
                       maf = fdat$maf,
                       X_variance = fdat$X_variance,
+                      region = region_info$analysis_region,
                       other_quantities = list(dropped_samples = fdat$dropped_samples),
                       # filters
                       imiss_cutoff = ${imiss}, 
@@ -1485,7 +1490,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
                       ld_reference_meta_file = ${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
                       pip_cutoff_to_skip = pip_cutoff_to_skip,
                       # methods parameter configuration
-                      max_L = -1,
+                      L = ${L},
+                      L_greedy = ${L_greedy},
                       data_driven_prior_matrices = dd_prior, 
                       data_driven_prior_matrices_cv = dd_prior_cv, 
                       data_driven_prior_weights_cutoff = ${prior_weights_min}, 
@@ -1497,7 +1503,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
                       coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
                       # TWAS weights and CV for TWAS weights
                       twas_weights = ${&quot;TRUE&quot; if not skip_twas_weights else &quot;FALSE&quot;},
-                      sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else sample_partition},
+                      sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else &quot;read.table(%r, header = TRUE)&quot; % str(sample_partition)},
                       max_cv_variants = ${max_cv_variants}, 
                       cv_folds = ${twas_cv_folds},
                       cv_threads = ${twas_cv_threads}            
@@ -1630,44 +1636,23 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
     process_and_compare_variants &lt;- function(combined_list, condition_name) {
        extracted_regional_window_combined_susie_result &lt;- list()
        extracted_regional_window_combined_sumstats_result &lt;- list()
-       compare_variants &lt;- function(variants1, variants2) {
-            return(any(variants1 %in% variants2) | any(variants2 %in% variants1))
-       }
-       subset_top_loci_variants &lt;- function(df) {
-          find_non_zero_rows &lt;- function(df) {
-                non_zero_indices &lt;- which(rowSums(df!= 0) &gt; 0)
-                return(non_zero_indices)
-           }
-           non_zero_indices &lt;- find_non_zero_rows(df)
-
-           if (length(non_zero_indices) &gt; 0) {
-              non_zero_index_variants &lt;- df[non_zero_indices, , drop = FALSE]%&gt;%select(variant_id)%&gt;%pull(variant_id)
-              zero_index_filtered_variants &lt;- df[-non_zero_indices, ,drop = FALSE]%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
-              top_loci_variants &lt;- c(non_zero_index_variants, zero_index_filtered_variants)
-           } else {
-              zero_index_filtered_variants &lt;- df%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
-              top_loci_variants &lt;- zero_index_filtered_variants
-           }
-             return(top_loci_variants)
-       }
-  
        for (i in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
            susie_result_1 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[i]]
            gene_id &lt;- names(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])[i]
     
            # Extract top_loci variants
-           variants1 &lt;- subset_top_loci_variants(susie_result_1[[&quot;top_loci&quot;]])
+           variants1 &lt;- unique(susie_result_1[[&quot;top_loci&quot;]][[&quot;variant&quot;]])
            if (length(variants1) &gt; 0) {
               different_in_all_genes &lt;- TRUE
     
            for (j in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
                if (i != j) {
                   susie_result_2 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[j]]
-                  variants2 &lt;- subset_top_loci_variants(susie_result_2[[&quot;top_loci&quot;]])
+                  variants2 &lt;- unique(susie_result_2[[&quot;top_loci&quot;]][[&quot;variant&quot;]])
         
                   # Compare variants
                   if (length(variants2) &gt; 0) {
-                    if (compare_variants(variants1, variants2)) {
+                    if (length(intersect(variants1, variants2)) &gt; 0) {
                         # If variants are not totally different across all genes, set the flag to FALSE
                        different_in_all_genes &lt;- FALSE
                        break
@@ -1757,12 +1742,12 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
           region_name = &quot;${_meta_info[2]}&quot;
         }
 
-        region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
+        region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), analysis_region = &quot;${_meta_info[1]}&quot;, grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
             
         dd_prior &lt;- NULL
         if (${&quot;TRUE&quot; if data_driven_prior else &quot;FALSE&quot;}) {
             # FIXME: please complete this function call
-            dd_prior &lt;- multigene_udr(extracted_combined_susie_list, coverage = paste0(&quot;cs_coverage_&quot;,${coverage[0]},sep=&quot;&quot;), independent_variant_list = ${independent_variant_list:r}, n_random = ${n_random}, n_null = ${n_null}, seed = ${seed})
+            dd_prior &lt;- multigene_udr(extracted_combined_susie_list, coverage = paste0(&quot;CS_&quot;, as.integer(round(100 * ${coverage[0]})), &quot;_susie&quot;), independent_variant_list = ${independent_variant_list:r}, n_random = ${n_random}, n_null = ${n_null}, seed = ${seed})
         }
         if (length(filtered_event_names)&gt;=2) {
            pip_cutoff_to_skip = list(${&quot;,&quot;.join(skip_analysis_pip_cutoff)})
@@ -1774,6 +1759,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
                             Y=fdat$residual_Y[,filtered_event_names],
                             maf=fdat$maf,
                             X_variance = fdat$X_variance,
+                            region = region_info$analysis_region,
                             other_quantities = list(dropped_samples = fdat$dropped_samples),
                             # filters
                             imiss_cutoff = ${imiss}, 
@@ -1782,7 +1768,8 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
                             ld_reference_meta_file = ${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
                             pip_cutoff_to_skip = pip_cutoff_to_skip,
                             # methods parameter configuration
-                            max_L = -1,
+                            L = ${L},
+                            L_greedy = ${L_greedy},
                             data_driven_prior_matrices = dd_prior, 
                             data_driven_prior_matrices_cv = dd_prior_cv, 
                             data_driven_prior_weights_cutoff = ${prior_weights_min}, 
@@ -1794,7 +1781,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
                             coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
                             # TWAS weights and CV for TWAS weights
                             twas_weights = ${&quot;TRUE&quot; if not skip_twas_weights else &quot;FALSE&quot;},
-                            sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else sample_partition},
+                            sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else &quot;read.table(%r, header = TRUE)&quot; % str(sample_partition)},
                             max_cv_variants = ${max_cv_variants}, 
                             cv_folds = ${twas_cv_folds},
                             cv_threads = ${twas_cv_threads}            
@@ -1874,22 +1861,13 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                                           tabix_header = TRUE,
                                           phenotype_header = 4,
                                           region_name_col = 4,
-                                          scale_residuals = FALSE)
+                                          scale_residuals = FALSE,
+                                          min_markers = ${epigenetics_mark_treshold})
     }, NoSNPsError = function(e) {
         message(&quot;Error: &quot;, paste(e$message, &quot;${_meta_info[2] + &#39;@&#39; + _meta_info[1]}&quot;))
         saveRDS(list(&quot;${_meta_info[0]}&quot; = e$message), ${_output:ar}, compress=&#39;xz&#39;)
         quit(save=&quot;no&quot;)
     })
-    # Filter out list fdat that with less than a treshold of epigenomic marker.
-    library(tidyverse)
-    filter_fdat_except_specific_names &lt;- function(fdat, n) {
-        # Identify which elements in list1 meet the row count criteria
-        indices_to_keep &lt;- sapply(fdat$Y_coordinates, function(x) nrow(x) &gt;= n)
-        fdat_filtered &lt;- map(fdat[!names(fdat) %in% c(&quot;dropped_sample&quot;, &quot;X&quot;, &quot;chrom&quot;)],~.x[indices_to_keep]) 
-        return(c(fdat_filtered,fdat[names(fdat) %in% c(&quot;dropped_sample&quot;, &quot;X&quot;, &quot;chrom&quot;)]))
-    }
-
-    fdat = filter_fdat_except_specific_names(fdat, n = ${epigenetics_mark_treshold})
     # Check if Y_coordinates is empty after filtering
     if (length(fdat$Y_coordinates) == 0) {
         e_msg = paste0(&quot;None of the study have more than or equal to &quot;,${epigenetics_mark_treshold}, &quot; epigenetics marks, region skipped&quot;)
@@ -1904,6 +1882,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
     }
   
     fitted = setNames(replicate(length(fdat$residual_Y), list(), simplify = FALSE), names(fdat$residual_Y))
+    region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), analysis_region = &quot;${_meta_info[1]}&quot;, grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=&quot;${_meta_info[2]}&quot;)
     for (r in 1:length(fitted)) {
         st = proc.time()
         fitted[[r]] = list()
@@ -1917,12 +1896,18 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
             }
             fitted[[r]]$susie_on_top_pc &lt;- list()
             for (i in 1:ncol(top_pc_data)) {
-                susie_on_top_pc &lt;- susie_wrapper(fdat$residual_X[[r]], top_pc_data[,i], init_L=${init_L}, max_L=${max_L}, refine=TRUE, coverage = ${coverage[0]})
-                fitted[[r]]$susie_on_top_pc[[i]] &lt;- susie_post_processor(susie_on_top_pc, fdat$residual_X[[r]], top_pc_data[,i], fdat$residual_X_scalar[[r]], 1, fdat$maf[[r]],
-                                           secondary_coverage = c(${&quot;,&quot;.join([str(x) for x in coverage[1:]])}), signal_cutoff = ${pip_cutoff},
-                                           other_quantities = list(dropped_samples = list(X=fdat$dropped_sample$dropped_samples_X[[r]], 
-                                                                   y=fdat$dropped_sample$dropped_samples_Y[[r]], 
-                                                                   covar=fdat$dropped_sample$dropped_samples_covar[[r]])))
+                susie_on_top_pc &lt;- susieR::susie(fdat$residual_X[[r]], top_pc_data[,i], L=${L}, L_greedy=${L_greedy}, refine=TRUE, coverage = ${coverage[0]})
+                fitted[[r]]$susie_on_top_pc[[i]] &lt;- format_finemapping_output(
+                    postprocess_finemapping_fits(
+                        fits = list(susie = susie_on_top_pc),
+                        data_x = fdat$residual_X[[r]], data_y = top_pc_data[,i],
+                        X_scalar = fdat$residual_X_scalar[[r]], y_scalar = 1, maf = fdat$maf[[r]],
+                        coverage = ${coverage[0]}, secondary_coverage = c(${&quot;,&quot;.join([str(x) for x in coverage[1:]])}), signal_cutoff = ${pip_cutoff},
+                        region = region_info$analysis_region,
+                        other_quantities = list(dropped_samples = list(X=fdat$dropped_sample$dropped_samples_X[[r]], 
+                                                                        y=fdat$dropped_sample$dropped_samples_Y[[r]], 
+                                                                        covar=fdat$dropped_sample$dropped_samples_covar[[r]]))),
+                    primary_method = &quot;susie&quot;)
             }
             # Run TWAS weights on the first PC
             # Exactly the same codes copied from susie_twas
@@ -1940,7 +1925,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
         fitted[[r]]$fsusie_result &lt;- fsusie_wrapper(X = fdat$residual_X[[r]],
                                       Y = fdat$residual_Y[[r]],
                                       pos=fdat$Y_coordinates[[r]]$start,
-                                      L=${max_L},
+                                      L=${L},
                                       prior=&quot;${prior}&quot;,
                                       max_SNP_EM=${max_SNP_EM}, 
                                       max_scale = ${max_scale},
@@ -1951,12 +1936,18 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                                       )
         fitted[[r]]$Y_coordinates = fdat$Y_coordinates[[r]] # Add Y coord 
         names(fitted[[r]]$fsusie_result$pip) = colnames(fdat$residual_X[[r]]) 
-        fitted[[r]]$fsusie_summary &lt;- susie_post_processor(fitted[[r]]$fsusie_result, fdat$residual_X[[r]], NULL, fdat$residual_X_scalar[[r]], 1, fdat$maf[[r]], 
-                                                          secondary_coverage = c(${&quot;,&quot;.join([str(x) for x in coverage[1:]])}), signal_cutoff = ${pip_cutoff},
-                                                          other_quantities = list(dropped_samples = list(X=fdat$dropped_sample$dropped_samples_X[[r]], y=fdat$dropped_sample$dropped_samples_Y[[r]], 
-                                                                                  covar=fdat$dropped_sample$dropped_samples_covar[[r]])))
+        fitted[[r]]$fsusie_summary &lt;- format_finemapping_output(
+            postprocess_finemapping_fits(
+                fits = list(fsusie = fitted[[r]]$fsusie_result),
+                data_x = fdat$residual_X[[r]], data_y = NULL,
+                X_scalar = fdat$residual_X_scalar[[r]], y_scalar = 1, maf = fdat$maf[[r]],
+                coverage = ${coverage[0]}, secondary_coverage = c(${&quot;,&quot;.join([str(x) for x in coverage[1:]])}), signal_cutoff = ${pip_cutoff},
+                region = region_info$analysis_region,
+                other_quantities = list(dropped_samples = list(X=fdat$dropped_sample$dropped_samples_X[[r]], y=fdat$dropped_sample$dropped_samples_Y[[r]], 
+                                                                covar=fdat$dropped_sample$dropped_samples_covar[[r]]))),
+            primary_method = &quot;fsusie&quot;)
         fitted[[r]]$total_time_elapsed = proc.time() - st
-        fitted[[r]]$region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=&quot;${_meta_info[2]}&quot;)
+        fitted[[r]]$region_info = region_info
         # original data no longer relevant, set to NA to release memory
         fdat$residual_X[[r]] &lt;- NA
         fdat$residual_Y[[r]] &lt;- NA
@@ -2000,7 +1991,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                          Y_u = Reduce(cbind, Y[[2]]),
                          pos = list(pos1 =fdat$phenotype_coordiates[[1]], pos2 = fdat$phenotype_coordiates[[3]]),
                          X=X,
-                         L=${max_L},
+                         L=${L},
                          data.format=&quot;list_df&quot;)
     saveRDS(fitted, ${_output:ar})
 </pre></div>

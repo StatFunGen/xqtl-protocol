@@ -568,7 +568,7 @@ per-study LD reference via the <code class="docutils literal notranslate"><span 
     --phenotype-names trait_A
 
 #It is also possible to analyze a selected list of regions using option `--region-list`. The last column of this file will be used for the list to analyze. Here for example use the same list of regions as we used for customized association-window:
-sos run pipeline/colocboost.ipynb colcoboost  \
+sos run pipeline/colocboost.ipynb colocboost  \
     --name protocol_example_protein  \
     --genoFile input/xqtl_association/protocol_example.genotype.chr21_22.bed   \
     --phenoFile output/phenotype/protocol_example.protein.region_list.txt \
@@ -779,7 +779,7 @@ Global Workflow Options:
   --R2-threshold 0.6 (as float)
   --minimum-ld 5 (as int)
   --qc-method NULL
-                        summary stats QC methods: rss_qc, dentist, slalom
+                        summary stats QC methods: slalom, dentist
   --extract-sumstats-region-name NULL
   --sumstats-region-name-col NULL
                         Either an index number in str format or &quot;NULL&quot; as a string
@@ -877,7 +877,7 @@ parameter: rcond = 0.01
 parameter: lamb = 0.01
 parameter: R2_threshold = 0.6
 parameter: minimum_ld = 5
-# summary stats QC methods: rss_qc, dentist, slalom
+# summary stats QC methods: slalom, dentist
 parameter: qc_method = &quot;NULL&quot;
 parameter: extract_sumstats_region_name = &quot;NULL&quot;
 # Either an index number in str format or &quot;NULL&quot; as a string
@@ -1256,6 +1256,12 @@ def parse_region(region):
     else:
         raise ValueError(f&quot;Invalid region format: {region}. Expected format: chr:start-end or chr:start_end&quot;)
 
+def format_region_key(region):
+    chrom = str(region[0])
+    if not chrom.startswith(&#39;chr&#39;):
+        chrom = f&#39;chr{chrom}&#39;
+    return f&quot;{chrom}:{region[1]}-{region[2]}&quot;
+
 def resolve_region_names(region_name, customized_association_windows=None, region_list=None):
     &quot;&quot;&quot;
     Resolve region names by looking them up in either customized_association_windows or region_list.
@@ -1325,7 +1331,7 @@ def resolve_region_names(region_name, customized_association_windows=None, regio
                 raise ValueError(f&quot;Could not parse region &#39;{region}&#39; and it was not found in the region file&quot;)
         
         # Format the region key
-        region_key = f&quot;chr{parsed_region[0]}:{parsed_region[1]}-{parsed_region[2]}&quot;
+        region_key = format_region_key(parsed_region)
         if region_key not in region_dict:
             region_dict[region_key] = parsed_region
     
@@ -1422,7 +1428,7 @@ def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping,
             try:
                 # First try parsing the region as a coordinate
                 parsed_region = parse_region(region)
-                region_key = f&quot;chr{parsed_region[0]}:{parsed_region[1]}-{parsed_region[2]}&quot;
+                region_key = format_region_key(parsed_region)
                 if region_key not in region_dict:
                     region_dict[region_key] = parsed_region
             except ValueError:
@@ -1459,7 +1465,7 @@ def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping,
                     raise ValueError(f&quot;Invalid region format in region_list: {line.strip()}&quot;)
                 
                 # Create key in the same format as regional_data[&quot;meta_info&quot;][1]
-                region_key = f&quot;chr{region[0]}:{region[1]}-{region[2]}&quot;
+                region_key = format_region_key(region)
                 region_dict[region_key] = region
 
     return gwas_dict, region_dict
@@ -1649,21 +1655,21 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
   
     # - analysis parameters
     region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
-    res &lt;- colocboost_analysis_pipeline(region_data = fdat, 
-                                        event_filters = event_filters,
-                                        # - analysis
-                                        xqtl_coloc = xqtl_coloc,
-                                        joint_gwas = joint_gwas,
-                                        separate_gwas = separate_gwas,
-                                        # - individual QC
-                                        maf_cutoff = maf_cutoff, 
-                                        pip_cutoff_to_skip_ind = pip_cutoff_to_skip_ind,
-                                        # - sumstat QC
-                                        pip_cutoff_to_skip_sumstat = pip_cutoff_to_skip_sumstat,
-                                        keep_indel = keep_indel,
-                                        qc_method = qc_method,
-                                        impute = impute, 
-                                        impute_opts = impute_opts)
+    res &lt;- colocboost_pipeline(region_data = fdat, 
+                               event_filters = event_filters,
+                               # - analysis
+                               xqtl_coloc = xqtl_coloc,
+                               joint_gwas = joint_gwas,
+                               separate_gwas = separate_gwas,
+                               # - individual QC
+                               maf_cutoff = maf_cutoff, 
+                               pip_cutoff_to_skip_ind = pip_cutoff_to_skip_ind,
+                               # - sumstat QC
+                               pip_cutoff_to_skip_sumstat = pip_cutoff_to_skip_sumstat,
+                               keep_indel = keep_indel,
+                               qc_method = qc_method,
+                               impute = impute, 
+                               impute_opts = impute_opts)
 
     # Reorganize outputs
     computing_time &lt;- c(computing_time, res$computing_time)

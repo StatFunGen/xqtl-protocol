@@ -468,15 +468,13 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-results">Extracting susie results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-rss-results-for-adgwas">Extracting susie_rss results for ADGWAS</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-fsusie-results">Extracting fsusie results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting-the-pip-plot">Plotting the pip plot</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-choices">Workflow choices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-modality-flags">Input modality flags</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-all-top-loci">Export all top loci</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exporting-cis-analysis-susie-twas-results">Exporting cis_analysis susie_twas results</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-gwas-data">Export gwas data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combine-seperate-meta-file">combine seperate meta file</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overlapped-gwas-data-and-eqtl-data">Overlapped gwas data and eQTL data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-all-top-loci">Export all top loci</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#into-vcf-format">Into VCF format</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cis-window-analysis-result-consolidation">Cis-window analysis Result consolidation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-results-consolidation">GWAS results consolidation</a></li>
@@ -494,127 +492,137 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="integrative-analysis-output-processing">
 <h1>Integrative Analysis Output Processing<a class="headerlink" href="#integrative-analysis-output-processing" title="Link to this heading">#</a></h1>
-<p>This notebook is to post-process the susie results into different text file</p>
-<section id="extracting-susie-results">
-<h2>Extracting susie results<a class="headerlink" href="#extracting-susie-results" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_to_tsv \
-    --cwd output/test --rds_path `ls output/test/cache/*rds | head ` --region-list &lt;(head -50  ./dlpfc_region_list) --container containers/stephenslab.sif 
-</pre></div>
-</div>
-</div>
+<p>This notebook is to post-process the susie results into exported tables.</p>
+<section id="workflow-choices">
+<h2>Workflow choices<a class="headerlink" href="#workflow-choices" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Produces</p></th>
+<th class="head"><p>When to use</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">export_top_loci</span></code> (<strong>recommended</strong>)</p></td>
+<td><p>per-region RDS + per-region <code class="docutils literal notranslate"><span class="pre">top_loci.bed.gz</span></code> + combined <code class="docutils literal notranslate"><span class="pre">{name}.{qtl_type}.top_loci.bed.gz</span></code></p></td>
+<td><p>Default path. Chains the export, the top_loci extraction, and the combine step in one <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span></code> invocation. See concrete examples under “Export all top loci” below.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cis_results_export</span> <span class="pre">--step1_only</span></code></p></td>
+<td><p>per-region RDS only</p></td>
+<td><p>When a downstream consumer needs the raw exported RDS but not the top_loci summary. Equivalent to running just <code class="docutils literal notranslate"><span class="pre">export_top_loci_1</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cis_results_export</span></code> (no flag)</p></td>
+<td><p>per-region RDS + combined meta TSV <code class="docutils literal notranslate"><span class="pre">{name}.cis_results_db.tsv</span></code></p></td>
+<td><p>Used to be the default workflow; now mostly superseded by <code class="docutils literal notranslate"><span class="pre">export_top_loci</span></code>. Step 2 produces the meta TSV that listed per-region paths for legacy downstream tools.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </section>
-<section id="extracting-susie-rss-results-for-adgwas">
-<h2>Extracting susie_rss results for ADGWAS<a class="headerlink" href="#extracting-susie-rss-results-for-adgwas" title="Link to this heading">#</a></h2>
+<section id="input-modality-flags">
+<h2>Input modality flags<a class="headerlink" href="#input-modality-flags" title="Link to this heading">#</a></h2>
+<p>Both workflows share step 1, so these flags work identically for <code class="docutils literal notranslate"><span class="pre">cis_results_export</span></code> and <code class="docutils literal notranslate"><span class="pre">export_top_loci</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>Use for</p></th>
+<th class="head"><p>Effect on intermediate filename</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><em>(none)</em></p></td>
+<td><p>univariate SuSiE (default)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{name}.{region}.cis_results_db.rds</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--fsusie</span></code></p></td>
+<td><p>functional SuSiE (mQTL, haQTL, …)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{name}.epigenomics_{region}.cis_results_db.rds</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--metaQTL</span></code></p></td>
+<td><p>meta-analysis QTL</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{name}.metabolomics_{region}.cis_results_db.rds</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--mnm</span></code></p></td>
+<td><p>multi-gene multivariate SuSiE</p></td>
+<td><p>same as default but skips the sumstats RDS write</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Common per-mode <code class="docutils literal notranslate"><span class="pre">--suffix</span></code> values for the upstream fine-mapping output:</p>
+<ul class="simple">
+<li><p>susie: <code class="docutils literal notranslate"><span class="pre">univariate_susie_twas_weights.rds</span></code> or <code class="docutils literal notranslate"><span class="pre">univariate_bvsr.rds</span></code></p></li>
+<li><p>fsusie: <code class="docutils literal notranslate"><span class="pre">fsusie_mixture_normal_top_pc_weights.rds</span></code></p></li>
+<li><p>mnm: <code class="docutils literal notranslate"><span class="pre">multigene_bvsr.rds</span></code></p></li>
+</ul>
+<p>Common <code class="docutils literal notranslate"><span class="pre">--region_file</span></code> choices: <code class="docutils literal notranslate"><span class="pre">TADB_enhanced_cis.coding.bed</span></code> (cis), <code class="docutils literal notranslate"><span class="pre">extended_TADB.bed</span></code> (fsusie / multi-gene), <code class="docutils literal notranslate"><span class="pre">hg38_1362_blocks.bed</span></code> (metaQTL).</p>
+<p>All concrete invocation examples are under <a class="reference internal" href="#Export-all-top-loci"><span class="xref myst">Export all top loci</span></a> below; add the modality flag (<code class="docutils literal notranslate"><span class="pre">--fsusie</span></code> / <code class="docutils literal notranslate"><span class="pre">--metaQTL</span></code> / <code class="docutils literal notranslate"><span class="pre">--mnm</span></code>) plus the matching <code class="docutils literal notranslate"><span class="pre">--suffix</span></code> to switch input type. To run only the RDS export without top_loci extraction or combine, swap the workflow name <code class="docutils literal notranslate"><span class="pre">export_top_loci</span></code> → <code class="docutils literal notranslate"><span class="pre">cis_results_export</span> <span class="pre">--step1_only</span></code>.</p>
+</section>
+<section id="export-all-top-loci">
+<h2>Export all top loci<a class="headerlink" href="#export-all-top-loci" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_to_tsv \
-    --cwd output/ADGWAS_finemapping_extracted/Bellenguez/ --rds_path `ls GWAS_Finemapping_Results/Bellenguez/ADGWAS2022*rds ` \
-    --region-list ~/1300_hg38_EUR_LD_blocks_orig.tsv \
-    --container containers/stephenslab.sif 
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Required CLI args (substitute placeholders &lt;...&gt; with your real values):
+#   --file_path                  dir containing fine-mapping RDS files
+#   --prefix &lt;fm_rds_prefix&gt;     filename part BEFORE the region id
+#   --suffix &lt;fm_rds_suffix&gt;     filename part AFTER  the region id
+#                                expected per-region path:
+#                                  {file_path}/{prefix}.{region}.{suffix}
+#                                example: ROSMAP_AC_eQTL.ENSG00000012779.univariate_bvsr.rds
+#                                         \__ prefix __/  \___ region ___/  \___ suffix ___/
+#   --name   &lt;study_name&gt;        tag used in output filenames and intermediate RDS names
+#                                (final output: {cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz)
+#   --qtl_type cis | trans | trans_&lt;program&gt;  appears in the combined filename
+#   --region_file                bed of regions (chr, start, end, region_id) to enumerate
+#   --geno_ref                   tabix-indexed bim.gz for allele-flipping checks
+#
+# Outputs produced:
+#   {cwd}/{name}.{region}.cis_results_db.rds        per-region intermediate RDS
+#   {cwd}/summary/{name}.{region}.top_loci.bed.gz   per-region top_loci
+#   {cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz combined public-facing file
 
-sos run pipeline/SuSiE_post_processing.ipynb susie_tsv_collapse \
-    --cwd output/ADGWAS_finemapping_extracted --tsv_path `ls output/ADGWAS_finemapping_extracted/*lbf.tsv` \
-    --container containers/stephenslab.sif 
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="extracting-fsusie-results">
-<h2>Extracting fsusie results<a class="headerlink" href="#extracting-fsusie-results" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
-    --cwd output/f_susie_tad_haQTL_pos --rds_path `ls output/f_susie_tad_haQTL_pos/cache/*rds ` \
-    --region-list ../eqtl/dlpfc_tad_list \
-    --container containers/stephenslab.sif -s build
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
-    --cwd output/f_susie_tad_meQTL_pos_selected/ --rds_path `ls output/f_susie_tad_meQTL_pos_selected//cache/*1204*rds ` \
-    --region-list ../eqtl/dlpfc_tad_list \
-    --container containers/stephenslab.sif -s build
+# Full run: export all regions via SLURM and combine into one study-level file.
+sos run ./mnm_postprocessing.ipynb export_top_loci \
+    --region_file ./TADB_enhanced_cis.coding.bed \
+    --file_path /path/to/fine_mapping \
+    --prefix &lt;fm_rds_prefix&gt; \
+    --suffix &lt;fm_rds_suffix&gt; \
+    --name &lt;study_name&gt; \
+    --min_corr 0.8 \
+    --geno_ref ./Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz \
+    --qtl_type cis \
+    --cwd ~/tmp/export_run \
+    --mem 14G --walltime 72h \
+    -q slurm -j 100 -s build
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
-    --cwd output/f_susie_tad_meQTL_pos_2/ --rds_path `ls output/f_susie_tad_meQTL_pos_2//cache/*rds ` \
-    --region-list ../eqtl/dlpfc_tad_list \
-    --container containers/stephenslab.sif -s build
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
-    --cwd output/f_susie_tad_meQTL_pos/ --rds_path `ls output/f_susie_tad_meQTL_pos//cache/*rds ` \
-    --region-list ../eqtl/dlpfc_tad_list \
-    --container containers/stephenslab.sif -s build
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
-    --cwd output/f_susie_tad_haQTL_pos_check_pure_2 --rds_path `ls output/f_susie_tad_haQTL_pos_check_pure_2/cache/*rds ` \
-    --region-list ../eqtl/dlpfc_tad_list \
-    --container containers/stephenslab.sif -s build
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb fsusie_to_tsv \
-    --cwd output/f_susie_tad_meQTL_pos_2/ --rds_path `ls output/f_susie_tad_meQTL_pos_2//cache/*rds ` \
-    --region-list ../eqtl/dlpfc_tad_list \
-    --container containers/stephenslab.sif -s build
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="plotting-the-pip-plot">
-<h2>Plotting the pip plot<a class="headerlink" href="#plotting-the-pip-plot" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_pip_landscape_plot \
-    --cwd output/test/ --plot_list plot_recipe --annot_tibble ~/Annotatr_builtin_annotation_tibble.tsv -s force &amp;
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_post_processing.ipynb susie_upsetR_plot \
-    --cwd output/test/ --plot_list plot_recipe_1  -s force &amp;
-</pre></div>
-</div>
-</div>
-</div>
-<p>The required input for this step is a tab-delimited plot_recipe file that specifies the path to each of the variant.tsv files generated from this module. Each column represents a molecular phenotype, and each row indicates the files that share common variants. Since one TAD may correspond to multiple genes, additional eQTL are permitted. If there are additional molecular phenotypes or ADGWAS datasets, additional columns can be appended.</p>
-<p>The built-in Annotatr_builtin_annotation_tibble.tsv can be downloaded from <a class="reference external" href="https://www.synapse.org/#!Synapse:syn51198526">synapse</a>, please download it and specify the path.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>cat /mnt/vast/hpc/csg/molecular_phenotype_calling/QTL_fine_mapping/plot_recipe
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>haQTL	mQTL	eQTL	eQTL	ADGWAS
-/mnt/vast/hpc/csg/molecular_phenotype_calling/QTL_fine_mapping/output/f_susie_tad_meQTL_pos//meQTL.yuqi_mqtl.tad100.uni_Fsusie.mixture_normal_per_scale.variant.tsv	/mnt/vast/hpc/csg/molecular_phenotype_calling/QTL_fine_mapping/output/f_susie_tad_haQTL_pos//haQTL.rosmap_haqtl.tad100.uni_Fsusie.mixture_normal_per_scale.variant.tsv	/mnt/vast/hpc/csg/molecular_phenotype_calling/eqtl//output/susie_per_gene_tad//demo.ENSG00000117322.unisusie.fit.variant.tsv	/mnt/vast/hpc/csg/molecular_phenotype_calling/eqtl//output/susie_per_gene_tad//demo.ENSG00000203710.unisusie.fit.variant.tsv	/mnt/vast/hpc/csg/xqtl_workflow_testing/susie_rss/output/ADGWAS_finemapping_extracted/Bellenguez/ADGWAS2022.chr1.sumstat.chr1_205972031_208461272.unisusie_rss.fit.variant.tsv
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Subset by region: step 3 (combine) is auto-skipped because --region-name is set.
+# Use this for one-region debugging or a re-run of a few failed regions.
+sos run ./mnm_postprocessing.ipynb export_top_loci \
+    --region_file ./TADB_enhanced_cis.coding.bed \
+    --file_path /path/to/fine_mapping \
+    --prefix &lt;fm_rds_prefix&gt; \
+    --suffix &lt;fm_rds_suffix&gt; \
+    --name &lt;study_name&gt; \
+    --min_corr 0.8 \
+    --geno_ref ./Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz \
+    --qtl_type cis \
+    --cwd ~/tmp/export_run \
+    --region-name ENSG00000048740 \
+    --mem 14G --walltime 72h \
+    -q slurm -j 100 -s build
+
+# Combine-step overrides:
+#   --combine yes   force run step 3 on a subset (rare; e.g. re-combining after partial re-run)
+#   --combine no    skip step 3 on a full run   (rare; e.g. combine offline)
+#   default &#39;auto&#39;: run if no region filter, skip if --region-name / --region-list is set
+#
+# Note: --job_size defaults to 1 (one substep per sbatch). Pass --job_size N to bundle
+# N substeps in parallel inside one task; requires N x cores and N x mem on the node.
 </pre></div>
 </div>
 </div>
@@ -659,82 +667,6 @@ Inh Inh_De_Jager_eQTL
 DLPFC DLPFC_De_Jager_eQTL
 PCC PCC_De_Jager_eQTL
 AC AC_De_Jager_eQTL
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#susie
-sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export    \
-    --region_file /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/TADB_enhanced_cis.protein_coding.bed   \
-    --file_path  /mnt/vast/hpc/homes/rf2872/aws/rds_files   \
-    --name demo_susie   \
-    --suffix univariate_susie_twas_weights.rds   \
-    --prefix  MiGA_eQTL KNIGHT_pQTL  \
-    --min_corr 0.8 \
-    --geno_ref /mnt/vast/hpc/csg/rf2872/data/Fungen_xqtl/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz  \
-    --context-meta /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv  \
-    --cwd demo_susie \
-    --step1_only #optional to keep cache file
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#fsusie
-sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export    \
-    --region_file /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/extended_TADB.bed  \
-    --file_path  /mnt/vast/hpc/homes/rf2872/aws/rds_files     \
-    --name demo_fsusie   \
-    --suffix fsusie_mixture_normal_top_pc_weights.rds    \
-    --prefix  ROSMAP_mQTL ROSMAP_haQTL  \
-    --min_corr 0.8  \
-    --geno_ref /mnt/vast/hpc/csg/rf2872/data/Fungen_xqtl/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz  \
-    --context-meta /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv   \
-    --cwd demo_fsusie \
-    --fsusie \
-    --step1_only #optional to keep cache file
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#meta QTL
-sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export      \
-    --region_file /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/hg38_1362_blocks.bed     \
-    --file_path  /mnt/vast/hpc/homes/rf2872/aws/rds_files       \
-    --name demo_metaQTL     \
-    --suffix univariate_susie_twas_weights.rds        \
-    --prefix  ROSMAP_metaQTL  \
-    --min_corr 0.8   \
-    --geno_ref /mnt/vast/hpc/csg/rf2872/data/Fungen_xqtl/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz    \
-    --context-meta /mnt/vast/hpc/homes/rf2872/codes/xqtl-analysis/resource/context_meta.tsv    \
-    --cwd demo_metaQTL \
-    --metaQTL \
-    --step1_only #optional to keep cache file
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># multi gene mvsusie
-# multi gene mvsusie
-    sos run /data/interactive_analysis/rf2872/codes/Jan/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb  cis_results_export  \
-    --region_file  /data/xqtl-analysis/resource/extended_TADB.bed  \
-    --file_path /data/analysis_result/mnm/ROSMAP/mnm_genes/   \
-    --name ROSMAP_AC_DeJager_eQTL   \
-    --suffix multigene_bvsr.rds   \
-    --prefix  ROSMAP_AC_DeJager_eQTL \
-    --min_corr 0.8 \
-    --geno_ref  /data/resource/geno_align/Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz \
-    --cwd demo_multigene \
-    --mnm \
-    --region-name  chr10_100845599_104855543 \#optional for testing with one region
-    --step1_only #optional to keep cache file
 </pre></div>
 </div>
 </div>
@@ -787,20 +719,6 @@ sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.i
 </div>
 </div>
 </div>
-</section>
-<section id="export-all-top-loci">
-<h2>Export all top loci<a class="headerlink" href="#export-all-top-loci" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run /home/rf2872/codes/xqtl-pipeline/pipeline/fine_mapping_post_processing.ipynb   export_top_loci \
---export_path /home/ubuntu/demo_singlecontext/ \
---region ENSG00000197106 \
---prefix ROSMAP_DeJager \
---suffix  cis_results_db.export.rds
-</pre></div>
-</div>
-</div>
-</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
@@ -814,7 +732,7 @@ parameter: name = &quot;demo&quot;
 ## Containers that contains the necessary packages
 parameter: container = &quot;&quot;
 # For cluster jobs, number commands to run per job
-parameter: job_size = 50
+parameter: job_size = 1
 # Wall clock time expected
 parameter: walltime = &quot;96h&quot;
 # Memory expected
@@ -1676,7 +1594,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = 
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Exporting cis susie_twas results
-[cis_results_export_1, gwas_results_export_1]
+[cis_results_export_1, gwas_results_export_1, export_top_loci_1]
 # per chunk we process at most 200 datasets
 parameter: per_chunk = 200
 # Region list should have last column being region name. 
@@ -1983,10 +1901,10 @@ R: expand = &quot;${ }&quot;,stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
               filter(rowSums(select(., starts_with(&#39;cs_coverage_&#39;))) &gt; 0)
     
             susie_vars &lt;- rbind(top_loci_others %&gt;% filter(pip &gt;= 0.05), top_loci_cs) %&gt;% pull(variant_id)
-            if(length(susie_vars) &gt; 0) susie_vars &lt;- align_to_genoref(var_list = susie_vars, geno_ref = geno_ref, region = paste0(gsub(&quot;chr&quot;,&quot;&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
+            if(length(susie_vars) &gt; 0) susie_vars &lt;- align_to_genoref(var_list = susie_vars, geno_ref = geno_ref, region = paste0(sub(&quot;^(chr)?&quot;,&quot;chr&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
     
             susie_vars_cs &lt;- top_loci_cs %&gt;% pull(variant_id)
-            if(length(susie_vars_cs) &gt; 0)  susie_vars_cs &lt;- align_to_genoref(var_list = susie_vars_cs, geno_ref = geno_ref, region = paste0(gsub(&quot;chr&quot;,&quot;&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
+            if(length(susie_vars_cs) &gt; 0)  susie_vars_cs &lt;- align_to_genoref(var_list = susie_vars_cs, geno_ref = geno_ref, region = paste0(sub(&quot;^(chr)?&quot;,&quot;chr&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
     
             top_loci &lt;- top_loci %&gt;% mutate(annotated_susie = ifelse(variant_id %in% susie_vars, 1, 0),
                                annotated_susie_cs = ifelse(variant_id %in% susie_vars_cs, 1, 0))
@@ -2332,7 +2250,7 @@ R: expand = &quot;${ }&quot;,stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
                 if(has_rows(dat_con$top_loci) || has_rows(dat_con$preset_top_loci)) cons_top_loci[[id]][[context]] &lt;- context else  cons_top_loci[[id]][[context]] &lt;- NULL    
                 variant_ids &lt;- c(dat_con$top_loci$variant_id, dat_con$variant_names, dat_con$preset_variants_result$top_loci$variant_id, dat_con$preset_variants_result$variant_names)
                 unique_variant_ids &lt;- unique(variant_ids)
-                aligned_variant_ids &lt;- align_to_genoref(unique_variant_ids, geno_ref, paste0(gsub(&quot;chr&quot;,&quot;&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
+                aligned_variant_ids &lt;- align_to_genoref(unique_variant_ids, geno_ref, paste0(sub(&quot;^(chr)?&quot;,&quot;chr&quot;,&quot;${_meta_info[0]}&quot;), &quot;:&quot;, &quot;${_meta_info[1]}&quot;, &quot;-&quot;, &quot;${_meta_info[2]}&quot;))
                 names(aligned_variant_ids) &lt;- unique_variant_ids
 
                 # change beta or z in top loci and sumstats
@@ -2425,8 +2343,8 @@ R: expand = &quot;${ }&quot;,stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
     cons_top_loci &lt;- if(length(cons_top_loci) &gt; 0) cons_top_loci else NA
 
     combine_data = combine_data_sumstats = cons_top_loci_minp = &#39;&#39;
-    combine_data = paste0(&quot;${_output:add}&quot;,&quot;/&quot;,&quot;${name}&quot;, &quot;.&quot;, ${&#39;&quot;epigenomics_&quot;&#39; if fsusie else &#39;&quot;&quot;&#39;}, ${ &#39;&quot;metabolomics_&quot;&#39; if metaQTL else &#39;&quot;&quot;&#39;}, gene, &quot;.cis_results_db.export.rds&quot;)
-    if (${&quot;FALSE&quot; if fsusie else &quot;TRUE&quot;}) combine_data_sumstats = gsub(&quot;export.rds$&quot;, &quot;export_sumstats.rds&quot;, combine_data)
+    combine_data = paste0(&quot;${_output:add}&quot;,&quot;/&quot;,&quot;${name}&quot;, &quot;.&quot;, ${&#39;&quot;epigenomics_&quot;&#39; if fsusie else &#39;&quot;&quot;&#39;}, ${ &#39;&quot;metabolomics_&quot;&#39; if metaQTL else &#39;&quot;&quot;&#39;}, gene, &quot;.cis_results_db.rds&quot;)
+    if (${&quot;FALSE&quot; if fsusie else &quot;TRUE&quot;}) combine_data_sumstats = gsub(&quot;\\.rds$&quot;, &quot;.sumstats.rds&quot;, combine_data)
   
     if (${&quot;TRUE&quot; if exported_file.is_file() else &quot;FALSE&quot;}){
         if (file.exists(combine_data)) {
@@ -2611,16 +2529,22 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[export_top_loci]
-parameter: export_path=path
-parameter: region = str
-parameter: prefix = str
-parameter: suffix = str
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[export_top_loci_2]
+# `export_suffix` deliberately differs from step 1&#39;s `--suffix` (input rds) to avoid CLI collision.
+parameter: export_path = cwd
+parameter: export_prefix = &#39;&#39;  # falls back to step-1 `name` if empty
+parameter: export_suffix = &#39;cis_results_db.rds&#39;
 parameter: fsusie_prefix = &#39;&#39;
 parameter: preset_top_loci = False
 parameter: lfsr_thres = 0.01
-input: f&quot;{export_path}/{prefix}.{fsusie_prefix}{region}.{suffix}&quot; 
-output: f&quot;{cwd:a}/{prefix}.{region}.toploci.bed.gz&quot; 
+
+_pfx = export_prefix if export_prefix else name
+import glob as _glob
+_rds_files = sorted(_glob.glob(f&quot;{export_path}/{_pfx}.{fsusie_prefix}*.{export_suffix}&quot;))
+stop_if(len(_rds_files) == 0, f&quot;No RDS files matched: {export_path}/{_pfx}.{fsusie_prefix}*.{export_suffix}&quot;)
+
+input: _rds_files, group_by = 1
+output: f&quot;{cwd}/summary/{_input:bnn}.top_loci.bed.gz&quot;
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
 R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     library(tidyverse)
@@ -2692,7 +2616,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
             MAF = maf,
             betahat = betahat,
             sebetahat = sebetahat,
-            z=z,
+            z = if (&quot;z&quot; %in% colnames(.)) z else NA,
             
           )  %&gt;%
           {
@@ -2743,6 +2667,50 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
       # Write empty file
         fwrite(empty_df,&quot;${_output}&quot;)
     }
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>
+[export_top_loci_3]
+# Combine per-region .top_loci.bed.gz files into one study-level file.
+# Public-facing name: {name}.{qtl_type}[.{variant_tag}].top_loci.bed.gz
+parameter: qtl_type = str
+parameter: variant_tag = &#39;&#39;
+# &#39;auto&#39; (default): skip step 3 if region_name or region_list is set; &#39;yes&#39;: force run; &#39;no&#39;: force skip.
+parameter: combine = &#39;auto&#39;
+# Re-declared so this step can detect step-1 subset filters.
+parameter: region_list = path()
+parameter: region_name = []
+stop_if(combine not in (&#39;auto&#39;, &#39;yes&#39;, &#39;no&#39;), f&quot;--combine must be auto|yes|no, got {combine}&quot;)
+_region_filter_set = (region_list.is_file() or len(region_name) &gt; 0)
+_do_combine = (combine == &#39;yes&#39;) or (combine == &#39;auto&#39; and not _region_filter_set)
+skip_if(not _do_combine, f&quot;Skipping combine: combine={combine}, region_filter_set={_region_filter_set}&quot;)
+_tag = f&quot;.{variant_tag}&quot; if variant_tag else &quot;&quot;
+input: group_by = &#39;all&#39;
+output: f&quot;{cwd}/summary/{name}.{qtl_type}{_tag}.top_loci.bed.gz&quot;
+task: trunk_workers = 1, walltime = &#39;2h&#39;, trunk_size = 1, mem = &#39;8G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    set -euo pipefail
+    mkdir -p &quot;$(dirname &quot;${_output}&quot;)&quot;
+    GZ=$(command -v bgzip || echo gzip)
+    {
+        # header from first non-empty file
+        for f in ${_input}; do
+            if [ &quot;$(zcat -f &quot;$f&quot; 2&gt;/dev/null | wc -l)&quot; -ge 2 ]; then
+                zcat &quot;$f&quot; | head -1
+                break
+            fi
+        done
+        # data rows from every non-empty file
+        for f in ${_input}; do
+            if [ &quot;$(zcat -f &quot;$f&quot; 2&gt;/dev/null | wc -l)&quot; -ge 2 ]; then
+                zcat &quot;$f&quot; | tail -n +2
+            fi
+        done
+    } | $GZ &gt; ${_output}
 </pre></div>
 </div>
 </div>
@@ -3052,15 +3020,13 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-results">Extracting susie results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-susie-rss-results-for-adgwas">Extracting susie_rss results for ADGWAS</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-fsusie-results">Extracting fsusie results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting-the-pip-plot">Plotting the pip plot</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-choices">Workflow choices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-modality-flags">Input modality flags</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-all-top-loci">Export all top loci</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exporting-cis-analysis-susie-twas-results">Exporting cis_analysis susie_twas results</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-gwas-data">Export gwas data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combine-seperate-meta-file">combine seperate meta file</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overlapped-gwas-data-and-eqtl-data">Overlapped gwas data and eQTL data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-all-top-loci">Export all top loci</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#into-vcf-format">Into VCF format</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cis-window-analysis-result-consolidation">Cis-window analysis Result consolidation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-results-consolidation">GWAS results consolidation</a></li>

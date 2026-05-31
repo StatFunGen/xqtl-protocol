@@ -937,20 +937,49 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
     # First column is always the phenotype ID column
     phenotype_id = df.columns.values[0]
     
-    # Type-specific processing
+    # ----- shared helpers / constants ---------------------------------------------------
+    # Names of columns that are never sample-level phenotype data. Used by the ATAC branch
+    # to derive sample columns by subtraction and by write_phenotype_outputs to guard the
+    # analysis BED schema.
+    ANNOTATION_COLUMNS = {&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;, &quot;strand&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;}
+
+    def write_phenotype_outputs(merged_df, sample_cols, bed_path, meta_path):
+        &quot;&quot;&quot;Compose and write the two phenotype outputs from a single merged DataFrame.
+
+        merged_df    : annotation columns + sample columns, must contain at minimum
+                       [#chr, start, end, ID]; may also contain &quot;strand&quot;.
+        sample_cols  : explicit list of sample-level column names in merged_df.
+
+        Analysis BED (bed_path)  : [#chr, start, end, ID, *sample_cols].
+                                   Strand is intentionally omitted — tensorqtl and pecotmr
+                                   expect exactly 4 metadata columns before samples.
+        Sidecar TSV (meta_path)  : [#chr, start, end, ID] (+ &quot;strand&quot; if available) + path.
+        &quot;&quot;&quot;
+        bed_df = merged_df[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;] + sample_cols]
+        meta_cols = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;]
+        if &quot;strand&quot; in merged_df.columns:
+            meta_cols.append(&quot;strand&quot;)
+        meta_df = merged_df[meta_cols].copy()
+        qtl.io.write_bed(bed_df, bed_path)
+        meta_df.assign(path=bed_path).to_csv(meta_path, &quot;\t&quot;, index=False)
+
+    # ----- type-specific assembly --------------------------------------------------------
+    # Each branch produces:
+    #   merged_df   : annotation + samples (per write_phenotype_outputs contract)
+    #   sample_cols : list of sample column names in merged_df
     if molecular_trait_type == &quot;gene&quot;:
         if ${strip_id}:
             # Update the index by stripping the pattern &quot;A | B&quot; to &quot;B&quot;
             df.index = df.index.map(lambda x: x.split(&#39;|&#39;)[-1].strip() if &#39;|&#39; in x else x)
-            
+
         bed_template_df = load_bed_template_from_gtf(${_input[1]:ar}, &quot;${phenotype_id_column}&quot;)
-        bed_df = prepare_bed(df, bed_template_df).drop(&quot;gene_name&quot;, axis=1)
-        bed_df = bed_df.drop_duplicates(&quot;gene_id&quot;, keep=False)
-        bed_df = bed_df.rename(columns={&#39;gene_id&#39;: &#39;ID&#39;})
-        
+        merged_df = prepare_bed(df, bed_template_df)
+        merged_df = merged_df.drop_duplicates(&quot;gene_id&quot;, keep=False).rename(columns={&#39;gene_id&#39;: &#39;ID&#39;})
+        sample_cols = list(df.columns)
+
     elif molecular_trait_type == &quot;protein&quot;:
         auxiliary_mapping = Path(&quot;${auxiliary_id_mapping:a}&quot;)
-        
+
         if auxiliary_mapping.is_file():
             # Use protein name mapping from auxiliary file
             df_info = pd.read_csv(auxiliary_mapping).rename(
@@ -960,23 +989,23 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
         else:
             # Extract UniProt ID from phenotype ID if no mapping file
             df[[phenotype_id, &#39;UniProt&#39;]] = df[phenotype_id].astype(str).str.split(&#39;|&#39;, 1, expand=True)
-            
+
         bed_template_df = load_bed_template_from_gtf(${_input[1]:ar}, &quot;${phenotype_id_column}&quot;)
-        bed_df = prepare_bed(df, bed_template_df)
-        bed_df[&quot;ID&quot;] = bed_df[&quot;gene_id&quot;] + &quot;_&quot; + bed_df[&quot;UniProt&quot;]
-        bed_df = bed_df.drop_duplicates(&quot;ID&quot;, keep=False)[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;] + df.drop([&quot;UniProt&quot;], axis=1).columns.values.tolist()]
-        
+        merged_df = prepare_bed(df, bed_template_df)
+        merged_df[&quot;ID&quot;] = merged_df[&quot;gene_id&quot;] + &quot;_&quot; + merged_df[&quot;UniProt&quot;]
+        merged_df = merged_df.drop_duplicates(&quot;ID&quot;, keep=False)
+        sample_cols = df.drop([&quot;UniProt&quot;], axis=1).columns.values.tolist()
+
     elif molecular_trait_type == &quot;atac&quot;:
-        # For ATAC, the coordinate_annotation is directly a BED file
+        # For ATAC, the coordinate_annotation is directly a BED file (no strand)
         bed_template_df = pd.read_csv(&quot;${_input[1]}&quot;, sep=&quot;\t&quot;).set_index(&quot;ID&quot;)
         bed_template_df = bed_template_df.assign(ID=bed_template_df.index)
-        bed_df = prepare_bed(df, bed_template_df)
-        bed_df = bed_df.drop_duplicates(&quot;ID&quot;, keep=False)
+        merged_df = prepare_bed(df, bed_template_df).drop_duplicates(&quot;ID&quot;, keep=False)
+        sample_cols = [c for c in merged_df.columns if c not in ANNOTATION_COLUMNS]
     else:
         raise ValueError(f&quot;Unsupported molecular_trait_type: {molecular_trait_type}&quot;)
-        
-    qtl.io.write_bed(bed_df, ${_output[0]:r})
-    bed_df[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;, &quot;strand&quot;]].assign(path=${_output[0]:r}).to_csv(${_output[1]:r}, &quot;\t&quot;, index=False)
+
+    write_phenotype_outputs(merged_df, sample_cols, ${_output[0]:r}, ${_output[1]:r})
 
     # If annotating gene or protein, save a gene_list.tsv for gene partitioning
     if molecular_trait_type in [&quot;gene&quot;, &quot;protein&quot;]:
