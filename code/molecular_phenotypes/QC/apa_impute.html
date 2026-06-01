@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Bulk RNA-seq counts normalization &#8212; FunGen-xQTL Consortium</title>
+    <title>Post-APA calling: Imputation and QC &#8212; FunGen-xQTL Consortium</title>
   
   
   
@@ -60,11 +60,11 @@
     <script async="async" src="../../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'code/molecular_phenotypes/QC/bulk_expression_normalization';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'code/molecular_phenotypes/QC/apa_impute';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="Post-APA calling: Imputation and QC" href="apa_impute.html" />
-    <link rel="prev" title="Sample level RNA-seq quality control" href="bulk_expression_QC.html" />
+    <link rel="next" title="snRNA-seq Preprocessing QC Pipeline" href="../snRNAseq_preprocessing.html" />
+    <link rel="prev" title="Bulk RNA-seq counts normalization" href="bulk_expression_normalization.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -192,8 +192,8 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../bulk_expression.html">RNA-seq expression</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../calling/RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample level RNA-seq quality control</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Bulk RNA-seq counts normalization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Post-APA calling: Imputation and QC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../snRNAseq_preprocessing.html">snRNA-seq Preprocessing QC Pipeline</a></li>
 
 
@@ -343,7 +343,7 @@
       
       
       
-      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/code/molecular_phenotypes/QC/bulk_expression_normalization.ipynb" target="_blank"
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/code/molecular_phenotypes/QC/apa_impute.ipynb" target="_blank"
    class="btn btn-sm btn-source-edit-button dropdown-item"
    title="Suggest edit"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -360,7 +360,7 @@
       
       
       
-      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fcode/molecular_phenotypes/QC/bulk_expression_normalization.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fcode/molecular_phenotypes/QC/apa_impute.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -390,7 +390,7 @@
       
       
       
-      <li><a href="../../../_sources/code/molecular_phenotypes/QC/bulk_expression_normalization.ipynb" target="_blank"
+      <li><a href="../../../_sources/code/molecular_phenotypes/QC/apa_impute.ipynb" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -466,7 +466,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Bulk RNA-seq counts normalization</h1>
+    <h1>Post-APA calling: Imputation and QC</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -476,15 +476,11 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#aim">Aim</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vii-multi-sample-read-count-normalization">vii. Multi-sample read count normalization</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-working-example">Minimum working example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
 </ul>
             </nav>
         </div>
@@ -496,389 +492,212 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="bulk-rna-seq-counts-normalization">
-<h1>Bulk RNA-seq counts normalization<a class="headerlink" href="#bulk-rna-seq-counts-normalization" title="Link to this heading">#</a></h1>
-<section id="description">
-<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>The normalization step follows steps used by the GTeX pipeline. Genes are first filtered to keep genes where TPM is greater than 10% in at least 20% of the samples. They are also kept if read counts is greater than 6 in at least 20% of the samples. The filtered data is then normalized using the Trimmed Mean of M-value (TMM) method.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="post-apa-calling-imputation-and-qc">
+<h1>Post-APA calling: Imputation and QC<a class="headerlink" href="#post-apa-calling-imputation-and-qc" title="Link to this heading">#</a></h1>
+<section id="aim">
+<h2>Aim<a class="headerlink" href="#aim" title="Link to this heading">#</a></h2>
+<p>This notebook is designed to impute the missing values in the PDUI matrix, and perform quantile normailization for the impute values.</p>
 </section>
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
-<ol class="arabic simple">
-<li><p>TPM matrix and read count matrix in RNA-SeQC format</p>
 <ul class="simple">
-<li><p>the first two rows should be commented text with <code class="docutils literal notranslate"><span class="pre">#</span></code> prefix.</p></li>
-<li><p>the matrix should be tab delimited.</p></li>
-<li><p>the matrix files should end with <code class="docutils literal notranslate"><span class="pre">gct</span></code> suffix</p></li>
-<li><p>These requirements are satisfied if the inputs are outputs from <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/bulk_expression_QC.html"><code class="docutils literal notranslate"><span class="pre">bulk_expression_QC</span></code> pipeline</a>.</p></li>
+<li><p>raw PDUI matrix (row as gene, columns as sample id)</p></li>
+<li><p>covariate file</p></li>
 </ul>
-</li>
-<li><p>GTF for collapsed gene model</p>
-<ul class="simple">
-<li><p>the gene names must be consistent with the GCT matrices (eg ENSG00000000003 vs. ENSG00000000003.1 will not work)</p></li>
-<li><p>chromosome names must have <code class="docutils literal notranslate"><span class="pre">chr</span></code> prefix (although we can make it an option in the pipeline, currently we assume the <code class="docutils literal notranslate"><span class="pre">chr</span></code> prefix convention)</p></li>
-</ul>
-</li>
-<li><p>Meta-data to match between sample names in expression data and genotype files</p>
-<ul class="simple">
-<li><p>Required input</p></li>
-<li><p>Tab delimited with header</p></li>
-<li><p>Only 2 columns: first column is sample name in expression data, 2nd column is sample name in genotype data</p></li>
-<li><p><strong>must contains all the sample name in expression matrices even if they don’t existing in genotype data</strong></p></li>
-</ul>
-</li>
-</ol>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
-<p>Normalized expression file in <code class="docutils literal notranslate"><span class="pre">bed</span></code> format.</p>
+<ul class="simple">
+<li><p>PDUI matrix without missingness</p>
+<ul>
+<li><p>The missing value is calculated using <code class="docutils literal notranslate"><span class="pre">impute</span></code> package</p></li>
+</ul>
+</li>
+</ul>
 </section>
-<section id="minimal-working-example-steps">
-<h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
-<section id="vii-multi-sample-read-count-normalization">
-<h3>vii. Multi-sample read count normalization<a class="headerlink" href="#vii-multi-sample-read-count-normalization" title="Link to this heading">#</a></h3>
-<p>Timing &lt;10min</p>
-<p>TMM normalization of read counts.</p>
+<section id="minimum-working-example">
+<h2>Minimum working example<a class="headerlink" href="#minimum-working-example" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/bulk_expression_normalization.ipynb normalize \
-    --cwd output/rnaseq \
-    --tpm-gct output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tpm.gct.gz \
-    --counts-gct output/rnaseq/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.geneCount.gct.gz \
-    --annotation-gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf  \
-    --count-threshold 1 --sample_participant_lookup data/rnaseq/sample_participant_lookup.txt
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run /mnt/mfs/statgen/ls3751/github/xqtl-protocol/pipeline/molecular_phenotypes/QC/apa_impute.ipynb APAimpute \
+    --cwd /mnt/mfs/statgen/ls3751/MWE_dapars2/Output \
+    --cov /data/example.cov.txt
+    --chrlist chr1 \
+    --container /mnt/mfs/statgen/ls3751/container/dapars2.sif
 </pre></div>
 </div>
 </div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">Running</span> <span class="n">normalize</span><span class="p">:</span> 
-<span class="n">INFO</span><span class="p">:</span> <span class="n">normalize</span> <span class="ow">is</span> <span class="n">completed</span><span class="o">.</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">normalize</span> <span class="n">output</span><span class="p">:</span>   <span class="o">/</span><span class="n">restricted</span><span class="o">/</span><span class="n">projectnb</span><span class="o">/</span><span class="n">xqtl</span><span class="o">/</span><span class="n">xqtl_protocol</span><span class="o">/</span><span class="n">toy_xqtl_protocol</span><span class="o">/</span><span class="n">output</span><span class="o">/</span><span class="n">rnaseq</span><span class="o">/</span><span class="n">bulk_rnaseq_tmp_matrix</span><span class="o">.</span><span class="n">low_expression_filtered</span><span class="o">.</span><span class="n">outlier_removed</span><span class="o">.</span><span class="n">tmm</span><span class="o">.</span><span class="n">expression</span><span class="o">.</span><span class="n">bed</span><span class="o">.</span><span class="n">gz</span>
-<span class="n">INFO</span><span class="p">:</span> <span class="n">Workflow</span> <span class="n">normalize</span> <span class="p">(</span><span class="n">ID</span><span class="o">=</span><span class="n">wfac0c64bd10a9bed</span><span class="p">)</span> <span class="ow">is</span> <span class="n">executed</span> <span class="n">successfully</span> <span class="k">with</span> <span class="mi">1</span> <span class="n">completed</span> <span class="n">step</span><span class="o">.</span>
-</pre></div>
 </div>
 </section>
-</section>
-<section id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Step</p></th>
-<th class="head"><p>Substep</p></th>
-<th class="head"><p>Problem</p></th>
-<th class="head"><p>Possible Reason</p></th>
-<th class="head"><p>Solution</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p></p></td>
-<td><p></p></td>
-<td><p></p></td>
-<td><p></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="command-interface">
-<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>!sos run bulk_expression_normalization.ipynb -h
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/caox2/.pixi/envs/python/lib/python3.12/site-packages/sos/targets.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools&lt;81.
-  import pkg_resources
-usage: sos run bulk_expression_normalization.ipynb
-               [workflow_name | -t targets] [options] [workflow_options]
-  workflow_name:        Single or combined workflows defined in this script
-  targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
-  workflow_options:     Double-hyphen workflow-specific parameters
-
-Workflows:
-  normalize
-
-Global Workflow Options:
-  --cwd output (as path)
-                        Work directory &amp; output directory
-  --counts-gct VAL (as path, required)
-                        gene count table
-  --tpm-gct VAL (as path, required)
-                        gene TPM table
-  --annotation-gtf VAL (as path, required)
-                        gene gtf annotation table
-  --sample-participant-lookup VAL (as path, required)
-                        A file to map sample ID from expression to genotype,must
-                        contain two columns, sample_id and participant_id,
-                        mapping IDs in the expression files to IDs in the
-                        genotype (these can be the same).
-  --tpm-threshold 0.1 (as float)
-  --count-threshold 6 (as int)
-  --sample-frac-threshold 0.2 (as float)
-  --normalization-method &#39;tmm_cpm_voom&#39;
-                        Normalization method: TMM + CPM(voom) (tmm_cpm_voom),
-                        TMM + CPM(edgeR) (tmm_cpm_edger), or quantile
-                        normalization (qn)
-  --[no-]quantile-normalize (default to True)
-  --job-size 1 (as int)
-                        For cluster jobs, number commands to run per job
-  --walltime 5h
-                        Wall clock time expected
-  --mem 16G
-                        Memory expected
-  --numThreads 20 (as int)
-                        Number of threads
-  --container &#39;&#39;
-
-
-Sections
-  normalize:
-</pre></div>
-</div>
-</div>
-</div>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-# Work directory &amp; output directory
-parameter: cwd = path(&quot;output&quot;)
-#  gene count table
-parameter: counts_gct = path
-#  gene TPM table
-parameter: tpm_gct = path
-#  gene gtf annotation table
-parameter: annotation_gtf = path
-# A file to map sample ID from expression to genotype,must contain two columns, sample_id and participant_id, mapping IDs in the expression files to IDs in the genotype (these can be the same).
-parameter: sample_participant_lookup = path
-parameter: tpm_threshold = 0.1
-parameter: count_threshold = 6
-parameter: sample_frac_threshold = 0.2
-# Normalization method: TMM + CPM(voom) (tmm_cpm_voom), TMM + CPM(edgeR) (tmm_cpm_edger), or quantile normalization (qn)
-parameter: normalization_method = &#39;tmm_cpm_voom&#39;
-# Quantile Normalization after rescale
-parameter: quantile_normalize = True
-# For cluster jobs, number commands to run per job
+# FIXME: this entire section must be rewritten using conventions as in other pipelines.
+parameter: walltime = &#39;40h&#39;
+parameter: mem = &#39;32G&#39;
+parameter: ncore = 16
+parameter: cwd = path
+parameter: thread = 8
 parameter: job_size = 1
-# Wall clock time expected
-parameter: walltime = &quot;5h&quot;
-# Memory expected
-parameter: mem = &quot;16G&quot;
-# Number of threads
-parameter: numThreads = 20
-parameter: container = &quot;&quot;
+parameter: container = &#39;&#39;
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[normalize]
-# Path to the input molecular phenotype data, should be a processd and indexed bed.gz file, with tabix index.
-input: tpm_gct, counts_gct, annotation_gtf, sample_participant_lookup
-output: f&#39;{cwd:a}/{_input[0]:bnnn}.{normalization_method}.{&quot;no_qnorm.&quot; if not quantile_normalize else &quot;&quot;}expression.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, stdout = f&#39;{_output[0]:nn}.stdout&#39;,container = container
-    import numpy as np
-    import pandas as pd
-    import os
-    import qtl.io
-    import qtl.norm
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APAimpute]
+parameter: chrlist = list
+input: [f&#39;{cwd}/apa_{x}/Dapars_result_result_temp.{x}.txt&#39; for x in chrlist]
+output: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_{x}.bed&#39; for x in chrlist]
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = ncore
+R: expand= &quot;${ }&quot;, container = container
+    .libPaths( c(&#39;/usr/local/lib/R/site-library&#39; , &#39;/usr/lib/R/site-library&#39;, &#39;/usr/lib/R/library&#39;, .libPaths()))
+    suppressPackageStartupMessages(require(dplyr))
+    suppressPackageStartupMessages(require(tidyr))
+    suppressPackageStartupMessages(require(magrittr))
+    suppressPackageStartupMessages(require(impute))
+    suppressPackageStartupMessages(require(readr))
+    suppressPackageStartupMessages(require(stringr))
+    chr = str_extract_all(&quot;${chrlist}&quot;, pattern = &quot;chr\\d+&quot;)[[1]]
+    apalist = paste0(&quot;${cwd}&quot;, &quot;/apa_&quot;, chr,&quot;/Dapars_result_result_temp.&quot;, chr, &quot;.txt&quot;)
+    merge_apa = function(file) {
+        df = data.table::fread(file, colClasses = &#39;character&#39;)
+        df = df %&gt;% select(1,2,3,4, order(colnames(df)[5:ncol(df)]))
+        return(df)
+    }
+    dapars_result = do.call(&quot;rbind&quot;, mapply(merge_apa, apalist, SIMPLIFY = FALSE))
+    tmp = dapars_result[,1:4]
+    v1 = v2 = v3 = NULL
+    for (i in 1:nrow(tmp)) {
+      chro = str_split(tmp$Loci[i], &quot;:&quot;)[[1]][1]
+      spos = str_split(str_split(tmp$Loci[i], &quot;:&quot;)[[1]][2],&quot;-&quot;)[[1]][1]
+      epos = str_split(str_split(tmp$Loci[i], &quot;:&quot;)[[1]][2],&quot;-&quot;)[[1]][2]
+      v1 = c(v1 , chro)
+      v2 = c(v2, spos)
+      v3 = c(v3, epos)
+    }
+    tmp = tmp %&gt;% mutate(`#chr` = v1, start = v2, end = v3) %&gt;% select(`#chr`, start, end, Gene)
+    dapars_result = dapars_result[,-c(2:4)]
     
-    # ============= Function definition (packaged from eqtl_prepare_expression.py) =============
-    # This function is adapted from the GTEx pipeline&#39;s eqtl_prepare_expression.py script
-    # Source: https://github.com/broadinstitute/gtex-pipeline/blob/master/qtl/src/eqtl_prepare_expression.py
-    # 
-    # Modifications from the original script:
-    # 1. Converted command-line interface (argparse) to function parameters for direct Python calling
-    # 2. Encapsulated the main script logic into a callable function
-    # 3. Made all parameters explicit function arguments with appropriate defaults
-    # 4. Preserved all core processing logic and algorithms from the original implementation
-    # 5. Supports three normalization methods:
-    #    - TMM + CPM with voom transformation (tmm_cpm_voom) [default]
-    #    - TMM + CPM with edgeR (tmm_cpm_edger)
-    #    - Quantile normalization (qn)
-    # 6. Added optional inverse normal transformation via the &#39;qnorm&#39; parameter:
-    #    - &#39;qnorm&#39;: Apply inverse normal transformation after primary normalization
-    #    - &#39;none&#39;: Skip inverse normal transformation [default]
-    #
-    # This implementation allows direct function calls within the workflow without external script execution,
-    # maintaining compatibility with the original GTEx pipeline while providing better integration.
-    # =========================================================================================
+    tmp_vec = pull(dapars_result, Gene)
+    dapars_result = dapars_result[,-1]
+    id_vec = NULL
+    for (i in 1:length(colnames(dapars_result))) {
+      id = tail(str_split((colnames(dapars_result))[i], &quot;/&quot;)[[1]],1)
+      id = str_split(id,&quot;_&quot;)[[1]][1]
+      id_vec = c(id_vec ,id)
+    }
+    colnames(dapars_result) = id_vec
+    dapars_result = as.matrix(dapars_result)
+    rownames(dapars_result) = tmp_vec
+    dapars_result = dapars_result[,colMeans(is.na(dapars_result)) &lt;= 0.8]
+    dapars_result = dapars_result[rowMeans(is.na(dapars_result)) &lt; 0.5,]
     
-    def eqtl_prepare_expression(tpm_gct, counts_gct, annotation_gtf, sample_to_participant,
-                                prefix, output_dir=&#39;.&#39;, sample_ids=None, chrs=None,
-                                convert_tpm=False, tpm_threshold=0.1, count_threshold=6,
-                                sample_frac_threshold=0.2, normalization_method=&#39;tmm_cpm_voom&#39;,
-                                qnorm=&#39;none&#39;, parquet=False):
-        &quot;&quot;&quot;
-        Generate normalized expression BED files for eQTL analyses
-        
-        This function packages the main logic from eqtl_prepare_expression.py
-        &quot;&quot;&quot;
-        
-        # First, define the prepare_expression function (from the original script)
-        def prepare_expression(counts_df, tpm_df, sample_frac_threshold=0.2,
-                             count_threshold=6, tpm_threshold=0.1, mode=&#39;tmm_cpm_voom&#39;, qnorm=&#39;none&#39;):
-            &quot;&quot;&quot;
-            Genes are filtered using the following expression thresholds:
-              TPM &gt;= tpm_threshold in &gt;= sample_frac_threshold * samples
-              read counts &gt;= count_threshold in sample_frac_threshold * samples
+    
+    class(dapars_result) = &quot;numeric&quot;
+    dapars_impute = impute.knn(dapars_result)
+    df = as.data.frame(dapars_impute$data)
+    
+    for (gene in 1:nrow(df)) {
+      mat = apply(df[gene,], 1, rank, ties.method = &quot;average&quot;)
+      mat = qnorm(mat/ (ncol(df) + 1))
+      df[gene, ] = mat
+    }
+    
+    df$Gene = rownames(dapars_result)
+    final_data &lt;- inner_join(tmp, df)
+    write_delim(final_data, file = paste0(&quot;${cwd}&quot;,&quot;/Dapars_allchrom.bed&quot;), &quot;\t&quot;)
+    for (i in chr) {
+          select_data = final_data %&gt;% filter(`#chr` == i)
+          write.table(select_data, file = paste0(&quot;${cwd}&quot;, &quot;/apa_&quot;, i,&quot;/Dapars_result_impute_&quot;, i, &quot;.bed&quot;), quote = F, row.names = F)
+    }
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APArename_1]
+parameter: match = path
+parameter: chrlist = list
+input: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_{x}.bed&#39; for x in chrlist], group_by = 1
+output: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed&#39; for x in chrlist], group_by = 1
+R: expand= &quot;${ }&quot;, container = container
 
-            The filtered counts matrix is then normalized using:
-              TMM (mode=&#39;tmm&#39;; default) or
-              quantile normalization (mode=&#39;qn&#39;)
-            &quot;&quot;&quot;
-            # expression thresholds
-            ns = tpm_df.shape[1]
-            mask = (
-                (np.sum(tpm_df &gt;= tpm_threshold, axis=1) &gt;= sample_frac_threshold * ns) &amp;
-                (np.sum(counts_df &gt;= count_threshold, axis=1) &gt;= sample_frac_threshold * ns)
-            ).values
+    .libPaths( c(&#39;/usr/local/lib/R/site-library&#39; , &#39;/usr/lib/R/site-library&#39;, &#39;/usr/lib/R/library&#39;, .libPaths())) 
+    suppressPackageStartupMessages(require(dplyr))
+    suppressPackageStartupMessages(require(tidyr))
+    suppressPackageStartupMessages(require(readr))
+  
 
-            # apply normalization
-            if mode.lower() == &#39;tmm_cpm_edger&#39;:
-                norm_counts_df = qtl.norm.edger_cpm(counts_df, normalized_lib_sizes=True)
-                norm_counts_df = norm_counts_df[mask]
-            elif mode.lower() == &#39;tmm_cpm_voom&#39;:
-                norm_counts_df = qtl.norm.voom_transform(counts_df)
-                norm_counts_df = norm_counts_df[mask]
-            elif mode.lower() == &#39;qn&#39;:
-                norm_counts_df = qtl.norm.normalize_quantiles(tpm_df.loc[mask])
-            else:
-                raise ValueError(f&#39;Unsupported mode {mode}&#39;)
+    input_dir &lt;- ${_input:r}
 
-            # apply quantile normalization
-            if qnorm.lower() == &#39;qnorm&#39;:
-                result_df = qtl.norm.inverse_normal_transform(norm_counts_df)
-            elif qnorm.lower() == &#39;none&#39;:
-                result_df = norm_counts_df
-            else:
-                raise ValueError(f&#39;Unsupported qnorm mode {qnorm}&#39;)
-                
-            return result_df
-        
-        # Main logic (from the original __main__ block)
-        print(&#39;Loading expression data&#39;, flush=True)
-        
-        # Handle sample_ids if provided
-        if sample_ids is not None:
-            if isinstance(sample_ids, str):  # If it&#39;s a file path
-                with open(sample_ids) as f:
-                    sample_ids = f.read().strip().split(&#39;\n&#39;)
-                    print(f&#39;  * Loading {len(sample_ids)} samples&#39;, flush=True)
-        
-        # Load expression data
-        counts_df = qtl.io.read_gct(counts_gct, sample_ids=sample_ids, load_description=False)
-        tpm_df = qtl.io.read_gct(tpm_gct, sample_ids=sample_ids, load_description=False)
-        
-        # Load sample to participant mapping
-        sample_to_participant_s = pd.read_csv(sample_to_participant, sep=&#39;\t&#39;, index_col=0,
-                                              header=None, dtype=str).squeeze(&#39;columns&#39;)
-        
-        # Check inputs
-        if not counts_df.columns.equals(tpm_df.columns):
-            raise ValueError(&#39;Sample IDs in the TPM and read counts files must match.&#39;)
-        missing_ids = ~counts_df.columns.isin(sample_to_participant_s.index)
-        if missing_ids.any():
-            raise ValueError(f&quot;Sample IDs in expression files and participant lookup table must match ({missing_ids.sum()} sample IDs missing from {os.path.basename(sample_to_participant)}).&quot;)
-        
-        # Convert to TPM if requested
-        if convert_tpm:
-            print(&#39;  * Converting to TPM&#39;, flush=True)
-            tpm_df = tpm_df / tpm_df.sum(0) * 1e6
-        
-        # Normalize data
-        print(f&#39;Normalizing data ({normalization_method})&#39;, flush=True)
-        norm_df = prepare_expression(counts_df, tpm_df,
-                                     sample_frac_threshold=sample_frac_threshold,
-                                     count_threshold=count_threshold,
-                                     tpm_threshold=tpm_threshold,
-                                     mode=normalization_method,
-                                     qnorm=qnorm)
-        print(f&#39;  * {counts_df.shape[0]} genes in input tables&#39;, flush=True)
-        print(f&#39;  * {norm_df.shape[0]} genes remain after thresholding&#39;, flush=True)
-        
-        # Change sample IDs to participant IDs
-        norm_df.rename(columns=sample_to_participant_s, inplace=True)
-        
-        # Handle chromosome list
-        if chrs is not None:
-            if isinstance(chrs, str):  # If it&#39;s a file path
-                with open(chrs) as f:
-                    chrs = f.read().strip().split(&#39;\n&#39;)
-        else:
-            chrs = [f&#39;chr{i}&#39; for i in range(1,23)] + [&#39;chrX&#39;]
-        
-        # Prepare BED
-        bed_template_df = qtl.io.gtf_to_tss_bed(annotation_gtf, feature=&#39;transcript&#39;)
-        bed_template_df = bed_template_df[bed_template_df[&#39;chr&#39;].isin(chrs)]
-        bed_df = pd.merge(bed_template_df, norm_df, left_index=True, right_index=True)
-        qtl.io.sort_bed(bed_df, inplace=True)
-        print(f&#39;  * {bed_df.shape[0]} genes remain after selecting chromosomes&#39;, flush=True)
-        
-        # Write output
-        print(&#39;Writing BED file&#39;, flush=True)
-        output_file = os.path.join(output_dir, f&#39;{prefix}.expression.bed.gz&#39;)
-        if not parquet:
-            qtl.io.write_bed(bed_df, output_file)
-        else:
-            output_file = os.path.join(output_dir, f&#39;{prefix}.expression.bed.parquet&#39;)
-            bed_df.to_parquet(output_file)
-        
-        return output_file
+    df = data.table::fread(input_dir, colClasses = &#39;character&#39;)
+    ref = data.table::fread(&quot;${match}&quot;, colClasses = &#39;character&#39;)
     
-    # ============= Now use the function in your workflow =============
+    tmp = NULL
+    for (i in colnames(df)[5:ncol(df)]){
+      tmp = c(tmp, as.character(ref[which(ref$ProjID == i),2]))
+    }
     
-    # Check for duplicates first
-    sample_map = pd.read_table(&quot;${_input[3]}&quot;)
-    duplicated = sample_map.loc[sample_map.duplicated(subset=[&#39;participant_id&#39;])]
+    colnames(df)[5:ncol(df)] = tmp
+    df = df %&gt;% group_by(`#chr`) %&gt;% arrange(start, .by_group = TRUE) %&gt;% mutate(end = start + 1)
+    write_delim(df, file = ${_output:r}, &quot;\t&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APArename_2]
+parameter: match = path
+parameter: chrlist = list
+input: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed&#39; for x in chrlist], group_by = 1
+output: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed.gz&#39; for x in chrlist], group_by = 1
+bash: expand= &quot;${ }&quot;
+    bgzip -f ${_input:r}
+    tabix -p bed ${_output:r} -f
+    gzip -dfk ${_output:r}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APArename_3]
+parameter: cwd = &quot;/mnt/mfs/statgen/ls3751/aqtl_analysis/wig/AC&quot;
+parameter: container = &quot;/mnt/mfs/statgen/ls3751/container/dapars2_final.sif&quot;
+parameter: match = &quot;/mnt/mfs/statgen/ls3751/aqtl_analysis/ROSMAP_APA_matchtable.txt&quot; #path
+input: f&#39;{cwd}/Dapars_allchrom.bed&#39;
+output: f&#39;{cwd}/Dapars_allchrom_renamed.bed&#39;
+R: expand= &quot;${ }&quot;, container = container
+    .libPaths( c(&#39;/usr/local/lib/R/site-library&#39; , &#39;/usr/lib/R/site-library&#39;, &#39;/usr/lib/R/library&#39;, .libPaths())) 
+    suppressPackageStartupMessages(require(dplyr))
+    suppressPackageStartupMessages(require(tidyr))
+    suppressPackageStartupMessages(require(readr))
     
-    if duplicated.shape[0] &gt; 0:
-        print(&quot;Duplicate samples found. Please remove duplicates from ${_input[3]} before normalizing.&quot;)
-        print(&quot;Duplicates:&quot;)
-        print(duplicated)
-        raise ValueError
-    else:
-        print(&quot;No duplicates found. Proceeding with normalization...&quot;)
+    input_dir &lt;- ${_input:r}
+
+    df = read_delim(input_dir, col_types = list(col_character()))
+    ref = data.table::fread(&quot;${match}&quot;, colClasses = &#39;character&#39;)
     
-    # Create chromosome list file
-    chr_file = &quot;${_output[0]:bnnn}.vcf_chr_list&quot;
-    chrs = [f&#39;chr{i}&#39; for i in range(1,23)] + [&#39;chrX&#39;, &#39;chrY&#39;, &#39;chrMT&#39;]
-    with open(chr_file, &#39;w&#39;) as f:
-        for chr in chrs:
-            f.write(chr + &#39;\n&#39;)
+    tmp = NULL
+    for (i in colnames(df)[5:ncol(df)]){
+      tmp = c(tmp, as.character(ref[which(ref$ProjID == i),2]))
+    }
     
-    # Set qnorm parameter based on quantile_normalize flag
-    qnorm_param = &#39;qnorm&#39; if ${quantile_normalize} else &#39;none&#39;
-    
-    # Call the eqtl_prepare_expression function
-    output_file = eqtl_prepare_expression(
-        tpm_gct=&quot;${_input[0]}&quot;,
-        counts_gct=&quot;${_input[1]}&quot;,
-        annotation_gtf=&quot;${_input[2]}&quot;,
-        sample_to_participant=&quot;${_input[3]}&quot;,
-        prefix=&quot;${_output[0]:nnn}&quot;,
-        output_dir=&quot;.&quot;,
-        sample_ids=None,
-        chrs=chr_file,
-        convert_tpm=False,
-        tpm_threshold=${tpm_threshold},
-        count_threshold=${count_threshold},
-        sample_frac_threshold=${sample_frac_threshold},
-        normalization_method=&quot;${normalization_method}&quot;,
-        qnorm=qnorm_param,
-        parquet=False
-    )
-    
-    # Clean up temporary file
-    if os.path.exists(chr_file):
-        os.remove(chr_file)
-    
-    print(f&quot;Preparing expression completed. Output saved to: {output_file}&quot;)
+    colnames(df)[5:ncol(df)] = tmp
+    df = df %&gt;% group_by(`#chr`) %&gt;% arrange(start, .by_group = TRUE) # %&gt;% mutate(end = start + 1)
+    write_delim(df, file = paste0(&quot;${cwd}&quot;,&quot;/Dapars_allchrom_renamed.bed&quot;), &quot;\t&quot;)
+[APArename_4]
+output: f&#39;{_input}.gz&#39;, f&#39;{_input}.gz.tbi&#39;
+bash: expand = &quot;${ }&quot;
+    bgzip -f ${_input}
+    tabix -p bed ${_output[0]} -f
+    gzip -dfk ${_output[0]}
 </pre></div>
 </div>
 </div>
@@ -917,20 +736,20 @@ python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, s
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="bulk_expression_QC.html"
+       href="bulk_expression_normalization.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Sample level RNA-seq quality control</p>
+        <p class="prev-next-title">Bulk RNA-seq counts normalization</p>
       </div>
     </a>
     <a class="right-next"
-       href="apa_impute.html"
+       href="../snRNAseq_preprocessing.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Post-APA calling: Imputation and QC</p>
+        <p class="prev-next-title">snRNA-seq Preprocessing QC Pipeline</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -952,15 +771,11 @@ python: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, s
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#aim">Aim</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vii-multi-sample-read-count-normalization">vii. Multi-sample read count normalization</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-working-example">Minimum working example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
 </ul>
   </nav></div>
 

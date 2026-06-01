@@ -1,0 +1,855 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Pseudobulk mega phenotype data QC and normalization &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../../_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'code/molecular_phenotypes/QC/pseudobulk_mega_expression_QC_and_normalization';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Methylation" href="../methylation.html" />
+    <link rel="prev" title="Pseudobulk eqtl phenotype QC and normalization" href="pseudobulk_expression_aggregation_QC_norm.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="../../../_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../../README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../commands_generator/eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference_data/reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference_data/rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../bulk_expression.html">RNA-seq expression</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../calling/RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snRNAseq_preprocessing.html">snRNA-seq Preprocessing QC Pipeline</a></li>
+
+
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq) Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eqtl phenotype QC and normalization</a></li>
+
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Pseudobulk mega phenotype data QC and normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../methylation.html">Methylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../calling/methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../calling/splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Normalization and phenotype table generation for splicingQTL analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../data_preprocessing/genotype_preprocessing.html">Genotype data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/genotype/VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/genotype/GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/genotype/PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/genotype/GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/genotype/genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../data_preprocessing/phenotype_preprocessing.html">Phenotype data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/phenotype/gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/phenotype/phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/phenotype/phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../data_preprocessing/covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/covariate/covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../data_preprocessing/covariate/covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../association_scan/qtl_association_testing.html">QTL Association Analysis</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../association_scan/TensorQTL/TensorQTL.html">QTL Association Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../association_scan/quantile_models/qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../association_scan/qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../multivariate_genome/multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../multivariate_genome/MASH/mixture_prior.html">A multivariate EBNM approach for mixture multivariate distribution estimate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../multivariate_genome/MASH/mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../mnm_analysis/mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/univariate_fine_mapping_twas_vignette.html">Univariate Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/mnm_methods/mnm_regression.html">Advanced regression models for association analysis with individual level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mnm_analysis/mnm_methods/rss_analysis.html">High-dimensional regression with summary statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mnm_analysis/mnm_postprocessing.html">Integrative Analysis Output Processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../pecotmr_integration/SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pecotmr_integration/twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mnm_analysis/mnm_methods/colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../enrichment/eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../enrichment/gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../enrichment/gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../enrichment/sldsc_enrichment.html">Stratified LD Score Regression</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../xqtl_modifier_score/ems_training.html">scEEMS Model Training Tutorial</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="../../xqtl_modifier_score/ems_prediction.html">EMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/code/molecular_phenotypes/QC/pseudobulk_mega_expression_QC_and_normalization.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fcode/molecular_phenotypes/QC/pseudobulk_mega_expression_QC_and_normalization.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../_sources/code/molecular_phenotypes/QC/pseudobulk_mega_expression_QC_and_normalization.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Pseudobulk mega phenotype data QC and normalization</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-parameter-settings">Global parameter settings</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phenotype-merging-and-qc">Phenotype merging and QC</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="pseudobulk-mega-phenotype-data-qc-and-normalization">
+<h1>Pseudobulk mega phenotype data QC and normalization<a class="headerlink" href="#pseudobulk-mega-phenotype-data-qc-and-normalization" title="Link to this heading">#</a></h1>
+<p>It is based on Nick’s code and normalization method from <a class="reference external" href="https://bigomics.ch/blog/why-how-normalize-rna-seq-data/">this page</a>. Should be optimized for general use.</p>
+<p>The main idea is to merge the 3 dataset of snRNA pseudobulk from <code class="docutils literal notranslate"><span class="pre">phils'</span> <span class="pre">1st</span> <span class="pre">version(masasshi)</span></code>, <code class="docutils literal notranslate"><span class="pre">kelli</span></code> and <code class="docutils literal notranslate"><span class="pre">phils'</span> <span class="pre">2nd</span> <span class="pre">version</span></code> so as to get the mega data with more samples(~800) to be more powerful to download QTL analysis. First do the normalization within dataset, then <code class="docutils literal notranslate"><span class="pre">removeBatchEffect()</span></code> function from <code class="docutils literal notranslate"><span class="pre">limma</span></code> package was used to remove the batch effect from these 3 data.</p>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<p>The input is pseudo bulk eqtl phenotype data of raw count matrix. In this notebook, we use the following files as input:
+phenotype original file:</p>
+<ol class="arabic simple">
+<li><p>De Jager batch:<br />
+<code class="docutils literal notranslate"><span class="pre">/mnt/vast/hpc/homes/al4225/pseudobulk_phil_old/cell_expr_sampleid/snuc_pseudo_bulk.{tissue}.count_matrix</span></code></p></li>
+<li><p>Kellis batch:<br />
+<code class="docutils literal notranslate"><span class="pre">/mnt/vast/hpc/homes/al4225/project/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl_kelli/cell_expr_sampleid/snuc_pseudo_bulk.{tissue}.count_matrix</span></code></p></li>
+<li><p>De Jager new batch:<br />
+<code class="docutils literal notranslate"><span class="pre">/mnt/vast/hpc/homes/al4225/pseudobulk_phil_new/cell_expr/snuc_pseudo_bulk.{tissue}.count_matrix</span></code></p></li>
+</ol>
+<p>For Ast, Inh, Oli, OPC, Mic, Exc, the input is separate raw count matrix(1st col is gene name, 2nd col to the end are sampleid with raw counts expression value), for each specific celltype. So we list the celltype name as 1st col, phil’s 1st data path as the 2nd col, kelli’s data as the 3rd col, phil’s 2nd data as the 4th col in a txt file as the input. e.g.<br />
+<code class="docutils literal notranslate"><span class="pre">Ast	/mnt/vast/hpc/homes/al4225/pseudobulk_phil_old/cell_expr_sampleid/snuc_pseudo_bulk.Ast.count_matrix	/mnt/vast/hpc/homes/al4225/project/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl_kelli/cell_expr_sampleid/snuc_pseudo_bulk.Ast.count_matrix	/mnt/vast/hpc/homes/al4225/pseudobulk_phil_new/cell_expr/snuc_pseudo_bulk.Ast.count_matrix</span></code></p>
+</section>
+<section id="steps">
+<h2>Steps:<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<p>– <code class="docutils literal notranslate"><span class="pre">Count</span> <span class="pre">Cells</span> <span class="pre">by</span> <span class="pre">Sample</span></code>: Calculate the number of cells for each sample using metadata. This helps in filtering samples based on cell count.<br />
+– <code class="docutils literal notranslate"><span class="pre">Filter</span> <span class="pre">Samples</span></code>: Exclude samples with fewer than 10 cells to ensure sufficient data quality and representativeness.
+– <code class="docutils literal notranslate"><span class="pre">Select</span> <span class="pre">samples</span></code>: Include all samples from phil’s 1st data, then keep new samples from kelli’s data based on phil’s 1st data and get the merged12 data, and them keep new samples from phil’s 2nd data based on the merged12 data.
+– <code class="docutils literal notranslate"><span class="pre">Gene</span> <span class="pre">Filtering</span></code>: Use <code class="docutils literal notranslate"><span class="pre">filterByExpr()</span></code> to retain genes with sufficient expression across samples, improving the reliability of statistical tests.<br />
+– <code class="docutils literal notranslate"><span class="pre">Normalization</span></code>: Apply TMM normalization to adjust for composition effects, making counts between samples comparable.<br />
+– <code class="docutils literal notranslate"><span class="pre">Voom</span> <span class="pre">Transformation</span></code>: Transform count data to log2-counts per million (logCPM), stabilizing variance across genes.<br />
+– <code class="docutils literal notranslate"><span class="pre">Filter</span> <span class="pre">by</span> <span class="pre">Expression</span></code>: Remove genes with mean log2CPM &lt; 2.0 to focus on genes with significant expression levels.<br />
+– <code class="docutils literal notranslate"><span class="pre">Remove</span> <span class="pre">batch</span> <span class="pre">effect:</span></code> <code class="docutils literal notranslate"><span class="pre">removeBatchEffect()</span></code> function from <code class="docutils literal notranslate"><span class="pre">limma</span></code> package was used to remove the batch effect from these 3 data.<br />
+– <code class="docutils literal notranslate"><span class="pre">Quantile</span> <span class="pre">normalization</span></code>: Apply quantile normalization to ensure that the distribution of expression values is consistent across samples.</p>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<p>The output is a normalized.log2cpm.tsv file, with 1st column  <code class="docutils literal notranslate"><span class="pre">id</span></code> as gene name, then the sampleids as following columns.<br />
+<strong>1) Normalized.log2cpm.tsv file</strong>: <code class="docutils literal notranslate"><span class="pre">/home/al4225/pseudobulk_merge/mega_quantnorm_SM/snuc_pseudo_bulk.{tissue}.mega.normalized.log2cpm.tsv</span></code><br />
+<strong>2) Raw count matrix</strong>(keep all samples of phil’s old version, then keep new kelli’s sample, then keep new samples of phil’s new version): <code class="docutils literal notranslate"><span class="pre">/home/al4225/pseudobulk_merge/cellcounts_mega/snuc_pseudo_bulk.{tissue}.mega.count_matrix</span></code><br />
+<strong>3) Cell counts of each sample</strong>: <code class="docutils literal notranslate"><span class="pre">/home/al4225/pseudobulk_merge/ncells_mega/snuc_pseudo_bulk.{tissue}.mega.nCells</span></code></p>
+</section>
+<section id="global-parameter-settings">
+<h2>Global parameter settings<a class="headerlink" href="#global-parameter-settings" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="k">global</span><span class="p">]</span>
+<span class="c1"># It is required to input the name of the analysis</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">cwd</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s2">&quot;output&quot;</span><span class="p">)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">container</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="c1"># For cluster jobs, number commands to run per job</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">job_size</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="c1"># Wall clock time expected</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">walltime</span> <span class="o">=</span> <span class="s2">&quot;20h&quot;</span>
+<span class="c1"># Memory expected</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">mem</span> <span class="o">=</span> <span class="s2">&quot;16G&quot;</span>
+<span class="c1"># Number of threads</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">numThreads</span> <span class="o">=</span> <span class="mi">2</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="phenotype-merging-and-qc">
+<h2>Phenotype merging and QC<a class="headerlink" href="#phenotype-merging-and-qc" title="Link to this heading">#</a></h2>
+<p>Before merging, should make sure the sample names from different dataset are using the same format.</p>
+<p>sos run pipeline/pseudobulk_mega_expression_QC_and_normalization.ipynb mergedata <br />
+–name snuc_pseudo_bulk <br />
+–file_paths /mnt/vast/hpc/homes/al4225/pseudobulk_merge/celltypes_3.txt <br />
+–cwd /mnt/vast/hpc/homes/al4225/pseudobulk_merge/mega_quantnorm_SM/ <br />
+–container /home/al4225/project/fungen-xqtl-analysis/analysis/Wang_Columbia/ROSMAP/pseudo_bulk_eqtl_kelli/container/seurat.sif <br />
+–mem 80G -J 50 -c /mnt/vast/hpc/csg/molecular_phenotype_calling/csg.yml -q csg</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">mergedata</span><span class="p">]</span>
+<span class="c1"># data: 1st: phil&#39;s old, 2nd: kelli, 3rd:phils new</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="c1"># load the input txt file with celltype name and paths</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">file_paths</span> <span class="o">=</span> <span class="n">path</span><span class="p">()</span>
+
+<span class="c1">#for each tissue.</span>
+<span class="n">input_file_paths</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_paths</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">input_file_paths</span><span class="p">)</span>
+<span class="n">input_inv</span> <span class="o">=</span> <span class="n">input_file_paths</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">tissue_id_inv</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">input_inv</span><span class="p">]</span>
+<span class="n">input_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">input_inv</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">tissue ID List:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tissue_id_inv</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">File List:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">input_files</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Length of tissue_id_inv:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tissue_id_inv</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Length of group by ts:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">input</span><span class="p">:</span> <span class="n">input_files</span><span class="p">,</span> <span class="n">group_by</span> <span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">group_with</span> <span class="o">=</span> <span class="s2">&quot;tissue_id_inv&quot;</span> 
+<span class="n">output</span><span class="p">:</span> <span class="n">normalized_log2cpm</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cwd</span><span class="si">:</span><span class="s1">a</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">_tissue_id_inv</span><span class="si">}</span><span class="s1">.mega.normalized.log2cpm.tsv&#39;</span>
+<span class="c1">#output: gene_expression_matrix = f&#39;{cwd:a}/{name}.{_tissue_id_inv}.mega.count_matrix&#39; # raw count matrix output</span>
+<span class="c1">#output: cell_counts = f&#39;{cwd:a}/{name}.{_tissue_id_inv}.mega.nCells&#39; # cell counts of each sample output</span>
+<span class="n">task</span><span class="p">:</span> <span class="n">trunk_workers</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">trunk_size</span> <span class="o">=</span> <span class="n">job_size</span><span class="p">,</span> <span class="n">walltime</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">,</span> <span class="n">mem</span> <span class="o">=</span> <span class="n">mem</span><span class="p">,</span> <span class="n">cores</span> <span class="o">=</span> <span class="n">numThreads</span><span class="p">,</span> <span class="n">tags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">R</span><span class="p">:</span> <span class="n">expand</span> <span class="o">=</span> <span class="s1">&#39;${ }&#39;</span><span class="p">,</span> <span class="n">stdout</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_output</span><span class="si">:</span><span class="s2">0</span><span class="si">}</span><span class="s2">.stdout&quot;</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_output</span><span class="si">:</span><span class="s2">0</span><span class="si">}</span><span class="s2">.stderr&quot;</span><span class="p">,</span> <span class="n">container</span> <span class="o">=</span> <span class="n">container</span>
+<span class="n">library</span><span class="p">(</span><span class="n">Seurat</span><span class="p">)</span>
+<span class="n">library</span><span class="p">(</span><span class="n">edgeR</span><span class="p">)</span>
+<span class="n">library</span><span class="p">(</span><span class="n">limma</span><span class="p">)</span>
+<span class="n">library</span><span class="p">(</span><span class="n">dplyr</span><span class="p">)</span>
+
+<span class="c1"># phils&#39; version1</span>
+<span class="n">expr1</span> <span class="o">&lt;-</span> <span class="n">read</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="n">_input</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">r</span><span class="p">},</span> <span class="n">header</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">check</span><span class="o">.</span><span class="n">names</span><span class="o">=</span><span class="n">F</span><span class="p">)</span>
+<span class="n">cat</span><span class="p">(</span><span class="s2">&quot;load phils version1:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">head</span><span class="p">(</span><span class="n">expr1</span><span class="p">)[,</span><span class="mi">1</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+
+<span class="c1"># Kelli&#39;s data</span>
+<span class="n">expr2</span> <span class="o">&lt;-</span> <span class="n">read</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="n">_input</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span><span class="n">r</span><span class="p">},</span> <span class="n">header</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">check</span><span class="o">.</span><span class="n">names</span><span class="o">=</span><span class="n">F</span><span class="p">)</span>
+<span class="n">cat</span><span class="p">(</span><span class="s2">&quot;load kelli data:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">head</span><span class="p">(</span><span class="n">expr2</span><span class="p">)[,</span><span class="mi">1</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+
+<span class="c1"># phil&#39;s new data</span>
+<span class="n">expr3</span> <span class="o">=</span> <span class="n">read</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="n">_input</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span><span class="n">r</span><span class="p">},</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">check</span><span class="o">.</span><span class="n">names</span><span class="o">=</span><span class="n">F</span><span class="p">)</span>
+<span class="n">cat</span><span class="p">(</span><span class="s2">&quot;load phils new data version2:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">head</span><span class="p">(</span><span class="n">expr3</span><span class="p">)[,</span><span class="mi">1</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+
+<span class="n">genes1</span> <span class="o">=</span> <span class="n">rownames</span><span class="p">(</span><span class="n">expr1</span><span class="p">)</span>
+<span class="n">genes2</span> <span class="o">=</span> <span class="n">rownames</span><span class="p">(</span><span class="n">expr2</span><span class="p">)</span>
+<span class="n">genes3</span> <span class="o">=</span> <span class="n">rownames</span><span class="p">(</span><span class="n">expr3</span><span class="p">)</span>
+
+<span class="c1"># Find common genes among all three sets</span>
+<span class="n">common_genes</span> <span class="o">=</span> <span class="n">Reduce</span><span class="p">(</span><span class="n">intersect</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">genes1</span><span class="p">,</span> <span class="n">genes2</span><span class="p">,</span> <span class="n">genes3</span><span class="p">))</span>
+
+<span class="c1"># Filter the expression matrices to keep only common genes</span>
+<span class="n">expr1</span> <span class="o">=</span> <span class="n">expr1</span><span class="p">[</span><span class="n">common_genes</span><span class="p">,</span> <span class="p">]</span>
+<span class="n">expr2</span> <span class="o">=</span> <span class="n">expr2</span><span class="p">[</span><span class="n">common_genes</span><span class="p">,</span> <span class="p">]</span>
+<span class="n">expr3</span> <span class="o">=</span> <span class="n">expr3</span><span class="p">[</span><span class="n">common_genes</span><span class="p">,</span> <span class="p">]</span>
+
+<span class="n">sample1</span> <span class="o">=</span> <span class="n">colnames</span><span class="p">(</span><span class="n">expr1</span><span class="p">)</span>
+<span class="n">sample2</span> <span class="o">=</span> <span class="n">colnames</span><span class="p">(</span><span class="n">expr2</span><span class="p">)</span>
+<span class="n">sample3</span> <span class="o">=</span> <span class="n">colnames</span><span class="p">(</span><span class="n">expr3</span><span class="p">)</span>
+<span class="n">common_samples</span> <span class="o">=</span> <span class="n">intersect</span><span class="p">(</span><span class="n">sample1</span><span class="p">,</span> <span class="n">sample2</span><span class="p">)</span>
+<span class="n">cat</span><span class="p">(</span><span class="s2">&quot;common samplesof expr1 and expr2:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">common_samples</span><span class="p">)</span>
+<span class="c1"># remove the common samples in expr2</span>
+<span class="n">expr2</span> <span class="o">&lt;-</span> <span class="n">expr2</span><span class="p">[,</span> <span class="o">!(</span>colnames<span class="o">(</span>expr2<span class="o">)</span><span class="w"> </span>%in%<span class="w"> </span>common_samples<span class="o">)]</span>
+<span class="n">expr12</span> <span class="o">&lt;-</span> <span class="n">cbind</span><span class="p">(</span><span class="n">expr1</span><span class="p">,</span><span class="n">expr2</span><span class="p">)</span>
+<span class="n">common_samples12_3</span> <span class="o">=</span> <span class="n">intersect</span><span class="p">(</span><span class="n">colnames</span><span class="p">(</span><span class="n">expr12</span><span class="p">),</span> <span class="n">sample3</span><span class="p">)</span>
+<span class="c1"># remove the common samples in expr3</span>
+<span class="n">expr3</span> <span class="o">&lt;-</span> <span class="n">expr3</span><span class="p">[,</span> <span class="o">!(</span>colnames<span class="o">(</span>expr3<span class="o">)</span><span class="w"> </span>%in%<span class="w"> </span>common_samples12_3<span class="o">)]</span>
+<span class="n">expr_raw</span> <span class="o">&lt;-</span> <span class="n">cbind</span><span class="p">(</span><span class="n">expr12</span><span class="p">,</span><span class="n">expr3</span><span class="p">)</span>
+<span class="c1">#write.table(expr_raw, file = &quot;${_output[&#39;gene_expression_matrix&#39;]}&quot;, sep = &quot;\t&quot;, row.names = TRUE, quote = FALSE, col.names = TRUE)</span>
+
+<span class="c1"># get the ncell df</span>
+<span class="n">sample_ids</span> <span class="o">&lt;-</span> <span class="n">colnames</span><span class="p">(</span><span class="n">expr_raw</span><span class="p">)</span>
+<span class="n">cell_counts</span> <span class="o">&lt;-</span> <span class="n">colSums</span><span class="p">(</span><span class="n">expr_raw</span><span class="p">)</span>
+<span class="n">cellcounts</span> <span class="o">&lt;-</span> <span class="n">data</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="n">sampleid</span> <span class="o">=</span> <span class="n">sample_ids</span><span class="p">,</span> <span class="n">ncell</span> <span class="o">=</span> <span class="n">cell_counts</span><span class="p">)</span>
+<span class="n">head</span><span class="p">(</span><span class="n">cellcounts</span><span class="p">)</span>
+<span class="c1">#write.table(cellcounts, file = &quot;${_output[&#39;cell_counts&#39;]}&quot;, sep = &quot;\t&quot;, row.names = FALSE, col.names = TRUE, quote = FALSE)</span>
+
+<span class="c1">#filtering out samples with fewer than 10 cells in a celltype</span>
+<span class="n">col_sums</span> <span class="o">&lt;-</span> <span class="n">colSums</span><span class="p">(</span><span class="n">expr1</span><span class="p">,</span> <span class="n">na</span><span class="o">.</span><span class="n">rm</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">paste</span><span class="p">(</span><span class="s2">&quot;Original data frame dimensions of expr1:&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="p">(</span><span class="n">expr1</span><span class="p">)))</span>
+<span class="n">keep_cols</span> <span class="o">&lt;-</span> <span class="n">names</span><span class="p">(</span><span class="n">col_sums</span><span class="p">)[</span><span class="n">col_sums</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">]</span>
+<span class="n">expr1</span> <span class="o">&lt;-</span> <span class="n">expr1</span><span class="p">[</span><span class="n">keep_cols</span><span class="p">]</span>
+
+<span class="n">col_sums</span> <span class="o">&lt;-</span> <span class="n">colSums</span><span class="p">(</span><span class="n">expr2</span><span class="p">,</span> <span class="n">na</span><span class="o">.</span><span class="n">rm</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">)</span>
+<span class="n">keep_cols</span> <span class="o">&lt;-</span> <span class="n">names</span><span class="p">(</span><span class="n">col_sums</span><span class="p">)[</span><span class="n">col_sums</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">]</span>
+<span class="n">expr2</span> <span class="o">&lt;-</span> <span class="n">expr2</span><span class="p">[</span><span class="n">keep_cols</span><span class="p">]</span>
+
+<span class="n">col_sums</span> <span class="o">&lt;-</span> <span class="n">colSums</span><span class="p">(</span><span class="n">expr3</span><span class="p">,</span> <span class="n">na</span><span class="o">.</span><span class="n">rm</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">)</span>
+<span class="n">keep_cols</span> <span class="o">&lt;-</span> <span class="n">names</span><span class="p">(</span><span class="n">col_sums</span><span class="p">)[</span><span class="n">col_sums</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">]</span>
+<span class="n">expr3</span> <span class="o">&lt;-</span> <span class="n">expr3</span><span class="p">[</span><span class="n">keep_cols</span><span class="p">]</span>
+
+<span class="n">y1</span> <span class="o">&lt;-</span> <span class="n">DGEList</span><span class="p">(</span><span class="n">counts</span> <span class="o">=</span> <span class="n">expr1</span><span class="p">)</span>
+<span class="n">keep</span> <span class="o">&lt;-</span> <span class="n">filterByExpr</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span>
+<span class="n">y1</span> <span class="o">&lt;-</span> <span class="n">y1</span><span class="p">[</span><span class="n">keep</span><span class="p">,,</span><span class="n">keep</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">sizes</span><span class="o">=</span><span class="n">F</span><span class="p">]</span>
+<span class="c1">#counts per million</span>
+<span class="n">y1</span> <span class="o">&lt;-</span> <span class="n">calcNormFactors</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;TMM&quot;</span><span class="p">)</span>
+<span class="n">v1</span> <span class="o">&lt;-</span> <span class="n">voom</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="n">F</span><span class="p">)</span>
+<span class="n">logcpm1</span> <span class="o">&lt;-</span> <span class="n">v1</span><span class="err">$</span><span class="n">E</span>
+
+<span class="n">y2</span> <span class="o">&lt;-</span> <span class="n">DGEList</span><span class="p">(</span><span class="n">counts</span> <span class="o">=</span> <span class="n">expr2</span><span class="p">)</span>
+<span class="n">keep</span> <span class="o">&lt;-</span> <span class="n">filterByExpr</span><span class="p">(</span><span class="n">y2</span><span class="p">)</span>
+<span class="n">y2</span> <span class="o">&lt;-</span> <span class="n">y2</span><span class="p">[</span><span class="n">keep</span><span class="p">,,</span><span class="n">keep</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">sizes</span><span class="o">=</span><span class="n">F</span><span class="p">]</span>
+<span class="c1">#counts per million</span>
+<span class="n">y2</span> <span class="o">&lt;-</span> <span class="n">calcNormFactors</span><span class="p">(</span><span class="n">y2</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;TMM&quot;</span><span class="p">)</span>
+<span class="n">v2</span> <span class="o">&lt;-</span> <span class="n">voom</span><span class="p">(</span><span class="n">y2</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="n">F</span><span class="p">)</span>
+<span class="n">logcpm2</span> <span class="o">&lt;-</span> <span class="n">v2</span><span class="err">$</span><span class="n">E</span>
+
+<span class="n">y3</span> <span class="o">&lt;-</span> <span class="n">DGEList</span><span class="p">(</span><span class="n">counts</span> <span class="o">=</span> <span class="n">expr3</span><span class="p">)</span>
+<span class="n">keep</span> <span class="o">&lt;-</span> <span class="n">filterByExpr</span><span class="p">(</span><span class="n">y3</span><span class="p">)</span>
+<span class="n">y3</span> <span class="o">&lt;-</span> <span class="n">y3</span><span class="p">[</span><span class="n">keep</span><span class="p">,,</span><span class="n">keep</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">sizes</span><span class="o">=</span><span class="n">F</span><span class="p">]</span>
+<span class="c1">#counts per million</span>
+<span class="n">y3</span> <span class="o">&lt;-</span> <span class="n">calcNormFactors</span><span class="p">(</span><span class="n">y3</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;TMM&quot;</span><span class="p">)</span>
+<span class="n">v3</span> <span class="o">&lt;-</span> <span class="n">voom</span><span class="p">(</span><span class="n">y3</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="n">F</span><span class="p">)</span>
+<span class="n">logcpm3</span> <span class="o">&lt;-</span> <span class="n">v3</span><span class="err">$</span><span class="n">E</span>
+
+<span class="n">genes1</span> <span class="o">=</span> <span class="n">rownames</span><span class="p">(</span><span class="n">logcpm1</span><span class="p">)</span>
+<span class="n">genes2</span> <span class="o">=</span> <span class="n">rownames</span><span class="p">(</span><span class="n">logcpm2</span><span class="p">)</span>
+<span class="n">genes3</span> <span class="o">=</span> <span class="n">rownames</span><span class="p">(</span><span class="n">logcpm3</span><span class="p">)</span>
+
+<span class="c1"># Find common genes among all three sets</span>
+<span class="n">common_genes</span> <span class="o">=</span> <span class="n">Reduce</span><span class="p">(</span><span class="n">intersect</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">genes1</span><span class="p">,</span> <span class="n">genes2</span><span class="p">,</span> <span class="n">genes3</span><span class="p">))</span>
+
+<span class="c1"># Filter the expression matrices to keep only common genes</span>
+<span class="n">logcpm1</span> <span class="o">=</span> <span class="n">logcpm1</span><span class="p">[</span><span class="n">common_genes</span><span class="p">,</span> <span class="p">]</span>
+<span class="n">logcpm2</span> <span class="o">=</span> <span class="n">logcpm2</span><span class="p">[</span><span class="n">common_genes</span><span class="p">,</span> <span class="p">]</span>
+<span class="n">logcpm3</span> <span class="o">=</span> <span class="n">logcpm3</span><span class="p">[</span><span class="n">common_genes</span><span class="p">,</span> <span class="p">]</span>
+
+<span class="n">batch</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="n">rep</span><span class="p">(</span><span class="s2">&quot;Batch_phil1&quot;</span><span class="p">,</span> <span class="n">ncol</span><span class="p">(</span><span class="n">logcpm1</span><span class="p">)),</span> <span class="n">rep</span><span class="p">(</span><span class="s2">&quot;Batch_kelli&quot;</span><span class="p">,</span> <span class="n">ncol</span><span class="p">(</span><span class="n">logcpm2</span><span class="p">)),</span> <span class="n">rep</span><span class="p">(</span><span class="s2">&quot;Batch_phil2&quot;</span><span class="p">,</span> <span class="n">ncol</span><span class="p">(</span><span class="n">logcpm3</span><span class="p">)))</span>
+
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="n">cbind</span><span class="p">(</span><span class="n">logcpm1</span><span class="p">,</span> <span class="n">logcpm2</span><span class="p">,</span><span class="n">logcpm3</span><span class="p">)</span>
+<span class="c1"># remove genes if mean log2CPM &lt; 2.0</span>
+<span class="n">mean_logcpm</span> <span class="o">&lt;-</span> <span class="n">apply</span><span class="p">(</span><span class="n">logcpm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="n">logcpm</span><span class="p">[</span><span class="n">mean_logcpm</span> <span class="o">&gt;</span> <span class="mf">2.0</span><span class="p">,]</span>
+
+<span class="c1"># remove batch effect</span>
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="n">removeBatchEffect</span><span class="p">(</span><span class="n">logcpm</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="n">logcpm</span><span class="p">)</span>
+<span class="n">logcpm</span><span class="err">$</span><span class="nb">id</span> <span class="o">&lt;-</span> <span class="n">rownames</span><span class="p">(</span><span class="n">logcpm</span><span class="p">)</span>
+<span class="n">rownames</span><span class="p">(</span><span class="n">logcpm</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">NULL</span>
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="n">logcpm</span><span class="p">[,</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">setdiff</span><span class="p">(</span><span class="n">names</span><span class="p">(</span><span class="n">logcpm</span><span class="p">),</span> <span class="s2">&quot;id&quot;</span><span class="p">))]</span>
+
+<span class="c1"># convert log2CPM to matrix</span>
+<span class="n">logcpm_id</span> <span class="o">&lt;-</span> <span class="n">logcpm</span><span class="err">$</span><span class="nb">id</span>
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">logcpm</span><span class="p">[,</span> <span class="n">colnames</span><span class="p">(</span><span class="n">logcpm</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;id&quot;</span><span class="p">])</span>
+<span class="n">rownames</span><span class="p">(</span><span class="n">logcpm</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">logcpm_id</span>
+
+<span class="c1"># quantile normalizarion</span>
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="n">t</span><span class="p">(</span><span class="n">apply</span><span class="p">(</span><span class="n">logcpm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">ties</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;average&quot;</span><span class="p">))</span>
+<span class="n">logcpm</span> <span class="o">&lt;-</span> <span class="n">qnorm</span><span class="p">(</span><span class="n">logcpm</span> <span class="o">/</span> <span class="p">(</span><span class="n">ncol</span><span class="p">(</span><span class="n">logcpm</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+<span class="c1"># export</span>
+<span class="n">df</span> <span class="o">&lt;-</span> <span class="n">data</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="nb">id</span> <span class="o">=</span> <span class="n">rownames</span><span class="p">(</span><span class="n">logcpm</span><span class="p">),</span> <span class="n">logcpm</span><span class="p">,</span> <span class="n">check</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">F</span><span class="p">)</span>
+<span class="n">write</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">&quot;$</span><span class="si">{_output[&#39;normalized_log2cpm&#39;]}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">quote</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">F</span><span class="p">)</span>
+
+<span class="n">cat</span><span class="p">(</span><span class="s2">&quot;the mega normalized pseudo_bulk_eqtl tsv are saved&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "my_python3.11",
+            path: "./code/molecular_phenotypes/QC"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'my_python3.11'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="pseudobulk_expression_aggregation_QC_norm.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Pseudobulk eqtl phenotype QC and normalization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../methylation.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Methylation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-parameter-settings">Global parameter settings</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phenotype-merging-and-qc">Phenotype merging and QC</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
