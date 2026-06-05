@@ -808,6 +808,7 @@ parameter: seed = 999
 parameter: L_greedy = 8
 # maximum number of single effects to use for SuSiE
 parameter: L = 30
+parameter: estimate_residual_variance = True
 # remove a variant if it has more than imiss missing individual level data
 parameter: imiss = 1.0
 # MAF and variance of X cutoff
@@ -1245,6 +1246,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
                                                                       L = ${L},
                                                                       # fine-mapping results summary
                                                                       signal_cutoff = ${pip_cutoff},
+                                                                      estimate_residual_variance = ${&#39;TRUE&#39; if estimate_residual_variance else &#39;FALSE&#39;},
                                                                       coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
                                                                       # TWAS weights and CV for TWAS weights
                                                                       twas_weights = FALSE, 
@@ -1281,6 +1283,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&qu
                                                                   L = ${L},
                                                                   # fine-mapping results summary
                                                                   signal_cutoff = ${pip_cutoff},
+                                                                  estimate_residual_variance = ${&#39;TRUE&#39; if estimate_residual_variance else &#39;FALSE&#39;},
                                                                   coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
                                                                   # TWAS weights and CV for TWAS weights
                                                                   twas_weights = TRUE, 
@@ -1505,6 +1508,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, st
                       data_driven_prior_weights_cutoff = ${prior_weights_min}, 
                       canonical_prior_matrices = use_canonical_prior,
                       mvsusie_max_iter = ${mvsusie_max_iter}, 
+                      estimate_residual_variance = ${&#39;TRUE&#39; if estimate_residual_variance else &#39;FALSE&#39;},
                       mrmash_max_iter = ${mrmash_max_iter},
                       # fine-mapping results summary
                       signal_cutoff = ${pip_cutoff},
@@ -1783,6 +1787,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
                             data_driven_prior_weights_cutoff = ${prior_weights_min}, 
                             canonical_prior_matrices = ${&quot;TRUE&quot; if prior_canonical_matrices else &quot;FALSE&quot;},
                             mvsusie_max_iter = ${mvsusie_max_iter}, 
+                            estimate_residual_variance = ${&#39;TRUE&#39; if estimate_residual_variance else &#39;FALSE&#39;},
                             mrmash_max_iter = ${mrmash_max_iter},
                             # fine-mapping results summary
                             signal_cutoff = ${pip_cutoff},
@@ -1904,7 +1909,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
             }
             fitted[[r]]$susie_on_top_pc &lt;- list()
             for (i in 1:ncol(top_pc_data)) {
-                susie_on_top_pc &lt;- susieR::susie(fdat$residual_X[[r]], top_pc_data[,i], L=${L}, L_greedy=${L_greedy}, refine=TRUE, coverage = ${coverage[0]})
+                susie_on_top_pc &lt;- susieR::susie(fdat$residual_X[[r]], top_pc_data[,i], L=${L}, L_greedy=${L_greedy}, refine=TRUE, coverage = ${coverage[0]}, estimate_residual_variance = ${&#39;TRUE&#39; if estimate_residual_variance else &#39;FALSE&#39;})
                 fitted[[r]]$susie_on_top_pc[[i]] &lt;- format_finemapping_output(
                     postprocess_finemapping_fits(
                         fits = list(susie = susie_on_top_pc),
