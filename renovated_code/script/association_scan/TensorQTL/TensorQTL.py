@@ -263,8 +263,8 @@ compute_qvalues <- function(pvalues) {
             return(qvalue(pvalues)$qvalues)
         }
     }, error = function(e) {
-        message("Too few p-values to calculate qvalue, fall back to qvalue(pi0 = 1)")
-        qvalue(pvalues, pi0 = 1)$qvalues
+        message("Too few p-values to calculate qvalue, fall back to BH")
+        p.adjust(pvalues, method = "BH")
     })
 }
 pairs_df = read_delim(file_path, delim = '\\t')
