@@ -1,0 +1,537 @@
+# ============================================================
+# xQTL Protocol — Snakemake Pipeline (Modular SoS: SoS + modular scripts)
+# ============================================================
+# Modular SoS combines the best of Route 1 (SoS) and Route 2 (native scripts):
+#
+#   Route 1 (SoS):     Snakemake → sos run notebook.ipynb step
+#                      Task blocks contain inline R/Python code.
+#
+#   Route 2 (Native):  Snakemake → bash renovated_code/script.sh step
+#                      No SoS; pure shell dispatch.
+#
+#   Modular SoS (this):    Snakemake → sos run modular_sos/notebooks/notebook.ipynb step
+#                      Task blocks call renovated_code/script.sh instead of
+#                      running inline code — SoS manages workflow sections,
+#                      modular scripts do the computation.
+#
+# All notebook documentation, parameter definitions, and workflow structure
+# are preserved from the original SoS notebooks. Only the task execution
+# blocks are replaced with script calls.
+#
+# Usage:
+#   snakemake --snakefile modular_sos/Snakefile --configfile config.yaml --cores 1
+#
+# Config requirements: same as Snakefile_sos, plus:
+#   renovated_code_dir: /abs/path/to/renovated_code   # modular script root
+# ============================================================
+
+from pathlib import Path
+import re
+import shlex
+
+configfile: "../config.yaml"
+
+# ── Validate required configuration keys ────────────────────────────────────
+required_keys = ["cwd", "renovated_code_dir", "themes", "genotype",
+                 "reference", "chromosomes"]
+for k in required_keys:
+    if k not in config:
+        raise ValueError(f"Required config key '{k}' is missing from config.yaml")
+
+# Keep parity with the non-Modular SoS Snakefile for configs that omit the
+# phenotype_preprocessing block entirely.
+config.setdefault("phenotype_preprocessing", {
+    "run_imputation": False,
+    "impute_method": "gEBMF",
+    "num_factor": 60,
+    "qc_prior_to_impute": True,
+})
+
+# ── Convenience variables ────────────────────────────────────────────────────
+CWD            = config["cwd"]
+NOTEBOOKS      = str(Path(workflow.snakefile).parent / "notebooks")
+RENOVATED      = config["renovated_code_dir"]
+THEMES         = [t["name"] for t in config["themes"]]
+CHROMS         = config["chromosomes"]
+NORM_METHOD    = config["normalization"]["method"]
+HF_METHOD      = config["hidden_factors"]["method"]
+SOS_BIN        = config.get("sos_bin", "sos")
+MINERVA        = config.get("minerva", "")
+SOS_CFG        = config.get("sos", {})
+MODULAR_SOS_ROOT    = Path(workflow.snakefile).resolve().parents[2]
+ACTIVATE_PIXI  = MODULAR_SOS_ROOT / "snakemake" / "dryrun" / "activate_local_pixi.sh"
+DEFAULT_PIXI_HOME = Path(workflow.snakefile).resolve().parents[4] / "mwe_data" / ".pixi"
+COMPAT_PYTHON  = str(Path(workflow.snakefile).resolve().parents[1] / "compat" / "python")
+DEFAULT_RUNTIME_BASE = Path(CWD).resolve().parent.parent
+RUNTIME_HOME   = config.get("runtime_home", str(DEFAULT_RUNTIME_BASE / ".modular-sos-home"))
+RUNTIME_ROOT   = config.get("runtime_root", str(DEFAULT_RUNTIME_BASE / ".xqtl-runtime"))
+RUN_WORKDIR    = str(Path.cwd())
+
+# ── Dry-run flag ─────────────────────────────────────────────────────────────
+_DRY_RUN = bool(config.get("dry_run", False) or SOS_CFG.get("dryrun", False))
+_FORCE   = bool(SOS_CFG.get("force", False))
+DRY_RUN_SOS = "-n" if _DRY_RUN else ""
+
+shell.executable("/bin/bash")
+shell.prefix(
+    "set +u; "
+    f"export XQTL_LOCAL_RUNTIME_HOME={shlex.quote(RUNTIME_HOME)}; "
+    f"export XQTL_LOCAL_RUNTIME_ROOT={shlex.quote(RUNTIME_ROOT)}; "
+    f"if [ -f {shlex.quote(str(ACTIVATE_PIXI))} ] && "
+    f"{{{{ [ -n \"$PIXI_HOME\" ] || [ -d {shlex.quote(str(DEFAULT_PIXI_HOME / 'envs'))} ]; }}}}; "
+    f"then source {shlex.quote(str(ACTIVATE_PIXI))} >/dev/null 2>&1; fi; "
+    "set -u; "
+)
+
+
+def _strip_suffixes(path_str, suffixes):
+    name = Path(str(path_str)).name
+    changed = True
+    while changed:
+        changed = False
+        for suffix in suffixes:
+            if name.endswith(suffix):
+                name = name[: -len(suffix)]
+                changed = True
+                break
+    return name
+
+
+def _bn(path_str):
+    name = Path(str(path_str)).name
+    return name.rsplit(".", 1)[0] if "." in name else name
+
+
+def _theme_cfg(theme):
+    return next(t for t in config["themes"] if t["name"] == theme)
+
+
+def get_theme_raw_phenotype_file(theme):
+    raw = _theme_cfg(theme).get("raw_phenotype_file", "")
+    if not raw:
+        raise ValueError(
+            f"Theme '{theme}': start_from is 'raw_phenotype' "
+            "but no raw_phenotype_file path was provided in config."
+        )
+    return raw
+
+
+def get_raw_phenotype_symlink_suffix(theme):
+    raw = get_theme_raw_phenotype_file(theme).lower()
+    if raw.endswith(".bgz"):
+        return ".gz"
+    for suffix in [".gz", ".bz2", ".xz", ".zip"]:
+        if raw.endswith(suffix):
+            return suffix
+    return ""
+
+
+def get_theme_bam_list(theme):
+    bam_list = _theme_cfg(theme).get("bam_list", "")
+    if not bam_list:
+        raise ValueError(
+            f"Theme '{theme}': start_from is 'fastq' but no bam_list path "
+            "was provided in config. RNA_calling.ipynb rnaseqc_call requires "
+            "the STAR/sample BAM inventory."
+        )
+    return bam_list
+
+
+def get_rnaseqc_prefix_by_theme(theme):
+    return f"{_bn(get_theme_bam_list(theme))}.rnaseqc"
+
+
+def get_molecular_phenotype_bed_by_theme(theme):
+    prefix = get_rnaseqc_prefix_by_theme(theme)
+    return (
+        f"{CWD}/{theme}/molecular_phenotypes/"
+        f"{prefix}.low_expression_filtered.outlier_removed."
+        f"{NORM_METHOD}.expression.bed.gz"
+    )
+
+
+def get_pipeline_notebook_path(notebook_name):
+    return str((Path(config["pipeline_dir"]) / notebook_name).resolve())
+
+
+def _vcf_basename(path_str):
+    return _strip_suffixes(path_str, [".gz", ".bgz", ".bz2", ".xz", ".vcf", ".bcf"])
+
+
+def _plink_basename(path_str):
+    return _strip_suffixes(path_str, [".bed", ".bim", ".fam", ".pgen", ".pvar", ".psam"])
+
+
+def _phenotype_basename(path_str):
+    return _strip_suffixes(path_str, [".gz", ".bed"])
+
+
+def _infer_multi_vcf_basename(vcf_files):
+    stems = [_vcf_basename(path_str) for path_str in vcf_files]
+    normalized = []
+    for stem in stems:
+        match = re.match(
+            r"^(?P<base>.+?)\.chr(?:[0-9]+|X|Y|M|MT)(?:\..*)?$",
+            stem,
+            re.IGNORECASE,
+        )
+        if not match:
+            raise ValueError(
+                "Multiple genotype VCF inputs require either genotype.basename "
+                "or chromosome-tagged VCF names like '*.chr1.*.vcf.gz'. "
+                f"Could not infer merged basename from: {stem}"
+            )
+        normalized.append(match.group("base"))
+    basenames = sorted(set(normalized))
+    if len(basenames) != 1:
+        raise ValueError(
+            "Multiple genotype VCF inputs did not resolve to one merged basename. "
+            f"Resolved candidates: {', '.join(basenames)}. "
+            "Set genotype.basename explicitly in the config if needed."
+        )
+    return basenames[0]
+
+
+PREBUILT_PLINK = config["genotype"].get("plink_bed", "")
+VCF_FILES = config["genotype"].get("vcf_files", [])
+GENOTYPE_BASENAME = config["genotype"].get("basename", "")
+
+if PREBUILT_PLINK:
+    INPUT_PLINK_BASENAME = _plink_basename(PREBUILT_PLINK)
+else:
+    INPUT_PLINK_BASENAME = ""
+
+if VCF_FILES:
+    if len(VCF_FILES) == 1:
+        CONVERTED_PLINK_BASENAME = _vcf_basename(VCF_FILES[0])
+    elif GENOTYPE_BASENAME:
+        CONVERTED_PLINK_BASENAME = GENOTYPE_BASENAME
+    else:
+        CONVERTED_PLINK_BASENAME = _infer_multi_vcf_basename(VCF_FILES)
+elif PREBUILT_PLINK:
+    CONVERTED_PLINK_BASENAME = INPUT_PLINK_BASENAME
+else:
+    raise ValueError(
+        "No genotype input was provided. Supply either genotype.vcf_files or genotype.plink_bed."
+    )
+
+if not INPUT_PLINK_BASENAME:
+    INPUT_PLINK_BASENAME = CONVERTED_PLINK_BASENAME
+
+PLINK_QC_BASENAME = f"{INPUT_PLINK_BASENAME}.plink_qc"
+
+
+def _sos_rule_settings(rule_name):
+    """Resolve SoS queue settings for a Modular SoS wrapper rule."""
+    defaults = SOS_CFG.get("defaults", {})
+    rule_cfg = SOS_CFG.get("rules", {}).get(rule_name, {})
+    queue = rule_cfg.get("queue", defaults.get("queue", "premium"))
+    max_jobs = rule_cfg.get("J", defaults.get("J", 100))
+    job_size = rule_cfg.get("job_size", defaults.get("job_size", 1))
+    rule_force = rule_cfg.get("force")
+    stage_force = _FORCE if rule_force is None else bool(rule_force)
+    stage = "force" if stage_force else "build"
+    local_rules = set(SOS_CFG.get("local_rules", ["sample_match", "merge_pca_covariate"]))
+    is_local = rule_name in local_rules or str(queue).lower() in {"", "local", "none", "false"}
+    return queue, max_jobs, job_size, stage, is_local
+
+
+def sos_sched(rule_name):
+    """Return queue submission flags for SoS notebook wrappers."""
+    queue, max_jobs, job_size, stage, is_local = _sos_rule_settings(rule_name)
+    if _DRY_RUN or not MINERVA:
+        return ""
+    if is_local:
+        return f"-s {stage}"
+    return f"-c {MINERVA} -q {queue} -J {max_jobs} --job_size {job_size} -s {stage}"
+
+
+def sos_queue(rule_name):
+    """Return the effective queue name for a SoS wrapper rule."""
+    queue, _, _, _, is_local = _sos_rule_settings(rule_name)
+    return "local" if is_local else str(queue)
+
+
+def sos_uses_lsf(rule_name):
+    """Whether the SoS wrapper rule should be launched through LSF."""
+    return (not _DRY_RUN) and bool(MINERVA) and (sos_queue(rule_name) != "local")
+
+
+def lsf_mem_gb(mem_mb):
+    """Convert Snakemake mem_mb to an integer LSF rusage[mem=*GB]."""
+    return max(1, (int(mem_mb) + 999) // 1000)
+
+
+def lsf_walltime(minutes, queue):
+    """Convert runtime minutes to LSF HH:MM, capped for express queue."""
+    minutes = int(minutes)
+    if str(queue).lower() == "express":
+        minutes = min(minutes, 11 * 60)
+    return f"{minutes // 60}:{minutes % 60:02d}"
+
+
+def sos_walltime_arg(minutes, queue):
+    """Return a SoS walltime argument that respects queue-level limits."""
+    minutes = int(minutes)
+    if str(queue).lower() == "express":
+        minutes = min(minutes, 11 * 60)
+    if minutes % 60 == 0:
+        return f"{minutes // 60}h"
+    return f"{minutes // 60}:{minutes % 60:02d}:00"
+
+# ── Helper functions (identical to Snakefile_sos) ────────────────────────────
+def get_phenotype_bed_by_theme(theme):
+    """Return the normalized phenotype BED.gz path for a theme wildcard."""
+    theme_cfg = _theme_cfg(theme)
+    if config.get("start_from", "") == "phenotype_bed":
+        bed = theme_cfg.get("phenotype_bed", "")
+        if not bed:
+            raise ValueError(
+                f"Theme '{theme}': start_from is 'phenotype_bed' "
+                "but no phenotype_bed path was provided in config."
+            )
+        return bed
+    if config.get("start_from", "") == "raw_phenotype":
+        base = f"{CWD}/{theme}/phenotype_preprocessing"
+        if config["phenotype_preprocessing"].get("run_imputation", False):
+            return f"{base}/{theme}.bed.imputed.bed.gz"
+        return f"{base}/{theme}.bed.gz"
+    return get_molecular_phenotype_bed_by_theme(theme)
+
+
+def get_phenotype_bed(wc):
+    return get_phenotype_bed_by_theme(wc.theme)
+
+
+def get_phenotype_base(theme):
+    return _phenotype_basename(get_phenotype_bed_by_theme(theme))
+
+
+def get_theme_covariate_file(theme):
+    return _theme_cfg(theme)["covariate_file"]
+
+
+def get_theme_covariate_base(theme):
+    return _bn(get_theme_covariate_file(theme))
+
+
+def get_plink_qc_bed():
+    return f"{CWD}/data_preprocessing/genotype/{PLINK_QC_BASENAME}.bed"
+
+
+def get_genotype_chrom_list():
+    return f"{CWD}/data_preprocessing/genotype/{PLINK_QC_BASENAME}.genotype_by_chrom_files.txt"
+
+
+def get_sample_match_prefix(theme):
+    return get_phenotype_base(theme)
+
+
+def get_sample_genotypes_path(theme):
+    return (
+        f"{CWD}/data_preprocessing/{theme}/genotype_data/"
+        f"{get_sample_match_prefix(theme)}.sample_genotypes.txt"
+    )
+
+
+def get_sample_overlap_path(theme):
+    return (
+        f"{CWD}/data_preprocessing/{theme}/genotype_data/"
+        f"{get_sample_match_prefix(theme)}.sample_overlap.txt"
+    )
+
+
+def get_king_prefix(theme):
+    return f"{PLINK_QC_BASENAME}.{theme}"
+
+
+def get_unrelated_bed(theme):
+    return f"{CWD}/data_preprocessing/{theme}/genotype_data/{get_king_prefix(theme)}.unrelated.bed"
+
+
+def get_related_bed(theme):
+    return f"{CWD}/data_preprocessing/{theme}/genotype_data/{get_king_prefix(theme)}.related.bed"
+
+
+def get_unrelated_pruned_prefix(theme):
+    return f"{get_king_prefix(theme)}.unrelated.plink_qc.prune"
+
+
+def get_unrelated_pruned_bed(theme):
+    return f"{CWD}/data_preprocessing/{theme}/genotype_data/{get_unrelated_pruned_prefix(theme)}.bed"
+
+
+def get_unrelated_pruned_in(theme):
+    return f"{CWD}/data_preprocessing/{theme}/genotype_data/{get_unrelated_pruned_prefix(theme)}.in"
+
+
+def get_related_qc_prefix(theme):
+    return f"{get_king_prefix(theme)}.related.plink_qc.extracted"
+
+
+def get_related_qc_bed(theme):
+    return f"{CWD}/data_preprocessing/{theme}/genotype_data/{get_related_qc_prefix(theme)}.bed"
+
+
+def get_flashpca_prefix(theme):
+    return f"{get_unrelated_pruned_prefix(theme)}.pca"
+
+
+def get_flashpca_rds(theme):
+    return f"{CWD}/data_preprocessing/{theme}/pca/{get_flashpca_prefix(theme)}.rds"
+
+
+def get_projected_pca_prefix(theme):
+    return f"{get_related_qc_prefix(theme)}.pca.projected"
+
+
+def get_projected_pca_rds(theme):
+    return f"{CWD}/data_preprocessing/{theme}/pca/{get_projected_pca_prefix(theme)}.rds"
+
+
+def get_merged_cov_base(theme):
+    return get_theme_covariate_base(theme)
+
+
+def get_merged_cov_path(theme):
+    return f"{CWD}/data_preprocessing/{theme}/covariates/{get_merged_cov_base(theme)}.pca.gz"
+
+
+def get_phenotype_chrom_list(theme):
+    return (
+        f"{CWD}/data_preprocessing/{theme}/phenotype_data/"
+        f"{get_phenotype_base(theme)}.phenotype_by_chrom_files.txt"
+    )
+
+
+def get_phenotype_region_list(theme):
+    return (
+        f"{CWD}/data_preprocessing/{theme}/phenotype_data/"
+        f"{get_phenotype_base(theme)}.phenotype_by_chrom_files.region_list.txt"
+    )
+
+
+def get_hidden_factor_prefix(theme):
+    return f"{get_phenotype_base(theme)}.{get_merged_cov_base(theme)}.pca"
+
+
+def get_hidden_factors_by_theme(theme):
+    return (
+        f"{CWD}/data_preprocessing/{theme}/covariates/"
+        f"{get_hidden_factor_prefix(theme)}.{HF_METHOD}.gz"
+    )
+
+
+def get_hidden_factors(wc):
+    return get_hidden_factors_by_theme(wc.theme)
+
+
+def get_input_plink(wc):
+    """Return the plink BED file used as input for genome-wide QC."""
+    prebuilt = config["genotype"].get("plink_bed", "")
+    if prebuilt:
+        return prebuilt
+    return f"{CWD}/data_preprocessing/genotype/{CONVERTED_PLINK_BASENAME}.bed"
+
+
+# ── Include Modular SoS rule modules ─────────────────────────────────────────────
+include: "rules/00_phenotype_preprocessing.smk"
+include: "rules/01_molecular_phenotypes.smk"
+include: "rules/02_genotype_preprocessing.smk"
+include: "rules/03_sample_qc_pca.smk"
+include: "rules/04_phenotype_covariate_prep.smk"
+include: "rules/05_association_testing.smk"
+include: "rules/06_univariate_finemapping.smk"
+
+
+# ============================================================
+# rule all — full pipeline targets
+# ============================================================
+rule all:
+    """Run the complete xQTL pipeline (Modular SoS) for all configured themes."""
+    default_target: True
+    input:
+        [get_molecular_phenotype_bed_by_theme(theme) for theme in THEMES]
+        if config.get("start_from", "") == "fastq" else [],
+        get_genotype_chrom_list(),
+        [get_projected_pca_rds(theme) for theme in THEMES],
+        [get_hidden_factors_by_theme(theme) for theme in THEMES],
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas_plots/.done_plots",
+            cwd=CWD, theme=THEMES,
+        ),
+
+
+# ============================================================
+# rule xqtl_core — complete Modular SoS pipeline without plots
+# ============================================================
+rule xqtl_core:
+    """Run Modular SoS through association and SuSiE/TWAS fine-mapping, excluding plots."""
+    input:
+        [get_molecular_phenotype_bed_by_theme(theme) for theme in THEMES]
+        if config.get("start_from", "") == "fastq" else [],
+        get_genotype_chrom_list(),
+        [get_projected_pca_rds(theme) for theme in THEMES],
+        [get_hidden_factors_by_theme(theme) for theme in THEMES],
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
+            cwd=CWD, theme=THEMES,
+        ),
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
+
+
+# ── Convenience stage targets ─────────────────────────────────────────────────
+rule phenotype_preprocessing:
+    input:
+        expand(
+            "{cwd}/{theme}/phenotype_preprocessing/{theme}.bed.gz",
+            cwd=CWD, theme=THEMES,
+        ) if config.get("start_from", "") == "raw_phenotype" else [],
+        expand(
+            "{cwd}/{theme}/phenotype_preprocessing/{theme}.bed.imputed.bed.gz",
+            cwd=CWD, theme=THEMES,
+        ) if (
+            config.get("start_from", "") == "raw_phenotype"
+            and config["phenotype_preprocessing"].get("run_imputation", False)
+        ) else [],
+
+rule phenotype_calling:
+    input:
+        [get_molecular_phenotype_bed_by_theme(theme) for theme in THEMES],
+
+rule genotype_preprocessing:
+    input:
+        get_genotype_chrom_list(),
+
+rule sample_qc_pca:
+    input:
+        [get_projected_pca_rds(theme) for theme in THEMES],
+
+rule covariate_prep:
+    input:
+        [get_hidden_factors_by_theme(theme) for theme in THEMES],
+
+rule association_testing:
+    input:
+        expand(
+            "{cwd}/association_scan/{theme}/TensorQTL/.done_cis",
+            cwd=CWD, theme=THEMES,
+        ),
+
+rule finemapping:
+    input:
+        expand(
+            "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
