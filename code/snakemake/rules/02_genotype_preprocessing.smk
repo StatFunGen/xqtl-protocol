@@ -1,9 +1,9 @@
 # ============================================================
-# Rule Module 02: Genotype Preprocessing  (Modular SoS)
+# Rule Module 02: Genotype Preprocessing  (script-backed)
 # ============================================================
 # Covers: VCF QC → Plink conversion → Merge plink → GWAS QC → Split by chromosome
 #
-# SoS notebooks called (Modular SoS wrappers in pipeline/):
+# SoS notebooks called (script-backed wrappers in pipeline/):
 #   - VCF_QC.ipynb              (qc)
 #   - genotype_formatting.ipynb (vcf_to_plink, merge_plink, genotype_by_chrom)
 #   - GWAS_QC.ipynb             (qc_no_prune)
@@ -29,8 +29,9 @@ rule vcf_qc:
     output:
         vcf_qc = "{cwd}/data_preprocessing/genotype/{prefix}.vcf.gz",
     params:
+        sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         # container     = config.get("containers", {}).get("bioinfo", ""),  # Disabled - not in config
         outdir        = "{cwd}/data_preprocessing/genotype",
         fasta         = config["reference"]["fasta"],
@@ -44,13 +45,13 @@ rule vcf_qc:
     shell:
         """
         mkdir -p {params.outdir}
-        sos run {params.notebooks_dir}/VCF_QC.ipynb qc \
+        {params.sos_bin} run {params.notebooks_dir}/VCF_QC.ipynb qc \
             --cwd {params.outdir} \
             --genoFile {input.vcf} \
             --dbsnp-variants {params.dbsnp} \
             --reference-genome {params.fasta} \
             --gt-only-vcf-qc {params.gt_only_vcf_qc} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -83,8 +84,9 @@ rule vcf_to_plink:
         ),
         plink_list = "{cwd}/data_preprocessing/genotype/vcf_to_plink_files.list",
     params:
+        sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         # container     = config.get("containers", {}).get("bioinfo", ""),  # Disabled - not in config
         outdir        = "{cwd}/data_preprocessing/genotype",
         vcf_list      = "{cwd}/data_preprocessing/genotype/vcf_qc_files.list",
@@ -97,11 +99,11 @@ rule vcf_to_plink:
         """
         mkdir -p {params.outdir}
         printf '%s\n' {input.vcf_qc} > {params.vcf_list}
-        sos run {params.notebooks_dir}/genotype_formatting.ipynb vcf_to_plink \
+        {params.sos_bin} run {params.notebooks_dir}/genotype_formatting.ipynb vcf_to_plink \
             --cwd {params.outdir} \
             --genoFile {params.vcf_list} \
              \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run}
         printf '%s\n' {output.bed} > {output.plink_list}
         """
@@ -133,8 +135,9 @@ rule merge_plink:
         bim = "{cwd}/data_preprocessing/genotype/" + CONVERTED_PLINK_BASENAME + ".bim",
         fam = "{cwd}/data_preprocessing/genotype/" + CONVERTED_PLINK_BASENAME + ".fam",
     params:
+        sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/genotype",
         output_name   = CONVERTED_PLINK_BASENAME,
         merge_mem     = "300G",
@@ -153,13 +156,13 @@ rule merge_plink:
             cp "${{input_prefix}}.bim" {output.bim}
             cp "${{input_prefix}}.fam" {output.fam}
         else
-            sos run {params.notebooks_dir}/genotype_formatting.ipynb merge_plink \
+            {params.sos_bin} run {params.notebooks_dir}/genotype_formatting.ipynb merge_plink \
                 --cwd {params.outdir} \
                 --genoFile {input.plink_list} \
                 --name {params.output_name} \
                 --mem {params.merge_mem} \
                  \
-                --renovated-code-dir {params.renovated_dir} \
+                --modular-script-dir {params.modular_script_dir} \
                 --numThreads {threads} {params.dry_run}
         fi
         """
@@ -176,8 +179,9 @@ rule plink_qc:
         bim = "{cwd}/data_preprocessing/genotype/" + PLINK_QC_BASENAME + ".bim",
         fam = "{cwd}/data_preprocessing/genotype/" + PLINK_QC_BASENAME + ".fam",
     params:
+        sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         # container     = config.get("containers", {}).get("bioinfo", ""),  # Disabled - not in config
         outdir        = "{cwd}/data_preprocessing/genotype",
         mac_filter    = config["genotype_qc"]["mac_filter"],
@@ -192,7 +196,7 @@ rule plink_qc:
         runtime  = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.notebooks_dir}/GWAS_QC.ipynb qc_no_prune \
+        {params.sos_bin} run {params.notebooks_dir}/GWAS_QC.ipynb qc_no_prune \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --mac-filter {params.mac_filter} \
@@ -201,7 +205,7 @@ rule plink_qc:
             --mind-filter {params.mind_filter} \
             --hwe-filter {params.hwe_filter} \
              \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -215,8 +219,9 @@ rule genotype_by_chrom:
     output:
         chrom_list = "{cwd}/data_preprocessing/genotype/" + PLINK_QC_BASENAME + ".genotype_by_chrom_files.txt",
     params:
+        sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         # container     = config.get("containers", {}).get("bioinfo", ""),  # Disabled - not in config
         outdir        = "{cwd}/data_preprocessing/genotype",
         chroms        = " ".join(
@@ -230,11 +235,11 @@ rule genotype_by_chrom:
         runtime  = config["resources"]["genotype_qc"]["runtime"],
     shell:
         """
-        sos run {params.notebooks_dir}/genotype_formatting.ipynb genotype_by_chrom \
+        {params.sos_bin} run {params.notebooks_dir}/genotype_formatting.ipynb genotype_by_chrom \
             --cwd {params.outdir} \
             --genoFile {input.bed} \
             --chrom {params.chroms} \
              \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run}
         """

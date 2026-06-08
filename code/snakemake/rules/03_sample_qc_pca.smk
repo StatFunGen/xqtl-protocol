@@ -1,10 +1,10 @@
 # ============================================================
-# Rule Module 03: Per-tissue Sample QC, Kinship & PCA  (Modular SoS)
+# Rule Module 03: Per-tissue Sample QC, Kinship & PCA  (script-backed)
 # ============================================================
 # Covers: Sample matching → KING kinship → Unrelated/related QC →
 #         FlashPCA (unrelated) → Project related samples onto PC space
 #
-# SoS notebooks called (Modular SoS wrappers in pipeline/):
+# SoS notebooks called (script-backed wrappers in pipeline/):
 #   - GWAS_QC.ipynb (genotype_phenotype_sample_overlap, king, qc, qc_no_prune)
 #   - PCA.ipynb     (flashpca, project_samples)
 # ============================================================
@@ -24,7 +24,7 @@ rule sample_match:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("sample_match"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/genotype_data",
         sample_lookup_arg = lambda wc: (
             f"--sample_participant_lookup {next(t.get('sample_participant_lookup', '') for t in config['themes'] if t['name'] == wc.theme)}"
@@ -47,7 +47,7 @@ rule sample_match:
             --genoFile "$local_genofam" \
             --phenoFile "$local_pheno" \
             {params.sample_lookup_arg} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         actual_sample_genotypes="{params.outdir}/{wildcards.pheno_base}.bed.sample_genotypes.txt"
         actual_sample_overlap="{params.outdir}/{wildcards.pheno_base}.bed.sample_overlap.txt"
@@ -89,7 +89,7 @@ rule king_kinship:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("king_kinship"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/genotype_data",
         dry_run       = DRY_RUN_SOS,
     threads: 1
@@ -103,7 +103,7 @@ rule king_kinship:
             --genoFile {input.bed} \
             --keep-samples {input.sample_genotypes} \
             --name {wildcards.theme} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
 
         base=$(printf '%s\n' "{output.unrelated_bed}" | sed 's/\\.unrelated\\.bed$//')
@@ -144,13 +144,13 @@ rule unrelated_qc:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("unrelated_qc"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/genotype_data",
         mac_filter    = config["genotype_qc"]["mac_filter"],
         ld_window     = config["genotype_qc"]["ld_window"],
         ld_shift      = config["genotype_qc"]["ld_shift"],
         ld_r2         = config["genotype_qc"]["ld_r2"],
-        bad_ld_arg    = "--bad-ld" if config["genotype_qc"].get("bad_ld", False) else "",
+        bad_ld_arg    = "--other-args bad-ld" if config["genotype_qc"].get("bad_ld", False) else "",
         dry_run       = DRY_RUN_SOS,
     threads: 1
     resources:
@@ -166,7 +166,7 @@ rule unrelated_qc:
             --shift {params.ld_shift} \
             --r2 {params.ld_r2} \
             {params.bad_ld_arg} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
 
         prefix=$(printf '%s\n' "{output.pruned_bed}" | sed 's/\\.bed$//')
@@ -197,7 +197,7 @@ rule related_qc:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("related_qc"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/genotype_data",
         mac_filter    = config["genotype_qc"]["mac_filter"],
         dry_run       = DRY_RUN_SOS,
@@ -221,7 +221,7 @@ rule related_qc:
             --geno-filter 0 \
             --mind-filter 0.1 \
             --hwe-filter 0 \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
 
         prefix=$(printf '%s\n' "{output.related_qc_bed}" | sed 's/\\.bed$//')
@@ -246,7 +246,7 @@ rule flashpca:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("flashpca"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/pca",
         n_pcs         = config["pca"]["n_pcs"],
         maha_k        = config["pca"]["maha_k"],
@@ -259,13 +259,13 @@ rule flashpca:
     shell:
         """
         mkdir -p {params.outdir}
-        {params.sos_bin} run {params.notebooks_dir}/PCA.ipynb flashpca_core \
+        {params.sos_bin} run {params.notebooks_dir}/PCA.ipynb flashpca \
             --cwd {params.outdir} \
             --genoFile {input.pruned_bed} \
             --k {params.n_pcs} \
             --maha-k {params.maha_k} \
             --prob {params.maha_prob} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """
 
@@ -284,7 +284,7 @@ rule project_samples:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("project_samples"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/pca",
         maha_k        = config["pca"]["maha_k"],
         maha_prob     = config["pca"]["maha_prob"],
@@ -301,11 +301,11 @@ rule project_samples:
             exit 0
         fi
 
-        {params.sos_bin} run {params.notebooks_dir}/PCA.ipynb project_samples_core \
+        {params.sos_bin} run {params.notebooks_dir}/PCA.ipynb project_samples \
             --cwd {params.outdir} \
             --genoFile {input.related_qc_bed} \
             --pca-model {input.pca_rds} \
             --maha-k {params.maha_k} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """

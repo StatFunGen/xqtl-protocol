@@ -177,7 +177,7 @@ def run_normalize(args):
             qnorm=qnorm)
 
         # RNASeQC GCTs often carry versioned Ensembl IDs (for example ENSG....5)
-        # while modular_sos gene annotations use unversioned gene IDs.
+        # while current gene annotations use unversioned gene IDs.
         norm_df.index = normalize_ensembl_gene_ids(pd.Index(norm_df.index))
         if norm_df.index.has_duplicates:
             dup_ids = norm_df.index[norm_df.index.duplicated()].unique().tolist()

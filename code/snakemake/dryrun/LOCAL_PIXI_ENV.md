@@ -1,10 +1,10 @@
 # Local Pixi Compatibility Note
 
-This directory contains a repo-local compatibility layer for the current dry-run environment. It does not modify the installed Pixi tree under `../mwe_data/.pixi`; it only makes the relocated install usable from this checkout.
+This directory contains a repo-local compatibility layer for the current dry-run environment. It does not modify the installed Pixi tree under `../xqtl-renovated/mwe_data/.pixi`; it only makes the relocated install usable from this checkout.
 
 ## Canonical local paths
 
-- Repo root: `/sc/arion/projects/load/users/sunh14/xqtl/xqtl-renovated/xqtl-protocol`
+- Repo root: `/sc/arion/projects/load/users/sunh14/xqtl/xqtl-protocol`
 - Live Pixi home: `/sc/arion/projects/load/users/sunh14/xqtl/xqtl-renovated/mwe_data/.pixi`
 - Sibling setup repo: `/sc/arion/projects/load/users/sunh14/xqtl/xqtl-renovated/pixi-setup`
 
@@ -43,8 +43,8 @@ Important caveat: `pixi-setup.sh` currently downloads package lists from GitHub 
 From the repo root:
 
 ```bash
-source renovated_code/snakemake/dryrun/activate_local_pixi.sh
-renovated_code/snakemake/dryrun/check_local_pixi_env.sh
+source code/snakemake/dryrun/activate_local_pixi.sh
+code/snakemake/dryrun/check_local_pixi_env.sh
 ```
 
 The activation script:
@@ -75,7 +75,7 @@ Observed on 2026-03-30:
 This is intentionally the lowest-risk fix:
 
 - no rebuild of the installed Pixi envs
-- no mutation of `../mwe_data/.pixi`
+- no mutation of `../xqtl-renovated/mwe_data/.pixi`
 - no switch to project-style `pixi.toml`
 
 If you later want a cleaner rebuild, do it in a separate test `PIXI_HOME` and run the 21 dry-run scripts against that test install before switching anything over.

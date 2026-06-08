@@ -721,6 +721,8 @@ _picard_qc_star_align_2() {
 }
 
 _multiqc_report() {
+    local -a input_dirs
+
     [[ -z "$INPUT_DIR" ]] && { echo "ERROR: --input-dir is required" >&2; exit 1; }
     [[ -z "$OUTPUT_REPORT" ]] && { echo "ERROR: --output-report is required" >&2; exit 1; }
     if [[ -z "$MULTIQC_CONFIG" ]]; then
@@ -734,7 +736,23 @@ extra_fn_clean_exts:
 fn_ignore_dirs:
     - '*_STARpass1'
 MULTIQC_EOF
-    multiqc "$INPUT_DIR" -v -n "$(basename "$OUTPUT_REPORT")" -o "$(dirname "$OUTPUT_REPORT")" -c "$MULTIQC_CONFIG"
+    read -r -a input_dirs <<< "$INPUT_DIR"
+    _run_multiqc "${input_dirs[@]}" -v -n "$(basename "$OUTPUT_REPORT")" -o "$(dirname "$OUTPUT_REPORT")" -c "$MULTIQC_CONFIG"
+}
+
+_run_multiqc() {
+    local multiqc_bin
+    local multiqc_python
+
+    multiqc_bin="$(command -v multiqc || true)"
+    [[ -n "$multiqc_bin" ]] || { echo "ERROR: multiqc was not found on PATH" >&2; exit 127; }
+    multiqc_python="$(dirname "$multiqc_bin")/python"
+
+    if [[ -x "$multiqc_python" ]]; then
+        "$multiqc_python" -m multiqc "$@"
+    else
+        "$multiqc_bin" "$@"
+    fi
 }
 
 if [[ "$DRY_RUN" == "true" ]]; then

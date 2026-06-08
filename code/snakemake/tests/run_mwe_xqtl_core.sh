@@ -7,10 +7,10 @@ Usage:
   run_mwe_xqtl_core.sh [options]
 
 Options:
-  --mwe-data PATH          MWE data directory, .tar.gz/.tgz, or zip file. Defaults to xqtl-renovated/mwe_data.
-  --run-tag TAG           Run label under renovated_code/snakemake/tmp/modular_sos_mwe.
+  --mwe-data PATH          MWE data directory, .tar.gz/.tgz, or zip file. Defaults to ../xqtl-renovated/mwe_data.
+  --run-tag TAG           Run label under code/snakemake/tmp/xqtl_mwe.
   --cores N               Snakemake cores. Default: 1.
-  --target TARGET         Snakemake target. Default: xqtl_core.
+  --target TARGET         Snakemake target. Default: xqtl_association_core.
   --snakemake-dry-run     Build the DAG without executing jobs.
   --no-pixi               Do not source the local pixi compatibility layer.
   -h, --help              Show this help.
@@ -18,10 +18,10 @@ EOF
 }
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-RUNNER="${SCRIPT_DIR}/../../dryrun/run_modular_sos_mwe_snakemake.sh"
+RUNNER="${SCRIPT_DIR}/../dryrun/run_mwe_snakemake.sh"
 
 CORES=1
-TARGET="xqtl_core"
+TARGET="xqtl_association_core"
 ARGS=()
 
 while [[ $# -gt 0 ]]; do

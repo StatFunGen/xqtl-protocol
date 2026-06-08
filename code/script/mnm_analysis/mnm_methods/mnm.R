@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # mnm.R — Multivariate mvSuSiE fine-mapping and mr.mash TWAS weights
-# Called directly by modular_sos SoS notebook task blocks.
+# Called directly by current SoS notebook task blocks.
 #
 # Usage:
 #   Rscript mnm.R \

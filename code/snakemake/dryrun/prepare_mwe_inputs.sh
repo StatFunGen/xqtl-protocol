@@ -5,14 +5,14 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
 MWE_DIR="${MWE_DIR:-}"
 if [[ -z "${MWE_DIR}" ]]; then
-    MWE_DIR="$(cd -- "${ROOT}/../mwe_data" && pwd)"
+    MWE_DIR="$(cd -- "${ROOT}/../xqtl-renovated/mwe_data" && pwd)"
 else
     MWE_DIR="$(cd -- "${MWE_DIR}" && pwd)"
 fi
-T="${1:-${ROOT}/tmp/modular_sos_mwe_test}"
+T="${1:-${ROOT}/tmp/xqtl_mwe_test}"
 
-if [[ "${XQTL_MODULAR_SOS_SKIP_PIXI:-0}" != "1" ]]; then
-    source "${ROOT}/renovated_code/snakemake/dryrun/activate_local_pixi.sh" >/dev/null
+if [[ "${XQTL_SNAKEMAKE_SKIP_PIXI:-0}" != "1" ]]; then
+    source "${ROOT}/code/snakemake/dryrun/activate_local_pixi.sh" >/dev/null
 fi
 
 mkdir -p "${T}" "${T}/output"
@@ -293,7 +293,7 @@ with open(participant_out_path, "w") as out:
         out.write(f"{sample_id}\t{genotype_id}\t{genotype_id}\n")
 PY
 
-python - <<'PY' "${T}/sample_participant_lookup.tsv" "${T}/modular_sos_hg_covariates.cov.gz"
+python - <<'PY' "${T}/sample_participant_lookup.tsv" "${T}/xqtl_hg_covariates.cov.gz"
 import csv
 import gzip
 import sys
@@ -308,25 +308,25 @@ with gzip.open(cov_path, "wt") as out:
     out.write("cov_const\t" + "\t".join("0" for _ in sample_ids) + "\n")
 PY
 
-cat > "${T}/modular_sos_hidden_cov.tsv" <<'EOF'
+cat > "${T}/xqtl_hidden_cov.tsv" <<'EOF'
 #id	sample1	sample2
 cov1	0	1
 cov2	1	0
 cov3	0.5	1.5
 EOF
-bgzip -f "${T}/modular_sos_hidden_cov.tsv"
-mv -f "${T}/modular_sos_hidden_cov.tsv.gz" "${T}/modular_sos_hidden_cov.gz"
+bgzip -f "${T}/xqtl_hidden_cov.tsv"
+mv -f "${T}/xqtl_hidden_cov.tsv.gz" "${T}/xqtl_hidden_cov.gz"
 
-cat > "${T}/modular_sos_hidden_pheno.bed" <<'EOF'
+cat > "${T}/xqtl_hidden_pheno.bed" <<'EOF'
 #chr	start	end	gene_id	sample1	sample2
 chr1	10000	10001	gene_chr1_1	1.0	2.0
 chr2	20000	20001	gene_chr2_1	0.5	1.5
 chr22	22000	22001	gene_chr22_1	1.2	0.8
 EOF
-bgzip -f "${T}/modular_sos_hidden_pheno.bed"
-tabix -f -p bed "${T}/modular_sos_hidden_pheno.bed.gz"
+bgzip -f "${T}/xqtl_hidden_pheno.bed"
+tabix -f -p bed "${T}/xqtl_hidden_pheno.bed.gz"
 
-POS_FILE="${T}/modular_sos_hg_synthetic.positions.tsv"
+POS_FILE="${T}/xqtl_hg_synthetic.positions.tsv"
 awk '
 ($1 == 1 || $1 == "chr1") {
     print $1 "\t" $4
@@ -357,6 +357,6 @@ header_printed == 0 {
     for (i = 1; i <= n; ++i) printf "\t%.3f", FNR + ((i - 1) % 11) / 10
     printf "\n"
 }
-' "${T}/AC.unrelated.plink_qc.prune.fam" "${POS_FILE}" > "${T}/modular_sos_hg_synthetic.expression.bed"
-bgzip -f "${T}/modular_sos_hg_synthetic.expression.bed"
-tabix -f -p bed "${T}/modular_sos_hg_synthetic.expression.bed.gz"
+' "${T}/AC.unrelated.plink_qc.prune.fam" "${POS_FILE}" > "${T}/xqtl_hg_synthetic.expression.bed"
+bgzip -f "${T}/xqtl_hg_synthetic.expression.bed"
+tabix -f -p bed "${T}/xqtl_hg_synthetic.expression.bed.gz"

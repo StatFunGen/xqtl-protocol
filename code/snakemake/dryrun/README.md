@@ -1,13 +1,13 @@
 # Local MWE Runtime Helpers
 
-This directory keeps the small host-side helpers used by the Modular SoS MWE
+This directory keeps the small host-side helpers used by the script-backed MWE
 runner. It does not contain generated run outputs.
 
 ## Scripts
 
-- `run_modular_sos_mwe_snakemake.sh`: prepares a temporary MWE run directory,
-  writes a Modular SoS config, and runs Snakemake.
-- `prepare_modular_sos_mwe_inputs.sh`: normalizes the external MWE data into the
+- `run_mwe_snakemake.sh`: prepares a temporary MWE run directory,
+  writes a script-backed config, and runs Snakemake.
+- `prepare_mwe_inputs.sh`: normalizes the external MWE data into the
   layout expected by the Snakemake config.
 - `activate_local_pixi.sh` and `_local_pixi_common.sh`: optional local Pixi
   activation helpers for this checkout.
@@ -20,13 +20,13 @@ The Pixi environment itself is intentionally not part of the source bundle.
 The ignored local holder is:
 
 ```bash
-renovated_code/snakemake/dryrun/bin/
+code/snakemake/dryrun/bin/
 ```
 
 The default live Pixi home used on this machine is outside the repository:
 
 ```bash
-../mwe_data/.pixi
+../xqtl-renovated/mwe_data/.pixi
 ```
 
 ## Example
@@ -34,9 +34,9 @@ The default live Pixi home used on this machine is outside the repository:
 From the repository root:
 
 ```bash
-renovated_code/snakemake/modular_sos/tests/run_mwe_xqtl_core.sh \
-  --mwe-data ../mwe_data \
-  --run-tag modular_sos_mwe_core \
+code/snakemake/tests/run_mwe_xqtl_core.sh \
+  --mwe-data ../xqtl-renovated/mwe_data \
+  --run-tag xqtl_mwe_core \
   --cores 1
 ```
 

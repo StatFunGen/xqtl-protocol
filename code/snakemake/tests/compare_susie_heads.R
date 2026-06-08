@@ -1,8 +1,8 @@
 args <- commandArgs(trailingOnly = TRUE)
 old_bvsr <- args[[1]]
-modular_sos_bvsr <- args[[2]]
+current_bvsr <- args[[2]]
 old_twas <- args[[3]]
-modular_sos_twas <- args[[4]]
+current_twas <- args[[4]]
 compare_tsv <- args[[5]]
 report_txt <- args[[6]]
 
@@ -34,18 +34,18 @@ extract_twas <- function(path) {
 }
 
 old_sum <- utils::head(extract_sumstats(old_bvsr), 3)
-modular_sos_sum <- utils::head(extract_sumstats(modular_sos_bvsr), 3)
+current_sum <- utils::head(extract_sumstats(current_bvsr), 3)
 old_twas_df <- utils::head(extract_twas(old_twas), 3)
-modular_sos_twas_df <- utils::head(extract_twas(modular_sos_twas), 3)
+current_twas_df <- utils::head(extract_twas(current_twas), 3)
 
-susie_match <- identical(old_sum, modular_sos_sum)
-twas_match <- identical(old_twas_df, modular_sos_twas_df)
+susie_match <- identical(old_sum, current_sum)
+twas_match <- identical(old_twas_df, current_twas_df)
 
 write.table(
   data.frame(
     metric = c("susie_head", "twas_head"),
     old = c("present", "present"),
-    modular_sos = c("present", "present"),
+    current = c("present", "present"),
     status = c(if (susie_match) "match" else "diff", if (twas_match) "match" else "diff")
   ),
   file = compare_tsv,
@@ -59,12 +59,12 @@ cat("20_susie_head_match:", if (susie_match) "TRUE" else "FALSE", "\n")
 cat("20_twas_head_match:", if (twas_match) "TRUE" else "FALSE", "\n\n")
 cat("20_susie_head_old:\n")
 print(old_sum)
-cat("\n20_susie_head_modular_sos:\n")
-print(modular_sos_sum)
+cat("\n20_susie_head_current:\n")
+print(current_sum)
 cat("\n20_twas_head_old:\n")
 print(old_twas_df)
-cat("\n20_twas_head_modular_sos:\n")
-print(modular_sos_twas_df)
+cat("\n20_twas_head_current:\n")
+print(current_twas_df)
 sink()
 
 if (!susie_match || !twas_match) {

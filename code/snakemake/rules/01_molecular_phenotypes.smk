@@ -1,15 +1,15 @@
 # ============================================================
-# Rule Module 01: Molecular Phenotype Quantification  (Modular SoS)
+# Rule Module 01: Molecular Phenotype Quantification  (script-backed)
 # ============================================================
 # Covers: FastQC → STAR alignment + RNA-SeQC quantification →
 #         Multi-sample QC → TMM normalization
 #
-# SoS notebooks called (Modular SoS wrappers in pipeline/):
+# SoS notebooks called (script-backed wrappers in pipeline/):
 #   - RNA_calling.ipynb          (fastqc, rnaseqc_call)
 #   - bulk_expression_QC.ipynb   (qc)
 #   - bulk_expression_normalization.ipynb (normalize)
 #
-# Each notebook step now calls the modular script from renovated_code/
+# Each notebook step now calls the modular script from code/script/
 # instead of running inline R/Python code.
 # ============================================================
 
@@ -28,7 +28,7 @@ rule fastqc:
         sos_bin          = SOS_BIN,
         sos_sched        = sos_sched("fastqc"),
         notebooks_dir    = NOTEBOOKS,
-        renovated_dir    = RENOVATED,
+        modular_script_dir    = MODULAR_SCRIPT_DIR,
         data_dir         = lambda wc: next(
             t["data_dir"] for t in config["themes"] if t["name"] == wc.theme
         ),
@@ -45,7 +45,7 @@ rule fastqc:
             --cwd {params.outdir} \
             --sample-list {input.sample_list} \
             --data-dir {params.data_dir} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         touch {output.done}
         """
@@ -72,7 +72,7 @@ rule rnaseqc_call:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("rnaseqc_call"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         data_dir      = lambda wc: next(
             t["data_dir"] for t in config["themes"] if t["name"] == wc.theme
         ),
@@ -94,7 +94,7 @@ rule rnaseqc_call:
             --gtf {params.gtf} \
             --reference-fasta {params.fasta} \
             --bam-list {input.bam_list} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """
 
@@ -113,7 +113,7 @@ rule bulk_expression_qc:
         sos_bin             = SOS_BIN,
         sos_sched           = sos_sched("bulk_expression_qc"),
         notebooks_dir        = NOTEBOOKS,
-        renovated_dir        = RENOVATED,
+        modular_script_dir        = MODULAR_SCRIPT_DIR,
         outdir               = "{cwd}/{theme}/molecular_phenotypes",
         low_expr_tpm         = config["rnaseq_qc"]["low_expr_tpm"],
         low_expr_tpm_percent = config["rnaseq_qc"]["low_expr_tpm_percent"],
@@ -134,7 +134,7 @@ rule bulk_expression_qc:
             --low-expr-TPM-percent {params.low_expr_tpm_percent} \
             --RLEFilterPercent {params.rle_filter_percent} \
             --DSFilterPercent {params.ds_filter_percent} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """
 
@@ -152,7 +152,7 @@ rule bulk_expression_normalization:
         sos_bin               = SOS_BIN,
         sos_sched             = sos_sched("bulk_expression_normalization"),
         notebooks_dir         = NOTEBOOKS,
-        renovated_dir         = RENOVATED,
+        modular_script_dir         = MODULAR_SCRIPT_DIR,
         outdir                = "{cwd}/{theme}/molecular_phenotypes",
         gtf                   = config["reference"]["gtf_ercc"],
         norm_method           = config["normalization"]["method"],
@@ -180,6 +180,6 @@ rule bulk_expression_normalization:
             --count-threshold {params.count_threshold} \
             --sample-frac-threshold {params.sample_frac_threshold} \
             --normalization-method {params.norm_method} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """

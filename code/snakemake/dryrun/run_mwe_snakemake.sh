@@ -4,13 +4,13 @@ set -euo pipefail
 usage() {
     cat <<'EOF'
 Usage:
-  run_modular_sos_mwe_snakemake.sh [options]
+  run_mwe_snakemake.sh [options]
 
 Options:
-  --mwe-data PATH          MWE data directory, .tar.gz/.tgz, or zip file. Defaults to ../mwe_data.
-  --run-tag TAG           Run label under renovated_code/snakemake/tmp/modular_sos_mwe.
+  --mwe-data PATH          MWE data directory, .tar.gz/.tgz, or zip file. Defaults to ../xqtl-renovated/mwe_data.
+  --run-tag TAG           Run label under code/snakemake/tmp/xqtl_mwe.
   --cores N               Snakemake cores. Default: 4.
-  --target TARGET         Snakemake target. Default: all. Use xqtl_core to skip plots.
+  --target TARGET         Snakemake target. Default: xqtl_association_core.
   --snakemake-dry-run     Build the DAG without executing jobs.
   --no-pixi               Do not source the local pixi compatibility layer.
   -h, --help              Show this help.
@@ -24,10 +24,10 @@ die() {
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
-DEFAULT_MWE_DATA="${ROOT}/../mwe_data"
+DEFAULT_MWE_DATA="${ROOT}/../xqtl-renovated/mwe_data"
 RUN_TAG="$(date +%Y%m%d_%H%M%S)"
 CORES=4
-TARGET="all"
+TARGET="xqtl_association_core"
 MWE_DATA=""
 USE_PIXI=1
 SNAKEMAKE_DRY_RUN=0
@@ -78,19 +78,16 @@ esac
 [[ "${CORES}" -gt 0 ]] || die "--cores must be a positive integer"
 
 SNAKEMAKE_BIN="${SNAKEMAKE_BIN:-snakemake}"
-SOS_BIN="${SOS_BIN:-sos}"
-if [[ -x "${SCRIPT_DIR}/bin/sos" ]]; then
-    SOS_BIN="${SCRIPT_DIR}/bin/sos"
-fi
+SOS_BIN="${SOS_BIN:-}"
 
-BASE_DIR="${ROOT}/renovated_code/snakemake/tmp/modular_sos_mwe"
+BASE_DIR="${ROOT}/code/snakemake/tmp/xqtl_mwe"
 RUN_DIR="${BASE_DIR}/${RUN_TAG}"
 INPUT_DIR="${RUN_DIR}/inputs"
 OUTPUT_DIR="${RUN_DIR}/output"
 LOG_DIR="${RUN_DIR}/logs"
-CONFIG="${RUN_DIR}/modular_sos_mwe.config.yaml"
-SNAKEFILE="${ROOT}/renovated_code/snakemake/modular_sos/Snakefile"
-PREPARE_SCRIPT="${SCRIPT_DIR}/prepare_modular_sos_mwe_inputs.sh"
+CONFIG="${RUN_DIR}/xqtl_mwe.config.yaml"
+SNAKEFILE="${ROOT}/code/snakemake/Snakefile"
+PREPARE_SCRIPT="${SCRIPT_DIR}/prepare_mwe_inputs.sh"
 
 [[ ! -e "${RUN_DIR}" ]] || die "run directory already exists: ${RUN_DIR}"
 mkdir -p "${INPUT_DIR}" "${OUTPUT_DIR}" "${LOG_DIR}" "${RUN_DIR}/runtime_home" "${RUN_DIR}/runtime_root"
@@ -131,13 +128,21 @@ if [[ "${USE_PIXI}" -eq 1 && -f "${SCRIPT_DIR}/activate_local_pixi.sh" ]]; then
     source "${SCRIPT_DIR}/activate_local_pixi.sh" >/dev/null
 fi
 
-MWE_DIR="${MWE_DIR}" XQTL_MODULAR_SOS_SKIP_PIXI=1 "${PREPARE_SCRIPT}" "${INPUT_DIR}"
+if [[ -z "${SOS_BIN}" ]]; then
+    if [[ -n "${PIXI_HOME:-}" && -x "${PIXI_HOME}/envs/python/bin/python" ]]; then
+        SOS_BIN="${PIXI_HOME}/envs/python/bin/python -m sos"
+    else
+        SOS_BIN="sos"
+    fi
+fi
+
+MWE_DIR="${MWE_DIR}" XQTL_SNAKEMAKE_SKIP_PIXI=1 "${PREPARE_SCRIPT}" "${INPUT_DIR}"
 
 cat > "${CONFIG}" <<EOF
 cwd: "${OUTPUT_DIR}"
 dry_run: false
 pipeline_dir: "${ROOT}/pipeline"
-renovated_code_dir: "${ROOT}/renovated_code/script"
+modular_script_dir: "${ROOT}/code/script"
 sos_bin: "${SOS_BIN}"
 minerva: ""
 runtime_home: "${RUN_DIR}/runtime_home"
@@ -170,7 +175,6 @@ sos:
     - marchenko_pc
     - peer_factors
     - tensorqtl_cis
-    - susie_twas
 
 themes:
   - name: "AC"
@@ -178,12 +182,12 @@ themes:
     bam_list: "${INPUT_DIR}/AC_bam_list.normalized.txt"
     data_dir: "${INPUT_DIR}/fastq"
     paired_end: true
-    phenotype_bed: "${INPUT_DIR}/modular_sos_hg_synthetic.expression.bed.gz"
+    phenotype_bed: "${INPUT_DIR}/xqtl_hg_synthetic.expression.bed.gz"
     raw_phenotype_file: ""
     phenotype_id_column: "gene_id"
     molecular_trait_type: "gene"
     sample_participant_lookup: "${INPUT_DIR}/sample_participant_lookup.tsv"
-    covariate_file: "${INPUT_DIR}/modular_sos_hg_covariates.cov.gz"
+    covariate_file: "${INPUT_DIR}/xqtl_hg_covariates.cov.gz"
     phenotype_group: ""
 
 genotype:
@@ -248,7 +252,7 @@ phenotype_preprocessing:
   qc_prior_to_impute: true
 
 covariate:
-  n_pcs: 2
+  n_pcs: 1
   tol_cov: 0.3
   mean_impute: true
 
@@ -316,7 +320,7 @@ resources:
     runtime: 120
 EOF
 
-printf 'Modular SoS MWE run directory: %s\n' "${RUN_DIR}"
+printf 'script-backed MWE run directory: %s\n' "${RUN_DIR}"
 printf 'MWE data source: %s\n' "${MWE_DIR}"
 printf 'Config: %s\n' "${CONFIG}"
 printf 'Target: %s\n' "${TARGET}"

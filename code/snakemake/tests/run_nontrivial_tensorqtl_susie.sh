@@ -7,8 +7,8 @@ Usage:
   run_nontrivial_tensorqtl_susie.sh [options]
 
 Options:
-  --data-tar PATH       Fixture tarball. Default: data/modular_sos_nontrivial_tensorqtl_susie.tar.gz.
-  --workdir PATH        Output directory. Default: renovated_code/snakemake/tmp/modular_sos_tests/nontrivial_<timestamp>.
+  --data-tar PATH       Fixture tarball. Default: data/nontrivial_tensorqtl_susie.tar.gz.
+  --workdir PATH        Output directory. Default: code/snakemake/tmp/xqtl_tests/nontrivial_<timestamp>.
   --run-tag TAG         Label used when --workdir is omitted.
   --num-threads N       SoS notebook thread count. Default: 4.
   --no-pixi             Do not source the local pixi compatibility layer.
@@ -22,12 +22,12 @@ die() {
 }
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)"
-SNAKEMAKE_DIR="${ROOT}/renovated_code/snakemake"
+ROOT="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
+SNAKEMAKE_DIR="${ROOT}/code/snakemake"
 PIPELINE_NOTEBOOKS="${ROOT}/pipeline"
-LEGACY_TENSORQTL="${ROOT}/code/association_scan/TensorQTL/TensorQTL.ipynb"
-LEGACY_MNM="${ROOT}/code/mnm_analysis/mnm_methods/mnm_regression.ipynb"
-DATA_TAR="${SCRIPT_DIR}/data/modular_sos_nontrivial_tensorqtl_susie.tar.gz"
+LEGACY_TENSORQTL="${ROOT}/code/SoS/association_scan/TensorQTL/TensorQTL.ipynb"
+LEGACY_MNM="${ROOT}/code/SoS/mnm_analysis/mnm_methods/mnm_regression.ipynb"
+DATA_TAR="${SCRIPT_DIR}/data/nontrivial_tensorqtl_susie.tar.gz"
 RUN_TAG="$(date +%Y%m%d_%H%M%S)"
 WORKDIR=""
 NUM_THREADS=4
@@ -75,9 +75,9 @@ esac
 [[ "${NUM_THREADS}" -gt 0 ]] || die "--num-threads must be a positive integer"
 [[ -f "${DATA_TAR}" ]] || die "fixture tarball not found: ${DATA_TAR}"
 
-WORKDIR="${WORKDIR:-${SNAKEMAKE_DIR}/tmp/modular_sos_tests/nontrivial_${RUN_TAG}}"
+WORKDIR="${WORKDIR:-${SNAKEMAKE_DIR}/tmp/xqtl_tests/nontrivial_${RUN_TAG}}"
 [[ ! -e "${WORKDIR}" ]] || die "workdir already exists: ${WORKDIR}"
-mkdir -p "${WORKDIR}/logs" "${WORKDIR}/reports" "${WORKDIR}/old" "${WORKDIR}/modular_sos" \
+mkdir -p "${WORKDIR}/logs" "${WORKDIR}/reports" "${WORKDIR}/old" "${WORKDIR}/current" \
     "${WORKDIR}/runtime_home" "${WORKDIR}/runtime_root"
 
 export XQTL_LOCAL_RUNTIME_HOME="${WORKDIR}/runtime_home"
@@ -86,9 +86,12 @@ if [[ "${USE_PIXI}" -eq 1 && -f "${SNAKEMAKE_DIR}/dryrun/activate_local_pixi.sh"
     source "${SNAKEMAKE_DIR}/dryrun/activate_local_pixi.sh" >/dev/null
 fi
 
-SOS_BIN="${SOS_BIN:-sos}"
-if [[ -x "${SNAKEMAKE_DIR}/dryrun/bin/sos" ]]; then
-    SOS_BIN="${SNAKEMAKE_DIR}/dryrun/bin/sos"
+if [[ -n "${SOS_BIN:-}" ]]; then
+    read -r -a SOS_CMD <<< "${SOS_BIN}"
+elif [[ -n "${PIXI_HOME:-}" && -x "${PIXI_HOME}/envs/python/bin/python" ]]; then
+    SOS_CMD=("${PIXI_HOME}/envs/python/bin/python" "-m" "sos")
+else
+    SOS_CMD=("sos")
 fi
 
 tar -xzf "${DATA_TAR}" -C "${WORKDIR}"
@@ -101,13 +104,13 @@ printf '#id\t#path\nchr1\t%s\n' "${SUSIE_DIR}/fm_genotype.bed" > "${SUSIE_DIR}/g
 
 printf 'Notebook compare workdir: %s\n' "${WORKDIR}"
 printf 'Fixture: %s\n' "${FIXTURE}"
-printf 'SoS: %s\n' "${SOS_BIN}"
+printf 'SoS: %s\n' "${SOS_CMD[*]}"
 
-"${SOS_BIN}" run "${LEGACY_TENSORQTL}" cis \
+"${SOS_CMD[@]}" run "${LEGACY_TENSORQTL}" cis \
     --cwd "${WORKDIR}/old/tensorqtl_cis" \
     --genotype-file "${TQTL_DIR}/AC.unrelated.plink_qc.prune.bed" \
-    --phenotype-file "${TQTL_DIR}/modular_sos_hg_synthetic.expression.bed.gz" \
-    --covariate-file "${TQTL_DIR}/modular_sos_hg_covariates.cov.AC.related.plink_qc.extracted.pca.projected.gz" \
+    --phenotype-file "${TQTL_DIR}/xqtl_hg_synthetic.expression.bed.gz" \
+    --covariate-file "${TQTL_DIR}/xqtl_hg_covariates.cov.AC.related.plink_qc.extracted.pca.projected.gz" \
     --chromosome 1 \
     --MAC 0 \
     --window 1000000 \
@@ -115,40 +118,40 @@ printf 'SoS: %s\n' "${SOS_BIN}"
 
 XQTL_PATCH_TENSORQTL_SORT=1 \
 PYTHONPATH="${SNAKEMAKE_DIR}/compat/python${PYTHONPATH:+:${PYTHONPATH}}" \
-"${SOS_BIN}" run "${PIPELINE_NOTEBOOKS}/TensorQTL.ipynb" cis \
-    --cwd "${WORKDIR}/modular_sos/tensorqtl_cis" \
+"${SOS_CMD[@]}" run "${PIPELINE_NOTEBOOKS}/TensorQTL.ipynb" cis \
+    --cwd "${WORKDIR}/current/tensorqtl_cis" \
     --genotype-file "${TQTL_DIR}/AC.unrelated.plink_qc.prune.bed" \
-    --phenotype-file "${TQTL_DIR}/modular_sos_hg_synthetic.expression.bed.gz" \
-    --covariate-file "${TQTL_DIR}/modular_sos_hg_covariates.cov.AC.related.plink_qc.extracted.pca.projected.gz" \
+    --phenotype-file "${TQTL_DIR}/xqtl_hg_synthetic.expression.bed.gz" \
+    --covariate-file "${TQTL_DIR}/xqtl_hg_covariates.cov.AC.related.plink_qc.extracted.pca.projected.gz" \
     --chromosome 1 \
     --MAC 0 \
     --window 1000000 \
-    --numThreads "${NUM_THREADS}" 2>&1 | tee "${WORKDIR}/logs/tensorqtl.modular_sos.log"
+    --numThreads "${NUM_THREADS}" 2>&1 | tee "${WORKDIR}/logs/tensorqtl.current.log"
 
 TENSOR_COMPARE="${WORKDIR}/reports/tensorqtl_cis.compare.tsv"
-printf 'file\told_md5\tmodular_sos_md5\tstatus\n' > "${TENSOR_COMPARE}"
+printf 'file\told_md5\tcurrent_md5\tstatus\n' > "${TENSOR_COMPARE}"
 for file in \
-    modular_sos_hg_synthetic.expression.cis_qtl_pairs.1.parquet \
-    modular_sos_hg_synthetic.expression_chr1.cis_qtl.pairs.tsv.gz \
-    modular_sos_hg_synthetic.expression_chr1.cis_qtl.pairs.tsv.gz.tbi \
-    modular_sos_hg_synthetic.expression_chr1.cis_qtl.regional.tsv.gz \
-    modular_sos_hg_synthetic.expression_chr1.cis_qtl.regional.tsv.gz.tbi \
-    modular_sos_hg_synthetic.expression_chr1.cis_qtl_regional_significance.summary.txt \
-    modular_sos_hg_synthetic.expression_chr1.cis_qtl_regional_significance.tsv.gz
+    xqtl_hg_synthetic.expression.cis_qtl_pairs.1.parquet \
+    xqtl_hg_synthetic.expression_chr1.cis_qtl.pairs.tsv.gz \
+    xqtl_hg_synthetic.expression_chr1.cis_qtl.pairs.tsv.gz.tbi \
+    xqtl_hg_synthetic.expression_chr1.cis_qtl.regional.tsv.gz \
+    xqtl_hg_synthetic.expression_chr1.cis_qtl.regional.tsv.gz.tbi \
+    xqtl_hg_synthetic.expression_chr1.cis_qtl_regional_significance.summary.txt \
+    xqtl_hg_synthetic.expression_chr1.cis_qtl_regional_significance.tsv.gz
 do
     old_file="${WORKDIR}/old/tensorqtl_cis/${file}"
-    modular_sos_file="${WORKDIR}/modular_sos/tensorqtl_cis/${file}"
+    current_file="${WORKDIR}/current/tensorqtl_cis/${file}"
     [[ -f "${old_file}" ]] || die "missing old TensorQTL output: ${old_file}"
-    [[ -f "${modular_sos_file}" ]] || die "missing Modular SoS TensorQTL output: ${modular_sos_file}"
+    [[ -f "${current_file}" ]] || die "missing script-backed TensorQTL output: ${current_file}"
     old_md5="$(md5sum "${old_file}" | awk '{print $1}')"
-    modular_sos_md5="$(md5sum "${modular_sos_file}" | awk '{print $1}')"
+    current_md5="$(md5sum "${current_file}" | awk '{print $1}')"
     status="match"
-    [[ "${old_md5}" == "${modular_sos_md5}" ]] || status="diff"
-    printf '%s\t%s\t%s\t%s\n' "${file}" "${old_md5}" "${modular_sos_md5}" "${status}" >> "${TENSOR_COMPARE}"
+    [[ "${old_md5}" == "${current_md5}" ]] || status="diff"
+    printf '%s\t%s\t%s\t%s\n' "${file}" "${old_md5}" "${current_md5}" "${status}" >> "${TENSOR_COMPARE}"
 done
 awk 'NR > 1 && $4 != "match" { bad = 1 } END { exit bad }' "${TENSOR_COMPARE}"
 
-python3 - "${WORKDIR}/modular_sos/tensorqtl_cis/modular_sos_hg_synthetic.expression_chr1.cis_qtl.regional.tsv.gz" <<'PY'
+python3 - "${WORKDIR}/current/tensorqtl_cis/xqtl_hg_synthetic.expression_chr1.cis_qtl.regional.tsv.gz" <<'PY'
 import csv
 import gzip
 import math
@@ -172,7 +175,7 @@ with gzip.open(path, "rt", newline="") as handle:
 raise SystemExit("TensorQTL regional output has no finite p_nominal/p_perm/p_beta row")
 PY
 
-"${SOS_BIN}" run "${LEGACY_MNM}" susie_twas \
+"${SOS_CMD[@]}" run "${LEGACY_MNM}" susie_twas \
     --cwd "${WORKDIR}/old/fm_susie_twas" \
     --name fmtest \
     --genoFile "${SUSIE_DIR}/genotype_by_chrom_files_normalized.txt" \
@@ -183,8 +186,8 @@ PY
     --skip-analysis-pip-cutoff 0.0 \
     --numThreads "${NUM_THREADS}" 2>&1 | tee "${WORKDIR}/logs/susie_twas.old.log"
 
-"${SOS_BIN}" run "${PIPELINE_NOTEBOOKS}/mnm_regression.ipynb" susie_twas \
-    --cwd "${WORKDIR}/modular_sos/fm_susie_twas" \
+"${SOS_CMD[@]}" run "${PIPELINE_NOTEBOOKS}/mnm_regression.ipynb" susie_twas \
+    --cwd "${WORKDIR}/current/fm_susie_twas" \
     --name fmtest \
     --genoFile "${SUSIE_DIR}/genotype_by_chrom_files_normalized.txt" \
     --phenoFile "${SUSIE_DIR}/gene_chr1_1.mnm.bed.gz" \
@@ -193,13 +196,13 @@ PY
     --cis-window 500000 \
     --skip-analysis-pip-cutoff 0.0 \
     --numThreads "${NUM_THREADS}" \
-    --renovated-code-dir "${ROOT}/renovated_code/script" 2>&1 | tee "${WORKDIR}/logs/susie_twas.modular_sos.log"
+    --modular-script-dir "${ROOT}/code/script" 2>&1 | tee "${WORKDIR}/logs/susie_twas.current.log"
 
 Rscript "${SCRIPT_DIR}/compare_susie_heads.R" \
     "${WORKDIR}/old/fm_susie_twas/fine_mapping/fmtest.chr1_gene_chr1_1.univariate_bvsr.rds" \
-    "${WORKDIR}/modular_sos/fm_susie_twas/fine_mapping/fmtest.chr1_gene_chr1_1.univariate_bvsr.rds" \
+    "${WORKDIR}/current/fm_susie_twas/fine_mapping/fmtest.chr1_gene_chr1_1.univariate_bvsr.rds" \
     "${WORKDIR}/old/fm_susie_twas/twas_weights/fmtest.chr1_gene_chr1_1.univariate_twas_weights.rds" \
-    "${WORKDIR}/modular_sos/fm_susie_twas/twas_weights/fmtest.chr1_gene_chr1_1.univariate_twas_weights.rds" \
+    "${WORKDIR}/current/fm_susie_twas/twas_weights/fmtest.chr1_gene_chr1_1.univariate_twas_weights.rds" \
     "${WORKDIR}/reports/fm_susie_twas.compare.tsv" \
     "${WORKDIR}/reports/fm_susie_twas.head_report.txt"
 

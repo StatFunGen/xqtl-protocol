@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # susie_twas.R — Univariate SuSiE fine-mapping and TWAS weights
-# Called directly by modular_sos SoS notebook task blocks.
+# Called directly by current SoS notebook task blocks.
 #
 # Usage:
 #   Rscript susie_twas.R \
@@ -258,7 +258,7 @@ keep_variants <- if (file.exists(opt[["keep-variants"]]) && !dir.exists(opt[["ke
 
 ld_ref <- if (file.exists(opt[["ld-reference-meta-file"]]) && !dir.exists(opt[["ld-reference-meta-file"]])) opt[["ld-reference-meta-file"]] else NULL
 
-# Infer phenotype header width from the BED itself. Modular SoS expression BEDs can
+# Infer phenotype header width from the BED itself. script-backed expression BEDs can
 # include a strand column after ID, which must not be parsed as a sample.
 infer_phenotype_header <- function(path, is_coordinate_region) {
   if (!is_coordinate_region) {

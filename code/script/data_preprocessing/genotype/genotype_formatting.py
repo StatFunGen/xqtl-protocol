@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script-backed helpers for modular_sos genotype_formatting notebook steps that are
+Script-backed helpers for current genotype_formatting notebook steps that are
 not pure shell wrappers.
 """
 

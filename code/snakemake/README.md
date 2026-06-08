@@ -2,9 +2,9 @@
 
 ## Human Note
 
-This folder now contains the minimal Modular SoS runtime bundle for the refactored
+This folder now contains the minimal script-backed runtime bundle for the refactored
 xQTL workflow. The active runtime is no longer named `route3`; use
-`renovated_code/snakemake/modular_sos/`.
+`code/snakemake/`.
 
 The committed source bundle includes the Snakemake rules, generated SoS wrapper
 notebooks, modular scripts, a small non-trivial TensorQTL/SuSiE test package, and
@@ -15,14 +15,14 @@ Primary commands:
 
 ```bash
 # MWE through TensorQTL and SuSiE/TWAS, excluding plots
-renovated_code/snakemake/modular_sos/tests/run_mwe_xqtl_core.sh \
-  --mwe-data ../mwe_data \
-  --run-tag modular_sos_mwe_core \
+code/snakemake/tests/run_mwe_xqtl_core.sh \
+  --mwe-data ../xqtl-renovated/mwe_data \
+  --run-tag xqtl_mwe_core \
   --cores 1
 
-# Non-trivial legacy-vs-Modular-SoS notebook comparison
-renovated_code/snakemake/modular_sos/tests/run_nontrivial_tensorqtl_susie.sh \
-  --run-tag modular_sos_nontrivial_compare \
+# Non-trivial legacy-vs-script-backed notebook comparison
+code/snakemake/tests/run_nontrivial_tensorqtl_susie.sh \
+  --run-tag xqtl_nontrivial_compare \
   --num-threads 4
 ```
 
@@ -46,19 +46,19 @@ notebook stages into one script.
 Canonical Snakemake entry point:
 
 ```bash
-renovated_code/snakemake/modular_sos/Snakefile
+code/snakemake/Snakefile
 ```
 
 Active rule modules:
 
 ```text
-renovated_code/snakemake/modular_sos/rules/00_phenotype_preprocessing.smk
-renovated_code/snakemake/modular_sos/rules/01_molecular_phenotypes.smk
-renovated_code/snakemake/modular_sos/rules/02_genotype_preprocessing.smk
-renovated_code/snakemake/modular_sos/rules/03_sample_qc_pca.smk
-renovated_code/snakemake/modular_sos/rules/04_phenotype_covariate_prep.smk
-renovated_code/snakemake/modular_sos/rules/05_association_testing.smk
-renovated_code/snakemake/modular_sos/rules/06_univariate_finemapping.smk
+code/snakemake/rules/00_phenotype_preprocessing.smk
+code/snakemake/rules/01_molecular_phenotypes.smk
+code/snakemake/rules/02_genotype_preprocessing.smk
+code/snakemake/rules/03_sample_qc_pca.smk
+code/snakemake/rules/04_phenotype_covariate_prep.smk
+code/snakemake/rules/05_association_testing.smk
+code/snakemake/rules/06_univariate_finemapping.smk
 ```
 
 Active generated wrapper notebooks:
@@ -80,13 +80,13 @@ phenotype_formatting.ipynb
 phenotype_imputation.ipynb
 ```
 
-The Modular SoS Snakefile executes:
+The script-backed Snakefile executes:
 
 ```text
 Snakemake -> sos run pipeline/<notebook>.ipynb <step>
 ```
 
-Those notebooks call modular scripts under `renovated_code/script/`.
+Those notebooks call modular scripts under `code/script/`.
 
 ### Targets
 
@@ -95,8 +95,8 @@ fine-mapping, excluding fine-mapping plot generation.
 
 ```bash
 snakemake \
-  --snakefile renovated_code/snakemake/modular_sos/Snakefile \
-  --configfile path/to/modular_sos.config.yaml \
+  --snakefile code/snakemake/Snakefile \
+  --configfile path/to/xqtl.config.yaml \
   --cores 1 \
   xqtl_core
 ```
@@ -105,8 +105,8 @@ snakemake \
 
 ```bash
 snakemake \
-  --snakefile renovated_code/snakemake/modular_sos/Snakefile \
-  --configfile path/to/modular_sos.config.yaml \
+  --snakefile code/snakemake/Snakefile \
+  --configfile path/to/xqtl.config.yaml \
   --cores 1 \
   all
 ```
@@ -116,20 +116,20 @@ snakemake \
 MWE driver:
 
 ```bash
-renovated_code/snakemake/modular_sos/tests/run_mwe_xqtl_core.sh
+code/snakemake/tests/run_mwe_xqtl_core.sh
 ```
 
 It wraps:
 
 ```bash
-renovated_code/snakemake/dryrun/run_modular_sos_mwe_snakemake.sh
-renovated_code/snakemake/dryrun/prepare_modular_sos_mwe_inputs.sh
+code/snakemake/dryrun/run_mwe_snakemake.sh
+code/snakemake/dryrun/prepare_mwe_inputs.sh
 ```
 
 The full MWE data is external. The default expected path is:
 
 ```bash
-../mwe_data
+../xqtl-renovated/mwe_data
 ```
 
 The MWE data input can also be a `.tar.gz`, `.tgz`, or `.zip` containing a root
@@ -142,7 +142,7 @@ AC_sample_fastq.list
 Observed local size:
 
 ```text
-../mwe_data = 73G
+../xqtl-renovated/mwe_data = 73G
 ```
 
 Large local components include `.pixi` at 22G, a PLINK bed at 27G, FASTQ at
@@ -153,7 +153,7 @@ Large local components include `.pixi` at 22G, a PLINK bed at 27G, FASTQ at
 Committed fixture:
 
 ```bash
-renovated_code/snakemake/modular_sos/tests/data/modular_sos_nontrivial_tensorqtl_susie.tar.gz
+code/snakemake/tests/data/nontrivial_tensorqtl_susie.tar.gz
 ```
 
 Committed size:
@@ -165,16 +165,16 @@ Committed size:
 Test driver:
 
 ```bash
-renovated_code/snakemake/modular_sos/tests/run_nontrivial_tensorqtl_susie.sh
+code/snakemake/tests/run_nontrivial_tensorqtl_susie.sh
 ```
 
 It runs four notebook invocations:
 
 ```text
 legacy TensorQTL.ipynb cis
-Modular SoS TensorQTL.ipynb cis
+script-backed TensorQTL.ipynb cis
 legacy mnm_regression.ipynb susie_twas
-Modular SoS mnm_regression.ipynb susie_twas
+script-backed mnm_regression.ipynb susie_twas
 ```
 
 It fails if:
@@ -192,24 +192,24 @@ Ignored paths include:
 ```text
 .pixi/
 **/.pixi/
-renovated_code/snakemake/dryrun/bin/
-renovated_code/snakemake/tmp/
-renovated_code/snakemake/archive/
+code/snakemake/dryrun/bin/
+code/snakemake/tmp/
+code/snakemake/archive/
 ```
 
 The local activation helpers are committed for record/reproducibility:
 
 ```text
-renovated_code/snakemake/dryrun/LOCAL_PIXI_ENV.md
-renovated_code/snakemake/dryrun/_local_pixi_common.sh
-renovated_code/snakemake/dryrun/activate_local_pixi.sh
-renovated_code/snakemake/dryrun/check_local_pixi_env.sh
+code/snakemake/dryrun/LOCAL_PIXI_ENV.md
+code/snakemake/dryrun/_local_pixi_common.sh
+code/snakemake/dryrun/activate_local_pixi.sh
+code/snakemake/dryrun/check_local_pixi_env.sh
 ```
 
 These scripts assume the external local Pixi install when present:
 
 ```text
-../mwe_data/.pixi
+../xqtl-renovated/mwe_data/.pixi
 ```
 
 ### Validation State
@@ -217,35 +217,35 @@ These scripts assume the external local Pixi install when present:
 Committed runtime bundle commit:
 
 ```text
-d0f822d3 Add Modular SoS runtime bundle
+d0f822d3 Add script-backed runtime bundle
 ```
 
 Post-namespace static checks run before that commit:
 
 ```bash
-bash -n renovated_code/snakemake/dryrun/run_modular_sos_mwe_snakemake.sh \
-  renovated_code/snakemake/dryrun/prepare_modular_sos_mwe_inputs.sh \
-  renovated_code/snakemake/modular_sos/tests/run_mwe_xqtl_core.sh \
-  renovated_code/snakemake/modular_sos/tests/run_nontrivial_tensorqtl_susie.sh
+bash -n code/snakemake/dryrun/run_mwe_snakemake.sh \
+  code/snakemake/dryrun/prepare_mwe_inputs.sh \
+  code/snakemake/tests/run_mwe_xqtl_core.sh \
+  code/snakemake/tests/run_nontrivial_tensorqtl_susie.sh
 
 python -m py_compile \
-  renovated_code/snakemake/compat/python/sitecustomize.py \
-  renovated_code/script/data_preprocessing/genotype/genotype_formatting.py \
-  renovated_code/script/data_preprocessing/phenotype/gene_annotation.py \
-  renovated_code/script/molecular_phenotypes/QC/bulk_expression_normalization.py \
-  renovated_code/script/molecular_phenotypes/calling/RNA_calling.py \
-  renovated_code/script/association_scan/TensorQTL/TensorQTL.py
+  code/snakemake/compat/python/sitecustomize.py \
+  code/script/data_preprocessing/genotype/genotype_formatting.py \
+  code/script/data_preprocessing/phenotype/gene_annotation.py \
+  code/script/molecular_phenotypes/QC/bulk_expression_normalization.py \
+  code/script/molecular_phenotypes/calling/RNA_calling.py \
+  code/script/association_scan/TensorQTL/TensorQTL.py
 ```
 
 Namespace checks after commit:
 
 ```bash
-git grep -n -E 'route3|Route3|Route 3|ROUTE3|route 3' HEAD -- renovated_code ':!renovated_code/snakemake/archive'
+git grep -n -E 'route3|Route3|Route 3|ROUTE3|route 3' HEAD -- code :!code/snakemake/archive
 ```
 
 returned no matches.
 
-Important limitation: after the final namespace rename to `modular_sos`, I did
+Important limitation: after the final namespace rename to `current`, I did
 not rerun the full Snakemake MWE. Earlier non-trivial TensorQTL/SuSiE comparison
 completed before the final namespace rename; the namespace rename was then
 validated by static checks and fixture listing.
@@ -267,7 +267,7 @@ Known unstaged files at this point were outside the committed runtime bundle:
 ```text
 README.md
 CODEX_HANDOFF.md
-code/association_scan/TensorQTL/TensorQTL.ipynb
+code/SoS/association_scan/TensorQTL/TensorQTL.ipynb
 code/commands_generator/eQTL_analysis_commands.ipynb
 code/data_preprocessing/genotype/GWAS_QC.ipynb
 code/data_preprocessing/genotype/VCF_QC.ipynb

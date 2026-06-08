@@ -1,8 +1,8 @@
 # ============================================================
-# Rule Module 00: Phenotype Preprocessing (Modular SoS)
+# Rule Module 00: Phenotype Preprocessing (script-backed)
 # ============================================================
 # Mirrors source-Snakemake phenotype preprocessing while using
-# Modular SoS SoS wrappers and modular scripts.
+# script-backed SoS wrappers and modular scripts.
 #
 # Activated when: start_from: "raw_phenotype"
 # ============================================================
@@ -18,7 +18,7 @@ rule annotate_coord:
     params:
         sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/{theme}/phenotype_preprocessing",
         pheno_id_col  = lambda wc: _theme_cfg(wc.theme).get("phenotype_id_column", "gene_id"),
         trait_type    = lambda wc: _theme_cfg(wc.theme).get("molecular_trait_type", "gene"),
@@ -51,7 +51,7 @@ rule annotate_coord:
             --auxiliary-id-mapping {params.auxiliary_map} \
             {params.sep_arg} \
             {params.strip_id} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} || exit $?
         """
 
@@ -65,7 +65,7 @@ rule phenotype_impute:
     params:
         sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/{theme}/phenotype_preprocessing",
         impute_method = config["phenotype_preprocessing"]["impute_method"],
         num_factor    = config["phenotype_preprocessing"]["num_factor"],
@@ -85,6 +85,6 @@ rule phenotype_impute:
             --phenoFile {input.phenotype_bed} \
             {params.qc_flag} \
             --num-factor {params.num_factor} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} || exit $?
         """

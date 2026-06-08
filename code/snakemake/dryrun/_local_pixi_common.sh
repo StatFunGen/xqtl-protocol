@@ -3,11 +3,11 @@
 xqtl_local_pixi_support_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 xqtl_local_pixi_repo_root="$(cd -- "${xqtl_local_pixi_support_dir}/../../.." && pwd)"
 xqtl_local_pixi_workspace_root="$(cd -- "${xqtl_local_pixi_repo_root}/.." && pwd)"
-xqtl_local_pixi_default_home="${xqtl_local_pixi_workspace_root}/mwe_data/.pixi"
+xqtl_local_pixi_default_home="${xqtl_local_pixi_workspace_root}/xqtl-renovated/mwe_data/.pixi"
 xqtl_local_runtime_home_default="${xqtl_local_pixi_repo_root}"
 xqtl_local_runtime_root_default="${xqtl_local_pixi_repo_root}/.xqtl-runtime"
 xqtl_local_pixi_helper_bin="${xqtl_local_pixi_support_dir}/bin"
-xqtl_local_pixi_compat_python="${xqtl_local_pixi_repo_root}/renovated_code/snakemake/compat/python"
+xqtl_local_pixi_compat_python="${xqtl_local_pixi_repo_root}/code/snakemake/compat/python"
 xqtl_local_pixi_preferred_envs=(
     python
     snakemake
@@ -176,5 +176,6 @@ xqtl_local_export_r_runtime() {
     export R_SHARE_DIR="${r_home}/share"
     export R_INCLUDE_DIR="${r_home}/include"
     export R_DOC_DIR="${r_home}/doc"
+    export R_LIBS="${PIXI_HOME}/envs/r-base/lib/R/library${R_LIBS:+:${R_LIBS}}"
     export LD_LIBRARY_PATH="${r_home}/lib:${PIXI_HOME}/envs/r-base/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 }

@@ -1,9 +1,9 @@
 # ============================================================
-# Rule Module 06: Univariate Fine-mapping  (Modular SoS)
+# Rule Module 06: Univariate Fine-mapping  (script-backed)
 # ============================================================
 # Covers: Univariate SuSiE fine-mapping + TWAS weight estimation
 #
-# SoS notebooks called (Modular SoS wrappers in pipeline/):
+# SoS notebooks called (script-backed wrappers in pipeline/):
 #   - mnm_regression.ipynb (susie_twas)
 #   - rss_analysis.ipynb   (univariate_plot)
 # ============================================================
@@ -26,13 +26,13 @@ rule susie_twas:
         outer_queue   = sos_queue("susie_twas"),
         outer_walltime = lsf_walltime(config["resources"]["finemapping"]["runtime"], sos_queue("susie_twas")),
         outer_mem_gb  = lsf_mem_gb(config["resources"]["finemapping"]["mem_mb"]),
-        outer_job_name = lambda wc: f"modular_sos_susie_{wc.theme}",
+        outer_job_name = lambda wc: f"xqtl_susie_{wc.theme}",
         runtime_home  = RUNTIME_HOME,
         runtime_root  = RUNTIME_ROOT,
         activate_pixi = str(ACTIVATE_PIXI),
         run_workdir   = RUN_WORKDIR,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/finemapping/{theme}/susie_twas",
         cis_window    = config["association"]["cis_window"],
         L             = config["finemapping"]["L"],
@@ -78,7 +78,7 @@ cd "{params.run_workdir}"
     --pip-cutoff {params.pip_cutoff} \
     --min_twas_maf {params.min_twas_maf} \
     {params.small_sample_correction} \
-    --renovated-code-dir {params.renovated_dir} \
+    --modular-script-dir {params.modular_script_dir} \
     --numThreads {threads} {params.dry_run} {params.sos_sched}
 OUTER_LSF
             chmod +x "$outer_script"
@@ -105,7 +105,7 @@ OUTER_LSF
 	                --pip-cutoff {params.pip_cutoff} \
 	                --min_twas_maf {params.min_twas_maf} \
 	                {params.small_sample_correction} \
-	                --renovated-code-dir {params.renovated_dir} \
+	                --modular-script-dir {params.modular_script_dir} \
 	                --numThreads {threads} {params.dry_run} {params.sos_sched}
         fi
 	        python3 - "{params.outdir}" "{input.pheno_region_list}" <<'PY'
@@ -159,7 +159,7 @@ rule finemapping_plots:
     output:
         plots_done = "{cwd}/finemapping/{theme}/susie_twas_plots/.done_plots",
     params:
-        plot_script     = RENOVATED + "/pecotmr_integration/univariate_plot.R",
+        plot_script     = MODULAR_SCRIPT_DIR + "/pecotmr_integration/univariate_plot.R",
         finemapping_dir = "{cwd}/finemapping/{theme}/susie_twas",
         outdir          = "{cwd}/finemapping/{theme}/susie_twas_plots",
         pip_cutoff      = config["finemapping"]["pip_cutoff"],

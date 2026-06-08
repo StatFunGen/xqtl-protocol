@@ -218,6 +218,7 @@ first_existing_path <- function(path_value) {
   if (is.null(path_value)) return(NULL)
   path_value <- as.character(path_value)
   if (!nzchar(path_value) || identical(path_value, "NA")) return(NULL)
+  if (!file.exists(path_value) || isTRUE(file.info(path_value)$isdir)) return(NULL)
   path_value
 }
 
@@ -424,8 +425,9 @@ run_plot_pca <- function(opt) {
     pca_final[[label_col]] <- as.character(pca_final[[label_col]])
   }
 
-  k <- min(opt$k, length(grep("^PC", colnames(pca_final))))
-  if (k < 2L) stop("plot_pca requires at least 2 PC columns")
+  pc_cols <- grep("^PC", colnames(pca_final), value = TRUE)
+  k <- min(opt$k, length(pc_cols))
+  if (k < 1L) stop("plot_pca requires at least 1 PC column")
 
   colors_40 <- c("#a9a9a9", "#2f4f4f", "#556b2f", "#a0522d", "#7f0000", "#006400", "#808000", "#483d8b", "#3cb371", "#bdb76b", "#4682b4", "#9acd32",
                  "#20b2aa", "#00008b", "#32cd32", "#daa520", "#7f007f", "#b03060", "#ff0000", "#ff8c00", "#ffff00", "#0000cd", "#00ff00", "#9400d3",
@@ -492,15 +494,33 @@ run_plot_pca <- function(opt) {
     dir.create(dirname(out_path), recursive = TRUE, showWarnings = FALSE)
   }
 
-  unit <- 4
-  n_col <- min(4, k)
-  n_row <- ceiling((k - 1) / n_col)
-  plots <- lapply(seq_len(k - 1L), function(i) {
-    plot_pcs(pca_final, paste0("PC", i), paste0("PC", i + 1L), dat$meta)
-  })
-  png(pc_plot_out, width = unit * n_col, height = unit * n_row, unit = "in", res = 300)
-  do.call(gridExtra::grid.arrange, c(plots, list(ncol = n_col, nrow = n_row)))
-  invisible(dev.off())
+  if (k >= 2L) {
+    unit <- 4
+    n_col <- min(4, k)
+    n_row <- ceiling((k - 1) / n_col)
+    plots <- lapply(seq_len(k - 1L), function(i) {
+      plot_pcs(pca_final, paste0("PC", i), paste0("PC", i + 1L), dat$meta)
+    })
+    png(pc_plot_out, width = unit * n_col, height = unit * n_row, unit = "in", res = 300)
+    do.call(gridExtra::grid.arrange, c(plots, list(ncol = n_col, nrow = n_row)))
+    invisible(dev.off())
+  } else {
+    pca_final$sample_index <- seq_len(nrow(pca_final))
+    pc1 <- pc_cols[1]
+    one_pc_plot <- ggplot(pca_final, aes_string(x = "sample_index", y = pc1)) +
+      labs(title = dat$meta, x = "Sample index", y = pc1) +
+      theme_classic()
+    if (label_col %in% colnames(pca_final)) {
+      one_pc_plot <- one_pc_plot +
+        geom_point(aes_string(color = label_col)) +
+        scale_color_manual(values = color_list)
+    } else {
+      one_pc_plot <- one_pc_plot + geom_point()
+    }
+    png(pc_plot_out, width = 4, height = 4, unit = "in", res = 300)
+    print(one_pc_plot)
+    invisible(dev.off())
+  }
 
   pve <- round(f$values / sum(f$values), 2)
   pve_cum <- cumsum(pve) / sum(pve)

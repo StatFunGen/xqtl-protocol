@@ -1,12 +1,12 @@
 # ============================================================
-# Rule Module 04: Phenotype & Covariate Preparation  (Modular SoS)
+# Rule Module 04: Phenotype & Covariate Preparation  (script-backed)
 # ============================================================
 # Covers:
 #   - Merge genotype PCs with fixed covariates
 #   - Partition phenotype BED by chromosome
 #   - Compute hidden confounding factors (Marchenko PCA or PEER)
 #
-# SoS notebooks called (Modular SoS wrappers in pipeline/):
+# SoS notebooks called (script-backed wrappers in pipeline/):
 #   - covariate_formatting.ipynb    (merge_genotype_pc)
 #   - phenotype_formatting.ipynb    (phenotype_by_chrom)
 #   - covariate_hidden_factor.ipynb (Marchenko_PC, PEER)
@@ -28,7 +28,7 @@ rule merge_pca_covariate:
         sos_bin       = SOS_BIN,
         sos_sched     = sos_sched("merge_pca_covariate"),
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/covariates",
         output_name   = lambda wc: f"{get_merged_cov_base(wc.theme)}.pca",
         n_pcs         = config["covariate"]["n_pcs"],
@@ -50,7 +50,7 @@ rule merge_pca_covariate:
             --k {params.n_pcs} \
             --tol-cov {params.tol_cov} \
             {params.mean_impute} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """
 
@@ -67,7 +67,7 @@ rule phenotype_by_chrom:
     params:
         sos_bin       = SOS_BIN,
         notebooks_dir = NOTEBOOKS,
-        renovated_dir = RENOVATED,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/data_preprocessing/{theme}/phenotype_data",
         output_name   = "{pheno_base}",
         chroms        = " ".join(config["chromosomes"]),
@@ -84,7 +84,7 @@ rule phenotype_by_chrom:
             --phenoFile {input.phenotype_bed} \
             --name {params.output_name} \
             --chrom {params.chroms} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run}
         """
 
@@ -102,7 +102,7 @@ rule marchenko_pc:
         sos_bin          = SOS_BIN,
         sos_sched        = sos_sched("marchenko_pc"),
         notebooks_dir    = NOTEBOOKS,
-        renovated_dir    = RENOVATED,
+        modular_script_dir    = MODULAR_SCRIPT_DIR,
         outdir           = "{cwd}/data_preprocessing/{theme}/covariates",
         n_factors        = config["hidden_factors"]["n_factors"],
         mean_impute_flag = lambda _: "--mean-impute-missing" if config["covariate"]["mean_impute"] else "",
@@ -119,7 +119,7 @@ rule marchenko_pc:
             --covFile {input.merged_cov} \
             --N {params.n_factors} \
             {params.mean_impute_flag} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """
 
@@ -137,7 +137,7 @@ rule peer_factors:
         sos_bin          = SOS_BIN,
         sos_sched        = sos_sched("peer_factors"),
         notebooks_dir    = NOTEBOOKS,
-        renovated_dir    = RENOVATED,
+        modular_script_dir    = MODULAR_SCRIPT_DIR,
         outdir           = "{cwd}/data_preprocessing/{theme}/covariates",
         n_factors        = config["hidden_factors"]["n_factors"],
         iterations       = config["hidden_factors"]["peer_iterations"],
@@ -156,6 +156,6 @@ rule peer_factors:
             --N {params.n_factors} \
             --iteration {params.iterations} \
             --convergence_mode {params.convergence_mode} \
-            --renovated-code-dir {params.renovated_dir} \
+            --modular-script-dir {params.modular_script_dir} \
             --numThreads {threads} {params.dry_run} {params.sos_sched}
         """

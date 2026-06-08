@@ -169,7 +169,7 @@ ensure_plink2() {
 
     if [[ -r "$activate_script" ]]; then
         set +u
-        # Modular SoS notebook tasks can lose the parent shell PATH even though the
+        # script-backed notebook tasks can lose the parent shell PATH even though the
         # faithful notebook flow expects plink2 to be available in-task.
         source "$activate_script" >/dev/null 2>&1 || true
         set -u
@@ -244,6 +244,14 @@ _qc() {
     mapfile -t make_args < <(resolve_make_args)
     local prune_args=("$plink_command" "$BED_PREFIX" --allow-extra-chr --rm-dup force-first)
     [[ "$BAD_LD" == "true" ]] && prune_args+=(--bad-ld)
+    local other_arg
+    for other_arg in "${OTHER_ARGS[@]}"; do
+        if [[ ! "$other_arg" =~ ^[A-Za-z0-9][A-Za-z0-9_.:-]*$ ]]; then
+            echo "ERROR: unsafe --other-arg '$other_arg'; pass PLINK flag names without leading dashes or values" >&2
+            exit 2
+        fi
+        prune_args+=("--${other_arg}")
+    done
 
     plink2 \
         "${prune_args[@]}" \

@@ -1,13 +1,13 @@
 # ============================================================
-# Rule Module 05: QTL Association Testing  (Modular SoS)
+# Rule Module 05: QTL Association Testing  (script-backed)
 # ============================================================
 # Covers: CIS-QTL association testing with TensorQTL
 #
-# SoS notebook called (Modular SoS wrapper in pipeline/):
+# SoS notebook called (script-backed wrapper in pipeline/):
 #   - TensorQTL.ipynb (cis)
 #
 # The notebook task block calls:
-#   renovated_code/association_scan/TensorQTL/TensorQTL.sh cis
+#   code/script/association_scan/TensorQTL/TensorQTL.py cis
 # ============================================================
 
 # ------------------------------------
@@ -27,6 +27,7 @@ rule tensorqtl_cis:
         sos_sched     = sos_sched("tensorqtl_cis"),
         tensorqtl_notebook = f"{NOTEBOOKS}/TensorQTL.ipynb",
         compat_python  = COMPAT_PYTHON,
+        modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir       = "{cwd}/association_scan/{theme}/TensorQTL",
         normalized_geno_manifest = lambda wc: (
             f"{config['cwd']}/association_scan/{wc.theme}/TensorQTL/"
@@ -72,6 +73,7 @@ rule tensorqtl_cis:
 		                --maf-threshold {params.maf} \
 		                --walltime {params.sos_walltime} \
 		                --mem {params.sos_mem} \
+                    --modular-script-dir {params.modular_script_dir} \
 		                --numThreads {threads} {params.sos_sched}
 	        else
 	            XQTL_PATCH_TENSORQTL_SORT=1 PYTHONPATH="{params.compat_python}${{PYTHONPATH:+:$PYTHONPATH}}" \
@@ -86,6 +88,7 @@ rule tensorqtl_cis:
 		                --maf-threshold {params.maf} \
 		                --walltime {params.sos_walltime} \
 		                --mem {params.sos_mem} \
+                    --modular-script-dir {params.modular_script_dir} \
 		                --numThreads {threads} {params.sos_sched}
 	        fi
 	        python3 - "{params.outdir}" "{params.normalized_pheno_manifest}" <<'PY'
