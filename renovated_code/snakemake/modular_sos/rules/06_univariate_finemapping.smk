@@ -3,7 +3,7 @@
 # ============================================================
 # Covers: Univariate SuSiE fine-mapping + TWAS weight estimation
 #
-# SoS notebooks called (Modular SoS wrappers in renovated_code/notebook/modular_sos/):
+# SoS notebooks called (Modular SoS wrappers in pipeline/):
 #   - mnm_regression.ipynb (susie_twas)
 #   - rss_analysis.ipynb   (univariate_plot)
 # ============================================================

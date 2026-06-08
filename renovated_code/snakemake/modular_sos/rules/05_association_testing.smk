@@ -3,7 +3,7 @@
 # ============================================================
 # Covers: CIS-QTL association testing with TensorQTL
 #
-# SoS notebook called (Modular SoS wrapper in renovated_code/notebook/modular_sos/):
+# SoS notebook called (Modular SoS wrapper in pipeline/):
 #   - TensorQTL.ipynb (cis)
 #
 # The notebook task block calls:

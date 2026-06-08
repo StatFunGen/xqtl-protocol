@@ -263,7 +263,7 @@ compute_qvalues <- function(pvalues) {
             return(qvalue(pvalues)$qvalues)
         }
     }, error = function(e) {
-        message("Too few p-values to calculate qvalue, fall back to BH")
+        message("Too few p-values to calculate qvalue; using BH")
         p.adjust(pvalues, method = "BH")
     })
 }
@@ -292,10 +292,10 @@ library(dplyr)
 library(readr)
 library(qvalue)
 emprical_pd = tibble(map(input_files, ~read_delim(.x,'\\t')))%>%unnest()
-emprical_pd['q_beta'] = tryCatch(qvalue(emprical_pd$p_beta)$qvalue, error = function(e){print('Too few pvalue to calculate qvalue, fall back to BH')
-                                                                                          qvalue(emprical_pd$p_beta,pi0 = 1 )$qvalue})
-emprical_pd['q_perm'] = tryCatch(qvalue(emprical_pd$p_perm)$qvalue, error = function(e){print('Too few pvalue to calculate qvalue, fall back to BH')
-                                                                                          qvalue(emprical_pd$p_perm,pi0 = 1 )$qvalue})
+emprical_pd['q_beta'] = tryCatch(qvalue(emprical_pd$p_beta)$qvalue, error = function(e){print('Too few pvalue to calculate qvalue; using BH')
+                                                                                          p.adjust(emprical_pd$p_beta, method = 'BH')})
+emprical_pd['q_perm'] = tryCatch(qvalue(emprical_pd$p_perm)$qvalue, error = function(e){print('Too few pvalue to calculate qvalue; using BH')
+                                                                                          p.adjust(emprical_pd$p_perm, method = 'BH')})
 emprical_pd['fdr_beta'] = p.adjust(emprical_pd$p_beta,'fdr')
 emprical_pd['fdr_perm'] = p.adjust(emprical_pd$p_perm,'fdr')
 if (!all(is.na(emprical_pd$p_beta))) {
@@ -528,6 +528,9 @@ def run_cis(args) -> None:
     if not regional_outputs:
         print("No regional results produced.", flush=True)
         return
+    if args.skip_postprocess:
+        print("\nCIS QTL complete. Regional postprocess skipped.", flush=True)
+        return
 
     output_prefix = strip_suffix(os.path.basename(regional_outputs[0]), ".cis_qtl.regional.tsv.gz")
     out_tsv = os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.tsv.gz")
@@ -540,7 +543,7 @@ def run_cis(args) -> None:
 
 
 def run_cis_postprocess(args) -> None:
-    regional_files = sorted(glob.glob(os.path.join(args.cwd, "*.cis_qtl.regional.tsv.gz")))
+    regional_files = args.regional_files or sorted(glob.glob(os.path.join(args.cwd, "*.cis_qtl.regional.tsv.gz")))
     if not regional_files:
         sys.exit(f"ERROR: No regional cis-QTL files found in {args.cwd}")
 
@@ -550,8 +553,10 @@ def run_cis_postprocess(args) -> None:
     ]
     output_prefix = prefix_candidates[0]
 
-    out_tsv = os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.tsv.gz")
-    out_summary = os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.summary.txt")
+    out_tsv = args.output_tsv or os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.tsv.gz")
+    out_summary = args.output_summary or os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.summary.txt")
+    os.makedirs(os.path.dirname(os.path.abspath(out_tsv)), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(out_summary)), exist_ok=True)
     run_regional_postprocess(regional_files, out_tsv, out_summary)
     print(f"Regional significance table: {out_tsv}", flush=True)
     print(f"Regional significance summary: {out_summary}", flush=True)
@@ -649,6 +654,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Minimum MAF filter (0 = no filter)")
     p.add_argument("--trans-geno-chromosome", default="", metavar="CHR",
                    help="For trans-QTL, use this genotype chromosome instead of the per-phenotype chromosome")
+    p.add_argument("--skip-postprocess", action="store_true", default=False,
+                   help="For --step cis, produce per-chromosome outputs only; run --step cis_postprocess separately.")
+    p.add_argument("--output-tsv", default="", metavar="PATH",
+                   help="Output table for --step cis_postprocess")
+    p.add_argument("--output-summary", default="", metavar="PATH",
+                   help="Summary table for --step cis_postprocess")
+    p.add_argument("--regional-files", nargs="*", default=[],
+                   help="Regional cis-QTL files for --step cis_postprocess")
     p.add_argument("--numThreads", type=int, default=8)
     p.add_argument("--dry-run", action="store_true", default=False,
                    help="Print the full command and validate inputs; do not run TensorQTL.")

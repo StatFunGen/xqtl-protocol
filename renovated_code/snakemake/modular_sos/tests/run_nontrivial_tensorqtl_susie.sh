@@ -24,7 +24,7 @@ die() {
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)"
 SNAKEMAKE_DIR="${ROOT}/renovated_code/snakemake"
-MODULAR_SOS_NOTEBOOKS="${ROOT}/renovated_code/notebook/modular_sos"
+PIPELINE_NOTEBOOKS="${ROOT}/pipeline"
 LEGACY_TENSORQTL="${ROOT}/code/association_scan/TensorQTL/TensorQTL.ipynb"
 LEGACY_MNM="${ROOT}/code/mnm_analysis/mnm_methods/mnm_regression.ipynb"
 DATA_TAR="${SCRIPT_DIR}/data/modular_sos_nontrivial_tensorqtl_susie.tar.gz"
@@ -115,7 +115,7 @@ printf 'SoS: %s\n' "${SOS_BIN}"
 
 XQTL_PATCH_TENSORQTL_SORT=1 \
 PYTHONPATH="${SNAKEMAKE_DIR}/compat/python${PYTHONPATH:+:${PYTHONPATH}}" \
-"${SOS_BIN}" run "${MODULAR_SOS_NOTEBOOKS}/TensorQTL.ipynb" cis \
+"${SOS_BIN}" run "${PIPELINE_NOTEBOOKS}/TensorQTL.ipynb" cis \
     --cwd "${WORKDIR}/modular_sos/tensorqtl_cis" \
     --genotype-file "${TQTL_DIR}/AC.unrelated.plink_qc.prune.bed" \
     --phenotype-file "${TQTL_DIR}/modular_sos_hg_synthetic.expression.bed.gz" \
@@ -183,7 +183,7 @@ PY
     --skip-analysis-pip-cutoff 0.0 \
     --numThreads "${NUM_THREADS}" 2>&1 | tee "${WORKDIR}/logs/susie_twas.old.log"
 
-"${SOS_BIN}" run "${MODULAR_SOS_NOTEBOOKS}/mnm_regression.ipynb" susie_twas \
+"${SOS_BIN}" run "${PIPELINE_NOTEBOOKS}/mnm_regression.ipynb" susie_twas \
     --cwd "${WORKDIR}/modular_sos/fm_susie_twas" \
     --name fmtest \
     --genoFile "${SUSIE_DIR}/genotype_by_chrom_files_normalized.txt" \

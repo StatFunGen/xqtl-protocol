@@ -6,7 +6,7 @@
 #   - Partition phenotype BED by chromosome
 #   - Compute hidden confounding factors (Marchenko PCA or PEER)
 #
-# SoS notebooks called (Modular SoS wrappers in renovated_code/notebook/modular_sos/):
+# SoS notebooks called (Modular SoS wrappers in pipeline/):
 #   - covariate_formatting.ipynb    (merge_genotype_pc)
 #   - phenotype_formatting.ipynb    (phenotype_by_chrom)
 #   - covariate_hidden_factor.ipynb (Marchenko_PC, PEER)
