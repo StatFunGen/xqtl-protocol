@@ -12,6 +12,7 @@ Flags are kept identical to the SoS notebook parameter names.
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -25,6 +26,16 @@ def run(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
     """Run a shell command, print it, raise on failure."""
     print(f"+ {cmd}", flush=True)
     return subprocess.run(cmd, shell=True, check=check)
+
+
+def q(value: str) -> str:
+    return shlex.quote(str(value))
+
+
+def temp_without_suffix(output: str, suffix: str) -> str:
+    if output.endswith(suffix):
+        return output[: -len(suffix)]
+    return f"{output}.tmp"
 
 
 def ensure_tabix_index(bed_gz: str) -> None:
@@ -43,6 +54,76 @@ def get_name(phenoFile: str, name: str) -> str:
         if base.endswith(suffix):
             return base[: -len(suffix)]
     return base
+
+
+def phenotype_by_chrom_1(args) -> None:
+    os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+    temp_out = temp_without_suffix(args.output, ".gz")
+    run(f"zcat {q(args.phenoFile)} | head -1 > {q(temp_out)}")
+    run(f"tabix {q(args.phenoFile)} {q(args.chrom[0])} >> {q(temp_out)}")
+    run(f"bgzip -f {q(temp_out)}")
+    run(f"tabix -p bed {q(args.output)} -f")
+
+
+def phenotype_by_chrom_gct_1(args) -> None:
+    os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+    temp_out = temp_without_suffix(args.output, ".gct")
+    run(f"zcat {q(args.phenoFile)} | head -1 > {q(temp_out)}")
+    run(f"tabix {q(args.phenoFile)} {q(args.chrom[0])} >> {q(temp_out)}")
+    run(f"cat {q(temp_out)} | awk '{{$1=$2=$3=\"\"; print $0}}' >> {q(args.output)}")
+    run(f"rm {q(temp_out)}")
+
+
+def phenotype_by_region_1(args) -> None:
+    os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+    temp_out = temp_without_suffix(args.output, ".gz")
+    coord = f"{args.region[0]}:{args.region[1]}-{args.region[2]}"
+    run(f"tabix -h {q(args.phenoFile)} {q(coord)} > {q(temp_out)}")
+    run(f"bgzip -f {q(temp_out)}")
+
+
+def phenotype_by_chrom_2(args) -> None:
+    import pandas as pd
+
+    chrom = [str(x).split(".")[-3].replace("chr", "") for x in args.inputs]
+    chrom_df = pd.DataFrame({"#id": chrom, "#dir": args.inputs})
+    chrom_df["#chr"] = [f"chr{x}" for x in chrom]
+    pheno = pd.read_csv(args.phenoFile, sep="\t", usecols=[0, 1, 2, 3])
+    pheno = pheno.rename(columns={pheno.columns[3]: "ID"})
+    pheno = (
+        pheno.merge(chrom_df[["#chr", "#dir"]], left_on="#chr", right_on="#chr")
+        .rename(columns={"#dir": "path"})
+    )
+    chrom_df = chrom_df[chrom_df["#chr"].isin(pheno["#chr"].unique())]
+    chrom_df[["#id", "#dir"]].to_csv(args.output_files, index=False, sep="\t")
+    pheno.to_csv(args.output_region_list, index=False, sep="\t")
+
+
+def phenotype_by_chrom_gct_2(args) -> None:
+    import pandas as pd
+
+    chrom = [str(x).split(".")[-2].replace("chr", "") for x in args.inputs]
+    chrom_df = pd.DataFrame({"#id": chrom, "#dir": args.inputs})
+    chrom_df["#chr"] = [f"chr{x}" for x in chrom]
+    pheno = pd.read_csv(args.phenoFile, sep="\t", usecols=[0, 1, 2, 3])
+    pheno = pheno.rename(columns={pheno.columns[3]: "ID"})
+    pheno = (
+        pheno.merge(chrom_df[["#chr", "#dir"]], left_on="#chr", right_on="#chr")
+        .rename(columns={"#dir": "path"})
+    )
+    chrom_df = chrom_df[chrom_df["#chr"].isin(pheno["#chr"].unique())]
+    chrom_df[["#id", "#dir"]].to_csv(args.output_files, index=False, sep="\t")
+    pheno.to_csv(args.output_region_list, index=False, sep="\t")
+
+
+def phenotype_by_region_2(args) -> None:
+    import pandas as pd
+
+    region_df = pd.DataFrame({
+        "#id": [str(x).split(".")[-3] for x in args.inputs],
+        "dir": args.inputs,
+    })
+    region_df.to_csv(args.output, index=False, sep="\t")
 
 
 # ---------------------------------------------------------------------------
@@ -124,9 +205,18 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument("--step", required=True,
-                   choices=["phenotype_by_chrom", "phenotype_by_region"],
+                   choices=[
+                       "phenotype_by_chrom",
+                       "phenotype_by_chrom_1",
+                       "phenotype_by_chrom_2",
+                       "phenotype_by_chrom_gct_1",
+                       "phenotype_by_chrom_gct_2",
+                       "phenotype_by_region",
+                       "phenotype_by_region_1",
+                       "phenotype_by_region_2",
+                   ],
                    help="Which step to run")
-    p.add_argument("--phenoFile", required=True, metavar="PATH",
+    p.add_argument("--phenoFile", metavar="PATH",
                    help="Input phenotype BED.gz file (tabix-indexed)")
     p.add_argument("--cwd", default="output", metavar="DIR",
                    help="Output directory")
@@ -137,11 +227,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     # phenotype_by_chrom
     p.add_argument("--chrom", nargs="+", metavar="CHR",
-                   help="[phenotype_by_chrom] Chromosomes to extract (e.g. chr1 chr2 ...)")
+                   help="[phenotype_by_chrom*] Chromosomes to extract (e.g. chr1 chr2 ...)")
 
     # phenotype_by_region
     p.add_argument("--region-list", metavar="PATH",
                    help="[phenotype_by_region] TSV with chr/start/end/name columns")
+    p.add_argument("--region", nargs=4, metavar=("CHR", "START", "END", "ID"),
+                   help="[phenotype_by_region_1] Region tuple from the SoS fan-out")
+    p.add_argument("--output", metavar="PATH",
+                   help="[step *_1] Explicit SoS output path")
+    p.add_argument("--inputs", nargs="+", metavar="PATH",
+                   help="[step *_2] Grouped SoS input paths")
+    p.add_argument("--output-files", metavar="PATH",
+                   help="[chrom *_2] Output file manifest path")
+    p.add_argument("--output-region-list", metavar="PATH",
+                   help="[chrom *_2] Output region-list path")
 
     return p
 
@@ -151,14 +251,74 @@ def main():
     args = parser.parse_args()
 
     if args.step == "phenotype_by_chrom":
+        if not args.phenoFile:
+            parser.error("--phenoFile is required for step phenotype_by_chrom")
         if not args.chrom:
             parser.error("--chrom is required for step phenotype_by_chrom")
         phenotype_by_chrom(args)
 
+    elif args.step == "phenotype_by_chrom_1":
+        if not args.phenoFile:
+            parser.error("--phenoFile is required for step phenotype_by_chrom_1")
+        if not args.chrom:
+            parser.error("--chrom is required for step phenotype_by_chrom_1")
+        if not args.output:
+            parser.error("--output is required for step phenotype_by_chrom_1")
+        phenotype_by_chrom_1(args)
+
+    elif args.step == "phenotype_by_chrom_2":
+        if not args.phenoFile:
+            parser.error("--phenoFile is required for step phenotype_by_chrom_2")
+        if not args.inputs:
+            parser.error("--inputs is required for step phenotype_by_chrom_2")
+        if not args.output_files:
+            parser.error("--output-files is required for step phenotype_by_chrom_2")
+        if not args.output_region_list:
+            parser.error("--output-region-list is required for step phenotype_by_chrom_2")
+        phenotype_by_chrom_2(args)
+
+    elif args.step == "phenotype_by_chrom_gct_1":
+        if not args.phenoFile:
+            parser.error("--phenoFile is required for step phenotype_by_chrom_gct_1")
+        if not args.chrom:
+            parser.error("--chrom is required for step phenotype_by_chrom_gct_1")
+        if not args.output:
+            parser.error("--output is required for step phenotype_by_chrom_gct_1")
+        phenotype_by_chrom_gct_1(args)
+
+    elif args.step == "phenotype_by_chrom_gct_2":
+        if not args.phenoFile:
+            parser.error("--phenoFile is required for step phenotype_by_chrom_gct_2")
+        if not args.inputs:
+            parser.error("--inputs is required for step phenotype_by_chrom_gct_2")
+        if not args.output_files:
+            parser.error("--output-files is required for step phenotype_by_chrom_gct_2")
+        if not args.output_region_list:
+            parser.error("--output-region-list is required for step phenotype_by_chrom_gct_2")
+        phenotype_by_chrom_gct_2(args)
+
     elif args.step == "phenotype_by_region":
+        if not args.phenoFile:
+            parser.error("--phenoFile is required for step phenotype_by_region")
         if not args.region_list:
             parser.error("--region-list is required for step phenotype_by_region")
         phenotype_by_region(args)
+
+    elif args.step == "phenotype_by_region_1":
+        if not args.phenoFile:
+            parser.error("--phenoFile is required for step phenotype_by_region_1")
+        if not args.region:
+            parser.error("--region is required for step phenotype_by_region_1")
+        if not args.output:
+            parser.error("--output is required for step phenotype_by_region_1")
+        phenotype_by_region_1(args)
+
+    elif args.step == "phenotype_by_region_2":
+        if not args.inputs:
+            parser.error("--inputs is required for step phenotype_by_region_2")
+        if not args.output:
+            parser.error("--output is required for step phenotype_by_region_2")
+        phenotype_by_region_2(args)
 
 
 if __name__ == "__main__":

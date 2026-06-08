@@ -46,6 +46,11 @@ def parse_args():
         default=[],
         help="Per-sample strand values for STAR_align_3",
     )
+    parser.add_argument(
+        "--var-vcf-file",
+        default="",
+        help="Variant VCF used for WASP tagging; controls STAR_align_3 transcript BAM suffix",
+    )
     return parser.parse_args()
 
 
@@ -160,8 +165,9 @@ def run_star_align_3(args):
     coord_bam_list = [Path(x).name for x in args.input[2::6]]
     sorted_bigwig_list = [Path(x).name for x in args.input[4::6]]
     sj_list = [f"{strip_extensions(x, 5)}.SJ.out.tab" for x in coord_bam_list]
+    wasp_suffix = "_wasp_qc" if args.var_vcf_file else ""
     trans_bam_list = [
-        f"{strip_extensions(x, 4)}.toTranscriptome.out.bam"
+        f"{strip_extensions(x, 4)}.toTranscriptome.out{wasp_suffix}.bam"
         for x in coord_bam_list
     ]
 

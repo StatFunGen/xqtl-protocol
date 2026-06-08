@@ -5,7 +5,7 @@ This directory keeps two Modular SoS test surfaces:
 1. `run_mwe_xqtl_core.sh` runs the Modular SoS Snakemake DAG through TensorQTL and SuSiE/TWAS fine-mapping, excluding plots via the `xqtl_core` target.
 2. `run_nontrivial_tensorqtl_susie.sh` reruns legacy-vs-Modular SoS notebook compares for TensorQTL and SuSiE/TWAS using `data/modular_sos_nontrivial_tensorqtl_susie.tar.gz`.
 
-The Modular SoS runtime remains notebook-first: Snakemake rules call generated notebooks under `renovated_code/snakemake/modular_sos/notebooks`, and those notebooks call the modular scripts. The rule set kept active is `00` through `06`; `xqtl_core` includes rule `06` SuSiE/TWAS and excludes only the plot target.
+The Modular SoS runtime remains notebook-first: Snakemake rules call the canonical modular notebooks under `renovated_code/notebook/modular_sos`, and those notebooks call the modular scripts. The rule set kept active is `00` through `06`; `xqtl_core` includes rule `06` SuSiE/TWAS and excludes only the plot target.
 
 ## Run The MWE
 
@@ -41,9 +41,9 @@ renovated_code/snakemake/modular_sos/tests/run_nontrivial_tensorqtl_susie.sh \
 This unpacks `data/modular_sos_nontrivial_tensorqtl_susie.tar.gz`, runs:
 
 - legacy `code/association_scan/TensorQTL/TensorQTL.ipynb cis`
-- Modular SoS `renovated_code/snakemake/modular_sos/notebooks/TensorQTL.ipynb cis`
+- Modular SoS `renovated_code/notebook/modular_sos/TensorQTL.ipynb cis`
 - legacy `code/mnm_analysis/mnm_methods/mnm_regression.ipynb susie_twas`
-- Modular SoS `renovated_code/snakemake/modular_sos/notebooks/mnm_regression.ipynb susie_twas`
+- Modular SoS `renovated_code/notebook/modular_sos/mnm_regression.ipynb susie_twas`
 
 The test fails if TensorQTL output MD5s differ or if SuSiE/TWAS head records differ. Outputs are written under `renovated_code/snakemake/tmp/modular_sos_tests/`.
 

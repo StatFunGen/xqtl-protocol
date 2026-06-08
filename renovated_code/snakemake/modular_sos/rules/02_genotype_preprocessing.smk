@@ -3,7 +3,7 @@
 # ============================================================
 # Covers: VCF QC → Plink conversion → Merge plink → GWAS QC → Split by chromosome
 #
-# SoS notebooks called (Modular SoS wrappers in modular_sos/notebooks/):
+# SoS notebooks called (Modular SoS wrappers in renovated_code/notebook/modular_sos/):
 #   - VCF_QC.ipynb              (qc)
 #   - genotype_formatting.ipynb (vcf_to_plink, merge_plink, genotype_by_chrom)
 #   - GWAS_QC.ipynb             (qc_no_prune)

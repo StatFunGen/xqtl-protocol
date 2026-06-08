@@ -42,6 +42,8 @@ opt_list <- list(
               help = "[BiCV_3] Fake VCF generated from residual BED"),
   make_option("--output",                type = "character", default = NULL,
               help = "Optional explicit output path"),
+  make_option("--choose-k-method",       type = "character", default = "Marchenko",
+              help = "[Marchenko_PC] Method to choose PCA factor count: Marchenko or Buja_Eyuboglu"),
   make_option("--N",                     type = "integer",   default = 0,
               help = "Number of hidden factors (0 = auto-determine)"),
   make_option("--mean-impute-missing",   action = "store_true", default = FALSE,
@@ -50,6 +52,10 @@ opt_list <- list(
   make_option("--iteration",             type = "integer",   default = 1000),
   make_option("--convergence-mode",      type = "character", default = "fast",
               help = "PEER convergence mode: fast, medium, slow"),
+  make_option("--tol",                   type = "double",    default = 0.001,
+              help = "[PEER_fit] PEER/MOFA convergence tolerance"),
+  make_option("--r2-tol",                type = "character", default = "False",
+              help = "[PEER_fit] Optional PEER/MOFA dropR2 setting; False disables it"),
   make_option("--numThreads",            type = "integer",   default = 8),
   make_option("--dry-run",               action = "store_true", default = FALSE,
               help = "Print full command + validate inputs; do not run.")
@@ -74,6 +80,14 @@ residual_prefix <- function(resid_file) {
 
 peer_model_prefix <- function(model_file) {
   sub("\\.PEER_MODEL\\.[^.]+$", "", basename(model_file))
+}
+
+explicit_or_default_output <- function(opt, default_file) {
+  if (!is.null(opt$output) && nzchar(opt$output)) {
+    opt$output
+  } else {
+    default_file
+  }
 }
 
 fake_vcf_prefix <- function(resid_file) {
@@ -310,8 +324,11 @@ run_compute_residual <- function(opt) {
   if (is.null(opt$covFile))   stop("--covFile is required for compute_residual")
   res <- compute_residuals(opt)
   bname <- hidden_factor_prefix(opt$phenoFile, opt$covFile)
-  out_file <- file.path(opt$cwd,
-                        paste0(bname, ".residual.bed.gz"))
+  out_file <- explicit_or_default_output(
+    opt,
+    file.path(opt$cwd, paste0(bname, ".residual.bed.gz"))
+  )
+  dir.create(dirname(out_file), showWarnings = FALSE, recursive = TRUE)
   write_bgzip_bed(res$resid_df, out_file)
   cat(sprintf("compute_residual output: %s (%d genes × %d samples)\n",
               out_file, ncol(res$residuals), nrow(res$residuals)))
@@ -321,12 +338,24 @@ run_compute_residual <- function(opt) {
 run_marchenko_from_resid <- function(opt) {
   if (is.null(opt$residFile)) stop("--residFile is required for Marchenko_PC")
   if (is.null(opt$covFile)) stop("--covFile is required for Marchenko_PC")
+  choose_k_method <- opt$`choose-k-method`
+  allowed_methods <- c("Marchenko", "Buja_Eyuboglu")
+  if (!choose_k_method %in% allowed_methods) {
+    stop(sprintf(
+      "Invalid choice of methods to choose K for PCA: %s. Available: %s",
+      choose_k_method,
+      paste(allowed_methods, collapse = ", ")
+    ))
+  }
   cat("=== Marchenko_PC (from residual file) ===\n")
   suppressPackageStartupMessages(library(PCAtools))
   suppressPackageStartupMessages(library(BiocSingular))
   resid_df <- read_delim(opt$residFile, delim = "\t", show_col_types = FALSE)
   cov_df <- read_delim(opt$covFile, delim = "\t", show_col_types = FALSE)
   common_samples <- intersect(colnames(cov_df), colnames(resid_df))
+  if (length(common_samples) == 0L) {
+    stop("No overlapping samples between residual phenotype and covariate inputs")
+  }
   cov_df_common <- cbind(cov_df[, 1, drop = FALSE], cov_df[, common_samples, drop = FALSE])
   bname <- residual_prefix(opt$residFile)
   resid_pc <- pca(
@@ -337,21 +366,37 @@ run_marchenko_from_resid <- function(opt) {
   )
 
   if (opt$N == 0L) {
-    M <- apply(resid_df[, common_samples, drop = FALSE], 1, function(x) {
-      (x - mean(x)) / sqrt(var(x))
-    })
-    resid_sigma2 <- var(as.vector(M))
-    n_factors <- chooseMarchenkoPastur(
-      .dim = dim(resid_df[, common_samples, drop = FALSE]),
-      var.explained = resid_pc$sdev^2,
-      noise = resid_sigma2
-    )
+    if (choose_k_method == "Marchenko") {
+      M <- apply(resid_df[, common_samples, drop = FALSE], 1, function(x) {
+        (x - mean(x)) / sqrt(var(x))
+      })
+      resid_sigma2 <- var(as.vector(M))
+      n_factors <- chooseMarchenkoPastur(
+        .dim = dim(resid_df[, common_samples, drop = FALSE]),
+        var.explained = resid_pc$sdev^2,
+        noise = resid_sigma2
+      )
+    } else if (choose_k_method == "Buja_Eyuboglu") {
+      if (!requireNamespace("jackstraw", quietly = TRUE)) {
+        stop("Package 'jackstraw' is required for choose-k-method Buja_Eyuboglu")
+      }
+      n_factors <- jackstraw::permutationPA(
+        data.matrix(resid_df[, common_samples, drop = FALSE]),
+        B = 100,
+        threshold = 0.05,
+        verbose = FALSE
+      )$r
+    }
   } else {
     n_factors <- opt$N
   }
 
   if (n_factors == 0L) {
-    stop(sprintf("Invalid choice of methods to choose K for PCA: Marchenko (returned %d)", n_factors))
+    stop(sprintf(
+      "Invalid choice of methods to choose K for PCA: %s (returned %d)",
+      choose_k_method,
+      n_factors
+    ))
   }
 
   factors <- as.data.frame(resid_pc$rotated[, seq_len(n_factors), drop = FALSE])
@@ -359,7 +404,11 @@ run_marchenko_from_resid <- function(opt) {
   factors <- as.data.frame(t(factors))
   factors$id <- rownames(factors)
   factors <- factors %>% select(id, everything()) %>% rename("#id" = "id")
-  out_file <- file.path(opt$cwd, paste0(bname, ".Marchenko_PC.gz"))
+  out_file <- explicit_or_default_output(
+    opt,
+    file.path(opt$cwd, paste0(bname, ".", choose_k_method, "_PC.gz"))
+  )
+  dir.create(dirname(out_file), showWarnings = FALSE, recursive = TRUE)
   write_delim(rbind(cov_df_common, factors), out_file, "\t")
   cat(sprintf("Output: %s (%d factors × %d samples)\n",
               out_file, n_factors, length(common_samples)))
@@ -386,6 +435,7 @@ run_peer_fit <- function(opt) {
     "convergence_mode = sys.argv[5]",
     "num_threads = sys.argv[6]",
     "tol = float(sys.argv[7])",
+    "r2_tol = sys.argv[8]",
     "",
     "os.environ['OMP_NUM_THREADS'] = num_threads",
     "os.environ['OPENBLAS_NUM_THREADS'] = num_threads",
@@ -404,7 +454,13 @@ run_peer_fit <- function(opt) {
     "        num_factor = 60",
     "ent.set_data_matrix([[data.transpose()]], samples_names=[data.columns.values.tolist()], features_names=[data.index.values.tolist()])",
     "ent.set_model_options(factors=num_factor, spikeslab_weights=False, ard_weights=False)",
-    "ent.set_train_options(iter=iteration, convergence_mode=convergence_mode, startELBO=1, freqELBO=1, tolerance=tol, gpu_mode=False, verbose=True, seed=42)",
+    "train_options = dict(iter=iteration, convergence_mode=convergence_mode, startELBO=1, freqELBO=1, tolerance=tol, gpu_mode=False, verbose=True, seed=42)",
+    "if r2_tol.lower() not in ('false', 'f', '0', 'none', 'null', ''):",
+    "    if r2_tol.lower() in ('true', 't', 'yes', 'y'):",
+    "        train_options['dropR2'] = True",
+    "    else:",
+    "        train_options['dropR2'] = float(r2_tol)",
+    "ent.set_train_options(**train_options)",
     "ent.build()",
     "ent.run()",
     "ent.save(model_file)",
@@ -419,7 +475,8 @@ run_peer_fit <- function(opt) {
     Sys.which("python"),
     c(py_script, opt$residFile, model_file, as.character(opt$N),
       as.character(opt$iteration), opt$`convergence-mode`,
-      as.character(opt$numThreads), "0.001")
+      as.character(opt$numThreads), as.character(opt$tol),
+      as.character(opt$`r2-tol`))
   )
   cat(sprintf("PEER model saved: %s\n", model_file))
 }

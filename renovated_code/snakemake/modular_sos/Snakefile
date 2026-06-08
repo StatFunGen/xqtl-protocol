@@ -9,7 +9,7 @@
 #   Route 2 (Native):  Snakemake → bash renovated_code/script.sh step
 #                      No SoS; pure shell dispatch.
 #
-#   Modular SoS (this):    Snakemake → sos run modular_sos/notebooks/notebook.ipynb step
+#   Modular SoS (this):    Snakemake → sos run renovated_code/notebook/modular_sos/notebook.ipynb step
 #                      Task blocks call renovated_code/script.sh instead of
 #                      running inline code — SoS manages workflow sections,
 #                      modular scripts do the computation.
@@ -49,7 +49,7 @@ config.setdefault("phenotype_preprocessing", {
 
 # ── Convenience variables ────────────────────────────────────────────────────
 CWD            = config["cwd"]
-NOTEBOOKS      = str(Path(workflow.snakefile).parent / "notebooks")
+NOTEBOOKS      = str(Path(workflow.snakefile).resolve().parents[2] / "notebook" / "modular_sos")
 RENOVATED      = config["renovated_code_dir"]
 THEMES         = [t["name"] for t in config["themes"]]
 CHROMS         = config["chromosomes"]

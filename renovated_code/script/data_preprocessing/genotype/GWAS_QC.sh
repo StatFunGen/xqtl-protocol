@@ -20,10 +20,16 @@ PHENO_FILE=""
 SAMPLE_PARTICIPANT_LOOKUP=""
 CWD="output"
 NAME=""
+PLINK_COMMAND=""
+OUTPUT_FORMAT=""
+MAKE_COMMAND=""
+OUT_PREFIX=""
+PRUNE_PREFIX=""
 KEEP_SAMPLES=""
 KEEP_VARIANTS=""
 REMOVE_SAMPLES=""
 EXCLUDE_VARIANTS=""
+OTHER_ARGS=()
 META_ONLY=false
 RM_DUPS=false
 TREAT_DOSAGE_MISSING=false
@@ -51,10 +57,16 @@ while [[ $# -gt 0 ]]; do
         --sample-participant-lookup) SAMPLE_PARTICIPANT_LOOKUP="$2"; shift 2 ;;
         --cwd)                       CWD="$2"; shift 2 ;;
         --name)                      NAME="$2"; shift 2 ;;
+        --plink-command)             PLINK_COMMAND="$2"; shift 2 ;;
+        --output-format)             OUTPUT_FORMAT="$2"; shift 2 ;;
+        --make-command)              MAKE_COMMAND="$2"; shift 2 ;;
+        --out-prefix)                OUT_PREFIX="$2"; shift 2 ;;
+        --prune-prefix)              PRUNE_PREFIX="$2"; shift 2 ;;
         --keep-samples)              KEEP_SAMPLES="$2"; shift 2 ;;
         --keep-variants)             KEEP_VARIANTS="$2"; shift 2 ;;
         --remove-samples)            REMOVE_SAMPLES="$2"; shift 2 ;;
         --exclude-variants)          EXCLUDE_VARIANTS="$2"; shift 2 ;;
+        --other-arg)                 OTHER_ARGS+=("$2"); shift 2 ;;
         --meta-only)                 META_ONLY=true; shift ;;
         --rm-dups)                   RM_DUPS=true; shift ;;
         --treat-dosage-missing)      TREAT_DOSAGE_MISSING=true; shift ;;
@@ -90,6 +102,59 @@ BED_PREFIX="${BED_PREFIX%.pgen}"
 BED_PREFIX="${BED_PREFIX%.fam}"
 BED_PREFIX="${BED_PREFIX%.psam}"
 
+resolve_plink_command() {
+    if [[ -n "$PLINK_COMMAND" ]]; then
+        case "$PLINK_COMMAND" in
+            --bfile|--pfile) printf '%s\n' "$PLINK_COMMAND" ;;
+            *) echo "ERROR: unsupported --plink-command '$PLINK_COMMAND'" >&2; exit 2 ;;
+        esac
+        return
+    fi
+
+    case "$OUTPUT_FORMAT" in
+        plink1) printf '%s\n' "--bfile"; return ;;
+        plink2) printf '%s\n' "--pfile"; return ;;
+        "") ;;
+        *) echo "ERROR: unsupported --output-format '$OUTPUT_FORMAT'" >&2; exit 2 ;;
+    esac
+
+    if [[ "$GENO_FILE" == *.pgen || -f "${BED_PREFIX}.pvar" || -f "${BED_PREFIX}.psam" ]]; then
+        printf '%s\n' "--pfile"
+    else
+        printf '%s\n' "--bfile"
+    fi
+}
+
+resolve_make_args() {
+    local requested="$MAKE_COMMAND"
+    if [[ -z "$requested" ]]; then
+        if [[ "$META_ONLY" == "true" ]]; then
+            requested="--write-snplist --write-samples"
+        elif [[ "$OUTPUT_FORMAT" == "plink2" || "$(resolve_plink_command)" == "--pfile" ]]; then
+            requested="--make-pgen"
+        else
+            requested="--make-bed"
+        fi
+    fi
+
+    case "$requested" in
+        --make-bed) printf '%s\n' "--make-bed" ;;
+        --make-pgen) printf '%s\n' "--make-pgen" ;;
+        "--write-snplist --write-samples")
+            printf '%s\n' "--write-snplist"
+            printf '%s\n' "--write-samples"
+            ;;
+        *) echo "ERROR: unsupported --make-command '$requested'" >&2; exit 2 ;;
+    esac
+}
+
+quote_array_for_bash() {
+    local value
+    for value in "$@"; do
+        printf ' %q' "$value"
+    done
+}
+
 is_nonzero() {
     awk -v value="$1" 'BEGIN { exit !((value + 0) != 0) }'
 }
@@ -123,9 +188,13 @@ _qc_no_prune() {
     [[ -n "$NAME" ]] && out_prefix="${out_prefix}.${NAME}"
     out_prefix="${out_prefix}.plink_qc"
     [[ -n "$KEEP_VARIANTS" && -f "$KEEP_VARIANTS" ]] && out_prefix="${out_prefix}.extracted"
+    [[ -n "$OUT_PREFIX" ]] && out_prefix="$OUT_PREFIX"
 
-    local args=(--bfile "$BED_PREFIX" --allow-extra-chr)
-    local make_args=(--make-bed)
+    local plink_command
+    plink_command="$(resolve_plink_command)"
+    local args=("$plink_command" "$BED_PREFIX" --allow-extra-chr)
+    local make_args=()
+    mapfile -t make_args < <(resolve_make_args)
     is_nonzero "$MAF_FILTER" && args+=(--maf "$MAF_FILTER")
     is_nonzero "$MAF_MAX_FILTER" && args+=(--max-maf "$MAF_MAX_FILTER")
     is_nonzero "$MAC_FILTER" && args+=(--mac "$MAC_FILTER")
@@ -145,6 +214,14 @@ _qc_no_prune() {
     [[ -n "$KEEP_VARIANTS" && -f "$KEEP_VARIANTS" ]] && args+=(--extract "$KEEP_VARIANTS")
     [[ "$META_ONLY" == "true" ]] && make_args=(--write-snplist --write-samples)
     [[ "$RM_DUPS" == "true" ]] && args+=(--rm-dup force-first list)
+    local other_arg
+    for other_arg in "${OTHER_ARGS[@]}"; do
+        if [[ ! "$other_arg" =~ ^[A-Za-z0-9][A-Za-z0-9_.:-]*$ ]]; then
+            echo "ERROR: unsafe --other-arg '$other_arg'; pass PLINK flag names without leading dashes or values" >&2
+            exit 2
+        fi
+        args+=("--${other_arg}")
+    done
 
     plink2 \
         "${args[@]}" \
@@ -159,7 +236,13 @@ _qc() {
 
     local prune_base="${CWD}/${INPUT_STEM}"
     local pruned_out="${CWD}/${INPUT_STEM}.prune"
-    local prune_args=(--bfile "$BED_PREFIX" --allow-extra-chr --rm-dup force-first)
+    [[ -n "$PRUNE_PREFIX" ]] && prune_base="$PRUNE_PREFIX"
+    [[ -n "$OUT_PREFIX" ]] && pruned_out="$OUT_PREFIX"
+    local plink_command
+    plink_command="$(resolve_plink_command)"
+    local make_args=()
+    mapfile -t make_args < <(resolve_make_args)
+    local prune_args=("$plink_command" "$BED_PREFIX" --allow-extra-chr --rm-dup force-first)
     [[ "$BAD_LD" == "true" ]] && prune_args+=(--bad-ld)
 
     plink2 \
@@ -170,10 +253,10 @@ _qc() {
         --memory 16000
 
     plink2 \
-        --bfile "$BED_PREFIX" \
+        "$plink_command" "$BED_PREFIX" \
         --allow-extra-chr \
         --extract "${prune_base}.prune.in" \
-        --make-bed \
+        "${make_args[@]}" \
         --out "$pruned_out" \
         --threads "$NUM_THREADS" \
         --memory 16000
@@ -257,8 +340,11 @@ _king() {
 
     local out_prefix="${CWD}/${INPUT_STEM}"
     [[ -n "$NAME" ]] && out_prefix="${out_prefix}.${NAME}"
+    [[ -n "$OUT_PREFIX" ]] && out_prefix="$OUT_PREFIX"
 
-    local args=(--bfile "$BED_PREFIX" --make-king-table --king-table-filter "$KINSHIP")
+    local plink_command
+    plink_command="$(resolve_plink_command)"
+    local args=("$plink_command" "$BED_PREFIX" --make-king-table --king-table-filter "$KINSHIP")
     [[ -n "$KEEP_SAMPLES" && -f "$KEEP_SAMPLES" ]] && args+=(--keep "$KEEP_SAMPLES")
     [[ -n "$REMOVE_SAMPLES" && -f "$REMOVE_SAMPLES" ]] && args+=(--remove "$REMOVE_SAMPLES")
     args+=(--min-af "$KIN_MAF" --max-af "$(python3 - <<PY
@@ -274,7 +360,7 @@ PY
         --memory 16000
 }
 
-export -f _qc_no_prune _qc _sample_overlap _king
+export -f resolve_plink_command resolve_make_args is_nonzero ensure_plink2 _qc_no_prune _qc _sample_overlap _king
 
 if [[ "$DRY_RUN" == "true" ]]; then
     echo "[DRY-RUN] $(basename "$0") $STEP" >&2
@@ -301,19 +387,28 @@ _dispatch() {
 
 if [[ -n "$CONTAINER" ]]; then
     singularity exec "$CONTAINER" bash -s <<EOF
-$(declare -f _qc_no_prune _qc _sample_overlap _king _dispatch)
+$(declare -f resolve_plink_command resolve_make_args is_nonzero ensure_plink2 _qc_no_prune _qc _sample_overlap _king _dispatch)
 STEP="$STEP"
 GENO_FILE="$GENO_FILE"
 PHENO_FILE="$PHENO_FILE"
 SAMPLE_PARTICIPANT_LOOKUP="$SAMPLE_PARTICIPANT_LOOKUP"
 CWD="$CWD"
 NAME="$NAME"
+PLINK_COMMAND="$PLINK_COMMAND"
+OUTPUT_FORMAT="$OUTPUT_FORMAT"
+MAKE_COMMAND="$MAKE_COMMAND"
+OUT_PREFIX="$OUT_PREFIX"
+PRUNE_PREFIX="$PRUNE_PREFIX"
 BED_PREFIX="$BED_PREFIX"
 INPUT_STEM="$INPUT_STEM"
 KEEP_SAMPLES="$KEEP_SAMPLES"
 KEEP_VARIANTS="$KEEP_VARIANTS"
 REMOVE_SAMPLES="$REMOVE_SAMPLES"
 EXCLUDE_VARIANTS="$EXCLUDE_VARIANTS"
+OTHER_ARGS=($(quote_array_for_bash "${OTHER_ARGS[@]}"))
+META_ONLY="$META_ONLY"
+RM_DUPS="$RM_DUPS"
+TREAT_DOSAGE_MISSING="$TREAT_DOSAGE_MISSING"
 MAC_FILTER="$MAC_FILTER"
 MAF_FILTER="$MAF_FILTER"
 MAF_MAX_FILTER="$MAF_MAX_FILTER"

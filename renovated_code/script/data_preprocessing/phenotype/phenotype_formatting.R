@@ -86,9 +86,13 @@ gct_extract_samples <- function(opt) {
 
   dat_filt <- dat[, c(fixed_cols, available)]
 
-  # Reconstruct GCT format
-  out_file <- file.path(opt$cwd, paste0(opt$name, ".filtered.gct.gz"))
-  con_out  <- gzcon(file(out_file, "wb"))
+  # Reconstruct GCT format at the SoS-declared output path when provided.
+  out_file <- opt$output
+  if (is.null(out_file) || !nzchar(out_file)) {
+    out_file <- file.path(opt$cwd, paste0(opt$name, ".filtered.gct.gz"))
+  }
+  dir.create(dirname(out_file), showWarnings = FALSE, recursive = TRUE)
+  con_out <- if (grepl("\\.gz$", out_file)) gzcon(file(out_file, "wb")) else file(out_file, "w")
   writeLines(header_lines[1], con_out)
   writeLines(sprintf("%d\t%d", nrow(dat_filt), length(available)), con_out)
   write_tsv(dat_filt, con_out)

@@ -4,7 +4,7 @@
 # Covers: Sample matching → KING kinship → Unrelated/related QC →
 #         FlashPCA (unrelated) → Project related samples onto PC space
 #
-# SoS notebooks called (Modular SoS wrappers in modular_sos/notebooks/):
+# SoS notebooks called (Modular SoS wrappers in renovated_code/notebook/modular_sos/):
 #   - GWAS_QC.ipynb (genotype_phenotype_sample_overlap, king, qc, qc_no_prune)
 #   - PCA.ipynb     (flashpca, project_samples)
 # ============================================================

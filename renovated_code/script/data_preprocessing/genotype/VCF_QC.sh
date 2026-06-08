@@ -5,6 +5,7 @@
 #
 # Steps:
 #   qc
+#   qc_2
 #   rename_chrs
 #   dbsnp_annotate
 #   qc_3
@@ -24,6 +25,13 @@ SNP_ONLY=false
 GT_ONLY_VCF_QC=false
 SKIP_VCF_HEADER_FILTERING=false
 OUTPUT=""
+GENO_FILTER=0.2
+DP_SNP=10
+GQ=20
+DP_INDEL=10
+AB_SNP=0.15
+AB_INDEL=0.2
+HWE_FILTER=0.0
 NOVEL_SUMSTATS=""
 KNOWN_SUMSTATS=""
 NOVEL_TSTV=""
@@ -43,6 +51,13 @@ while [[ $# -gt 0 ]]; do
         --gt-only-vcf-qc)             GT_ONLY_VCF_QC="$2"; shift 2 ;;
         --skip-vcf-header-filtering)  SKIP_VCF_HEADER_FILTERING="$2"; shift 2 ;;
         --output)                     OUTPUT="$2"; shift 2 ;;
+        --geno-filter)                GENO_FILTER="$2"; shift 2 ;;
+        --DP-snp)                     DP_SNP="$2"; shift 2 ;;
+        --GQ)                         GQ="$2"; shift 2 ;;
+        --DP-indel)                   DP_INDEL="$2"; shift 2 ;;
+        --AB-snp)                     AB_SNP="$2"; shift 2 ;;
+        --AB-indel)                   AB_INDEL="$2"; shift 2 ;;
+        --hwe-filter)                 HWE_FILTER="$2"; shift 2 ;;
         --novel-sumstats)             NOVEL_SUMSTATS="$2"; shift 2 ;;
         --known-sumstats)             KNOWN_SUMSTATS="$2"; shift 2 ;;
         --novel-tstv)                 NOVEL_TSTV="$2"; shift 2 ;;
@@ -97,7 +112,7 @@ _qc() {
     [[ -z "$REFERENCE_GENOME" ]] && { echo "ERROR: --reference-genome is required" >&2; exit 1; }
 
     local out split_cmd
-    out="$(infer_qc_output)"
+    out="${OUTPUT:-$(infer_qc_output)}"
 
     if bool_true "$BI_ALLELIC"; then
         split_cmd=(bcftools view -m2 -M2)
@@ -171,6 +186,46 @@ _append_file_info() {
         "$file_path" "$output_size" "$output_rows" "$output_columns" "$output_header_rows" "$output_preview" >> "$stdout_file"
 }
 
+_print_file_info() {
+    local file_path="$1"
+    local output_size output_rows output_columns output_header_rows output_preview
+    output_size="$(ls -lh "$file_path" | awk '{print $5}')"
+    output_rows="$(stream_file "$file_path" | wc -l | awk '{print $1}')"
+    output_columns="$(stream_file "$file_path" | grep -v '##' | head -1 | wc -w | awk '{print $1}')"
+    output_header_rows="$(stream_file "$file_path" | grep '##' | wc -l | awk '{print $1}')"
+    output_preview="$(stream_file "$file_path" | grep -v '##' | head | cut -f 1-11)"
+    printf 'output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_header_row: %s\noutput_preview:\n%s\n' \
+        "$file_path" "$output_size" "$output_rows" "$output_columns" "$output_header_rows" "$output_preview"
+}
+
+_qc_2() {
+    [[ -z "$GENO_FILE" ]] && { echo "ERROR: --genoFile is required" >&2; exit 1; }
+    [[ -z "$OUTPUT" ]] && { echo "ERROR: --output is required" >&2; exit 1; }
+
+    if gt_only_vcf_qc_enabled; then
+        printf 'running GT-only VCF QC\n'
+
+        bcftools view -c1 "$GENO_FILE" \
+            | bcftools view -f PASS \
+            | bcftools filter -i "F_MISSING<${GENO_FILTER} & HWE>${HWE_FILTER}" \
+                -Oz --threads "$NUM_THREADS" -o "$OUTPUT"
+    else
+        printf 'running DP/GQ/AD-aware VCF QC\n'
+
+        bcftools filter -S . -i \
+            "(TYPE=\"SNP\" & (FMT/DP)>=${DP_SNP} & (FMT/GQ)>=${GQ}) | (TYPE=\"INDEL\" & (FMT/DP)>=${DP_INDEL} & (FMT/GQ)>=${GQ})" \
+            "$GENO_FILE" \
+            | bcftools view -c1 \
+            | bcftools view -f PASS \
+            | bcftools filter -i \
+                "GT=\"hom\" | TYPE=\"snp\" & GT=\"het\" & (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) >= ${AB_SNP} | TYPE=\"indel\" & GT=\"het\" & (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) >= ${AB_INDEL}" \
+            | bcftools filter -i "F_MISSING<${GENO_FILTER} & HWE>${HWE_FILTER}" \
+                -Oz --threads "$NUM_THREADS" -o "$OUTPUT"
+    fi
+
+    _print_file_info "$OUTPUT"
+}
+
 _qc_3() {
     [[ -z "$GENO_FILE" ]] && { echo "ERROR: --genoFile is required" >&2; exit 1; }
     [[ -z "$NOVEL_SUMSTATS" || -z "$KNOWN_SUMSTATS" || -z "$NOVEL_TSTV" || -z "$KNOWN_TSTV" ]] && {
@@ -183,10 +238,8 @@ _qc_3() {
     bcftools filter -i 'RSID="."' "$GENO_FILE" | SnpSift tstv - > "$NOVEL_TSTV"
     bcftools filter -i 'RSID!="."' "$GENO_FILE" | SnpSift tstv - > "$KNOWN_TSTV"
 
-    local stdout_file="${NOVEL_SUMSTATS%.*}.stdout"
-    : > "$stdout_file"
     for file_path in "$NOVEL_SUMSTATS" "$KNOWN_SUMSTATS" "$NOVEL_TSTV" "$KNOWN_TSTV"; do
-        _append_file_info "$stdout_file" "$file_path"
+        _print_file_info "$file_path"
     done
 }
 
@@ -202,6 +255,13 @@ if [[ "$DRY_RUN" == "true" ]]; then
     printf '    --gt-only-vcf-qc %s\n' "$GT_ONLY_VCF_QC" >&2
     printf '    --skip-vcf-header-filtering %s\n' "$SKIP_VCF_HEADER_FILTERING" >&2
     [[ -n "$OUTPUT" ]] && printf '    --output %s\n' "$OUTPUT" >&2
+    printf '    --geno-filter %s\n' "$GENO_FILTER" >&2
+    printf '    --DP-snp %s\n' "$DP_SNP" >&2
+    printf '    --GQ %s\n' "$GQ" >&2
+    printf '    --DP-indel %s\n' "$DP_INDEL" >&2
+    printf '    --AB-snp %s\n' "$AB_SNP" >&2
+    printf '    --AB-indel %s\n' "$AB_INDEL" >&2
+    printf '    --hwe-filter %s\n' "$HWE_FILTER" >&2
     [[ -n "$NOVEL_SUMSTATS" ]] && printf '    --novel-sumstats %s\n' "$NOVEL_SUMSTATS" >&2
     [[ -n "$KNOWN_SUMSTATS" ]] && printf '    --known-sumstats %s\n' "$KNOWN_SUMSTATS" >&2
     [[ -n "$NOVEL_TSTV" ]] && printf '    --novel-tstv %s\n' "$NOVEL_TSTV" >&2
@@ -212,11 +272,12 @@ fi
 run_dispatch() {
     case "$STEP" in
         qc) _qc ;;
+        qc_2) _qc_2 ;;
         rename_chrs) _rename_chrs ;;
         dbsnp_annotate) _dbsnp_annotate ;;
         qc_3) _qc_3 ;;
         *)
-            echo "ERROR: Unknown step '$STEP'. Available: qc, rename_chrs, dbsnp_annotate, qc_3" >&2
+            echo "ERROR: Unknown step '$STEP'. Available: qc, qc_2, rename_chrs, dbsnp_annotate, qc_3" >&2
             exit 1
             ;;
     esac
@@ -224,7 +285,7 @@ run_dispatch() {
 
 if [[ -n "$CONTAINER" ]]; then
     singularity exec "$CONTAINER" bash -s <<EOF
-$(declare -f bool_true stream_file infer_qc_output _qc _rename_chrs _dbsnp_annotate _append_file_info _qc_3 run_dispatch)
+$(declare -f bool_true stream_file gt_only_vcf_qc_enabled infer_qc_output _qc _rename_chrs _dbsnp_annotate _append_file_info _print_file_info _qc_2 _qc_3 run_dispatch)
 STEP="$STEP"
 GENO_FILE="$GENO_FILE"
 CWD="$CWD"
@@ -233,8 +294,16 @@ REFERENCE_GENOME="$REFERENCE_GENOME"
 NUM_THREADS="$NUM_THREADS"
 BI_ALLELIC="$BI_ALLELIC"
 SNP_ONLY="$SNP_ONLY"
+GT_ONLY_VCF_QC="$GT_ONLY_VCF_QC"
 SKIP_VCF_HEADER_FILTERING="$SKIP_VCF_HEADER_FILTERING"
 OUTPUT="$OUTPUT"
+GENO_FILTER="$GENO_FILTER"
+DP_SNP="$DP_SNP"
+GQ="$GQ"
+DP_INDEL="$DP_INDEL"
+AB_SNP="$AB_SNP"
+AB_INDEL="$AB_INDEL"
+HWE_FILTER="$HWE_FILTER"
 NOVEL_SUMSTATS="$NOVEL_SUMSTATS"
 KNOWN_SUMSTATS="$KNOWN_SUMSTATS"
 NOVEL_TSTV="$NOVEL_TSTV"

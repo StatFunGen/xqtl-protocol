@@ -4,7 +4,7 @@
 # Covers: FastQC → STAR alignment + RNA-SeQC quantification →
 #         Multi-sample QC → TMM normalization
 #
-# SoS notebooks called (Modular SoS wrappers in modular_sos/notebooks/):
+# SoS notebooks called (Modular SoS wrappers in renovated_code/notebook/modular_sos/):
 #   - RNA_calling.ipynb          (fastqc, rnaseqc_call)
 #   - bulk_expression_QC.ipynb   (qc)
 #   - bulk_expression_normalization.ipynb (normalize)

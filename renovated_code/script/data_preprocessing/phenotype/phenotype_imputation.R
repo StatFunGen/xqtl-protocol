@@ -29,6 +29,8 @@ opt_list <- list(
   make_option("--phenoFile",         type = "character", default = NULL,
               help = "Input BED.gz phenotype file"),
   make_option("--cwd",               type = "character", default = "output"),
+  make_option("--output",            type = "character", default = NULL,
+              help = "Optional explicit output path for SoS-declared outputs"),
   make_option("--numThreads",        type = "integer",   default = 20),
   make_option("--qc-prior-to-impute",type = "logical",   default = TRUE,
               help = "Apply QC filters before imputation"),
@@ -83,6 +85,26 @@ write_bed <- function(dat, path) {
   system(paste("tabix -p bed", path))
 }
 
+checked_system2 <- function(command, args) {
+  status <- system2(command, args)
+  if (!identical(as.integer(status), 0L)) {
+    stop(sprintf("Command failed with exit status %s: %s %s",
+                 status, command, paste(args, collapse = " ")))
+  }
+}
+
+write_bgzip_bed <- function(dat, path) {
+  if (!grepl("\\.gz$", path)) {
+    stop("BGZF BED output path must end with .gz: ", path)
+  }
+  dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
+  plain_path <- sub("\\.gz$", "", path)
+  cat(sprintf("Writing: %s\n", plain_path))
+  write.table(dat, plain_path, sep = "\t", quote = FALSE, row.names = FALSE)
+  checked_system2("bgzip", c("-f", plain_path))
+  checked_system2("tabix", c("-f", "-p", "bed", path))
+}
+
 qc_filter <- function(mat, missing_rate = 0.4, zero_rate = 0.95) {
   # mat: numeric matrix, rows = features, cols = samples
   n   <- ncol(mat)
@@ -96,6 +118,20 @@ qc_filter <- function(mat, missing_rate = 0.4, zero_rate = 0.95) {
 }
 
 get_outpath <- function(opt, suffix) {
+  if (!is.null(opt$output) && nzchar(opt$output)) {
+    return(opt$output)
+  }
+  bname <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
+  file.path(opt$cwd, paste0(bname, suffix))
+}
+
+get_aux_outpath <- function(opt, suffix) {
+  if (!is.null(opt$output) && nzchar(opt$output)) {
+    stem <- sub("\\.gz$", "", opt$output)
+    stem <- sub("\\.bed$", "", stem)
+    stem <- sub("\\.imputed$", "", stem)
+    return(paste0(stem, suffix))
+  }
   bname <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
   file.path(opt$cwd, paste0(bname, suffix))
 }
@@ -140,12 +176,15 @@ run_gEBMF <- function(opt) {
     mat <- qc_filter(mat, opt$`qc-missing-rate`, opt$`qc-zero-rate`)
   fl <- flash(mat, var_type = 2L, n_threads = opt$nCores,
               greedy_Kmax = opt[["num-factor"]], backfit = opt[["backfit-iter"]])
+  if (isTRUE(opt$`null-check`)) {
+    fl <- flash_nullcheck(fl)
+  }
   imputed <- fitted(fl)
   mat[is.na(mat)] <- imputed[is.na(mat)]
   out <- cbind(coord[rownames(mat), ], as.data.frame(mat))
   write_bed(out, get_outpath(opt, ".gEBMF.imputed.bed.gz"))
   if (isTRUE(opt$`save-flash`))
-    saveRDS(fl, get_outpath(opt, ".gEBMF_factors.rds"))
+    saveRDS(fl, get_aux_outpath(opt, ".gEBMF_factors.rds"))
 }
 
 run_missforest <- function(opt) {
@@ -203,7 +242,7 @@ run_missxgboost <- function(opt) {
 
   pheno_imp <- xgboost_imputation(as.matrix(mat_qc))
   out <- cbind(coord_qc, as.data.frame(pheno_imp))
-  write_bed(out, get_outpath(opt, ".imputed.bed.gz"))
+  write_bgzip_bed(out, get_outpath(opt, ".imputed.bed.gz"))
 }
 
 run_soft <- function(opt) {

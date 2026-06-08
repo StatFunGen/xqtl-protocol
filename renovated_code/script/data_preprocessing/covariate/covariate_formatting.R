@@ -27,6 +27,10 @@ opt_list <- list(
               help = "Output basename without the trailing .gz"),
   make_option("--k",            type = "integer",   default = 20,
               help = "Number of genotype PCs to include"),
+  make_option("--outliersFile", type = "character", default = ".",
+              help = "Optional two-column outlier sample file; column 2 contains sample IDs"),
+  make_option("--remove-outliers", action = "store_true", default = FALSE,
+              help = "Remove samples listed in --outliersFile before writing merged covariates"),
   make_option("--tol-cov",      type = "double",    default = 0.3,
               help = "Collinearity tolerance: max fraction of missing covariates per sample"),
   make_option("--mean-impute",  action = "store_true", default = FALSE,
@@ -40,6 +44,10 @@ opt <- parse_args(OptionParser(option_list = opt_list))
 if (is.null(opt$step))    stop("--step is required")
 if (is.null(opt$pcaFile)) stop("--pcaFile is required")
 if (is.null(opt$covFile)) stop("--covFile is required")
+if (isTRUE(opt$`remove-outliers`) &&
+    (is.null(opt$outliersFile) || !file.exists(opt$outliersFile))) {
+  stop("--outliersFile is required and must exist when --remove-outliers is set")
+}
 
 dir.create(opt$cwd, showWarnings = FALSE, recursive = TRUE)
 
@@ -61,6 +69,10 @@ merge_genotype_pc <- function(opt) {
       cat(sprintf("    --name %s \\\n",            opt$name))
     }
     cat(sprintf("    --k %d \\\n",                 opt$k))
+    if (isTRUE(opt$`remove-outliers`)) {
+      cat(sprintf("    --outliersFile %s \\\n",    opt$outliersFile))
+      cat(sprintf("    --remove-outliers \\\n"))
+    }
     cat(sprintf("    --tol-cov %.2f \\\n",         opt$`tol-cov`))
     cat(sprintf("    --cwd %s\n",                    opt$cwd))
     cat("\n[DRY-RUN] Input file check:\n")
@@ -82,6 +94,15 @@ merge_genotype_pc <- function(opt) {
       mtx[, i][which(is.na(mtx[, i]))] <- f[i]
     }
     mtx
+  }
+
+  read_outlier_samples <- function(path) {
+    outliers <- fread(path, header = FALSE, data.table = FALSE)
+    if (ncol(outliers) == 0L) {
+      return(character())
+    }
+    sample_col <- if (ncol(outliers) >= 2L) 2L else 1L
+    unique(as.character(outliers[[sample_col]]))
   }
 
   filter_mtx <- function(X, missing_rate_thresh) {
@@ -139,6 +160,16 @@ merge_genotype_pc <- function(opt) {
   pca_missing <- mtx %>% select(-all_of(overlap))
   print(paste(ncol(pca_missing), "samples in the PCA file are missing from the covariate file:", sep = " "))
   print(colnames(pca_missing))
+
+  if (isTRUE(opt$`remove-outliers`)) {
+    outlier_samples <- read_outlier_samples(opt$outliersFile)
+    overlap <- setdiff(overlap, outlier_samples)
+    if (length(overlap) <= 1) {
+      stop("No overlapping samples remain after outlier removal")
+    }
+    print(paste(length(outlier_samples), "outlier samples requested for removal", sep = " "))
+    print(outlier_samples)
+  }
 
   covt <- covt %>% select(all_of(overlap))
   mtx <- mtx %>% select(all_of(overlap))

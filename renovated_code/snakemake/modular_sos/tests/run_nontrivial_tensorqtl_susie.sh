@@ -24,7 +24,7 @@ die() {
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)"
 SNAKEMAKE_DIR="${ROOT}/renovated_code/snakemake"
-MODULAR_SOS_NOTEBOOKS="${SNAKEMAKE_DIR}/modular_sos/notebooks"
+MODULAR_SOS_NOTEBOOKS="${ROOT}/renovated_code/notebook/modular_sos"
 LEGACY_TENSORQTL="${ROOT}/code/association_scan/TensorQTL/TensorQTL.ipynb"
 LEGACY_MNM="${ROOT}/code/mnm_analysis/mnm_methods/mnm_regression.ipynb"
 DATA_TAR="${SCRIPT_DIR}/data/modular_sos_nontrivial_tensorqtl_susie.tar.gz"

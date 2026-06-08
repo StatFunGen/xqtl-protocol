@@ -5,7 +5,13 @@
 #
 # Steps:
 #   phenotype_by_chrom   — split BED.gz into per-chromosome files
+#   phenotype_by_chrom_1 — split one chromosome, preserving SoS fan-out
+#   phenotype_by_chrom_2 — build chromosome manifest files
+#   phenotype_by_chrom_gct_1 — create one per-chromosome GCT
+#   phenotype_by_chrom_gct_2 — build GCT chromosome manifest files
 #   phenotype_by_region  — extract phenotypes by region list
+#   phenotype_by_region_1 — extract one region, preserving SoS fan-out
+#   phenotype_by_region_2 — build region manifest file
 #   gct_extract_samples  — filter samples from a GCT file
 #
 # Usage:
@@ -71,12 +77,24 @@ _run() {
 case "$STEP" in
     phenotype_by_chrom)
         _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
+    phenotype_by_chrom_1)
+        _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
+    phenotype_by_chrom_2)
+        _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
+    phenotype_by_chrom_gct_1)
+        _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
+    phenotype_by_chrom_gct_2)
+        _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
     phenotype_by_region)
+        _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
+    phenotype_by_region_1)
+        _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
+    phenotype_by_region_2)
         _run python "$SCRIPT_DIR/phenotype_formatting.py" ;;
     gct_extract_samples)
         _run Rscript "$SCRIPT_DIR/phenotype_formatting.R" ;;
     *)
         echo "ERROR: Unknown step '$STEP'" >&2
-        echo "Available steps: phenotype_by_chrom, phenotype_by_region, gct_extract_samples" >&2
+        echo "Available steps: phenotype_by_chrom, phenotype_by_chrom_1, phenotype_by_chrom_2, phenotype_by_chrom_gct_1, phenotype_by_chrom_gct_2, phenotype_by_region, phenotype_by_region_1, phenotype_by_region_2, gct_extract_samples" >&2
         exit 1 ;;
 esac
