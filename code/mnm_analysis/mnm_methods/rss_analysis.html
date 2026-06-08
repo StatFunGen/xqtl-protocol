@@ -476,10 +476,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-study-ld-reference">Per-study LD reference</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal working example</a></li>
 </ul>
@@ -560,31 +557,16 @@
 </div>
 <p>III. <strong>LD Reference Metadata File</strong></p>
 <ul class="simple">
-<li><p><strong>Format</strong>: Single TSV file with columns: <code class="docutils literal notranslate"><span class="pre">#chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p></li>
-<li><p><strong>Two supported formats</strong>:</p>
-<ol class="arabic simple">
-<li><p><strong>Pre-computed LD blocks</strong> (<code class="docutils literal notranslate"><span class="pre">.cor.xz</span></code>): Many rows per chromosome, each with specific block boundaries in <code class="docutils literal notranslate"><span class="pre">start</span></code>/<code class="docutils literal notranslate"><span class="pre">end</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> as comma-separated <code class="docutils literal notranslate"><span class="pre">ld_file,bim_file</span></code>.</p></li>
-<li><p><strong>PLINK genotype files</strong>: One row per chromosome with <code class="docutils literal notranslate"><span class="pre">start=0</span></code>, <code class="docutils literal notranslate"><span class="pre">end=0</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> pointing to a per-chromosome PLINK prefix (<code class="docutils literal notranslate"><span class="pre">.pgen/.pvar[.zst]/.psam</span></code> or <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>). LD is computed on the fly.</p></li>
-</ol>
-</li>
+<li><p><strong>Format</strong>: Single TSV file.</p></li>
+<li><p><strong>Contents</strong>:</p>
+<ul>
+<li><p>Columns: <code class="docutils literal notranslate"><span class="pre">#chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, path to the LD matrix, genomic build.</p></li>
+<li><p>LD matrix path format: comma-separated, first entry is the LD matrix, second is the bim file.</p></li>
 </ul>
-<section id="per-study-ld-reference">
-<h3>Per-study LD reference<a class="headerlink" href="#per-study-ld-reference" title="Link to this heading">#</a></h3>
-<p>Each study can use a different LD reference by adding an <code class="docutils literal notranslate"><span class="pre">ld_meta_data</span></code> column to the GWAS meta-data file:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">study_id</span>  <span class="n">chrom</span>  <span class="n">file_path</span>    <span class="n">column_mapping_file</span>  <span class="n">n_sample</span>  <span class="n">n_case</span>  <span class="n">n_control</span>  <span class="n">ld_meta_data</span>
-<span class="n">AD_EUR</span>    <span class="mi">0</span>      <span class="n">ad_eur</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">111326</span>  <span class="mi">677663</span>     <span class="n">ld_ref_EUR</span><span class="o">.</span><span class="n">tsv</span>
-<span class="n">AD_AFR</span>    <span class="mi">0</span>      <span class="n">ad_afr</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">21982</span>   <span class="mi">41944</span>      <span class="n">ld_ref_AFR</span><span class="o">.</span><span class="n">tsv</span>
-<span class="n">AD_ADM</span>    <span class="mi">0</span>      <span class="n">ad_adm</span><span class="o">.</span><span class="n">txt</span>   <span class="n">mapping</span><span class="o">.</span><span class="n">yml</span>          <span class="mi">0</span>         <span class="mi">50000</span>   <span class="mi">100000</span>     <span class="n">ld_EUR</span><span class="o">.</span><span class="n">tsv</span><span class="p">,</span><span class="n">ld_AFR</span><span class="o">.</span><span class="n">tsv</span>
-</pre></div>
-</div>
-<ul class="simple">
-<li><p>Single path: single LD panel for the study.</p></li>
-<li><p>Comma-separated paths: mixture LD panel – each loaded as genotype X and passed as <code class="docutils literal notranslate"><span class="pre">X=list(X1,</span> <span class="pre">X2,</span> <span class="pre">...)</span></code> to <code class="docutils literal notranslate"><span class="pre">susie_rss</span></code>.</p></li>
-<li><p>Empty or absent: falls back to <code class="docutils literal notranslate"><span class="pre">--ld-meta-data</span></code> CLI default.</p></li>
-<li><p>Paths are resolved relative to the GWAS meta-data TSV directory.</p></li>
+</li>
+<li><p><strong>Documentation</strong>: Refer to our LD reference preparation document for detailed information (Tosin pending update).</p></li>
 </ul>
 <p>IV. For analyzing specific genomic regions, you can specify them using the <code class="docutils literal notranslate"><span class="pre">--region-names</span></code> option in the ‘chr:start-end’ format, where multiple regions are accepted. Alternatively, you may provide a file containing a list of regions through the <code class="docutils literal notranslate"><span class="pre">--region-list</span></code> option, also adhering to the ‘chr:start-end’ format. When both <code class="docutils literal notranslate"><span class="pre">--region-names</span></code> and <code class="docutils literal notranslate"><span class="pre">--region-list</span></code> are provided, union of these options will be used to analyze. In cases where neither option is specified, the analysis defaults to encompass all regions specified in the LD reference metadata. Use –comment_string to specify the comment symbol in the original names, enclosing your option in quotation marks (e.g., –comment_string “#”). The default is no comment symbol.</p>
-</section>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
@@ -611,12 +593,11 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/rss_analysis.ipynb univariate_rss \
     --ld-meta-data reference_data/ADSP_R4_EUR/ld_meta_file.tsv \
     --gwas-meta-data data/mnm_regression/gwas_meta_data.txt \
-    --qc_method &quot;slalom&quot; --impute \
+    --qc_method &quot;rss_qc&quot; --impute \
     --finemapping_method &quot;susie_rss&quot; \
     --cwd output/rss_analysis \
     --skip_analysis_pip_cutoff 0 \
     --skip_regions 6:25000000-35000000 \
-    --ld-reference-size 10000 \
     --region_name 22:49355984-50799822
     
 </pre></div>
@@ -626,6 +607,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 parameter: cwd = path(&quot;output/&quot;)
 parameter: gwas_meta_data = path()
 parameter: ld_meta_data = path()
@@ -639,6 +621,7 @@ parameter: ld_mismatch_correction = False
 parameter: container = &#39;&#39;
 parameter: skip_regions = []
 import re
+parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 parameter: job_size = 5
 parameter: walltime = &quot;10h&quot;
 parameter: mem = &quot;16G&quot;
@@ -829,66 +812,40 @@ regions = list(regional_data[&#39;regions&#39;].keys())
 input: for_each = &quot;regions&quot;
 output: f&#39;{cwd:a}/{step_name}/{&quot;%s&quot; % qc_method.upper() if qc_method else &quot;noQC&quot;}{&quot;_RAISS_imputed&quot; if impute else &quot;&quot;}.chr{_regions.replace(&quot;:&quot;, &quot;_&quot;)}.univariate{&quot;_%s&quot; % finemapping_method if finemapping_method else &quot;&quot;}.rds&#39; if not diagnostics else f&#39;{cwd:a}/{step_name}/Automated_QC.chr{_regions.replace(&quot;:&quot;, &quot;_&quot;)}.univariate.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
-    library(pecotmr)
-    library(dplyr)
-    library(data.table)
-    skip_region = c(${&#39;, &#39;.join([&#39;&quot;{}&quot;&#39;.format(item) for item in skip_regions])})
-    studies = c(${&#39;, &#39;.join([&#39;&quot;{}&quot;&#39;.format(item) for item in regional_data[&quot;GWAS&quot;].keys()])})
-    sumstat_paths = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][0] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
-    column_file_paths = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][1] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
-    n_samples = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][2] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
-    n_cases = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][3] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
-    n_controls = c(${paths([regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][4] for x in regional_data[&quot;GWAS&quot;].keys()]):r,})
-    if(&quot;${extract_region_name}&quot; == &quot;NULL&quot;){
-        extract_region_name = &quot;${regional_data[&#39;regions&#39;][_regions][3] if len(regional_data[&#39;regions&#39;][_regions]) &gt; 3 else None}&quot;
-        if(extract_region_name == &quot;None&quot; | &quot;${region_name_col}&quot; == &quot;NULL&quot;){
-            extract_region_name = NULL
-        }
-    } else {
-        extract_region_name = &quot;${extract_region_name}&quot;
-    }
-
-    # Per-study LD: each study can specify its own LD reference via
-    # ld_meta_data column in GWAS meta TSV. Comma-separated = mixture panel.
-    # load_study_LD from pecotmr: single path -&gt; auto, comma-separated -&gt; mixture X=list()
-    study_ld_paths &lt;- c(${&#39;,&#39;.join([&#39;&quot;&#39; + str(regional_data[&#39;GWAS&#39;][x][regional_data[&#39;regions&#39;][_regions][0]][5]) + &#39;&quot;&#39; for x in regional_data[&#39;GWAS&#39;].keys()] if &#39;GWAS&#39; in regional_data else [])})
-    ld_cache &lt;- list()
-
-    res = setNames(replicate(length(studies), list(), simplify = FALSE), studies)
-    for (r in 1:length(res)) {
-        # Load study-specific LD (cached to avoid reloading for same panel)
-        ld_key &lt;- study_ld_paths[r]
-        if (is.null(ld_cache[[ld_key]])) ld_cache[[ld_key]] &lt;- load_study_LD(ld_key, &#39;${&quot;chr%s:%s-%s&quot; % (regional_data[&quot;regions&quot;][_regions][0], regional_data[&quot;regions&quot;][_regions][1], regional_data[&quot;regions&quot;][_regions][2])}&#39;)
-        LD_data &lt;- ld_cache[[ld_key]]
-
-        tryCatch({
-        res[[r]] = rss_analysis_pipeline(sumstat_path = sumstat_paths[r], column_file_path = column_file_paths[r],
-                                        LD_data = LD_data, extract_region_name = extract_region_name, region_name_col = ${region_name_col}, n_sample = as.numeric(n_samples[r]), n_case = as.numeric(n_cases[r]), 
-                                        n_control = as.numeric(n_controls[r]), skip_region = skip_region,
-                                        qc_method = ${&quot;NULL&quot; if len(qc_method) == 0 else &quot;&#39;%s&#39;&quot; % qc_method},
-                                        impute = ${&quot;TRUE&quot; if impute else &quot;FALSE&quot;},
-                                        impute_opts = list(rcond = ${rcond}, R2_threshold = ${R2_threshold}, minimum_ld = ${minimum_ld}, lamb=${lamb}),
-                                        finemapping_method = ${&quot;NULL&quot; if len(finemapping_method) == 0 else &quot;&#39;%s&#39;&quot; % finemapping_method}, 
-                                        finemapping_opts = list(L = ${L}, L_greedy = ${L_greedy}, coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}), signal_cutoff = ${pip_cutoff}),
-                                        pip_cutoff_to_skip = ${skip_analysis_pip_cutoff}, comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;},
-                                        R_finite = ${ld_reference_size},
-                                        R_mismatch = ${&#39;&quot;eb&quot;&#39; if ld_mismatch_correction else &quot;NULL&quot;},
-                                        diagnostics = ${&quot;TRUE&quot; if diagnostics else &quot;FALSE&quot;}
-                                        )
-        fwrite(res[[r]]$rss_data_analyzed, file = paste0(&quot;${_output:nn}.&quot;, extract_region_name, studies[r], &quot;.sumstats.tsv.gz&quot;), sep = &quot;\t&quot;, col.names = TRUE, row.names = FALSE, quote = FALSE, compress = &quot;gzip&quot;)
-        if(is.null(res[[r]][[1]])){
-              res[[r]] = list()
-        }
-      }, error = function(e) {
-        res[[r]] = list()
-        cat(paste(&quot;Error processing file &quot;, studies[r], &quot;: &quot;, conditionMessage(e), &quot;\n&quot;))
-      }
-      )}
-    region = &quot;chr${_regions.replace(&quot;:&quot;, &quot;_&quot;)}&quot;
-    full_result = list()
-    full_result[[region]] = res
-    saveRDS(full_result, file = &quot;${_output}&quot;)
+bash: expand= &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/pecotmr_integration/univariate_rss.R \
+        --ld-meta-data ${ld_meta_data} \
+        --studies &quot;${&quot;,&quot;.join(regional_data[&quot;GWAS&quot;].keys())}&quot; \
+        --sumstat-paths &quot;${&quot;,&quot;.join([regional_data[&quot;GWAS&quot;][x][regional_data[&quot;regions&quot;][_regions][0]][0] for x in regional_data[&quot;GWAS&quot;].keys()])}&quot; \
+        --column-file-paths &quot;${&quot;,&quot;.join([str(regional_data[&quot;GWAS&quot;][x][regional_data[&quot;regions&quot;][_regions][0]][1]) for x in regional_data[&quot;GWAS&quot;].keys()])}&quot; \
+        --n-samples &quot;${&quot;,&quot;.join([str(regional_data[&quot;GWAS&quot;][x][regional_data[&quot;regions&quot;][_regions][0]][2]) for x in regional_data[&quot;GWAS&quot;].keys()])}&quot; \
+        --n-cases &quot;${&quot;,&quot;.join([str(regional_data[&quot;GWAS&quot;][x][regional_data[&quot;regions&quot;][_regions][0]][3]) for x in regional_data[&quot;GWAS&quot;].keys()])}&quot; \
+        --n-controls &quot;${&quot;,&quot;.join([str(regional_data[&quot;GWAS&quot;][x][regional_data[&quot;regions&quot;][_regions][0]][4]) for x in regional_data[&quot;GWAS&quot;].keys()])}&quot; \
+        --ld-meta-data-paths &quot;${&quot;,&quot;.join([str(regional_data[&quot;GWAS&quot;][x][regional_data[&quot;regions&quot;][_regions][0]][5]) for x in regional_data[&quot;GWAS&quot;].keys()])}&quot; \
+        --region &quot;chr${_regions.replace(&quot;:&quot;, &quot;_&quot;)}&quot; \
+        ${&quot;--skip-regions &quot; + &quot;,&quot;.join(skip_regions) if skip_regions else &quot;&quot;} \
+        ${&quot;--extract-region-name &quot; + extract_region_name if extract_region_name != &quot;NULL&quot; else &quot;&quot;} \
+        ${&quot;--region-name-col &quot; + region_name_col if region_name_col != &quot;NULL&quot; else &quot;&quot;} \
+        --imiss ${imiss} \
+        --maf ${maf} \
+        --L ${L} \
+        --L-greedy ${L_greedy} \
+        --pip-cutoff ${pip_cutoff} \
+        --skip-analysis-pip-cutoff ${skip_analysis_pip_cutoff} \
+        --coverage &quot;${&quot;,&quot;.join([str(x) for x in coverage])}&quot; \
+        --ld-reference-size ${ld_reference_size} \
+        ${&quot;--ld-mismatch-correction&quot; if ld_mismatch_correction else &quot;&quot;} \
+        ${&quot;--finemapping-method &quot; + finemapping_method if finemapping_method else &quot;&quot;} \
+        ${&quot;--impute&quot; if impute else &quot;&quot;} \
+        --rcond ${rcond} \
+        --lamb ${lamb} \
+        --r2-threshold ${R2_threshold} \
+        --minimum-ld ${minimum_ld} \
+        ${&quot;--qc-method &quot; + qc_method if qc_method else &quot;&quot;} \
+        ${&quot;--comment-string &quot; + comment_string if comment_string != &quot;NULL&quot; else &quot;&quot;} \
+        ${&quot;--diagnostics&quot; if diagnostics else &quot;&quot;} \
+        --output-prefix ${_output:nn} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -896,15 +853,14 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[univariate_plot]
+parameter: input = path
+input: input
 output: pip_plot = f&quot;{cwd}/{_input:bn}.png&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = &#39;12h&#39;, mem = &#39;20G&#39;, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    res = readRDS(${_input:r})
-    png(${_output[0]:r}, width = 14, height=6, unit=&#39;in&#39;, res=300)
-    par(mfrow=c(1,2))
-    susieR::susie_plot(res, y= &quot;PIP&quot;, pos=list(attr=&#39;pos&#39;,start=res$pos[1],end=res$pos[length(res$pos)]), add_legend=T, xlab=&quot;position&quot;)
-    susieR::susie_plot(res, y= &quot;z&quot;, pos=list(attr=&#39;pos&#39;,start=res$pos[1],end=res$pos[length(res$pos)]), add_legend=T, xlab=&quot;position&quot;, ylab=&quot;-log10(p)&quot;)
-    dev.off()
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/pecotmr_integration/univariate_plot.R \
+        --input &quot;${_input}&quot; \
+        --output &quot;${_output[0]}&quot;
 </pre></div>
 </div>
 </div>
@@ -978,10 +934,7 @@ R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-study-ld-reference">Per-study LD reference</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal working example</a></li>
 </ul>

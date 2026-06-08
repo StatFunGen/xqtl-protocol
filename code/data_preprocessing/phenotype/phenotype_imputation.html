@@ -599,6 +599,7 @@
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">20</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
   <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">&#39;&#39;</span>
 
 <span class="n">Sections</span>
   <span class="n">EBMF</span><span class="p">:</span>
@@ -636,6 +637,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # Work directory &amp; output directory
 parameter: cwd = path(&quot;output&quot;)
 # Molecular phenotype matrix
@@ -651,6 +653,8 @@ parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 20
 parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -665,78 +669,17 @@ parameter: num_factor = &#39;60&#39;
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   library(&quot;flashier&quot;)
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-   #library(&quot;irlba&quot;)
-   library(&quot;softImpute&quot;)
-  
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    # Tunning the parameter
-    lambda &lt;- 30
-    rank &lt;- 50
-    if (nrow(pheno_NAs) &lt; 1500) {
-      lambda &lt;- 5
-    } else {
-      lambda &lt;- 30
-    }  
-    # Impute
-    X_mis_C &lt;- as(as.matrix(pheno_NAs), &quot;Incomplete&quot;)
-    ###uses &quot;svd&quot; algorithm
-    fit1 &lt;- softImpute::softImpute(X_mis_C,rank = rank,lambda = lambda,type = &quot;svd&quot;)
-    pheno_soft &lt;- softImpute::complete(as.matrix(pheno_NAs),fit1)
-    min_sd &lt;- min(apply(pheno_soft, 1, sd))
-    pca_res &lt;- irlba::irlba(pheno_soft, nv = ${num_factor})
-    pca_res &lt;- list(pca_res$d, pca_res$u, pca_res$v)
-    names(pca_res) &lt;- c(&#39;d&#39;, &#39;u&#39;, &#39;v&#39;)
-    fl_pca &lt;- flash_init(as.matrix(pheno_NAs), S = min_sd, var_type = ${varType}) |&gt;
-      flash_factors_init(pca_res, ebnm_fn = ${prior}) |&gt;
-      flash_backfit(maxiter = 300)
-    pheno.imp &lt;- ifelse(is.na(as.matrix(pheno_NAs)), fitted(fl_pca), as.matrix(pheno_NAs))
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      write_delim(cbind(pheno_qc[, 1:4], pheno.imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-    } else {
-      if (length(miss.ind) &gt; 0) {
-         pheno.imp.qc &lt;- pheno.imp[-miss.ind, ]
-         write_delim(cbind(pheno[-miss.ind, 1:4], pheno.imp.qc), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-      } else {
-         pheno.imp.qc &lt;- pheno.imp
-         write_delim(cbind(pheno[, 1:4], pheno.imp.qc), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-      }
-    } 
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step EBMF \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --prior &quot;${prior}&quot; \
+        --varType &quot;${varType}&quot; \
+        --num-factor ${num_factor} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -752,82 +695,19 @@ parameter: null_check = False
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   library(&quot;flashier&quot;)
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-   library(&quot;snow&quot;)
-   library(&quot;softImpute&quot;)
-  
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_qc &lt;- pheno
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    pheno_range &lt;- range(unlist(as.list(as.data.frame(pheno_NAs))), na.rm = TRUE) 
-    if (pheno_range[1] &gt;= 0 &amp;&amp; pheno_range[2] &lt;= 1) {
-        dat &lt;- qnorm(as.matrix(pheno_NAs))
-    }else{
-        dat &lt;- as.matrix(pheno_NAs)
-    }
-    rm(pheno_NAs)
-    groups &lt;- pheno$`#chr`
-    null_check &lt;- ${&quot;TRUE&quot; if null_check else &quot;FALSE&quot;}
-    cl &lt;- flash_init_cluster_for_grouped_data(dat, groups, ${nCores} , K = ${num_factor})
-    for (i in seq_len(${backfit_iter})) {
-        flash_backfit_grouped_data(cl, maxiter = 10)
-        flash_impute_grouped_data(cl)
-      }
-    fl &lt;- flash_recover_fl_object_from_cluster(cl)
-    snow::stopCluster(cl)
-    rm(cl)
-
-    if(${&quot;TRUE&quot; if null_check else &quot;FALSE&quot;}){
-        fl &lt;- flash_nullcheck(fl)
-      }
-
-    if(${&quot;TRUE&quot; if save_flash else &quot;FALSE&quot;}){
-        saveRDS(fl,paste0(&#39;${_output:nnn}&#39;, &#39;.gEBMF_factors.rds&#39;))
-      }
-
-    x_imp &lt;- ifelse(is.na(dat), fitted(fl), dat)
-    #message(&#39;done.&#39;)
-    if (pheno_range[1] &gt;= 0 &amp;&amp; pheno_range[2] &lt;= 1) {
-        pheno_imp &lt;- pnorm(x_imp)
-    }else{
-        pheno_imp &lt;- x_imp
-    }
-  
-    write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot;)
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step gEBMF \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --num-factor ${num_factor} \
+        --nCores ${nCores} \
+        --backfit-iter ${backfit_iter} \
+        --save-flash ${&quot;TRUE&quot; if save_flash else &quot;FALSE&quot;} \
+        --null-check ${&quot;TRUE&quot; if null_check else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -838,48 +718,14 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   library(flashier)
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-   library(&quot;missForest&quot;)
-
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    pheno_imp &lt;- missForest(as.matrix(pheno_NAs), parallelize = &#39;no&#39;)$ximp
-    # If ’variables’ the data is split into pieces of the size equal to the number of cores registered in the parallel backend.
-    write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step missforest \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -890,46 +736,13 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   source(&#39;./xgb_imp.R&#39;)
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-   library(&quot;missForest&quot;)
-
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    pheno_imp &lt;- xgboost_imputation(as.matrix(pheno_NAs))
-    write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.sh missxgboost \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -940,47 +753,14 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   library(impute)
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-    
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    pheno_NAs = pheno_NAs %&gt;% select(where(~mean(is.na(.)) &lt; 0.8))
-    # I removed columns that have more than 80 % missing values, cuz knn cannot impute them. 
-    pheno_imp &lt;- impute.knn(as.matrix(pheno_NAs), rowmax = 1)$data
-    write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step knn \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -991,48 +771,14 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   library(softImpute)
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-    
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    X_mis_C &lt;- as(as.matrix(pheno_NAs), &quot;Incomplete&quot;)
-    ###uses &quot;svd&quot; algorithm
-    fit &lt;- softImpute(X_mis_C,rank = 50,lambda = 30,type = &quot;svd&quot;)
-    pheno_imp &lt;- complete(as.matrix(pheno_NAs),fit)
-    write_delim(cbind(pheno_qc[, 1:4], pheno_imp), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step soft \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1043,47 +789,14 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-    
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    Yfill &lt;- as.matrix(pheno_NAs)
-    for (t.row in 1:nrow(pheno_NAs)) {
-        Yfill[t.row, is.na(Yfill[t.row,])] &lt;- rowMeans(Yfill, na.rm = TRUE)[t.row] 
-    }    
-    write_delim(cbind(pheno_qc[, 1:4], Yfill), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step mean \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1094,47 +807,14 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(&quot;dplyr&quot;)
-    
-    pheno &lt;- read_delim(${_input:ar}, delim = &quot;\t&quot;)
-    # Get index of features that have &gt; 40% missing 
-    miss.ind &lt;- which(rowSums(is.na(pheno[, 5:ncol(pheno)]))/(ncol(pheno) -4) &gt; 0.4) 
-    # Get index of features where more than 95% values are zero.
-    value0.ind &lt;- which(rowSums((pheno[, 5:ncol(pheno)] == 0 | is.na(pheno[, 5:ncol(pheno)])))/(ncol(pheno) -4) &gt; 0.95)
-    miss.ind &lt;- c(miss.ind, value0.ind)
-    # remove these rows if qc_prior_to_impute = True
-    if (${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;}) {
-      if (length(miss.ind) &gt; 0) {
-         pheno_qc &lt;- pheno[-miss.ind, ]
-       } else {
-         pheno_qc &lt;- pheno
-       }
-      pheno_NAs &lt;- pheno_qc[, 5:ncol(pheno_qc)]
-    } else {
-      pheno_NAs &lt;- pheno[, 5:ncol(pheno)]
-    }
-    Yfill &lt;- as.matrix(pheno_NAs)
-    for (t.row in 1:nrow(pheno_NAs)) {
-        Yfill[t.row, is.na(Yfill[t.row,])] &lt;- min(Yfill[t.row, ], na.rm = TRUE)
-    }
-    write_delim(cbind(pheno_qc[, 1:4], Yfill), &quot;${_output:n}&quot;, delim = &quot;\t&quot; )
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step lod \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1151,63 +831,17 @@ parameter: tol_missing = 0.05
 input: phenoFile
 output: f&#39;{cwd:a}/{_input:nn}.filter_na.{impute_method}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-   library(&quot;dplyr&quot;)
-   library(&quot;tibble&quot;)
-   library(&quot;readr&quot;)
-   library(softImpute)
-   compute_missing &lt;- function(mtx){
-          miss &lt;- sum(is.na(mtx))/length(mtx)
-          return(miss)
-        }
-
-        mean_impute &lt;- function(mtx){
-          f &lt;- apply(mtx, 2, function(x) mean(x,na.rm = TRUE))
-          for (i in 1:length(f)) mtx[,i][which(is.na(mtx[,i]))] &lt;- f[i]
-          return(mtx)
-        }
-    
-        soft_impute &lt;- function(){
-          f &lt;- apply(mtx, 2, function(x) mean(x,na.rm = TRUE))
-          for (i in 1:length(f)) mtx[,i][which(is.na(mtx[,i]))] &lt;- f[i]
-          return(mtx)
-        }
-  
-  
-        filter_mtx &lt;- function(X, missing_rate_thresh) {
-            rm_col &lt;- which(apply(X, 2, compute_missing) &gt; missing_rate_thresh)
-            if (length(rm_col)) X &lt;- X[, -rm_col]
-            return((X))
-        }  
-  
-    bed = read_delim(&quot;${_input}&quot;)
-    mtx = bed[,5:ncol(bed)]%&gt;%as.matrix
-    rownames(mtx) = bed[,4]%&gt;%unlist()
-    tbl_filtered = filter_mtx(mtx%&gt;%t(),${tol_missing})
-    if ( &quot;${impute_method}&quot; == &quot;mean&quot; ){
-    tbl_filtered = tbl_filtered%&gt;%mean_impute()%&gt;%t()
-     } else if (&quot;${impute_method}&quot; == &quot;soft&quot;){ 
-      tbl_filtered_C= as(t(tbl_filtered),&quot;Incomplete&quot;)
-      fit=softImpute(tbl_filtered_C,rank=${rank_max},lambda=${lambda_hyp},type=&quot;svd&quot;)
-      tbl_filtered = complete(t(tbl_filtered),fit)
-    }
-    tbl_filtered = tbl_filtered%&gt;%as_tibble(rownames = colnames(bed)[4])  
-    bed_filtered = inner_join(bed[,1:4],tbl_filtered)
-    bed_filtered%&gt;%write_delim(&quot;${_output:n}&quot;, &quot;\t&quot; )
-  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    bgzip -f ${_output:n}
-    tabix ${_output}
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -v &quot;##&quot;   | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step bed_filter_na \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --rank-max ${rank_max} \
+        --lambda-hyp ${lambda_hyp} \
+        --impute-method &quot;${impute_method}&quot; \
+        --tol-missing ${tol_missing} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>

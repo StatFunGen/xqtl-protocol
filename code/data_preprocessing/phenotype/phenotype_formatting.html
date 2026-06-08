@@ -620,6 +620,7 @@ Global Workflow Options:
                         Work directory &amp; output directory
   --container &#39;&#39;
                         The filename namefor output data
+  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
   --job-size 1 (as int)
                         For cluster jobs, number commands to run per job
@@ -666,11 +667,14 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 import os
 # Work directory &amp; output directory
 parameter: cwd = path(&quot;output&quot;)
 # The filename namefor output data
 parameter: container = &#39;&#39;
+import re
+parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -701,21 +705,14 @@ chrom = list(set(chrom))
 input: phenoFile, for_each = &quot;chrom&quot;
 output: f&#39;{cwd}/{name}.{_chrom}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
-    zcat $[_input] | head -1 &gt; $[_output:n]
-    tabix $[_input] $[_chrom] &gt;&gt; $[_output:n] 
-    bgzip -f $[_output:n]
-    tabix -p bed $[_output] -f
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -v &quot;##&quot;   | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_chrom_1 \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --name &quot;${name}&quot; \
+        --chrom &quot;${_chrom}&quot; \
+        --output &quot;${_output}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -726,13 +723,13 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 # Path to the input molecular phenotype data.
 input: group_by = &quot;all&quot;
 output: f&#39;{cwd}/{name}.{step_name[:-2]}_files.txt&#39;,f&#39;{cwd}/{name}.{step_name[:-2]}_files.region_list.txt&#39;
-import pandas as pd
-chrom = [str(x).split(&quot;.&quot;)[-3].replace(&quot;chr&quot;,&quot;&quot;) for x in _input]
-chrom_df = pd.DataFrame({&quot;#id&quot; : chrom ,&quot;#dir&quot; : _input})
-chrom_df.to_csv(_output[0],index = 0,sep = &quot;\t&quot;)
-chrom_df[&quot;#chr&quot;] = [f&#39;chr{x}&#39; for x in chrom]
-phenoFile = pd.read_csv(phenoFile,sep = &quot;\t&quot;, usecols = [0,1,2,3]).merge(chrom_df[[&quot;#chr&quot;,&quot;#dir&quot;]],left_on = &quot;#chr&quot;,right_on = &quot;#chr&quot;).rename(columns={&quot;#dir&quot;: &quot;path&quot;})
-phenoFile.to_csv(_output[1], index = 0, sep = &quot;\t&quot;)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_chrom_2 \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${phenoFile}&quot; \
+        --inputs ${_input} \
+        --output-files &quot;${_output[0]}&quot; \
+        --output-region-list &quot;${_output[1]}&quot;
 </pre></div>
 </div>
 </div>
@@ -744,31 +741,15 @@ parameter: TAD_list = path
 parameter: phenotype_per_tad = 2 # This is the minimum number of epigenomics marker for a tadb to be considered having a functions.
 input: phenoFile,TAD_list
 output: f&#39;{cwd}/{_input[0]:b}.{_input[1]:b}.{phenotype_per_tad}_pheno_per_region.region_list&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
-    library(tidyverse)
-
-    tabix_region &lt;- function(file, region){
-    data.table::fread(cmd = paste0(&quot;tabix -h &quot;, file, &quot; &quot;, region)) %&gt;%
-     as_tibble() %&gt;%
-     mutate(
-        !!names(.)[1] := as.character(.[[1]]),
-        !!names(.)[2] := as.numeric(.[[2]])
-    ) 
-    }
-    TAD_list = read_delim(${_input[1]:ar})%&gt;%mutate(region  = paste0(`#chr`,&quot;:&quot;,start,&quot;-&quot;,end),
-                                        path = ${_input[0]:ar},  
-                                        keep = map_lgl( region,~tabix_region(${_input[0]:ar}, .x)%&gt;%nrow &gt;= ${phenotype_per_tad} )) 
-    TAD_list%&gt;%filter(keep)%&gt;%select(`#chr`,start,end,ID = index, path)%&gt;%write_delim(${_output:ar},&quot;\t&quot;)
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -v &quot;##&quot;   | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.R \
+        --step phenotype_annotate_by_tad \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input[0]}&quot; \
+        --TAD_list &quot;${_input[1]}&quot; \
+        --phenotype-per-tad ${phenotype_per_tad} \
+        --output &quot;${_output}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -783,34 +764,31 @@ chrom = list(set(chrom))
 input: phenoFile, for_each = &quot;chrom&quot;
 output: f&#39;{cwd:a}/{name}.{_chrom}.gct&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
-    zcat $[_input] | head -1 &gt; $[_output:n]
-    tabix $[_input] $[_chrom] &gt;&gt; $[_output:n] 
-    cat   $[_output:n] |  awk &#39;{$1=$2=$3=&quot;&quot;; print $0}&#39; &gt;&gt; $[_output]
-    rm $[_output:n]
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -v &quot;##&quot;   | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-
-[phenotype_by_chrom_gct_2]
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_chrom_gct_1 \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --name &quot;${name}&quot; \
+        --chrom &quot;${_chrom}&quot; \
+        --output &quot;${_output}&quot; \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[phenotype_by_chrom_gct_2]
 # Path to the input molecular phenotype data.
 input: group_by = &quot;all&quot;
 output: f&#39;{cwd}/{name}.{step_name[:-2]}_files.txt&#39;,f&#39;{cwd}/{name}.{step_name[:-2]}_files.region_list.txt&#39;
-import pandas as pd
-chrom = [str(x).split(&quot;.&quot;)[-2].replace(&quot;chr&quot;,&quot;&quot;) for x in _input]
-chrom_df = pd.DataFrame({&quot;#id&quot; : chrom ,&quot;#dir&quot; : _input})
-chrom_df.to_csv(_output[0],index = 0,sep = &quot;\t&quot;)
-chrom_df[&quot;#chr&quot;] = [f&#39;chr{x}&#39; for x in chrom]
-phenoFile = pd.read_csv(phenoFile,sep = &quot;\t&quot;, usecols = [0,1,2,3]).merge(chrom_df[[&quot;#chr&quot;,&quot;#dir&quot;]],left_on = &quot;#chr&quot;,right_on = &quot;#chr&quot;).rename({&quot;#dir&quot;:&quot;path&quot;})
-phenoFile.to_csv(_output[1], index = 0, sep = &quot;\t&quot; )
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_chrom_gct_2 \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${phenoFile}&quot; \
+        --inputs ${_input} \
+        --output-files &quot;${_output[0]}&quot; \
+        --output-region-list &quot;${_output[1]}&quot;
 </pre></div>
 </div>
 </div>
@@ -829,19 +807,14 @@ chrom = extract_chrom(regions)
 input: phenoFile, for_each = &quot;regions&quot;
 output: f&#39;{cwd}/{region_list:bn}_phenotype_by_region/{name}.{_regions[3]}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;,container = container
-    tabix -h  $[_input] $[_regions[0]]:$[_regions[1]]-$[_regions[2]] &gt; $[_output:n]
-    bgzip -f $[_output:n]
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; 
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;` 
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;` 
-        echo &quot;output_column:&quot; `zcat $i | grep -v &quot;##&quot;   | head -1 | wc -w `
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `
-        echo &quot;output_preview:&quot;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6 ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_region_1 \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --name &quot;${name}&quot; \
+        --region &quot;${_regions[0]}&quot; &quot;${_regions[1]}&quot; &quot;${_regions[2]}&quot; &quot;${_regions[3]}&quot; \
+        --output &quot;${_output}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -851,9 +824,11 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[phenotype_by_region_2]
 input: group_by = &quot;all&quot;
 output: f&#39;{cwd}/{name}.{step_name[:-2]}_files.txt&#39;
-import pandas as pd
-region_df = pd.DataFrame({&quot;#id&quot; :  [str(x).split(&quot;.&quot;)[-3] for x in _input]  ,&quot;dir&quot; : _input})
-region_df.to_csv(_output,index = 0,sep = &quot;\t&quot;)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_region_2 \
+        --cwd &quot;${cwd}&quot; \
+        --inputs ${_input} \
+        --output &quot;${_output}&quot;
 </pre></div>
 </div>
 </div>
@@ -868,7 +843,7 @@ parameter: phenoFile = paths
 input: phenoFile , group_by = 1
 output: f&#39;{cwd}/{_input:bn}.subsetted.bam&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
     samtools view -b ${_input} ${region} &gt; ${_output}
 </pre></div>
 </div>
@@ -882,17 +857,14 @@ parameter: keep_samples = path
 input: phenoFile
 output: f&#39;{_input[0]:nn}.sample_matched.gct.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container
-    library(&quot;dplyr&quot;)
-    library(&quot;readr&quot;)
-    phenoFile = read_delim($[_input[0]:ar], &quot;\t&quot;, col_names = T, comment = &quot;#&quot;)
-    sample_lookup = read_delim($[keep_samples:ar], &quot;\t&quot; ,col_names = T, comment = &quot;#&quot;)
-    ## Make phenoFile consistant with sampleLookup, remove samples by select()
-    int = intersect(colnames(phenoFile),unlist(sample_lookup[,1]))
-    phenoFile_tmp = phenoFile%&gt;%select(c(colnames(phenoFile)[1],all_of(int)))
-    ## Add 2 header lines, https://github.com/getzlab/rnaseqc/blob/286f99dfd4164d33014241dd4f3149da0cddf5bf/src/RNASeQC.cpp#L426
-    cat(paste(&quot;#1.2\n#&quot;, nrow(phenoFile_tmp), ncol(phenoFile_tmp) - 2, &quot;\n&quot;), file=$[_output:nr], append=FALSE)
-    phenoFile_tmp%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/phenotype_formatting.R \
+        --step gct_extract_samples \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input[0]}&quot; \
+        --keep-samples &quot;${keep_samples}&quot; \
+        --output &quot;${_output}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>

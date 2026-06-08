@@ -623,12 +623,15 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # Required input is TPM file
 parameter: tpm_gct = path
 # Raw counts file is optional and if available, it will be filtered to match with the TPM file sample and genes
 parameter: counts_gct = path()
 parameter: cwd = path(&quot;output&quot;)
 parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 cwd = path(f&#39;{cwd:a}&#39;)
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
@@ -651,47 +654,14 @@ parameter: low_expr_TPM_percent = 0.2
 input: tpm_gct
 output: f&#39;{cwd}/{_input:bnnn}.low_expression_filtered.tpm.gct.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;,container = container
-    # Load packages
-    library(dplyr)
-    library(readr)
-    library(tibble)
-    library(purrr)
-    ## Setting inputs
-    low_expr_TPM &lt;- $[low_expr_TPM]
-    low_expr_TPM_percent &lt;- $[low_expr_TPM_percent]
-    ## QC
-    ### Data integrity check. The input file should has sample ID as column name; the first column is gene ID
-    TPM_data &lt;- read_tsv($[_input:ar], col_names = TRUE, comment = &quot;#&quot;)%&gt;%as.data.frame()
-    names(TPM_data)[1] &lt;- &quot;feature&quot;
-    if( sum(duplicated(TPM_data$feature)) &gt; 0){
-      message(&quot;feature (e.g. gene names) should be in the first column. Please remove duplicated feature IDs, Exit!&quot;)
-      quit(save = &quot;no&quot;, status = 1, runLast = FALSE)
-    }else{
-      rownames(TPM_data) &lt;- TPM_data$feature
-      TPM_data = TPM_data[,-1]
-      loaded_sample_count &lt;- ncol(TPM_data)
-    }
-    #### NA check
-    if(sum(is.na(TPM_data)) &gt; 0 ){      
-      message(paste0(&quot;NA is not allowed in the data, there are &quot;,sum(is.na(TPM_data)),&quot; NAs, Exit!&quot;))
-      quit(save = &quot;no&quot;, status = 1, runLast = FALSE)}
-    #### make sure every expr column is in numeric type
-    matrix_check &lt;- map(TPM_data, is.numeric) %&gt;% unlist
-    if(sum(!matrix_check) &gt; 0){
-      message(&quot;The following column(s) in expression matrix is/are NOT in numeric type. Plese check, Proceed by excluding those samples&quot;)
-      message(paste(names(matrix_check)[!matrix_check], collapse = &quot;; &quot;))
-      TPM_data = TPM_data[,matrix_check]
-    }
-    message(&quot;Gene expression profiles loaded successfully!&quot;)
-    message(paste(nrow(TPM_data), &quot;genes and&quot;, ncol(TPM_data), &quot;samples are loaded from&quot;, $[_input:r], sep = &quot; &quot;))
-    
-    #### Filter out low exp genes
-    keep_genes_idx &lt;- (rowMeans(TPM_data&gt;low_expr_TPM)&gt;low_expr_TPM_percent) 
-    TPM_data = TPM_data[keep_genes_idx,]
-    message(paste(sum(1 - keep_genes_idx), &quot;genes are filtered by filter: &gt;&quot;, low_expr_TPM_percent*100, &quot;% samples have expression values &lt;&quot;, low_expr_TPM))
-    message(paste(sum(keep_genes_idx), &quot;genes left, saving output to $[_output].&quot;))
-    TPM_data%&gt;%as_tibble(rownames = &quot;gene_ID&quot;)%&gt;%write_delim(&quot;$[_output]&quot;,&quot;\t&quot;)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/molecular_phenotypes/QC/bulk_expression_QC.R \
+        --step qc_1 \
+        --cwd &quot;${cwd}&quot; \
+        --tpm-gct &quot;${_input}&quot; \
+        --low-expr-TPM ${low_expr_TPM} \
+        --low-expr-TPM-percent ${low_expr_TPM_percent} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -708,155 +678,18 @@ parameter: pvalue_cutoff = 0.05
 parameter: cluster_level = 5
 output: f&#39;{cwd}/{_input:bnnn}.outlier_removed.tpm.gct.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container
-    library(RColorBrewer)
-    library(ape)
-    library(reshape2)
-    library(dplyr)
-    library(readr)
-    ## Setting parameters
-    RLEFilterPercent &lt;-$[RLEFilterPercent]
-    DSFilterPercent &lt;- $[DSFilterPercent]
-    ### Hcluster parameter
-    pvalues.cut &lt;- $[pvalue_cutoff]
-    topk_genes &lt;- $[topk_genes]
-    cluster_percent &lt;- $[cluster_percent]
-    treesNum &lt;- $[cluster_level]
-    ## Define functions to accomodate rank deficient covariance matrices in https://github.com/statfungen/xqtl-protocol/issues/307
-    mahalanobis = function (x, center, cov, inverted = FALSE, ...) 
-        {
-            x &lt;- if (is.vector(x)) 
-                matrix(x, ncol = length(x))
-            else as.matrix(x)
-            if (!isFALSE(center)) 
-                x &lt;- sweep(x, 2L, center)
-            if (!inverted) 
-                cov &lt;- MASS::ginv(cov, ...)
-            setNames(rowSums(x %*% cov * x), rownames(x))
-        }
-          
-    ## laod Data
-    TPM_data &lt;- read_tsv($[_input:ar], col_names = TRUE, comment = &quot;#&quot;)%&gt;%as.data.frame()
-    rownames(TPM_data) &lt;- TPM_data$gene_ID
-    TPM_data = TPM_data[,-1]
-    RLEFilterLength &lt;- RLEFilterPercent*ncol(TPM_data)
-    DSFilter &lt;- DSFilterPercent*ncol(TPM_data)
-  
-    ## Outlier detection
-  
-    ### RLE
-    # https://github.com/stormlovetao/eQTLQC/blob/86dcc388c8da7f1bd5b223f4b9b26f09c907eb15/Sample/src/report.Rmd#L71
-    log_offset &lt;- 0.0001
-    logtpm = log10(TPM_data%&gt;%as.matrix + log_offset)
-    rle=logtpm-apply(logtpm, 1, median) # change &quot;/&quot; to &quot;-&quot; so that we got log(fold-change) which centered on 0 on the RLE plot.
-    iqr = apply(rle,2,IQR)
-    rle=melt( rle , variable.name = &quot;Sample&quot;,value.name =&quot;TPM&quot;, id=&quot;feature&quot;)
-    names(rle) &lt;- c(&quot;feature&quot;,&quot;Sample&quot;,&quot;TPM&quot;)
-    rle_IQR &lt;- rle %&gt;% group_by(Sample) %&gt;% summarise(IQR = IQR(TPM))
-    rle_IQR_range &lt;- rle_IQR$IQR %&gt;% range %&gt;% abs() %&gt;% max()
-    rle_IQR_range &lt;- 2*rle_IQR_range %&gt;% ceiling()
-    bymedian &lt;- with(rle, reorder(Sample, TPM, IQR))  # sort by IQR
-    par(mar=c(3,3,3,3))
-    pdf(file = &quot;$[_output:n].RLEplot.pdf&quot;)
-    boxplot(TPM ~ bymedian, data=rle, outline=F, ylim = c(-rle_IQR_range, rle_IQR_range), las=2, boxwex=1, col=&#39;gray&#39;, cex.axis=0.3, main=&quot;RLE plot before QC&quot;, xlab=&quot;&quot;, ylab=&quot;Residual expression levels&quot;, frame=F)
-    dev.off()
-    ExpPerSample &lt;- nrow(TPM_data)
-    RLEFilterList &lt;- unique(levels(bymedian)[((length(levels(bymedian))-(RLEFilterLength))+1):(length(levels(bymedian))+1)])
-    RLEFilterList &lt;- as.character(RLEFilterList)
-    message(paste0(&quot;The right most &quot;, RLEFilterPercent*100, &quot;% samples (N = &quot;, length(RLEFilterList), &quot;) are marked as candidate outliers in this step:&quot;) )
-    for (x in 1:length(RLEFilterList)){
-      message(RLEFilterList[x])
-    }
-
-    ### hcluster  
-    sampleDists &lt;- 1 - cor(logtpm, method=&#39;spearman&#39;)
-    hc &lt;- hclust(as.dist(sampleDists), method = &quot;complete&quot;)
-    hcphy &lt;- as.phylo(hc)
-  
-    pdf(file = &quot;$[_output:n].preQC_cluster.pdf&quot;)
-    plot(hcphy, type = &quot;unrooted&quot;, cex=.2, lab4ut=&#39;axial&#39;,underscore = T, main=&quot;Sample clustering before QC (Spearman - Cor.)&quot;)
-    dev.off()
-    # https://github.com/stormlovetao/eQTLQC/blob/86dcc388c8da7f1bd5b223f4b9b26f09c907eb15/Sample/src/report.Rmd#L102
-    log_offset &lt;- 1
-    logtpm = log10(TPM_data%&gt;%as.matrix + log_offset)
-    ntop &lt;- topk_genes
-    Pvars &lt;- apply(logtpm, 1, var)
-    select &lt;- order(Pvars, decreasing =TRUE)[seq_len(min(ntop, length(Pvars)))]
-    MD_matrix &lt;- logtpm[select, ]
-    MahalanobisDistance = mahalanobis(t(MD_matrix), colMeans(t(MD_matrix)), cov(t(MD_matrix))) 
-    # Note: t(MD_matrix)=sample_row*gene_column, Manhalanobis() returns one vector with length=row number
-    pvalues = pchisq(MahalanobisDistance, df=nrow(MD_matrix), lower.tail=F)
-    pvalues.adjust = p.adjust(pvalues, method =&quot;bonferroni&quot;) # adjusted pvalues for each sample
-    pvalues.low &lt;- pvalues.adjust[pvalues.adjust&lt;pvalues.cut]
-    
-    HCoutliers &lt;- character()
-    for(x in c(1:treesNum)){
-      trees &lt;- cutree(hc,k=x)
-      idx &lt;- c(1:x)#which tree is checking
-      for(i in idx)
-      {
-        group &lt;- hc$labels[which(trees == i)]
-        if(sum(group %in% names(pvalues.low))/length(group) &gt;= cluster_percent)
-        {
-          HCoutliers &lt;- union(HCoutliers,group)
-        }
-      }
-    }
-    
-    message(paste(length(HCoutliers), &quot;samples are marked as candidate outlier(s) in this step.&quot;, sep = &quot; &quot;))
-    if(length(HCoutliers)&gt;0){
-      message(&quot;Sample outliers are marked in red as follows:&quot;)
-      for (x in 1:length(HCoutliers)){
-          message(HCoutliers[x])
-      }
-      co1 = hc$labels%in%HCoutliers
-      co1[which(co1 == &quot;FALSE&quot;)]&lt;-&quot;gray0&quot;
-      co1[which(co1 == &quot;TRUE&quot;)]&lt;-&quot;red&quot;
-      par(mar=c(3,3,3,3))
-  
-    pdf(file = &quot;$[_output:n].cluster.pdf&quot;)
-    plot(hcphy, tip.col = co1, type = &quot;unrooted&quot;, cex=.2, lab4ut=&#39;axial&#39;,underscore = T, main=&quot;Label Outliers in Red&quot;)
-    Xcol = c(&quot;gray0&quot;, &quot;red&quot;)
-    Xtext = c(&quot;Normal Sample&quot;, &quot;Outliers&quot;)
-    legend(&#39;bottomleft&#39;,pch=21,Xtext, col=&#39;white&#39;,pt.bg=Xcol, cex=1)
-    dev.off()
-    }else{
-      message(&quot;No outlier detected.&quot;)
-    }
-    
-    ### D-s
-    D = apply(1-sampleDists, 1, median)
-    pdf(file = &quot;$[_output:n].D_stat_hist.pdf&quot;)
-    hist(D, breaks=100, ylab=&quot;Number of samples&quot;, xlab=&quot;D-statistic&quot;, main=&quot;Histogram of Sample D-statistics before data QC&quot;)
-    dev.off()
-    
-    DSFilter &lt;- sort(D)[DSFilter]
-    D&lt;-as.data.frame(D)
-    D&lt;-data.frame(Sample = rownames(D),D = D$D)
-    D_filterList = D%&gt;%filter(D &lt;= DSFilter)
-    D_filterList &lt;- D_filterList$Sample
-    D_filterList&lt;-as.character(D_filterList)
-    message(paste0(&quot;The right most &quot;, DSFilterPercent*100, &quot;% samples (N=&quot;, length(D_filterList), &quot;) are marked as candidate outliers in this step:&quot;) )
-    for (x in 1:length(D_filterList)){
-      message(D_filterList[x])
-    }
-    
-    ## Outliers are the intersect of three candidates list
-    outliersList &lt;- intersect(RLEFilterList,intersect(HCoutliers,D_filterList))
-    message(&quot;Outliers:&quot;)
-    for (x in 1:length(outliersList)){
-      message(outliersList[x])
-    }
-    outliersIndex &lt;- which(colnames(logtpm) %in% outliersList)
-    if(!length(outliersIndex) == 0){
-        TPM_data &lt;- TPM_data[,-outliersIndex]
-    }
-    ## Add 2 header lines, https://github.com/getzlab/rnaseqc/blob/286f99dfd4164d33014241dd4f3149da0cddf5bf/src/RNASeQC.cpp#L426
-    cat(paste(&quot;#1.2\n#&quot;, nrow(TPM_data), ncol(TPM_data), &quot;\n&quot;), file=$[_output:nr], append=FALSE)
-    TPM_data%&gt;%as_tibble(rownames = &quot;gene_ID&quot;)%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
-  
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container
-    gzip -f --best $[_output:n]
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/molecular_phenotypes/QC/bulk_expression_QC.R \
+        --step qc_2 \
+        --cwd &quot;${cwd}&quot; \
+        --tpm-gct &quot;${_input}&quot; \
+        --RLEFilterPercent ${RLEFilterPercent} \
+        --DSFilterPercent ${DSFilterPercent} \
+        --topk-genes ${topk_genes} \
+        --cluster-percent ${cluster_percent} \
+        --pvalue-cutoff ${pvalue_cutoff} \
+        --cluster-level ${cluster_level} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -872,21 +705,13 @@ bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdou
 stop_if(not counts_gct.is_file())
 output: f&#39;{cwd}/{_input:bnnn}.geneCount.gct.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container
-    library(&quot;dplyr&quot;)
-    library(&quot;readr&quot;)
-    # Reason to use read.table: 1.accomodate both &quot; &quot; and &quot;\t&quot;
-    tpm = read_delim($[_input:ar], &quot;\t&quot;, col_names = T, comment = &quot;#&quot;)
-    geneCount = read_delim($[counts_gct:ar], &quot;\t&quot; ,col_names = T, comment = &quot;#&quot;)
-    ## Make geneCount consistant with tpm, remove gene by filter() and remove samples by select()
-    geneCount = geneCount%&gt;%filter(gene_ID %in% tpm$gene_ID)%&gt;%select(colnames(tpm))
-    ## Add 2 header lines, https://github.com/getzlab/rnaseqc/blob/286f99dfd4164d33014241dd4f3149da0cddf5bf/src/RNASeQC.cpp#L426
-    cat(paste(&quot;#1.2\n#&quot;, nrow(geneCount), ncol(geneCount) - 1, &quot;\n&quot;), file=$[_output:nr], append=FALSE)
-    ## Save each file with 3 header line
-    geneCount%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
-
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container
-    gzip -f --best $[_output:n]
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/molecular_phenotypes/QC/bulk_expression_QC.R \
+        --step qc_3 \
+        --cwd &quot;${cwd}&quot; \
+        --tpm-gct &quot;${_input}&quot; \
+        --counts-gct &quot;${counts_gct}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>

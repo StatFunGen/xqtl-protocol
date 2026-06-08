@@ -718,10 +718,13 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # Work directory &amp; output directory
 parameter: cwd = path(&quot;output&quot;)
 # The filename name for containers
 parameter: container = &#39;&#39;
+import re
+parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -732,6 +735,7 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 20
 # the path to a bed file or VCF file, a vector of bed files or VCF files, or a text file listing the bed files or VCF files to process
 parameter: genoFile = paths
+parameter: name = &quot;&quot;
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = f&quot;{cwd:a}&quot;
@@ -870,29 +874,17 @@ if isinstance(genoFile, dict):
 input: genoFile, group_by = 1
 output: f&#39;{cwd}/{_input:bn}.vcf.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container
-    plink2 --bfile ${_input:n} \
-        --recode vcf-iid  \
-        --out ${_output:nn} \
-        --threads ${numThreads} \
-        --memory ${int(expand_size(mem) * 0.9)/1e06} --output-chr chrMT
-    bgzip -l 9 ${_output:n}
-    tabix -f -p vcf ${_output}
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint=entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.sh plink_to_vcf_1 \
+        --genoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --mem &quot;${mem}&quot; \
+        --numThreads ${numThreads}
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    for i in ${_output} ; do 
-        # Capture file metadata
-        output_info=&quot;$i&quot;
-        output_size=$(ls -lh &quot;$i&quot; | awk &#39;{print $5}&#39;)
-        output_rows=$(zcat &quot;$i&quot; | wc -l)
-        output_column=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head -1 | wc -w)
-        output_header_row=$(zcat &quot;$i&quot; | grep &quot;##&quot; | wc -l)
-        output_preview=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head | cut -f 1-11)
-
-        # Write captured information to the stdout file
-        printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %d\noutput_column: %d\noutput_header_row: %d\noutput_preview:\n%s\n&quot; \
-            &quot;$output_info&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_header_row&quot; &quot;$output_preview&quot;
-    done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.py \
+        --step vcf_gz_summary \
+        --data-files &quot;${_output}&quot;
 </pre></div>
 </div>
 </div>
@@ -922,42 +914,11 @@ input: genoFile, group_by = 1
 output: f&#39;{cwd}/{_input:bnn}.{&quot;pgen&quot; if keep_dosage else &quot;bed&quot;}&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    echo &quot;dosage ${keep_dosage}&quot;
-    if [ ${keep_dosage} = True ]; then
-        plink2 --vcf ${_input} dosage=DS \
-        --not-chr X \
-        --allow-extra-chr \
-        --double-id \
-        --max-alleles 2 \
-        --set-all-var-ids &#39;@:#:$r:$a&#39; \
-        --new-id-max-allele-len 24 \
-        ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-        ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
-        --make-pgen --out ${_output:n}  ${&quot;--rm-dup exclude-all&quot; if remove_duplicates else &quot;&quot; } \
-        --threads ${numThreads} \
-        --memory ${int(expand_size(mem) * 0.9)/1e06} ${&quot;--output-chr chrMT&quot; if add_chr else &quot;&quot;}  
-    else
-        plink2 --vcf ${_input} \
-            --vcf-half-call m \
-            --vcf-require-gt \
-            --allow-extra-chr \
-            --double-id \
-            ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-            ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
-            --make-bed --out ${_output:n}  ${&quot;--rm-dup exclude-all&quot; if remove_duplicates else &quot;&quot; } \
-            --threads ${numThreads} \
-            --memory ${int(expand_size(mem) * 0.9)/1e06} ${&quot;--output-chr chrMT&quot; if add_chr else &quot;&quot;}  
-    fi
-    
-
-    
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=${_output:n}.stdout
-        for i in ${_output} ; do 
-            echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-            echo &quot;output_size: $(ls -lh &quot;$i&quot; | awk &#39;{print $5}&#39;)&quot; &gt;&gt; $stdout;
-        done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.sh vcf_to_plink \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -976,20 +937,20 @@ regions = [x.strip().split() for x in open(region_list).readlines() if x.strip()
 input: genoFile, for_each = &#39;regions&#39;
 output: f&#39;{cwd}/{region_list:bn}_genotype_by_region/{_input:bn}.{_regions[3]}.bed&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    plink2 --bfile ${_input:an} \
-        --make-bed \
-        --out ${_output[0]:n} \
-        --chr ${_regions[0]} \
-        --from-bp ${f&#39;0&#39; if (int(_regions[1]) - window) &lt; 0 else f&#39;{(int(_regions[1]) - window)}&#39;} \
-        --to-bp ${int(_regions[2]) + window} \
-        --allow-no-sex --output-chr chrMT || touch ${_output} 
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.sh genotype_by_region_1 \
+        --genoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --region-chrom &quot;${_regions[0]}&quot; \
+        --region-start &quot;${_regions[1]}&quot; \
+        --region-end &quot;${_regions[2]}&quot; \
+        --window ${window} \
+        --numThreads ${numThreads}
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        for i in ${_output} ; do 
-            echo &quot;output_info: $i &quot;
-            echo &quot;output_size: $(ls -lh &quot;$i&quot; | awk &#39;{print $5}&#39;)&quot;
-        done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.py \
+        --step file_size_summary \
+        --data-files &quot;${_output}&quot;
 </pre></div>
 </div>
 </div>
@@ -1010,31 +971,16 @@ regions = [x.strip().split() for x in open(region_list).readlines() if x.strip()
 input: genoFile, for_each = &#39;regions&#39;
 output: f&#39;{cwd}/{region_list:bn}_LD/{_input:bn}.{_regions[0]}_{_regions[1]}_{_regions[2]}.float{float_type}.npz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, volumes = [f&#39;{region_list:ad}:{region_list:ad}&#39;]
-    plink --bfile ${_input:an} \
-        --out ${_output:nn} \
-        --chr ${_regions[0]} \
-        --from-bp ${_regions[1]} \
-        --to-bp ${_regions[2]} \
-        --r square0 \
-        --make-just-bim \
-        --threads ${numThreads}
-
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    import pandas as pd
-    import numpy as np
-    np_ld = np.loadtxt(&quot;${_output:nn}.ld&quot;, delimiter = &quot;\t&quot;, dtype = &quot;float${float_type}&quot;)
-    bim = pd.read_csv(&quot;${_output:nn}.bim&quot;, &quot;\t&quot;, header = None)[1].to_numpy()
-    np.savez_compressed(&quot;${_output}&quot;, np_ld, bim, allow_pickel = True)
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        echo &quot;The npz file is a numpy compressed version of the .ld file described below&quot;
-        for i in $[_output:nn] ; do 
-        echo &quot;output_info: $i.ld &quot;
-        echo &quot;output_size:&quot; `ls -lh $i.ld | cut -f 5  -d  &quot; &quot;`
-        echo &quot;output_column:&quot; `head -1 $i | wc -w `
-        echo &quot;output_row:&quot; `wc -l $i `
-        done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.py \
+        --step ld_by_region_plink_1 \
+        --genoFile &quot;${_input}&quot; \
+        --region-chrom &quot;${_regions[0]}&quot; \
+        --region-start &quot;${_regions[1]}&quot; \
+        --region-end &quot;${_regions[2]}&quot; \
+        --float-type ${float_type} \
+        --output &quot;${_output}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1087,19 +1033,18 @@ make_command = get_make_command(output_format)
 output: f&#39;{cwd}/{_input:bn}.{_chrom}.{output_ext}&#39;
 # look up for genotype file
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    echo &quot;input $[_input:n]&quot;
-    plink2 \
-        $[plink_command] $[_input:n] \
-        $[make_command] \
-        --out $[_output[0]:n] \
-        --chr $[_chrom] \
-        --threads $[numThreads] \
-        --memory $[int(expand_size(mem) * 0.9)/1e06] \
-        --allow-no-sex
-
-
-        
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.sh genotype_by_chrom \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --name &quot;${name}&quot; \
+        --output &quot;${_output}&quot; \
+        --plink-command &quot;${plink_command}&quot; \
+        --make-command &quot;${make_command}&quot; \
+        --output-format &quot;${output_format}&quot; \
+        --chrom ${_chrom} \
+        --mem &quot;${mem}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1156,49 +1101,13 @@ parameter: data_files = paths
 input: data_files
 output: out
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    import pandas as pd
-    import os, sys
-
-    # Extracting the id list outside for better readability
-    n = len(&quot;${ext}&quot;.split(&quot;.&quot;))+1
-    id_list = [x.split(&quot;.&quot;)[-n] for x in [${_input:r,}]]
-    files = [${_input:r,}]
-
-    # check if some files are empty remove them from the id_list
-    non_empty_files = []
-    non_empty_ids = []
-
-    for file, id in zip(files, id_list):
-        try:
-            # Check if file is empty
-            if os.path.getsize(file) &gt; 0:
-                non_empty_files.append(file)
-                non_empty_ids.append(id)
-            else:
-                print(f&quot;Empty file found: {file}&quot;, file=sys.stderr)
-        except OSError as e:
-            print(f&quot;Error accessing file {file}: {e}&quot;, file=sys.stderr)
-
-    if not non_empty_files:
-        raise ValueError(&quot;No non-empty files found. Exiting.&quot;)
-    
-    data_tempt = pd.DataFrame({
-        &quot;#id&quot;: non_empty_ids,
-        &quot;#path&quot;: non_empty_files
-    })
-
-    data_tempt.to_csv(&quot;${_output}&quot;, index=False, sep=&quot;\t&quot;)
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    i=&quot;${_output}&quot;
-    output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
-    output_rows=$(cat $i | wc -l | cut -f 1 -d &#39; &#39;)
-    output_column=$(cat $i | head -1 | wc -w)
-    output_preview=$(cat $i | grep -v &quot;##&quot; | head | cut -f 1,2,3,4,5,6)
-    
-    printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_preview:\n%s\n&quot; \
-        &quot;$i&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_preview&quot;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.py \
+        --step write_data_list \
+        --data-files &quot;${&quot;::&quot;.join([str(x) for x in _input])}&quot; \
+        --ext &quot;${ext}&quot; \
+        --output &quot;${_output}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1219,29 +1128,17 @@ parameter: name = str
 # The path to the file that contains the list of samples to keep (format FID, IID)
 parameter: keep_samples = path(&#39;.&#39;)
 parameter: extra_plink_opts = []
+parameter: mem = &#39;300G&#39;
 input: genoFile, group_by = &#39;all&#39;
 output: f&quot;{cwd}/{name}{_input[0]:x}&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    echo ${_input:n} | tr &#39; &#39; &#39;\n&#39; | tail -n +2 &gt;  ${_output:n}.merge_list
-    plink${&quot;2&quot; if str(_input).endswith(&quot;pgen&quot;) else &quot; --keep-allele-order&quot;} \
-    --${&quot;p&quot; if str(_input).endswith(&quot;pgen&quot;) else &quot;b&quot;}file ${_input[0]:n} \
-    --${&quot;p&quot; if str(_input).endswith(&quot;pgen&quot;) else &quot;&quot;}merge-list ${_output:n}.merge_list \
-    --make-${&quot;pgen&quot; if str(_input).endswith(&quot;pgen&quot;) else &quot;bed&quot;} \
-    --out ${_output:n} \
-    --threads ${numThreads} \
-    --memory ${int(expand_size(mem) * 0.9)/1e06} ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} ${&quot; &quot;.join([(&quot;--%s&quot; % x) for x in extra_plink_opts])}
-    rm -f ${_output:n}.merge_list
-
-    i=&quot;${_output}&quot;
-    output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
-    output_rows=$(zcat $i | wc -l | cut -f 1 -d &#39; &#39;)
-    output_column=$(zcat $i | head -1 | wc -w)
-    output_preview=$(cat $i | grep -v &quot;##&quot; | head | cut -f 1,2,3,4,5,6)
-    
-    printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_preview:\n%s\n&quot; \
-        &quot;$i&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_preview&quot;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.sh merge_plink \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --name &quot;${name}&quot; \
+        --mem &quot;${mem}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1258,24 +1155,15 @@ parameter: name = str
 input: genoFile, group_by = &#39;all&#39;
 output:  f&quot;{cwd}/{name}.vcf.gz&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    bcftools concat -Oz ${_input} &gt; ${_output}
-    tabix -p vcf ${_output}
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.sh merge_vcf \
+        --genoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot;
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    for i in ${_output} ; do 
-        # Capture file metadata
-        output_info=&quot;$i&quot;
-        output_size=$(ls -lh &quot;$i&quot; | awk &#39;{print $5}&#39;)
-        output_rows=$(zcat &quot;$i&quot; | wc -l)
-        output_column=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head -1 | wc -w)
-        output_header_row=$(zcat &quot;$i&quot; | grep &quot;##&quot; | wc -l)
-        output_preview=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head | cut -f 1-11)
-
-        # Write captured information to the stdout file
-        printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %d\noutput_column: %d\noutput_header_row: %d\noutput_preview:\n%s\n&quot; \
-            &quot;$output_info&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_header_row&quot; &quot;$output_preview&quot; &gt;&gt; ${_output:n}.stdout
-    done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/genotype/genotype_formatting.py \
+        --step vcf_gz_summary \
+        --data-files &quot;${_output}&quot;
 </pre></div>
 </div>
 </div>

@@ -737,6 +737,7 @@ Global Workflow Options:
                         requried.
   --container &#39;&#39;
                         Software container option
+  --entrypoint (&#39;micromamba run -n&#39; + &#39; &#39; + container.split(&#39;/&#39;)[-1][:-4] + &quot; --no-capture-output&quot;) if container.endswith(&#39;.sif&#39;) else &quot;&quot;
 
   --[no-]add-chr (default to False)
                         use this function to edit memory string for PLINK input
@@ -790,6 +791,7 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # input can either be 1 vcf genoFile, or a list of vcf genoFile.
 parameter: genoFile = paths
 # The path to the file that contains the list of samples to remove (format FID, IID)
@@ -808,8 +810,14 @@ parameter: walltime = &#39;24h&#39;
 parameter: mem = &#39;60G&#39;
 # Software container option
 parameter: container = &quot;&quot;
-#whether things like DP in the vcf header should be ignored when filtering.
+import re
+parameter: entrypoint=&quot;&quot;
+# Whether to run GT-only VCF QC for inputs that do not carry per-sample DP/GQ/AD FORMAT fields.
+parameter: gt_only_vcf_qc = False
+# Deprecated alias for GT-only VCF QC.
 parameter: skip_vcf_header_filtering = False
+gt_only_vcf_qc = bool(gt_only_vcf_qc or skip_vcf_header_filtering)
+vcf_qc_mode_suffix = &#39;.gt_only&#39; if gt_only_vcf_qc else &#39;&#39;
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = path(f&quot;{cwd:a}&quot;)
@@ -879,7 +887,7 @@ genoFile = get_genotype_file(genoFile)
 input: genoFile
 output: f&#39;{_input:nn}.add_chr.vcf.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;
+bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, entrypoint=entrypoint
     for i in {1..22} X Y MT; do echo &quot;$i chr$i&quot;; done &gt; ${_output:nn}.chr_name_conv.txt
     bcftools annotate --rename-chrs ${_output:nn}.chr_name_conv.txt ${_input} -Oz -o ${_output}
     tabix -p vcf ${_output}
@@ -894,7 +902,7 @@ bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n
 input: genoFile
 output: f&quot;{cwd}/{_input:bnn}.variants.gz&quot;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
     # Extract specific fields from the VCF file using bcftools
     bcftools query -f&#39;%CHROM\t%POS\t%ID\t%REF\t%ALT\n&#39; ${_input} | \
     awk &#39;BEGIN { 
@@ -930,52 +938,19 @@ parameter: reference_genome = path
 parameter: bi_allelic = False
 parameter: snp_only = False
 input: genoFile, group_by = 1
-output: f&#39;{cwd}/{_input:bnn}.{&quot;leftnorm&quot; if not bi_allelic else &quot;biallelic&quot;}{&quot;.snp&quot; if snp_only else &quot;&quot;}.vcf.gz&#39;
+output: f&#39;{cwd}/{_input:bnn}.{&quot;leftnorm&quot; if not bi_allelic else &quot;biallelic&quot;}{&quot;.snp&quot; if snp_only else &quot;&quot;}{vcf_qc_mode_suffix}.vcf.gz&#39;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    
-    if [ &quot;${skip_vcf_header_filtering}&quot; = &quot;True&quot; ]; then
-        printf &quot;not filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
-        # split multiallelic sites into biallelic records 
-        ${&#39;bcftools norm -m-any&#39; if not bi_allelic else &#39;bcftools view -m2 -M2&#39;} ${&#39;-v snps&#39; if snp_only else &quot;&quot;} ${_input} |\
-        # Fix incorrect or missing REF alleles and warn about them
-        bcftools norm -d exact --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
-        # Remove ID and replace with CHROM:POS:REF:ALT format
-        bcftools annotate -x ID -I +&#39;%CHROM:%POS:%REF:%ALT&#39; | \
-        # Annotate with dbSNP rsID
-        bcftools annotate -a ${dbsnp_variants}  -h &lt;(echo &#39;##INFO=&lt;ID=RSID,Number=1,Type=String,Description=&quot;dbSNP rsID&quot;&gt;&#39;) \
-            -c CHROM,FROM,TO,INFO/RSID -Oz --threads ${numThreads} -o ${_output}
-
-    else
-        printf &quot;filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
-        # split multiallelic sites into biallelic records 
-        ${&#39;bcftools norm -m-any&#39; if not bi_allelic else &#39;bcftools view -m2 -M2&#39;} ${&#39;-v snps&#39; if snp_only else &quot;&quot;} ${_input} |\
-        # Fix incorrect or missing REF alleles and warn about them
-        bcftools norm -d exact --check-ref ws -f ${reference_genome} --threads ${numThreads} |\
-        # Fill missing tags
-        bcftools +fill-tags -- -t all,F_MISSING,&#39;VD=sum(FMT/DP)&#39; | \
-        # Remove ID and replace with CHROM:POS:REF:ALT format
-        bcftools annotate -x ID -I +&#39;%CHROM:%POS:%REF:%ALT&#39; | \
-        # Annotate with dbSNP rsID
-        bcftools annotate -a ${dbsnp_variants}  -h &lt;(echo &#39;##INFO=&lt;ID=RSID,Number=1,Type=String,Description=&quot;dbSNP rsID&quot;&gt;&#39;) \
-            -c CHROM,FROM,TO,INFO/RSID -Oz --threads ${numThreads} -o ${_output}
-
-    fi
-    
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    for i in ${_output} ; do 
-        # Capture file metadata
-        output_info=&quot;$i&quot;
-        output_size=$(ls -lh &quot;$i&quot; | awk &#39;{print $5}&#39;)
-        output_rows=$(zcat &quot;$i&quot; | wc -l)
-        output_column=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head -1 | wc -w)
-        output_header_row=$(zcat &quot;$i&quot; | grep &quot;##&quot; | wc -l)
-        output_preview=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head | cut -f 1-11)
-
-        # Write captured information to the stdout file
-        printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %d\noutput_column: %d\noutput_header_row: %d\noutput_preview:\n%s\n&quot; \
-            &quot;$output_info&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_header_row&quot; &quot;$output_preview&quot; &gt;&gt; ${_output:n}.stdout
-    done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/VCF_QC.sh qc \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --dbsnp-variants &quot;${dbsnp_variants}&quot; \
+        --reference-genome &quot;${reference_genome}&quot; \
+        --bi-allelic &quot;${bi_allelic}&quot; \
+        --snp-only &quot;${snp_only}&quot; \
+        --gt-only-vcf-qc &quot;${gt_only_vcf_qc}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1003,54 +978,20 @@ parameter: AB_indel = 0.2
 parameter: hwe_filter = 0.0
 output: f&quot;{_input:nn}.bcftools_qc.vcf.gz&quot;
 task: trunk_workers = 1, trunk_size=job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-
-    if [ &quot;${skip_vcf_header_filtering}&quot; = &quot;True&quot; ]; then
-        printf &quot;not filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
-
-        bcftools view -c1 ${_input} | \
-        bcftools view -f PASS | \
-
-        # Filter based on missingness and Hardy-Weinberg equilibrium 
-        bcftools filter -i &#39;F_MISSING&lt;${geno_filter}&#39; \
-         -Oz --threads ${numThreads} -o ${_output}
-    else
-
-        printf &quot;filtering for vcf header&quot; &gt;&gt; ${_output:n}.stdout
-        # Initial filtering based on depth and genotype quality for SNPs and INDELs. Will set to missing genotypes that do not meet both conditions (DP&gt;=DP_spns &amp; GQ&gt;=GQ), similarly for indels
-        bcftools filter -S . -i \
-        &#39;(TYPE=&quot;SNP&quot; &amp; (FMT/DP)&gt;=${DP_snp} &amp; (FMT/GQ)&gt;=${GQ}) | 
-         (TYPE=&quot;INDEL&quot; &amp; (FMT/DP)&gt;=${DP_indel} &amp; (FMT/GQ)&gt;=${GQ})&#39; ${_input} | \
-
-        # Further filtering to retain only variants that are PASS and have at least one non-reference allele 
-        bcftools view -c1 | \
-        bcftools view -f PASS | \
-
-        # Filter based on genotype (hom/het) and allelic balance for SNPs and INDELs
-        bcftools filter -i \
-        &#39;GT=&quot;hom&quot; | 
-         TYPE=&quot;snp&quot; &amp; GT=&quot;het&quot; &amp; (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) &gt;= ${AB_snp} | 
-         TYPE=&quot;indel&quot; &amp; GT=&quot;het&quot; &amp; (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) &gt;= ${AB_indel}&#39; | \
-
-        # Filter based on missingness and Hardy-Weinberg equilibrium 
-        bcftools filter -i &#39;F_MISSING&lt;${geno_filter} &amp; HWE&gt;${hwe_filter}&#39; \
-        -Oz --threads ${numThreads} -o ${_output}
-    fi
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    for i in ${_output} ; do 
-        # Capture file metadata
-        output_info=&quot;$i&quot;
-        output_size=$(ls -lh &quot;$i&quot; | awk &#39;{print $5}&#39;)
-        output_rows=$(zcat &quot;$i&quot; | wc -l)
-        output_column=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head -1 | wc -w)
-        output_header_row=$(zcat &quot;$i&quot; | grep &quot;##&quot; | wc -l)
-        output_preview=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head | cut -f 1-11)
-
-        # Write captured information to the stdout file
-        printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %d\noutput_column: %d\noutput_header_row: %d\noutput_preview:\n%s\n&quot; \
-            &quot;$output_info&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_header_row&quot; &quot;$output_preview&quot; &gt;&gt; ${_output:n}.stdout
-    done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/VCF_QC.sh qc_2 \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --gt-only-vcf-qc &quot;${gt_only_vcf_qc}&quot; \
+        --geno-filter ${geno_filter} \
+        --DP-snp ${DP_snp} \
+        --GQ ${GQ} \
+        --DP-indel ${DP_indel} \
+        --AB-snp ${AB_snp} \
+        --AB-indel ${AB_indel} \
+        --hwe-filter ${hwe_filter} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1064,36 +1005,15 @@ output: f&quot;{cwd}/{_input:bnn}.novel_variant_sumstats&quot;,
         f&quot;{cwd}/{_input:bnn}.novel_variant.snipsift_tstv&quot;,
         f&quot;{cwd}/{_input:bnn}.known_variant.snipsift_tstv&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-
-    # Compute statistics for novel variants (RSID is missing)
-    bcftools stats -i &#39;RSID=&quot;.&quot;&#39; -v ${_input} &gt; ${_output[0]}
-
-    # Compute statistics for known variants (RSID is present)
-    bcftools stats -i &#39;RSID!=&quot;.&quot;&#39; -v ${_input} &gt; ${_output[1]}
-
-    # Compute TS/TV for novel variants
-    bcftools filter -i &#39;RSID=&quot;.&quot;&#39; ${_input} | \
-        SnpSift tstv - &gt; ${_output[2]}
-
-    # Compute TS/TV for known variants
-    bcftools filter -i &#39;RSID!=&quot;.&quot;&#39; ${_input} | \
-        SnpSift tstv - &gt; ${_output[3]}
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    for i in ${_output} ; do 
-        # Capture file metadata
-        output_info=&quot;$i&quot;
-        output_size=$(ls -lh &quot;$i&quot; | awk &#39;{print $5}&#39;)
-        output_rows=$(zcat &quot;$i&quot; | wc -l)
-        output_column=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head -1 | wc -w)
-        output_header_row=$(zcat &quot;$i&quot; | grep &quot;##&quot; | wc -l)
-        output_preview=$(zcat &quot;$i&quot; | grep -v &quot;##&quot; | head | cut -f 1-11)
-
-        # Write captured information to the stdout file
-        printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %d\noutput_column: %d\noutput_header_row: %d\noutput_preview:\n%s\n&quot; \
-            &quot;$output_info&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_header_row&quot; &quot;$output_preview&quot; &gt;&gt; ${_output[0]:n}.stdout
-    done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/VCF_QC.sh qc_3 \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --novel-sumstats &quot;${_output[0]}&quot; \
+        --known-sumstats &quot;${_output[1]}&quot; \
+        --novel-tstv &quot;${_output[2]}&quot; \
+        --known-tstv &quot;${_output[3]}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>

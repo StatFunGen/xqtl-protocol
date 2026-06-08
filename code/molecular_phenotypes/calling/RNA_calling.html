@@ -815,6 +815,7 @@ Global Workflow Options:
                         Software container option
   --varVCFfile &#39;&#39;
                         VarVCFfile for data preparation for wasp_filtering
+  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
   --[no-]uncompressed (default to False)
                         Whether the fasta/fastq file is compressed or not.
@@ -933,6 +934,7 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # The output directory for generated files.
 parameter: cwd = path(&quot;output&quot;)
 # Sample meta data list
@@ -955,6 +957,8 @@ parameter: numThreads = 8
 parameter: container = &quot;&quot;
 # VarVCFfile for data preparation for wasp_filtering
 parameter: varVCFfile = &quot;&quot;
+import re
+parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 from sos.utils import expand_size
 cwd = path(f&#39;{cwd:a}&#39;)
 ## Whether the fasta/fastq file is compressed or not.
@@ -991,7 +995,7 @@ if &quot;read_length&quot; in sample_inv.columns:
     sample_inv = sample_inv.drop(&quot;read_length&quot; , axis = 1)
     
 
-## Read columns follow the documented fq1/fq2 contract; fall back only for legacy one/two-read-column sample sheets
+## Read columns follow the documented fq1/fq2 contract; legacy one/two-read-column sample sheets are also accepted
 file_columns = [x for x in [&quot;fq1&quot;, &quot;fq2&quot;] if x in sample_inv.columns]
 if len(file_columns) == 0:
     legacy_file_columns = [x for x in sample_inv.columns if x != &quot;ID&quot;]
@@ -1034,9 +1038,13 @@ env.logger.info(f&#39;Input samples are {&quot;paired-end&quot; if is_paired_end
 input: raw_reads, group_by = 1
 output: f&#39;{cwd}/{_input:bn}.1.fastq&#39;,f&#39;{cwd}/{_input:bn}.2.fastq&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    samtools sort -n ${_input} -o ${_output[0]:nn}.sorted.bam
-    bedtools bamtofastq -i ${_output[0]:nn}.sorted.bam -fq ${_output[0]} -fq2 ${_output[1]}
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.sh bam_to_fastq \
+        --cwd &quot;${cwd}&quot; \
+        --input-bam &quot;${_input}&quot; \
+        --sorted-bam &quot;${_output[0]:nn}.sorted.bam&quot; \
+        --output-fastq1 &quot;${_output[0]}&quot; \
+        --output-fastq2 &quot;${_output[1]}&quot;
 </pre></div>
 </div>
 </div>
@@ -1062,8 +1070,13 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 input: raw_reads, group_by =  1
 output: f&#39;{cwd}/{fastqc_output_base(_input)}_fastqc.html&#39;,f&#39;{cwd}/{fastqc_output_base(_input)}_fastqc.zip&#39; 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    fastqc ${_input} -o ${_output[0]:d}
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.sh fastqc \
+        --cwd &quot;${cwd}&quot; \
+        --sample-list &quot;${sample_list}&quot; \
+        --data-dir &quot;${data_dir}&quot; \
+        --input-fastq &quot;${_input}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1120,7 +1133,7 @@ warn_if(fasta_with_adapters_etc.is_file(),msg = &quot;Use input fasta and adapto
 input: raw_reads, group_by = is_paired_end + 1 , group_with = &quot;sample_id&quot;
 output: [f&#39;{cwd}/{path(x):bn}.trimmed.fq.gz&#39; for x in _input]
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
         fastp -i ${f&#39;{_input[0]} -I {_input[1]}&#39; if is_paired_end else _input} -o ${ f&#39;{_output[0]} -O {_output[1]}&#39; if is_paired_end else _output } \
             ${f&#39;--adapter_fasta {fasta_with_adapters_etc}&#39; if fasta_with_adapters_etc.is_file() else &quot;--detect_adapter_for_pe&quot;}  -V -h ${_output[0]:n}.html -j ${_output[0]:n}.json -w ${numThreads} \
             --length_required ${min_len}  -W ${window_size} -M ${required_quality} -5 -3 --cut_front_mean_quality ${leading} --cut_tail_mean_quality ${leading}
@@ -1192,7 +1205,7 @@ parameter: min_len = 50
 input: raw_reads, group_by = is_paired_end + 1 , group_with = &quot;sample_id&quot;
 output: ([ f&#39;{cwd}/{_sample_id}_paired_{_input[0]:bn}.gz&#39;, f&#39;{cwd}/{_sample_id}_unpaired_{_input[0]:bn}.gz&#39;,  f&#39;{cwd}/{_sample_id}_paired_{_input[1]:bn}.gz&#39;,f&#39;{cwd}/{_sample_id}_unpaired_{_input[1]:bn}.gz&#39; ] if is_paired_end else f&#39;{cwd}/{_sample_id}_trimmed_{_input:bn}.gz&#39;)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
     trimmomatic -Xmx${java_mem} ${&quot;PE&quot; if is_paired_end else &quot;SE&quot;}  -threads ${numThreads} \
         ${_input:r}  ${_output:r} \
         ILLUMINACLIP:${fasta_with_adapters_etc}:${seed_mismatches}:${palindrome_clip_threshold}:${simple_clip_threshold} \
@@ -1271,84 +1284,42 @@ if _read_length == 0:
 else:
     print(&quot;Using read length specified in the sample list&quot;)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = star_mem, cores = numThreads
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    
-    # Remove previous output files
-    rm -rf $[cwd]/$[_sample_id].*.out.*.gz
-    rm -rf $[cwd]/$[_sample_id]._STARpass1
-
-    set -e
-
-    # Record start timestamp for alignment
-    align_start_time=$(date +%s)
-
-    # Run STAR alignment
-    STAR --runMode alignReads \
-         --runThreadN $[numThreads] \
-         --genomeDir $[STAR_index] \
-         --readFilesIn $[_input:r] \
-         --readFilesCommand $[&quot;cat&quot; if uncompressed else &quot;zcat&quot;] \
-         --outFileNamePrefix $[_output[0]:nnnn]. \
-         --outSAMstrandField $[outSAMstrandField] \
-         --twopassMode Basic \
-         --outFilterMultimapNmax $[outFilterMultimapNmax] \
-         --alignSJoverhangMin $[alignSJoverhangMin] \
-         --alignSJDBoverhangMin $[alignSJDBoverhangMin] \
-         --outFilterMismatchNmax $[outFilterMismatchNmax] \
-         --outFilterMismatchNoverLmax $[outFilterMismatchNoverLmax] \
-         --alignIntronMin $[alignIntronMin] \
-         --alignIntronMax $[alignIntronMax] \
-         --alignMatesGapMax $[alignMatesGapMax] \
-         --outFilterType $[outFilterType] \
-         --outFilterScoreMinOverLread $[outFilterScoreMinOverLread] \
-         --outFilterMatchNminOverLread $[outFilterMatchNminOverLread] \
-         --limitSjdbInsertNsj $[limitSjdbInsertNsj] \
-         --outFilterIntronMotifs $[outFilterIntronMotifs] \
-         --alignSoftClipAtReferenceEnds $[alignSoftClipAtReferenceEnds] \
-         --quantMode $[&quot; &quot;.join(quantMode)] \
-         --outSAMtype BAM Unsorted \
-         --outSAMunmapped Within \
-         --genomeLoad NoSharedMemory \
-         --chimSegmentMin $[chimSegmentMin] \
-         --chimJunctionOverhangMin $[chimJunctionOverhangMin] \
-         --chimOutType $[&quot; &quot;.join(chimOutType)] \
-         --chimMainSegmentMultNmax $[chimMainSegmentMultNmax] \
-         --chimOutJunctionFormat 0 \
-         --outSAMattributes $[&quot; &quot;.join(outSAMattributes)] $[&quot;vW&quot; if varVCFfile else &quot;&quot;] \
-         --outSAMattrRGline $[&quot; &quot;.join(outSAMattrRGline)] \
-         --sjdbOverhang $[sjdbOverhang if _read_length == 0 else _read_length ] \
-         --sjdbGTFfile $[gtf] $[(&quot;--varVCFfile %s --waspOutputMode SAMtag&quot; % varVCFfile) if varVCFfile else &quot;&quot;]
-
-    # Record end timestamp for alignment and calculate runtime
-    align_end_time=$(date +%s)
-    align_runtime=$((align_end_time - align_start_time))
-
-    # Remove temporary files
-    rm -r $[_output[0]:nnnn]._STARgenome
-    $[ f&#39;rm -rf [_output[0]:nnnn]._STARtmp&#39; if is_paired_end else &quot;&quot;]
-
-    # Record start timestamp for sorting
-    sort_start_time=$(date +%s)
-
-    # Sort the aligned BAM file
-    samtools sort --threads $[numThreads] -o $[_output[0]:nnnn].Aligned.sortedByCoord.out.bam $[_output[0]:nnnn].Aligned.out.bam
-    rm $[_output[0]:nnnn].Aligned.out.bam
-
-    # Record end timestamp for sorting and calculate runtime
-    sort_end_time=$(date +%s)
-    sort_runtime=$((sort_end_time - sort_start_time))
-
-    # Index the final BAM file
-    samtools index $[_output[0]]
-
-    # Print runtime information
-    echo &quot;STAR alignment started at: $(date -d @$align_start_time)&quot;
-    echo &quot;STAR alignment ended at: $(date -d @$align_end_time)&quot;
-    echo &quot;STAR alignment runtime: $align_runtime seconds&quot;
-    echo &quot;&quot;
-    echo &quot;Sorting started at: $(date -d @$sort_start_time)&quot;
-    echo &quot;Sorting ended at: $(date -d @$sort_end_time)&quot;
-    echo &quot;Sorting runtime: $sort_runtime seconds&quot;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.sh star_align_1 \
+        --cwd &quot;${cwd}&quot; \
+        --gtf &quot;${gtf}&quot; \
+        --STAR-index &quot;${STAR_index}&quot; \
+        --input-reads &quot;${_input:r}&quot; \
+        --sample-id &quot;${_sample_id}&quot; \
+        --paired-end ${is_paired_end} \
+        --read-files-command &quot;${&quot;cat&quot; if uncompressed else &quot;zcat&quot;}&quot; \
+        --output-prefix &quot;${_output[0]:nnnn}&quot; \
+        --output-cord-bam &quot;${_output[&quot;cord_bam&quot;]}&quot; \
+        --output-trans-bam &quot;${_output[&quot;trans_bam&quot;]}&quot; \
+        --outFilterMultimapNmax ${outFilterMultimapNmax} \
+        --alignSJoverhangMin ${alignSJoverhangMin} \
+        --alignSJDBoverhangMin ${alignSJDBoverhangMin} \
+        --outFilterMismatchNmax ${outFilterMismatchNmax} \
+        --outFilterMismatchNoverLmax ${outFilterMismatchNoverLmax} \
+        --alignIntronMin ${alignIntronMin} \
+        --alignIntronMax ${alignIntronMax} \
+        --alignMatesGapMax ${alignMatesGapMax} \
+        --outFilterType &quot;${outFilterType}&quot; \
+        --outFilterScoreMinOverLread ${outFilterScoreMinOverLread} \
+        --outFilterMatchNminOverLread ${outFilterMatchNminOverLread} \
+        --limitSjdbInsertNsj ${limitSjdbInsertNsj} \
+        --outSAMstrandField &quot;${outSAMstrandField}&quot; \
+        --outFilterIntronMotifs &quot;${outFilterIntronMotifs}&quot; \
+        --alignSoftClipAtReferenceEnds &quot;${alignSoftClipAtReferenceEnds}&quot; \
+        --quantMode &quot;${&quot; &quot;.join(quantMode)}&quot; \
+        --outSAMattrRGline &quot;${&quot; &quot;.join(outSAMattrRGline)}&quot; \
+        --outSAMattributes &quot;${&quot; &quot;.join(outSAMattributes)}&quot; \
+        --chimSegmentMin ${chimSegmentMin} \
+        --chimJunctionOverhangMin ${chimJunctionOverhangMin} \
+        --chimOutType &quot;${&quot; &quot;.join(chimOutType)}&quot; \
+        --chimMainSegmentMultNmax ${chimMainSegmentMultNmax} \
+        --sjdbOverhang ${sjdbOverhang if _read_length == 0 else _read_length} \
+        --var-vcf-file &quot;${varVCFfile}&quot;
 </pre></div>
 </div>
 </div>
@@ -1452,151 +1423,25 @@ output: picard_metrics = f&#39;{cwd}/{_sample_id}.alignment_summary_metrics&#39;
         bigwig = f&#39;{_input[0]:n}.md.bw&#39;,
         output_summary = f&#39;{cwd}/{_sample_id}.bam_file_meta&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    # Record start timestamp for CollectMultipleMetrics
-    start_time=$(date +%s)
-    echo &quot;CollectMultipleMetrics started at: $(date)&quot;
-    set -e
-    picard -Xmx${java_mem} CollectMultipleMetrics \
-        -REFERENCE_SEQUENCE ${reference_fasta} \
-        -PROGRAM CollectAlignmentSummaryMetrics \
-        -PROGRAM CollectInsertSizeMetrics \
-        -PROGRAM QualityScoreDistribution \
-        -PROGRAM MeanQualityByCycle \
-        -PROGRAM CollectBaseDistributionByCycle \
-        -PROGRAM CollectGcBiasMetrics \
-        -VALIDATION_STRINGENCY STRICT \
-        -INPUT  ${_input[&quot;cord_bam_wasp_qc&quot;]} \
-        -OUTPUT  ${_output[0]:n}
-    
-    # Record end timestamp and calculate runtime for CollectMultipleMetrics
-    end_time=$(date +%s)
-    runtime=$((end_time - start_time))
-    echo &quot;CollectMultipleMetrics ended at: $(date)&quot;
-    echo &quot;CollectMultipleMetrics runtime: $runtime seconds&quot;
-
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n}.stderr&#39;, stdout = f&#39;{_output[-1]:n}.stdout&#39;
-    start_time=$(date +%s)
-    echo &quot;MarkDuplicates started at: $(date)&quot;
-    set -e
-    picard -Xmx${java_mem}  MarkDuplicates \
-        -I ${_input[&quot;cord_bam_wasp_qc&quot;]}  \
-        -O ${_output[2]} \
-        -PROGRAM_RECORD_ID null \
-        -M ${_output[3]} \
-        -TMP_DIR ${cwd}\
-        -MAX_RECORDS_IN_RAM 500000 -SORTING_COLLECTION_SIZE_RATIO 0.25 \
-        -ASSUME_SORT_ORDER coordinate \
-        -TAGGING_POLICY DontTag \
-        -OPTICAL_DUPLICATE_PIXEL_DISTANCE ${optical_distance} \
-        -CREATE_INDEX true \
-        -CREATE_MD5_FILE true \
-        -VALIDATION_STRINGENCY STRICT \
-        -REMOVE_SEQUENCING_DUPLICATES false \
-        -REMOVE_DUPLICATES false
-    samtools index ${_output[2]}
-    # Record end timestamp and calculate runtime for MarkDuplicates
-    end_time=$(date +%s)
-    runtime=$((end_time - start_time))
-    echo &quot;MarkDuplicates ended at: $(date)&quot;
-    echo &quot;MarkDuplicates runtime: $runtime seconds&quot;
-
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;
-    set -e
-    # Get only lines with rRNA and transcript_id from the GTF file
-    cat ${gtf} | grep rRNA | grep transcript_id &gt; ${cwd}/$(basename ${gtf}).tmp.${_input[&quot;cord_bam_wasp_qc&quot;]:bnnnn}  # To avoid data racing problem, modification was made here to change the output location to the output path
-    
-    # Extract header from the BAM file
-    samtools view -H ${_input[&quot;cord_bam_wasp_qc&quot;]}  &gt; ${_input[&quot;cord_bam_wasp_qc&quot;]}.RI
-
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;
-        import os
-        import pandas as pd
-        from collections import defaultdict
-        chrom = []
-        start = []
-        end = []
-        strand = []
-        tag = []
-        filename = os.path.basename(&quot;${gtf}.tmp.${_input[&quot;cord_bam_wasp_qc&quot;]:bnnnn}&quot;)
-        annotation_gtf = os.path.join(&quot;${cwd}&quot;,filename) # also change the path to read the file only with rRNA and transcript_id from the GTF file
-
-        with open(annotation_gtf, &#39;r&#39;) as gtf:
-            for row in gtf:
-                row = row.strip().split(&#39;\t&#39;)
-                if row[0][0]==&#39;#&#39; or row[2]!=&quot;transcript&quot;: continue # skip header
-                chrom.append(row[0])
-                start.append(row[3])
-                end.append(row[4])
-                strand.append(row[6])
-                attributes = defaultdict()
-                for a in row[8].replace(&#39;&quot;&#39;, &#39;&#39;).split(&#39;;&#39;)[:-1]:
-                    kv = a.strip().split(&#39; &#39;)
-                    if kv[0]!=&#39;tag&#39;:
-                        attributes[kv[0]] = kv[1]
-                    else:
-                        attributes.setdefault(&#39;tags&#39;, []).append(kv[1])
-                tag.append(attributes)
-        transcript_id = [x[&quot;transcript_id&quot;] for x in tag]
-        RI = pd.DataFrame(data={&#39;chr&#39;:chrom, &#39;start&#39;:start, &#39;end&#39;:end, &#39;strand&#39;:strand,&#39;transcript_id&#39; : transcript_id })
-        RI.to_csv(&quot;${_input[&quot;cord_bam_wasp_qc&quot;]}.RI&quot;, index = 0, header = 0, mode = &quot;a&quot;,sep = &quot;\t&quot; )
-
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.rna_metrics.stderr&#39;, stdout = f&#39;{_output[0]:n}.rna_metrics.stdout&#39;
-    # Record start timestamp for CollectRnaSeqMetrics
-    start_time=$(date +%s)
-    echo &quot;CollectRnaSeqMetrics started at: $(date)&quot;
-    set -e
-    picard -Xmx${java_mem} CollectRnaSeqMetrics \
-        -REF_FLAT ${ref_flat} \
-        -RIBOSOMAL_INTERVALS ${_input[&quot;cord_bam_wasp_qc&quot;]}.RI \
-        -STRAND_SPECIFICITY ${picard_strand_dict[_strand]} \
-        -CHART_OUTPUT ${_output[0]:n}.rna_metrics.pdf \
-        -VALIDATION_STRINGENCY STRICT \
-        -INPUT ${_input[&quot;cord_bam_wasp_qc&quot;]}  \
-        -OUTPUT  ${_output[0]:n}.rna_metrics
-    
-    rm ${cwd}/$(basename ${gtf}).tmp.${_input[&quot;cord_bam_wasp_qc&quot;]:bnnnn} # remove the path of the corresponding file with only rRNA and transcript_id from the GTF file
-    
-    # Record end timestamp and calculate runtime for CollectRnaSeqMetrics
-    end_time=$(date +%s)
-    runtime=$((end_time - start_time))
-    echo &quot;CollectRnaSeqMetrics ended at: $(date)&quot;
-    echo &quot;CollectRnaSeqMetrics runtime: $runtime seconds&quot;
-
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.bw.stderr&#39;, stdout = f&#39;{_output[0]:n}.bw.stdout&#39;
-    generate_bigwig() {
-        # Check if enough arguments are provided
-        if [[ $# -ne 1 ]]; then
-            echo &quot;Usage: generate_bigwig &lt;file.bam&gt;&quot;
-            return 1
-        fi
-
-        local input_file=&quot;$1&quot;
-        
-        # Derive file.bw from file.bam
-        local bigwig_file=&quot;${input_file%.*}.bw&quot;
-
-        # Execute the commands
-        samtools index &quot;$input_file&quot;
-        bamCoverage -b &quot;$input_file&quot; -o &quot;$bigwig_file&quot;
-    }
-
-    export -f generate_bigwig  # To make it available in subshells, if needed.
-    generate_bigwig $[_output[&quot;md_bam&quot;]]
-
-import pandas as pd
-out = pd.DataFrame({
-    &quot;sample_id&quot;: _sample_id,
-    &quot;strand&quot;: _strand,
-    &quot;coord_bam_list&quot;: f&#39;{_output[&quot;md_bam&quot;]:b}&#39;,
-    &quot;BW_list&quot;: f&#39;{_output[&quot;bigwig&quot;]:b}&#39;,
-    &quot;SJ_list&quot;: f&#39;{_output[&quot;md_bam&quot;]:bnnnnn}.SJ.out.tab&#39;,
-    &quot;trans_bam_list&quot;: f&#39;{_output[&quot;md_bam&quot;]:bnnnn}.toTranscriptome.out{&quot;_wasp_qc&quot; if varVCFfile else &quot;&quot;}.bam&#39;},
-    index=[0])
-out.to_csv(_output[&quot;output_summary&quot;], sep=&quot;\t&quot;, index=False)
-
-if zap_raw_bam:
-    _input[&quot;cord_bam_wasp_qc&quot;].zap()
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.sh picard_qc_star_align_2 \
+        --cwd &quot;${cwd}&quot; \
+        --gtf &quot;${gtf}&quot; \
+        --ref-flat &quot;${ref_flat}&quot; \
+        --reference-fasta &quot;${reference_fasta}&quot; \
+        --java-mem &quot;${java_mem}&quot; \
+        --optical-distance ${optical_distance} \
+        --input-bam &quot;${_input[0]}&quot; \
+        --sample-id &quot;${_sample_id}&quot; \
+        --strand &quot;${_strand}&quot; \
+        --picard-metrics &quot;${_output[&quot;picard_metrics&quot;]}&quot; \
+        --picard-rna-metrics &quot;${_output[&quot;picard_rna_metrics&quot;]}&quot; \
+        --md-bam &quot;${_output[&quot;md_bam&quot;]}&quot; \
+        --md-metrics &quot;${_output[&quot;md_metrics&quot;]}&quot; \
+        --bigwig &quot;${_output[&quot;bigwig&quot;]}&quot; \
+        --output-summary &quot;${_output[&quot;output_summary&quot;]}&quot; \
+        --var-vcf-file &quot;${varVCFfile}&quot; \
+        --zap-raw-bam &quot;${zap_raw_bam}&quot;
 </pre></div>
 </div>
 </div>
@@ -1608,25 +1453,14 @@ input: group_by = &quot;all&quot;
 depends: sos_variable(&quot;strand&quot;)
 output: f&#39;{cwd}/{sample_list:bn}.bam_file_list&#39;
 task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = 1
-python: container=container, expand= &quot;${ }&quot;
-
-    import pandas as pd
-
-    coord_bam_list = [${_input:br,}][2::6]
-    sorted_bigwig_list = [${_input:br,}][4::6]
-    SJ_list = [f&#39;{x}.SJ.out.tab&#39; for x in [${_input:bnnnnnr,}][2::6]]
-    trans_bam_list = [f&#39;{x}.toTranscriptome.out{&quot;_wasp_qc&quot; if &quot;${varVCFfile}&quot; else &quot;&quot;}.bam&#39; for x in [${_input:bnnnnr,}][2::6]]
-
-    out = pd.DataFrame({
-        &quot;sample_id&quot;: ${sample_id},
-        &quot;strand&quot;: ${strand},
-        &quot;coord_bam_list&quot;: coord_bam_list,
-        &quot;BW_list&quot;: sorted_bigwig_list,
-        &quot;SJ_list&quot;: SJ_list,
-        &quot;trans_bam_list&quot;: trans_bam_list
-    })
-
-    out.to_csv(&quot;${_output}&quot;, sep=&quot;\t&quot;, index=False)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.py \
+        --step star_align_3 \
+        --output &quot;${_output}&quot; \
+        --input ${&quot; &quot;.join([str(x) for x in _input])} \
+        --sample-id ${&quot; &quot;.join([str(x) for x in sample_id])} \
+        --strand ${&quot; &quot;.join([str(x) for x in strand])} \
+        --var-vcf-file &quot;${varVCFfile}&quot;
 </pre></div>
 </div>
 </div>
@@ -1663,6 +1497,7 @@ import pandas as pd
 parameter: bam_list = path
 # Reference gene model
 parameter: gtf = path
+parameter: reference_fasta = path
 sample_inv = pd.read_csv(bam_list,sep = &quot;\t&quot;)
 parameter: detection_threshold = 5
 parameter: mapping_quality = 255
@@ -1674,7 +1509,7 @@ sample_id = sample_inv.sample_id.values.tolist()
     
 ## Get the file name for cood_bam data
 coord_bam_list_inv = sample_inv.coord_bam_list.values.tolist()
-coord_bam_list = [f&#39;{cwd}/{x}&#39; for x in coord_bam_list_inv ]
+coord_bam_list = [x if os.path.isabs(x) else f&#39;{cwd}/{x}&#39; for x in coord_bam_list_inv ]
 input:  coord_bam_list, group_by = 1, group_with = {&quot;sample_id&quot;,&quot;strand_list&quot;}
 output: f&#39;{cwd}/{_sample_id}.rnaseqc.gene_tpm.gct.gz&#39;,
         f&#39;{cwd}/{_sample_id}.rnaseqc.gene_reads.gct.gz&#39;,
@@ -1682,21 +1517,20 @@ output: f&#39;{cwd}/{_sample_id}.rnaseqc.gene_tpm.gct.gz&#39;,
         f&#39;{cwd}/{_sample_id}.rnaseqc.metrics.tsv&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    cd ${cwd} &amp;&amp; \
-    rnaseqc \
-        ${gtf:a} \
-        ${_input:a} \
-        ${_output[0]:d}  \
-        ${(&quot;--stranded &quot; + _strand_list) if _strand_list != &quot;unstranded&quot; else &quot;&quot;} \
-        ${f&#39;--detection-threshold {detection_threshold}&#39;} ${f&#39;--mapping-quality {mapping_quality}&#39;} ${ &#39;&#39; if is_paired_end else &#39;-u&#39;}
-
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    mv ${_output[0]:d}/${_input:b}.gene_tpm.gct ${_output[0]:n}
-    mv ${_output[0]:d}/${_input:b}.gene_reads.gct ${_output[1]:n}
-    mv ${_output[0]:d}/${_input:b}.exon_reads.gct ${_output[2]:n}
-    mv ${_output[0]:d}/${_input:b}.metrics.tsv ${_output[3]}
-    gzip ${_output[0]:n} ${_output[1]:n} ${_output[2]:n}
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.sh rnaseqc_call \
+        --cwd &quot;${cwd}&quot; \
+        --sample-list &quot;${sample_list}&quot; \
+        --data-dir &quot;${data_dir}&quot; \
+        --gtf &quot;${gtf}&quot; \
+        --reference-fasta &quot;${reference_fasta}&quot; \
+        --input-bam &quot;${_input}&quot; \
+        --sample-id &quot;${_sample_id}&quot; \
+        --strand &quot;${_strand_list}&quot; \
+        --detection-threshold &quot;${detection_threshold}&quot; \
+        --mapping-quality &quot;${mapping_quality}&quot; \
+        --paired-end ${is_paired_end} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1712,79 +1546,12 @@ output: f&#39;{cwd}/{bam_list:bn}.rnaseqc.gene_tpm.gct.gz&#39;,
         f&#39;{cwd}/{bam_list:bn}.rnaseqc.exon_readsCount.gct.gz&#39;,
         f&#39;{cwd}/{bam_list:bn}.rnaseqc.metrics.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    import pandas as pd
-    import os
-    def make_gct(gct_path):
-        # sample_name
-        sample_name = &quot;.&quot;.join(os.path.basename(gct_path).split(&quot;.&quot;)[:-4])
-        # read_input
-        pre_gct = pd.read_csv(gct_path,sep = &quot;\t&quot;,
-                              skiprows= 2,index_col=&quot;Name&quot;).drop(&quot;Description&quot;,axis = 1)
-        pre_gct.index.name = &quot;gene_ID&quot;
-        pre_gct.columns = [sample_name]
-        return(pre_gct)
-
-    def merge_gct(gct_path_list):
-        gct = pd.DataFrame()
-        for gct_path in gct_path_list:
-            #check duplicated indels and remove them.
-            gct_col = make_gct(gct_path)
-            gct = gct.merge(gct_col,right_index=True,left_index = True,how = &quot;outer&quot;)
-        return gct
-
-    input_list = [${_input:r,}]
-    tpm_list = input_list[0::4]
-    gc_list = input_list[1::4]
-    ec_list = input_list[2::4]
-    gct_path_list_list = [tpm_list,gc_list,ec_list]
-    output_path = [${_output:r,}][0:3]
-    for i in range(0,len(output_path)):
-        output = merge_gct(gct_path_list_list[i])
-        output.to_csv(output_path[i], sep = &quot;\t&quot;)
-    metrics_list = input_list[3::4]
-    with open(&quot;${cwd}/${bam_list:bn}.rnaseqc.metrics_output_list&quot;, &quot;w&quot;) as f:
-        f.write(&#39;\n&#39;.join(metrics_list))
-
-
-    input_files_tsv = &quot;${_output[3]:n}_output_list&quot;
-    prefix = &quot;${_output[3]:nn}&quot;
-
-
-
-
-    annotation_headers = &quot;&quot;
-
-    annotation_tsvs = []
-    output_dir = &quot;.&quot;
-
-
-    if len(annotation_headers)==1 and annotation_headers[0]==&#39;&#39;:
-        annotation_headers = []
-
-    path_s = pd.read_csv(input_files_tsv, sep=&#39;\t&#39;, index_col=0, header=None, names=[&#39;sample_id&#39;,&#39;metrics_path&#39;]).squeeze(&quot;columns&quot;)
-    if path_s.isnull().all():  # ID not provided
-        path_s = pd.Series(path_s.index, index=[os.path.split(i)[1].split(&#39;.metrics.tsv&#39;)[0] for i in path_s.index])
-
-    # check format
-    df = pd.read_csv(path_s.iloc[0], sep=&#39;\t&#39;, header=None)
-    if df.shape[0]==2:  # RNA-SeQC v1.1.9
-        dfs = [pd.read_csv(i, sep=&#39;\t&#39;) for i in path_s]
-    elif df.shape[1]==2:  # RNA-SeQC v2
-        dfs = [pd.read_csv(i, sep=&#39;\t&#39;, header=None, index_col=0).T for i in path_s]
-    else:
-        raise ValueError(&#39;Unrecognized input format (shape {}).&#39;.format(df.shape))
-    metrics_df = pd.concat(dfs, axis=0)
-    metrics_df.index = metrics_df[&#39;Sample&#39;]
-
-    # add optional annotations as additional columns
-    for h,tsv in zip(annotation_headers, annotation_tsvs):
-        annotation_df = pd.read_csv(tsv, sep=&#39;\t&#39;, index_col=0, header=None, names=[&#39;sample_id&#39;,h])
-        metrics_df[h] = annotation_df.loc[metrics_df.index, h]
-
-    metrics_df.to_csv(os.path.join(output_dir, prefix+&#39;.metrics.tsv&#39;), sep=&#39;\t&#39;, index=False, float_format=&#39;%.8g&#39;)
-#bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-#    aggregate_rnaseqc_metrics  ${_output[3]:n}_output_list ${_output[3]:nn}
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.py \
+        --step rnaseqc_merge \
+        --cwd &quot;${cwd}&quot; \
+        --name &quot;${bam_list:bn}&quot; \
+        --input ${&quot; &quot;.join([str(x) for x in _input])}
 </pre></div>
 </div>
 </div>
@@ -1814,6 +1581,7 @@ parameter: RSEM_index = path
 parameter: max_frag_len = 1000
 parameter: estimate_rspd = True
 
+import os
 sample_inv = pd.read_csv(bam_list,sep = &quot;\t&quot;)
 
 ## Extract strand information if user have specified the strand
@@ -1824,11 +1592,11 @@ sample_id = sample_inv.sample_id.values.tolist()
     
 ## Get the file name for trans_bam_list data
 trans_bam_list_inv = sample_inv.trans_bam_list.values.tolist()
-trans_bam_list = [f&#39;{cwd}/{x}&#39; for x in trans_bam_list_inv]
+trans_bam_list = [x if os.path.isabs(x) else f&#39;{cwd}/{x}&#39; for x in trans_bam_list_inv]
 input: trans_bam_list, group_by = 1, group_with = {&quot;sample_id&quot;, &quot;strand_list&quot;} 
 output: f&#39;{cwd}/{_sample_id}.rsem.isoforms.results&#39;, f&#39;{cwd}/{_sample_id}.rsem.genes.results&#39;,f&#39;{cwd}/{_sample_id}.rsem.stat/{_sample_id}.rsem.cnt&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
     run_RSEM ${RSEM_index:a} ${_input:a} ${_sample_id} \
         -o ${_output[0]:d} \
         --max_frag_len ${max_frag_len} \
@@ -1856,62 +1624,12 @@ output: f&#39;{cwd}/{bam_list:bn}.rsem_transcripts_expected_count.txt.gz&#39;,
         f&#39;{cwd}/{bam_list:bn}.rsem.aggregated_quality.metrics.tsv&#39;
 
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    input_list = [${_input:r,}]
-    with open(&#39;${cwd}/${bam_list:bn}.rsem.isoforms_output_list&#39;, &quot;w&quot;) as f:
-        f.write(&#39;\n&#39;.join(input_list[0::3]))
-    with open(&#39;${cwd}/${bam_list:bn}.rsem.genes_output_list&#39;, &quot;w&quot;) as f:
-        f.write(&#39;\n&#39;.join(input_list[1::3]))
-
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-         aggregate_rsem_results ${cwd}/${bam_list:bn}.rsem.isoforms_output_list {expected_count,TPM,FPKM,IsoPct} ${_output[0]:nnn} -o ${cwd}
-         aggregate_rsem_results ${cwd}/${bam_list:bn}.rsem.genes_output_list {expected_count,TPM,FPKM} ${_output[1]:nnn} -o ${cwd}
-# -o to specify the output-dir(writable);the defualt is cwd of the sos command-/home/username/data(read-only)
-
-R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n}.stderr&#39;, stdout = f&#39;{_output[-1]:n}.stdout&#39;
-     readRSEM.cnt &lt;- function (source) {
-            # RSEM .cnt files gives statistics about the (transcriptome) alignment passed to RSEM:
-            # Row 1: N0 (# unalignable reads);
-            #        N1 (# alignable reads);
-            #        N2 (# filtered reads due to too many alignments);
-            #        N_tot (N0+N1+N2)
-            # Row 2: nUnique (# reads aligned uniquely to a gene);
-            #        nMulti (# reads aligned to multiple genes);
-            #        nUncertain (# reads aligned to multiple locations in the given reference sequences, which include isoform-level multi-mapping reads)
-            # Row 3: nHits (# total alignments);
-            #        read_type (0: single-end read, no quality; 1: single-end read, with quality score; 2: paired-end read, no quality score; 3: paired-end read, with quality score)
-            # Source: https://groups.google.com/forum/#!topic/rsem-users/usmPKgsC5LU
-            # Note: N1 = nUnique + nMulti
-
-            stopifnot(file.exists(source[1]))
-            isDir &lt;- file.info(source[1])$isdir
-            if (isDir) {
-                files &lt;- system(paste(&quot;find&quot;, source, &quot;-name \&quot;*.rsem.cnt\&quot;&quot;), intern=TRUE)
-                stopifnot(length(files) &gt; 0)
-                samples &lt;- gsub(&quot;_rsem.cnt&quot;, &quot;&quot;, basename(files), fixed=TRUE)
-            } else {
-                files &lt;- source
-                samples &lt;- gsub(&quot;.rsem.cnt&quot;, &quot;&quot;, basename(files), fixed=TRUE)
-            }
-            metrics &lt;- list()
-            for (i in 1:length(files)) {
-                m &lt;- read.table(files[i], header=FALSE, sep=&quot; &quot;, comment.char=&quot;#&quot;, stringsAsFactors=FALSE, nrows=3, fill=TRUE)
-                metrics[[i]] &lt;- data.frame(Sample=samples[i],
-                File=files[i],
-                TotalReads=m[1, 4],
-                AlignedReads=m[1, 2],
-                UniquelyAlignedReads=m[2, 1],
-                stringsAsFactors=FALSE)
-            }
-            metrics &lt;- do.call(rbind, metrics)
-            row.names(metrics) &lt;- metrics$Sample
-
-            return(metrics)
-        }
-        sourceRSEM = c(${_input:r,})
-        sourceRSEM = sourceRSEM[seq(3,length(sourceRSEM),3)]
-        metrics.RSEM = readRSEM.cnt(sourceRSEM)
-        write.table(metrics.RSEM, file=&quot;${_output[-1]}&quot;,col.names=TRUE, row.names=FALSE, quote=FALSE)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.py \
+        --step rsem_call_2 \
+        --cwd &quot;${cwd}&quot; \
+        --name &quot;${bam_list:bn}&quot; \
+        --input ${&quot; &quot;.join([str(x) for x in _input])}
 </pre></div>
 </div>
 </div>
@@ -1931,13 +1649,12 @@ R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[-1]:n
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[rsem_call_3,rnaseqc_call_3]
 output: f&#39;{_input[0]:nnn}.multiqc_report.html&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-report: output = f&quot;{_output:n}.multiqc_config.yml&quot;
-  extra_fn_clean_exts:
-      - &#39;_rsem&#39;
-  fn_ignore_dirs:
-      - &#39;*_STARpass1&#39;
-bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    multiqc ${_input:d} -v -n ${_output:b} -o ${_output:d} -c ${_output:n}.multiqc_config.yml
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.sh multiqc_report \
+        --cwd &quot;${cwd}&quot; \
+        --input-dir &quot;${_input:d}&quot; \
+        --output-report &quot;${_output}&quot; \
+        --multiqc-config &quot;${_output:n}.multiqc_config.yml&quot;
 </pre></div>
 </div>
 </div>
@@ -1948,141 +1665,14 @@ bash:  container=container,expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.
 # Path to flat reference file, for computing QC metric
 output: f&#39;{_input[0]:nn}.picard.aggregated_quality.metrics.tsv&#39;# it will be outputed in a very &#39;deep&#39; directory with {cwd}/
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, trunk_size = job_size
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    ## Define Function
-    readPicard.alignment_summary_metrics &lt;- function (source) {
-      stopifnot(length(source) == 1)
-      stopifnot(file.exists(source))
-      isDir &lt;- file.info(source)$isdir
-      if (isDir) {
-        files &lt;- system(paste(&quot;find -L&quot;, source, &quot;-name \&quot;*.alignment_summary_metrics\&quot;&quot;), intern=TRUE)
-        stopifnot(length(files) &gt; 0)
-        samples &lt;- gsub(&quot;.alignment_summary_metrics&quot;, &quot;&quot;, basename(files), fixed=TRUE)
-      } else {
-        files &lt;- source
-        samples &lt;- gsub(&quot;.alignment_summary_metrics&quot;, &quot;&quot;, basename(files), fixed=TRUE)
-      }
-    
-      metrics &lt;- list()
-      for (i in 1:length(files)) {
-        m &lt;- read.table(files[i], header=TRUE, sep=&quot;\t&quot;, comment.char=&quot;#&quot;, stringsAsFactors=FALSE, nrows=${is_paired_end}+1)
-        metrics[[i]] &lt;- data.frame(Sample=samples[i],
-                                   File=files[i],
-                                   PF_READS=sum(m$PF_READS[1:2]),
-                                   PF_READS_ALIGNED=sum(m$PF_READS_ALIGNED[1:2]),
-                                   PCT_PF_READS_ALIGNED=sum(m$PF_READS_ALIGNED[1:2])/sum(m$PF_READS[1:2]),
-                                   stringsAsFactors=FALSE)
-      }
-      metrics &lt;- do.call(rbind, metrics)
-      row.names(metrics) &lt;- metrics$Sample
-    
-      return(metrics)
-    }
-
-    readPicard.rna_metrics &lt;- function(source) {
-
-      stopifnot(length(source) == 1)
-      stopifnot(file.exists(source))
-      isDir &lt;- file.info(source)$isdir
-      if (isDir) {
-        files &lt;- system(paste(&quot;find -L&quot;, source, &quot;-name \&quot;*.rna_metrics\&quot;&quot;), intern=TRUE)
-        stopifnot(length(files) &gt; 0)
-        samples &lt;- gsub(&quot;.rna_metrics&quot;, &quot;&quot;, basename(files), fixed=TRUE)
-      } else {
-        files &lt;- source
-        samples &lt;- gsub(&quot;.rna_metrics&quot;, &quot;&quot;, basename(files), fixed=TRUE)
-      }
-
-      metrics &lt;- list()
-      for (i in 1:length(files)) {
-        m &lt;- read.table(files[i], header=TRUE, sep=&quot;\t&quot;, comment.char=&quot;#&quot;, stringsAsFactors=FALSE, nrows=1)
-        metrics[[i]] &lt;- data.frame(Sample=samples[i],
-                                   File=files[i],
-                                   PCT_RIBOSOMAL_BASES=m$PCT_RIBOSOMAL_BASES,
-                                   PCT_CODING_BASES=m$PCT_CODING_BASES,
-                                   PCT_UTR_BASES=m$PCT_UTR_BASES,
-                                   PCT_INTRONIC_BASES=m$PCT_INTRONIC_BASES,
-                                   PCT_INTERGENIC_BASES=m$PCT_INTERGENIC_BASES,
-                                   PCT_MRNA_BASES=m$PCT_MRNA_BASES,
-                                   PCT_USABLE_BASES=m$PCT_USABLE_BASES,
-                                   MEDIAN_CV_COVERAGE=m$MEDIAN_CV_COVERAGE,
-                                   MEDIAN_5PRIME_BIAS=m$MEDIAN_5PRIME_BIAS,
-                                   MEDIAN_3PRIME_BIAS=m$MEDIAN_3PRIME_BIAS,
-                                   MEDIAN_5PRIME_TO_3PRIME_BIAS=m$MEDIAN_5PRIME_TO_3PRIME_BIAS,
-                                   stringsAsFactors=FALSE)
-      }
-      metrics &lt;- do.call(rbind, metrics)
-      row.names(metrics) &lt;- metrics$Sample
-    
-      return(metrics)
-    }
-
-
-    readPicard.duplicate_metrics &lt;- function(source) {
-
-      stopifnot(length(source) == 1)
-      stopifnot(file.exists(source))
-      #pattern_suffix &lt;- ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp_qc&quot;,&quot;&quot;)
-      #pattern_suffix &lt;- ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp_qc&quot;,&quot;&quot;)
-      pattern &lt;- paste0(&#39;*.Aligned.sortedByCoord.out&#39;,ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp&quot;,&quot;_nowasp&quot;),ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_qc&quot;,&quot;_noqc&quot;),&#39;.md.metrics&#39;)
-      substitute &lt;- paste0(&#39;.Aligned.sortedByCoord.out&#39;,ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_wasp&quot;,&quot;_nowasp&quot;),ifelse(&quot;${varVCFfile}&quot;!=&quot;&quot;,&quot;_qc&quot;,&quot;_noqc&quot;),&#39;.md.metrics&#39;)
-      #substitute &lt;- paste0(&#39;.Aligned.sortedByCoord.out&#39;,pattern_suffix,&#39;.md.metrics&#39;)
-      #f&#39;{cwd}/{_sample_id}.Aligned.toTranscriptome.out{&quot;_wasp&quot; if wasp else &quot;_nowasp&quot;}{&quot;_qc&quot; if wasp else &quot;_noqc&quot;}.bam&#39;
-      isDir &lt;- file.info(source)$isdir
-      if (isDir) {
-        files &lt;- system(paste(&quot;find -L&quot;, source, &quot;-name&quot;,pattern), intern=TRUE)
-        stopifnot(length(files) &gt; 0)
-        samples &lt;- gsub(substitute, &quot;&quot;, basename(files), fixed=TRUE)
-      } else {
-        files &lt;- source
-        samples &lt;- gsub(substitute, &quot;&quot;, basename(files), fixed=TRUE)
-      }
-
-      metrics &lt;- list()
-      for (i in 1:length(files)) {
-        m &lt;- read.table(files[i], header=TRUE, sep=&quot;\t&quot;, comment.char=&quot;#&quot;, stringsAsFactors=FALSE, nrows=1)
-        metrics[[i]] &lt;- data.frame(Sample=samples[i],
-                                   File=files[i],
-                                   PERCENT_DUPLICATION=m$PERCENT_DUPLICATION,
-                                   ESTIMATED_LIBRARY_SIZE=m$ESTIMATED_LIBRARY_SIZE,
-                                   stringsAsFactors=FALSE)
-      }
-      metrics &lt;- do.call(rbind, metrics)
-      row.names(metrics) &lt;- metrics$Sample
-    
-      return(metrics)
-    }
-
-
-    readPicard &lt;- function(source) {
-      metrics.aln &lt;- readPicard.alignment_summary_metrics(source)
-      metrics.rna &lt;- readPicard.rna_metrics(source)
-      metrics.dup &lt;- readPicard.duplicate_metrics(source)
-
-      stopifnot(all(row.names(metrics.aln) %in% row.names(metrics.rna)) &amp;
-                all(row.names(metrics.rna) %in% row.names(metrics.dup)) &amp;
-                all(row.names(metrics.dup) %in% row.names(metrics.aln)))
-
-      metrics.aln$File &lt;- NULL
-      metrics.rna$File &lt;- NULL
-      metrics.dup$File &lt;- NULL
-      metrics.rna$Sample &lt;- NULL
-      metrics.dup$Sample &lt;- NULL
-
-      metrics &lt;- cbind(metrics.aln, metrics.rna[row.names(metrics.aln), ])
-      metrics &lt;- cbind(metrics, metrics.dup[row.names(metrics.aln), ])
-
-      return(metrics)
-    }
-
-    ## Execution  
-    sourcePicard = ${_input[-1]:dr}
-
-    Picard_qualityMetrics &lt;- readPicard(sourcePicard)
-    write.table(Picard_qualityMetrics, file=&quot;${_output}&quot;,col.names=TRUE, row.names=FALSE, quote=FALSE)
-
-
-# Need to considering .checkpoint directory(hidden) when there&#39;s interruption caused by previous error in [STAR_lign] on interactive sessions. It might cause inconsistent length of metrics of metrics.aln.
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.R \
+        --step aggregate_picard_qc \
+        --input-dir &quot;${_input[-1]:d}&quot; \
+        --output &quot;${_output}&quot; \
+        --is-paired-end ${is_paired_end} \
+        ${&quot;--wasp&quot; if varVCFfile else &quot;&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -2113,52 +1703,16 @@ input: output_from(&quot;STAR_align_1&quot;), group_by = 2, group_with = {&quot;
 output: cord_bam_wasp_qc = f&#39;{cwd}/{_sample_id}.Aligned.sortedByCoord.out{&quot;_wasp&quot; if wasp else &quot;_nowasp&quot;}{&quot;_qc&quot; if wasp else &quot;_noqc&quot;}.bam&#39;,
         trans_bam_wasp_qc = f&#39;{cwd}/{_sample_id}.Aligned.toTranscriptome.out{&quot;_wasp&quot; if wasp else &quot;_nowasp&quot;}{&quot;_qc&quot; if wasp else &quot;_noqc&quot;}.bam&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-
-    # WASP-based QC filtering function
-    wasp_filter() {
-        # Check if an argument is provided
-        if [[ -z &quot;$1&quot; ]]; then
-            echo &quot;Usage: wasp_filter &lt;file.something.ext&gt;&quot;
-            return 1
-        fi
-        local input_file=&quot;$1&quot;
-        local base_name=&quot;${input_file%.*}&quot;  # Removes the last extension
-        local derived_file=&quot;${base_name%.*}.int.bam&quot;  # Removes the second to last extension and adds .ext     
-
-        if [ $[unique] ]; then # pay attention to the spcae around the variable in [[]].
-            # wasp_filtering &amp; unique_filtering
-            if [ $[wasp] ]; then
-                echo &quot;Applying unique_WASP filtering&quot;
-                samtools view -h -q $[mapping_quality] &quot;$input_file&quot; | grep -v &quot;vW:i:[2-7]&quot; | samtools view -b &gt; &quot;$derived_file&quot;
-            # unique_filtering
-            else
-                echo &quot;Applying unique filtering&quot;
-                samtools view -h -q $[mapping_quality] &quot;$input_file&quot; | samtools view -b &gt; &quot;$derived_file&quot; # remember to convert SAM files back to BAM files
-            fi
-        else
-            # only wasp_filtering: Potential Allele-Specific Alignment Bias
-            if [ $[wasp] ]; then
-                echo &quot;Applying WASP filtering&quot;
-                samtools view -h &quot;$input_file&quot; | grep -v &quot;vW:i:[2-7]&quot; | samtools view -b &gt; &quot;$derived_file&quot;
-            # no filter
-            else
-                echo &quot;Applying no filtering&quot;
-                cp &quot;$input_file&quot; &quot;$derived_file&quot;
-            fi
-        fi
-        return 0
-    }
-
-    # I tried using the filtered bam file to replace the original bam file, but I got &quot;Exec format error&quot;. Don&#39;t do that! It&#39;s risky for the file being overwritten and being read simultaneously.
-
-    export -f wasp_filter  # Make it available in subshells, if needed
-
-    # Perform WASP-based QC filtering
-    wasp_filter $[_input[0]]
-    wasp_filter $[_input[1]] 
-    mv $[_output[0]:nnnn].Aligned.sortedByCoord.int.bam  $[_output[0]]
-    mv $[_output[1]:nnnn].Aligned.toTranscriptome.int.bam  $[_output[1]]
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/molecular_phenotypes/calling/RNA_calling.sh filter_reads \
+        --cwd &quot;${cwd}&quot; \
+        --input-cord-bam &quot;${_input[0]}&quot; \
+        --input-trans-bam &quot;${_input[1]}&quot; \
+        --output-cord-bam &quot;${_output[&quot;cord_bam_wasp_qc&quot;]}&quot; \
+        --output-trans-bam &quot;${_output[&quot;trans_bam_wasp_qc&quot;]}&quot; \
+        --unique &quot;${unique}&quot; \
+        --wasp &quot;${wasp}&quot; \
+        --mapping-quality &quot;${mapping_quality}&quot;
 </pre></div>
 </div>
 </div>

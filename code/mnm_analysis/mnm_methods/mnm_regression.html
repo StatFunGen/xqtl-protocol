@@ -767,6 +767,7 @@ INFO: Workflow mnm (ID=w080346b338ea4ab5) is executed successfully with 2 comple
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # It is required to input the name of the analysis
 parameter: name = str
 parameter: cwd = path(&quot;output&quot;)
@@ -804,8 +805,8 @@ parameter: trans_analysis = False
 parameter: seed = 999
 
 # association analysis paramters
-# initial greedy number of single effects for SuSiE
-parameter: L_greedy = 8
+# initial number of single effects for SuSiE
+parameter: init_L = 8
 # maximum number of single effects to use for SuSiE
 parameter: L = 30
 parameter: estimate_residual_variance = True
@@ -840,6 +841,8 @@ parameter: max_cv_variants = -1
 parameter: ld_reference_meta_file = path()
 # Analysis environment settings
 parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 200
 # Wall clock time expected
@@ -1392,8 +1395,6 @@ parameter: prior_canonical_matrices = False
 parameter: sample_partition = path() 
 parameter: mvsusie_max_iter = 200
 parameter: mrmash_max_iter = 5000
-parameter: min_twas_maf = 0.01
-parameter: min_twas_xvar = 0.01
 depends: sos_variable(&quot;regional_data&quot;)
 # Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
 stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
@@ -1595,7 +1596,7 @@ else:
     f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_twas_weights.rds&#39;]    
 output: output_files
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm_genes.stderr&quot;, container = container
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm_genes.stderr&quot;, container = container, entrypoint = entrypoint
 
     library(data.table)
     library(dplyr)
@@ -1648,23 +1649,44 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
     process_and_compare_variants &lt;- function(combined_list, condition_name) {
        extracted_regional_window_combined_susie_result &lt;- list()
        extracted_regional_window_combined_sumstats_result &lt;- list()
+       compare_variants &lt;- function(variants1, variants2) {
+            return(any(variants1 %in% variants2) | any(variants2 %in% variants1))
+       }
+       subset_top_loci_variants &lt;- function(df) {
+          find_non_zero_rows &lt;- function(df) {
+                non_zero_indices &lt;- which(rowSums(df!= 0) &gt; 0)
+                return(non_zero_indices)
+           }
+           non_zero_indices &lt;- find_non_zero_rows(df)
+
+           if (length(non_zero_indices) &gt; 0) {
+              non_zero_index_variants &lt;- df[non_zero_indices, , drop = FALSE]%&gt;%select(variant_id)%&gt;%pull(variant_id)
+              zero_index_filtered_variants &lt;- df[-non_zero_indices, ,drop = FALSE]%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
+              top_loci_variants &lt;- c(non_zero_index_variants, zero_index_filtered_variants)
+           } else {
+              zero_index_filtered_variants &lt;- df%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
+              top_loci_variants &lt;- zero_index_filtered_variants
+           }
+             return(top_loci_variants)
+       }
+  
        for (i in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
            susie_result_1 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[i]]
            gene_id &lt;- names(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])[i]
     
            # Extract top_loci variants
-           variants1 &lt;- unique(susie_result_1[[&quot;top_loci&quot;]][[&quot;variant&quot;]])
+           variants1 &lt;- subset_top_loci_variants(susie_result_1[[&quot;top_loci&quot;]])
            if (length(variants1) &gt; 0) {
               different_in_all_genes &lt;- TRUE
     
            for (j in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
                if (i != j) {
                   susie_result_2 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[j]]
-                  variants2 &lt;- unique(susie_result_2[[&quot;top_loci&quot;]][[&quot;variant&quot;]])
+                  variants2 &lt;- subset_top_loci_variants(susie_result_2[[&quot;top_loci&quot;]])
         
                   # Compare variants
                   if (length(variants2) &gt; 0) {
-                    if (length(intersect(variants1, variants2)) &gt; 0) {
+                    if (compare_variants(variants1, variants2)) {
                         # If variants are not totally different across all genes, set the flag to FALSE
                        different_in_all_genes &lt;- FALSE
                        break
@@ -1754,12 +1776,12 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
           region_name = &quot;${_meta_info[2]}&quot;
         }
 
-        region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), analysis_region = &quot;${_meta_info[1]}&quot;, grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
+        region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
             
         dd_prior &lt;- NULL
         if (${&quot;TRUE&quot; if data_driven_prior else &quot;FALSE&quot;}) {
             # FIXME: please complete this function call
-            dd_prior &lt;- multigene_udr(extracted_combined_susie_list, coverage = paste0(&quot;CS_&quot;, as.integer(round(100 * ${coverage[0]})), &quot;_susie&quot;), independent_variant_list = ${independent_variant_list:r}, n_random = ${n_random}, n_null = ${n_null}, seed = ${seed})
+            dd_prior &lt;- multigene_udr(extracted_combined_susie_list, coverage = paste0(&quot;cs_coverage_&quot;,${coverage[0]},sep=&quot;&quot;), independent_variant_list = ${independent_variant_list:r}, n_random = ${n_random}, n_null = ${n_null}, seed = ${seed})
         }
         if (length(filtered_event_names)&gt;=2) {
            pip_cutoff_to_skip = list(${&quot;,&quot;.join(skip_analysis_pip_cutoff)})
@@ -1771,7 +1793,6 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
                             Y=fdat$residual_Y[,filtered_event_names],
                             maf=fdat$maf,
                             X_variance = fdat$X_variance,
-                            region = region_info$analysis_region,
                             other_quantities = list(dropped_samples = fdat$dropped_samples),
                             # filters
                             imiss_cutoff = ${imiss}, 
@@ -1780,8 +1801,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
                             ld_reference_meta_file = ${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
                             pip_cutoff_to_skip = pip_cutoff_to_skip,
                             # methods parameter configuration
-                            L = ${L},
-                            L_greedy = ${L_greedy},
+                            max_L = -1,
                             data_driven_prior_matrices = dd_prior, 
                             data_driven_prior_matrices_cv = dd_prior_cv, 
                             data_driven_prior_weights_cutoff = ${prior_weights_min}, 
@@ -1794,7 +1814,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quo
                             coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
                             # TWAS weights and CV for TWAS weights
                             twas_weights = ${&quot;TRUE&quot; if not skip_twas_weights else &quot;FALSE&quot;},
-                            sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else &quot;read.table(%r, header = TRUE)&quot; % str(sample_partition)},
+                            sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else sample_partition},
                             max_cv_variants = ${max_cv_variants}, 
                             cv_folds = ${twas_cv_folds},
                             cv_threads = ${twas_cv_threads}            
@@ -1988,7 +2008,7 @@ meta_info = regional_data[&#39;meta_info&#39;]
 input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
 output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0]}.mvfsusie_{prior}.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
     # Load regional association data
     fdat = load_regional_association_data(genotype = ${_input[0]:anr},
                                           phenotype = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1::2]])}),
@@ -2004,7 +2024,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f
                          Y_u = Reduce(cbind, Y[[2]]),
                          pos = list(pos1 =fdat$phenotype_coordiates[[1]], pos2 = fdat$phenotype_coordiates[[3]]),
                          X=X,
-                         L=${L},
+                         L=${max_L},
                          data.format=&quot;list_df&quot;)
     saveRDS(fitted, ${_output:ar})
 </pre></div>

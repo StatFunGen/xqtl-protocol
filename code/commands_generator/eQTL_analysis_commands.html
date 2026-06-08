@@ -636,7 +636,7 @@ A genotype list, with two column, `#chr` and  `path`
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/eQTL_analysis_commands.ipynb plink_per_chrom \
     --ref_fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta    \
-    --genoFile   input_data/Genotype/DEJ_11898_B01_GRM_WGS_2017-05-15_2*.recalibrated_variants.xqtl_protocol_data.add_chr.vcf.gz  \
+    --genoFile   input_data/Genotype/DEJ_11898_B01_GRM_WGS_2017-05-15_2*.recalibrated_variants.add_chr.vcf.gz  \
     --dbSNP  reference_data/00-All.add_chr.variants.gz \
     --sample_participant_lookup reference_data/sample_participant_lookup.rnaseq --run --monitor --cwd output_rerun
 </pre></div>
@@ -647,7 +647,7 @@ A genotype list, with two column, `#chr` and  `path`
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span> sos run pipeline/eQTL_analysis_commands.ipynb sumstat_standardizer    \
     --recipe protocol_data.recipe    \
-    --genotype_list output_rerun/data_preprocessing/genotype/xqtl_protocol_data.merged.filtered.plink_files_list.txt  \
+    --genotype_list output_rerun/data_preprocessing/genotype/wgs.merged.filtered.plink_files_list.txt  \
     --fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta      \
     --sample_participant_lookup reference_data/sample_participant_lookup.rnaseq    \
     --Association_option &quot;TensorQTL&quot; --cwd output3 --run  --N 3    --cwd output_rerun
@@ -659,7 +659,7 @@ A genotype list, with two column, `#chr` and  `path`
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span> sos run pipeline/eQTL_analysis_commands.ipynb sumstat_standardizer    \
     --recipe protocol_data.recipe    \
-    --genotype_list output_rerun/data_preprocessing/genotype/xqtl_protocol_data.merged.filtered.plink_files_list.txt  \
+    --genotype_list output_rerun/data_preprocessing/genotype/wgs.merged.filtered.plink_files_list.txt  \
     --fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta      \
     --sample_participant_lookup reference_data/sample_participant_lookup.rnaseq    \
     --Association_option &quot;TensorQTL&quot; --cwd output3 --run  --N 3    --cwd output_hidden_factor
@@ -766,7 +766,7 @@ script: interpreter = interpreter, expand = &quot;$[ ]&quot;, stderr = f&#39;{_o
 parameter: genoFile = paths
 skip_if(len(genoFile) == 1)
 input: output_from(&quot;VCF_QC&quot;), group_by = &quot;all&quot;
-parameter: name = &quot;xqtl_protocol_data.merged&quot;
+parameter: name = str
 output: f&quot;{cwd}/data_preprocessing/genotype//{name}.bed&quot;
 script: interpreter = interpreter, expand = &quot;$[ ]&quot;, stderr = f&#39;{_output}.step_{step_name}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
  $[&quot;monitor.py&quot; if monitor else &quot;&quot;] sos run $[exe_dir]//pipeline/genotype_formatting.ipynb merge_plink \

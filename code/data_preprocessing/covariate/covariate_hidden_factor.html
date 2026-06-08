@@ -799,6 +799,7 @@ Global Workflow Options:
                         Number of threads
   --container &#39;&#39;
                         Software container option
+  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
 
 Sections
@@ -845,6 +846,7 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # The output directory for generated files. MUST BE FULL PATH
 parameter: cwd = path(&quot;output&quot;)
 # Merged Covariates File
@@ -862,6 +864,7 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 8
 # Software container option
 parameter: container = &quot;&quot;
+parameter: entrypoint= &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -873,70 +876,15 @@ parameter: mean_impute_missing = False
 input: phenoFile, covFile
 output: f&#39;{cwd}/{name}.residual.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39; , container = container
-
-    mean_impute &lt;- function(d){
-      f &lt;- apply(d, 2, function(x) mean(x, na.rm = TRUE))
-      for (i in 1:length(f)) d[,i][which(is.na(d[,i]))] &lt;- f[i]
-      return(d)
-    }
-  
-    library(dplyr)
-    library(readr)
-    pheno = read_delim(${_input[0]:r},delim = &quot;\t&quot;)
-    covariate= read_delim(${_input[1]:r},delim = &quot;\t&quot;) 
-
-    # Extract samples in both files (Outliers will be removed in here as they are no longer presented in the header of factor)
-    extraction_sample_list &lt;- intersect(colnames(pheno), colnames(covariate)) 
-    
-    
-    if(length(extraction_sample_list) == 0){
-      stop(&quot;No samples are overlapped in two files!&quot;)
-    }
-    
-    ## Report sample counts:
-    print(paste((ncol(pheno) - 4), &quot;samples are in the phenotype file&quot;, sep = &quot; &quot;))
-    print(paste((ncol(covariate) - 1), &quot;samples are in the covariate file&quot;, sep = &quot; &quot;))
-
-    ## Report identical samples:
-    print(paste(length(extraction_sample_list), &quot;samples overlap between phenotype &amp; covariate files and are included in the analysis:&quot;, sep = &quot; &quot;))
-    print(extraction_sample_list)
-
-    ## Report non-overlapping samples :
-    covariate_missing = covariate %&gt;% select(-all_of(&#39;#id&#39;)) %&gt;% select(-all_of(extraction_sample_list))
-    print(paste(ncol(covariate_missing), &quot;samples in the covariate file are missing from the phenotype file:&quot;, sep = &quot; &quot;))
-    print(colnames(covariate_missing))
-
-    pheno_missing = pheno %&gt;% select(-c(1:4)) %&gt;% select(-all_of(extraction_sample_list))
-    print(paste(ncol(pheno_missing), &quot;samples in the phenotype file are missing from the covariate file:&quot;, sep = &quot; &quot;))
-    print(colnames(pheno_missing))
-
-    # Subset the data:
-    covariate = covariate[,extraction_sample_list]%&gt;%as.matrix()%&gt;%t()
-    pheno_id = pheno%&gt;%select(1:4)
-    pheno = pheno%&gt;%select(all_of(rownames(covariate)))%&gt;%as.matrix()%&gt;%t()
-    if (${&quot;T&quot; if mean_impute_missing else &quot;F&quot;}) {
-      pheno = mean_impute(pheno)
-    } else {
-      if(sum(is.na(pheno)) &gt; 0){ stop(&quot;NA in phenotype input is not allowed!&quot;) }
-    }
-    # Get residual 
-    pheno_resid = .lm.fit(x = cbind(1,covariate), y = pheno)$residuals
-    pheno_output = cbind(pheno_id, pheno_resid%&gt;%t())
-    pheno_output%&gt;%write_delim(&quot;${_output:n}&quot;,delim = &quot;\t&quot;)
-  
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container
-    bgzip -f ${_output:n}
-    tabix -p bed ${_output}
-
-    stdout=${_output:n}.stdout 
-    for i in ${_output} ; do 
-    echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-    echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-    echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-    echo &quot;output_column:&quot; `zcat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-    echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-    zcat $i | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
+        --step compute_residual \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${phenoFile}&quot; \
+        --covFile &quot;${covFile}&quot; \
+        --output &quot;${_output}&quot; \
+        ${&quot;--mean-impute-missing&quot; if mean_impute_missing else &quot;&quot;} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -950,56 +898,16 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout
 parameter: choose_k_method = &quot;Marchenko&quot;
 output: f&#39;{cwd}/{_input:bnnn}.{choose_k_method}_PC.gz&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    library(&quot;dplyr&quot;)
-    library(&quot;readr&quot;)
-    library(&quot;PCAtools&quot;)
-    library(&#39;BiocSingular&#39;)
-    residExpPath  = &quot;${_input}&quot;
-    covPath = &quot;${covFile}&quot;
-    residExpDF &lt;- read_delim(residExpPath, show_col_types=FALSE)
-    covDF &lt;- read_delim(covPath, show_col_types=FALSE)
-    commonMPSamples &lt;- intersect(colnames(covDF), colnames(residExpDF))
-    covDFcommon &lt;- cbind(covDF[, 1], covDF[, commonMPSamples])
-  
-    residExpPC &lt;- pca(
-        residExpDF[,commonMPSamples], # The first four columns are: chr, start, end, and gene_id; so we skip those.
-        scale = TRUE,
-        center = TRUE,
-        BSPARAM = ExactParam())
-
-    # Choose the number of PC
-    MPPCNum &lt;- 0
-    if (${&quot;T&quot; if choose_k_method == &quot;Marchenko&quot; else &quot;F&quot;}) {
-        M &lt;- apply(residExpDF[, commonMPSamples], 1, function(X){ (X - mean(X))/sqrt(var(X))});
-        residSigma2 &lt;- var(as.vector(M));
-        paste(&#39;sigma2:&#39;, residSigma2)
-        MPPCNum &lt;- chooseMarchenkoPastur(
-        .dim = dim(residExpDF[, commonMPSamples]), var.explained=residExpPC$sdev^2, noise=residSigma2)
-    }
-    if (${&quot;T&quot; if choose_k_method == &quot;Buja_Eyuboglu&quot; else &quot;F&quot;}) {
-        MPPCNum &lt;- jackstraw::permutationPA(data.matrix(residExpDF[, commonMPSamples]), B = 100, threshold = 0.05, verbose = F)$r
-    }
-    if (MPPCNum == 0) stop(&quot;Invalid choice of methods to choose K for PCA: ${choose_k_method}&quot;)
-
-    MPPCsDF &lt;- as.data.frame(residExpPC$rotated[, 1:MPPCNum, drop = FALSE])
-    MPColMatrix &lt;-  matrix(c(rep(&#39;Hidden_Factor_PC&#39;, times=MPPCNum), seq(1, MPPCNum)), ncol=2, nrow=MPPCNum)
-    colnames(MPPCsDF) &lt;- apply(MPColMatrix, 1, function(X){return(paste0(X[1], X[2]))})
-    # Add #id Column
-    MPPCsDF &lt;- as.data.frame(t(MPPCsDF))
-    MPPCsDF$id &lt;- rownames(MPPCsDF)
-    MPPCsDF &lt;- MPPCsDF %&gt;% select(id, everything()) %&gt;% rename(&quot;#id&quot; = &quot;id&quot;)
-    write_delim((rbind(covDFcommon, MPPCsDF)), &quot;${_output}&quot;, &quot;\t&quot;)
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
+        --step Marchenko_PC \
+        --cwd &quot;${cwd}&quot; \
+        --residFile &quot;${_input}&quot; \
+        --covFile &quot;${covFile}&quot; \
+        --choose-k-method &quot;${choose_k_method}&quot; \
+        --output &quot;${_output}&quot; \
+        --N ${N} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1031,47 +939,17 @@ parameter: convergence_mode = &quot;fast&quot;
 # input is the residual file from the first step
 output: f&#39;{cwd:a}/{_input:bnn}.PEER_MODEL.hd5&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
-    from mofapy2.run.entry_point import entry_point
-    import pandas as pd
-    import os
-    ## Force the number of threads used in numpy.
-    os.environ[&quot;OMP_NUM_THREADS&quot;] = &quot;${numThreads}&quot; # export OMP_NUM_THREADS=4
-    os.environ[&quot;OPENBLAS_NUM_THREADS&quot;] = &quot;${numThreads}&quot; # export OPENBLAS_NUM_THREADS=4 
-    os.environ[&quot;MKL_NUM_THREADS&quot;] = &quot;${numThreads}&quot; # export MKL_NUM_THREADS=6
-    import numpy as np
-    ## Data
-    data = pd.read_csv(${_input:r},&quot;\t&quot;,index_col = 3).drop([&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;],axis = 1)
-    # initialise the entry point
-    ent = entry_point()
-    # Guess number of factor
-    # Suggest the number of factors to use if no input value
-    num_factor = ${N}
-    if num_factor == 0:
-        if len(data.columns) &lt; 150:
-            num_factor = 15
-        elif len(data.columns) &lt; 250:
-            num_factor = 30
-        elif len(data.columns) &lt; 350:
-            num_factor = 45
-        else:
-            num_factor = 60
-    # Set data
-    # MOFA is a multi-view and multi-group inference framework. 
-    # If usig only a single view and a single group (as in PEER), the data needs to be embedded into a nested list
-    ent.set_data_matrix([[data.transpose()]],samples_names=[data.columns.values.tolist()], features_names=[data.index.values.tolist()])
-    ent.set_model_options(factors= num_factor , spikeslab_weights=False, ard_weights=False)
-    ent.set_train_options(iter=${iteration}, convergence_mode=&quot;${convergence_mode}&quot; ${f&#39;,dropR2 = {r2_tol}&#39; if r2_tol else &quot;&quot; }, startELBO=1, freqELBO=1,tolerance=${tol}, gpu_mode=False, verbose=True, seed=42)
-    ent.build()
-    ent.run()
-    ent.save(${_output:ar})
-    ## To fix issue https://github.com/statfungen/xqtl-protocol/issues/420
-    import h5py
-    right_name = [x.encode(&quot;UTF-8&quot;) for x in  ent.data_opts[&quot;features_names&quot;][0]] 
-    new_hd5 = h5py.File(${_output:ar}, &quot;r+&quot;)
-    del new_hd5[&quot;features/view0&quot;]
-    new_hd5[&quot;features&quot;].create_dataset(&quot;view0&quot;, data=np.array(right_name))
-    new_hd5.close()
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
+        --step PEER_fit \
+        --cwd &quot;${cwd}&quot; \
+        --residFile &quot;${_input}&quot; \
+        --N ${N} \
+        --iteration ${iteration} \
+        --convergence-mode &quot;${convergence_mode}&quot; \
+        --tol ${tol} \
+        --r2-tol ${r2_tol} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1081,117 +959,13 @@ python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[PEER_3]
 output: f&#39;{cwd:a}/{_input:bnn}.PEER.gz&#39;, f&#39;{cwd:a}/{_input:bnn}.PEER.diag.pdf&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    ####################
-    ## Load libraries ##
-    ####################
-    
-    library(MOFA2)
-    library(dplyr)
-    library(readr)
-    ################
-    ## Load model ##
-    ################
-    
-    file &lt;- &quot;${_input}&quot;
-    model &lt;- load_model(file)
-    
-    ####################################
-    ## (Optional) add sample metadata ##
-    ####################################
-    
-    # Important: 
-    # (1) the row names in the sample metadata data.frame have to match the sample names in the MOFA model
-    # (2) the sample name has to contain at least two columns: 
-    # 		- sample: sample names
-    #		- group: group name. Only required for multi-group inference. In your case just set the entire column to the same value
-    
-    # Load metadata
-    
-    # stopifnot(all(samples(model)[[1]]==metadata$sample))
-    # samples_metadata(model) &lt;- metadata
-    
-    ###############################
-    ## (Optional) Subset factors ##
-    ###############################
-    
-    # We can remove factors that explain little variance (in this case, we require at least 0.01%)
-    # r2 &lt;- model@cache$variance_explained$r2_per_factor
-    # factors &lt;- sapply(r2, function(x) x[,1]&gt;0.0001)
-    # model &lt;- subset_factors(model, which(apply(factors,1,sum) &gt;= 1))
-    
-    # fetch factors in matrix format, with dimensions (nfactors,nsamples)
-    factors &lt;- get_factors(model)[[1]]
-    dim(factors)
-    factors = as_tibble(t(factors),rownames = &quot;#id&quot;)
-    covPath = &quot;${covFile}&quot;
-    options(readr.show_col_types = FALSE)
-    covDF &lt;- read_delim(covPath, delim = &#39;\t&#39;)
-    commonMPSamples &lt;- intersect(colnames(covDF), colnames(factors))      
-    (rbind(covDF[, commonMPSamples], factors[, commonMPSamples])%&gt;%write_delim(&quot;${_output[0]}&quot;,&quot;\t&quot;))
-    # Plot save to vcf
-    pdf(&quot;${_output[1]}&quot;)
-    #############################
-    ## Plot variance explained ##
-    #############################
-    
-    # Plot variance explained using individual factors
-    plot_variance_explained(model, factors=&quot;all&quot;)
-    plot_variance_explained(model, factors=c(1,2,3))
-    
-    # Plot total variance explained using all factors
-    plot_variance_explained(model, plot_total = TRUE)[[2]]
-    
-    ########################
-    ## Plot factor values ##
-    ########################
-    
-    plot_factor(model, factor = 1)
-    plot_factors(model, factor = c(1,2))
-    
-    ###########################
-    ## Plot feature loadings ##
-    ###########################
-    
-    # The weights or loadings provide a score for each gene on each factor. 
-    # Genes with no association with the factor are expected to have values close to zero
-    # Genes with strong association with the factor are expected to have large absolute values. 
-    # The sign of the loading indicates the direction of the effect: a positive loading indicates that the feature is more active in the cells with positive factor values, and viceversa.
-    
-    # Plot the distribution of loadings for Factor 1.
-    plot_weights(model,
-      view = 1,
-      factor = 1,
-      nfeatures = 10,     # Top number of features to highlight
-      scale = T           # Scale loadings from -1 to 1
-    )
-    
-    # If you are not interested in the full distribution, but just on the top loadings:
-    plot_top_weights(model, 
-      view = 1, 
-      factor = 1, 
-      nfeatures = 10,
-      scale = T
-    )
-    
-    ######################################
-    ## Plot correlation between factors ##
-    ######################################
-    
-    plot_factor_cor(model)
-    
-    ###################
-    ## Fetch factors ##
-    ###################
-    invisible(dev.off())
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info $i &quot; &gt;&gt; $[_output[0]:n].stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $[_output[0]:n].stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $[_output[0]:n].stdout;
-        echo &quot;output_column:&quot; `zcat $i | head -1 | wc -w `   &gt;&gt; $[_output[0]:n].stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $[_output[0]:n].stdout;
-        zcat $i | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $[_output[0]:n].stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
+        --step PEER_extract \
+        --cwd &quot;${cwd}&quot; \
+        --modelFile &quot;${_input}&quot; \
+        --covFile &quot;${covFile}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1216,7 +990,7 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 import time
 output: f&#39;{cwd:a}/{_input:bn}.fake.vcf.gz&#39;
 #task: trunk_workers = 1,trunk_size = job_size , walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+R: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint = entrypoint
     library(&quot;dplyr&quot;)
     library(&quot;readr&quot;)
     ## Add fake header
@@ -1226,7 +1000,7 @@ R: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stder
     colnames(pheno)[1:3] = c(&quot;#CHROM&quot;,&quot;POS&quot;,&quot;ID&quot;) 
     pheno = cbind(pheno[1:3]%&gt;%mutate(REF = &quot;A&quot;, ALT = &quot;C&quot;, QUAL = &quot;.&quot;,FILTER = &quot;.&quot;, INFO = &quot;PR&quot;, FORMAT = &quot;GT&quot;),pheno[,5:ncol(pheno)])
     pheno%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, entrypoint = entrypoint
     bgzip -f $[_output:n]
     tabix -p vcf $[_output]
 </pre></div>
@@ -1255,7 +1029,7 @@ if N == 0:
 input: output_from(1), output_from(2)
 output: f&#39;{cwd:a}/{_input[0]:bnn}.BiCV.gz&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, entrypoint = entrypoint
     apex factor \
         --out $[_output[0]:nn] \
         --iter $[iteration] \

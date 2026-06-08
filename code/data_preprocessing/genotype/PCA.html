@@ -893,6 +893,7 @@ for (i in 1:3){
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # the output directory for generated files
 parameter: cwd = path(&quot;output&quot;)
 # A string to identify your analysis run
@@ -911,6 +912,8 @@ parameter: maha_k = 5
 parameter: homogeneous = False
 # Software container option
 parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -996,7 +999,7 @@ input: genoFile
 plink_command = get_plink_command_prefix(_input)
 output: f&#39;{cwd}/{genoFile:bn}.pca.eigenvec&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+bash: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
     plink2 ${plink_command} ${_input:n} --out ${_output:n} --pca ${k}
 </pre></div>
 </div>
@@ -1021,74 +1024,22 @@ parameter: stand = &quot;binom2&quot;
 input: genoFile, phenoFile
 output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    # Load required libraries
-    library(flashpcaR)
-    library(dplyr)
-    pops = c(${paths(pops):r,})
-    f &lt;- flashpca(${_input[0]:nr}, ndim=${k}, stand=&quot;${stand}&quot;, do_loadings=TRUE, check_geno=TRUE)
-    rownames(f$loadings) &lt;- read.table(&#39;${_input[0]:n}.bim&#39;,stringsAsFactors =F)[,2]
-    # Use the projection file to generate pca plot
-    pca &lt;- as.data.frame(f$projection)
-    pca &lt;- tibble::rownames_to_column(pca, &quot;ID&quot;)
-    colnames(pca) &lt;- c(&quot;ID&quot;,paste0(&quot;PC&quot;, 1:${k}))
-  
-    # Read fam file with phenotypes
-    if(stringr::str_detect(${_input[1]:r},&quot;\\.fam$|\\.psam$&quot;)){
-        pheno &lt;- read.table(${_input[1]:r}, header=F,stringsAsFactors =F)
-        colnames(pheno) = c(&quot;FID&quot;, &quot;IID&quot;, &quot;MID&quot;, &quot;PID&quot;, &quot;SEX&quot;, &quot;STATUS&quot;)
-    } else {
-        pheno &lt;- read.table(${_input[1]:r}, header=T,stringsAsFactors =F)
-        if(!&quot;IID&quot; %in% colnames(pheno)) stop(&quot;No IID column in the phenoFile. Please rename the header of the phenoFile&quot;)
-        if(!&quot;FID&quot; %in% colnames(pheno)) pheno$FID = pheno$IID
-    }
-    # Make the unique ID by merge FID and IID
-    pheno$ID = paste(pheno$FID,pheno$IID,sep = &quot;:&quot;)
-    #check duplicated ID
-    if(length(unique(pheno$ID))!=length(pheno$ID)) stop(&quot;There are duplicated names in IID column of phenoFile&quot;)
-
-    if (length(pops)&gt;0) pheno &lt;- pheno %&gt;%filter(${pop_col if pop_col else  &quot;pop&quot;} %in% pops | ${label_col if label_col else  &quot;pop&quot;} %in% pops)
-    pca &lt;-merge(pheno, pca,by =&quot;ID&quot;, all=FALSE) 
-    #
-    if (${&quot;TRUE&quot; if pop_col else &quot;FALSE&quot;}) {
-        # remove populations have less than ${min_pop_size} samples
-        pop&lt;-names(table(pca$${pop_col if pop_col else &quot;pop&quot;}))
-        pop_filter&lt;-pop[table(pca$pop)&lt;${min_pop_size}] # pop to be removed
-        if (length(pop_filter)&gt;0) {
-            warning(for (i in pop_filter){cat(i,&#39;;&#39;)},&#39;these &#39;, length(pop_filter),&quot; population will be removed due to having less than ${min_pop_size} samples in data.&quot;)
-            # remove
-            pca&lt;-pca%&gt;% filter(${f&#39;!{pop_col}%in%pop_filter&#39; if pop_col else pop_col})
-        }
-    } else {
-      pca$pop &lt;- 1 
-    }
-
-    # Write the PC scores to a file
-    write.table(pca,&quot;${_output:n}.txt&quot;, sep=&quot;\t&quot;, quote=FALSE, row.names=FALSE, col.names=TRUE)
-    dat = list(pca_model = f, pc_scores = pca, meta = &quot;${_input[1]:bn} ${suffix}&quot;)
-    # compute centroids before projecting back the samples
-    # (calculate mean/median/cov per pop)
-    if(${&quot;FALSE&quot; if homogeneous else &quot;TRUE&quot;}){
-        pop_group &lt;- split(dat$pc_scores[ ,c(paste0(&quot;PC&quot;, 1:${maha_k}))], list(Group = dat$pc_scores$${pop_col if pop_col else &quot;pop&quot;}))
-        dat$pc_cov &lt;- lapply(pop_group, function(x) cov(x))
-        dat$pc_mean &lt;- lapply(pop_group, function(x) sapply(x, mean))
-        dat$pc_median &lt;- lapply(pop_group, function(x) sapply(x, median))
-    } else {
-        dat$pc_cov &lt;- cov(f$projection[,1:${maha_k}])
-        dat$pc_mean &lt;- apply(f$projection[,1:${maha_k}], 2, mean)
-        dat$pc_median &lt;- apply(f$projection[,1:${maha_k}], 2, median)
-    }
-  
-    # save results
-    saveRDS(dat, ${_output:r})
-  
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This rds file is a list containing the pca for unrelated sample&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/genotype/PCA.R \
+        --step flashpca \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input[0]}&quot; \
+        --phenoFile &quot;${_input[1]}&quot; \
+        --output &quot;${_output}&quot; \
+        --stand &quot;${stand}&quot; \
+        --min-pop-size ${min_pop_size} \
+        --homogeneous &quot;${homogeneous}&quot; \
+        --pop-col &quot;${pop_col}&quot; \
+        --label-col &quot;${label_col}&quot; \
+        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
+        --k ${k} \
+        --maha-k ${maha_k} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1104,73 +1055,27 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 parameter: genoFile = path
 # The phenotypic file
 parameter: phenoFile = path(f&#39;{genoFile}&#39;.replace(&quot;.bed&quot;, &quot;.fam&quot;).replace(&quot;.pgen&quot;, &quot;.psam&quot;))
+# How to standardize X before PCA
+parameter: stand = &quot;binom2&quot;
 parameter: pca_model = f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;
 ## Input genoFile here is for related samples
 input: genoFile, phenoFile, pca_model
 output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.pca.projected.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    # Load required libraries
-    library(dplyr)
-    library(flashpcaR)
-    # Read the PLINK binary files
-    frel &lt;- ${_input[0]:nr}
-    # Read loadings, center and scale from previous PCA
-    dat &lt;- readRDS(${_input[2]:r})
-    f &lt;- dat$pca_model                           
-    # Read the bim/pvar file to obtain reference alleles
-    variant_file &lt;- if(stringr::str_detect(&#39;${_input[0]}&#39;, &quot;\\.bed$&quot;)) &#39;${_input[0]:n}.bim&#39; else &#39;${_input[0]:n}.pvar&#39;
-    bim &lt;- read.table(variant_file, stringsAsFactors=F)
-    ref_col &lt;- if(stringr::str_detect(variant_file, &quot;\\.bim$&quot;)) 5 else 4  # Column index differs between .bim and .pvar
-    ref &lt;- as.character(bim[,ref_col])
-    names(ref) &lt;- bim[,2]
-    if (nrow(f$loadings) != length(ref)) stop(&quot;Input number of variants should be the same as used in the previous PCA model&quot;)
-    overlapped_variants &lt;- match(names(ref), rownames(f$loadings))
-    # Project related samples
-    fpro &lt;- project(frel, loadings=f$loadings[overlapped_variants,], orig_mean=f$center[overlapped_variants], orig_sd=f$scale[overlapped_variants], ref_allele=ref)
-    pca &lt;- fpro$projection
-    k = ${k}
-    pca &lt;- as.data.frame(fpro$projection)
-    pca &lt;- tibble::rownames_to_column(pca, &quot;ID&quot;)
-    colnames(pca) &lt;- c(&quot;ID&quot;,paste0(&quot;PC&quot;, 1:k))
-    
-    # Read fam/psam file with phenotypes
-    if(stringr::str_detect(${_input[1]:r},&quot;\\.fam$|\\.psam$&quot;)){
-        pheno &lt;- read.table(${_input[1]:r}, header=F,stringsAsFactors =F)
-        colnames(pheno) = c(&quot;FID&quot;, &quot;IID&quot;, &quot;MID&quot;, &quot;PID&quot;, &quot;SEX&quot;, &quot;STATUS&quot;)
-    } else {
-        pheno &lt;- read.table(${_input[1]:r}, header=T,stringsAsFactors =F)
-        if(!&quot;IID&quot; %in% colnames(pheno)) stop(&quot;No IID column in the phenoFile. Please rename the header of the phenoFile&quot;)
-        if(!&quot;FID&quot; %in% colnames(pheno)) pheno$FID = pheno$IID
-    }
-    # Make the unique ID by merge FID and IID
-    pheno$ID = paste(pheno$FID,pheno$IID,sep = &quot;:&quot;)
-    #check duplicated ID
-    if(length(unique(pheno$ID))!=length(pheno$ID)) stop(&quot;There are duplicated names in IID column of phenoFile&quot;)
-
-    pca &lt;-merge(pheno, pca,by =&quot;ID&quot;, all=FALSE)
-    dat$pc_scores = bind_rows(dat$pc_scores, pca)
-    
-    # Write the PC scores to a file
-    write.table(dat$pc_scores,&quot;${_output:n}.txt&quot;, sep=&quot;\t&quot;, quote=FALSE, row.names=FALSE, col.names=TRUE)
-    # save results
-    saveRDS(dat, ${_output:r})
-  
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-        stdout=$[_output:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This rds file is a list containing the pca for projected sample&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        done
-        for i in $[_output:n].txt ; do 
-        echo &quot;output_info $i &quot; &gt;&gt; $stdout;
-        echo &quot;This is the PC score&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/genotype/PCA.R \
+        --step project_samples \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input[0]}&quot; \
+        --phenoFile &quot;${_input[1]}&quot; \
+        --output &quot;${_output}&quot; \
+        --stand &quot;${stand}&quot; \
+        --pop-col &quot;${pop_col}&quot; \
+        --label-col &quot;${label_col}&quot; \
+        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
+        --pca-model &quot;${_input[2]}&quot; \
+        --maha-k ${maha_k} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1192,101 +1097,22 @@ output: f&#39;{cwd}/{_input:bn}.pc.png&#39;,
         f&#39;{cwd}/{_input:bn}.scree.png&#39;,
         f&#39;{cwd}/{_input:bn}.scree.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: container = container, volumes = [f&quot;{outlier_file:ad}:{outlier_file:ad}&quot;], expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    library(dplyr)
-    library(ggplot2)
-    library(gridExtra)
-    library(matrixStats)
-    pops = c(${paths(pops):r,})
-    dat = readRDS(${_input:r})
-    f = dat$pca_model
-    pca_final&lt;-dat$pc_scores
-    
-    if (length(pops)&gt;1) pca_final &lt;- pca_final %&gt;% filter(${pop_col if pop_col else &quot;pop&quot;} %in% pops | ${label_col if label_col else  &quot;pop&quot;} %in% pops) 
-    pca_final &lt;- pca_final %&gt;% mutate(${label_col if label_col else &quot;pop&quot;}=as.character(${label_col if label_col else  &quot;pop&quot;}))
-    k = ${k}
-    # manually set colors for PCA plotting, to avoid similar colors in one plot:
-    # generated by https://mokole.com/palette.html
-    set.seed(999)
-    colors_40 = sample(c(&quot;#a9a9a9&quot;, &quot;#2f4f4f&quot;, &quot;#556b2f&quot;, &quot;#a0522d&quot;, &quot;#7f0000&quot;, &quot;#006400&quot;, &quot;#808000&quot;, &quot;#483d8b&quot;, &quot;#3cb371&quot;, &quot;#bdb76b&quot;, &quot;#4682b4&quot;, &quot;#9acd32&quot;, 
-                          &quot;#20b2aa&quot;, &quot;#00008b&quot;, &quot;#32cd32&quot;, &quot;#daa520&quot;, &quot;#7f007f&quot;, &quot;#b03060&quot;, &quot;#ff0000&quot;, &quot;#ff8c00&quot;, &quot;#ffff00&quot;, &quot;#0000cd&quot;, &quot;#00ff00&quot;, &quot;#9400d3&quot;, 
-                          &quot;#00fa9a&quot;, &quot;#00ffff&quot;, &quot;#00bfff&quot;, &quot;#f4a460&quot;, &quot;#f08080&quot;, &quot;#adff2f&quot;, &quot;#ff6347&quot;, &quot;#ff00ff&quot;, &quot;#1e90ff&quot;, &quot;#dda0dd&quot;, &quot;#7b68ee&quot;, &quot;#afeeee&quot;, 
-                          &quot;#ee82ee&quot;, &quot;#ff69b4&quot;, &quot;#ffe4c4&quot;, &quot;#ffc0cb&quot;))
-    colors_20 = sample(c(&quot;#2f4f4f&quot;, &quot;#2e8b57&quot;, &quot;#8b0000&quot;, &quot;#808000&quot;, &quot;#00008b&quot;, &quot;#ff0000&quot;, &quot;#ff8c00&quot;, &quot;#00ff00&quot;, &quot;#4169e1&quot;, &quot;#00ffff&quot;, &quot;#00bfff&quot;, &quot;#0000ff&quot;, 
-                          &quot;#da70d6&quot;, &quot;#d8bfd8&quot;, &quot;#ff00ff&quot;, &quot;#eee8aa&quot;, &quot;#ffff54&quot;, &quot;#ff1493&quot;, &quot;#ffa07a&quot;, &quot;#98fb98&quot;))
-
-    # assign colors to each ethnicity:
-    num_col=length(unique(pca_final$${label_col if label_col else &quot;pop&quot;}))
-    if (num_col &lt;= 20) {
-       color_list &lt;- colors_20[1:num_col]
-    } else {
-       color_list &lt;- colors_40[1:num_col]
-    }
-
-    ###
-    # Make the plots
-    ###
-    # Get the min and max values for x and y-axes
-    if (${&quot;TRUE&quot; if len(min_axis) == 0 or len(max_axis) == 0 else &quot;FALSE&quot;}) {
-        min_axis &lt;- round(colMins(as.matrix(f$projection[sapply(f$projection, is.numeric)])),1)
-        max_axis &lt;- round(colMaxs(as.matrix(f$projection[sapply(f$projection, is.numeric)])),1)  
-    } else {
-        min_axis &lt;- as.double(${min_axis})
-        max_axis &lt;- as.double(${max_axis})
-    }
-    if (${&quot;TRUE&quot; if outlier_file.is_file() else &quot;FALSE&quot;}) {
-        outliers &lt;- read.table(${outlier_file:r}, col.names=c(&quot;FID&quot;, &quot;IID&quot;),stringsAsFactors =F)
-        plot_pcs = function(pca_final, x, y, title=&quot;&quot;) {
-            ggplot(pca_final, aes_string(x=x, y=y)) + geom_point(${f&#39;aes(color={label_col})&#39; if label_col else &quot;&quot;}) + 
-              # add circles for these ouliters:
-              geom_point(data=filter(pca_final, IID %in% outliers$IID, FID %in% outliers$FID), shape = 21, size=1.5, color=&#39;red&#39;, stroke = 0.9) +
-              # add outliers dots:
-              geom_point(data=filter(pca_final, IID %in% outliers$IID, FID %in% outliers$FID), shape = 16, size=1${f&#39;,aes(color={label_col})&#39; if label_col else &quot;&quot;} ) + 
-              labs(title=title,x=x, y=y) +
-              scale_y_continuous(limits=c(min_axis, max_axis)) +
-              scale_x_continuous(limits=c(min_axis, max_axis)) +
-              scale_color_manual(values=color_list) +
-              theme_classic()
-        }} else {
-        plot_pcs = function(pca_final, x, y, title=&quot;&quot;) {
-          ggplot(pca_final, aes_string(x=x, y=y)) + geom_point(${f&#39;aes(color={label_col})&#39; if label_col else &quot;&quot;}) + 
-              labs(title=title,x=x, y=y) +
-              scale_y_continuous(limits=c(min_axis, max_axis)) +
-              scale_x_continuous(limits=c(min_axis, max_axis)) +
-              scale_color_manual(values=color_list) +
-              theme_classic()
-        }}
-    unit = 4
-    n_col = min(4, k)
-    n_row = ceiling(k / n_col)
-    plots = lapply(1:(k-1), function(i) plot_pcs(pca_final, paste0(&quot;PC&quot;,i), paste0(&quot;PC&quot;,i+1), dat$meta))
-    png(&#39;${_output[0]}&#39;, width = unit * n_col, height = unit * n_row, unit=&#39;in&#39;, res=300)
-    do.call(gridExtra::grid.arrange, c(plots, list(ncol = n_col, nrow = n_row)))
-    dev.off()
-    # Create scree plot
-    PVE &lt;- f$values
-    PVE &lt;- round(PVE/sum(PVE), 2)
-    PVEplot &lt;- qplot(c(1:length(PVE)), PVE) + geom_line() + xlab(&quot;Principal Component&quot;) + ylab(&quot;PVE&quot;) + ggtitle(&quot;Scree Plot&quot;) + ylim(0, 1) +scale_x_discrete(limits=factor(1:length(PVE)))
-    PVE_cum &lt;- cumsum(PVE)/sum(PVE)
-    cumPVEplot &lt;- qplot(c(1:length(PVE)), cumsum(PVE)) + geom_line() + xlab(&quot;Principal Component&quot;) + ylab(&quot;PVE&quot;) + ggtitle(&quot;Cumulative PVE Plot&quot;) + ylim(0, 1) + scale_x_discrete(limits=factor(1:length(PVE)))
-    png(&#39;${_output[1]}&#39;, width = 8, height = 4, unit=&#39;in&#39;, res=300)
-    grid.arrange(PVEplot, cumPVEplot, nrow = 1)
-    dev.off()
-    ## Textual Output
-    
-    PVE_output = tibble(PCs = 1:length(PVE), PVE = PVE, PVE_cum = PVE_cum )
-    PVE_output%&gt;%readr::write_delim(${_output[2]:r},&quot;\t&quot;)
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39; , container = container
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[2]] ; do 
-        echo &quot;output_info $i &quot; &gt;&gt; $stdout;
-        echo &quot;This is the PC score&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/genotype/PCA.R \
+        --step plot_pca \
+        --cwd &quot;${cwd}&quot; \
+        --plot-data &quot;${_input}&quot; \
+        --outlier-file &quot;${outlier_file}&quot; \
+        --min-axis &quot;${min_axis}&quot; \
+        --max-axis &quot;${max_axis}&quot; \
+        --pop-col &quot;${pop_col}&quot; \
+        --label-col &quot;${label_col}&quot; \
+        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
+        --k ${k} \
+        --output-pc-plot &quot;${_output[0]}&quot; \
+        --output-scree-plot &quot;${_output[1]}&quot; \
+        --output-scree-text &quot;${_output[2]}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1312,109 +1138,22 @@ output: distance=f&#39;{_input:n}.mahalanobis.rds&#39;,
         qqplot_mahalanobis=f&#39;{_input:n}.mahalanobis_qq.png&#39;,
         hist_mahalanobis=f&#39;{_input:n}.mahalanobis_hist.png&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container = container, expand = &quot;${ }&quot;
-    echo &#39;&#39;&#39;---
-    theme: base-theme
-    style: |
-      img {
-        height: 80%;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-      }
-    ---    
-    &#39;&#39;&#39; &gt; ${_output[2]}
-    
-R: container = container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    # Load required libraries
-    library(dplyr)
-    library(ggplot2)
-    library(gridExtra)
-  
-    # invert a known covariance matrix but allow them to be numerically singular matrix (still assuming full rank)
-    robust_inv = function(s) {
-        #tryCatch(solve(s), error=function(cond) solve(Matrix::nearPD(s)$mat))
-        tryCatch(solve(s), error=function(cond) MASS::ginv(s))
-    }
-
-    # Calculate mahalanobis distance  
-    calc_mahalanobis_dist = function(x, m, s, name = &#39;&#39;, prob=${prob}) {
-        pc &lt;- x %&gt;%
-          select(&quot;IID&quot;,&quot;FID&quot;, &quot;${pop_col if pop_col else &quot;pop&quot;}&quot;, starts_with(&quot;PC&quot;))
-        mu_pc &lt;- pc[,4:(4 + length(m) - 1)]
-        pc$mahal = mahalanobis(mu_pc, m, robust_inv(s), inverted=TRUE)
-        pc$p &lt;- pchisq(pc$mahal, df=nrow(s), lower.tail=FALSE)
-        manh_dis_sq_cutoff = quantile(pc$mahal, probs=prob)
-        # Obtain outliers
-        outliers = pc[(pc$mahal &gt; manh_dis_sq_cutoff &amp; pc$p &lt; ${pval}),]
-        d_summary = paste0(capture.output(summary(pc$mahal)), collapse = &#39;\n&#39;)
-        msg = paste(&#39;#&#39;, name, &quot;result summary\n## Mahalanobis distance summary:\n```\n&quot;, d_summary, &quot;\n```\n&quot;, 
-            paste(&quot;The cut-off for outlier removal is set to:&quot;, manh_dis_sq_cutoff, &quot;and the number of individuals to remove is:&quot;, nrow(outliers),&quot;\n&quot;),
-            paste(&quot;The new sample size after outlier removal is:&quot;,nrow(pc) - nrow(outliers),&quot;\n&quot;))
-        #
-        outliers &lt;- outliers %&gt;%
-        select(FID,IID)
-      list(pc=pc, manh_dis_sq_cutoff=manh_dis_sq_cutoff, msg=msg, outliers=outliers)
-    }
-
-    dat = readRDS(${_input:r})
-    if (is.list(dat$pc_mean)) {
-      pops = names(dat$pc_mean)
-      pop_group = split(dat$pc_scores, f = dat$pc_scores$${pop_col if pop_col else &quot;pop&quot;})
-      res = lapply(pops, function(p) calc_mahalanobis_dist(pop_group[[p]], dat$${&quot;pc_mean&quot; if not robust else &quot;pc_median&quot;}[[p]], dat$pc_cov[[p]], name = paste(dat$meta, p)))
-      names(res) = pops
-      res = list(
-          msg = do.call(paste, c(lapply(pops, function(p) res[[p]]$msg), sep = &quot;\n&quot;)),
-          manh_dis_sq_cutoff = cbind(pops, sapply(pops, function(p) res[[p]]$manh_dis_sq_cutoff)),
-          outliers = do.call(rbind, c(lapply(pops, function(p) res[[p]]$outliers))),
-          pc = do.call(rbind, c(lapply(pops, function(p) res[[p]]$pc)))
-          )
-    } else {
-      res = calc_mahalanobis_dist(dat$pc_scores, dat$${&quot;pc_mean&quot; if not robust else &quot;pc_median&quot;}, dat$pc_cov, name = dat$meta)
-    }
-      
-    write(res$msg, ${_output[2]:r})   
-    # Plot mahalanobis
-    k = ${k}
-    png(&#39;${_output[3]}&#39;, width = 4, height = 4, unit=&#39;in&#39;, res=300)
-    qqplot(qchisq(ppoints(100), df=k), res$pc$mahal, main = expression(&quot;Mahalanobis&quot; * ~D^2 * &quot; vs. quantiles of&quot; * ~ chi[k]^2), xlab = expression(chi[2]^2 * &quot;, probability points = 100&quot;), ylab = expression(D^2), pch=16)
-    abline(0,1,col=&#39;red&#39;)
-    dev.off() 
-    png(&#39;${_output[4]}&#39;, width = 4, height = 4, unit=&#39;in&#39;, res=300)
-    ggplot(res$pc, aes(x=mahal)) + geom_histogram(aes(y = ..count..), binwidth = 0.5, colour = &quot;#1F3552&quot;, fill = &quot;#4271AE&quot;) + scale_x_continuous(name = &quot;Mahalanobis distance&quot;) + theme_classic()
-    dev.off()
-  
-    # Save results and outliers
-    saveRDS(res,${_output[0]:r})
-    write.table(res$outliers, ${_output[1]:r}, sep=&quot;\t&quot;, quote=FALSE, row.names=FALSE, col.names=FALSE)
-  
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This rds file detail analysis output for detect outliers&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This text file documents the outliers samples&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        done
-        for i in $[_output[2]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This text file documents the analysis summary&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        done
-        for i in $[_output[3]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This plot documents the mahalanobis analysis result&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout; 
-        done
-        for i in $[_output[4]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This plot documents the mahalanobis distribution result&quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/genotype/PCA.R \
+        --step detect_outliers \
+        --cwd &quot;${cwd}&quot; \
+        --pca-result &quot;${_input}&quot; \
+        --prob ${prob} \
+        --pval ${pval} \
+        --robust ${&quot;TRUE&quot; if robust else &quot;FALSE&quot;} \
+        --pop-col &quot;${pop_col}&quot; \
+        --k ${k} \
+        --distance-output &quot;${_output[&#39;distance&#39;]}&quot; \
+        --identified-outliers-output &quot;${_output[&#39;identified_outliers&#39;]}&quot; \
+        --analysis-summary-output &quot;${_output[&#39;analysis_summary&#39;]}&quot; \
+        --qqplot-output &quot;${_output[&#39;qqplot_mahalanobis&#39;]}&quot; \
+        --hist-output &quot;${_output[&#39;hist_mahalanobis&#39;]}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>

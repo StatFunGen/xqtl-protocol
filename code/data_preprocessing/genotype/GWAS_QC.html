@@ -748,6 +748,7 @@ Global Workflow Options:
                         Number of threads
   --container &#39;&#39;
                         Software container option
+  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
 
 Sections
@@ -815,6 +816,7 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # the output directory for generated files
 parameter: cwd = path(&quot;output&quot;)
 # A string to identify your analysis run
@@ -842,6 +844,7 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 20
 # Software container option
 parameter: container = &quot;&quot;
+parameter: entrypoint= &quot;&quot;
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = path(f&quot;{cwd:a}&quot;)
@@ -919,6 +922,19 @@ def get_make_command(output_format):
         return &#39;--make-bed&#39;
     else:  # plink2
         return &#39;--make-pgen&#39;
+
+def get_other_args_flags(other_args):
+    import re
+    if not other_args:
+        return &quot;&quot;
+    args = [other_args] if isinstance(other_args, str) else list(other_args)
+    flags = []
+    for arg in args:
+        arg = str(arg)
+        if not re.fullmatch(r&quot;[A-Za-z0-9][A-Za-z0-9_.:-]*&quot;, arg):
+            raise ValueError(f&quot;Cannot safely pass PLINK other_args value: {arg}&quot;)
+        flags.append(f&quot;--other-arg {arg}&quot;)
+    return &quot; &quot;.join(flags)
 </pre></div>
 </div>
 </div>
@@ -936,31 +952,19 @@ parameter: kin_maf = 0.01
 input: genoFile
 output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.kin0&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-
 plink_command = get_plink_command_prefix(genoFile)
-
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
-    plink2 \
-      ${plink_command} ${_input:n} \
-      --make-king-table \
-      --king-table-filter ${kinship} \
-      ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-      ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
-      --min-af ${kin_maf} \
-      --max-af ${1-kin_maf} \
-      --out ${_output:n} \
-      --threads ${numThreads} \
-      --memory ${int(expand_size(mem) * 0.9)/1e6} 
-    
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-    i=&quot;${_output}&quot;
-    output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
-    output_rows=$(cat $i | wc -l | cut -f 1 -d &#39; &#39;)
-    output_column=$(cat $i | head -1 | wc -w)
-    output_preview=$(cat $i | grep -v &quot;##&quot; | head | cut -f 1,2,3,4,5,6)
-    
-    printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_preview:\n%s\n&quot; \
-        &quot;$i&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_preview&quot;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/GWAS_QC.sh king \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${genoFile}&quot; \
+        --plink-command &quot;${plink_command}&quot; \
+        --out-prefix &quot;${_output:n}&quot; \
+        --keep-samples &quot;${keep_samples}&quot; \
+        --remove-samples &quot;${remove_samples}&quot; \
+        --name &quot;${name}&quot; \
+        --kinship ${kinship} \
+        --kin-maf ${kin_maf} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -975,349 +979,12 @@ with open(_output, &#39;a&#39;):
     pass
 done_if(len(related_id) == 0, msg = f&quot;No related individuals detected from {_input}.&quot;)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R:  container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
-
-    # By Rui Dong and Derek Lamb, Columbia Neurology
-    # This function enhances the standard plinkQC::relatednessFilter approach through:
-    #
-    # 1. Graph-based preprocessing:
-    #    - For large relatedness networks, breaks down dense clusters of related individuals
-    #    - Removes highly connected nodes (individuals with many relatives) first
-    #    - Prevents memory issues when processing large components (&gt;20 individuals)
-    #    - Reduces the input size for the more intensive plinkQC filtering
-    #
-    # 2. Additional checks:
-    #    - Verifies that all related pairs are properly handled
-    #    - Runs up to 20 iterations to ensure complete filtering
-    #    - Catches edge cases that might be missed in a single pass
-    #
-    # This implementation is particularly helpful for datasets with large family 
-    # clusters or complex relatedness structures where the standard approach
-    # might struggle.    
-
-    filter_relatedness &lt;- function(
-      relatedness,                                  # Path to the relatedness file (required)
-      relatednessTh = 0.0625,                       # Threshold for relatedness
-      analysis_type = &quot;maximize_unrelated&quot;,         # Type of analysis: &quot;maximize_unrelated&quot; or &quot;maximize_cases&quot;
-      output_prefix = &quot;output_prefix&quot;,              # Base name for output file
-      otherCriterion = NULL,                        # Optional additional criterion for filtering
-      otherCriterionTh = NULL,                      # Threshold for the additional criterion
-      otherCriterionThDirection = &quot;ge&quot;,             # Direction of the threshold
-      relatednessIID1 = &quot;IID1&quot;,                     # Column name for first individual ID
-      relatednessIID2 = &quot;IID2&quot;,                     # Column name for second individual ID
-      relatednessFID1 = NULL,                       # Column name for first family ID
-      relatednessFID2 = NULL,                       # Column name for second family ID
-      relatednessRelatedness = &quot;PI_HAT&quot;,            # Column name for relatedness value
-      pheno_file = NULL,                            # File for phenotype information
-      pheno_col = &quot;pheno&quot;,                          # Column name for phenotype
-      otherCriterionIID = &quot;IID&quot;,                    # Column name for additional criterion ID
-      otherCriterionMeasure = NULL,                 # Column name for additional criterion measure
-      verbose = FALSE                               # Whether to print verbose output
-    ) {
-      # Load required packages
-      suppressMessages({
-        library(tidyverse)
-        library(igraph)
-        library(plinkQC)
-        library(data.table)
-      })
-      
-      # Validate inputs
-      if (is.null(relatedness)) {
-        stop(&quot;Relatedness file path is required&quot;)
-      }
-      
-      if (analysis_type == &quot;maximize_cases&quot; &amp;&amp; is.null(pheno_file)) {
-        stop(&quot;Must provide phenotype file when analysis_type is &#39;maximize_cases&#39;&quot;)
-      }
-      
-      # Read the relatedness file
-      full_kin0 &lt;- as.data.frame(relatedness)
-      
-      # Initial pruning of highly related individuals
-      working_graph &lt;- full_kin0 |&gt;
-        filter(!!sym(relatednessRelatedness) &gt;= relatednessTh) |&gt;
-        select(!!sym(relatednessIID1), !!sym(relatednessIID2)) |&gt;
-        graph_from_data_frame(directed = FALSE)
-      
-      working_comp &lt;- components(working_graph)
-      
-      # Set parameters
-      graph_size_th = 20
-      reduce_fraction = 0.05
-      high_related_indiv &lt;- c()
-      
-      # Reduce components to max 20
-      while (max(working_comp$csize &gt; graph_size_th)) {
-        
-        if (verbose) {
-          print(paste0(&quot;The largest component graph has &quot;, max(working_comp$csize), 
-                       &quot; individuals. Removing the most connected &quot;, 
-                       scales::percent(reduce_fraction), &quot; of them.&quot;))
-        }
-        
-        # Prepare for loop
-        large_comp_ids &lt;- which(working_comp$csize &gt; graph_size_th)
-        nodes_to_remove &lt;- c()
-        
-        for (comp_id in large_comp_ids) {
-          # Get nodes/degrees for component
-          comp_nodes &lt;- V(working_graph)[working_comp$membership == comp_id]
-          comp_degrees &lt;- degree(working_graph, v = comp_nodes)
-          
-          # Remove highly related individuals
-          num_to_remove &lt;- ceiling(length(comp_nodes) * reduce_fraction)
-          high_degree_nodes &lt;- names(sort(comp_degrees, decreasing = TRUE))[1:num_to_remove]
-          
-          # Append to removal list
-          nodes_to_remove &lt;- c(nodes_to_remove, high_degree_nodes)
-        }
-        
-        # Update for next loop
-        high_related_indiv &lt;- c(high_related_indiv, nodes_to_remove)
-        working_graph &lt;- delete_vertices(working_graph, nodes_to_remove)
-        working_comp &lt;- components(working_graph)
-      }
-      
-      kin0 &lt;- full_kin0 |&gt;
-        filter(!(!!sym(relatednessIID1) %in% high_related_indiv) &amp; 
-               !(!!sym(relatednessIID2) %in% high_related_indiv))
-      
-      # Process based on analysis type
-      if (analysis_type == &quot;maximize_unrelated&quot;) {
-        # Run the plinkQC relatedness Filter
-        rel &lt;- plinkQC::relatednessFilter(
-          relatedness = kin0,
-          otherCriterion = otherCriterion,
-          relatednessTh = relatednessTh,
-          relatednessIID1 = relatednessIID1,
-          relatednessIID2 = relatednessIID2,
-          otherCriterionTh = otherCriterionTh,
-          otherCriterionThDirection = otherCriterionThDirection,
-          relatednessFID1 = relatednessFID1,
-          relatednessFID2 = relatednessFID2,
-          relatednessRelatedness = relatednessRelatedness,
-          otherCriterionIID = otherCriterionIID,
-          otherCriterionMeasure = otherCriterionMeasure,
-          verbose = verbose
-        )$failIDs
-        
-        all_exclude &lt;- rel$IID
-        
-      } else if (analysis_type == &quot;maximize_cases&quot;) {
-        # Load phenotype information
-        related_individuals &lt;- unique(c(kin0 |&gt; pull(relatednessIID1), kin0 |&gt; pull(relatednessIID2)))
-        
-        df_pheno &lt;- fread(pheno_file) |&gt;
-          drop_na(!!sym(pheno_col)) |&gt;
-          filter(IID %in% related_individuals)
-        
-        # Match kinship and phenotype information
-        related_pheno_individuals &lt;- df_pheno |&gt; 
-          pull(IID)
-        
-        related_cases &lt;- df_pheno |&gt; 
-          filter(!!sym(pheno_col) == 1) |&gt; 
-          pull(IID)
-        
-        related_controls &lt;- df_pheno |&gt; 
-          filter(!!sym(pheno_col) == 0) |&gt; 
-          pull(IID)
-        
-        kin0 &lt;- kin0 |&gt;
-          filter(!!sym(relatednessIID1) %in% related_pheno_individuals &amp; 
-                 !!sym(relatednessIID2) %in% related_pheno_individuals)
-        
-        # Optimize cases
-        df_case_kin &lt;- kin0 |&gt;
-          filter(!!sym(relatednessIID1) %in% related_cases &amp; 
-                 !!sym(relatednessIID2) %in% related_cases)
-        
-        rel_cases &lt;- plinkQC::relatednessFilter(
-          relatedness = df_case_kin,
-          otherCriterion = otherCriterion,
-          relatednessTh = relatednessTh,
-          relatednessIID1 = relatednessIID1,
-          relatednessIID2 = relatednessIID2,
-          otherCriterionTh = otherCriterionTh,
-          otherCriterionThDirection = otherCriterionThDirection,
-          relatednessFID1 = relatednessFID1,
-          relatednessFID2 = relatednessFID2,
-          relatednessRelatedness = relatednessRelatedness,
-          otherCriterionIID = otherCriterionIID,
-          otherCriterionMeasure = otherCriterionMeasure,
-          verbose = verbose
-        )$failIDs
-        
-        # Remove controls related to cases
-        related_cases_keep &lt;- setdiff(related_cases, rel_cases$IID)
-        
-        related_controls_exclude &lt;- c()
-        
-        for (i in 1:nrow(kin0)) {
-          iid1 &lt;- kin0 |&gt; pull(!!sym(relatednessIID1)) |&gt; nth(i) 
-          iid2 &lt;- kin0 |&gt; pull(!!sym(relatednessIID2)) |&gt; nth(i)
-          
-          if (iid1 %in% related_cases_keep &amp; iid2 %in% related_controls) {
-            related_controls_exclude &lt;- c(related_controls_exclude, iid2)
-            
-          } else if(iid2 %in% related_cases_keep &amp; iid1 %in% related_controls) {
-            related_controls_exclude &lt;- c(related_controls_exclude, iid1)
-            
-          }
-        }
-        
-        # Subset controls to only unrelated controls
-        related_controls_keep &lt;- setdiff(related_controls, related_controls_exclude)
-        
-        df_control_kin &lt;- kin0 |&gt;
-          filter(!!sym(relatednessIID1) %in% related_controls_keep &amp; 
-                 !!sym(relatednessIID2) %in% related_controls_keep)
-        
-        rel_controls &lt;- plinkQC::relatednessFilter(
-          relatedness = df_control_kin,
-          otherCriterion = otherCriterion,
-          relatednessTh = relatednessTh,
-          relatednessIID1 = relatednessIID1,
-          relatednessIID2 = relatednessIID2,
-          otherCriterionTh = otherCriterionTh,
-          otherCriterionThDirection = otherCriterionThDirection,
-          relatednessFID1 = relatednessFID1,
-          relatednessFID2 = relatednessFID2,
-          relatednessRelatedness = relatednessRelatedness,
-          otherCriterionIID = otherCriterionIID,
-          otherCriterionMeasure = otherCriterionMeasure,
-          verbose = verbose
-        )$failIDs
-        
-        # Handle leftover individuals
-        all_exclude &lt;- c(rel_cases$IID, related_controls_exclude, rel_controls$IID)
-        
-      } else {
-        # Directly filter on kinship threshold
-        rel &lt;- kin0 %&gt;% dplyr::filter(!!sym(relatednessRelatedness) &gt;= relatednessTh)
-        
-        all_exclude &lt;- unique(c(rel |&gt; pull(relatednessIID1), rel |&gt; pull(relatednessIID2)))
-      }
-      
-      # Check for leftovers
-      df_related &lt;- kin0 |&gt;
-        filter(!(!!sym(relatednessIID1) %in% all_exclude) &amp; 
-               !(!!sym(relatednessIID2) %in% all_exclude)) |&gt;
-        filter(!!sym(relatednessRelatedness) &gt; relatednessTh)
-      print(&quot;df_related&quot;)
-      print(df_related)
-      if (nrow(df_related) &gt; 0) {
-        if (verbose) {
-          print(paste0(&quot;Warning: After first plinkQC pass, there are still &quot;, 
-                      nrow(df_related), &quot; related subjects in dataset.&quot;))
-        }
-        
-        # Iterate until all subjects are removed
-        iter &lt;- 0
-        while (nrow(df_related) &gt; 0 &amp; iter &lt; 20) {
-          # Rerun plinkQC
-          additional_exclude &lt;- plinkQC::relatednessFilter(
-            relatedness = df_related,
-            otherCriterion = otherCriterion,
-            relatednessTh = relatednessTh,
-            relatednessIID1 = relatednessIID1,
-            relatednessIID2 = relatednessIID2,
-            otherCriterionTh = otherCriterionTh,
-            otherCriterionThDirection = otherCriterionThDirection,
-            relatednessFID1 = relatednessFID1,
-            relatednessFID2 = relatednessFID2,
-            relatednessRelatedness = relatednessRelatedness,
-            otherCriterionIID = otherCriterionIID,
-            otherCriterionMeasure = otherCriterionMeasure,
-            verbose = verbose
-          )$failIDs
-          
-          # Add to exclude list
-          all_exclude &lt;- c(all_exclude, additional_exclude$IID)
-          
-          # Update df_related and iter
-          df_related &lt;- kin0 |&gt;
-            filter(!(!!sym(relatednessIID1) %in% all_exclude) &amp; 
-                   !(!!sym(relatednessIID2) %in% all_exclude)) |&gt;
-            filter(!!sym(relatednessRelatedness) &gt; relatednessTh)
-          iter &lt;- iter + 1
-        }
-        
-        # Print status
-        if (verbose) {
-          if (nrow(df_related) == 0) {
-            print(paste0(&quot;All related subjects successfully removed after &quot;, iter, &quot; iterations.&quot;))
-          } else if (nrow(df_related) &gt; 0) {
-            stop(paste0(&quot;Error: After 20 plinkQC passes, there are still &quot;, 
-                       nrow(df_related), &quot; subjects in dataset.&quot;))
-          }
-        }
-      }
-      
-      # Add in high-related individuals
-      all_exclude &lt;- c(all_exclude, high_related_indiv)
-      
-      # List of all excluded subjects
-      dat &lt;- data.frame(IID = all_exclude, FID = as.character(all_exclude)) # Because IID and FID are the same
-      
-      # Output the related ids
-      output_related &lt;- paste0(output_prefix, &quot;_kinship_cutoff_&quot;, relatednessTh, &quot;.related_id&quot;)
-      write.table(dat, output_related, quote = FALSE, row.names = FALSE, col.names = FALSE)
-      
-      if (verbose) {
-        cat(&quot;\n[INFO] There are&quot;, nrow(dat), &quot;excluded individuals identified using a kinship threshold of&quot;, relatednessTh, &quot;\n&quot;)
-        cat(&quot;[OUTPUT] Excluded individual IDs have been written to the file:\n&quot;)
-        cat(&quot;      &quot;, normalizePath(output_related), &quot;\n&quot;)
-      }
-      
-      # Return the excluded IDs
-      return(dat)
-    }
-    
-  
-    # main code
-    suppressMessages({
-      library(tidyverse)
-      library(data.table)
-    })
-    
-    # Read input and set column names to match your original code
-    kin0 &lt;- read.table(${_input:r}, header=FALSE, stringsAsFactors=FALSE)
-    colnames(kin0) &lt;- c(&quot;FID1&quot;,&quot;ID1&quot;,&quot;FID2&quot;,&quot;ID2&quot;,&quot;NSNP&quot;,&quot;HETHET&quot;,&quot;IBS0&quot;,&quot;KINSHIP&quot;)
-    
-    # Always use the filter_relatedness function with maximize_unrelated
-    result &lt;- filter_relatedness(
-      relatedness = kin0,  
-      relatednessTh = ${kinship},
-      analysis_type = &quot;maximize_unrelated&quot;,
-      relatednessIID1 = &quot;ID1&quot;,
-      relatednessIID2 = &quot;ID2&quot;,
-      relatednessFID1 = &quot;FID1&quot;, 
-      relatednessFID2 = &quot;FID2&quot;,
-      relatednessRelatedness = &quot;KINSHIP&quot;,
-      verbose = FALSE
-    )
-    
-    # Format output to match your original code
-    tmp1 &lt;- kin0[,1:2]
-    tmp2 &lt;- kin0[,3:4]
-    colnames(tmp1) = colnames(tmp2) = c(&quot;FID&quot;, &quot;ID&quot;)
-    lookup &lt;- dplyr::distinct(rbind(tmp1,tmp2))
-    dat &lt;- lookup[which(lookup[,2] %in% result$IID),]
-    # Write output in the exact format of the original script
-    cat(&quot;There are&quot;, nrow(dat), &quot;related individuals using a kinship threshold of ${kinship}\n&quot;)
-    write.table(dat, ${_output:r}, quote=FALSE, row.names=FALSE, col.names=FALSE)
-    
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-    i=&quot;${_output}&quot;
-    output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
-    output_rows=$(cat $i | wc -l | cut -f 1 -d &#39; &#39;)
-    output_column=$(cat $i | head -1 | wc -w)
-    output_preview=$(cat $i | grep -v &quot;##&quot; | head | cut -f 1,2,3,4,5,6)
-    
-    printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_preview:\n%s\n&quot; \
-        &quot;$i&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_preview&quot;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/genotype/GWAS_QC.R \
+        --step king_2 \
+        --input &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --kinship ${kinship}
 </pre></div>
 </div>
 </div>
@@ -1335,7 +1002,7 @@ output_ext = get_output_extension(output_format)
 output: unrelated_bed = f&#39;{cwd}/{_input[0]:bn}.unrelated{output_ext}&#39;,
         related_bed = f&#39;{cwd}/{_input[0]:bn}.related{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
     plink2 \
       ${plink_command} ${_input[1]:n} \
       --remove ${_input[0]} \
@@ -1402,34 +1069,34 @@ plink_command = get_plink_command_prefix(_input)
 output_format = determine_plink_format(_input)
 make_command = get_make_command(output_format) if not meta_only else &quot;--write-snplist --write-samples&quot;
 output_ext = get_output_extension(output_format) if not meta_only else &quot;.snplist&quot;
+other_args_flags = get_other_args_flags(other_args)
 output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot; + name) if name else &quot;&quot;}.plink_qc{&quot;.extracted&quot; if keep_variants.is_file() else &quot;&quot;}{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    plink2 \
-      ${plink_command} ${_input:n} \
-      --allow-extra-chr \
-      ${(&#39;--maf %s&#39; % maf_filter) if maf_filter &gt; 0 else &#39;&#39;} \
-      ${(&#39;--max-maf %s&#39; % maf_max_filter) if maf_max_filter &gt; 0 else &#39;&#39;} \
-      ${(&#39;--mac %s&#39; % mac_filter) if mac_filter &gt; 0 else &#39;&#39;} \
-      ${(&#39;--max-mac %s&#39; % mac_max_filter) if mac_max_filter &gt; 0 else &#39;&#39;} \
-      ${(&#39;--geno %s&#39; % geno_filter) if geno_filter &gt; 0 else &#39;&#39;} ${(&#39;dosage&#39; if treat_dosage_missing else &#39;&#39;)} \
-      ${(&#39;--hwe %s&#39; % hwe_filter) if hwe_filter &gt; 0 else &#39;&#39;} \
-      ${(&#39;--mind %s&#39; % mind_filter) if mind_filter &gt; 0 else &#39;&#39;} ${(&#39;dosage&#39; if treat_dosage_missing else &#39;&#39;)} \
-      ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-      ${(&#39;--remove %s&#39; % remove_samples) if remove_samples.is_file() else &quot;&quot;} \
-      ${(&#39;--exclude %s&#39; % exclude_variants) if exclude_variants.is_file() else &quot;&quot;} \
-      ${(&#39;--extract %s&#39; % keep_variants) if keep_variants.is_file() else &quot;&quot;} \
-      ${make_command} \
-      ${(&quot;&quot;) if not rm_dups else &quot;--rm-dup force-first &#39;list&#39;&quot;} \
-      ${paths([&quot;--%s&quot; % x for x in other_args]) if other_args else &quot;&quot;} \
-      --out ${_output:n} \
-      --threads ${numThreads} \
-      --memory ${int(expand_size(mem) * 0.9)/1e6} --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
-        
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    i=&quot;${_output}&quot;
-    output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
-    printf &quot;output_info: %s\noutput_size: %s\n&quot; &quot;$i&quot; &quot;$output_size&quot; &gt;&gt; ${_output:n}.stdout
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/GWAS_QC.sh qc_no_prune \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --plink-command &quot;${plink_command}&quot; \
+        --output-format &quot;${output_format}&quot; \
+        --make-command &quot;${make_command}&quot; \
+        --out-prefix &quot;${_output:n}&quot; \
+        --name &quot;${name}&quot; \
+        --mac-filter ${mac_filter} \
+        --maf-filter ${maf_filter} \
+        --maf-max-filter ${maf_max_filter} \
+        --mac-max-filter ${mac_max_filter} \
+        --geno-filter ${geno_filter} \
+        --mind-filter ${mind_filter} \
+        --hwe-filter ${hwe_filter} \
+        ${&quot;--keep-samples &quot; + str(keep_samples) if keep_samples.is_file() else &quot;&quot;} \
+        ${&quot;--remove-samples &quot; + str(remove_samples) if remove_samples.is_file() else &quot;&quot;} \
+        ${&quot;--exclude-variants &quot; + str(exclude_variants) if exclude_variants.is_file() else &quot;&quot;} \
+        ${&quot;--keep-variants &quot; + str(keep_variants) if keep_variants.is_file() else &quot;&quot;} \
+        ${&quot;--meta-only&quot; if meta_only else &quot;&quot;} \
+        ${&quot;--rm-dups&quot; if rm_dups else &quot;&quot;} \
+        ${&quot;--treat-dosage-missing&quot; if treat_dosage_missing else &quot;&quot;} \
+        ${other_args_flags} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1451,36 +1118,20 @@ make_command = get_make_command(output_format)
 output_ext = get_output_extension(output_format, is_prune=True)
 output: bed=f&#39;{cwd}/{_input:bn}{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-    plink2 \
-    ${plink_command} ${_input:n} \
-    --allow-extra-chr \
-    --rm-dup force-first \
-    --indep-pairwise ${window} ${shift} ${r2}  \
-    --out ${_output[&quot;prune&quot;]:nn} \
-    --threads ${numThreads} \
-    --memory ${int(expand_size(mem) * 0.9)/1e6}
-   
-    plink2 \
-    ${plink_command} ${_input:n} \
-    --allow-extra-chr \
-    --extract ${_output[&#39;prune&#39;]} \
-    ${make_command} \
-    --out ${_output[&#39;bed&#39;]:n} \
-    --threads ${numThreads} \
-    --memory ${int(expand_size(mem) * 0.9)/1e6}
-    
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    i=&quot;${_output[0]}&quot;
-    output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
-    printf &quot;output_info: %s\noutput_size: %s\n&quot; &quot;$i&quot; &quot;$output_size&quot; &gt;&gt; ${_output[0]:n}.stdout
-    i=&quot;${_output[1]}&quot;
-    output_size=$(ls -lh $i | cut -f 5 -d &#39; &#39;)
-    output_rows=$(zcat $i | wc -l | cut -f 1 -d &#39; &#39;)
-    output_column=$(zcat $i | head -1 | wc -w)
-    output_preview=$(cat $i | grep -v &quot;##&quot; | head | cut -f 1,2,3,4,5,6) 
-    printf &quot;output_info: %s\noutput_size: %s\noutput_rows: %s\noutput_column: %s\noutput_preview:\n%s\n&quot; \
-        &quot;$i&quot; &quot;$output_size&quot; &quot;$output_rows&quot; &quot;$output_column&quot; &quot;$output_preview&quot; &gt;&gt; ${_output[1]}.stdout
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/GWAS_QC.sh qc \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input}&quot; \
+        --plink-command &quot;${plink_command}&quot; \
+        --output-format &quot;${output_format}&quot; \
+        --make-command &quot;${make_command}&quot; \
+        --prune-prefix &quot;${_output[&#39;prune&#39;]:nn}&quot; \
+        --out-prefix &quot;${_output[&#39;bed&#39;]:n}&quot; \
+        --mac-filter ${mac_filter} \
+        --window ${window} \
+        --shift ${shift} \
+        --r2 ${r2} \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1504,89 +1155,13 @@ depends: executable(&#39;tabix&#39;), executable(&#39;bgzip&#39;)
 input: genoFile, phenoFile
 output: f&#39;{cwd:a}/{path(_input[1]):bn}.sample_overlap.txt&#39;, f&#39;{cwd:a}/{path(_input[1]):bn}.sample_genotypes.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    # Load required libraries
-    library(dplyr)
-    library(readr)
-    library(data.table)
-
-    # Read data files; let read_delim auto-determine the delimiter
-    input_file &lt;- &quot;${_input[0]}&quot;
-    
-    # Determine if the input is a FAM file (PLINK1) or a PSAM file (PLINK2)
-    if (grepl(&quot;\\.psam$&quot;, input_file)) {
-        # For PSAM file (PLINK2 format)
-        genoFam &lt;- fread(${_input[0]:ar}, header=TRUE)
-        # Standardize column names (PSAM typically uses &#39;#IID&#39; or &#39;#FID IID&#39;)
-        if (&quot;#FID&quot; %in% colnames(genoFam) &amp;&amp; &quot;IID&quot; %in% colnames(genoFam)) {
-            genoFam &lt;- genoFam %&gt;% select(`#FID`, IID)
-            colnames(genoFam) &lt;- c(&quot;V1&quot;, &quot;V2&quot;)  # Make column names match PLINK1 format for consistency
-        } else if (&quot;#IID&quot; %in% colnames(genoFam)) {
-            genoFam &lt;- genoFam %&gt;% mutate(V1 = `#IID`) %&gt;% select(V1, `#IID`)
-            colnames(genoFam) &lt;- c(&quot;V1&quot;, &quot;V2&quot;)  # Make column names match PLINK1 format for consistency
-        } else {
-            # Try to handle other possible PSAM formats
-            if (ncol(genoFam) &gt;= 2) {
-                genoFam &lt;- genoFam[, 1:2]
-                colnames(genoFam) &lt;- c(&quot;V1&quot;, &quot;V2&quot;)  # Make column names match PLINK1 format for consistency
-            } else {
-                stop(&quot;Cannot determine the structure of the PSAM file. Expected columns not found.&quot;)
-            }
-        }
-    } else {
-        # For FAM file (PLINK1 format) - assume standard format with no header
-        genoFam &lt;- fread(${_input[0]:ar}, header=FALSE)
-    }
-    
-    phenoFile &lt;- read_delim(${_input[1]:ar}, col_names=TRUE)
-    if (${&quot;TRUE&quot; if sample_participant_lookup.is_file() else &quot;FALSE&quot;}) {
-        sample_lookup &lt;- fread(${sample_participant_lookup:ar}, header=TRUE)
-        if (all(c(&quot;sample_id&quot;, &quot;genotype_id&quot;) %in% colnames(sample_lookup))) {
-            sample_lookup &lt;- sample_lookup[, .(sample_id, genotype_id)]
-        } else if (all(c(&quot;sample_id&quot;, &quot;participant_id&quot;) %in% colnames(sample_lookup))) {
-            sample_lookup &lt;- sample_lookup[, .(sample_id, genotype_id = participant_id)]
-        } else {
-            sample_lookup &lt;- sample_lookup[, 1:2]
-            colnames(sample_lookup) &lt;- c(&quot;sample_id&quot;, &quot;genotype_id&quot;)
-        }
-        sample_lookup &lt;- unique(sample_lookup)
-        pheno_sample_ids &lt;- colnames(phenoFile)[-c(1:4)]
-        renamed_genotype_ids &lt;- sample_lookup$genotype_id[match(pheno_sample_ids, sample_lookup$sample_id)]
-        if (any(is.na(renamed_genotype_ids))) {
-            stop(&quot;Some phenotype samples could not be mapped to genotype IDs using sample_participant_lookup&quot;)
-        }
-        colnames(phenoFile)[-c(1:4)] &lt;- renamed_genotype_ids
-      output_file &lt;- paste0(${phenoFile:nnr}, &#39;.rename_sample.bed&#39;)
-      # rename phenotype file
-      phenoFile$start &lt;- as.integer(phenoFile$start) 
-      phenoFile$end &lt;- as.integer(phenoFile$end) 
-      fwrite(phenoFile, output_file, sep = &#39;\t&#39;)
-      # Compress the file using bgzip
-      system(paste(&quot;bgzip -c&quot;, output_file, &quot;&gt;&quot;, paste0(output_file, &quot;.gz&quot;)))
-      # Create the index file using tabix
-      system(paste(&quot;tabix -p bed&quot;, paste0(output_file, &quot;.gz&quot;)))
-      system(paste(&quot;rm&quot;, output_file))
-    } else {
-        sample_lookup &lt;- cbind(genoFam[,2], genoFam[,2])
-        colnames(sample_lookup) &lt;- c(&quot;genotype_id&quot;, &quot;sample_id&quot;)
-    }
-    sample_lookup &lt;- sample_lookup %&gt;%
-    transmute(genotype_id = genotype_id, sample_id = sample_id) %&gt;%
-    distinct() %&gt;%
-    filter(
-        genotype_id %in% genoFam$V2,
-        genotype_id %in% colnames(phenoFile)
-    )
-    
-    genoFam %&gt;%
-    filter(
-        V2 %in% sample_lookup$genotype_id,
-    ) %&gt;%
-    select(V1, V2) %&gt;%
-    fwrite(${_output[1]:r}, col.names=FALSE, sep=&quot;\t&quot;)
-
-    sample_lookup %&gt;%
-    fwrite(${_output[0]:r}, sep=&quot;\t&quot;)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${renovated_code_dir}/data_preprocessing/genotype/GWAS_QC.sh genotype_phenotype_sample_overlap \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${genoFile}&quot; \
+        --phenoFile &quot;${phenoFile}&quot; \
+        --name &quot;${name}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>

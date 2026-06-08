@@ -669,6 +669,7 @@ Global Workflow Options:
   --numThreads 1 (as int)
                         Number of threads
   --container &#39;&#39;
+  --entrypoint &#39;&#39;
 
 Sections
   region_list_generation:
@@ -728,6 +729,7 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: renovated_code_dir = path(&#39;renovated_code/script&#39;)  # override with --renovated-code-dir
 # Work directory &amp; output directory
 parameter: cwd = path(&quot;output&quot;)
 # Molecular phenotype matrix
@@ -741,6 +743,7 @@ parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 1
 parameter: container = &quot;&quot;
+parameter: entrypoint= &quot;&quot;
 </pre></div>
 </div>
 </div>
@@ -787,263 +790,20 @@ parameter: sep = &quot;\t&quot;
 input: phenoFile, coordinate_annotation
 output: f&#39;{cwd:a}/{_input[0]:bn}.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.region_list.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
-
-    import pandas as pd
-    import numpy as np
-    import qtl.io
-    from pathlib import Path
-    from collections import defaultdict
-    import warnings
-
-    # Function to convert gtf to bed
-    def gtf_to_bed(annotation_gtf, feature=&#39;gene&#39;, exclude_chrs=[], phenotype_id=&#39;gene_id&#39;):
-        &quot;&quot;&quot;
-        Parse genes from GTF and return DataFrame with min start and max end positions.
-        For each gene, uses the smallest position as start and largest as end position.
-        &quot;&quot;&quot;
-        
-        # Data collections
-        gene_data = defaultdict(lambda: {&#39;chr&#39;: &#39;&#39;, &#39;start&#39;: float(&#39;inf&#39;), &#39;end&#39;: 0, &#39;strand&#39;: &#39;&#39;})
-        gene_names = {}  # To store gene_name for each gene_id
-        
-        if annotation_gtf.endswith(&#39;.gz&#39;):
-            opener = gzip.open(annotation_gtf, &#39;rt&#39;)
-        else:
-            opener = open(annotation_gtf, &#39;r&#39;)
-            
-        with opener as gtf:
-            for row in gtf:
-                row = row.strip().split(&#39;\t&#39;)
-                if row[0][0] == &#39;#&#39; or row[2] != feature: 
-                    continue  # Skip header or non-matching features
-                
-                # Parse attributes
-                attributes = defaultdict()
-                for a in row[8].replace(&#39;&quot;&#39;, &#39;&#39;).split(&#39;;&#39;)[:-1]:
-                    kv = a.strip().split(&#39; &#39;)
-                    if kv[0] != &#39;tag&#39;:
-                        attributes[kv[0]] = kv[1]
-                    else:
-                        attributes.setdefault(&#39;tags&#39;, []).append(kv[1])
-                
-                # Get gene identifiers
-                curr_gene_id = attributes[&#39;gene_id&#39;]
-                curr_gene_name = attributes[&#39;gene_name&#39;]
-                gene_names[curr_gene_id] = curr_gene_name
-                
-                # Update gene data
-                data = gene_data[curr_gene_id]
-                if data[&#39;chr&#39;] == &#39;&#39;:  # First entry for this gene
-                    data[&#39;chr&#39;] = row[0]
-                    data[&#39;strand&#39;] = row[6]
-                
-                # Update min start and max end
-                start_pos = int(row[3]) - 1  # Convert to 0-based for BED
-                end_pos = int(row[4]) - 1  # Both start and end are used
-                data[&#39;start&#39;] = min(data[&#39;start&#39;], start_pos)
-                data[&#39;end&#39;] = max(data[&#39;end&#39;], end_pos)
-        
-        # Convert to dataframe format
-        chrom, start, end, ids, names, strand = [], [], [], [], [], []
-        for gene_id, data in gene_data.items():
-            chrom.append(data[&#39;chr&#39;])
-            start.append(data[&#39;start&#39;])
-            end.append(data[&#39;end&#39;])
-            ids.append(gene_id)
-            names.append(gene_names[gene_id])
-            strand.append(data[&#39;strand&#39;])
-        
-        # Create DataFrame based on phenotype_id
-        if phenotype_id == &#39;gene_id&#39;:
-            bed_df = pd.DataFrame({
-                &#39;chr&#39;: chrom,
-                &#39;start&#39;: start,
-                &#39;end&#39;: end,
-                &#39;gene_id&#39;: ids,
-                &#39;strand&#39;: strand
-            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;, &#39;strand&#39;], index=ids)
-        elif phenotype_id == &#39;gene_name&#39;:
-            bed_df = pd.DataFrame({
-                &#39;chr&#39;: chrom,
-                &#39;start&#39;: start,
-                &#39;end&#39;: end,
-                &#39;gene_id&#39;: names,
-                &#39;strand&#39;: strand
-            }, columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;gene_id&#39;, &#39;strand&#39;], index=names)
-        
-        # Filter out excluded chromosomes
-        mask = np.ones(len(chrom), dtype=bool)
-        for k in exclude_chrs:
-            mask = mask &amp; (bed_df[&#39;chr&#39;] != k)
-        bed_df = bed_df[mask]
-        
-        # Sort by chromosome and start position
-        bed_df = bed_df.groupby(&#39;chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values([&#39;start&#39;, &#39;end&#39;]))
-        
-        return bed_df
-
-    def prepare_bed(df, bed_template_df, chr_subset=None):
-        bed_df = pd.merge(bed_template_df, df, left_index=True, right_index=True)
-        bed_df = bed_df.groupby(&#39;#chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values([&#39;start&#39;,&#39;end&#39;]))
-        if chr_subset is not None:
-            bed_df = bed_df[bed_df.chr.isin(chr_subset)]
-        return bed_df
-
-    def load_and_preprocess_data(input_path, drop_columns):
-        df = pd.read_csv(input_path, sep=&quot;${sep}&quot;, skiprows=0)
-        dc = [col for col in df.columns if col in drop_columns] # Take intersection between df.columns and drop_columns
-        df = df.drop(dc, axis=1) # drop the intersect
-        if len(df.columns) &lt; 2:
-            raise ValueError(&quot;There are too few columns in the loaded dataframe, please check the delimiter of the input file. The default delimiter is tab&quot;)
-        return df
-
-    def rename_samples_using_lookup(df, lookup_path):
-        lookup_file = Path(lookup_path)
-        
-        if not lookup_file.is_file():
-            return df
-            
-        if lookup_file.suffix == &#39;.csv&#39;:
-            sep = &#39;,&#39;
-        elif lookup_file.suffix == &#39;.tsv&#39;:
-            sep = &#39;\t&#39;
-        else:
-            sep = &#39;\t&#39;  # Default to tab if unknown extension
-            
-        try:
-            sample_participant_lookup = pd.read_csv(lookup_file, sep=sep, dtype={0:str, 1:str})
-            if &quot;genotype_id&quot; in sample_participant_lookup.columns:
-                sample_participant_lookup = sample_participant_lookup.set_index(sample_participant_lookup.columns[1])
-                df.rename(columns=sample_participant_lookup.to_dict()[&quot;genotype_id&quot;], inplace=True)
-            else:
-                # Fall back to the no header style
-                sample_participant_lookup = pd.read_csv(lookup_file, sep=sep, header=None, dtype={0:str, 1:str})
-                rename_dict = dict(zip(sample_participant_lookup[0], sample_participant_lookup[1]))
-                df.rename(columns=rename_dict, inplace=True)
-        except Exception as e:
-            print(f&quot;Warning: Error processing sample lookup file: {e}&quot;)
-        return df
-
-    def load_bed_template_from_gtf(input_path, phenotype_id_column):
-        if sum(gtf_to_bed(input_path, feature=&#39;gene&#39;, phenotype_id=&quot;gene_id&quot;).index.duplicated()) &gt; 0:
-            raise ValueError(f&quot;gtf file {input_path} needs to be collapsed into gene model by reference data processing module&quot;)
-
-        bed_template_df_id = gtf_to_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_id&quot;)
-        bed_template_df_name = gtf_to_bed(input_path, feature=&#39;transcript&#39;, phenotype_id=&quot;gene_name&quot;)
-        bed_template_df = bed_template_df_id.merge(bed_template_df_name, on=[&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;strand&quot;])
-        bed_template_df.columns = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;gene_id&quot;, &quot;strand&quot;, &quot;gene_name&quot;]
-        bed_template_df = bed_template_df.set_index(phenotype_id_column, drop=False)
-        return bed_template_df
-
-    drop_cols = [&quot;#chr&quot;, &quot;chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;stop&quot;, &quot;annot.seqnames&quot;, &quot;annot.start&quot;, &quot;annot.end&quot;]
-    df = load_and_preprocess_data(${_input[0]:ar}, drop_cols)
-    molecular_trait_type = &quot;${molecular_trait_type}&quot;
-    df.set_index(df.columns[0], inplace=True)
-    if ${True if sample_participant_lookup.is_file() else False}:
-        df = rename_samples_using_lookup(df, &quot;${sample_participant_lookup:a}&quot;)    
-    # First column is always the phenotype ID column
-    phenotype_id = df.columns.values[0]
-    
-    # ----- shared helpers / constants ---------------------------------------------------
-    # Names of columns that are never sample-level phenotype data. Used by the ATAC branch
-    # to derive sample columns by subtraction and by write_phenotype_outputs to guard the
-    # analysis BED schema.
-    ANNOTATION_COLUMNS = {&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;, &quot;strand&quot;, &quot;gene_id&quot;, &quot;gene_name&quot;}
-
-    def write_phenotype_outputs(merged_df, sample_cols, bed_path, meta_path):
-        &quot;&quot;&quot;Compose and write the two phenotype outputs from a single merged DataFrame.
-
-        merged_df    : annotation columns + sample columns, must contain at minimum
-                       [#chr, start, end, ID]; may also contain &quot;strand&quot;.
-        sample_cols  : explicit list of sample-level column names in merged_df.
-
-        Analysis BED (bed_path)  : [#chr, start, end, ID, *sample_cols].
-                                   Strand is intentionally omitted — tensorqtl and pecotmr
-                                   expect exactly 4 metadata columns before samples.
-        Sidecar TSV (meta_path)  : [#chr, start, end, ID] (+ &quot;strand&quot; if available) + path.
-        &quot;&quot;&quot;
-        bed_df = merged_df[[&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;] + sample_cols]
-        meta_cols = [&quot;#chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;ID&quot;]
-        if &quot;strand&quot; in merged_df.columns:
-            meta_cols.append(&quot;strand&quot;)
-        meta_df = merged_df[meta_cols].copy()
-        qtl.io.write_bed(bed_df, bed_path)
-        meta_df.assign(path=bed_path).to_csv(meta_path, &quot;\t&quot;, index=False)
-
-    # ----- type-specific assembly --------------------------------------------------------
-    # Each branch produces:
-    #   merged_df   : annotation + samples (per write_phenotype_outputs contract)
-    #   sample_cols : list of sample column names in merged_df
-    if molecular_trait_type == &quot;gene&quot;:
-        if ${strip_id}:
-            # Update the index by stripping the pattern &quot;A | B&quot; to &quot;B&quot;
-            df.index = df.index.map(lambda x: x.split(&#39;|&#39;)[-1].strip() if &#39;|&#39; in x else x)
-
-        bed_template_df = load_bed_template_from_gtf(${_input[1]:ar}, &quot;${phenotype_id_column}&quot;)
-        merged_df = prepare_bed(df, bed_template_df)
-        merged_df = merged_df.drop_duplicates(&quot;gene_id&quot;, keep=False).rename(columns={&#39;gene_id&#39;: &#39;ID&#39;})
-        sample_cols = list(df.columns)
-
-    elif molecular_trait_type == &quot;protein&quot;:
-        auxiliary_mapping = Path(&quot;${auxiliary_id_mapping:a}&quot;)
-
-        if auxiliary_mapping.is_file():
-            # Use protein name mapping from auxiliary file
-            df_info = pd.read_csv(auxiliary_mapping).rename(
-                columns={phenotype_id: phenotype_id, &#39;EntrezGeneSymbol&#39;: &#39;gene_name&#39;}
-            )[[&#39;gene_name&#39;, phenotype_id, &#39;UniProt&#39;]]
-            df = df_info.merge(df, on=phenotype_id).drop(phenotype_id, axis=1)
-        else:
-            # Extract UniProt ID from phenotype ID if no mapping file
-            df[[phenotype_id, &#39;UniProt&#39;]] = df[phenotype_id].astype(str).str.split(&#39;|&#39;, 1, expand=True)
-
-        bed_template_df = load_bed_template_from_gtf(${_input[1]:ar}, &quot;${phenotype_id_column}&quot;)
-        merged_df = prepare_bed(df, bed_template_df)
-        merged_df[&quot;ID&quot;] = merged_df[&quot;gene_id&quot;] + &quot;_&quot; + merged_df[&quot;UniProt&quot;]
-        merged_df = merged_df.drop_duplicates(&quot;ID&quot;, keep=False)
-        sample_cols = df.drop([&quot;UniProt&quot;], axis=1).columns.values.tolist()
-
-    elif molecular_trait_type == &quot;atac&quot;:
-        # For ATAC, the coordinate_annotation is directly a BED file (no strand)
-        bed_template_df = pd.read_csv(&quot;${_input[1]}&quot;, sep=&quot;\t&quot;).set_index(&quot;ID&quot;)
-        bed_template_df = bed_template_df.assign(ID=bed_template_df.index)
-        merged_df = prepare_bed(df, bed_template_df).drop_duplicates(&quot;ID&quot;, keep=False)
-        sample_cols = [c for c in merged_df.columns if c not in ANNOTATION_COLUMNS]
-    else:
-        raise ValueError(f&quot;Unsupported molecular_trait_type: {molecular_trait_type}&quot;)
-
-    write_phenotype_outputs(merged_df, sample_cols, ${_output[0]:r}, ${_output[1]:r})
-
-    # If annotating gene or protein, save a gene_list.tsv for gene partitioning
-    if molecular_trait_type in [&quot;gene&quot;, &quot;protein&quot;]:
-        # Save the region list
-        region_list = bed_template_df[bed_template_df.${phenotype_id_column}.isin(df.index)]
-        region_list.to_csv(&#39;${cwd:a}/${_input[0]:bn}.gene_list.tsv&#39;, sep=&quot;\t&quot;, index=False)
-    else:
-        # For ATAC, we cannot partition it by gene.
-        warnings.warn(f&quot;Gene partitioning is not applicable for molecular trait type: {molecular_trait_type}. No gene_list.tsv will be generated.&quot;)
-        
-
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/phenotype/gene_annotation.py \
+        --step annotate_coord \
+        --phenoFile &quot;${_input[0]}&quot; \
+        --coordinate-annotation &quot;${_input[1]}&quot; \
+        --sample-participant-lookup &quot;${sample_participant_lookup}&quot; \
+        --molecular-trait-type &quot;${molecular_trait_type}&quot; \
+        --phenotype-id-column &quot;${phenotype_id_column}&quot; \
+        --auxiliary-id-mapping &quot;${auxiliary_id_mapping}&quot; \
+        --sep &quot;${sep}&quot; \
+        ${&quot;--strip-id&quot; if strip_id else &quot;&quot;} \
+        --output-bed &quot;${_output[0]}&quot; \
+        --output-region-list &quot;${_output[1]}&quot; \
+        --gene-list-output &quot;${cwd:a}/${_input[0]:bn}.gene_list.tsv&quot;
 </pre></div>
 </div>
 </div>
@@ -1060,56 +820,13 @@ input: phenoFile
 output: f&#39;{cwd:a}/{_input:bn}.bed.gz&#39;,
         f&#39;{cwd:a}/{_input:bn}.region_list.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-R:  expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39; ,container = container
-
-    library(biomaRt)
-    library(dplyr)
-    library(readr)
-
-    # Clear biomart cache
-    biomartCacheClear()
-
-    # Read gene expression data
-    gene_exp &lt;- read_delim(&quot;$[_input[0]]&quot;, delim = &quot;\t&quot;)
-
-    # If column &quot;#chr&quot; exists, remove the first 3 columns (chr, start, and end)
-    if(&quot;#chr&quot; %in% colnames(gene_exp)){
-      gene_exp &lt;- gene_exp[, 4:ncol(gene_exp)]
-    }
-
-    # Connect to Ensembl biomart
-    ensembl &lt;- useEnsembl(biomart = &quot;ensembl&quot;, dataset = &quot;hsapiens_gene_ensembl&quot;, version = &quot;$[ensembl_version]&quot;)
-
-    # Get gene annotations from Ensembl
-    ensembl_df &lt;- getBM(attributes = c(&quot;ensembl_gene_id&quot;, &quot;chromosome_name&quot;, &quot;start_position&quot;, &quot;end_position&quot;), mart = ensembl)
-
-    # Filter and rename columns
-    my_genes_ann &lt;- ensembl_df %&gt;%
-      filter(ensembl_gene_id %in% gene_exp$gene_ID, chromosome_name %in% 1:23) %&gt;%
-      rename(&quot;#chr&quot; = chromosome_name, 
-            &quot;start&quot; = start_position, 
-            &quot;end&quot; = end_position, 
-            &quot;gene_ID&quot; = ensembl_gene_id) %&gt;%
-      filter(gene_ID != &quot;NA&quot;)
-
-    # Save the annotations
-    my_genes_ann %&gt;%
-      select(`#chr`, start, end, gene_ID) %&gt;%
-      write_delim(path = &quot;$[_output[1]]&quot;, &quot;\t&quot;)
-
-    # Merge the annotations with the gene expression data, after modifying &#39;end&#39; to be &#39;start + 1&#39;
-    my_gene_bed &lt;- my_genes_ann %&gt;%
-      mutate(end = start + 1) %&gt;%
-      inner_join(gene_exp, by = &quot;gene_ID&quot;) %&gt;%
-      arrange(`#chr`, start)
-
-    # Save the final merged data
-    write_tsv(my_gene_bed, path = &quot;$[_output[0]:n]&quot;, na = &quot;NA&quot;, append = FALSE, col_names = TRUE, quote_escape = &quot;double&quot;)
-
-
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;,container = container
-    bgzip -f $[_output[0]:n]
-    tabix -p bed $[_output[0]] -f
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${renovated_code_dir}/data_preprocessing/phenotype/gene_annotation.R \
+        --step annotate_coord_biomart \
+        --phenoFile &quot;${_input[0]}&quot; \
+        --ensembl-version ${ensembl_version} \
+        --output-bed &quot;${_output[0]}&quot; \
+        --output-region-list &quot;${_output[1]}&quot;
 </pre></div>
 </div>
 </div>
@@ -1291,155 +1008,15 @@ parameter: overlap_ratio = 0.8
 input: intron_count, annotation_gtf
 output: f&#39;{cwd}/{_input[0]:b}.exon_list&#39;, f&#39;{cwd}/{_input[0]:b}.leafcutter.clusters_to_genes.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    import pandas as pd
-    import qtl.annotation
-
-    gtf = ${_input[1]:r}
-    #there is no &quot;gene_type&quot; when using the uncollapsed gtf. Replace &quot;gene_biotype&quot; with &quot;gene_type&quot; in the gtf and temporarily save for use in the annotation
-    has_gene_type = True
-    with open(gtf, &#39;r&#39;) as file:
-        for line in file:
-            if line[0] == &#39;#&#39;:
-                continue
-
-            row = line.strip().split(&#39;\t&#39;)
-            chrom = row[0]
-            # source = row[1]
-            annot_type = row[2]
-
-            if annot_type == &quot;gene&quot;:
-                if &quot;gene_type&quot; not in line:
-                    has_gene_type = False
-                break
-
-    if has_gene_type == False:
-        
-        with open(gtf, &#39;r&#39;) as file:
-            file_contents = file.read()
-        updated_contents = file_contents.replace(&quot;gene_biotype&quot;, &quot;gene_type&quot;)
-        gtf = ${_input[1]:rn}.tmp${_input[1]:rx}
-        with open(gtf, &#39;w&#39;) as file:
-            file.write(updated_contents)
-
-
-    # Load data
-    #annot = qtl.annotation.Annotation(${_input[1]:r})
-    annot = qtl.annotation.Annotation(gtf)
-    exon_df = pd.DataFrame([[g.chr, e.start_pos, e.end_pos, g.strand, g.id, g.name]
-                        for g in annot.genes for e in g.transcripts[0].exons],
-                       columns=[&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;, &#39;strand&#39;, &#39;gene_id&#39;, &#39;gene_name&#39;])
-    exon_df.to_csv(${_output[0]:r}, sep=&#39;\t&#39;, index=False)
-    
-    
-R:expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    suppressMessages(library(dplyr, quietly=TRUE))
-    suppressMessages(library(stringr, quietly=TRUE))
-    suppressMessages(library(foreach, quietly=TRUE))
-    # leafcutter functions:
-    
-    #&#39; Make a data.frame of meta data about the introns
-    #&#39; @param introns Names of the introns
-    #&#39; @return Data.frame with chr, start, end, cluster id
-    #&#39; @export
-    get_intron_meta &lt;- function(introns) {
-      intron_meta &lt;- do.call(rbind, strsplit(introns, &quot;:&quot;))  
-      if (ncol(intron_meta) == 5) {
-        colnames(intron_meta) &lt;- c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;clu&quot;, &quot;category&quot;)
-      } else {
-        colnames(intron_meta) &lt;- c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;, &quot;clu&quot;)
-      }
-
-      intron_meta &lt;- as.data.frame(intron_meta, stringsAsFactors = FALSE)
-      intron_meta$start &lt;- as.numeric(intron_meta$start)
-      intron_meta$end &lt;- as.numeric(intron_meta$end)
-
-      return(intron_meta)
-    }
-    #&#39; Work out which gene each cluster belongs to. Note the chromosome names used in the two inputs must match.
-    #&#39; @param intron_meta Data frame describing the introns, usually from get_intron_meta
-    #&#39; @param exons_table Table of exons, see e.g. /data/gencode19_exons.txt.gz
-    #&#39; @return Data.frame with cluster ids and genes separated by commas
-    #&#39; @import dplyr
-    #&#39; @export
-    map_clusters_to_genes_site &lt;- function(intron_meta, exons_table) {
-      suppressMessages(library(foreach, quietly=TRUE))
-      gene_df &lt;- foreach (chr=sort(unique(intron_meta$chr)), .combine=rbind) %dopar% {
-    
-        intron_chr &lt;- intron_meta[ intron_meta$chr==chr, ]
-        exons_chr &lt;- exons_table[exons_table$chr==chr, ]
-    
-        exons_chr$temp &lt;- exons_chr$start
-        intron_chr$temp &lt;- intron_chr$end
-        three_prime_matches &lt;- inner_join( intron_chr, exons_chr, by=&quot;temp&quot;)
-    
-        exons_chr$temp &lt;- exons_chr$end
-        intron_chr$temp &lt;- intron_chr$start
-        five_prime_matches &lt;- inner_join( intron_chr, exons_chr, by=&quot;temp&quot;)
-    
-        all_matches &lt;- rbind(three_prime_matches, five_prime_matches)[ , c(&quot;clu&quot;, &quot;gene_name&quot;)]
-    
-        all_matches &lt;- all_matches[!duplicated(all_matches),]
-    
-        if (nrow(all_matches)==0) return(NULL)
-        all_matches$clu &lt;- paste(chr,all_matches$clu,sep=&#39;:&#39;)
-        all_matches
-      }
-    
-      clu_df &lt;- gene_df %&gt;% group_by(clu) %&gt;% summarize(genes=paste(gene_name, collapse = &quot;,&quot;))
-      class(clu_df) &lt;- &quot;data.frame&quot;
-      clu_df
-    }
-    
-    map_clusters_to_genes_region &lt;- function(intron_meta, exons_table, f) {
-        #combine the exon position to get gene region
-        merged_df &lt;- exons_table %&gt;%
-            group_by(chr, gene_id) %&gt;%
-            summarize(start = min(start), end = max(end), .groups = &#39;drop&#39;) %&gt;% as.data.frame()%&gt;%
-            .[,c(&quot;chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;gene_id&quot;)]
-        # use bedtools to map the intron region to gene region 
-         options(bedtools.path = &quot;/home/rf2872/software/bedtools2/bin/&quot;) #Fixme: build bedtools in leafcutter sif
-                map_res &lt;- bedtoolsr::bt.intersect(a = intron_meta, b = merged_df,f = f, wa = TRUE, wb=TRUE)
-        #organize output of mapped file
-        exon_map &lt;- map_res %&gt;% 
-            mutate(clu = paste(V1, V4, sep=&quot;:&quot;), 
-                   genes = .[[paste0(&quot;V&quot;, 4 + ncol(intron_meta))]]) %&gt;%
-                select(clu,genes)
-          return(exon_map)
-    }
-
-    cat(&quot;LeafCutter: mapping clusters to genes\n&quot;)
-    intron_counts &lt;- read.table(${_input[0]:r}, header=TRUE, check.names=FALSE, row.names=4)
-    intron_meta &lt;- get_intron_meta(rownames(intron_counts))
-    exon_table &lt;- read.table(${_output[0]:r}, header=TRUE, stringsAsFactors=FALSE)
-    if(!str_detect(intron_meta$chr[1],&quot;chr&quot;)) {
-        exon_table = exon_table %&gt;% mutate(chr = str_remove_all(chr,&quot;chr&quot;))
-    } else if (!any(str_detect(exon_table$chr[1],&quot;chr&quot;))) {
-        exon_table = exon_table %&gt;% mutate(chr = paste0(&quot;chr&quot;,chr))
-    } else {exon_table = exon_table}
-    stopifnot(is.element(&#39;gene_id&#39;, colnames(exon_table)))
-    exon_table[, &#39;gene_name&#39;] &lt;- exon_table[, &#39;gene_id&#39;]
-    if(&quot;${map_stra}&quot; == &quot;site&quot;){
-      cat(&quot;mapping clusters to genes by splicing site\n&quot;)
-      m &lt;- map_clusters_to_genes_site(intron_meta, exon_table)
-      } else if(&quot;${map_stra}&quot; == &quot;region&quot;){
-      cat(&quot;mapping clusters to genes by overlapping gene region\n&quot;)
-      m &lt;- map_clusters_to_genes_region(intron_meta, exon_table, f = ${overlap_ratio})
-    } else {
-      stop(&quot;Map strategy should only be &#39;site&#39; or &#39;region&#39;.&quot;)
-    }
-    write.table(m, ${_output[1]:r}, sep = &quot;\t&quot;, quote=FALSE, row.names=FALSE)
-  
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/phenotype/gene_annotation.py \
+        --step map_leafcutter_cluster_to_gene \
+        --intron-count &quot;${_input[0]}&quot; \
+        --annotation-gtf &quot;${_input[1]}&quot; \
+        --map-stra &quot;${map_stra}&quot; \
+        --overlap-ratio ${overlap_ratio} \
+        --output-exon-list &quot;${_output[0]}&quot; \
+        --output-cluster-map &quot;${_output[1]}&quot;
 </pre></div>
 </div>
 </div>
@@ -1451,92 +1028,15 @@ parameter: sample_participant_lookup = path()
 input: phenoFile, annotation_gtf,output_from(&quot;map_leafcutter_cluster_to_gene&quot;)
 output: f&#39;{cwd:a}/{_input[0]:bn}.formated.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.phenotype_group.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    import pandas as pd
-    import numpy as np
-    import qtl.io
-    import os
-    from pathlib import Path
-
-    # Load data
-    if os.path.exists(${_input[1]:rn}.tmp${_input[1]:rx}):
-        gtf = ${_input[1]:rn}.tmp${_input[1]:rx}
-    else:
-        gtf = ${_input[1]:r}
-    #tss_df = qtl.io.gtf_to_tss_bed(${_input[1]:r})
-    tss_df = qtl.io.gtf_to_tss_bed(gtf)
-    bed_df = pd.read_csv(${_input[0]:ar}, sep=&#39;\t&#39;, skiprows=0)
-    bed_df.columns.values[0] = &quot;#chr&quot; # Temporary
-    sample_participant_lookup = Path(&quot;${sample_participant_lookup:a}&quot;)
-    cluster2gene_dict = pd.read_csv(${_input[3]:r}, sep=&#39;\t&#39;, index_col=0).to_dict()
-    cluster2gene_dict = cluster2gene_dict[&#39;genes&#39;]
-    print(&#39;    ** assigning introns to gene mapping(s)&#39;)
-    n = 0
-    gene_bed_df = []
-    group_s = {}
-    for _,r in bed_df.iterrows():
-        s = r[&#39;ID&#39;].split(&#39;:&#39;)
-        cluster_id = s[0]+&#39;:&#39;+s[3]
-        if cluster_id in cluster2gene_dict:
-            gene_ids = cluster2gene_dict[cluster_id].split(&#39;,&#39;)
-            for g in gene_ids:
-                gi = r[&#39;ID&#39;]+&#39;:&#39;+g
-                gene_bed_df.append(tss_df.loc[g, [&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;]].tolist() + [gi] + r.iloc[4:].tolist())
-                group_s[gi] = g
-        else:
-            n += 1
-    if n &gt; 0:
-        print(f&#39;    ** discarded {n} introns without a gene mapping&#39;)
-
-    print(&#39;  * writing BED files for QTL mapping&#39;)
-    gene_bed_df = pd.DataFrame(gene_bed_df, columns=bed_df.columns)
-    # sort by TSS
-    gene_bed_df = gene_bed_df.groupby(&#39;#chr&#39;, sort=False, group_keys=False).apply(lambda x: x.sort_values(&#39;start&#39;))
-    #rename the samples if they named by file name (simply pick the first element with [.])
-    gene_bed_df.columns = list(gene_bed_df.columns[:4]) + [name.split(&#39;.&#39;)[0] if &#39;junc&#39; in name else name for name in gene_bed_df.columns[4:]]
-    # change sample IDs to participant IDs
-    if sample_participant_lookup.is_file():
-        sample_participant_lookup_s = pd.read_csv(sample_participant_lookup, sep=&quot;\t&quot;, index_col=0, dtype={0:str,1:str})
-        #gene_bed_df.rename(columns=sample_participant_lookup_s.to_dict(), inplace=True)
-        # Create a dictionary mapping from sample_id to participant_id
-        column_mapping = dict(zip(sample_participant_lookup_s.index, sample_participant_lookup_s[&#39;participant_id&#39;]))
-        # Get the column names to be replaced
-        column_names = gene_bed_df.columns[4:]
-        # Replace the column names using the mapping dictionary
-        #new_column_names = [column_mapping.get(col, &#39;missing_data&#39;) for col in column_names]
-        #it should overlap with genotype in downstream anyways
-        new_column_names = [column_mapping.get(col, col) for col in column_names]
-        gene_bed_df.rename(columns=dict(zip(column_names, new_column_names)), inplace=True)
-
-    gene_bed_df = gene_bed_df.drop_duplicates()
-    qtl.io.write_bed(gene_bed_df, ${_output[0]:r})
-    gene_bed_df[[&#39;start&#39;, &#39;end&#39;]] = gene_bed_df[[&#39;start&#39;, &#39;end&#39;]].astype(np.int32)
-    gene_bed_df[gene_bed_df.columns[4:]] = gene_bed_df[gene_bed_df.columns[4:]].astype(np.float32)
-    group_s_df =  pd.Series(group_s).sort_values().reset_index()
-    group_s_df.columns = [&#39;ID&#39;, &#39;gene&#39;]
-    group_s_df.to_csv(${_output[1]:r}, sep=&#39;\t&#39;, index=False, header=True)
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-        stdout=$[_output[0]:n].stdout
-
-        rm $[_input[1]:rn].tmp$[_input[1]:rx]
-
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/phenotype/gene_annotation.py \
+        --step annotate_leafcutter_isoforms \
+        --phenoFile &quot;${_input[0]}&quot; \
+        --annotation-gtf &quot;${_input[1]}&quot; \
+        --cluster-map &quot;${_input[3]}&quot; \
+        --sample-participant-lookup &quot;${sample_participant_lookup}&quot; \
+        --output-bed &quot;${_output[0]}&quot; \
+        --output-phenotype-group &quot;${_output[1]}&quot;
 </pre></div>
 </div>
 </div>
@@ -1552,69 +1052,14 @@ parameter: sample_participant_lookup = path()
 input: phenoFile, annotation_gtf
 output: f&#39;{cwd:a}/{_input[0]:bn}.formated.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.phenotype_group.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    import pandas as pd
-    import numpy as np
-    import qtl.io
-    from pathlib import Path
-    tss_df = qtl.io.gtf_to_tss_bed(${_input[1]:r}, feature=&#39;gene&#39;,phenotype_id = &quot;gene_id&quot; )
-    bed_df = pd.read_csv(${_input[0]:ar}, sep=&#39;\t&#39;, skiprows=0)
-    bed_df[&quot;gene_id&quot;]  = [x[-1] for x in bed_df.ID.str.split(&quot;_&quot;)]
-    sample_participant_lookup = Path(&quot;${sample_participant_lookup:a}&quot;)
-    if &quot;start&quot; in  bed_df.columns:
-        bed_df = bed_df.drop([&quot;#Chr&quot;,&quot;start&quot;,&quot;end&quot;],axis = 1)
-    output = tss_df.merge(bed_df, left_on = [&quot;gene_id&quot;], right_on = [&quot;gene_id&quot;],how = &quot;right&quot;).sort_values([&quot;chr&quot;,&quot;start&quot;])
-    # change sample IDs to participant IDs
-    if sample_participant_lookup.is_file():
-        sample_participant_lookup_s = pd.read_csv(sample_participant_lookup, sep=&quot;\t&quot;, index_col=0, dtype={0:str,1:str})
-
-        column_mapping = dict(zip(sample_participant_lookup_s.index, sample_participant_lookup_s[&#39;participant_id&#39;]))
-
-        column_names = output.columns[4:]
-        print(column_names)
-        new_column_names = [column_mapping.get(col, col) for col in column_names]
-        output.rename(columns=dict(zip(column_names, new_column_names)), inplace=True)
-
-        #output.rename(columns=sample_participant_lookup_s.to_dict(), inplace=True)
-
-    # Old code grouping by each gene
-    #bed_output = output.drop(&quot;gene_id&quot; , axis = 1)
-    #phenotype_group = output[[&quot;ID&quot;,&quot;gene_id&quot;]]
-
-    bed_output = output.drop(&quot;gene_id&quot; , axis = 1)
-
-    # R version 
-    #output = output%&gt;%mutate(gene_type_id = map_chr(str_split( ID ,&quot;_&quot;),~paste0(.x[length(.x)],&quot;_&quot;,.x[1] )) )
-    
-    # corrected in python
-    output = output.assign(gene_type_id = output[&#39;ID&#39;].str.split(&#39;_&#39;).map(lambda x: x[-1] + &#39;_&#39; + x[0]))
-    phenotype_group = output[[&quot;ID&quot;,&quot;gene_type_id&quot;]]
-
-    bed_output.to_csv(${_output[0]:nr},&quot;\t&quot;,index = False)
-    phenotype_group.to_csv(${_output[1]:r},&quot;\t&quot;,index = False,header=False)
-
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-    bgzip -f ${_output[0]:n}
-    tabix ${_output[0]}
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6   &gt;&gt; $stdout ; done
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${renovated_code_dir}/data_preprocessing/phenotype/gene_annotation.py \
+        --step annotate_psichomics_isoforms \
+        --phenoFile &quot;${_input[0]}&quot; \
+        --annotation-gtf &quot;${_input[1]}&quot; \
+        --sample-participant-lookup &quot;${sample_participant_lookup}&quot; \
+        --output-bed &quot;${_output[0]}&quot; \
+        --output-phenotype-group &quot;${_output[1]}&quot;
 </pre></div>
 </div>
 </div>
