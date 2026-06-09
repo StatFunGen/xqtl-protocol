@@ -141,7 +141,7 @@ xgboost_imputation <- function(data, maxiter = 10, verbose = TRUE, max.depth = 2
         # print("xgb_mis:")
         # print(head(xgb_misX))
         # xgboost on train
-        xgb <- xgboost(data = xgb_obsX, max.depth = max.depth, nrounds = nrounds)
+        xgb <- xgb.train(params = list(max_depth = max.depth), data = xgb_obsX, nrounds = nrounds)
         
         misY <- predict(xgb, xgb_misX) ## predict missing values in column varInd
         

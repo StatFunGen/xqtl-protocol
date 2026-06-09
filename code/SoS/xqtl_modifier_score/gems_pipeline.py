@@ -43,7 +43,10 @@ import pickle
 import torch
 import random
 from sklearn.calibration import CalibratedClassifierCV
-import optunahub
+try:
+    import optunahub  # optional; unused, PyPI-only
+except Exception:
+    optunahub = None
 import joblib
 
 def make_variant_features(df):

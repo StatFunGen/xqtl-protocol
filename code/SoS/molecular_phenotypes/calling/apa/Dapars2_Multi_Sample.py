@@ -188,6 +188,8 @@ def Each_Thread_3UTR_estimation_list_version_sample_ids(curr_thread_UTR_events_i
     Output_result = open(Output_result_file,'w')
 
     for curr_3UTR_id in curr_thread_UTR_events_ids:
+        if (curr_3UTR_id, 0) not in All_samples_coverage_shared_dict:
+            continue  # skip 3UTR regions with no wig coverage (sparse toy data)
         curr_3UTR_structure = UTR_events_dict[curr_3UTR_id]
         region_start = curr_3UTR_structure[1]
         region_end = curr_3UTR_structure[2]

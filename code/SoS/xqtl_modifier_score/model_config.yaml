@@ -1,78 +1,35 @@
+# Toy model configuration for EMS training/prediction MWE
+system:
+  temp_directory: "/tmp/ems_dask"
+  random_seeds:
+    torch_seed: 0
+    numpy_seed: 0
+    random_seed: 0
 
-# Generic Model Configuration - User Customizable
-algorithm:
-  name: "catboost"
-  parameter_sets:
-    standard:
-      depth: 4
-      iterations: 20
-      learning_rate: 0.05
-      l2_leaf_reg: 3.0
-      min_data_in_leaf: 10
-      verbose: true
-      loss_function: "Logloss"
-      
-    conservative:
-      depth: 5
-      iterations: 100
-      learning_rate: 0.03
-      l2_leaf_reg: 5.0
-      min_data_in_leaf: 10
-      bagging_temperature: 1.0
-      leaf_estimation_method: "Newton"
-      leaf_estimation_iterations: 10
-      verbose: true
-      loss_function: "Logloss"
+experiment:
+  sampling_parameters:
+    npr_train: 1
+    npr_test: 1
+  classification_thresholds:
+    train:
+      positive_class_threshold: 0.5
+      negative_class_threshold: 0.1
+    test:
+      positive_class_threshold: 0.5
+      negative_class_threshold: 0.1
 
 feature_weighting:
   default_weight: 1.0
   high_priority_patterns:
-    weight: 10.0
-    feature_patterns: ["chrombpnet_positive", "tf_positive", "diff"]
+    weight: 2.0
+    feature_patterns: ["ABC", "chrombpnet"]
 
-model_variants:
-  baseline:
-    name: "Standard"
-    description: "Standard parameters, no feature weighting"
-    parameter_set: "standard"
-    use_feature_weights: false
-    
-  regularized:
-    name: "Conservative"
-    description: "Conservative parameters to reduce overfitting"
-    parameter_set: "conservative"
-    use_feature_weights: false
-    
-  weighted:
-    name: "Feature-Weighted"
-    description: "Standard parameters with biology-informed weighting"
-    parameter_set: "standard"
-    use_feature_weights: true
-    
-  regularized_weighted:
-    name: "Conservative-Weighted"
-    description: "Conservative parameters with feature weighting"
-    parameter_set: "conservative"
-    use_feature_weights: true
-
-training:
-  evaluation_metrics: ["average_precision_score", "roc_auc_score"]
-
-experiment:
-  sampling_parameters:
-    npr_train: 10
-    npr_test: 10
-  classification_thresholds:
-    train:
-      positive_class_threshold: 0.1
-      negative_class_threshold: 0.01
-    test:
-      positive_class_threshold: 0.9
-      negative_class_threshold: 0.01
-
-system:
-  temp_directory: "/nfs/scratch"
-  random_seeds:
-    torch_seed: 9448
-    numpy_seed: 9448
-    random_seed: 9448
+algorithm:
+  parameter_sets:
+    standard:
+      iterations: 50
+      depth: 4
+      learning_rate: 0.1
+      loss_function: "Logloss"
+      verbose: 0
+      random_seed: 0
