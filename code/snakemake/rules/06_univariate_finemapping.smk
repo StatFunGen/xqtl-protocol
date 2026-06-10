@@ -35,10 +35,11 @@ rule susie_twas:
         modular_script_dir = MODULAR_SCRIPT_DIR,
         outdir        = "{cwd}/finemapping/{theme}/susie_twas",
         cis_window    = config["association"]["cis_window"],
-        init_L        = config["finemapping"]["L"],
-        L             = config["finemapping"]["max_L"],
+        L             = config["finemapping"]["L"],
+        max_L         = config["finemapping"]["max_L"],
         pip_cutoff    = config["finemapping"]["pip_cutoff"],
         min_twas_maf  = config["finemapping"]["maf"],
+        small_sample_correction = "--small-sample-correction" if config["finemapping"].get("small_sample_correction", False) else "",
         dry_run       = DRY_RUN_SOS,
     threads: 1
     resources:
@@ -72,10 +73,11 @@ cd "{params.run_workdir}"
     --phenoFile {input.pheno_region_list} \
     --covFile {input.hidden_factors} \
     --cis-window {params.cis_window} \
-    --init-L {params.init_L} \
-    --L {params.L} \
+    --init-L {params.L} \
+    --max-L {params.max_L} \
     --pip-cutoff {params.pip_cutoff} \
     --min_twas_maf {params.min_twas_maf} \
+    {params.small_sample_correction} \
     --modular-script-dir {params.modular_script_dir} \
     --numThreads {threads} {params.dry_run} {params.sos_sched}
 OUTER_LSF
@@ -98,10 +100,11 @@ OUTER_LSF
                 --phenoFile {input.pheno_region_list} \
                 --covFile {input.hidden_factors} \
                 --cis-window {params.cis_window} \
-                --init-L {params.init_L} \
-                --L {params.L} \
+                --init-L {params.L} \
+                --max-L {params.max_L} \
 	                --pip-cutoff {params.pip_cutoff} \
 	                --min_twas_maf {params.min_twas_maf} \
+	                {params.small_sample_correction} \
 	                --modular-script-dir {params.modular_script_dir} \
 	                --numThreads {threads} {params.dry_run} {params.sos_sched}
         fi

@@ -73,22 +73,16 @@ dir.create(opt$cwd, showWarnings = FALSE, recursive = TRUE)
 read_bed <- function(path) {
   cat(sprintf("Reading: %s\n", path))
   dat <- read.table(gzfile(path), header = TRUE, sep = "\t",
-                    stringsAsFactors = FALSE, check.names = FALSE,
-                    comment.char = "")
-  rownames(dat) <- as.character(seq_len(nrow(dat)))
+                    stringsAsFactors = FALSE, check.names = FALSE)
   dat
 }
 
 write_bed <- function(dat, path) {
-  if (!grepl("\\.gz$", path)) {
-    stop("BGZF BED output path must end with .gz: ", path)
-  }
-  dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
-  plain_path <- sub("\\.gz$", "", path)
   cat(sprintf("Writing: %s\n", path))
-  write.table(dat, plain_path, sep = "\t", quote = FALSE, row.names = FALSE)
-  checked_system2("bgzip", c("-f", plain_path))
-  checked_system2("tabix", c("-f", "-p", "bed", path))
+  gz <- gzfile(path, "w")
+  write.table(dat, gz, sep = "\t", quote = FALSE, row.names = FALSE)
+  close(gz)
+  system(paste("tabix -p bed", path))
 }
 
 checked_system2 <- function(command, args) {
@@ -167,7 +161,7 @@ run_EBMF <- function(opt) {
     ebnm_point_normal  = ebnm::ebnm_point_normal,
     stop("Unknown prior: ", opt$prior))
   fl <- flash(mat, ebnm_fn = prior_fn, var_type = as.integer(opt$varType),
-              greedy_Kmax = opt[["num-factor"]])
+              n_threads = opt$numThreads, greedy_Kmax = opt[["num-factor"]])
   imputed <- fitted(fl)
   mat[is.na(mat)] <- imputed[is.na(mat)]
   out <- cbind(coord[rownames(mat), ], as.data.frame(mat))
@@ -180,7 +174,7 @@ run_gEBMF <- function(opt) {
   coord <- dat[, 1:4]; mat <- as.matrix(dat[, -(1:4)])
   if (isTRUE(opt$`qc-prior-to-impute`))
     mat <- qc_filter(mat, opt$`qc-missing-rate`, opt$`qc-zero-rate`)
-  fl <- flash(mat, var_type = 2L,
+  fl <- flash(mat, var_type = 2L, n_threads = opt$nCores,
               greedy_Kmax = opt[["num-factor"]], backfit = opt[["backfit-iter"]])
   if (isTRUE(opt$`null-check`)) {
     fl <- flash_nullcheck(fl)
