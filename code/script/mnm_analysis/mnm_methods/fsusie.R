@@ -46,10 +46,6 @@ option_list <- list(
   make_option("--coverage",     type="character", default="0.95,0.7,0.5"),
   make_option("--init-l",       type="integer",   default=1),
   make_option("--max-l",        type="integer",   default=10),
-  make_option("--L-greedy",     type="integer",   default=NA,
-              help="Alias for --init-l used by xqtl-protocol notebooks"),
-  make_option("--L",            type="integer",   default=NA,
-              help="Alias for --max-l used by xqtl-protocol notebooks"),
   # TWAS
   make_option("--skip-twas-weights", action="store_true", default=FALSE),
   make_option("--max-cv-variants",   type="integer", default=5000),
@@ -62,13 +58,6 @@ option_list <- list(
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
-
-if (!is.na(opt[["L-greedy"]])) {
-  opt[["init-l"]] <- opt[["L-greedy"]]
-}
-if (!is.na(opt[["L"]])) {
-  opt[["max-l"]] <- opt[["L"]]
-}
 
 library(pecotmr)
 library(tidyverse)
