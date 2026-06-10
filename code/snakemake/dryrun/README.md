@@ -29,17 +29,6 @@ The default live Pixi home used on this machine is outside the repository:
 ../xqtl-renovated/mwe_data/.pixi
 ```
 
-## MWE Data Provenance
-
-The full external MWE data tree was downloaded from:
-
-```bash
-s3://statfungen/ftp_fgc_xqtl/xqtl_protocol_data/mwe_data/
-```
-
-It is intentionally not committed to this repository. Point `--mwe-data` at a
-local copy of that tree, or at an archive containing that tree.
-
 ## Example
 
 From the repository root:
