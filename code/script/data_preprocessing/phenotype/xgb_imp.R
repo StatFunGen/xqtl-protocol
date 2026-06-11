@@ -81,7 +81,7 @@ load_xgboost_imputation <- function() {
 
           xgb_obsX <- xgb.DMatrix(data = as.matrix(obsX), label = as.matrix(obsY))
           xgb_misX <- xgb.DMatrix(data = as.matrix(misX), label = as.matrix(misY))
-          xgb <- xgboost(data = xgb_obsX, max.depth = max.depth, nrounds = nrounds, verbose = 0)
+          xgb <- xgb.train(data = xgb_obsX, params = list(max_depth = max.depth), nrounds = nrounds, verbose = 0)
           misY <- predict(xgb, xgb_misX)
           list(varInd = varInd, misY = misY)
         }

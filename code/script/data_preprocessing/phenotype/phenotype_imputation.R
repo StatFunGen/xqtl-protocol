@@ -199,7 +199,7 @@ run_missforest <- function(opt) {
   coord <- dat[, 1:4]; mat <- as.matrix(dat[, -(1:4)])
   if (isTRUE(opt$`qc-prior-to-impute`))
     mat <- qc_filter(mat, opt$`qc-missing-rate`, opt$`qc-zero-rate`)
-  res <- missForest(t(mat), ntree = 100, parallelize = "forests")
+  res <- missForest(t(mat), ntree = 100, parallelize = "no")
   imputed_t <- res$ximp
   out <- cbind(coord[rownames(mat), ], as.data.frame(t(imputed_t)))
   write_bed(out, get_outpath(opt, ".missForest.imputed.bed.gz"))
