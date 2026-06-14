@@ -112,6 +112,8 @@ read_pheno_metadata <- function(pheno_file) {
     if (!"FID" %in% colnames(pheno)) pheno$FID <- pheno$IID
   }
 
+  pheno$FID <- as.character(pheno$FID)
+  pheno$IID <- as.character(pheno$IID)
   pheno$ID <- paste(pheno$FID, pheno$IID, sep = ":")
   if (length(unique(pheno$ID)) != length(pheno$ID)) {
     stop("There are duplicated names in IID column of phenoFile")
