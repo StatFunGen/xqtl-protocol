@@ -9,16 +9,46 @@
 #   Rscript univariate_plot.R --input res.rds --output plot.png
 # ============================================================
 
-suppressPackageStartupMessages(library(optparse))
+parse_options <- function() {
+  if (requireNamespace("optparse", quietly = TRUE)) {
+    opt_list <- list(
+      optparse::make_option("--input", type = "character", default = NULL,
+                            help = "Input RDS file produced by univariate_rss step"),
+      optparse::make_option("--output", type = "character", default = NULL,
+                            help = "Output PNG file path")
+    )
+    return(optparse::parse_args(optparse::OptionParser(option_list = opt_list)))
+  }
 
-opt_list <- list(
-  make_option("--input",  type = "character", default = NULL,
-              help = "Input RDS file produced by univariate_rss step"),
-  make_option("--output", type = "character", default = NULL,
-              help = "Output PNG file path")
-)
+  args <- commandArgs(trailingOnly = TRUE)
+  opt <- list(input = NULL, output = NULL)
+  i <- 1
+  while (i <= length(args)) {
+    arg <- args[[i]]
+    if (arg %in% c("--help", "-h")) {
+      cat("Options:\n  --input\n  --output\n")
+      quit(status = 0)
+    }
+    pieces <- strsplit(arg, "=", fixed = TRUE)[[1]]
+    flag <- pieces[[1]]
+    value <- if (length(pieces) > 1) paste(pieces[-1], collapse = "=") else NULL
+    if (!flag %in% c("--input", "--output")) {
+      stop("Unknown option: ", flag)
+    }
+    if (is.null(value)) {
+      i <- i + 1
+      if (i > length(args)) {
+        stop("Option requires a value: ", flag)
+      }
+      value <- args[[i]]
+    }
+    opt[[sub("^--", "", flag)]] <- value
+    i <- i + 1
+  }
+  opt
+}
 
-opt <- parse_args(OptionParser(option_list = opt_list))
+opt <- parse_options()
 if (is.null(opt$input))  stop("--input is required")
 if (is.null(opt$output)) stop("--output is required")
 
@@ -55,6 +85,10 @@ extract_first_result_leaf <- function(obj, path = character()) {
   }
 
   if (!is.null(obj$susie_result_trimmed) && inherits(obj$susie_result_trimmed, "susie")) {
+    return(list(label = paste(path, collapse = "/"), entry = obj))
+  }
+
+  if (!is.null(obj$variant_names) && (!is.null(obj$sumstats) || !is.null(obj$pip) || !is.null(obj$top_loci))) {
     return(list(label = paste(path, collapse = "/"), entry = obj))
   }
 
@@ -110,9 +144,16 @@ build_plot_payload <- function(obj) {
   }
 
   pip_pos <- extract_variant_positions(variant_ids)
+  pip_values <- NULL
+  if (!is.null(susie_fit) && !is.null(susie_fit$pip)) {
+    pip_values <- susie_fit$pip
+  } else if (!is.null(entry$pip)) {
+    pip_values <- entry$pip
+  }
+
   pip_df <- NULL
-  if (!is.null(susie_fit$pip) && length(pip_pos) == length(susie_fit$pip) && any(!is.na(pip_pos))) {
-    pip_df <- data.frame(pos = pip_pos, value = as.numeric(susie_fit$pip))
+  if (!is.null(pip_values) && length(pip_pos) == length(pip_values) && any(!is.na(pip_pos))) {
+    pip_df <- data.frame(pos = pip_pos, value = as.numeric(pip_values))
     pip_df <- pip_df[!is.na(pip_df$pos), , drop = FALSE]
   }
 
@@ -131,9 +172,10 @@ build_plot_payload <- function(obj) {
 }
 
 plot_metric <- function(df, title, ylab, col) {
+  title <- if (nchar(title) > 90) paste0(substr(title, 1, 87), "...") else title
   if (is.null(df) || nrow(df) == 0) {
     plot.new()
-    title(main = title)
+    title(main = title, cex.main = 0.8)
     text(0.5, 0.5, "No plottable data", cex = 1.1)
     return(invisible(NULL))
   }
@@ -147,7 +189,8 @@ plot_metric <- function(df, title, ylab, col) {
     col = col,
     xlab = "position",
     ylab = ylab,
-    main = title
+    main = title,
+    cex.main = 0.8
   )
 }
 

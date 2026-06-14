@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # ============================================================
 # TensorQTL.sh
-# Mirrors: code/association_scan/TensorQTL/TensorQTL.ipynb
+# Mirrors: code/SoS/association_scan/TensorQTL/TensorQTL.ipynb
 #
 # Steps:
 #   cis  — cis-QTL nominal scan + permutation across all chromosomes
+#   cis_postprocess — combine regional cis-QTL outputs and compute q-values
 #   trans — trans-QTL scan
 #
 # Usage:
@@ -56,7 +57,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
 fi
 
 case "$STEP" in
-    cis|trans)
+    cis|cis_postprocess|trans)
         if [[ -n "$CONTAINER" ]]; then
             singularity exec "$CONTAINER" "${_cmd[@]}"
         else
@@ -64,6 +65,6 @@ case "$STEP" in
         fi
         ;;
     *)
-        echo "ERROR: Unknown step '$STEP'. Available: cis, trans" >&2
+        echo "ERROR: Unknown step '$STEP'. Available: cis, cis_postprocess, trans" >&2
         exit 1 ;;
 esac
