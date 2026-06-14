@@ -47,7 +47,15 @@ This unpacks `data/nontrivial_tensorqtl_susie.tar.gz`, runs:
 
 The test fails if TensorQTL output MD5s differ or if SuSiE/TWAS head records differ. Outputs are written under `code/snakemake/tmp/xqtl_tests/`.
 
-## Run MESA Or Other Downstream Data
+## Run RSS Analysis MWE
+
+```bash
+code/snakemake/tests/run_rss_analysis_mwe.sh
+```
+
+This builds or reuses the small `pecotmr` toy-data fixture under `code/snakemake/tests/data/rss_analysis_mwe/`, then runs the RSS notebook stages directly through SoS: `get_analysis_regions`, `univariate_rss`, and `univariate_plot`. The test asserts the legacy notebook contract that the saved RDS top-level key is `chr22_49355984_50799822`; the canonical `chr22:49355984-50799822` region is used to load the LD block, not as the saved-key string.
+
+## Run Other Downstream Data
 
 Use the script-backed Snakefile directly with the data-specific config:
 
