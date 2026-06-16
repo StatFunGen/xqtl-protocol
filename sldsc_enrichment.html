@@ -1,0 +1,1886 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Stratified LD Score Regression (S-LDSC) Enrichment &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'sldsc_enrichment';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="scEEMS Model Training" href="ems_training.html" />
+    <link rel="prev" title="GREGOR enrichment analysis" href="gregor.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/sldsc_enrichment.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fsldsc_enrichment.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/sldsc_enrichment.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Stratified LD Score Regression (S-LDSC) Enrichment</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methods-workflow-overview">Methods - Workflow Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ldsc-model">LDSC model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stratified-ldsc">Stratified LDSC</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tau-estimation-and-enrichment-analysis">Tau Estimation and Enrichment Analysis</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#notation">Notation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-panel-and-maf-cutoff">Reference panel and MAF cutoff</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#quantities-from-the-regression-layer-polyfun">Quantities from the regression layer (polyfun)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#quantities-from-the-post-processing-layer-pecotmr">Quantities from the post-processing layer (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#standardized-tau-tau-pecotmr">Standardized tau (<span class="math notranslate nohighlight">\(\tau^*\)</span>)  —  (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#differential-per-snp-heritability-enrichstat-polyfun-pecotmr">Differential per-SNP heritability (“EnrichStat”)  —  (polyfun + pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reporting-binary-vs-continuous-annotations-pecotmr">Reporting: binary vs. continuous annotations  —  (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-type-comparison-always-use-tau-c-pecotmr">Cross-type comparison: always use <span class="math notranslate nohighlight">\(\tau^*_C\)</span>  —  (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-analysis-polyfun-runs-the-regression-pecotmr-standardizes-both-modes">Joint analysis  —  (polyfun runs the regression; pecotmr standardizes both modes)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#meta-analysis-across-traits-random-effects-pecotmr">Meta-Analysis across Traits (Random Effects)  —  (pecotmr)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-mwe">Minimal Working Example (MWE)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-make-annotation-files-ldscore">Step 1. <code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs"><strong>Inputs</strong></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#target-annotation-file">1. Target Annotation File</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-annotation-file-baseline-ld">2. Reference Annotation File (baseline-LD)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#genome-reference-file">3. Genome Reference File</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#snp-list">4. SNP List</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics-preprocessing-run-before-step-2">Munge summary statistics (preprocessing, run before Step 2)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-get-heritability">Step 2. <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#allele-frequency-files-frq-our-panel">1. Allele Frequency Files (<code class="docutils literal notranslate"><span class="pre">.frq</span></code>, our panel)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-summary-statistics">2. GWAS Summary Statistics</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-post-processing-pecotmr-and-meta-analysis">Step 3. <code class="docutils literal notranslate"><span class="pre">Post-processing</span> <span class="pre">(pecotmr)</span> <span class="pre">and</span> <span class="pre">meta-analysis</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional">Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::meta_sldsc_random<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-summary-cached-artifacts">Output summary (cached artifacts)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-stage-outputs">Per-stage outputs</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#make-annotation-file">Make Annotation File</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-functional-enrichment-using-annotations">Calculate Functional Enrichment using Annotations</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="stratified-ld-score-regression-s-ldsc-enrichment">
+<h1>Stratified LD Score Regression (S-LDSC) Enrichment<a class="headerlink" href="#stratified-ld-score-regression-s-ldsc-enrichment" title="Link to this heading">#</a></h1>
+<p>Minimal working-example driver for the S-LDSC functional-enrichment pipeline. The <strong>Steps</strong> section below gives one ready-to-run <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span></code> command per workflow, using the toy inputs symlinked under <code class="docutils literal notranslate"><span class="pre">input/</span></code>.</p>
+<blockquote>
+<div><p><strong>Environment note.</strong> Steps 1–2 (<code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code>, <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code>) wrap the external <strong>polyfun</strong> toolkit (<code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code>, <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code>, <code class="docutils literal notranslate"><span class="pre">munge_polyfun_sumstats.py</span></code>) and require pre-computed reference-panel files (baseline-LD scores, LD weights, <code class="docutils literal notranslate"><span class="pre">.frq</span></code>, and PLINK <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>). polyfun is <strong>not installed in this environment</strong> and the reference panel is not shipped with the toy example, so those two steps cannot be executed here; their commands are provided for use on a system where polyfun and a matching panel are available. Steps 3–4 (<code class="docutils literal notranslate"><span class="pre">postprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">meta_subset</span></code>) use <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code> (available here) and read the <code class="docutils literal notranslate"><span class="pre">.results</span></code>/<code class="docutils literal notranslate"><span class="pre">.log</span></code> files produced by Step 2.</p>
+</div></blockquote>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>This notebook implements the pipeline of <a class="reference external" href="https://www.nature.com/articles/ng.3404">S-LDSC</a> for LD score and functional enrichment analysis.</p>
+<p><strong>Important: the S-LDSC implementation comes from the <a class="reference external" href="https://github.com/omerwe/polyfun/tree/master">polyfun</a> package, not the original LDSC from <code class="docutils literal notranslate"><span class="pre">bulik/ldsc</span></code> GitHub repo.</strong></p>
+<p>Uses GWAS summary statistics together with annotation and LD reference-panel data to compute per-SNP heritability enrichment for each annotation. It supports single-annotation (individual contribution) and joint multi-annotation (independent contribution) analysis.</p>
+<p><strong>Background.</strong> LD Score Regression (Bulik-Sullivan et al. 2015) distinguishes confounding (e.g. population stratification) from true polygenic signal by regressing GWAS chi-square statistics on LD scores: SNPs tagging more variation (high LD score) show higher chi-square under true polygenicity, whereas confounding inflates statistics independently of LD. S-LDSC (Finucane et al. 2015) partitions heritability across overlapping annotation categories; standardized tau accounts for negative selection (Gazal et al. 2017). The model details and the tau*/EnrichStat definitions follow below.</p>
+</section>
+<section id="methods-workflow-overview">
+<h2>Methods - Workflow Overview<a class="headerlink" href="#methods-workflow-overview" title="Link to this heading">#</a></h2>
+<p>The pipeline runs in three stages: (1) annotation preparation and the S-LDSC regression (polyfun), (2) post-processing into standardized <span class="math notranslate nohighlight">\(\tau^*\)</span> and meta-analysis (the <code class="docutils literal notranslate"><span class="pre">pecotmr</span></code> package), and (3) optional re-meta on user-defined trait subsets. The concrete commands for stages 1-2 are in the <strong>Steps</strong> section below.</p>
+<p><strong>Stage 1 - polyfun.</strong> Three SoS workflows wrap polyfun: <code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code> converts target annotations into polyfun <code class="docutils literal notranslate"><span class="pre">.annot.gz</span></code> and runs <code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code> (toggles <code class="docutils literal notranslate"><span class="pre">compute_single</span></code> and <code class="docutils literal notranslate"><span class="pre">compute_joint</span></code>, both default <code class="docutils literal notranslate"><span class="pre">True</span></code>; the joint dir is only emitted when <span class="math notranslate nohighlight">\(N \geq 2\)</span>); <code class="docutils literal notranslate"><span class="pre">munge_sumstats_polyfun</span></code> preprocesses each GWAS into LDSC format; <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> runs polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code> once per <code class="docutils literal notranslate"><span class="pre">--target-anno-dir</span></code>, enforcing the MAF cutoff via <code class="docutils literal notranslate"><span class="pre">--frqfile-chr</span></code> (<code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> accepts only <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">0.05</span></code>).</p>
+<p><strong>Stage 2 - pecotmr post-processing.</strong> A single <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code> call consumes all polyfun outputs: it extracts <span class="math notranslate nohighlight">\(\tau\)</span>, <span class="math notranslate nohighlight">\(E\)</span>, <span class="math notranslate nohighlight">\(h^2_g\)</span>, EnrichStat p-value and per-block jackknife <span class="math notranslate nohighlight">\(\tau\)</span> values; computes <span class="math notranslate nohighlight">\(sd_C\)</span> and <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> over the regression’s MAF-cutoff SNP set; standardizes <span class="math notranslate nohighlight">\(\tau \to \tau^*\)</span> for single and joint modes; auto-detects binary vs continuous annotations; and runs a DerSimonian-Laird random-effects meta-analysis across traits, producing three meta tables (<span class="math notranslate nohighlight">\(\tau^*\)</span> cross-type comparable, <span class="math notranslate nohighlight">\(E\)</span> within-binary, EnrichStat within-binary). Output is an R list with <code class="docutils literal notranslate"><span class="pre">per_trait</span></code> and <code class="docutils literal notranslate"><span class="pre">meta</span></code> entries.</p>
+<p><strong>Stage 3 - subset meta-analysis.</strong> <code class="docutils literal notranslate"><span class="pre">pecotmr::meta_sldsc_random</span></code> re-runs the meta on a trait subset without re-running the regression (lightweight, interactive):</p>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;sldsc_results.rds&quot;</span><span class="p">)</span>
+<span class="n">neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="s">&quot;AD_GWAX&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;PD_meta&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ALS_meta&quot;</span><span class="p">)</span>
+<span class="n">meta_neuro_taustar</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">::</span><span class="nf">meta_sldsc_random</span><span class="p">(</span>
+<span class="w">  </span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_target_anno&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tau_star&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="theory">
+<h2>Theory<a class="headerlink" href="#theory" title="Link to this heading">#</a></h2>
+<p>The statistical model behind the pipeline is summarized below. Because the same framework underlies several of the workflow steps, the model, its stratified extension, and the tau-estimation / enrichment definitions are described together here rather than repeated per step.</p>
+<section id="ldsc-model">
+<h3>LDSC model<a class="headerlink" href="#ldsc-model" title="Link to this heading">#</a></h3>
+<p>Under a polygenic assumption, in which effect sizes for variants are drawn independently from distributions with variance proportional to <span class="math notranslate nohighlight">\(1/(p(1-p))\)</span> where <span class="math notranslate nohighlight">\(p\)</span> is the minor allele frequency (MAF), the expected <span class="math notranslate nohighlight">\(\chi^2\)</span> statistic of variant <span class="math notranslate nohighlight">\(j\)</span> is:</p>
+<div class="math notranslate nohighlight">
+\[E[\chi^2_j \mid \ell_j] \;=\; \frac{N\,h^2\,\ell_j}{M} \;+\; N a \;+\; 1 \quad (1)\]</div>
+<p>where <span class="math notranslate nohighlight">\(N\)</span> is the sample size; <span class="math notranslate nohighlight">\(M\)</span> is the number of SNPs, so that <span class="math notranslate nohighlight">\(h^2/M\)</span> is the average heritability per SNP; <span class="math notranslate nohighlight">\(a\)</span> measures the contribution of confounding biases such as cryptic relatedness and population stratification; and <span class="math notranslate nohighlight">\(\ell_j = \sum_k r^2_{jk}\)</span> is the LD Score of variant <span class="math notranslate nohighlight">\(j\)</span>, which measures the amount of genetic variation tagged by <span class="math notranslate nohighlight">\(j\)</span>. A full derivation is given in the Supplementary Note of Bulik-Sullivan et al. (2015); an alternative derivation appears in the Supplementary Note of Zhu and Stephens (2017) AoAS.</p>
+<p>Equation (1) shows that LD Score regression can compute SNP-based heritability for a phenotype from GWAS summary statistics alone, without requiring individual-level genotype data as REML and related methods do.</p>
+</section>
+<section id="stratified-ldsc">
+<h3>Stratified LDSC<a class="headerlink" href="#stratified-ldsc" title="Link to this heading">#</a></h3>
+<p>Heritability is the proportion of phenotypic variation that is due to variation in genetic values, and it can also be partitioned over disjoint or overlapping categories of SNPs.</p>
+<p>Stratified LD Score Regression (S-LDSC) partitions heritability by leveraging both LD-score information and SNPs that have not reached genome-wide significance. S-LDSC exploits the fact that the <span class="math notranslate nohighlight">\(\chi^2\)</span> statistic for a given SNP reflects the cumulative effects of all SNPs tagged by it: in regions of high LD, the focal SNP captures the contribution of a group of nearby SNPs.</p>
+<p>S-LDSC declares an annotation enriched for heritability if SNPs with high LD to that annotation have higher <span class="math notranslate nohighlight">\(\chi^2\)</span> statistics than SNPs with low LD to it.</p>
+<p>Let <span class="math notranslate nohighlight">\(a_{jC}\)</span> denote the value of annotation <span class="math notranslate nohighlight">\(C\)</span> at SNP <span class="math notranslate nohighlight">\(j\)</span>:</p>
+<ul class="simple">
+<li><p><strong>Binary annotation</strong> (e.g. an indicator for “in enhancer”, “in exon”, “in cell-type-specific peak”): <span class="math notranslate nohighlight">\(a_{jC} \in \{0, 1\}\)</span>.</p></li>
+<li><p><strong>Continuous annotation</strong> (e.g. gene-specificity score, conservation score, continuous epigenomic signal): <span class="math notranslate nohighlight">\(a_{jC} \in \mathbb{R}\)</span>.</p></li>
+</ul>
+<p>Under a polygenic model the per-SNP heritability for SNP <span class="math notranslate nohighlight">\(j\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{Var}(\beta_j) \;=\; \sum_C a_{jC}\, \tau_C\]</div>
+<p>and the expected <span class="math notranslate nohighlight">\(\chi^2\)</span> statistic of SNP <span class="math notranslate nohighlight">\(j\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[E[\chi^2_j \mid \mathbf{a}_j] \;=\; N \sum_C \tau_C\, \ell(j, C) \;+\; N a \;+\; 1 \quad (2)\]</div>
+<p>where <span class="math notranslate nohighlight">\(\ell(j, C) = \sum_k a_{kC}\, r^2_{jk}\)</span> is the partitioned LD score of SNP <span class="math notranslate nohighlight">\(j\)</span> with respect to annotation <span class="math notranslate nohighlight">\(C\)</span>, and <span class="math notranslate nohighlight">\(a\)</span> measures confounding bias. Equation (2) allows joint estimation of all <span class="math notranslate nohighlight">\(\tau_C\)</span> via a (computationally simple) multiple regression of <span class="math notranslate nohighlight">\(\chi^2_j\)</span> against <span class="math notranslate nohighlight">\(\ell(j, C)\)</span>.</p>
+<p>Interpretation of <span class="math notranslate nohighlight">\(\tau_C\)</span>:</p>
+<ul class="simple">
+<li><p><strong>Binary <span class="math notranslate nohighlight">\(C\)</span></strong>: <span class="math notranslate nohighlight">\(\tau_C\)</span> is the <em>additive increase in per-SNP heritability</em> for SNPs in category <span class="math notranslate nohighlight">\(C\)</span>, on top of the contributions from any other annotations they belong to.</p></li>
+<li><p><strong>Continuous <span class="math notranslate nohighlight">\(C\)</span></strong>: <span class="math notranslate nohighlight">\(\tau_C\)</span> is the <em>additive change in per-SNP heritability per unit increase</em> in the value of annotation <span class="math notranslate nohighlight">\(C\)</span>.</p></li>
+</ul>
+<p>For application to real data and comparisons to other methods, see the three papers cited at the top of this notebook.</p>
+</section>
+<section id="tau-estimation-and-enrichment-analysis">
+<h3>Tau Estimation and Enrichment Analysis<a class="headerlink" href="#tau-estimation-and-enrichment-analysis" title="Link to this heading">#</a></h3>
+<p>Goal: quantify the contribution of functional annotations to trait heritability and assess statistical significance, accounting for LD structure and (for continuous annotations) annotation scale.</p>
+<p>The pipeline has two computational layers:</p>
+<ul class="simple">
+<li><p><strong>Regression layer</strong> — the S-LDSC regression itself, performed by the <a class="reference external" href="https://github.com/omerwe/polyfun">polyfun</a> engine. We do not re-implement this.</p></li>
+<li><p><strong>Post-processing layer</strong> — standardization, differential per-SNP heritability, binary/continuous detection, and random-effects meta-analysis across traits. Implemented in the <a class="reference external" href="https://github.com/StatFunGen/pecotmr"><code class="docutils literal notranslate"><span class="pre">pecotmr</span></code></a> R package (<code class="docutils literal notranslate"><span class="pre">R/sldsc_wrapper.R</span></code>).</p></li>
+</ul>
+<p>The notation below tags each modeling quantity as <strong>(polyfun)</strong> or <strong>(pecotmr)</strong>.</p>
+<section id="notation">
+<h4>Notation<a class="headerlink" href="#notation" title="Link to this heading">#</a></h4>
+<p>For each annotation <span class="math notranslate nohighlight">\(C\)</span> we use:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\pi^{h^2}_C\)</span> = proportion of trait heritability <span class="math notranslate nohighlight">\(h^2_g\)</span> assigned to annotation <span class="math notranslate nohighlight">\(C\)</span>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\pi^{M}_C\)</span> = proportion of (effective) SNPs in annotation <span class="math notranslate nohighlight">\(C\)</span>. For binary annotations this is <span class="math notranslate nohighlight">\(M_C / M_{\mathrm{ref}}\)</span>; for continuous annotations it is the share of total annotation weight in <span class="math notranslate nohighlight">\(C\)</span>.</p></li>
+</ul>
+</section>
+<section id="reference-panel-and-maf-cutoff">
+<h4>Reference panel and MAF cutoff<a class="headerlink" href="#reference-panel-and-maf-cutoff" title="Link to this heading">#</a></h4>
+<p>All LD-derived quantities — partitioned LD scores for the 97 baseline annotations and for our <span class="math notranslate nohighlight">\(K\)</span> target annotations, the LD-score-regression weights, allele frequencies, and the SNP set — are computed against our own LD reference panel. We do not mix in pre-computed quantities from external panels (e.g. 1000G); <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> throughout this notebook denotes the number of common SNPs in our panel.</p>
+<p>By default we restrict to MAF <span class="math notranslate nohighlight">\(&gt; 5\%\)</span> per the sLDSC recommendation: rare-variant LD is unstable and HapMap3-style regression weights are common-variant by construction. The cutoff is exposed as the SoS parameter <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> (default <span class="math notranslate nohighlight">\(0.05\)</span>); the regression, the standardized <span class="math notranslate nohighlight">\(sd_C\)</span>, and <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> are all evaluated on the same MAF <span class="math notranslate nohighlight">\(&gt;\)</span> cutoff SNP set. If allele-frequency files are not available the pipeline fails; the user must explicitly set <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span> <span class="pre">=</span> <span class="pre">0</span></code> to opt out (not recommended).</p>
+</section>
+<section id="quantities-from-the-regression-layer-polyfun">
+<h4>Quantities from the regression layer (polyfun)<a class="headerlink" href="#quantities-from-the-regression-layer-polyfun" title="Link to this heading">#</a></h4>
+<p>Solving Equation (2) jointly across annotations, with 200-block genomic jackknife for inference, is performed by polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code>. From each polyfun run we obtain, per annotation:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\tau_C\)</span> and its standard error — <strong>(polyfun)</strong>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\pi^{h^2}_C\)</span> and <span class="math notranslate nohighlight">\(\pi^{M}_C\)</span> — <strong>(polyfun)</strong>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(E_C = \pi^{h^2}_C / \pi^{M}_C\)</span> and its standard error — <strong>(polyfun)</strong>.</p></li>
+<li><p>The p-value of the differential per-SNP heritability test (defined below) — <strong>(polyfun)</strong>, computed internally with the full coefficient covariance matrix.</p></li>
+</ul>
+<p>We also obtain, per run:</p>
+<ul class="simple">
+<li><p>The total trait heritability <span class="math notranslate nohighlight">\(h^2_g\)</span> — <strong>(polyfun)</strong>.</p></li>
+<li><p>The 200-block jackknife delete-values of <span class="math notranslate nohighlight">\(\tau_C\)</span> — <strong>(polyfun)</strong>.</p></li>
+</ul>
+</section>
+<section id="quantities-from-the-post-processing-layer-pecotmr">
+<h4>Quantities from the post-processing layer (pecotmr)<a class="headerlink" href="#quantities-from-the-post-processing-layer-pecotmr" title="Link to this heading">#</a></h4>
+<p>From the polyfun outputs above plus our reference panel, the post-processing layer computes:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(sd_C\)</span> — per-annotation standard deviation over MAF <span class="math notranslate nohighlight">\(&gt;\)</span> cutoff SNPs — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">compute_sldsc_annot_sd</span></code>)</strong>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> — reference SNP count at the MAF cutoff — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">compute_sldsc_M_ref</span></code>)</strong>.</p></li>
+<li><p>Whether each annotation is binary or continuous — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">is_binary_sldsc_annot</span></code>)</strong>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\tau^*_C\)</span> point estimate and per-block <span class="math notranslate nohighlight">\(\tau^*_C\)</span> — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">standardize_sldsc_trait</span></code>)</strong>.</p></li>
+<li><p>EnrichStat point estimate and its standard error (formula below) — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">standardize_sldsc_trait</span></code>)</strong>.</p></li>
+<li><p>DerSimonian-Laird random-effects meta-analysis of <span class="math notranslate nohighlight">\(\tau^*_C\)</span>, <span class="math notranslate nohighlight">\(E_C\)</span>, or EnrichStat across traits — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">meta_sldsc_random</span></code>)</strong>.</p></li>
+</ul>
+<p>The top-level entry point <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code> orchestrates all of the above.</p>
+</section>
+<section id="standardized-tau-tau-pecotmr">
+<h4>Standardized tau (<span class="math notranslate nohighlight">\(\tau^*\)</span>)  —  (pecotmr)<a class="headerlink" href="#standardized-tau-tau-pecotmr" title="Link to this heading">#</a></h4>
+<p><span class="math notranslate nohighlight">\(\tau_C\)</span> has units that depend on the scale of the annotation and on the total heritability of the trait, so raw <span class="math notranslate nohighlight">\(\tau\)</span> is not directly comparable across annotations or across traits. We compute the standardized version (Gazal et al. 2017)</p>
+<div class="math notranslate nohighlight">
+\[\tau^*_C \;=\; \tau_C \cdot \frac{sd_C \cdot M_{\mathrm{ref}}}{h^2_g}\]</div>
+<p>interpreted as the additive change in per-SNP heritability associated with a 1 standard deviation increase in annotation <span class="math notranslate nohighlight">\(C\)</span>, divided by the average per-SNP heritability across all SNPs. <span class="math notranslate nohighlight">\(\tau^*_C\)</span> is dimensionless and comparable across annotations and across traits. In a joint multi-annotation regression it is the <em>independent contribution</em> of annotation <span class="math notranslate nohighlight">\(C\)</span> after controlling for overlapping effects of the others.</p>
+<p>Here <span class="math notranslate nohighlight">\(sd_C\)</span> is the standard deviation of annotation <span class="math notranslate nohighlight">\(C\)</span> across reference SNPs (MAF <span class="math notranslate nohighlight">\(&gt;\)</span> cutoff), <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> is the count of those SNPs, and <span class="math notranslate nohighlight">\(h^2_g\)</span> is the trait heritability. Applying the same scaling to each of the 200 jackknife blocks yields per-block <span class="math notranslate nohighlight">\(\tau^*_C\)</span> values; their sample variance gives the jackknife standard error
+$<span class="math notranslate nohighlight">\(SE^{\text{jackknife}}(\tau^*_C) \;=\; \sqrt{\,\tfrac{(B-1)^2}{B}\, \mathrm{Var}_b(\tau^*_{C,(b)})\,}\)</span><span class="math notranslate nohighlight">\(
+with \)</span>B = 200$, used as the per-trait input to cross-trait meta-analysis.</p>
+</section>
+<section id="differential-per-snp-heritability-enrichstat-polyfun-pecotmr">
+<h4>Differential per-SNP heritability (“EnrichStat”)  —  (polyfun + pecotmr)<a class="headerlink" href="#differential-per-snp-heritability-enrichstat-polyfun-pecotmr" title="Link to this heading">#</a></h4>
+<p>To test whether the per-SNP heritability <em>inside</em> annotation <span class="math notranslate nohighlight">\(C\)</span> differs from <em>outside</em> it (Finucane et al. 2015):</p>
+<div class="math notranslate nohighlight">
+\[\text{EnrichStat}_C \;=\; \frac{h^2_g}{M_{\mathrm{ref}}} \!\left[\, \frac{\pi^{h^2}_C}{\pi^{M}_C} \;-\; \frac{1 - \pi^{h^2}_C}{1 - \pi^{M}_C} \,\right]\]</div>
+<p>The point-estimate p-value of this test is computed by polyfun internally using the full coefficient covariance and reported as <code class="docutils literal notranslate"><span class="pre">Enrichment_p</span></code>. Its standard error is recovered from the reported p-value:</p>
+<div class="math notranslate nohighlight">
+\[|Z_C| \;=\; \Phi^{-1}\!\left(1 - \tfrac{p_C}{2}\right), \qquad SE_{\text{EnrichStat}_C} \;=\; \frac{|\text{EnrichStat}_C|}{|Z_C|}.\]</div>
+<p>This per-trait point + SE is the input to cross-trait meta-analysis.</p>
+</section>
+<section id="reporting-binary-vs-continuous-annotations-pecotmr">
+<h4>Reporting: binary vs. continuous annotations  —  (pecotmr)<a class="headerlink" href="#reporting-binary-vs-continuous-annotations-pecotmr" title="Link to this heading">#</a></h4>
+<p>The estimation machinery applies to both annotation types, but the <em>headline</em> quantity to report <strong>within each type</strong> differs.</p>
+<p>For a <strong>binary annotation</strong> (e.g. enhancer indicator, exon, in/out of a cell-type peak), <span class="math notranslate nohighlight">\(\pi^{M}_C = M_C / M_{\mathrm{ref}}\)</span> has a direct interpretation and <span class="math notranslate nohighlight">\(E_C\)</span> reads as “the category explains <span class="math notranslate nohighlight">\(E_C\)</span>-fold more heritability than its share of SNPs.” The within-type headline quantities are therefore <span class="math notranslate nohighlight">\(E_C\)</span> and the EnrichStat p-value; <span class="math notranslate nohighlight">\(\tau^*_C\)</span> is reported alongside.</p>
+<p>For a <strong>continuous annotation</strong> (e.g. gene-specificity score, conservation score, continuous epigenomic signal), <span class="math notranslate nohighlight">\(E_C\)</span> depends on the scale of the annotation: rescaling the annotation by a constant changes <span class="math notranslate nohighlight">\(E_C\)</span> even though the underlying biology is unchanged. The within-type headline quantities are therefore <span class="math notranslate nohighlight">\(\tau^*_C\)</span> and its p-value; <span class="math notranslate nohighlight">\(E_C\)</span> is reported alongside but should not be interpreted for continuous annotations.</p>
+<p>The pipeline determines whether an annotation is binary by inspecting whether its values lie in <span class="math notranslate nohighlight">\(\{0, 1\}\)</span> and selects the appropriate within-type headline statistic automatically (pecotmr).</p>
+<blockquote>
+<div><p><strong>From the official LDSC tutorial</strong> (<a class="reference external" href="https://github.com/bulik/ldsc/wiki/Partitioned-Heritability-from-Continuous-Annotations">Partitioned Heritability from Continuous Annotations</a>):</p>
+<p><em>“Enrichment is (Prop. heritability) / (Prop. SNPs). These outputs make sense only for binary annotations. Do not try to interpret them for continuous annotations. Using <code class="docutils literal notranslate"><span class="pre">--print-coefficients</span></code> outputs the regression coefficients and corresponding standard errors and Z score for each annotation. These coefficients measure the additional contribution of one annotation to the model and are interpretable for both binary and continuous annotations.”</em></p>
+<p>The pipeline always passes <code class="docutils literal notranslate"><span class="pre">--print-coefficients</span></code> to polyfun for this reason.</p>
+</div></blockquote>
+</section>
+<section id="cross-type-comparison-always-use-tau-c-pecotmr">
+<h4>Cross-type comparison: always use <span class="math notranslate nohighlight">\(\tau^*_C\)</span>  —  (pecotmr)<a class="headerlink" href="#cross-type-comparison-always-use-tau-c-pecotmr" title="Link to this heading">#</a></h4>
+<p>For an apple-to-apple comparison <strong>across binary and continuous annotations</strong> — ranking annotations on a single axis, meta-analyzing a mixed set, or reporting a leaderboard that pools both types — use <span class="math notranslate nohighlight">\(\tau^*_C\)</span>. The standardization in Gazal et al. (2017) was designed for exactly this purpose: <span class="math notranslate nohighlight">\(sd_C = \sqrt{p(1-p)}\)</span> for a binary annotation (where <span class="math notranslate nohighlight">\(p\)</span> is the proportion in the category) and <span class="math notranslate nohighlight">\(sd_C = \)</span> empirical standard deviation for a continuous annotation, so the resulting <span class="math notranslate nohighlight">\(\tau^*_C\)</span> is dimensionless and has the same interpretation in both cases — additive change in per-SNP heritability per 1 SD increase in the annotation, normalized by the average per-SNP heritability. <span class="math notranslate nohighlight">\(E_C\)</span> does not have this property and must not be compared across types.</p>
+<p>The pipeline emits both <span class="math notranslate nohighlight">\(E_C\)</span> and <span class="math notranslate nohighlight">\(\tau^*_C\)</span> for every annotation, with the binary/continuous flag, so callers can pick the right column for the comparison they are making.</p>
+</section>
+<section id="joint-analysis-polyfun-runs-the-regression-pecotmr-standardizes-both-modes">
+<h4>Joint analysis  —  (polyfun runs the regression; pecotmr standardizes both modes)<a class="headerlink" href="#joint-analysis-polyfun-runs-the-regression-pecotmr-standardizes-both-modes" title="Link to this heading">#</a></h4>
+<p>For <strong>joint analysis</strong> (multiple annotations fit together), both <span class="math notranslate nohighlight">\(\tau\)</span> and <span class="math notranslate nohighlight">\(E\)</span> are conditional on the other annotations in the model. We report joint <span class="math notranslate nohighlight">\(\tau^*_C\)</span> as the independent contribution of annotation <span class="math notranslate nohighlight">\(C\)</span> after controlling for the others. The annotation-prep step exposes two independent toggles, <code class="docutils literal notranslate"><span class="pre">compute_single</span></code> and <code class="docutils literal notranslate"><span class="pre">compute_joint</span></code> (both default <code class="docutils literal notranslate"><span class="pre">True</span></code>), so the user can produce the <span class="math notranslate nohighlight">\(N\)</span> single-target outputs, the joint output, or both in one invocation. With both defaults the post-processing layer reads all <span class="math notranslate nohighlight">\(N+1\)</span> regression outputs per trait and presents single + joint side-by-side. When the joint subset is decided after looking at single-target results (exploratory <span class="math notranslate nohighlight">\(\rightarrow\)</span> conditional workflow), the user runs the annotation-prep step a second time with <code class="docutils literal notranslate"><span class="pre">compute_single=False</span></code> on the curated subset.</p>
+</section>
+</section>
+<section id="meta-analysis-across-traits-random-effects-pecotmr">
+<h3>Meta-Analysis across Traits (Random Effects)  —  (pecotmr)<a class="headerlink" href="#meta-analysis-across-traits-random-effects-pecotmr" title="Link to this heading">#</a></h3>
+<p>DerSimonian-Laird random-effects meta-analysis of per-annotation estimates across traits, implemented in <code class="docutils literal notranslate"><span class="pre">pecotmr::meta_sldsc_random</span></code> (which delegates the numerics to <code class="docutils literal notranslate"><span class="pre">rmeta::meta.summaries(...,</span> <span class="pre">method</span> <span class="pre">=</span> <span class="pre">&quot;random&quot;)</span></code>):</p>
+<div class="math notranslate nohighlight">
+\[\hat\theta_{\mathrm{meta}} \;=\; \frac{\sum_i w_i\, \hat\theta_i}{\sum_i w_i}, \qquad SE_{\mathrm{meta}} \;=\; \sqrt{\frac{1}{\sum_i w_i}}, \qquad w_i \;=\; \frac{1}{SE_i^2 + \hat\sigma^2}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\hat\theta_i\)</span> is the per-trait estimate and <span class="math notranslate nohighlight">\(SE_i\)</span> its standard error:</p>
+<ul class="simple">
+<li><p><strong>For <span class="math notranslate nohighlight">\(\tau^*_C\)</span> meta</strong>: <span class="math notranslate nohighlight">\(SE_i\)</span> is the jackknife SE from the per-block <span class="math notranslate nohighlight">\(\tau^*_C\)</span> values.</p></li>
+<li><p><strong>For <span class="math notranslate nohighlight">\(E_C\)</span> meta</strong>: <span class="math notranslate nohighlight">\(SE_i\)</span> is the polyfun-reported <code class="docutils literal notranslate"><span class="pre">Enrichment_std_error</span></code>.</p></li>
+<li><p><strong>For EnrichStat meta</strong>: <span class="math notranslate nohighlight">\(SE_i\)</span> is the back-solved SE from polyfun’s <code class="docutils literal notranslate"><span class="pre">Enrichment_p</span></code>.</p></li>
+</ul>
+<p>For binary-annotation enrichment reporting we use a two-channel meta: the <strong>effect size and SE</strong> come from the meta on <span class="math notranslate nohighlight">\(E_C\)</span> (interpretable on the original enrichment-fold scale), while the <strong>p-value</strong> comes from the meta on EnrichStat (the appropriate hypothesis test). The pipeline produces a default meta over all supplied traits; users can re-run meta on any subset of traits without re-running the regression layer.</p>
+<div class="math notranslate nohighlight">
+\[Z_{\mathrm{meta}} \;=\; \frac{\hat\theta_{\mathrm{meta}}}{SE_{\mathrm{meta}}}, \qquad p \;=\; 2\,\Phi(-|Z_{\mathrm{meta}}|)\]</div>
+</section>
+</section>
+<section id="minimal-working-example-mwe">
+<h2>Minimal Working Example (MWE)<a class="headerlink" href="#minimal-working-example-mwe" title="Link to this heading">#</a></h2>
+<p>The steps below run the four pipeline workflows end to end on the example data. Each step lists what it does, then the <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span></code> command to execute it.</p>
+</section>
+<section id="step-1-make-annotation-files-ldscore">
+<h2>Step 1. <code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code><a class="headerlink" href="#step-1-make-annotation-files-ldscore" title="Link to this heading">#</a></h2>
+<p><em>Annotation preparation and S-LDSC regression (polyfun).</em> This step accepts a single annotation file for a single-tau analysis (one annotation as input) or several annotation files for a joint-tau analysis (multiple annotations as input).</p>
+<section id="inputs">
+<h3><strong>Inputs</strong><a class="headerlink" href="#inputs" title="Link to this heading">#</a></h3>
+<section id="target-annotation-file">
+<h4>1. Target Annotation File<a class="headerlink" href="#target-annotation-file" title="Link to this heading">#</a></h4>
+<ul>
+<li><p><strong>Purpose</strong>: Specifies the user-provided (“target”) genome annotation files. The pipeline supports both binary and continuous annotations; the type is auto-detected per annotation column.</p></li>
+<li><p><strong>Formats</strong>:</p>
+<ul>
+<li><p>Text file (<code class="docutils literal notranslate"><span class="pre">.txt</span></code>) listing per-chromosome paths to annotation files. Annotation files can be <code class="docutils literal notranslate"><span class="pre">.rds</span></code>/<code class="docutils literal notranslate"><span class="pre">.tsv</span></code>/<code class="docutils literal notranslate"><span class="pre">.txt</span></code>.</p></li>
+<li><p>Alternatively, files for specific chromosomes can be provided directly.</p></li>
+<li><p><strong>Multiple target annotations</strong> are supported in one input file (one column per annotation, prefixed <code class="docutils literal notranslate"><span class="pre">path</span></code>, <code class="docutils literal notranslate"><span class="pre">path1</span></code>, <code class="docutils literal notranslate"><span class="pre">path2</span></code>, …). Single-target and joint-target analyses are produced automatically in one pipeline pass.</p></li>
+<li><p><strong>Format</strong> (the score column is optional; if absent, score is set to 1):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">is_range</span> <span class="pre">=</span> <span class="pre">False</span></code>:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">chr</span>   <span class="n">pos</span>   <span class="n">score</span>
+<span class="mi">1</span>    <span class="mi">10001</span>   <span class="mi">1</span>
+<span class="mi">1</span>    <span class="mi">10002</span>   <span class="mi">1</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">is_range</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">chr</span>   <span class="n">start</span>   <span class="n">end</span>   <span class="n">score</span>
+<span class="mi">1</span>    <span class="mi">10001</span>  <span class="mi">20001</span>  <span class="mi">1</span>
+<span class="mi">1</span>    <span class="mi">30001</span>  <span class="mi">40001</span>  <span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="reference-annotation-file-baseline-ld">
+<h4>2. Reference Annotation File (baseline-LD)<a class="headerlink" href="#reference-annotation-file-baseline-ld" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Purpose</strong>: Provides the baseline annotations (typically the 97-annotation baseline-LD model from Gazal et al. 2017) in <code class="docutils literal notranslate"><span class="pre">.annot.gz</span></code> format for each chromosome. The baseline conditions every regression.</p></li>
+<li><p><strong>Formats</strong>:</p>
+<ul>
+<li><p>Text file listing baseline annotation files for all chromosomes.</p></li>
+<li><p>Alternatively, files for specific chromosomes can be provided directly.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="genome-reference-file">
+<h4>3. Genome Reference File<a class="headerlink" href="#genome-reference-file" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Purpose</strong>: PLINK-format <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code> files for our LD reference panel, per chromosome. This is the panel against which all LD-derived quantities (target LD scores, baseline LD scores, regression weights, allele frequencies) must be computed. <strong>Do not mix files derived from different panels</strong> (e.g. 1000G vs ADSP).</p></li>
+<li><p><strong>Formats</strong>:</p>
+<ul>
+<li><p>Text file listing per-chromosome reference files, or files for specific chromosomes.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="snp-list">
+<h4>4. SNP List<a class="headerlink" href="#snp-list" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Purpose</strong>: Specifies the SNPs to include in LDSC analysis (typically a HapMap3-style list).</p></li>
+<li><p><strong>Format</strong>: A list of <code class="docutils literal notranslate"><span class="pre">rsid</span></code>s, one per line.</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb make_annotation_files_ldscore \
+    --annotation_file data/polyfun_new/input/colocboost_test_annotation_path.txt \
+    --reference_anno_file data/polyfun_new/input/reference_annotation0.txt \
+    --genome_ref_file data/polyfun_new/input/genome_reference_bfile.txt \
+    --annotation_name protocol_example \
+    --plink_name reference. \
+    --baseline_name annotations. \
+    --weight_name weights. \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --cwd output/sldsc_ldscore -j 4
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="munge-summary-statistics-preprocessing-run-before-step-2">
+<h3>Munge summary statistics (preprocessing, run before Step 2)<a class="headerlink" href="#munge-summary-statistics-preprocessing-run-before-step-2" title="Link to this heading">#</a></h3>
+<p>Before estimating heritability, each raw GWAS summary-statistics file must be converted into the LDSC-compatible format consumed by <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code>. Run <code class="docutils literal notranslate"><span class="pre">munge_sumstats_polyfun</span></code> once per trait; the munged files are then collected in the directory passed to <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> via <code class="docutils literal notranslate"><span class="pre">--sumstat_dir</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb munge_sumstats_polyfun \
+    --sumstats data/polyfun_new/example_data/trait_raw_sumstats.tsv \
+    --n 0 \
+    --min-info 0.6 \
+    --min-maf 0.001 \
+    --chi2-cutoff 30 \
+    --polyfun_path data/github/polyfun \
+    --cwd data/polyfun_new/example_data
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="step-2-get-heritability">
+<h2>Step 2. <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code><a class="headerlink" href="#step-2-get-heritability" title="Link to this heading">#</a></h2>
+<p><strong>Inputs</strong></p>
+<section id="allele-frequency-files-frq-our-panel">
+<h3>1. Allele Frequency Files (<code class="docutils literal notranslate"><span class="pre">.frq</span></code>, our panel)<a class="headerlink" href="#allele-frequency-files-frq-our-panel" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Purpose</strong>: PLINK <code class="docutils literal notranslate"><span class="pre">.frq</span></code> files for the reference panel, used to enforce the MAF cutoff. <strong>Required</strong> when <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> (default <code class="docutils literal notranslate"><span class="pre">0.05</span></code>); the pipeline fails if missing unless <code class="docutils literal notranslate"><span class="pre">maf_cutoff</span> <span class="pre">=</span> <span class="pre">0</span></code> is explicitly set.</p></li>
+</ul>
+</section>
+<section id="gwas-summary-statistics">
+<h3>2. GWAS Summary Statistics<a class="headerlink" href="#gwas-summary-statistics" title="Link to this heading">#</a></h3>
+<ul>
+<li><p><strong>Purpose</strong>: One munged sumstats file per trait, listed in a text file (<code class="docutils literal notranslate"><span class="pre">all_traits_file</span></code>). The pipeline runs the regression once per trait per single/joint mode.</p></li>
+<li><p><strong>Format</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CAD_META</span><span class="o">.</span><span class="n">filtered</span><span class="o">.</span><span class="n">sumstats</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">UKB</span><span class="o">.</span><span class="n">Lym</span><span class="o">.</span><span class="n">BOLT</span><span class="o">.</span><span class="n">sumstats</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb get_heritability \
+    --target_anno_dirs output/sldsc_ldscore/protocol_example_single_1 \
+    --all_traits_file data/polyfun_new/input/sumstats_test_all.txt \
+    --sumstat_dir data/polyfun_new/example_data \
+    --baseline_ld_dir data/polyfun_new/example_data \
+    --weights_dir data/polyfun_new/example_data \
+    --plink_name reference. \
+    --baseline_name annotations. \
+    --weight_name weights. \
+    --annotation_name protocol_example \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --maf_cutoff 0 \
+    --cwd output/sldsc_heritability -j 4
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="step-3-post-processing-pecotmr-and-meta-analysis">
+<h2>Step 3. <code class="docutils literal notranslate"><span class="pre">Post-processing</span> <span class="pre">(pecotmr)</span> <span class="pre">and</span> <span class="pre">meta-analysis</span></code><a class="headerlink" href="#step-3-post-processing-pecotmr-and-meta-analysis" title="Link to this heading">#</a></h2>
+<p><em>Post-Processing (<code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code>)</em></p>
+<p>A single R function call consumes all polyfun outputs for the run and produces the final tables:</p>
+<ul class="simple">
+<li><p>Reads each polyfun output and extracts <span class="math notranslate nohighlight">\(\tau\)</span>, <span class="math notranslate nohighlight">\(E\)</span>, <span class="math notranslate nohighlight">\(h^2_g\)</span>, EnrichStat p-value, and per-block jackknife <span class="math notranslate nohighlight">\(\tau\)</span> values.</p></li>
+<li><p>Computes annotation <span class="math notranslate nohighlight">\(sd_C\)</span> and <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> over the same MAF <span class="math notranslate nohighlight">\(&gt;\)</span> cutoff SNP set as the regression.</p></li>
+<li><p>Standardizes <span class="math notranslate nohighlight">\(\tau \to \tau^*\)</span> for both single-tau and joint-tau modes, including the per-block versions for jackknife SE.</p></li>
+<li><p>Auto-detects whether each annotation is binary or continuous and tags every output row accordingly.</p></li>
+<li><p>Reports the number and names of baseline annotations encountered (via <code class="docutils literal notranslate"><span class="pre">message()</span></code>) for transparency.</p></li>
+<li><p>Runs the default DerSimonian-Laird random-effects meta-analysis across all supplied traits, producing three meta tables: <span class="math notranslate nohighlight">\(\tau^*\)</span> (cross-type comparable), <span class="math notranslate nohighlight">\(E\)</span> (within-binary), and EnrichStat (within-type).</p></li>
+</ul>
+<p>Outputs are returned as an R list with two top-level entries: <code class="docutils literal notranslate"><span class="pre">per_trait</span></code> (one tidy data frame per trait, single + joint estimates side-by-side per target) and <code class="docutils literal notranslate"><span class="pre">meta</span></code> (three tables, one per quantity, with rows = target annotations and columns = single/joint mean/SE/p plus an <code class="docutils literal notranslate"><span class="pre">is_binary</span></code> flag).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">[postprocess]</span></code> step reads all polyfun outputs under <code class="docutils literal notranslate"><span class="pre">heritability_cwd</span></code>
+(which contains the <span class="math notranslate nohighlight">\(N\)</span> single-target subdirectories and optionally the
+joint subdirectory) and calls <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline()</span></code>
+to produce per-trait standardized tables and the default random-effects
+meta across all traits.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--target-categories-label</span></code> (same order as <code class="docutils literal notranslate"><span class="pre">--target-categories</span></code>) to give the target annotations friendly names in the output — e.g. <code class="docutils literal notranslate"><span class="pre">--target-categories</span> <span class="pre">ANNOT_1_0</span> <span class="pre">ANNOT_2_0</span> <span class="pre">--target-categories-label</span> <span class="pre">quantile_eQTL</span> <span class="pre">eQTL</span></code> makes the <code class="docutils literal notranslate"><span class="pre">target</span></code> column read <code class="docutils literal notranslate"><span class="pre">quantile_eQTL</span></code> / <code class="docutils literal notranslate"><span class="pre">eQTL</span></code> instead of <code class="docutils literal notranslate"><span class="pre">ANNOT_1_0</span></code> / <code class="docutils literal notranslate"><span class="pre">ANNOT_2_0</span></code> (the original names are kept in <code class="docutils literal notranslate"><span class="pre">params$target_categories_orig</span></code>). Omit it to keep the polyfun <code class="docutils literal notranslate"><span class="pre">.results</span></code> names.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb postprocess \
+    --traits_file data/polyfun_new/input/sumstats_test_all.txt \
+    --heritability_cwd output/sldsc_heritability \
+    --target_categories ANNOT_0 \
+    --target_categories_label protocol_example_annotation \
+    --target_anno_dir output/sldsc_ldscore/protocol_example_single_1 \
+    --annotation_name protocol_example \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --maf_cutoff 0 \
+    --cwd output/sldsc_postprocess -j 4
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional">
+<h2>Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::meta_sldsc_random<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)<a class="headerlink" href="#step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional" title="Link to this heading">#</a></h2>
+<p>The default meta in Step 2 pools all traits the user supplied. To re-run the meta on a subset (e.g., neurodegenerative traits only, or autoimmune traits only) without re-running the regression layer:</p>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;sldsc_results.rds&quot;</span><span class="p">)</span>
+<span class="n">neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="s">&quot;AD_GWAX&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;PD_meta&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ALS_meta&quot;</span><span class="p">)</span>
+<span class="n">meta_neuro_taustar</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">::</span><span class="nf">meta_sldsc_random</span><span class="p">(</span>
+<span class="w">  </span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_target_anno&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tau_star&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This step is light-weight and can be run interactively.</p>
+<p>The default meta in step 3 pools all traits supplied to <code class="docutils literal notranslate"><span class="pre">[postprocess]</span></code>. Use <code class="docutils literal notranslate"><span class="pre">[meta_subset]</span></code> to re-run the meta on a user-defined trait subset (e.g., neurodegenerative traits only, autoimmune traits only) without re-running the regression or the per-trait standardization. The subset operates on the cached <code class="docutils literal notranslate"><span class="pre">.sldsc_postprocess.rds</span></code> output; it is light-weight and can be run interactively or in batch.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb meta_subset \
+    --postprocess_rds output/sldsc_postprocess/protocol_example.sldsc_postprocess.rds \
+    --subset_traits_file data/polyfun_new/input/sumstats_test_category1.txt \
+    --subset_name category1 \
+    --target_categories ANNOT_0 \
+    --annotation_name protocol_example \
+    --python_exec python \
+    --polyfun_path data/github/polyfun \
+    --maf_cutoff 0 \
+    --cwd output/sldsc_postprocess -j 4
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<section id="output-summary-cached-artifacts">
+<h3>Output summary (cached artifacts)<a class="headerlink" href="#output-summary-cached-artifacts" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Stage</p></th>
+<th class="head"><p>Cached on disk</p></th>
+<th class="head"><p>Recomputable from</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Target LD scores</p></td>
+<td><p>per-annotation, once</p></td>
+<td><p>annotation + reference panel</p></td>
+<td><p>input to every regression</p></td>
+</tr>
+<tr class="row-odd"><td><p>polyfun <code class="docutils literal notranslate"><span class="pre">.results</span></code> per (trait, mode)</p></td>
+<td><p>yes</p></td>
+<td><p>regression run</p></td>
+<td><p><span class="math notranslate nohighlight">\(\tau\)</span>, <span class="math notranslate nohighlight">\(E\)</span>, EnrichStat</p></td>
+</tr>
+<tr class="row-even"><td><p>Per-trait standardized table</p></td>
+<td><p>yes (RDS)</p></td>
+<td><p>polyfun outputs + <span class="math notranslate nohighlight">\(sd_C\)</span> + <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span></p></td>
+<td><p>reporting + meta</p></td>
+</tr>
+<tr class="row-odd"><td><p>Default meta tables</p></td>
+<td><p>yes (RDS)</p></td>
+<td><p>per-trait standardized</p></td>
+<td><p>headline figures</p></td>
+</tr>
+<tr class="row-even"><td><p>Subset meta</p></td>
+<td><p>re-run on demand</p></td>
+<td><p>per-trait standardized</p></td>
+<td><p>custom analyses</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="per-stage-outputs">
+<h3>Per-stage outputs<a class="headerlink" href="#per-stage-outputs" title="Link to this heading">#</a></h3>
+<p>Each workflow writes into its <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>:</p>
+<ul class="simple">
+<li><p><strong>make_annotation_files_ldscore</strong> — polyfun <code class="docutils literal notranslate"><span class="pre">.annot.gz</span></code> files plus per-annotation LD-score directories (<code class="docutils literal notranslate"><span class="pre">.l2.ldscore.{gz,parquet}</span></code>, <code class="docutils literal notranslate"><span class="pre">.l2.M</span></code>, <code class="docutils literal notranslate"><span class="pre">.l2.M_5_50</span></code>). One single-target directory per annotation, plus (when more than one annotation) a joint directory.</p></li>
+<li><p><strong>get_heritability</strong> — per trait and per target directory, the S-LDSC regression outputs <code class="docutils literal notranslate"><span class="pre">&lt;trait&gt;.{results,log,part_delete}</span></code>. The <code class="docutils literal notranslate"><span class="pre">.results</span></code> <code class="docutils literal notranslate"><span class="pre">Category</span></code> column carries the annotation name with a <code class="docutils literal notranslate"><span class="pre">_&lt;ref-ld-index&gt;</span></code> suffix.</p></li>
+<li><p><strong>postprocess</strong> — a single <code class="docutils literal notranslate"><span class="pre">&lt;annotation_name&gt;.sldsc_postprocess.rds</span></code> containing per-trait tables (Gazal-style tau*, EnrichStat with back-solved jackknife SE) and three DerSimonian–Laird random-effects meta tables (tau*, E, EnrichStat).</p></li>
+<li><p><strong>meta_subset</strong> — a re-meta of the cached <code class="docutils literal notranslate"><span class="pre">.sldsc_postprocess.rds</span></code> over a user-defined trait subset (lightweight; no regression re-run).</p></li>
+</ul>
+</section>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>Produces per-annotation enrichment statistics (tau, enrichment, p-value) from stratified LD score regression.</p>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<p>List all workflows and their options:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
+<p>The cells below are the pipeline definition (preserved from the original notebook): the <code class="docutils literal notranslate"><span class="pre">[global]</span></code> parameter block and the workflow step bodies.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+# Path to the work directory of the analysis.
+parameter: cwd = path(&#39;output&#39;)
+# Prefix for the analysis output
+parameter: annotation_name = str
+parameter: python_exec = &quot;python&quot; # e.g. &quot;/home/you/.conda/envs/polyfun/bin/python&quot;
+parameter: polyfun_path   = path # e.g. &quot;/home/you/tools/polyfun&quot;
+
+# MAF cutoff for sLDSC. Default 0.05 per sLDSC recommendation (rare-variant LD is unstable
+# and HapMap3-style regression weights are common-variant by construction).
+# Set to 0 to opt out of MAF filtering (NOT recommended; only use if you understand the implications).
+# Other values would require recomputing LD scores at that cutoff.
+parameter: maf_cutoff = 0.05
+
+# for make_annotation_files_ldscore workflow:
+parameter: annotation_file = path()
+parameter: reference_anno_file = path()
+parameter: genome_ref_file = path() # with .bed
+parameter: chromosome = []
+parameter: snp_list = path()
+parameter: ld_wind_kb = 0 # use kb if the value is provided
+parameter: ld_wind_cm = 1.0 # default using ld_wind_cm
+
+# for get_heritability workflow.
+# Note: all LD-derived inputs (baseline LD scores, target LD scores, regression weights,
+# allele frequencies) must be computed against the same reference panel as `genome_ref_file`.
+# Do not mix files derived from different reference panels (e.g., 1000G vs ADSP).
+parameter: all_traits_file = path() # txt file, each row contains all GWAS summary statistics name: e.g. CAD_META.filtered.sumstats.gz
+parameter: sumstat_dir = path() # Directory containing GWAS summary statistics
+parameter: target_anno_dir = path()  # Directory containing target annotation files: output of ldscore
+parameter: baseline_ld_dir = path()  # Directory containing baseline LD score files (computed against our panel)
+parameter: frqfile_dir = path()  # Directory containing allele frequency files (.frq, our panel)
+parameter: plink_name = &quot;ADSP_chr&quot;
+parameter: weights_dir = path()  # Directory containing LD weights (computed against our panel)
+parameter: baseline_name = &quot;baseline_chr&quot;  # Prefix of baseline annotation files
+parameter: weight_name = &quot;weights_chr&quot;  # Prefix of LD weights files
+parameter: n_blocks = 200
+
+# Number of threads
+parameter: numThreads = 16
+# For cluster jobs, number commands to run per job
+parameter: job_size = 1
+parameter: walltime = &#39;12h&#39;
+parameter: mem = &#39;16G&#39;
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="make-annotation-file">
+<h2>Make Annotation File<a class="headerlink" href="#make-annotation-file" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[make_annotation_files_ldscore]
+# Annotation preparation. Takes one annotation_file with N target annotations
+# and produces, in one invocation, any combination of:
+#   - N single-target LD-score directories (when compute_single = TRUE, default)
+#   - 1 joint LD-score directory containing all N (when compute_joint = TRUE
+#     and N &gt;= 2, default)
+#
+# Outputs per chromosome &lt;chr&gt;:
+#   &lt;cwd&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;.&lt;chr&gt;.annot.gz   (i in 1..N, when compute_single)
+#   &lt;cwd&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;.&lt;chr&gt;.l2.ldscore.{parquet|gz}
+#   &lt;cwd&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;.&lt;chr&gt;.l2.M
+#   &lt;cwd&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;/&lt;annotation_name&gt;_single_&lt;i&gt;.&lt;chr&gt;.l2.M_5_50  (when .frq present)
+#
+#   &lt;cwd&gt;/&lt;annotation_name&gt;_joint/&lt;annotation_name&gt;_joint.&lt;chr&gt;.{...}                (when compute_joint and N&gt;=2)
+#
+# Workflows:
+#   - Workflow A (&quot;all at once&quot;): compute_single=TRUE, compute_joint=TRUE (defaults).
+#     Produces both, fits the case where you have already chosen the joint set.
+#   - Workflow B (&quot;exploratory then conditional&quot;):
+#       Step 1: compute_single=TRUE, compute_joint=FALSE.
+#               Run on N candidate annotations -&gt; N single-target dirs.
+#               Inspect single-target results, identify K significant ones.
+#       Step 2: compute_single=FALSE, compute_joint=TRUE.
+#               Run on a NEW annotation_file with the K selected annotations
+#               -&gt; 1 joint dir with the conditional model.
+
+#
+# --- snplist (--snp_list) vs no-snplist: which polyfun script, output format,
+#     column name, and the CM requirement ---
+#   --snp_list given  -&gt; ldsc.py --l2 --print-snps   -&gt; output .l2.ldscore.gz
+#   --snp_list absent -&gt; compute_ldscores.py         -&gt; output .l2.ldscore.parquet
+#
+#   LD-score column name (this is what becomes the .results &quot;Category&quot; in
+#   [get_heritability], with a &quot;_&lt;ref-ld-index&gt;&quot; suffix appended there):
+#     * compute_ldscores.py  ALWAYS keeps the annot column name(s):
+#         single annot column &quot;ANNOT&quot;          -&gt; ldscore column &quot;ANNOT&quot;
+#         joint  annot columns &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...  -&gt; &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...
+#     * ldsc.py --l2 has a quirk: with EXACTLY ONE annotation (n_annot == 1) it
+#       HARD-CODES the ldscore column name to &quot;L2&quot; and DROPS the annot&#39;s original
+#       column name. With &gt;=2 annotations it uses &quot;&lt;annot_name&gt;L2&quot;
+#       (&quot;ANNOT_1L2&quot;,&quot;ANNOT_2L2&quot;,...).
+#     =&gt; a single-target snplist run reports &quot;L2_0&quot; in .results, while a
+#        single-target no-snplist run reports &quot;ANNOT_0&quot;.  [postprocess] auto-
+#        detects either; only matters if you pass --target-categories explicitly.
+#
+#   CM column requirement for snplist:  ldsc.py --l2 --print-snps requires the
+#   target annot to (a) carry a &quot;CM&quot; (centimorgan) column and (b) line up with
+#   the plink .bim (same SNP set, same row order). This step handles both
+#   internally (normalize_for_ldsc: takes CM from the .bim 4th column, re-expands
+#   the annot onto the .bim rows, filling 0). Therefore the plink .bim files MUST
+#   carry genetic-map (cM) positions when using --ld-wind-cm (the default);
+#   if your .bim has 0 in the cM column, switch to --ld-wind-kb instead.
+#
+parameter: compute_single = True
+parameter: compute_joint = True
+parameter: score_column = 3
+parameter: is_range = False
+
+import pandas as pd
+import os
+
+if not (compute_single or compute_joint):
+    raise ValueError(&quot;[make_annotation_files_ldscore] at least one of compute_single or compute_joint must be TRUE&quot;)
+
+def adapt_file_path(file_path, reference_file):
+    reference_path = os.path.dirname(reference_file)
+    if os.path.isfile(file_path):
+        return file_path
+    file_name = os.path.basename(file_path)
+    if os.path.isfile(file_name):
+        return file_name
+    file_in_ref_dir = os.path.join(reference_path, file_name)
+    if os.path.isfile(file_in_ref_dir):
+        return file_in_ref_dir
+    file_prefixed = os.path.join(reference_path, file_path)
+    if os.path.isfile(file_prefixed):
+        return file_prefixed
+    raise FileNotFoundError(f&quot;No valid path found for file: {file_path}&quot;)
+
+
+# ---- Parse inputs and determine N ----
+if (str(annotation_file).endswith((&#39;rds&#39;, &#39;tsv&#39;, &#39;txt&#39;, &#39;tsv.gz&#39;, &#39;txt.gz&#39;)) and
+    str(reference_anno_file).endswith(&#39;annot.gz&#39;)):
+    # Case 1: direct file paths (single-chromosome run). Multiple target files separated by &#39;,&#39;.
+    target_files_direct = str(annotation_file).split(&#39;,&#39;)
+    N_targets = len(target_files_direct)
+    target_names = [f&quot;target_{i+1}&quot; for i in range(N_targets)]
+    input_files = [[*target_files_direct, str(reference_anno_file), str(genome_ref_file)]]
+    if len(chromosome) &gt; 0:
+        input_chroms = [int(x) for x in chromosome]
+    else:
+        input_chroms = [0]
+else:
+    # Case 2: txt list with #id and one or more &#39;path&#39; columns
+    target_files_df = pd.read_csv(annotation_file, sep=&quot;\t&quot;)
+    reference_files = pd.read_csv(reference_anno_file, sep=&quot;\t&quot;)
+    genome_ref_files = pd.read_csv(genome_ref_file, sep=&quot;\t&quot;)
+
+    target_files_df[&quot;#id&quot;] = [x.replace(&quot;chr&quot;, &quot;&quot;) for x in target_files_df[&quot;#id&quot;].astype(str)]
+    reference_files[&quot;#id&quot;]  = [x.replace(&quot;chr&quot;, &quot;&quot;) for x in reference_files[&quot;#id&quot;].astype(str)]
+    genome_ref_files[&quot;#id&quot;] = [x.replace(&quot;chr&quot;, &quot;&quot;) for x in genome_ref_files[&quot;#id&quot;].astype(str)]
+
+    path_columns = [c for c in target_files_df.columns if c.startswith(&#39;path&#39;)]
+    N_targets = len(path_columns)
+    target_names = path_columns[:]   # &#39;path&#39;, &#39;path1&#39;, &#39;path2&#39;, ...
+
+    for col in path_columns:
+        target_files_df[col] = target_files_df[col].apply(lambda x: adapt_file_path(x, str(annotation_file)))
+    reference_files[&quot;path&quot;] = reference_files[&quot;path&quot;].apply(lambda x: adapt_file_path(x, str(reference_anno_file)))
+    genome_ref_files[&quot;path&quot;] = genome_ref_files[&quot;path&quot;].apply(lambda x: adapt_file_path(x, str(genome_ref_file)))
+
+    merged = target_files_df.merge(reference_files, on=&quot;#id&quot;).merge(genome_ref_files, on=&quot;#id&quot;)
+    if len(chromosome) &gt; 0:
+        merged = merged[merged[&quot;#id&quot;].isin([str(c) for c in chromosome])]
+
+    rows = merged.values.tolist()
+    input_chroms = [r[0] for r in rows]
+    input_files = [[*r[1:N_targets+1], r[-2], r[-1]] for r in rows]
+
+# ---- Determine output format ----
+use_print_snps = snp_list.is_file()
+ldscore_ext = &quot;l2.ldscore.gz&quot; if use_print_snps else &quot;l2.ldscore.parquet&quot;
+
+if ld_wind_kb &gt; 0:
+    use_kb_window = True
+    ld_window_param = ld_wind_kb
+    ld_window_flag = &quot;--ld-wind-kb&quot;
+else:
+    use_kb_window = False
+    ld_window_param = ld_wind_cm
+    ld_window_flag = &quot;--ld-wind-cm&quot;
+
+emit_single = compute_single
+emit_joint  = compute_joint and N_targets &gt;= 2
+
+# ---- Build per-chromosome output list ----
+def chrom_outputs(chrom):
+    outs = []
+    if emit_single:
+        for i in range(N_targets):
+            name = f&quot;{annotation_name}_single_{i+1}&quot;
+            prefix = f&quot;{cwd:a}/{name}/{name}.{chrom}&quot;
+            outs += [f&quot;{prefix}.annot.gz&quot;, f&quot;{prefix}.{ldscore_ext}&quot;, f&quot;{prefix}.l2.M&quot;]
+    if emit_joint:
+        name = f&quot;{annotation_name}_joint&quot;
+        prefix = f&quot;{cwd:a}/{name}/{name}.{chrom}&quot;
+        outs += [f&quot;{prefix}.annot.gz&quot;, f&quot;{prefix}.{ldscore_ext}&quot;, f&quot;{prefix}.l2.M&quot;]
+    return outs
+
+input: input_files, group_by = N_targets + 2, group_with = &quot;input_chroms&quot;
+
+output: chrom_outputs(input_chroms[_index])
+
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
+
+# ----------------------------------------------------------------------------
+# Step A: write the requested .annot files for this chromosome.
+# ----------------------------------------------------------------------------
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+    library(data.table)
+
+    clean_chr &lt;- function(x) as.numeric(gsub(&quot;^chr&quot;, &quot;&quot;, x))
+
+    process_range_data &lt;- function(data, chr_value) {
+        data$chr &lt;- clean_chr(data$chr)
+        data &lt;- data[data$chr == chr_value,]
+        if (nrow(data) == 0) return(NULL)
+        expanded &lt;- lapply(seq_len(nrow(data)), function(j) {
+            row &lt;- data[j,]
+            pos_seq &lt;- seq(row$start, row$end - 1)
+            result &lt;- data.frame(chr = rep(row$chr, length(pos_seq)), pos = pos_seq)
+            if (ncol(data) &gt; 3) {
+                for (col in 4:ncol(data))
+                    result[[names(data)[col]]] &lt;- rep(row[[col]], length(pos_seq))
+            }
+            result
+        })
+        unique(rbindlist(expanded))
+    }
+
+    process_annotation &lt;- function(target_anno, ref_anno, score_column_value) {
+        target_anno &lt;- as.data.frame(target_anno)
+        ref_anno    &lt;- as.data.frame(ref_anno)
+        target_anno$chr &lt;- clean_chr(target_anno$chr)
+        ref_anno$CHR    &lt;- clean_chr(ref_anno$CHR)
+        chr_value &lt;- unique(ref_anno$CHR)
+        anno_scores &lt;- rep(0, nrow(ref_anno))
+        match_pos &lt;- match(target_anno$pos, ref_anno$BP)
+        valid_pos &lt;- as.numeric(na.omit(match_pos))
+        if (score_column_value &lt;= ncol(target_anno)) {
+            anno_scores[valid_pos] &lt;- target_anno[[score_column_value]][!is.na(match_pos)]
+        } else {
+            anno_scores[valid_pos] &lt;- 1
+            print(&quot;Warning: score column does not exist; setting scores to 1&quot;)
+        }
+        anno_scores
+    }
+
+    read_target_anno &lt;- function(file_path, ref_anno) {
+        if (endsWith(file_path, &quot;rds&quot;)) {
+            target_anno &lt;- readRDS(file_path)
+            return(process_annotation(target_anno, ref_anno, ${score_column}))
+        }
+        target_anno &lt;- fread(file_path)
+        if (${&quot;TRUE&quot; if is_range else &quot;FALSE&quot;}) {
+            names(target_anno)[1:3] &lt;- c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;)
+            target_anno &lt;- process_range_data(target_anno, unique(ref_anno$CHR))
+            if (is.null(target_anno)) return(rep(0, nrow(ref_anno)))
+        } else {
+            names(target_anno)[1:2] &lt;- c(&quot;chr&quot;, &quot;pos&quot;)
+        }
+        process_annotation(target_anno, ref_anno, ${score_column})
+    }
+
+    # ---- Read reference annotation ----
+    ref_anno &lt;- as.data.frame(fread(${_input[-2]:ar}))
+    if (&quot;ANNOT&quot; %in% colnames(ref_anno)) ref_anno &lt;- ref_anno[, -which(colnames(ref_anno) == &quot;ANNOT&quot;)]
+
+    # ---- Compute per-target annotation scores ----
+    target_files &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % str(p.absolute()) for p in _input[:-2])})
+    N_local &lt;- length(target_files)
+    score_list &lt;- lapply(target_files, read_target_anno, ref_anno = ref_anno)
+
+    emit_single_local &lt;- ${&quot;TRUE&quot; if emit_single else &quot;FALSE&quot;}
+    emit_joint_local  &lt;- ${&quot;TRUE&quot; if emit_joint  else &quot;FALSE&quot;}
+    use_print_snps_local &lt;- ${&quot;TRUE&quot; if use_print_snps else &quot;FALSE&quot;}
+    bfile_prefix         &lt;- &quot;${_input[-1]:na}&quot;
+
+    # Reshape annot to match .bim panel for ldsc.py --l2 --print-snps
+    # (drop A1/A2/MAF, expand to .bim rows filling 0, take CM from .bim).
+    normalize_for_ldsc &lt;- function(df) {
+        if (!use_print_snps_local) return(df)
+        df &lt;- df[, !names(df) %in% c(&quot;A1&quot;, &quot;A2&quot;, &quot;MAF&quot;, &quot;CM&quot;), drop = FALSE]
+        annot_cols &lt;- setdiff(names(df), c(&quot;CHR&quot;, &quot;BP&quot;, &quot;SNP&quot;))
+        bim &lt;- as.data.frame(fread(paste0(bfile_prefix, &quot;.bim&quot;), header = FALSE,
+                                   col.names = c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;CM&quot;, &quot;BP&quot;, &quot;A1&quot;, &quot;A2&quot;)))
+        bim$CHR &lt;- as.character(bim$CHR); df$CHR &lt;- as.character(df$CHR)
+        idx &lt;- match(bim$SNP, df$SNP)
+        out &lt;- data.frame(CHR = bim$CHR, BP = bim$BP, SNP = bim$SNP, CM = bim$CM,
+                          stringsAsFactors = FALSE)
+        for (col in annot_cols) {
+            v &lt;- rep(0, nrow(bim))
+            non_na &lt;- !is.na(idx)
+            v[non_na] &lt;- df[[col]][idx[non_na]]
+            out[[col]] &lt;- v
+        }
+        out
+    }
+
+    # ---- Write N single-target .annot files (when requested) ----
+    if (emit_single_local) {
+        for (i in seq_len(N_local)) {
+            out_anno &lt;- ref_anno
+            out_anno$ANNOT &lt;- score_list[[i]]
+            out_anno &lt;- normalize_for_ldsc(out_anno)
+            name &lt;- paste0(&quot;${annotation_name}&quot;, &quot;_single_&quot;, i)
+            out_path_gz  &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.${input_chroms[_index]}.annot.gz&quot;))
+            out_path_tsv &lt;- sub(&quot;\\.gz$&quot;, &quot;&quot;, out_path_gz)
+            dir.create(dirname(out_path_gz), showWarnings = FALSE, recursive = TRUE)
+            fwrite(out_anno, out_path_tsv, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = &quot;\t&quot;)
+        }
+    }
+
+    # ---- Optionally write joint .annot ----
+    if (emit_joint_local) {
+        joint_anno &lt;- ref_anno
+        for (i in seq_len(N_local)) {
+            joint_anno[[paste0(&quot;ANNOT_&quot;, i)]] &lt;- score_list[[i]]
+        }
+        joint_anno &lt;- normalize_for_ldsc(joint_anno)
+        joint_name   &lt;- paste0(&quot;${annotation_name}&quot;, &quot;_joint&quot;)
+        joint_out_gz &lt;- file.path(&quot;${cwd:a}&quot;, joint_name, paste0(joint_name, &quot;.${input_chroms[_index]}.annot.gz&quot;))
+        joint_out_tsv &lt;- sub(&quot;\\.gz$&quot;, &quot;&quot;, joint_out_gz)
+        dir.create(dirname(joint_out_gz), showWarnings = FALSE, recursive = TRUE)
+        fwrite(joint_anno, joint_out_tsv, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = &quot;\t&quot;)
+    }
+
+# ----------------------------------------------------------------------------
+# Step B: gzip all annot files. Uses expand=&quot;$[ ]&quot; so bash ${var} survives.
+# ----------------------------------------------------------------------------
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+    set -e
+    annots=()
+    if [ &quot;$[str(emit_single)]&quot; = &quot;True&quot; ]; then
+        for i in $(seq 1 $[N_targets]); do
+            annots+=(&quot;$[cwd:a]/$[annotation_name]_single_$i/$[annotation_name]_single_$i.$[input_chroms[_index]].annot&quot;)
+        done
+    fi
+    if [ &quot;$[str(emit_joint)]&quot; = &quot;True&quot; ]; then
+        annots+=(&quot;$[cwd:a]/$[annotation_name]_joint/$[annotation_name]_joint.$[input_chroms[_index]].annot&quot;)
+    fi
+    for a in &quot;${annots[@]}&quot;; do
+        gzip -f &quot;$a&quot;
+    done
+
+# ----------------------------------------------------------------------------
+# Step C: run polyfun&#39;s LD-score computation for each emitted annotation file.
+# ----------------------------------------------------------------------------
+bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout = f&#39;{_output[1]}.stdout&#39;
+    set -e
+    chrom=&quot;$[input_chroms[_index]]&quot;
+
+    run_polyfun() {
+        local annot=&quot;$1&quot;
+        local out_prefix=&quot;$2&quot;
+        if [ &quot;$[str(use_print_snps)]&quot; = &quot;True&quot; ]; then
+            $[python_exec] $[polyfun_path]/ldsc.py \
+                --print-snps $[snp_list] \
+                $[ld_window_flag] $[ld_window_param] \
+                --out &quot;$out_prefix&quot; \
+                --bfile $[_input[-1]:nar] \
+                --yes-really \
+                --annot &quot;$annot&quot; \
+                --l2
+        else
+            $[python_exec] $[polyfun_path]/compute_ldscores.py \
+                --annot &quot;$annot&quot; \
+                --bfile $[_input[-1]:nar] \
+                $[ld_window_flag] $[ld_window_param] \
+                --out &quot;${out_prefix}.$[ldscore_ext]&quot; \
+                --allow-missing
+        fi
+    }
+
+    if [ &quot;$[str(emit_single)]&quot; = &quot;True&quot; ]; then
+        for i in $(seq 1 $[N_targets]); do
+            name=&quot;$[annotation_name]_single_$i&quot;
+            annot=&quot;$[cwd:a]/$name/$name.$chrom.annot.gz&quot;
+            prefix=&quot;$[cwd:a]/$name/$name.$chrom&quot;
+            run_polyfun &quot;$annot&quot; &quot;$prefix&quot;
+        done
+    fi
+    if [ &quot;$[str(emit_joint)]&quot; = &quot;True&quot; ]; then
+        name=&quot;$[annotation_name]_joint&quot;
+        annot=&quot;$[cwd:a]/$name/$name.$chrom.annot.gz&quot;
+        prefix=&quot;$[cwd:a]/$name/$name.$chrom&quot;
+        run_polyfun &quot;$annot&quot; &quot;$prefix&quot;
+    fi
+
+# ----------------------------------------------------------------------------
+# Step D: write .l2.M and .l2.M_5_50 files for each emitted annotation directory.
+# ----------------------------------------------------------------------------
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[2]}.stderr&#39;, stdout = f&#39;{_output[2]}.stdout&#39;
+    suppressPackageStartupMessages({ library(data.table); library(dplyr) })
+    use_print_snps &lt;- ${str(use_print_snps).upper()}
+
+    chrom &lt;- &quot;${input_chroms[_index]}&quot;
+    # Look up .frq file under frqfile_dir, using plink_name + chrom (matches cell 25).
+    frq_file &lt;- file.path(&quot;${frqfile_dir}&quot;, paste0(&quot;${plink_name}&quot;, chrom, &quot;.frq&quot;))
+    has_frq  &lt;- file.exists(frq_file)
+    frq_dt &lt;- if (has_frq) fread(frq_file)[, .(SNP, MAF)] else NULL
+
+    write_M_files &lt;- function(annot_path, ldscore_path, m_path) {
+        if (use_print_snps &amp;&amp; file.exists(m_path) &amp;&amp; file.exists(paste0(m_path, &quot;_5_50&quot;))) {
+            cat(&quot;M files already exist for&quot;, m_path, &quot;\n&quot;); return(invisible())
+        }
+        ldscore_dt &lt;- if (endsWith(ldscore_path, &quot;.parquet&quot;)) {
+            suppressPackageStartupMessages(library(arrow)); arrow::read_parquet(ldscore_path)
+        } else fread(ldscore_path)
+        annot_dt &lt;- fread(annot_path)
+        annot_filtered &lt;- annot_dt[annot_dt$SNP %in% ldscore_dt$SNP, ]
+        merged &lt;- if (has_frq) merge(annot_filtered, frq_dt, by = &quot;SNP&quot;, all.x = TRUE) else annot_filtered
+        std_cols &lt;- c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;BP&quot;, &quot;CM&quot;, &quot;A1&quot;, &quot;A2&quot;, if (has_frq) &quot;MAF&quot;)
+        annot_cols &lt;- setdiff(names(merged), std_cols)
+        if (length(annot_cols) == 0L) { merged[, ANNOT := 1L]; annot_cols &lt;- &quot;ANNOT&quot; }
+        M &lt;- merged[, lapply(.SD, sum, na.rm = TRUE), .SDcols = annot_cols]
+        writeLines(paste(as.numeric(M), collapse = &quot; &quot;), m_path)
+        if (has_frq) {
+            common &lt;- merged[!is.na(MAF) &amp; MAF &gt; 0.05, ]
+            M5 &lt;- common[, lapply(.SD, sum, na.rm = TRUE), .SDcols = annot_cols]
+            writeLines(paste(as.numeric(M5), collapse = &quot; &quot;), paste0(m_path, &quot;_5_50&quot;))
+        }
+    }
+
+    targets &lt;- c()
+    if (${&quot;TRUE&quot; if emit_single else &quot;FALSE&quot;}) {
+        for (i in seq_len(${N_targets})) {
+            targets &lt;- c(targets, paste0(&quot;${annotation_name}&quot;, &quot;_single_&quot;, i))
+        }
+    }
+    if (${&quot;TRUE&quot; if emit_joint else &quot;FALSE&quot;}) {
+        targets &lt;- c(targets, paste0(&quot;${annotation_name}&quot;, &quot;_joint&quot;))
+    }
+    for (name in targets) {
+        annot_path   &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.&quot;, chrom, &quot;.annot.gz&quot;))
+        ldscore_path &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.&quot;, chrom, &quot;.${ldscore_ext}&quot;))
+        m_path       &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.&quot;, chrom, &quot;.l2.M&quot;))
+        write_M_files(annot_path, ldscore_path, m_path)
+    }
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="calculate-functional-enrichment-using-annotations">
+<h2>Calculate Functional Enrichment using Annotations<a class="headerlink" href="#calculate-functional-enrichment-using-annotations" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_heritability]
+# Per-trait sLDSC regression via polyfun. Fans out across target_anno_dirs:
+# each (trait, target_dir) pair becomes one polyfun invocation. Outputs go to
+# &lt;cwd&gt;/&lt;basename(target_dir)&gt;/&lt;trait&gt;.{results,log,part_delete}.
+#
+# `target_anno_dirs` is the list produced by [make_annotation_files_ldscore]:
+# typically N _single_&lt;i&gt; directories plus optionally one _joint directory.
+
+#
+# --- about the &quot;.results&quot; Category column and the &quot;_0 / _1&quot; suffix ---
+# Each (trait, target_dir) pair is ONE polyfun call; its `ldsc.py --ref-ld-chr`
+# always gets exactly two LD-score sources, in this order:
+#     &quot;&lt;target_dir&gt;/&lt;target&gt;.&quot;   (index 0)  ,  &quot;&lt;baseline_dir&gt;/&lt;baseline&gt;&quot;   (index 1)
+# With --overlap-annot, every annotation column in the .results &quot;Category&quot; is
+# named  &lt;ldscore_column_name&gt;_&lt;ref-ld-index&gt;:
+#     index 0 = the target file   -&gt; &quot;ANNOT_0&quot;  (no-snplist; compute_ldscores.py keeps the annot col name)
+#                                  -&gt; &quot;L2_0&quot;    (snplist + single annot; ldsc.py hard-codes &quot;L2&quot;, see below)
+#                                  -&gt; &quot;ANNOT_1_0&quot;,&quot;ANNOT_2_0&quot;      (no-snplist joint dir, N&gt;=2 annot cols)
+#                                  -&gt; &quot;ANNOT_1L2_0&quot;,&quot;ANNOT_2L2_0&quot;  (snplist joint dir, N&gt;=2 -&gt; &quot;&lt;name&gt;L2&quot;)
+#     index 1 = the baseline file -&gt; &quot;base_1&quot;,&quot;Coding_UCSC_1&quot;, ...  (the 97 baseline annots)
+# So in this pipeline the suffix is only ever 0 (target) or 1 (baseline); it would
+# continue 0,1,2,... only if you handed `ldsc.py --ref-ld-chr` more than two sources.
+# (Why ANNOT_0 vs L2_0: see the [make_annotation_files_ldscore] header — ldsc.py&#39;s
+#  &quot;n_annot == 1 -&gt; column name &#39;L2&#39;&quot; quirk vs compute_ldscores.py keeping the annot
+#  column name.)  [postprocess] auto-detects the target Category; if you instead pass
+# --target-categories, the names must match this column exactly.
+#
+parameter: target_anno_dirs = paths()
+parameter: all_traits = []
+
+import os
+
+with open(all_traits_file, &#39;r&#39;) as f:
+    trait_paths = [os.path.join(sumstat_dir, line.strip()) for line in f if line.strip()]
+
+# Build (trait, target_dir) Cartesian product as parallel flat lists.
+input_list  = []
+target_meta = []
+for td in target_anno_dirs:
+    for t in trait_paths:
+        input_list.append(t)
+        target_meta.append(str(td))
+
+input: input_list, group_by = 1, group_with = &quot;target_meta&quot;
+
+output: f&quot;{cwd:a}/{os.path.basename(target_meta[_index])}/{os.path.basename(_input[0])}.log&quot;,  \
+        f&quot;{cwd:a}/{os.path.basename(target_meta[_index])}/{os.path.basename(_input[0])}.results&quot;
+
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+
+bash: expand = &quot;${ }&quot;
+    target_dir=&quot;${target_meta[_index]}&quot;
+    target_name=&quot;$(basename ${target_meta[_index]})&quot;
+    trait=&quot;$(basename ${_input[0]})&quot;
+    output_dir=&quot;${cwd:a}/$target_name&quot;
+    mkdir -p &quot;$output_dir&quot;
+
+    # MAF cutoff handling. Only 0 (disabled) or 0.05 (sLDSC default) are supported;
+    # other values would require recomputing LD scores at that cutoff.
+    frq_file_check=&quot;${frqfile_dir}/${plink_name}22.frq&quot;
+    if [ &quot;${maf_cutoff}&quot; = &quot;0&quot; ] || [ &quot;${maf_cutoff}&quot; = &quot;0.0&quot; ]; then
+        echo &quot;maf_cutoff = 0: skipping MAF filter (--not-M-5-50)&quot;
+        frq_option=&quot;--not-M-5-50&quot;
+    elif [ &quot;${maf_cutoff}&quot; = &quot;0.05&quot; ]; then
+        if [ -f &quot;$frq_file_check&quot; ]; then
+            echo &quot;maf_cutoff = 0.05: using --frqfile-chr (MAF &gt; 5%)&quot;
+            frq_option=&quot;--frqfile-chr ${frqfile_dir}/${plink_name}&quot;
+        else
+            echo &quot;ERROR: maf_cutoff=0.05 requires .frq files for the reference panel,&quot;
+            echo &quot;       but none found at ${frqfile_dir}/${plink_name}*.frq.&quot;
+            echo &quot;       Provide .frq files in frqfile_dir, or set maf_cutoff=0 (NOT recommended).&quot;
+            exit 1
+        fi
+    else
+        echo &quot;ERROR: maf_cutoff=${maf_cutoff} is not supported. Only 0 (no filter) or&quot;
+        echo &quot;       0.05 (sLDSC default) are accepted. Other values would require&quot;
+        echo &quot;       recomputing LD scores at that cutoff.&quot;
+        exit 1
+    fi
+
+    run_ldsc() {
+        local extra_args=&quot;$1&quot;
+        ${python_exec} ${polyfun_path}/ldsc.py \
+            --h2 ${sumstat_dir}/$trait \
+            --ref-ld-chr &quot;$target_dir/$target_name.&quot;,&quot;${baseline_ld_dir}/${baseline_name}&quot; \
+            --out &quot;$output_dir/$trait&quot; \
+            --overlap-annot \
+            --w-ld-chr ${weights_dir}/${weight_name} \
+            $frq_option \
+            --print-coefficients \
+            --print-delete-vals \
+            --n-blocks ${n_blocks} \
+            $extra_args
+    }
+
+    run_ldsc &quot;&quot;
+    log_file=&quot;$output_dir/$trait.log&quot;
+
+    # FloatingPointError retry ladder (preserved from original): 30 -&gt; 20 -&gt; 10
+    for max in 30 20 10; do
+        if [ -f &quot;$log_file&quot; ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;$log_file&quot;; then
+            echo &quot;FloatingPointError detected, retrying with --chisq-max $max...&quot;
+            run_ldsc &quot;--chisq-max $max&quot;
+        else
+            break
+        fi
+    done
+
+    if [ -f &quot;$log_file&quot; ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;$log_file&quot;; then
+        echo &quot;ERROR: FloatingPointError persists for trait $trait at target $target_name even with --chisq-max 10&quot;
+        echo &quot;This trait may have severe numerical instability issues in the summary statistics.&quot;
+    fi
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[munge_sumstats_polyfun]
+parameter: sumstats  = path
+parameter: n       = 0
+parameter: min_info = 0.6
+parameter: min_maf  = 0.001
+parameter: keep_hla = False
+parameter: chi2_cut = 30
+input: sumstats
+output: f&quot;{_input:n}.munged.parquet&quot;
+bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:nn}.stdout&#39;
+    {python_exec} {polyfun_path}/munge_polyfun_sumstats.py \
+        --sumstats {_input} \
+        --out {_output} \
+        {&#39;--n {}&#39;.format(n) if n&gt;0 else &#39;&#39;} \
+        {&#39;--min-info {}&#39;.format(min_info)} \
+        {&#39;--min-maf {}&#39;.format(min_maf)} \
+        {&#39;--chi2-cutoff {}&#39;.format(chi2_cut)} \
+        {&#39;--keep-hla&#39; if keep_hla else &#39;&#39;} \
+        --remove-strand-ambig
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[postprocess]
+# Post-processing of polyfun outputs via pecotmr::sldsc_postprocessing_pipeline.
+# Reads .results / .log / .part_delete for all traits in `traits_file`, both
+# single-target and (when present) joint-target runs, computes Gazal-style
+# tau*, EnrichStat with back-solved jackknife SE, and runs the default
+# DerSimonian-Laird random-effects meta across all supplied traits. Writes
+# one RDS containing per-trait tables and three meta tables (tau*, E, EnrichStat).
+
+parameter: traits_file = path()             # text file: one trait sumstats filename per line
+parameter: heritability_cwd = path()        # parent directory of [get_heritability] outputs (contains &lt;annotation_name&gt;_single_&lt;i&gt;/ subdirs and optionally &lt;annotation_name&gt;_joint/)
+parameter: target_categories = []           # target annotation names. Auto-detected from the joint-run results if empty.
+parameter: target_categories_label = []     # optional display names, same order as target_categories;
+                                            # when given, every &quot;target&quot; column / tau*-block colname in
+                                            # the output RDS is renamed to these (params$target_categories
+                                            # holds the labels, params$target_categories_orig the originals).
+parameter: target_anno_dir = path()         # directory of target .annot.gz files used for sd_C and binary detection (typically the joint dir, since it carries all target columns)
+
+input: traits_file
+output: f&quot;{cwd:a}/{annotation_name}.sldsc_postprocess.rds&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
+
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    library(pecotmr)
+
+    traits &lt;- readLines(&quot;${traits_file}&quot;)
+    target_cats &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % c for c in target_categories)})
+    target_lab  &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % c for c in target_categories_label)})
+
+    # Auto-detect single-target and joint-target output directories.
+    her_root  &lt;- &quot;${heritability_cwd}&quot;
+    all_subdirs &lt;- list.dirs(her_root, recursive = FALSE)
+    single_pattern &lt;- paste0(&quot;^&quot;, &quot;${annotation_name}&quot;, &quot;_single_([0-9]+)$&quot;)
+    joint_name     &lt;- paste0(&quot;${annotation_name}&quot;, &quot;_joint&quot;)
+    single_dirs &lt;- all_subdirs[grepl(single_pattern, basename(all_subdirs))]
+    single_indices &lt;- as.integer(sub(single_pattern, &quot;\\1&quot;, basename(single_dirs)))
+    single_dirs &lt;- single_dirs[order(single_indices)]
+    joint_dir   &lt;- file.path(her_root, joint_name)
+    has_joint   &lt;- dir.exists(joint_dir)
+
+    message(sprintf(&quot;Detected %d single-target dirs%s&quot;,
+                    length(single_dirs),
+                    if (has_joint) &quot;; joint-target dir present&quot; else &quot;; no joint-target dir&quot;))
+
+    # Build per-trait prefix maps. Each trait&#39;s polyfun output is at &lt;dir&gt;/&lt;trait&gt;
+    # (polyfun appends .results / .log / .part_delete).
+    trait_single_prefixes &lt;- lapply(traits, function(t) file.path(single_dirs, t))
+    names(trait_single_prefixes) &lt;- traits
+
+    if (has_joint) {
+        trait_joint_prefix &lt;- setNames(file.path(joint_dir, traits), traits)
+    } else {
+        trait_joint_prefix &lt;- setNames(rep(NA_character_, length(traits)), traits)
+    }
+
+    res &lt;- sldsc_postprocessing_pipeline(
+        trait_single_prefixes = trait_single_prefixes,
+        trait_joint_prefix    = trait_joint_prefix,
+        target_anno_dir       = &quot;${target_anno_dir}&quot;,
+        frqfile_dir           = &quot;${frqfile_dir}&quot;,
+        plink_name            = &quot;${plink_name}&quot;,
+        maf_cutoff            = ${maf_cutoff},
+        target_categories     = if (length(target_cats) &gt; 0) target_cats else NULL,
+        target_labels         = if (length(target_lab)  &gt; 0) target_lab  else NULL
+    )
+
+    saveRDS(res, &quot;${_output[0]}&quot;)
+    message(&quot;S-LDSC post-processing complete; results written to ${_output[0]}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[meta_subset]
+# Optional: re-run random-effects meta on a user-defined subset of traits, using
+# the cached per-trait standardized results from [postprocess]. No regression rerun.
+
+parameter: postprocess_rds = path()           # output of [postprocess]
+parameter: subset_traits_file = path()        # text file: one trait id per line, subset of those passed to [postprocess]
+parameter: subset_name = str                  # label used in the output filename
+parameter: target_categories = []             # target annotation names to meta on; if empty, uses all from postprocess output
+# If [postprocess] was run with --target-categories-label, the cached RDS already
+# carries the display names (params$target_categories = the labels), so leave
+# --target-categories empty here (or pass the labels, not the original ANNOT_* names).
+
+input: postprocess_rds, subset_traits_file
+output: f&quot;{cwd:a}/{annotation_name}.{subset_name}.meta.rds&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
+
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    library(pecotmr)
+
+    res &lt;- readRDS(&quot;${postprocess_rds}&quot;)
+    subset_traits &lt;- readLines(&quot;${subset_traits_file}&quot;)
+    target_cats &lt;- c(${&quot;,&quot;.join([f&#39;&quot;{c}&quot;&#39; for c in target_categories])})
+    if (length(target_cats) == 0) target_cats &lt;- res$params$target_categories
+
+    subset_per_trait &lt;- res$per_trait[subset_traits]
+
+    # Map wide names (tau_star_single/joint) to bare names meta_sldsc_random expects.
+    view_single &lt;- pecotmr:::.sldsc_view_for_meta(subset_per_trait, &quot;single&quot;)
+    view_joint  &lt;- pecotmr:::.sldsc_view_for_meta(subset_per_trait, &quot;joint&quot;)
+
+    out &lt;- list(
+        tau_star_single = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_single, c, &quot;tau_star&quot;)),   target_cats),
+        tau_star_joint  = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_joint,  c, &quot;tau_star&quot;)),   target_cats),
+        enrichment      = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_single, c, &quot;enrichment&quot;)), target_cats),
+        enrichstat      = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_single, c, &quot;enrichstat&quot;)), target_cats)
+    )
+
+    saveRDS(out, &quot;${_output[0]}&quot;)
+    message(&quot;Subset meta complete; results written to ${_output[0]}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="gregor.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">GREGOR enrichment analysis</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ems_training.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">scEEMS Model Training</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methods-workflow-overview">Methods - Workflow Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ldsc-model">LDSC model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stratified-ldsc">Stratified LDSC</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tau-estimation-and-enrichment-analysis">Tau Estimation and Enrichment Analysis</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#notation">Notation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-panel-and-maf-cutoff">Reference panel and MAF cutoff</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#quantities-from-the-regression-layer-polyfun">Quantities from the regression layer (polyfun)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#quantities-from-the-post-processing-layer-pecotmr">Quantities from the post-processing layer (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#standardized-tau-tau-pecotmr">Standardized tau (<span class="math notranslate nohighlight">\(\tau^*\)</span>)  —  (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#differential-per-snp-heritability-enrichstat-polyfun-pecotmr">Differential per-SNP heritability (“EnrichStat”)  —  (polyfun + pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reporting-binary-vs-continuous-annotations-pecotmr">Reporting: binary vs. continuous annotations  —  (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-type-comparison-always-use-tau-c-pecotmr">Cross-type comparison: always use <span class="math notranslate nohighlight">\(\tau^*_C\)</span>  —  (pecotmr)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-analysis-polyfun-runs-the-regression-pecotmr-standardizes-both-modes">Joint analysis  —  (polyfun runs the regression; pecotmr standardizes both modes)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#meta-analysis-across-traits-random-effects-pecotmr">Meta-Analysis across Traits (Random Effects)  —  (pecotmr)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-mwe">Minimal Working Example (MWE)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-make-annotation-files-ldscore">Step 1. <code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs"><strong>Inputs</strong></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#target-annotation-file">1. Target Annotation File</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-annotation-file-baseline-ld">2. Reference Annotation File (baseline-LD)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#genome-reference-file">3. Genome Reference File</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#snp-list">4. SNP List</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#munge-summary-statistics-preprocessing-run-before-step-2">Munge summary statistics (preprocessing, run before Step 2)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-get-heritability">Step 2. <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#allele-frequency-files-frq-our-panel">1. Allele Frequency Files (<code class="docutils literal notranslate"><span class="pre">.frq</span></code>, our panel)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gwas-summary-statistics">2. GWAS Summary Statistics</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-post-processing-pecotmr-and-meta-analysis">Step 3. <code class="docutils literal notranslate"><span class="pre">Post-processing</span> <span class="pre">(pecotmr)</span> <span class="pre">and</span> <span class="pre">meta-analysis</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional">Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::meta_sldsc_random<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-summary-cached-artifacts">Output summary (cached artifacts)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-stage-outputs">Per-stage outputs</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#make-annotation-file">Make Annotation File</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-functional-enrichment-using-annotations">Calculate Functional Enrichment using Annotations</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

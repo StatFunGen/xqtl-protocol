@@ -1,0 +1,1433 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>QTL Association Testing (TensorQTL) &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'TensorQTL';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quantile regression for QTL association testing" href="qr_and_twas.html" />
+    <link rel="prev" title="QTL Association Testing" href="qtl_association_testing.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/TensorQTL.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2FTensorQTL.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/TensorQTL.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>QTL Association Testing (TensorQTL)</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-genotype-file">Example genotype file</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-covariates-file">Example covariates file</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-customized-cis-window-file-optional">Example customized cis window file (Optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-interaction-file">Example interaction file</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cis-qtl-association">cis-QTL association</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#trans-qtl-association">trans-QTL association</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nominal-association-results">Nominal Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-testing-corrected-results">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-association-results">Interaction Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#region-gene-level-association-evidence">Region (Gene) Level Association Evidence</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-code">Pipeline Code</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="qtl-association-testing-tensorqtl">
+<h1>QTL Association Testing (TensorQTL)<a class="headerlink" href="#qtl-association-testing-tensorqtl" title="Link to this heading">#</a></h1>
+<p>This notebook performs cis- and trans-QTL association testing using <a class="reference external" href="https://doi.org/10.1186/s13059-019-1836-7">TensorQTL</a>. For each molecular phenotype it tests association against nearby (cis) or genome-wide (trans) genetic variants and reports nominal and region-level statistics.</p>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>Two workflows are available:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cis</span></code>  : association between each molecular phenotype and variants within a window around it (default 1 Mb around the TSS). Produces nominal pair statistics plus region (gene) level significance.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trans</span></code>: association between phenotypes and variants on a chosen genotype chromosome, optionally restricted to a region list.</p></li>
+</ul>
+<p>Inputs are the by-chromosome genotype/phenotype file lists and the covariate matrix produced by the genotype, phenotype, and covariate preprocessing steps.</p>
+<p><strong>Timing:</strong> cis ~1 min; trans ~1.5 min on the toy dataset.</p>
+</section>
+<section id="input-files">
+<h2>Input Files<a class="headerlink" href="#input-files" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Toy file</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--genotype-file</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt</span></code></p></td>
+<td><p>Two-column list (chrom id, PLINK bed prefix) of by-chromosome genotypes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--phenotype-file</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt</span></code></p></td>
+<td><p>List of bgzipped+tabixed molecular phenotype <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> files by chromosome</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--covariate-file</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/covariate/...prune.pca.Marchenko_PC.gz</span></code></p></td>
+<td><p>Covariate matrix (known covariates + hidden factors)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--region-list</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">data/combined_AD_genes.csv</span></code></p></td>
+<td><p>(trans, optional) subset of regions/genes to analyze; gene name in column 4</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Load required libraries
+library(data.table)
+library(genio)
+
+# ------------------------------------------------------------------
+# Example phenotype file (MWE: protocol_example, chr22)
+# ------------------------------------------------------------------
+# A text file listing one phenotype .bed.gz per chromosome.
+pheno_path &lt;- fread(&quot;output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt&quot;)
+head(pheno_path)
+
+# One chromosome of phenotype data in BED-like format (.bed.gz).
+pheno &lt;- fread(&quot;output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.chr22.bed.gz&quot;)
+pheno[1:5, 1:8]
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="dataframe">
+<caption>A data.table: 1 × 2</caption>
+<thead>
+	<tr><th scope=col>#id</th><th scope=col>#dir</th></tr>
+	<tr><th scope=col>&lt;int&gt;</th><th scope=col>&lt;chr&gt;</th></tr>
+</thead>
+<tbody>
+	<tr><td>22</td><td>output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.chr22.bed.gz</td></tr>
+</tbody>
+</table>
+</div><div class="output text_html"><table class="dataframe">
+<caption>A data.table: 5 × 8</caption>
+<thead>
+	<tr><th scope=col>#chr</th><th scope=col>start</th><th scope=col>end</th><th scope=col>ID</th><th scope=col>SAMPLE_001</th><th scope=col>SAMPLE_002</th><th scope=col>SAMPLE_003</th><th scope=col>SAMPLE_004</th></tr>
+	<tr><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;int&gt;</th><th scope=col>&lt;int&gt;</th><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th></tr>
+</thead>
+<tbody>
+	<tr><td>chr22</td><td>10939387</td><td>10961337</td><td>ENSG00000283047</td><td>37.076840</td><td>0.00000</td><td>5.583274</td><td> 0.0000000</td></tr>
+	<tr><td>chr22</td><td>15528191</td><td>15529138</td><td>ENSG00000130538</td><td> 0.000000</td><td>1.08358</td><td>8.913977</td><td> 4.0885045</td></tr>
+	<tr><td>chr22</td><td>15611758</td><td>15613095</td><td>ENSG00000231565</td><td> 5.978084</td><td>0.00000</td><td>2.637113</td><td>10.4666167</td></tr>
+	<tr><td>chr22</td><td>15615401</td><td>15615577</td><td>ENSG00000226474</td><td> 0.000000</td><td>0.00000</td><td>2.870204</td><td> 0.0000000</td></tr>
+	<tr><td>chr22</td><td>15749155</td><td>15750824</td><td>ENSG00000235992</td><td> 5.820253</td><td>0.00000</td><td>0.000000</td><td> 0.5868365</td></tr>
+</tbody>
+</table>
+</div></div>
+</div>
+<section id="example-genotype-file">
+<h3>Example genotype file<a class="headerlink" href="#example-genotype-file" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># ------------------------------------------------------------------
+# Example genotype file (MWE: protocol_example)
+# ------------------------------------------------------------------
+# A text file with two columns: chromosome ID and PLINK prefix path.
+geno_path &lt;- fread(file.path(output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt&quot;)
+head(geno_path)
+
+# Read the merged PLINK set (.bed/.bim/.fam) for the toy sample.
+plink_data &lt;- read_plink(&quot;output/plink/protocol_example.genotype.merged.plink_qc&quot;)
+genotypes &lt;- plink_data$X
+genotypes[1:5, 1:5]
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="dataframe">
+<caption>A data.table: 6 × 2</caption>
+<thead>
+	<tr><th scope=col>#id</th><th scope=col>#path</th></tr>
+	<tr><th scope=col>&lt;int&gt;</th><th scope=col>&lt;chr&gt;</th></tr>
+</thead>
+<tbody>
+	<tr><td> 2</td><td>/restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.2.bed </td></tr>
+	<tr><td> 6</td><td>/restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.6.bed </td></tr>
+	<tr><td>13</td><td>/restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.13.bed</td></tr>
+	<tr><td> 8</td><td>/restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.8.bed </td></tr>
+	<tr><td> 7</td><td>/restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.7.bed </td></tr>
+	<tr><td>11</td><td>/restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.11.bed</td></tr>
+</tbody>
+</table>
+</div><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Reading: /restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/plink/protocol_example.genotype.merged.plink_qc.bim
+
+Reading: /restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/plink/protocol_example.genotype.merged.plink_qc.fam
+
+Reading: /restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/plink/protocol_example.genotype.merged.plink_qc.bed
+</pre></div>
+</div>
+<div class="output text_html"><table class="dataframe">
+<caption>A matrix: 5 × 5 of type int</caption>
+<thead>
+	<tr><th></th><th scope=col>SAMPLE_001</th><th scope=col>SAMPLE_002</th><th scope=col>SAMPLE_003</th><th scope=col>SAMPLE_004</th><th scope=col>SAMPLE_005</th></tr>
+</thead>
+<tbody>
+	<tr><th scope=row>chr1:113886_CTCTT_C</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+	<tr><th scope=row>chr1:191223_C_*</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+	<tr><th scope=row>chr1:191223_C_G</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+	<tr><th scope=row>chr1:191223_C_T</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+	<tr><th scope=row>chr1:275436_A_G</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+</div></div>
+</div>
+</section>
+<section id="example-covariates-file">
+<h3>Example covariates file<a class="headerlink" href="#example-covariates-file" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># ------------------------------------------------------------------
+# Example covariates file (MWE: protocol_example)
+# ------------------------------------------------------------------
+cov &lt;- fread(&quot;output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz&quot;)
+cov[, 1:5]
+dim(cov)
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="dataframe">
+<caption>A data.table: 28 × 5</caption>
+<thead>
+	<tr><th scope=col>#id</th><th scope=col>SAMPLE_001</th><th scope=col>SAMPLE_002</th><th scope=col>SAMPLE_003</th><th scope=col>SAMPLE_004</th></tr>
+	<tr><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th><th scope=col>&lt;dbl&gt;</th></tr>
+</thead>
+<tbody>
+	<tr><td>msex             </td><td> 1.000000000</td><td> 1.00000000</td><td> 1.00000000</td><td> 1.000000000</td></tr>
+	<tr><td>age_death        </td><td>90.970000000</td><td>80.24000000</td><td>83.90000000</td><td>74.100000000</td></tr>
+	<tr><td>pmi              </td><td>10.570000000</td><td> 7.87000000</td><td> 9.93000000</td><td> 2.910000000</td></tr>
+	<tr><td>study            </td><td> 1.000000000</td><td> 0.00000000</td><td> 0.00000000</td><td> 0.000000000</td></tr>
+	<tr><td>PC1              </td><td>-0.233468563</td><td> 0.01961037</td><td> 0.11352412</td><td>-0.040027540</td></tr>
+	<tr><td>PC2              </td><td> 0.327658887</td><td> 0.04553162</td><td>-0.09470268</td><td>-0.146030127</td></tr>
+	<tr><td>PC3              </td><td> 0.098807354</td><td> 0.16302273</td><td> 0.04634796</td><td> 0.026222852</td></tr>
+	<tr><td>PC4              </td><td>-0.330900271</td><td> 0.14254433</td><td> 0.20275994</td><td>-0.001605085</td></tr>
+	<tr><td>PC5              </td><td>-0.310150069</td><td> 0.10916400</td><td>-0.18238419</td><td>-0.120223005</td></tr>
+	<tr><td>PC6              </td><td>-0.218843913</td><td>-0.16840993</td><td>-0.05711533</td><td>-0.221893629</td></tr>
+	<tr><td>PC7              </td><td>-0.040665022</td><td> 0.07576872</td><td> 0.14606728</td><td> 0.136076636</td></tr>
+	<tr><td>PC8              </td><td>-0.286365603</td><td> 0.14011839</td><td>-0.08323989</td><td> 0.040693345</td></tr>
+	<tr><td>PC9              </td><td> 0.078883981</td><td> 0.14174392</td><td> 0.13033626</td><td> 0.332998336</td></tr>
+	<tr><td>PC10             </td><td>-0.151439052</td><td>-0.08918759</td><td> 0.25286117</td><td>-0.152520170</td></tr>
+	<tr><td>PC11             </td><td> 0.118499177</td><td>-0.05618921</td><td>-0.18365505</td><td>-0.038165749</td></tr>
+	<tr><td>PC12             </td><td> 0.053282287</td><td>-0.07951395</td><td> 0.05349163</td><td>-0.081934005</td></tr>
+	<tr><td>PC13             </td><td> 0.115028477</td><td>-0.01330522</td><td>-0.01534750</td><td>-0.070994143</td></tr>
+	<tr><td>PC14             </td><td> 0.087845445</td><td>-0.26853232</td><td>-0.15027729</td><td> 0.218599476</td></tr>
+	<tr><td>PC15             </td><td> 0.001030374</td><td> 0.07595356</td><td>-0.08898327</td><td>-0.181299348</td></tr>
+	<tr><td>Hidden_Factor_PC1</td><td> 0.851879348</td><td> 0.98406483</td><td> 5.18812380</td><td>-5.667832700</td></tr>
+	<tr><td>Hidden_Factor_PC2</td><td>-2.825894932</td><td> 1.69447908</td><td> 0.06854215</td><td>-4.619987817</td></tr>
+	<tr><td>Hidden_Factor_PC3</td><td> 3.763782166</td><td>-0.80512535</td><td>-5.77247349</td><td>-3.825334825</td></tr>
+	<tr><td>Hidden_Factor_PC4</td><td>-1.301340188</td><td> 3.15633800</td><td> 2.42980902</td><td>-3.266057955</td></tr>
+	<tr><td>Hidden_Factor_PC5</td><td> 0.556485272</td><td>-1.26228531</td><td>-3.94541314</td><td> 2.110667490</td></tr>
+	<tr><td>Hidden_Factor_PC6</td><td>-4.493764002</td><td>-0.11490919</td><td>-2.51105454</td><td> 0.278112795</td></tr>
+	<tr><td>Hidden_Factor_PC7</td><td> 2.846210676</td><td>-0.42143392</td><td> 0.34488558</td><td>-3.151865035</td></tr>
+	<tr><td>Hidden_Factor_PC8</td><td>-1.876624232</td><td>-9.65305786</td><td> 4.25303685</td><td>-1.043104423</td></tr>
+	<tr><td>Hidden_Factor_PC9</td><td> 3.126759781</td><td> 0.48805759</td><td> 5.52493678</td><td> 1.428784448</td></tr>
+</tbody>
+</table>
+</div><div class="output text_html"><style>
+.list-inline {list-style: none; margin:0; padding: 0}
+.list-inline>li {display: inline-block}
+.list-inline>li:not(:last-child)::after {content: "\00b7"; padding: 0 .5ex}
+</style>
+<ol class=list-inline><li>28</li><li>61</li></ol>
+</div></div>
+</div>
+</section>
+<section id="example-customized-cis-window-file-optional">
+<h3>Example customized cis window file (Optional)<a class="headerlink" href="#example-customized-cis-window-file-optional" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># ------------------------------------------------------------------
+# Example customized cis-window file (Optional)
+# ------------------------------------------------------------------
+# Gene-level cis-window (start/end) defining the SNP search region per gene.
+# Omit to use --window for a symmetric +/-1Mb window around each gene TSS.
+window &lt;- fread(file.path(out,&quot;output/tadb/TADB_enhanced_cis.bed&quot;))
+head(window)
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="dataframe">
+<caption>A data.table: 6 × 4</caption>
+<thead>
+	<tr><th scope=col>#chr</th><th scope=col>start</th><th scope=col>end</th><th scope=col>gene_id</th></tr>
+	<tr><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;int&gt;</th><th scope=col>&lt;int&gt;</th><th scope=col>&lt;chr&gt;</th></tr>
+</thead>
+<tbody>
+	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000226444</td></tr>
+	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000276871</td></tr>
+	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000277248</td></tr>
+	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000279973</td></tr>
+	<tr><td>chr22</td><td>0</td><td>13626642</td><td>ENSG00000283023</td></tr>
+	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000283047</td></tr>
+</tbody>
+</table>
+</div></div>
+</div>
+</section>
+<section id="example-interaction-file">
+<h3>Example interaction file<a class="headerlink" href="#example-interaction-file" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># ------------------------------------------------------------------
+# Example interaction file (Optional, for iQTL analysis)
+# ------------------------------------------------------------------
+# Provide an interaction term as a separate file via --interaction
+# when it is not already part of the covariate file.
+int &lt;- fread(&quot;input/ROSMAP_interaction_example.tsv&quot;)
+head(int)
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><table class="dataframe">
+<caption>A data.table: 6 × 2</caption>
+<thead>
+	<tr><th scope=col>#id</th><th scope=col>msex</th></tr>
+	<tr><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;int&gt;</th></tr>
+</thead>
+<tbody>
+	<tr><td>SAMPLE_001</td><td>1</td></tr>
+	<tr><td>SAMPLE_002</td><td>1</td></tr>
+	<tr><td>SAMPLE_003</td><td>1</td></tr>
+	<tr><td>SAMPLE_004</td><td>1</td></tr>
+	<tr><td>SAMPLE_005</td><td>1</td></tr>
+	<tr><td>SAMPLE_006</td><td>0</td></tr>
+</tbody>
+</table>
+</div></div>
+</div>
+</section>
+</section>
+<section id="output-files">
+<h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
+<p><strong>cis</strong> (<code class="docutils literal notranslate"><span class="pre">output/tensorqtl_cis/</span></code>):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*.cis_qtl.pairs.tsv.gz</span></code> (+<code class="docutils literal notranslate"><span class="pre">.tbi</span></code>)</p></td>
+<td><p>Nominal variant-phenotype association statistics</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*.cis_qtl_regional_significance.tsv.gz</span></code></p></td>
+<td><p>Region (gene) level significance</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*.cis_qtl_regional_significance.summary.txt</span></code></p></td>
+<td><p>Summary of regional results</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*.cis_qtl_pairs.&lt;chr&gt;.parquet</span></code></p></td>
+<td><p>Per-chromosome nominal results (parquet)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>trans</strong> (<code class="docutils literal notranslate"><span class="pre">output/tensorqtl_trans/</span></code>):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_geno_&lt;chr&gt;.trans_qtl.pairs.tsv.gz</span></code> (+<code class="docutils literal notranslate"><span class="pre">.tbi</span></code>)</p></td>
+<td><p>Trans variant-phenotype association statistics</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<p>The commands below run on the included toy data and write results under <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>. The genotype, phenotype, and covariate inputs are produced by the preprocessing notebooks.</p>
+<section id="cis-qtl-association">
+<h3>cis-QTL association<a class="headerlink" href="#cis-qtl-association" title="Link to this heading">#</a></h3>
+<p>Test each molecular phenotype against variants within the cis window. Matching chromosomes between the genotype and phenotype lists are analyzed (chr22 in the toy data). <code class="docutils literal notranslate"><span class="pre">--MAC</span> <span class="pre">5</span></code> sets the minor-allele-count cutoff for the small toy sample.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/TensorQTL.ipynb cis \
+    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt \
+    --phenotype-file output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt \
+    --covariate-file output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --cwd output/tensorqtl_cis --name protocol_example --MAC 5 --numThreads 2
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="trans-qtl-association">
+<h3>trans-QTL association<a class="headerlink" href="#trans-qtl-association" title="Link to this heading">#</a></h3>
+<p>For trans-analysis:</p>
+<p><strong>Computational strategy designed for trans analysis:</strong></p>
+<p>Trans analysis faces significant memory challenges as we calculate all associations between all molecular traits × all genetic variants across the genome, creating a massive computational burden. To address this challenge, we implement a two-stage chromosome-based parallelization approach:</p>
+<p><strong>Stage 1 (trans_1): Chromosome-based parallelization</strong></p>
+<ul class="simple">
+<li><p>Phenotype data is processed per chromosome (e.g., 22 separate jobs for autosomes)</p></li>
+<li><p>For each phenotype chromosome, we test associations against variants from all 22 chromosomes</p></li>
+<li><p>This creates phenotype_chr × genotype_chr combinations (e.g., phenotype chr1 vs genotype chr1-22); Garbage was collected between each chromosome combination caculation to release memory</p></li>
+<li><p>Results are combined across all chromosome combinations and saved as compressed files</p></li>
+</ul>
+<p><strong>Stage 2 (trans_2): Significance filtering</strong></p>
+<ul class="simple">
+<li><p>Supports p-value cutoffs (<code class="docutils literal notranslate"><span class="pre">--pvalue-cutoff</span></code>) or q-value cutoffs (<code class="docutils literal notranslate"><span class="pre">--qvalue-cutoff</span></code>)</p></li>
+</ul>
+<p>Test phenotypes against variants on a chosen genotype chromosome (<code class="docutils literal notranslate"><span class="pre">--trans-geno-chromosome</span> <span class="pre">22</span></code>), restricted to the genes in <code class="docutils literal notranslate"><span class="pre">--region-list</span></code>. Trans analysis is memory-heavy genome-wide; here it is scoped to the toy chromosome.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/TensorQTL.ipynb trans \
+    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt \
+    --phenotype-file output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt \
+    --covariate-file output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
+    --cwd output/tensorqtl_trans --name protocol_example --MAC 5 --numThreads 2 \
+    --trans-geno-chromosome 22 --region-list data/combined_AD_genes.csv --region-list-phenotype-column 4
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<p>For each chromosome, several summary statistics files are generated, including both nominal test statistics for each test and region (gene) level association evidence.</p>
+<section id="nominal-association-results">
+<h3>Nominal Association Results<a class="headerlink" href="#nominal-association-results" title="Link to this heading">#</a></h3>
+<p>The columns of the nominal association result are as follows:</p>
+<ul class="simple">
+<li><p><strong>chrom</strong>: Variant chromosome.</p></li>
+<li><p><strong>pos</strong>: Variant chromosomal position (basepairs).</p></li>
+<li><p><strong>molecular_trait_id</strong>: Molecular trait identifier (gene).</p></li>
+<li><p><strong>variant_id</strong>: ID of the variant (rsid or chr:position:ref:alt).</p></li>
+<li><p><strong>tss_distance</strong>: Distance of the SNP to the gene transcription start site (TSS).</p></li>
+<li><p><strong>tes_distance</strong>: Distance of the SNP to the gene transcription end site (TES).</p></li>
+<li><p><strong>cis_window_start_distance</strong>: Distance of the SNP to the start of the cis window (if using a customized cis window).</p></li>
+<li><p><strong>cis_window_end_distance</strong>: Distance of the SNP to the end of the cis window (if using a customized cis window).</p></li>
+<li><p><strong>af</strong>: The allele frequency of this SNP.</p></li>
+<li><p><strong>ma_samples</strong>: Number of samples carrying the minor allele.</p></li>
+<li><p><strong>ma_count</strong>: Total number of minor alleles across individuals.</p></li>
+<li><p><strong>pvalue</strong>: Nominal P-value from linear regression.</p></li>
+<li><p><strong>bhat</strong>: Slope of the linear regression.</p></li>
+<li><p><strong>sebhat</strong>: Standard error of bhat.</p></li>
+<li><p><strong>n</strong>: Number of phenotypes after basic QC.</p></li>
+</ul>
+<section id="multiple-testing-corrected-results">
+<h4>Multiple Testing Corrected Results:<a class="headerlink" href="#multiple-testing-corrected-results" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>qvalue</strong>: Calculated q-value for each SNP (grouped by gene).</p></li>
+</ul>
+</section>
+</section>
+<section id="interaction-association-results">
+<h3>Interaction Association Results<a class="headerlink" href="#interaction-association-results" title="Link to this heading">#</a></h3>
+<p>The columns of interaction association results are as follows (FIXME):</p>
+<p><strong>Model:</strong><br />
+$<span class="math notranslate nohighlight">\(
+\text{phenotype} = \beta_0 + \beta_1 \cdot \text{snp} + \beta_2 \cdot \text{msex} + \beta_3 \cdot (\text{snp} \times \text{msex}) + \epsilon
+\)</span>$</p>
+<p>(Taking msex as the interaction factor)</p>
+<ul class="simple">
+<li><p><strong>chrom</strong>: Chromosome number.</p></li>
+<li><p><strong>pos</strong>: Variant chromosomal position (basepairs).</p></li>
+<li><p><strong>a2</strong>: Variant reference allele (A, C, T, or G).</p></li>
+<li><p><strong>a1</strong>: Variant alternate allele.</p></li>
+<li><p><strong>molecular_trait_id</strong>: Molecular trait identifier, varies from phenotypes to phenotypes.</p></li>
+<li><p><strong>variant_id</strong>: ID of the top variant (rsid or chr:position:ref:alt).</p></li>
+<li><p><strong>af</strong>: Alternative allele frequency in the MiGA cohort.</p></li>
+<li><p><strong>ma_samples</strong>: Number of samples carrying the minor allele.</p></li>
+<li><p><strong>ma_count</strong>: Total number of minor alleles across individuals.</p></li>
+<li><p><strong>pvalue</strong>: P-value of the main effect from the nonlinear regression.</p></li>
+<li><p><strong>bhat</strong>: Slope of the main effect from the nonlinear regression.</p></li>
+<li><p><strong>se</strong>: Standard error of beta.</p></li>
+<li><p><strong>pvalue_msex</strong>: P-value of the msex term from the nonlinear regression.</p></li>
+<li><p><strong>bhat_msex</strong>: Slope of the msex term from the nonlinear regression.</p></li>
+<li><p><strong>se_msex</strong>: Standard error of bhat_msex.</p></li>
+<li><p><strong>pvalue_msex_interaction</strong>: P-value of the interaction term from the nonlinear regression.</p></li>
+<li><p><strong>bhat_msex_interaction</strong>: Slope of the interaction term from the nonlinear regression.</p></li>
+<li><p><strong>se_msex_interaction</strong>: Standard error of beta_msex_interaction.</p></li>
+<li><p><strong>molecular_trait_object_id</strong>: An intermediate ID (can be ignored).</p></li>
+<li><p><strong>n</strong>: Number of samples.</p></li>
+</ul>
+<section id="id1">
+<h4>Multiple Testing Corrected Results:<a class="headerlink" href="#id1" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>qvalue_main</strong>: The q-value of the main effect.</p></li>
+<li><p><strong>qvalue_interaction</strong>: The q-value of the interaction effect.</p></li>
+</ul>
+</section>
+</section>
+<section id="region-gene-level-association-evidence">
+<h3>Region (Gene) Level Association Evidence<a class="headerlink" href="#region-gene-level-association-evidence" title="Link to this heading">#</a></h3>
+<p>The column specifications for region-level association evidence are as follows:</p>
+<ul class="simple">
+<li><p><strong>chrom</strong>: Chromosome number.</p></li>
+<li><p><strong>pos</strong>: Variant chromosomal position (basepairs).</p></li>
+<li><p><strong>n_variant</strong>: Total number of variants tested in cis.</p></li>
+<li><p><strong>beta_shape1</strong>: First parameter value of the fitted beta distribution.</p></li>
+<li><p><strong>beta_shape2</strong>: Second parameter value of the fitted beta distribution.</p></li>
+<li><p><strong>true_df</strong>: Effective degrees of freedom of the beta distribution approximation.</p></li>
+<li><p><strong>p_true_df</strong>: Empirical P-value for the beta distribution approximation.</p></li>
+<li><p><strong>variant_id</strong>: ID of the top variant (rsid or chr:position:ref:alt).</p></li>
+<li><p><strong>tss_distance</strong>: Distance of the SNP to the gene transcription start site (TSS).</p></li>
+<li><p><strong>tes_distance</strong>: Distance of the SNP to the gene transcription end site (TES).</p></li>
+<li><p><strong>ma_samples</strong>: Number of samples carrying the minor allele.</p></li>
+<li><p><strong>ma_count</strong>: Total number of minor alleles across individuals.</p></li>
+<li><p><strong>af</strong>: Alternative allele frequency.</p></li>
+<li><p><strong>p_nominal</strong>: Nominal P-value from linear regression.</p></li>
+<li><p><strong>bhat</strong>: Slope of the linear regression.</p></li>
+<li><p><strong>sehat</strong>: Standard error of the bhat.</p></li>
+<li><p><strong>p_perm</strong>: First permutation P-value directly obtained from the permutations with the direct method.</p></li>
+<li><p><strong>p_beta</strong>: Second permutation P-value obtained via beta approximation (this is the one to use for downstream analysis).</p></li>
+<li><p><strong>molecular_trait_object_id</strong>: Molecular trait identifier (gene).</p></li>
+<li><p><strong>n_traits</strong>: Group size in the permutation test.</p></li>
+<li><p><strong>genomic_inflation</strong>: Genomic inflation factor (lambda), quantifying the extent of bulk inflation and the excess false positive rate.</p></li>
+</ul>
+<section id="id2">
+<h4>Multiple Testing Corrected Results:<a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>q_beta</strong>: Q-value for p_beta using Storey’s method (qvalue), more conservative than FDR.</p></li>
+<li><p><strong>q_perm</strong>: Q-value for p_perm using Storey’s method (qvalue), more conservative than FDR.</p></li>
+<li><p><strong>fdr_beta</strong>: Adjusted P-value for p_beta using the Benjamini-Hochberg method (FDR).</p></li>
+<li><p><strong>fdr_perm</strong>: Adjusted P-value for p_perm using the Benjamini-Hochberg method (FDR).</p></li>
+<li><p><strong>p_nominal_threshold</strong>: Nominal p-value threshold for variants in the corresponding molecular trait, derived from empirical beta distribution as a result of permutation testing.</p></li>
+</ul>
+</section>
+</section>
+<section id="command-interface">
+<h3>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h3>
+<p>List all workflows and options:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/TensorQTL.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="pipeline-code">
+<h2>Pipeline Code<a class="headerlink" href="#pipeline-code" title="Link to this heading">#</a></h2>
+<p>The SoS workflow definitions below are unchanged from the original protocol.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+# Path to the work directory of the analysis.
+parameter: cwd = path(&#39;output&#39;)
+# Phenotype file, or a list of phenotype per region.
+parameter: phenotype_file = path
+# A genotype file in PLINK binary format (bed/bam/fam) format, or a list of genotype per chrom
+parameter: genotype_file = path
+# Covariate file
+parameter: covariate_file = path
+# Optional pattern to filter covariates (list of covariate prefixes or exact names)
+parameter: covariate_pattern = []
+# Prefix for the analysis output
+parameter: name = &quot;&quot;
+# An optional subset of regions of molecular features to analyze. The last column is the gene names
+parameter: region_list = path()
+parameter: region_list_phenotype_column = 4
+# Set list of sample to be keep
+parameter: keep_sample = path()
+# FIXME: please document
+parameter: interaction = &quot;&quot;
+
+# An optional list documenting the custom cis window for each region to analyze, with four column, chr, start, end, region ID (eg gene ID).
+# If this list is not provided, the default `window` parameter (see below) will be used.
+parameter: customized_cis_windows = path()
+
+# The phenotype group file to group molecule_trait into molecule_trait_object
+# This applies to multiple molecular events in the same region, such as sQTL analysis.
+parameter: phenotype_group = path() 
+
+# The name of phenotype corresponding to gene_id or gene_name in the region
+parameter: chromosome = []
+# Minor allele count cutoff
+parameter: MAC = 0
+# Specify genotype chromosome for trans analysis (e.g. --trans-geno-chromosome 5)
+# When set, trans step loads this genotype chrom instead of the one from input_files
+parameter: trans_geno_chromosome = &quot;&quot;
+
+# Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp
+# This parameter will be set to zero if `customized_cis_windows` is provided.
+parameter: window = 1000000
+
+# Number of threads
+parameter: numThreads = 8
+# For cluster jobs, number commands to run per job
+parameter: job_size = 1
+parameter: walltime = &#39;12h&#39;
+parameter: mem = &#39;16G&#39;
+# Container option for software to run the analysis: docker or singularity
+parameter: container = &#39;&#39;
+parameter: entrypoint = &#39;&#39;
+import re
+
+# Use the header of the covariate file to decide the sample size
+import pandas as pd
+N = len(pd.read_csv(covariate_file, sep = &quot;\t&quot;,nrows = 1).columns) - 1
+
+# Minor allele frequency cutoff. It will overwrite minor allele cutoff.
+# You may consider setting it to higher for interaction analysis if you have statistical power concerns
+parameter: maf_threshold = MAC/(2.0*N)
+
+# Filtering significant trans associations (for trans_2 workflow)
+parameter: pvalue_cutoff = &quot;5e-8&quot;
+parameter: qvalue_cutoff = &quot;&quot;
+
+
+import os
+import pandas as pd
+
+def adapt_file_path(file_path, reference_file):
+    &quot;&quot;&quot;
+    Adapt a single file path based on its existence and a reference file&#39;s path.
+
+    Args:
+    - file_path (str): The file path to adapt.
+    - reference_file (str): File path to use as a reference for adaptation.
+
+    Returns:
+    - str: Adapted file path.
+
+    Raises:
+    - FileNotFoundError: If no valid file path is found.
+    &quot;&quot;&quot;
+    reference_path = os.path.dirname(reference_file)
+
+    # Check if the file exists
+    if os.path.isfile(file_path):
+        return file_path
+
+    # Check file name without path
+    file_name = os.path.basename(file_path)
+    if os.path.isfile(file_name):
+        return file_name
+
+    # Check file name in reference file&#39;s directory
+    file_in_ref_dir = os.path.join(reference_path, file_name)
+    if os.path.isfile(file_in_ref_dir):
+        return file_in_ref_dir
+
+    # Check original file path prefixed with reference file&#39;s directory
+    file_prefixed = os.path.join(reference_path, file_path)
+    if os.path.isfile(file_prefixed):
+        return file_prefixed
+
+    # If all checks fail, raise an error
+    raise FileNotFoundError(f&quot;No valid path found for file: {file_path}&quot;)
+
+def adapt_file_path_all(df, column_name, reference_file):
+    return df[column_name].apply(lambda x: adapt_file_path(x, reference_file))
+
+
+if (str(genotype_file).endswith(&quot;bed&quot;) or str(genotype_file).endswith(&quot;pgen&quot;)) and str(phenotype_file).endswith(&quot;bed.gz&quot;):
+    input_files = [[phenotype_file, genotype_file]]
+    if len(chromosome) &gt; 0:
+        input_chroms = [int(x) for x in chromosome]
+    else:
+        input_chroms = [0]
+else:
+    import pandas as pd
+    import os
+    molecular_pheno_files = pd.read_csv(phenotype_file, sep = &quot;\t&quot;)
+    
+    if &quot;#dir&quot; in molecular_pheno_files.columns and &quot;#chr&quot; not in molecular_pheno_files.columns:
+        molecular_pheno_files = molecular_pheno_files.rename(columns={&quot;#dir&quot;: &quot;path&quot;})
+        if &quot;#id&quot; in molecular_pheno_files.columns:
+            molecular_pheno_files = molecular_pheno_files.rename(columns={&quot;#id&quot;: &quot;#chr&quot;})
+    
+    if &quot;#chr&quot; in molecular_pheno_files.columns:
+        molecular_pheno_files = molecular_pheno_files.groupby([&#39;#chr&#39;,&#39;path&#39;]).size().reset_index(name=&#39;count&#39;).drop(&quot;count&quot;,axis = 1).rename(columns = {&quot;#chr&quot;:&quot;#id&quot;})
+    genotype_files = pd.read_csv(genotype_file,sep = &quot;\t&quot;)
+    genotype_files[&quot;#id&quot;] = [x.replace(&quot;chr&quot;,&quot;&quot;) for x in genotype_files[&quot;#id&quot;].astype(str)] # e.g. remove chr1 to 1
+    genotype_files[&quot;#path&quot;] = genotype_files[&quot;#path&quot;].apply(lambda x: adapt_file_path(x, genotype_file))
+    molecular_pheno_files[&quot;#id&quot;] = [x.replace(&quot;chr&quot;,&quot;&quot;) for x in molecular_pheno_files[&quot;#id&quot;].astype(str)]
+    input_files = molecular_pheno_files.merge(genotype_files, on = &quot;#id&quot;)
+    
+    # Only keep chromosome specified in --chromosome
+    if len(chromosome) &gt; 0:
+        input_files = input_files[input_files[&#39;#id&#39;].isin(chromosome)]
+    input_files = input_files.values.tolist()
+    input_chroms = [x[0] for x in input_files]
+    input_files = [x[1:] for x in input_files]
+    if len(name) == 0:
+        name = f&#39;{path(input_files[0][0]):bnn}&#39; if len(input_files) == 1 else f&#39;{path(input_files[0][0]):bnnn}&#39;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[cis_1]
+# parse input file lists
+# skip nominal association results if the files exists already
+# This is false by default which means to recompute everything
+# This is only relevant when the `parquet` files for nominal results exist but not the other files
+# and you want to avoid computing the nominal results again
+parameter: skip_nominal_if_exist = False
+parameter: permutation = True
+
+# Extract interaction name
+var_interaction = interaction
+if os.path.isfile(interaction):
+    interaction_s = pd.read_csv(interaction, sep=&#39;\t&#39;, index_col=0)
+    var_interaction = interaction_s.columns[0] # interaction name
+test_regional_association = permutation and len(var_interaction) == 0
+
+input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
+output_files = dict([(&quot;parquet&quot;, f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl_pairs.{&quot;&quot; if input_chroms[_index] == 0 else input_chroms[_index]}.parquet&#39;), # This convention is necessary to match the pattern of map_norminal output
+                     (&quot;nominal&quot;, f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_chr%s&quot; % input_chroms[_index]}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl.pairs.tsv.gz&#39;)])
+if test_regional_association:
+    output_files[&quot;regional&quot;] = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_chr%s&quot; % input_chroms[_index]}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl.regional.tsv.gz&#39;
+output: output_files
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[&quot;nominal&quot;]:bnnn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;nominal&quot;]:nnn}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.py \
+        --step cis \
+        --cwd &quot;${cwd}&quot; \
+        --genotype-file &quot;${_input[1]}&quot; \
+        --phenotype-file &quot;${_input[0]}&quot; \
+        --covariate-file &quot;${covariate_file}&quot; \
+        --interaction &quot;${interaction}&quot; \
+        --chromosome ${input_chroms[_index]} \
+        --window ${window} \
+        --MAC ${MAC} \
+        --maf-threshold ${maf_threshold} \
+        --pvalue-cutoff &quot;${pvalue_cutoff}&quot; \
+        --qvalue-cutoff &quot;${qvalue_cutoff}&quot; \
+        --permutation ${permutation} \
+        ${&quot;--skip-nominal-if-exist&quot; if skip_nominal_if_exist else &quot;&quot;} \
+        ${&quot;--covariate-pattern &quot; + &quot; &quot;.join([str(x) for x in covariate_pattern]) if len(covariate_pattern) else &quot;&quot;} \
+        ${&quot;--region-list &quot; + str(region_list) + &quot; --region-list-phenotype-column &quot; + str(region_list_phenotype_column) if region_list.is_file() else &quot;&quot;} \
+        ${&quot;--keep-sample &quot; + str(keep_sample) if keep_sample.is_file() else &quot;&quot;} \
+        ${&quot;--customized-cis-windows &quot; + str(customized_cis_windows) if customized_cis_windows.is_file() else &quot;&quot;} \
+        ${&quot;--phenotype-group &quot; + str(phenotype_group) if phenotype_group.is_file() else &quot;&quot;} \
+        --skip-postprocess \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[cis_2]
+done_if(&quot;regional&quot; not in _input.labels)
+input: group_by = &quot;all&quot;
+output_file_prefix = name if len(_input[&quot;nominal&quot;]) &gt; 1 else f&#39;{_input[&quot;nominal&quot;][0]:bnnnn}&#39;
+output: f&#39;{cwd}/{output_file_prefix}.cis_qtl_regional_significance.tsv.gz&#39;,
+        f&#39;{cwd}/{output_file_prefix}.cis_qtl_regional_significance.summary.txt&#39;
+input_files = [str(x) for x in _input[&quot;regional&quot;]]
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.py \
+        --step cis_postprocess \
+        --cwd &quot;${cwd}&quot; \
+        --output-tsv &quot;${_output[0]}&quot; \
+        --output-summary &quot;${_output[1]}&quot; \
+        --regional-files ${&quot; &quot;.join(input_files)} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[trans]
+
+parameter: batch_size = 10000
+parameter: pval_threshold = 1.0
+# Permutation testing is incorrect when the analysis is done by chrom
+parameter: permutation = False
+parameter: pval = 0.0
+
+input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
+output: nominal = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_chr%s&quot; % input_chroms[_index] if input_chroms[_index] != 0 else &quot;&quot;}{&quot;_geno_chr%s&quot; % trans_geno_chromosome if trans_geno_chromosome else &quot;&quot;}.trans_qtl{&quot;_p_%.0e&quot; % pval if pval &gt; 0.0 else &quot;&quot;}.pairs.tsv.gz&#39;
+
+trans_genotype_file = genotype_file if trans_geno_chromosome else _input[1]
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+    python3 ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.py \
+        --step trans \
+        --cwd &quot;${cwd}&quot; \
+        --genotype-file &quot;${trans_genotype_file}&quot; \
+        --phenotype-file &quot;${_input[0]}&quot; \
+        --covariate-file &quot;${covariate_file}&quot; \
+        --output &quot;${_output[&#39;nominal&#39;]}&quot; \
+        --trans-geno-chromosome &quot;${trans_geno_chromosome}&quot; \
+        --window ${window} \
+        --MAC ${MAC} \
+        --maf-threshold ${maf_threshold} \
+        --batch-size ${batch_size} \
+        --pval-threshold ${pval_threshold} \
+        --pval ${pval} \
+        --pvalue-cutoff &quot;${pvalue_cutoff}&quot; \
+        --qvalue-cutoff &quot;${qvalue_cutoff}&quot; \
+        ${&quot;--covariate-pattern &quot; + &quot; &quot;.join([str(x) for x in covariate_pattern]) if len(covariate_pattern) else &quot;&quot;} \
+        ${&quot;--region-list &quot; + str(region_list) + &quot; --region-list-phenotype-column &quot; + str(region_list_phenotype_column) if region_list.is_file() else &quot;&quot;} \
+        ${&quot;--keep-sample &quot; + str(keep_sample) if keep_sample.is_file() else &quot;&quot;} \
+        ${&quot;--customized-cis-windows &quot; + str(customized_cis_windows) if customized_cis_windows.is_file() else &quot;&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="qtl_association_testing.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">QTL Association Testing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="qr_and_twas.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Quantile regression for QTL association testing</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-genotype-file">Example genotype file</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-covariates-file">Example covariates file</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-customized-cis-window-file-optional">Example customized cis window file (Optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-interaction-file">Example interaction file</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cis-qtl-association">cis-QTL association</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#trans-qtl-association">trans-QTL association</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nominal-association-results">Nominal Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-testing-corrected-results">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interaction-association-results">Interaction Association Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#region-gene-level-association-evidence">Region (Gene) Level Association Evidence</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Multiple Testing Corrected Results:</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-code">Pipeline Code</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

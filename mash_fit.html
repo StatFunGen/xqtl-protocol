@@ -1,0 +1,818 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>MASH analysis pipeline with data-driven prior matrices &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'mash_fit';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MASH analysis pipeline with posterior computation" href="mash_posterior.html" />
+    <link rel="prev" title="Mixture prior estimation for MASH" href="mixture_prior.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/mash_fit.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fmash_fit.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/mash_fit.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>MASH analysis pipeline with data-driven prior matrices</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multivariate-adaptive-shrinkage-mash-analysis-of-eqtl-data">Multivariate adaptive shrinkage (MASH) analysis of eQTL data</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mashr-mixture-model-fitting"><code class="docutils literal notranslate"><span class="pre">mashr</span></code> mixture model fitting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optional-posterior-computations">Optional posterior computations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="mash-analysis-pipeline-with-data-driven-prior-matrices">
+<h1>MASH analysis pipeline with data-driven prior matrices<a class="headerlink" href="#mash-analysis-pipeline-with-data-driven-prior-matrices" title="Link to this heading">#</a></h1>
+<p>In this notebook, we utilize the MASH prior, referred to as the <a class="reference external" href="https://github.com/statfungen/xqtl-protocol/blob/6c637645ce16aee2aa7dc86bbc334fb6bb66b9d9/code/multivariate/MASH/mixture_prior.ipynb#L4">mixture_prior</a>, from a previous step. Our objective is to conduct a multivariate analysis under the MASH model. After fitting the model, we subsequently compute the posteriors for our variables of interest.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<p>Requires <code class="docutils literal notranslate"><span class="pre">protocol_example.mash_input.rds</span></code> from <code class="docutils literal notranslate"><span class="pre">mash_preprocessing</span></code>. See that notebook to generate this file.</p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<section id="multivariate-adaptive-shrinkage-mash-analysis-of-eqtl-data">
+<h3>Multivariate adaptive shrinkage (MASH) analysis of eQTL data<a class="headerlink" href="#multivariate-adaptive-shrinkage-mash-analysis-of-eqtl-data" title="Link to this heading">#</a></h3>
+<p>Since we published Urbut 2019, we have improved implementation of MASH algorithm and made a new R package, <a class="reference external" href="https://github.com/stephenslab/mashr"><code class="docutils literal notranslate"><span class="pre">mashr</span></code></a>. Major improvements compared to Urbut 2019 are:</p>
+<ol class="arabic simple">
+<li><p>Faster computation of likelihood and posterior quantities via matrix algebra tricks and a C++ implementation.</p></li>
+<li><p>Faster computation of MASH mixture via convex optimization.</p></li>
+<li><p>New ways to estimate prior in place of the <code class="docutils literal notranslate"><span class="pre">SFA</span></code> approach, see <code class="docutils literal notranslate"><span class="pre">mixture_prior.ipynb</span></code> for details.</p></li>
+<li><p>Improve estimate of residual variance <span class="math notranslate nohighlight">\(\hat{V}\)</span>.</p></li>
+</ol>
+<p>At this point, the input data have already been converted from the original association summary statistics to a format convenient for analysis in MASH.</p>
+</section>
+</section>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--data</span></code>: input summary statistics data (MASH-format RDS) produced by <code class="docutils literal notranslate"><span class="pre">mash_preprocessing</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--vhat-data</span></code>: estimated residual variance <span class="math notranslate nohighlight">\(\hat{V}\)</span> (RDS).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--prior-data</span></code>: the data-driven prior matrices RDS generated by <code class="docutils literal notranslate"><span class="pre">mixture_prior</span></code>.</p></li>
+</ul>
+<p>MWE data are available on <a class="reference external" href="https://www.synapse.org/#!Synapse:syn69670658">synapse.org</a>.</p>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>A fitted MASH model file <code class="docutils literal notranslate"><span class="pre">*.mash_model.rds</span></code> containing the mixture weights.</p></li>
+<li><p>(Optional) a posterior file <code class="docutils literal notranslate"><span class="pre">*.posterior.rds</span></code> with posterior quantities (e.g. <code class="docutils literal notranslate"><span class="pre">lfsr</span></code>) for the “strong” set of gene-SNP pairs.</p></li>
+</ul>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<p>Using the MASH prior <a class="reference external" href="https://github.com/statfungen/xqtl-protocol/blob/main/code/multivariate_genome/MASH/mixture_prior.ipynb">previously generated</a>, fit the MASH model and compute posteriors.</p>
+<p><strong>Step 1.</strong> Fit the MASH mixture model and compute posteriors for the strong set:</p>
+<p><strong>Timing</strong> (toy chr22 dataset):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mash_fit</span></code>: ~1-2 min</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_fit.ipynb mash \
+    --output-prefix protocol_example_mash \
+    --data input/mash/protocol_example.EE.mash.rds \
+    --vhat-data input/mash/protocol_example.EE.V_simple.rds \
+    --prior-data input/mash/protocol_example.EE.prior.rds \
+    --effect-model EE \
+    --compute-posterior \
+    --cwd output/mash_fit
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_fit.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">mash</span></code> workflow has two steps. <code class="docutils literal notranslate"><span class="pre">mash_1</span></code> fits the <code class="docutils literal notranslate"><span class="pre">mashr</span></code> mixture model; <code class="docutils literal notranslate"><span class="pre">mash_2</span></code> (optional, on by default) computes posteriors for the “strong” set as in Urbut et al 2017. Use <code class="docutils literal notranslate"><span class="pre">--no-compute-posterior</span></code> to skip the posterior step.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: cwd = path(&#39;./mashr_workflow_output&#39;)
+# Input summary statistics data
+parameter: data = path
+parameter: prior_data = path
+parameter: vhat_data = path
+# Prefix of output files. If not specified, it will derive it from data.
+# If it is specified, for example, `--output-prefix AnalysisResults`
+# It will save output files as `{cwd}/AnalysisResults*`.
+parameter: output_prefix = &#39;&#39;
+parameter: output_suffix = &#39;all&#39;
+# Exchangable effect (EE) or exchangable z-scores (EZ)
+parameter: effect_model = &#39;EE&#39;
+parameter: container = &quot;&quot;
+# For cluster jobs, number commands to run per job
+parameter: job_size = 1
+# Wall clock time expected
+parameter: walltime = &quot;5h&quot;
+# Memory expected
+parameter: mem = &quot;16G&quot;
+# Number of threads
+parameter: numThreads = 1
+data = data.absolute()
+cwd = cwd.absolute()
+prior_data = prior_data.absolute()
+vhat_data = vhat_data.absolute()
+if len(output_prefix) == 0:
+    output_prefix = f&quot;{data:bn}&quot;
+
+mash_model = file_target(f&quot;{cwd:a}/{output_prefix}.{effect_model}.mash_model.rds&quot;)
+
+def sort_uniq(seq):
+    seen = set()
+    return [x for x in seq if not (x in seen or seen.add(x))]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="mashr-mixture-model-fitting">
+<h2><code class="docutils literal notranslate"><span class="pre">mashr</span></code> mixture model fitting<a class="headerlink" href="#mashr-mixture-model-fitting" title="Link to this heading">#</a></h2>
+<p>Main reference are our <code class="docutils literal notranslate"><span class="pre">mashr</span></code> vignettes <a class="reference external" href="https://stephenslab.github.io/mashr/articles/eQTL_outline.html">this for mashr eQTL outline</a> and <a class="reference external" href="https://github.com/stephenslab/mashr/blob/master/vignettes/flash_mash.Rmd">this for using FLASH prior</a>.</p>
+<p>The outcome of this workflow should be found under <code class="docutils literal notranslate"><span class="pre">./mashr_workflow_output</span></code> folder (can be configured). File names have pattern <code class="docutils literal notranslate"><span class="pre">*.mash_model_*.rds</span></code>. They can be used to computer posterior for input list of gene-SNP pairs (see next section).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Fit MASH mixture model (time estimate: &lt;15min for 70K by 49 matrix)
+[mash_1]
+parameter: output_level = 4
+input: data, vhat_data, prior_data
+output: mash_model
+
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+    library(mashr)
+    dat = readRDS(${_input[0]:r})
+    vhat = readRDS(${_input[1]:r})
+    U = readRDS(${_input[2]:r})$U
+    mash_data = mash_set_data(dat$random.b, Shat=dat$random.s, alpha=${1 if effect_model == &#39;EZ&#39; else 0}, V=vhat, zero_Bhat_Shat_reset = 1E3)
+    saveRDS(list(mash_model = mash(mash_data, Ulist = U, outputlevel = ${output_level}), vhat_file=${_input[1]:r}, prior_file=${_input[2]:r}), ${_output:r})
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="optional-posterior-computations">
+<h2>Optional posterior computations<a class="headerlink" href="#optional-posterior-computations" title="Link to this heading">#</a></h2>
+<p>Additionally provide posterior for the “strong” set in MASH input data.</p>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>Produces <code class="docutils literal notranslate"><span class="pre">protocol_example.mash_model.rds</span></code> with fitted MASH covariance matrices across 16 conditions. Expect ~10 canonical + data-driven covariance components.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Compute posterior for the &quot;strong&quot; set of data as in Urbut et al 2017.
+# This is optional because most of the time we want to apply the 
+# MASH model learned on much larger data-set.
+[mash_2]
+# default to True; use --no-compute-posterior to disable this
+parameter: compute_posterior = True
+# input Vhat file for the batch of posterior data
+skip_if(not compute_posterior)
+
+input: data, vhat_data, mash_model
+output: f&quot;{cwd:a}/{output_prefix}.{effect_model}.posterior.rds&quot;
+
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+R: expand = &quot;${ }&quot;, workdir = cwd, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+    library(mashr)
+    dat = readRDS(${_input[0]:r})
+    vhat = readRDS(${_input[1]:r})
+    mash_data = mash_set_data(dat$strong.b, Shat=dat$strong.s, alpha=${1 if effect_model == &#39;EZ&#39; else 0}, V=vhat, zero_Bhat_Shat_reset = 1E3)
+    mash_model = readRDS(${_input[2]:ar})$mash_model
+    saveRDS(mash_compute_posterior_matrices(mash_model, mash_data), ${_output:r})
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="mixture_prior.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Mixture prior estimation for MASH</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="mash_posterior.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">MASH analysis pipeline with posterior computation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multivariate-adaptive-shrinkage-mash-analysis-of-eqtl-data">Multivariate adaptive shrinkage (MASH) analysis of eQTL data</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mashr-mixture-model-fitting"><code class="docutils literal notranslate"><span class="pre">mashr</span></code> mixture model fitting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optional-posterior-computations">Optional posterior computations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

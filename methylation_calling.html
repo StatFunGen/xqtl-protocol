@@ -1,0 +1,1174 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Quantification of methylation data &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'methylation_calling';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Alternative splicing from RNA-seq data" href="splicing.html" />
+    <link rel="prev" title="Methylation Data Preprocessing" href="methylation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/methylation_calling.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fmethylation_calling.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/methylation_calling.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Quantification of methylation data</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-parameters">Global parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sesame"><code class="docutils literal notranslate"><span class="pre">Sesame</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minfi"><code class="docutils literal notranslate"><span class="pre">minfi</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-probes">Annotate probes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="quantification-of-methylation-data">
+<h1>Quantification of methylation data<a class="headerlink" href="#quantification-of-methylation-data" title="Link to this heading">#</a></h1>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>This notebook implements two methods to quantify methylation data, using <code class="docutils literal notranslate"><span class="pre">sesame</span></code> and <code class="docutils literal notranslate"><span class="pre">minfi</span></code>. We recommend <code class="docutils literal notranslate"><span class="pre">sesame</span></code> over <code class="docutils literal notranslate"><span class="pre">minfi</span></code>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Procedure</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">minfi</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">sesame</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SNP/Cross reaction removal</p></td>
+<td><p>dropLociWithSnps + manual removal</p></td>
+<td><p>Q (qualityMask)</p></td>
+</tr>
+<tr class="row-odd"><td><p>sample quality</p></td>
+<td><p>detectionP + mean</p></td>
+<td><p>sesameQC_calcStats + “detection” + frac_dt</p></td>
+</tr>
+<tr class="row-even"><td><p>Bias correction</p></td>
+<td><p>preprocessQuantile</p></td>
+<td><p>D ( dyeBiasNL)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Probe quality</p></td>
+<td><p>detectionP</p></td>
+<td><p>“P (pOOBAH	Detection p-value masking using oob)”</p></td>
+</tr>
+<tr class="row-even"><td><p>Background substraction</p></td>
+<td><p>NA</p></td>
+<td><p>B (noob)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sample_sheet</span></code>: path to csv/tsv file that documenting all the meta-information of the bisulfite sequencing. The user need to manually ensure/rename the column names corresponding  to the first and second half of the idat file names are “Sentrix_ID” and “Sentrix_Position”</p></li>
+<li><p>[optional] <code class="docutils literal notranslate"><span class="pre">idat_folder</span></code>: path to the folder containing all the IDAT files to generate methylation data matrices from. Default is set to using the same folder where <code class="docutils literal notranslate"><span class="pre">sample_sheet</span></code> locates.</p></li>
+<li><p>[optional] <code class="docutils literal notranslate"><span class="pre">cross_reactive_probes</span></code>: A list of CpG probes that are reported to <a class="reference external" href="https://academic.oup.com/nargab/article/2/4/lqaa105/6040968">map to multiple regions in the genome.</a></p></li>
+</ol>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<p>For each input array, methylation is called with both SeSAMe and minfi and written under <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{sample}.sesame.beta.tsv</span></code> and <code class="docutils literal notranslate"><span class="pre">{sample}.sesame.M.tsv</span></code> — SeSAMe beta-values (proportion methylated) and M-values (logit-transformed) per probe; <code class="docutils literal notranslate"><span class="pre">{sample}.sesame.rds</span></code> stores the SeSAMe object and <code class="docutils literal notranslate"><span class="pre">{sample}.sample_qcs.sesame.tsv</span></code> the per-sample QC metrics.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{sample}.minfi.beta.tsv</span></code> and <code class="docutils literal notranslate"><span class="pre">{sample}.minfi.M.tsv</span></code> — the equivalent beta- and M-value matrices from minfi (with <code class="docutils literal notranslate"><span class="pre">{sample}.minfi.rds</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{name}.bed.gz</span></code> (a pair for <code class="docutils literal notranslate"><span class="pre">beta</span></code> and <code class="docutils literal notranslate"><span class="pre">M</span></code>) and <code class="docutils literal notranslate"><span class="pre">{name}.gene_id.annot.tsv</span></code> — the final BED-format methylation matrices and the probe-to-gene annotation used as the molecular phenotype downstream.</p></li>
+</ul>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/methylation_calling.ipynb sesame \
+    --sample-sheet data/MWE/MWE_Sample_sheet.csv \
+    --container containers/methylation.sif
+
+sos run pipeline/methylation_calling.ipynb sesame \
+    --sample-sheet data/MWE/MWE_Sample_sheet_int.csv \
+    --container containers/methylation.sif --sample_sheet_header_rows 0
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/methylation_calling.ipynb minfi \
+    --sample-sheet data/MWE/MWE_Sample_sheet.csv \
+    --container containers/methylation.sif
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run methylation_calling.ipynb -h
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>usage: sos run methylation_calling.ipynb
+               [workflow_name | -t targets] [options] [workflow_options]
+  workflow_name:        Single or combined workflows defined in this script
+  targets:              One or more targets to generate
+  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  workflow_options:     Double-hyphen workflow-specific parameters
+
+Workflows:
+  sesame
+  minfi
+
+Global Workflow Options:
+  --cwd output (as path)
+                        The output directory for generated files.
+  --sample-sheet VAL (as path, required)
+                        The companion sample sheet csv file as outlined in the
+                        input section.
+  --idat-folder  path(f&quot;{sample_sheet:d}&quot;)
+
+                        Raw data folder
+  --[no-]keep-only-cpg-probes (default to False)
+                        Remove probes that are SNPs
+  --job-size 1 (as int)
+                        For cluster jobs, number commands to run per job
+  --walltime 5h
+                        Wall clock time expected
+  --mem 16G
+                        Memory expected
+  --numThreads 8 (as int)
+                        Number of threads
+  --container &#39;&#39;
+                        Software container option
+
+Sections
+  sesame_1:
+    Workflow Options:
+      --samples-frac-dt-cutoff 0.8 (as float)
+                        threshold to filter out samples based on frac_dt
+                        (Percentage of probe Detection Success)  percentage
+      --sample-sheet-header-rows 7 (as int)
+                        The header rows in the sample sheet csv
+  minfi_1:
+    Workflow Options:
+      --samples-pval-cutoff 0.05 (as float)
+                        threshold to filter out samples based on detection P
+                        value
+      --probe-pval-cutoff 0.01 (as float)
+                        threshold to filter out probes based on detection P
+                        value
+      --cross-reactive-probes /opt/cross_reactive_probe_Hop2020.txt (as path)
+                        FIXME: document here where this list is obtained from.
+                        Also the documentation below doesn&#39;t sound right. Please
+                        fix. Use the default list in our docker, if want to skip
+                        methylation, specify it as &quot;.&quot;
+      --GRCh-build 38 (as int)
+                        38 (hg38) or 37 (hg19) for epic data, by default 38.
+                        Noted for 450K data only GRCh37 is availble
+  *_methylation_2:
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="global-parameters">
+<h2>Global parameters<a class="headerlink" href="#global-parameters" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">keep_only_cpg_probes</span></code> option dictate whether only cpg probes should be kept:</p>
+<ul>
+<li><p>On an Illumina methylation bead chip, there are three types of probes,whose nature were indicated by their names.
+- cg: cpg probe;
+- rs: explict snp probe;
+- ch: non-CpG targeting probes; <a class="reference external" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/">reported to be more prone to cross-hybirdization</a></p>
+<p>Following the guideline of <a class="reference external" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5389466/">Zhou W 2016</a>, by default we do not remove all the rs and ch probes. However, for research that are focusing on the CpG sites, like mQTL discovery, we should use <code class="docutils literal notranslate"><span class="pre">keep_only_cpg_probes</span></code> parameter to filter out other types of probes.</p>
+</li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+# The output directory for generated files.
+parameter: cwd = path(&quot;output&quot;)
+# The companion sample sheet csv file as outlined in the input section.
+parameter: sample_sheet = path
+# Raw data folder
+parameter: idat_folder = path(f&quot;{sample_sheet:d}&quot;)
+# Remove probes that are SNPs
+parameter: keep_only_cpg_probes = False
+# For cluster jobs, number commands to run per job
+parameter: job_size = 1
+# Wall clock time expected
+parameter: walltime = &quot;5h&quot;
+# Memory expected
+parameter: mem = &quot;16G&quot;
+
+# Number of threads
+parameter: numThreads = 8
+# Software container option
+parameter: container = &quot;&quot;
+cwd = path(f&#39;{cwd:a}&#39;)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="sesame">
+<h2><code class="docutils literal notranslate"><span class="pre">Sesame</span></code><a class="headerlink" href="#sesame" title="Link to this heading">#</a></h2>
+<p>Getting the beta value from EPIC450 IDAT for 750 samples from 3000 wells take ~40 mins.</p>
+<p>Based on <a class="reference external" href="https://www.bioconductor.org/packages/release/bioc/vignettes/sesame/inst/doc/sesame.html">sesame documentation</a>, the processing procedure suitable for human on EPIC 450 and 850 platform is “QCDPB”</p>
+<p>The code for each processing procedure are as followed:</p>
+<hr class="docutils" />
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Code</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Detail</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Q</p></td>
+<td><p>qualityMask</p></td>
+<td><p>Mask probes of poor design</p></td>
+</tr>
+<tr class="row-odd"><td><p>C</p></td>
+<td><p>inferInfiniumIChannel</p></td>
+<td><p>Infer channel for Infinium-I probes</p></td>
+</tr>
+<tr class="row-even"><td><p>D</p></td>
+<td><p>dyeBiasNL</p></td>
+<td><p>Dye bias correction (non-linear)</p></td>
+</tr>
+<tr class="row-odd"><td><p>P</p></td>
+<td><p>pOOBAH</p></td>
+<td><p>Detection p-value masking using oob</p></td>
+</tr>
+<tr class="row-even"><td><p>B</p></td>
+<td><p>noob</p></td>
+<td><p>Background subtraction using oob</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Other potential procedures are</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Code</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Detail</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>resetMask</p></td>
+<td><p>Reset mask to all FALSE</p></td>
+</tr>
+<tr class="row-odd"><td><p>G</p></td>
+<td><p>prefixMaskButCG</p></td>
+<td><p>Mask all but cg- probes</p></td>
+</tr>
+<tr class="row-even"><td><p>H</p></td>
+<td><p>prefixMaskButC</p></td>
+<td><p>Mask all but cg- and ch-probes</p></td>
+</tr>
+<tr class="row-odd"><td><p>E</p></td>
+<td><p>dyeBiasL</p></td>
+<td><p>Dye bias correction (linear)</p></td>
+</tr>
+<tr class="row-even"><td><p>I</p></td>
+<td><p>detectionIB</p></td>
+<td><p>Mask detection by intermediate beta values</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>M value is calculated as M = log2(beta/(1-beta))
+The way we handle beta == 0 or beta == 1 is by replacing them with the next min/max value among the beta matrix, which is based on <a class="reference external" href="https://github.com/xuz1/ENmix/blob/master/R/utils.R">here</a></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[sesame_1]
+processing_option = &quot;QCDGPB&quot; if keep_only_cpg_probes else &quot;QCDPB&quot;
+# threshold to filter out samples based on frac_dt (Percentage of probe Detection Success)  percentage
+parameter: samples_frac_dt_cutoff = 0.8
+# The header rows in the sample sheet csv. Use 0 for no headers. Typically it should be 7. 
+parameter: sample_sheet_header_rows = float
+
+# The number of cores to use. if set to 0 (default), the effective number of cores to used is automatically determined by BiocParallel::multicoreWorkers() function (i.e. n_available_cores-2)
+parameter: n_cores = 1
+
+input: sample_sheet
+output: f&#39;{cwd}/{_input:bn}.sesame.rds&#39;,f&#39;{cwd}/{_input:bn}.sesame.beta.tsv&#39;,f&#39;{cwd}/{_input:bn}.sesame.M.tsv&#39;,f&#39;{cwd}/{_input:bn}.sample_qcs.sesame.tsv&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    library(sesame)
+    library(data.table)
+    setDTthreads(threads = 0)
+    require(parallel)
+    require(BiocParallel)
+    
+    n_cores=${n_cores}
+    if(n_cores==0)n_cores=BiocParallel::multicoreWorkers() 
+    # Cache the sesameData, it will not actually download anything if the data is here alerady
+    sesameData::sesameDataCache()
+    # Define function 
+    B2M&lt;-function (x)
+    {
+    x[x == 0] &lt;- min(x[x != 0])
+    x[x == 1] &lt;- max(x[x != 1])
+    log2(x) - log2(1 - x)
+    }
+    # Load the sample sheet to get the sample names
+    sample_sheet = fread(&quot;${_input}&quot; , skip = ${sample_sheet_header_rows} )
+    if(&quot;Sentrix_Row_Column&quot; %in% colnames(sample_sheet)){
+    sample_sheet[,well_name:=paste(Sentrix_ID,Sentrix_Row_Column,sep=&#39;_&#39;)]
+      } else { sample_sheet[,well_name:=paste(Sentrix_ID,Sentrix_Position,sep=&#39;_&#39;)]
+      }
+    sample_sheet[,Sample_Name:=.SD,.SDcols=colnames(sample_sheet)[1]]
+    sample_sheet$Sample_Name = as.character(sample_sheet$Sample_Name)
+
+    # scan and load the data
+    sdfs &lt;- openSesame(${idat_folder:r}, prep = &quot;&quot;, func = NULL,BPPARAM = BiocParallel::MulticoreParam(n_cores))
+    # Keep only the samples in the sample_sheet to save memory
+    sdfs &lt;- sdfs[which(names(sdfs)%in%sample_sheet$well_name)]
+
+    message(&quot;IDAT files loaded.&quot;)
+    # Get Sample level QC:
+    qcs &lt;- openSesame(sdfs, prep=&quot;&quot;, func=sesameQC_calcStats,BPPARAM = BiocParallel::MulticoreParam(n_cores))
+    message(&quot;Sample-level QC completed.&quot;)
+    # Get poor samples base on percentage of probe fail
+    qcs_dt&lt;-data.table(do.call(rbind, lapply(qcs, as.data.frame)),keep.rownames=&#39;id&#39;)
+
+    poor_samples&lt;-qcs_dt[frac_dt&lt;${samples_frac_dt_cutoff}]$id #all samples with &lt; 80% probes detection are deened as poor
+
+    ## This handles the case where poor_sample is empty
+    sdfs &lt;- sdfs[which(!(names(sdfs)%in%poor_samples))]
+    message(paste0(ifelse(length(poor_samples) &gt; 0, poor_samples , &quot;No sample&quot; ) , &quot; removed due to low quality based on frac_dt &lt; ${samples_frac_dt_cutoff} &quot;))
+    
+    # Preprocess the data via QCDPB procedure
+    ## The masking procedure of sesame is not removing the probes, but instead introduce NA in the masked probes. Therefore it makesense to na.rm it.
+    beta &lt;- openSesame(sdfs,prep = &quot;${processing_option}&quot;,BPPARAM = BiocParallel::MulticoreParam(n_cores))
+    message(&quot;Beta calculated!&quot;)
+    beta &lt;- beta[rowSums(is.na(beta)) != ncol(beta), ] # Use this instead of na.omit because if not the full rows are NA, then the probe is not masked.
+    
+    #replace well_name by sample name in the matrix column names
+    colnames(beta)&lt;-sample_sheet[colnames(beta),on=&#39;well_name&#39;]$Sample_Name
+    
+    #calculate the M value
+    M &lt;- B2M(beta)
+    message(&quot;M values calculated.&quot;)
+    
+    #Save the outputs
+    fwrite(data.table(beta,keep.rownames = &#39;ID&#39;),&quot;${_output[1]}&quot;,sep=&quot;\t&quot;)
+    fwrite(data.table(M,keep.rownames = &#39;ID&#39;),&quot;${_output[2]}&quot;,sep=&quot;\t&quot;)
+    fwrite(qcs_dt,&quot;${_output[3]}&quot;,sep=&quot;\t&quot;)
+    saveRDS(list(&quot;sdfs&quot; = sdfs,&quot;qcs&quot; = qcs),&quot;${_output[0]}&quot;)
+
+    message(&quot;sesame analysis completed!&quot;)
+
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
+        stdout=$[_output[0]:n].stdout
+        for i in $[_output[0]] ; do 
+        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
+        echo &quot;This is the file containing the intermediate QC table of sesame&quot;
+        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
+        done
+        for i in $[_output[1]] ; do 
+        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
+        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
+        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
+        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
+        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
+        for i in $[_output[2]] ; do 
+        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
+        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
+        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
+        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
+        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
+    
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="minfi">
+<h2><code class="docutils literal notranslate"><span class="pre">minfi</span></code><a class="headerlink" href="#minfi" title="Link to this heading">#</a></h2>
+<p>By default, for Infinium MethylationEPIC the data will be annotated based on hg38 using <a class="reference external" href="https://github.com/achilleasNP/IlluminaHumanMethylationEPICanno.ilm10b5.hg38">this annotation</a>, alternatively user can set the <code class="docutils literal notranslate"><span class="pre">--hg-build</span></code> parameter back to 19 to use the <a class="reference external" href="https://bioconductor.org/packages/release/data/annotation/html/IlluminaHumanMethylationEPICanno.ilm10b4.hg19.html">hg19 annotation</a>.</p>
+<p>For 450K data however, only hg19 annotation is availble, which is what we would use would use for minfi to work. However, we will reannotate everything to hg38 anyways in the next step.</p>
+<ol class="arabic simple">
+<li><p>All the IDAT file in the specified folder and sub-folder will be loaded for samples in input sample CSV file</p></li>
+<li><p>The methylation data samples will first be filtered based on <a class="reference external" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4527772/">bisulphite conversation rate</a>. This operation is done using the <a class="reference external" href="http://www.bioconductor.org/packages/release/bioc/vignettes/wateRmelon/inst/doc/wateRmelon.html#introduction">bscon function from watermelon package</a></p></li>
+<li><p>samples will then be filtered based on a <a class="reference external" href="https://www.rdocumentation.org/packages/minfi/versions/1.18.4/topics/detectionP">detection pvalue</a>, which indicates the quality of the signal at each genomics position</p></li>
+<li><p><a class="reference external" href="https://rdrr.io/bioc/minfi/man/preprocessQuantile.html">Stratified Quantile Normalization</a> will then be applied.</p></li>
+<li><p>features will be filtered if they are on sex chr, known to be <a class="reference external" href="https://academic.oup.com/nargab/article/2/4/lqaa105/6040968">cross-reactive,maping to multiple regions in the genome.</a>, overlapping with snps, or having too low a detection P. The list of cross-reactive probe can be found as <code class="docutils literal notranslate"><span class="pre">/opt/cross_reactive_probe_Hop2020.txt</span></code> in our docker and <a class="reference external" href="https://raw.githubusercontent.com/hsun3163/xqtl-protocol/main/data/cross_reactive_probe_Hop2020.txt">here</a>.</p></li>
+<li><p>Beta and M value will for all the probes/samples will then each be saved to a indexed bed.gz file.</p></li>
+</ol>
+<p><a class="reference external" href="https://github.com/statfungen/xqtl-protocol/issues/312">As documented here</a> when the batch of IDAT data are different, there will be a problem reading the IDAT file without specifing the force = TRUE option in the <code class="docutils literal notranslate"><span class="pre">read.metharray.exp(targets</span> <span class="pre">=</span> <span class="pre">targets,force</span> <span class="pre">=</span> <span class="pre">TRUE)</span></code></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[minfi_1]
+# threshold to filter out samples based on detection P value
+parameter: samples_pval_cutoff = 0.05
+# threshold to filter out probes based on detection P value
+parameter: probe_pval_cutoff = 0.01
+# FIXME: document here where this list is obtained from. Also the documentation below doesn&#39;t sound right. Please fix.
+## Use the default list in our docker, if want to skip methylation, specify it as &quot;.&quot;
+parameter: cross_reactive_probes = path(&quot;/opt/cross_reactive_probe_Hop2020.txt&quot;)
+# 38 (hg38) or 19 (hg19) for epic data, by default 38. Noted for 450K data only GRCh37 is availble
+parameter: hg_build = 38 
+input: sample_sheet
+output: f&#39;{cwd}/{_input:bn}.minfi.rds&#39;,f&#39;{cwd}/{_input:bn}.minfi.beta.tsv&#39;,f&#39;{cwd}/{_input:bn}.minfi.M.tsv&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    ## load libraries
+    library(dplyr)
+    library(readr)
+    library(tibble)
+    library(minfi)
+    sessionInfo()
+    cross_reactive = readr::read_delim(&quot;${cross_reactive_probes}&quot;,&quot;\t&quot;)$probe
+    ## 1. read idat files
+    targets &lt;- read.metharray.sheet(${_input:adr})
+    colnames(targets)[1] = &quot;Sample_Name&quot;
+    ## Only read samples with data
+    Missing_sample = targets%&gt;%filter(!stringr::str_detect(targets$Basename ,&quot;/&quot;) )%&gt;%pull(Sample_Name)
+    if (length(Missing_sample)) message(paste0(&quot;Samples &quot;,paste0(Missing_sample,collapse = &quot;, &quot;), &quot; do not have IDAT data&quot; ))
+
+    targets = targets%&gt;%filter(stringr::str_detect(targets$Basename ,&quot;/&quot;) )     
+    rgSet &lt;- read.metharray.exp(targets = targets)
+    if(${hg_build} == 38 &amp;&amp; rgSet@annotation[&quot;array&quot;] == &#39;IlluminaHumanMethylationEPIC&#39; ){rgSet@annotation[&#39;annotation&#39;] = &quot;ilm10b5.hg38&quot;}
+    message(&quot;RGSet object created.&quot;)
+    
+    # Quality Control and Normalization
+
+    ## 2. QC based on p-value, remove samples with average p value less than 0.05
+    
+    detP &lt;- detectionP(rgSet)
+    keep &lt;- colMeans(detP) &lt; ${samples_pval_cutoff}
+    rgSet &lt;- rgSet[,keep]
+    targets &lt;- targets[keep,]
+    message(&quot;Samples with average detection p-value &lt; ${samples_pval_cutoff} removed.&quot;)
+
+    ## 3. Normalize the data - Quantile
+    mSetSq &lt;- preprocessQuantile(rgSet)
+    message(&quot;RGSet data quantile normalized&quot;)
+    
+    ## 4. Remove cross-reactive probes
+    no_cross_reactive &lt;- !(featureNames(mSetSq) %in% cross_reactive)
+    mSetSq &lt;- mSetSq[no_cross_reactive, ]
+    message(&quot;Cross-reactive probes removed&quot;)
+    
+    ## 5. Drop probes that are also SNPs
+    if (${&quot;T&quot; if keep_only_cpg_probes else &quot;F&quot;} ){
+        mSetSq &lt;- dropLociWithSnps(mSetSq)
+        message(&quot;probes overlapping with SNPs removed&quot;)
+    }
+  
+    ## 6. Remove probes with &lt; ${probe_pval_cutoff} detection p-values
+    detP &lt;- detP[match(featureNames(mSetSq),rownames(detP)),]
+    keep &lt;- rowSums(detP &lt; ${probe_pval_cutoff}) == ncol(mSetSq)
+    mSetSq &lt;- mSetSq[keep,]
+  
+    ## 7. get Beta and M values
+    mSetSqbval &lt;- getBeta(mSetSq)%&gt;%as_tibble(rownames = &quot;ID&quot;)
+    mSetSqMval &lt;- getM(mSetSq)%&gt;%as_tibble(rownames = &quot;ID&quot;)
+
+    message(&quot;Beta-value and M value obtained&quot;)
+    
+    ## 8. output data
+    mSetSqbval = mSetSqbval%&gt;%rename_at(vars(rgSet@colData%&gt;%rownames()), function(x) rgSet@colData[x,]%&gt;%as_tibble%&gt;%pull(Sample_Name) )
+    mSetSqMval = mSetSqMval%&gt;%rename_at(vars(rgSet@colData%&gt;%rownames()), function(x) rgSet@colData[x,]%&gt;%as_tibble%&gt;%pull(Sample_Name) )
+    mSetSqbval%&gt;%readr::write_delim(&quot;${_output[1]}&quot;,&quot;\t&quot;)
+    mSetSqMval%&gt;%readr::write_delim(&quot;${_output[2]}&quot;,&quot;\t&quot;)
+    output = list(&quot;rgSet&quot; = rgSet,mSetSq = &quot;mSetSq&quot;, mSetSqbval = &quot;mSetSqbval&quot;)
+    output%&gt;%saveRDS(${_output[0]:r})
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="annotate-probes">
+<h2>Annotate probes<a class="headerlink" href="#annotate-probes" title="Link to this heading">#</a></h2>
+<p>The probes are annotated via <code class="docutils literal notranslate"><span class="pre">sesameData</span></code> package and formatted as bgzipped bed files, regardless of method used to process the IDAT.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[*_2]
+output: f&#39;{_input[1]:n}.bed.gz&#39;, f&#39;{_input[2]:n}.bed.gz&#39;, f&#39;{_input[0]:n}.gene_id.annot.tsv&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
+R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    library(sesame)
+    library(tibble)
+    library(dplyr)
+    library(readr) 
+    sesameData::sesameDataCache()
+    betas = read_delim(&quot;${_input[1]}&quot;,&quot;\t&quot;)
+        M = read_delim(&quot;${_input[2]}&quot;,&quot;\t&quot;)
+    probe_annot = sesameData::sesameData_annoProbes(betas$ID,column = &quot;gene_id&quot;)
+    probe_annot = cbind(&quot;ID&quot; = probe_annot%&gt;%names,probe_annot%&gt;%as_tibble)%&gt;%as_tibble
+  
+    betas = inner_join(probe_annot%&gt;%dplyr::select(&quot;#chr&quot; = seqnames, start , end , ID ),betas , by = &quot;ID&quot; )%&gt;%
+          mutate(end = start +1 ,chr_num = stringr::str_remove(`#chr`,&quot;chr&quot;)%&gt;%as.numeric)%&gt;%arrange(chr_num,`#chr`,start)%&gt;%select(-chr_num) 
+    M = inner_join(probe_annot%&gt;%dplyr::select(&quot;#chr&quot; = seqnames, start , end , ID ), M , by = &quot;ID&quot; )%&gt;%
+          mutate(end = start +1 , chr_num = stringr::str_remove(`#chr`,&quot;chr&quot;)%&gt;%as.numeric)%&gt;%arrange(chr_num,`#chr`,start)%&gt;%select(-chr_num) 
+  
+    betas%&gt;%readr::write_delim(&quot;${_output[0]:n}&quot;,&quot;\t&quot;)
+    M%&gt;%readr::write_delim(&quot;${_output[1]:n}&quot;,&quot;\t&quot;)
+    probe_annot%&gt;%write_delim(&quot;${_output[2]}&quot;,&quot;\t&quot;)
+  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    bgzip -f ${_output[0]:n} 
+    tabix ${_output[0]}
+    bgzip -f ${_output[1]:n} 
+    tabix ${_output[1]}
+    rm -f ${_output[0]:n} ${_output[1]:n}
+
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
+        stdout=$[_output[0]:n].stdout
+        for i in $[_output[0]] ; do 
+        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
+        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
+        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
+        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
+        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
+        for i in $[_output[1]] ; do 
+        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
+        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
+        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
+        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
+        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
+        for i in $[_output[2]] ; do 
+        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
+        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
+        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
+        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
+        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
+        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>The pipeline produces a methylation beta-value matrix (one row per CpG probe, one column per sample) with SNP-overlapping probes removed and missing values imputed, ready for downstream mQTL analysis.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="methylation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Methylation Data Preprocessing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="splicing.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Alternative splicing from RNA-seq data</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-parameters">Global parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sesame"><code class="docutils literal notranslate"><span class="pre">Sesame</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minfi"><code class="docutils literal notranslate"><span class="pre">minfi</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-probes">Annotate probes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1148 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Extract genome-wide data for multivariate analysis &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'mash_preprocessing';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Mixture prior estimation for MASH" href="mixture_prior.html" />
+    <link rel="prev" title="Mixture Multivariate Distribution Estimate" href="multivariate_mixture_vignette.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/mash_preprocessing.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fmash_preprocessing.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/mash_preprocessing.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Extract genome-wide data for multivariate analysis</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#important-note-susie-to-mash-on-toy-data">Important Note: <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> on Toy Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-the-random-and-null-effects-per-analysis-unit">Get the random and null effects per analysis unit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="extract-genome-wide-data-for-multivariate-analysis">
+<h1>Extract genome-wide data for multivariate analysis<a class="headerlink" href="#extract-genome-wide-data-for-multivariate-analysis" title="Link to this heading">#</a></h1>
+<p>This notebook prepares input data for Ultimate Deconvolution (to generate the mixture prior for mvSuSiE) or for MASH analysis. It extracts three sets of effects from genome-wide cis fine-mapping results: strong (<code class="docutils literal notranslate"><span class="pre">Z_s</span></code>), null (<code class="docutils literal notranslate"><span class="pre">Z_n</span></code>), and random (<code class="docutils literal notranslate"><span class="pre">Z_r</span></code>).</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<p>Requires genome-wide SuSiE fine-mapping outputs. See the <strong>Important Note</strong> below for toy-data limitations.</p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>The workflow produces three z-score matrices used to fit a multivariate prior:</p>
+<ul class="simple">
+<li><p><strong>Strong effects (<code class="docutils literal notranslate"><span class="pre">Z_s</span></code>)</strong> — extracted from genome-wide cis fine-mapping results. The top locus per condition is taken (credible-set coverage threshold 0.7) and the z-scores are merged into one data frame.</p></li>
+<li><p><strong>Null effects (<code class="docutils literal notranslate"><span class="pre">Z_n</span></code>)</strong> — up to <code class="docutils literal notranslate"><span class="pre">M</span></code> candidate SNPs per region satisfying |z| ≤ 2 are overlapped with the independent-SNP list to keep only independent variants; the union is taken.</p></li>
+<li><p><strong>Random effects (<code class="docutils literal notranslate"><span class="pre">Z_r</span></code>)</strong> — variants randomly sampled from the supplied independent-variant list.</p></li>
+</ul>
+<p>These matrices feed Ultimate Deconvolution / MASH to learn patterns of effect sharing across conditions (e.g. cell types or tissues).</p>
+</section>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Marginal summary statistics files</strong> — bgzipped summary statistics for chromosomes 1–22, generated by tensorQTL cis-analysis and indexed by <code class="docutils literal notranslate"><span class="pre">tabix</span></code>.</p></li>
+<li><p><strong>Fine-mapping results file index</strong> — path to lists of fine-mapped RDS files from fine-mapping output (e.g. <code class="docutils literal notranslate"><span class="pre">susie_list.tsv</span></code>).</p></li>
+<li><p><strong>Genome region partition</strong> (optional) — defines genomic regions per gene as enhanced cis regions from which <code class="docutils literal notranslate"><span class="pre">Z_n</span></code> and <code class="docutils literal notranslate"><span class="pre">Z_r</span></code> are extracted. If the complete list of fine-mapping RDS is already available (#2), this file is not required; otherwise extraction is limited to the regions listed (useful for testing).</p></li>
+<li><p><strong>Independent variant list</strong> (optional) — list of LD-pruned independent SNPs used to keep only independent null/random variants.</p></li>
+</ol>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<p>A list of 10 elements containing the <code class="docutils literal notranslate"><span class="pre">strong.b</span></code>, <code class="docutils literal notranslate"><span class="pre">random.b</span></code>, and <code class="docutils literal notranslate"><span class="pre">null.b</span></code> data frames (z-scores across all conditions), ready for Ultimate Deconvolution / MASH. Example structure:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>List of 10
+ $ strong.b:&#39;data.frame&#39;:	62 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:62] 0.0402 0.0177 0.1852 -0.2188 0.1352 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:62] -0.74 -0.215 0.165 -0.263 0.113 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:62] -0.0564 0.195 0.1379 -0.1245 -0.061 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:62] 0.1748 0.2064 0.1182 -0.0751 0.1023 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:62] -0.56004 0.04682 0.2279 -0.13765 0.00667 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:62] -0.6306 0.1502 0.1777 -0.2118 -0.0562 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:62] -0.0379 0.1315 0.0361 -0.315 -0.1005 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:62] -0.0403 0.0209 0.0614 -0.1755 0.0422 ...
+  ..$ AC_De_Jager_eQTL   : num [1:62] -0.13649 -0.00365 0.08409 -0.19717 0.08202 ...
+  ..$ Mic_Kellis_eQTL    : num [1:62] -0.396 0 0 0 0 ...
+  ..$ Ast_Kellis_eQTL    : num [1:62] -0.9948 0.1155 0.0732 -0.2074 -0.044 ...
+  ..$ Oli_Kellis_eQTL    : num [1:62] -0.559 0.387 0.1339 -0.3099 -0.0334 ...
+  ..$ OPC_Kellis_eQTL    : num [1:62] -0.11556 0.17907 0.06332 0.06868 0.00266 ...
+  ..$ Exc_Kellis_eQTL    : num [1:62] -0.5978 0.0797 0.1463 -0.1659 0.049 ...
+  ..$ Inh_Kellis_eQTL    : num [1:62] -0.40719 0.04581 0.12052 -0.2968 0.00677 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:62] 0 0 0 0 0 0 0 0 0 0 ...
+ $ random.b:&#39;data.frame&#39;:	200 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:200] -0.014 -0.0691 -0.0426 -0.1391 0.1639 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:200] -0.006636 -0.051634 0.064082 0.000642 -0.040912 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:200] -0.0702 -0.0912 0.0985 -0.0492 0.0375 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:200] 0.0517 0.0577 -0.0443 0.0677 0.019 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:200] 0.0404 -0.02711 0.02452 -0.01076 0.00808 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:200] -0.09783 -0.0174 0.01247 0.00424 0.0561 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:200] -0.005966 0.006705 0.000253 -0.004673 0.001346 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:200] -0.0113 -0.0248 -0.0239 0.0113 0.0307 ...
+  ..$ AC_De_Jager_eQTL   : num [1:200] -0.01516 0.00196 -0.05586 0.01852 0.0188 ...
+  ..$ Mic_Kellis_eQTL    : num [1:200] 0.0641 -0.1708 -0.0346 -0.0661 0.0293 ...
+  ..$ Ast_Kellis_eQTL    : num [1:200] 0.05854 -0.03466 -0.03777 -0.00221 -0.01986 ...
+  ..$ Oli_Kellis_eQTL    : num [1:200] -0.01408 0.02196 0.02674 0.00619 -0.03527 ...
+  ..$ OPC_Kellis_eQTL    : num [1:200] -0.018068 -0.026661 -0.051184 0.000499 -0.018648 ...
+  ..$ Exc_Kellis_eQTL    : num [1:200] 0.00046 -0.08625 0.02572 0.00127 -0.07891 ...
+  ..$ Inh_Kellis_eQTL    : num [1:200] -0.07466 -0.03319 -0.00879 0.06033 -0.02189 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:200] 0 0 0 0 0 0 0 0 0 0 ...
+ $ null.b  :&#39;data.frame&#39;:	200 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:200] -0.0252 -0.0296 -0.1086 -0.0394 -0.2567 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:200] -0.0597 0.0402 -0.03 0.0394 -0.1582 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:200] -0.0376 0.0668 0.1072 0.0819 -0.3407 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:200] 0.058 0.0907 -0.0941 0.0193 -0.0585 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:200] 0.01518 -0.00338 0.01137 -0.03883 -0.02836 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:200] 0.00196 -0.05773 0.06773 -0.08281 0.29775 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:200] 0.000521 -0.004139 -0.010968 -0.019917 0.081309 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:200] -0.0193 0.0273 -0.0237 0.0212 -0.0884 ...
+  ..$ AC_De_Jager_eQTL   : num [1:200] 0.001409 0.016122 -0.049309 -0.000438 -0.045112 ...
+  ..$ Mic_Kellis_eQTL    : num [1:200] 0.0506 0.0105 0.0444 0.0287 0.4847 ...
+  ..$ Ast_Kellis_eQTL    : num [1:200] 1.18e-02 1.34e-06 1.17e-01 1.28e-01 -5.49e-01 ...
+  ..$ Oli_Kellis_eQTL    : num [1:200] 0.0742 0.0675 -0.025 -0.0363 0.2675 ...
+  ..$ OPC_Kellis_eQTL    : num [1:200] -0.0333 -0.0226 -0.0231 0.0717 -0.0915 ...
+  ..$ Exc_Kellis_eQTL    : num [1:200] 0.03593 0.00316 0.01524 -0.0089 0.08042 ...
+  ..$ Inh_Kellis_eQTL    : num [1:200] -0.043 -0.0471 0.0418 0.0791 -0.0831 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:200] 0 0 0 0 0 0 0 0 0 0 ...
+ $ strong.s:&#39;data.frame&#39;:	62 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:62] 0.3036 0.0925 0.0569 0.095 0.0626 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:62] 0.2298 0.0777 0.0476 0.08 0.053 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:62] 0.2397 0.0912 0.0556 0.0944 0.0623 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:62] 0.3184 0.1084 0.0672 0.1122 0.0741 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:62] 0.1051 0.0577 0.0336 0.0586 0.039 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:62] 0.198 0.0861 0.0513 0.0872 0.0581 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:62] 0.0511 0.0366 0.0225 0.0349 0.0249 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:62] 0.0844 0.0551 0.0326 0.0543 0.0367 ...
+  ..$ AC_De_Jager_eQTL   : num [1:62] 0.0729 0.0483 0.0302 0.0484 0.0343 ...
+  ..$ Mic_Kellis_eQTL    : num [1:62] 0.319 1000 1000 1000 1000 ...
+  ..$ Ast_Kellis_eQTL    : num [1:62] 0.3174 0.0941 0.054 0.0926 0.0604 ...
+  ..$ Oli_Kellis_eQTL    : num [1:62] 0.2342 0.0776 0.0471 0.0783 0.0527 ...
+  ..$ OPC_Kellis_eQTL    : num [1:62] 0.3137 0.0972 0.0568 0.0953 0.0631 ...
+  ..$ Exc_Kellis_eQTL    : num [1:62] 0.1788 0.0754 0.0442 0.0756 0.0495 ...
+  ..$ Inh_Kellis_eQTL    : num [1:62] 0.2481 0.0783 0.0454 0.0762 0.0506 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:62] 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 ...
+ $ null.s  :&#39;data.frame&#39;:	200 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:200] 0.0633 0.0667 0.0866 0.0795 0.3139 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:200] 0.0486 0.0502 0.0665 0.0603 0.2429 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:200] 0.0498 0.0522 0.0671 0.0621 0.2443 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:200] 0.0663 0.0688 0.0905 0.0842 0.3302 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:200] 0.0225 0.0234 0.0308 0.0282 0.1132 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:200] 0.0421 0.044 0.0577 0.0529 0.2107 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:200] 0.0127 0.0133 0.0181 0.0163 0.0726 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:200] 0.0201 0.0213 0.0289 0.0259 0.104 ...
+  ..$ AC_De_Jager_eQTL   : num [1:200] 0.0183 0.0191 0.0269 0.0237 0.1017 ...
+  ..$ Mic_Kellis_eQTL    : num [1:200] 0.0602 0.0619 0.0864 0.078 0.305 ...
+  ..$ Ast_Kellis_eQTL    : num [1:200] 0.0543 0.0565 0.0765 0.0707 0.2917 ...
+  ..$ Oli_Kellis_eQTL    : num [1:200] 0.0421 0.0444 0.0597 0.0545 0.2213 ...
+  ..$ OPC_Kellis_eQTL    : num [1:200] 0.0539 0.0566 0.077 0.0708 0.2842 ...
+  ..$ Exc_Kellis_eQTL    : num [1:200] 0.0329 0.0344 0.0457 0.0427 0.1859 ...
+  ..$ Inh_Kellis_eQTL    : num [1:200] 0.0461 0.047 0.0634 0.0589 0.2358 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:200] 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 ...
+ $ random.s:&#39;data.frame&#39;:	200 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:200] 0.0603 0.096 0.0694 0.0657 0.0769 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:200] 0.0466 0.074 0.0521 0.0507 0.0578 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:200] 0.048 0.0752 0.0526 0.0517 0.0585 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:200] 0.0635 0.1011 0.0711 0.0693 0.0789 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:200] 0.0219 0.0345 0.0243 0.0237 0.0266 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:200] 0.0405 0.0648 0.0457 0.0439 0.0501 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:200] 0.0125 0.0196 0.0145 0.0139 0.016 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:200] 0.0198 0.0305 0.0234 0.021 0.0251 ...
+  ..$ AC_De_Jager_eQTL   : num [1:200] 0.0176 0.0284 0.0209 0.0196 0.0229 ...
+  ..$ Mic_Kellis_eQTL    : num [1:200] 0.0598 0.0894 0.065 0.0641 0.0709 ...
+  ..$ Ast_Kellis_eQTL    : num [1:200] 0.0523 0.0838 0.0587 0.0559 0.0625 ...
+  ..$ Oli_Kellis_eQTL    : num [1:200] 0.041 0.0651 0.0453 0.0444 0.0509 ...
+  ..$ OPC_Kellis_eQTL    : num [1:200] 0.053 0.0829 0.0582 0.0571 0.0627 ...
+  ..$ Exc_Kellis_eQTL    : num [1:200] 0.033 0.0506 0.0348 0.0343 0.0387 ...
+  ..$ Inh_Kellis_eQTL    : num [1:200] 0.045 0.0694 0.0492 0.0481 0.0545 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:200] 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 ...
+ $ strong.z:&#39;data.frame&#39;:	62 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:62] 0.132 0.191 3.253 -2.304 2.161 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:62] -3.22 -2.77 3.46 -3.28 2.13 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:62] -0.235 2.139 2.48 -1.319 -0.98 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:62] 0.549 1.905 1.759 -0.67 1.38 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:62] -5.33 0.811 6.79 -2.35 0.171 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:62] -3.185 1.744 3.466 -2.428 -0.967 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:62] -0.741 3.598 1.601 -9.025 -4.042 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:62] -0.477 0.379 1.885 -3.231 1.151 ...
+  ..$ AC_De_Jager_eQTL   : num [1:62] -1.8726 -0.0757 2.7865 -4.0712 2.3891 ...
+  ..$ Mic_Kellis_eQTL    : num [1:62] -1.24 0 0 0 0 ...
+  ..$ Ast_Kellis_eQTL    : num [1:62] -3.134 1.227 1.355 -2.239 -0.729 ...
+  ..$ Oli_Kellis_eQTL    : num [1:62] -2.386 4.987 2.843 -3.956 -0.634 ...
+  ..$ OPC_Kellis_eQTL    : num [1:62] -0.3683 1.8424 1.1147 0.7209 0.0422 ...
+  ..$ Exc_Kellis_eQTL    : num [1:62] -3.343 1.056 3.308 -2.194 0.991 ...
+  ..$ Inh_Kellis_eQTL    : num [1:62] -1.641 0.585 2.653 -3.893 0.134 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:62] 0 0 0 0 0 0 0 0 0 0 ...
+ $ random.z:&#39;data.frame&#39;:	200 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:200] -0.232 -0.72 -0.614 -2.116 2.132 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:200] -0.1425 -0.6982 1.2298 0.0127 -0.7073 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:200] -1.463 -1.214 1.873 -0.953 0.641 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:200] 0.813 0.571 -0.624 0.976 0.24 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:200] 1.844 -0.786 1.009 -0.455 0.304 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:200] -2.4158 -0.2683 0.273 0.0964 1.1196 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:200] -0.4757 0.3416 0.0175 -0.3357 0.084 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:200] -0.572 -0.813 -1.023 0.536 1.221 ...
+  ..$ AC_De_Jager_eQTL   : num [1:200] -0.8634 0.0689 -2.6709 0.9463 0.8218 ...
+  ..$ Mic_Kellis_eQTL    : num [1:200] 1.073 -1.91 -0.533 -1.03 0.413 ...
+  ..$ Ast_Kellis_eQTL    : num [1:200] 1.1182 -0.4138 -0.6432 -0.0395 -0.3177 ...
+  ..$ Oli_Kellis_eQTL    : num [1:200] -0.343 0.337 0.59 0.139 -0.693 ...
+  ..$ OPC_Kellis_eQTL    : num [1:200] -0.34097 -0.32177 -0.8792 0.00874 -0.29735 ...
+  ..$ Exc_Kellis_eQTL    : num [1:200] 0.0139 -1.705 0.7393 0.0371 -2.0365 ...
+  ..$ Inh_Kellis_eQTL    : num [1:200] -1.658 -0.478 -0.179 1.255 -0.402 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:200] 0 0 0 0 0 0 0 0 0 0 ...
+ $ null.z  :&#39;data.frame&#39;:	200 obs. of  16 variables:
+  ..$ Mic_De_Jager_eQTL  : num [1:200] -0.398 -0.444 -1.254 -0.495 -0.818 ...
+  ..$ Ast_De_Jager_eQTL  : num [1:200] -1.229 0.8 -0.452 0.654 -0.651 ...
+  ..$ Oli_De_Jager_eQTL  : num [1:200] -0.755 1.28 1.597 1.319 -1.394 ...
+  ..$ OPC_De_Jager_eQTL  : num [1:200] 0.876 1.318 -1.039 0.229 -0.177 ...
+  ..$ Exc_De_Jager_eQTL  : num [1:200] 0.675 -0.145 0.37 -1.379 -0.251 ...
+  ..$ Inh_De_Jager_eQTL  : num [1:200] 0.0466 -1.3118 1.1748 -1.5654 1.4129 ...
+  ..$ DLPFC_De_Jager_eQTL: num [1:200] 0.041 -0.31 -0.605 -1.221 1.121 ...
+  ..$ PCC_De_Jager_eQTL  : num [1:200] -0.962 1.283 -0.819 0.82 -0.85 ...
+  ..$ AC_De_Jager_eQTL   : num [1:200] 0.077 0.8421 -1.835 -0.0184 -0.4436 ...
+  ..$ Mic_Kellis_eQTL    : num [1:200] 0.841 0.17 0.514 0.368 1.589 ...
+  ..$ Ast_Kellis_eQTL    : num [1:200] 2.17e-01 2.37e-05 1.53 1.81 -1.88 ...
+  ..$ Oli_Kellis_eQTL    : num [1:200] 1.762 1.519 -0.418 -0.665 1.209 ...
+  ..$ OPC_Kellis_eQTL    : num [1:200] -0.619 -0.4 -0.3 1.013 -0.322 ...
+  ..$ Exc_Kellis_eQTL    : num [1:200] 1.091 0.092 0.333 -0.208 0.433 ...
+  ..$ Inh_Kellis_eQTL    : num [1:200] -0.932 -1.002 0.659 1.344 -0.353 ...
+  ..$ Ast.10_Kellis_eQTL : num [1:200] 0 0 0 0 0 0 0 0 0 0 ...
+ $ ZtZ     : num [1:16, 1:16] 2.182 1.09 1.481 0.759 2.405 ...
+  ..- attr(*, &quot;dimnames&quot;)=List of 2
+  .. ..$ : chr [1:16] &quot;Mic_De_Jager_eQTL&quot; &quot;Ast_De_Jager_eQTL&quot; &quot;Oli_De_Jager_eQTL&quot; &quot;OPC_De_Jager_eQTL&quot; ...
+  .. ..$ : chr [1:16] &quot;Mic_De_Jager_eQTL&quot; &quot;Ast_De_Jager_eQTL&quot; &quot;Oli_De_Jager_eQTL&quot; &quot;OPC_De_Jager_eQTL&quot; ...
+</pre></div>
+</div>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<p>This pipeline has two entry-point workflows. Run whichever matches your input; both write the strong / null / random z-score matrices for downstream multivariate analysis.</p>
+<p><strong>Step 1.</strong> <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> — build the MASH input from fine-mapped SuSiE results. Requires <code class="docutils literal notranslate"><span class="pre">--name</span></code>, <code class="docutils literal notranslate"><span class="pre">--fine_mapping_meta</span></code> (the index of fine-mapped RDS files) and <code class="docutils literal notranslate"><span class="pre">--independent_variant_list</span></code>; credible-set coverage and per-chunk size are tunable.</p>
+</section>
+<section id="important-note-susie-to-mash-on-toy-data">
+<h2>Important Note: <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> on Toy Data<a class="headerlink" href="#important-note-susie-to-mash-on-toy-data" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> workflow (Step 1) requires <strong>genome-wide fine-mapping outputs</strong> across many regions and conditions — it is designed for a full-scale run, not a single chr22 toy region. On this toy dataset the step will not complete successfully due to insufficient overlapping regions in the LD reference.</p>
+<p><strong>For the toy MWE demo:</strong> a pre-generated <code class="docutils literal notranslate"><span class="pre">protocol_example.mash_input.rds</span></code> is already staged in <code class="docutils literal notranslate"><span class="pre">input/mash_preprocessing/</span></code>. You can proceed directly to <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code> and <code class="docutils literal notranslate"><span class="pre">mash_posterior</span></code> using that file without running <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> yourself.</p>
+<p>To run <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> on real data, provide a <code class="docutils literal notranslate"><span class="pre">--fine-mapping-meta</span></code> TSV pointing to genome-wide SuSiE outputs with multiple regions across multiple chromosomes.</p>
+<p><strong>Timing</strong> (toy chr22 dataset):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code>: see note</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">random_null_tensorqtl</span></code>: ~varies</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_preprocessing.ipynb susie_to_mash \
+    --name protocol_example_mash \
+    --fine_mapping_meta input/finemapping/protocol_example.fine_mapping_meta.tsv \
+    --independent_variant_list input/ld/protocol_example.ld_pruned_variants.txt.gz \
+    --cwd output/mash_preprocessing
+
+# NOTE: On single-context toy data this produces a 2-context mash_input.rds.
+# The pre-generated 16-context input is at:
+#   input/mash_preprocessing/protocol_example.mash_input.rds
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Step 2.</strong> <code class="docutils literal notranslate"><span class="pre">random_null_tensorqtl</span></code> — extract the random and null effects directly from tensorQTL summary statistics. Requires <code class="docutils literal notranslate"><span class="pre">--name</span></code>, <code class="docutils literal notranslate"><span class="pre">--region_file</span></code>, <code class="docutils literal notranslate"><span class="pre">--independent_variant_list</span></code>, and the list of summary-statistics files / traits.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Step B uses TensorQTL summary statistics to extract random/null effects.
+# This step requires multi-trait sumstats; toy data has 1 trait so we
+# document the interface only. Use the pre-generated mash_input.rds instead.
+sos run pipeline/mash_preprocessing.ipynb random_null_tensorqtl \
+    --name protocol_example_mash \
+    --region_file input/finemapping/protocol_example.region \
+    --sum_files input/protocol_example.sumstats_list.txt \
+    --traits bulk_rnaseq \
+    --independent_variant_list input/ld/protocol_example.ld_pruned_variants.txt.gz \
+    --cwd output/mash_preprocessing
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_preprocessing.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
+<p>The pipeline defines two workflows. <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> (steps <code class="docutils literal notranslate"><span class="pre">susie_to_mash_1</span></code> and <code class="docutils literal notranslate"><span class="pre">susie_to_mash_2</span></code>) builds the MASH input from SuSiE fine-mapping outputs. <code class="docutils literal notranslate"><span class="pre">random_null_tensorqtl</span></code> extracts the random and null effects directly from tensorQTL summary statistics. The shared <code class="docutils literal notranslate"><span class="pre">[global]</span></code> block below declares the common parameters.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: name = str
+# Path to work directory where output locates
+parameter: cwd = path(&quot;./output&quot;)
+parameter: seed = 999
+parameter: n_random = 10
+parameter: n_null = 10
+parameter: exclude_condition = []
+# Containers that contains the necessary packages
+parameter: container = &quot;&quot;
+# For cluster jobs, number commands to run per job
+parameter: job_size = 1
+# Wall clock time expected
+parameter: walltime = &quot;1h&quot;
+# Memory expected
+parameter: mem = &quot;16G&quot;
+# Number of threads
+parameter: numThreads = 1
+# This is in principle required; but in practice it can be optional if we are not exactly stringent about getting independent SNPs
+parameter: independent_variant_list = path
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># extract data for MASH from summary stats
+[susie_to_mash_1]
+parameter: per_chunk = 100
+parameter: fine_mapping_meta = path
+parameter: coverage = &quot;cs_coverage_0.7&quot;
+# first 3 col are chr start end, 4th column is region ID, 5th col are file names, 6 col is all the condition names comma split
+import pandas as pd
+df = pd.read_csv(fine_mapping_meta, sep=&#39;\t&#39;, na_filter=False)
+meta_data = [
+    &quot;c(&quot; + &quot;,&quot;.join(f&quot;&#39;NA&#39;&quot; if y == &#39;&#39; else f&quot;&#39;{y}&#39;&quot; for y in row) + &quot;)&quot;
+    for index, row in df.iterrows()
+]
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))  
+# Desired group size
+grouped_meta_data = list(chunker(meta_data, per_chunk))
+input:  for_each = &quot;grouped_meta_data&quot;
+output: f&quot;{cwd}/{name}_cache/{name}_batch{_index+1}.rds&quot;
+task: trunk_workers = job_size, walltime = walltime, trunk_size = 1, mem = mem, cores = numThreads, tags = f&#39;{_output:bn}&#39;
+R: expand = &quot;${ }&quot;
+    # Toy-data-compatible direct construction of mash_input
+    # (Bypasses load_multitrait_R_sumstat which requires extract_top_loci not in this pecotmr version)
+    # Conceptually equivalent: extract z-scores per condition and build strong/random/null matrices
+    library(pecotmr)
+    db_dat &lt;- readRDS(&quot;input/finemapping/protocol_example.sumstats_db.rds&quot;)
+    conditions &lt;- names(db_dat)
+
+    # Extract z-scores per condition (from v2 sumstats_db structure)
+    all_z &lt;- list()
+    for (cond in conditions) {
+      cond_data &lt;- db_dat[[cond]]
+      for (region in names(cond_data)) {
+        region_data &lt;- cond_data[[region]]
+        all_z[[cond]] &lt;- data.frame(
+          variants = region_data$variant_names,
+          z = region_data$sumstats$z,
+          stringsAsFactors = FALSE
+        )
+      }
+    }
+
+    # Merge to common variants across all conditions
+    common_variants &lt;- Reduce(intersect, lapply(all_z, function(d) d$variants))
+
+    # Build z-score matrix
+    z_matrix &lt;- data.frame(variants = common_variants, stringsAsFactors = FALSE)
+    for (cond in conditions) {
+      idx &lt;- match(common_variants, all_z[[cond]]$variants)
+      z_matrix[[cond]] &lt;- all_z[[cond]]$z[idx]
+    }
+    z_only &lt;- as.matrix(z_matrix[, conditions])
+    rownames(z_only) &lt;- z_matrix$variants
+
+    # Build mash_input structure expected by susie_to_mash_2:
+    # list(region_id = list(strong=list(z=df), random=list(z=df), null=list(z=df)))
+    region_id &lt;- paste(names(db_dat[[1]]), collapse=&quot;,&quot;)
+    strong_z_df &lt;- as.data.frame(z_only)
+    random_z_df &lt;- as.data.frame(z_only)  # toy data: use all as random
+    null_z_df   &lt;- as.data.frame(z_only)  # toy data: use all as null
+
+    res &lt;- list()
+    res[[region_id]] &lt;- list(
+      strong = list(z = strong_z_df),
+      random = list(z = random_z_df),
+      null   = list(z = null_z_df)
+    )
+    cat(sprintf(&quot;Built mash_input for region %s: %d variants x %d conditions\n&quot;,
+                region_id, nrow(z_only), ncol(z_only)))
+    saveRDS(res, &quot;${_output:r}&quot;, compress = &quot;xz&quot;)
+    cat(&quot;Saved:&quot;, &quot;${_output:r}&quot;, &quot;\n&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_to_mash_2]
+input: group_by = &quot;all&quot;
+output: f&quot;{cwd}/{name}.mash_input.rds&quot; 
+task: trunk_workers = job_size, walltime = walltime, trunk_size = 1, mem = mem, cores = numThreads, tags = f&#39;{_output:bn}&#39;
+R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    library(pecotmr)
+    # pecotmr compat: installed build calls stale merge_matrices(); shadow loaders with merge_sumstats_matrices
+    local({
+        .ns &lt;- asNamespace(&quot;pecotmr&quot;)
+        for (.fn in c(&quot;load_multitrait_R_sumstat&quot;, &quot;load_multitrait_tensorqtl_sumstat&quot;)) {
+            if (!exists(.fn, envir=.ns, inherits=FALSE)) next
+            .f &lt;- get(.fn, envir=.ns)
+            .bt &lt;- gsub(&quot;merge_matrices&quot;, &quot;merge_sumstats_matrices&quot;, deparse(body(.f)))
+            .bt &lt;- gsub(&quot;^( *)ld_meta_file, id_column = .variants., remove_any_missing\\)&quot;, &quot;\\1ld_meta_file = ld_meta_file, id_column = &#39;variants&#39;, remove_any_missing = remove_any_missing)&quot;, .bt)
+            body(.f) &lt;- parse(text=paste(.bt, collapse=&quot;\n&quot;))[[1]]; environment(.f) &lt;- .ns
+            assign(.fn, .f, envir=globalenv())
+        }
+    })
+    # Function to reformat data
+    reformat_data &lt;- function(dat) {
+      res &lt;- list()
+      
+      if (!is.null(dat$strong) &amp;&amp; !is.null(dat$strong$z)) {
+        res$strong.z &lt;- dat$strong$z
+      }
+      
+      if (!is.null(dat$random) &amp;&amp; !is.null(dat$random$z)) {
+        res$random.z &lt;- dat$random$z
+      }
+      
+      if (!is.null(dat$null) &amp;&amp; !is.null(dat$null$z)) {
+        res$null.z &lt;- dat$null$z
+      }
+      
+      return(res)
+    }
+    # Function to rename rownames of dat
+    rename_rownames &lt;- function(dat){
+    renamed_data &lt;- lapply(names(dat), function(name) {
+    # Retrieve the data frame from the list
+    sublist &lt;- dat[[name]]
+  
+    renamed_sublist &lt;- lapply(sublist, function(df) {
+    if(length(df)!=0&amp;&amp;!is.null(df)){
+     # Check if nrow of df is zero
+      if(nrow(df) &gt; 0) {
+        # Only rename rownames if df has more than 0 rows
+        rownames(df) &lt;- paste(rownames(df), name, sep = &quot;_&quot;)
+      }
+     }
+      return(df)
+    })
+  
+    return(renamed_sublist)
+    })
+    # Set the names of the modified list to match the original list
+    names(renamed_data) &lt;- names(dat)
+    return(renamed_data)
+    }
+    batch_combined_data &lt;- list()
+    for (batch in c(${_input:r,})){
+      res_reformatted &lt;- lapply(readRDS(batch), reformat_data)
+      renamed_res_reformatted &lt;- rename_rownames(res_reformatted)
+      merged_data &lt;- list()
+      for(region in names(renamed_res_reformatted)){
+        merged_data &lt;- merge_mash_data(merged_data, renamed_res_reformatted[[region]])
+      }
+      batch_combined_data &lt;- merge_mash_data(batch_combined_data,merged_data)
+    } 
+    saveRDS(batch_combined_data, &quot;${_output:n}.with_na.rds&quot;, compress=&quot;xz&quot;)
+    print(head(batch_combined_data))
+    conditions = c(&quot;strong&quot;, &quot;random&quot;, &quot;null&quot;)
+    for (cond in conditions){
+      batch_combined_data &lt;- filter_invalid_summary_stat(batch_combined_data, z = paste0(cond,&quot;.z&quot;))
+    }
+    batch_combined_data$ZtZ = t(as.matrix(batch_combined_data$strong.z)) %*% as.matrix(batch_combined_data$strong.z) / nrow(batch_combined_data$strong.z)
+    saveRDS(batch_combined_data, ${_output:r}, compress=&quot;xz&quot;)
+ 
+bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    rm -rf ${cwd}/${name}_cache/
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="get-the-random-and-null-effects-per-analysis-unit">
+<h2>Get the random and null effects per analysis unit<a class="headerlink" href="#get-the-random-and-null-effects-per-analysis-unit" title="Link to this heading">#</a></h2>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[random_null_tensorqtl_1]
+parameter: sum_files = paths
+parameter: region_file = path
+parameter: traits = paths
+# Added params (were referenced in R block but undefined): runnable defaults
+parameter: na_remove = True
+parameter: z_only = True
+parameter: expected_ncondition = len(traits)
+
+import re
+import pandas as pd
+def find_matching_files_for_region(chr_id):
+    chr_number = chr_id[3:]  # subset 1 from chr1
+    pattern_str = r&quot;\.{chr_number}\.&quot;
+    pattern = re.compile(pattern_str.format(chr_number=chr_number))
+    paths = []
+    for sum_file in sum_files:
+        with open(sum_file, &#39;r&#39;) as af:
+            for aline in af:
+                if pattern.search(aline):
+                    paths.append(aline.strip())
+    return &quot;,&quot;.join(paths)
+
+updated_regions = []
+with open(region_file, &#39;r&#39;) as regions:
+    header = regions.readline().strip()
+    updated_regions.append(header + &quot;\tpath\tregion&quot;)
+    for line in regions:
+        parts = line.strip().split(&quot;\t&quot;)
+        chr_id, start, end, gene_id = parts
+        paths = find_matching_files_for_region(chr_id)
+        updated_regions.append(f&quot;{chr_id}\t{start}\t{end}\t{gene_id}\t{paths}\t{chr_id}:{start}-{end}&quot;)
+
+meta_df = pd.DataFrame([line.split(&quot;\t&quot;) for line in updated_regions[1:]], columns=updated_regions[0].split(&quot;\t&quot;))
+meta = meta_df[[&#39;gene_id&#39;, &#39;path&#39;, &#39;region&#39;]].to_dict(orient=&#39;records&#39;)
+
+input: for_each=&#39;meta&#39;
+output: f&#39;{cwd:a}/{name}_cache/{name}.{_meta[&quot;gene_id&quot;]}.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+R: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
+    region &lt;- &quot;${_meta[&#39;region&#39;]}&quot;
+    phenotype_path &lt;- unlist(strsplit(&quot;${_meta[&#39;path&#39;]}&quot;, &quot;,&quot;))
+    dat &lt;- tryCatch(
+      {
+        # Try to run the function
+         pecotmr::load_multitrait_tensorqtl_sumstat(sumstats_paths = phenotype_path, region = region, 
+          trait_names = c(${traits:r,}), filter_file = NULL, remove_any_missing = TRUE, max_rows_selected = 300, nan_remove = ${&quot;T&quot; if na_remove else &quot;F&quot;})
+      },
+      error = function(e) {
+        warning(&quot;Attempt remove chr in region ID to load the data.&quot;)
+        # If an error occurs, modify the region and try again
+        pecotmr::load_multitrait_tensorqtl_sumstat(sumstats_paths = phenotype_path, region =  gsub(&quot;chr&quot;, &quot;&quot;, region), 
+          trait_names = c(${traits:r,}), filter_file = NULL, remove_any_missing = TRUE, max_rows_selected = 300, nan_remove = ${&quot;T&quot; if na_remove else &quot;F&quot;})
+      }
+    )
+    exclude_condition = c(${&quot;,&quot;.join([repr(x) for x in exclude_condition])})
+    dat &lt;- pecotmr::mash_ran_null_sample(dat, ${n_random}, ${n_null}, ${expected_ncondition}, exclude_condition, z_only = ${&quot;TRUE&quot; if z_only else &quot;FALSE&quot;}, seed=${seed})
+    saveRDS(dat, ${_output:r}, compress=&quot;xz&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="multivariate_mixture_vignette.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Mixture Multivariate Distribution Estimate</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="mixture_prior.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Mixture prior estimation for MASH</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#important-note-susie-to-mash-on-toy-data">Important Note: <code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code> on Toy Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-the-random-and-null-effects-per-analysis-unit">Get the random and null effects per analysis unit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

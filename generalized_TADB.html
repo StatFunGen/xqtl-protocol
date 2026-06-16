@@ -1,0 +1,1055 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Generation of Topologically Associated Domains and their Boundaries &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'generalized_TADB';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Independent list of variants using LD clumping" href="ld_prune_reference.html" />
+    <link rel="prev" title="Reference Data Standardization" href="reference_data_preparation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/generalized_TADB.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fgeneralized_TADB.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/generalized_TADB.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Generation of Topologically Associated Domains and their Boundaries</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detailed-walkthrough">Detailed walkthrough</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-manage-tad-redundancy">Step 1: Manage TAD Redundancy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-generate-tadb-enhanced-cis-windows-and-extended-tadbs">Step 2: Generate TADB-enhanced cis windows and extended TADBs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-find-boundaries-and-build-tadb">How to find boundaries and build TADB</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#build-tadbs-and-remove-redundancy">Build TADBs and remove redundancy</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#length-distribution">Length distribution</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-tadb-and-cis-windows">Compare TADB and cis windows</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-tadb-enhanced-cis-windows-and-extended-tadbs">Construct TADB-enhanced cis windows and extended TADBs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="generation-of-topologically-associated-domains-and-their-boundaries">
+<h1>Generation of Topologically Associated Domains and their Boundaries<a class="headerlink" href="#generation-of-topologically-associated-domains-and-their-boundaries" title="Link to this heading">#</a></h1>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>This notebook builds <strong>TAD boundaries (TADBs)</strong> and TADB-enhanced cis windows from tissue/brain TAD calls. It runs in two conceptual stages: (i) <em>manage TAD redundancy</em> by recursively merging overlapping specific TADs (those whose overlap exceeds a cutoff) into a smaller set of generalized TADs, and (ii) <em>generate TADB-enhanced cis windows and extended TADBs</em> by deriving boundaries from the generalized + specific TADs and joining them with gene coordinates to produce per-gene cis windows.</p>
+<p>During fine mapping we often use a cis window (up &amp; downstream 1Mb of the start of a gene) as the fine-mapping region. That choice lacks a biological justification, so here we instead extend regions using TAD structure, producing both extended TADBs and TADB-enhanced cis windows since each serves a different goal. Genes within each TADB are extended by their 1Mb cis windows and the outermost boundary is taken, yielding roughly 1,381 TADBs that can serve as functional units for epigenetic analysis.</p>
+<blockquote>
+<div><p><strong>Synthetic-data note.</strong> This minimal working example runs on a small synthetic set of chr22 TAD blocks (<code class="docutils literal notranslate"><span class="pre">protocol_example.brain_TADs.txt</span></code>) and a chr22 gene table (<code class="docutils literal notranslate"><span class="pre">protocol_example.gene_start_end.tsv</span></code>, derived from the protocol gene-model GTF). It is for demonstration only and does not reproduce a full genome-wide TADB build.</p>
+</div></blockquote>
+</section>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--tad-input</span></code>: tab-separated TAD coordinates with columns <code class="docutils literal notranslate"><span class="pre">chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code> (no header). Example: <code class="docutils literal notranslate"><span class="pre">input/tadb/protocol_example.brain_TADs.txt</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--gene-coords</span></code>: gene coordinate table with columns <code class="docutils literal notranslate"><span class="pre">index</span></code>, <code class="docutils literal notranslate"><span class="pre">#chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_name</span></code> (derived from the gene-model GTF). Example: <code class="docutils literal notranslate"><span class="pre">input/tadb/protocol_example.gene_start_end.tsv</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cwd</span></code>: output directory (default <code class="docutils literal notranslate"><span class="pre">output/tadb</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--overlap-cutoff</span></code>: minimum percent overlap to merge two specific TADs into one generalized TAD (default <code class="docutils literal notranslate"><span class="pre">80</span></code>).</p></li>
+</ul>
+<p>For a genome-wide build, the raw inputs are <code class="docutils literal notranslate"><span class="pre">Cortex_DLPFC_Schmitt2016-raw_TADs.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">Hippocampus_Schmitt2016-raw_TADs.txt</span></code> (hg38 cortex/hippocampus TAD regions, <a class="reference external" href="https://doi.org/10.1016/j.ajhg.2021.01.001">cf. McArthur et al 2021</a> and <a class="reference external" href="https://doi.org/10.1016/j.celrep.2016.10.061">Schmitt et al 2017</a>; available at <a class="reference external" href="http://3dgenome.fsm.northwestern.edu/publications.html">3dgenome.fsm.northwestern.edu</a>) together with the gene model <code class="docutils literal notranslate"><span class="pre">Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf</span></code>.</p>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Generalized TAD: <code class="docutils literal notranslate"><span class="pre">generalized_TAD.tsv</span></code></p></li>
+<li><p>Generalized TADB: <code class="docutils literal notranslate"><span class="pre">generalized_TADB.tsv</span></code></p></li>
+<li><p>TADB-enhanced cis window: <code class="docutils literal notranslate"><span class="pre">TADB_enhanced_cis.bed</span></code></p></li>
+<li><p>Extended TADB: <code class="docutils literal notranslate"><span class="pre">extended_TADB.bed</span></code></p></li>
+</ul>
+</section>
+<section id="detailed-walkthrough">
+<h2>Detailed walkthrough<a class="headerlink" href="#detailed-walkthrough" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">default</span></code> workflow constructs the generalized TADs and TADB-enhanced cis windows in a single pass: it manages TAD redundancy (recursive merge of overlapping/neighboring TADs), derives generalized TAD boundaries, then builds the TADB-enhanced cis windows and extended TADBs by joining those boundaries with gene coordinates. The cells below document this process step by step for reference and reproducibility.</p>
+<p><strong>Timing:</strong> ~varies on typical compute infrastructure.</p>
+</section>
+<section id="step-1-manage-tad-redundancy">
+<h2>Step 1: Manage TAD Redundancy<a class="headerlink" href="#step-1-manage-tad-redundancy" title="Link to this heading">#</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># merge the TADs to one file</span>
+<span class="n">cat</span> <span class="o">../../</span><span class="n">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">Hippocampus_Schmitt2016</span><span class="o">-</span><span class="n">raw_TADs</span><span class="o">.</span><span class="n">txt</span> <span class="o">../../</span><span class="n">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">Cortex_DLPFC_Schmitt2016</span><span class="o">-</span><span class="n">raw_TADs</span><span class="o">.</span><span class="n">txt</span> <span class="o">&gt;</span> <span class="o">../../</span><span class="n">reference_data</span><span class="o">/</span><span class="n">TAD</span><span class="o">/</span><span class="n">brain_TADs</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>The merged TADs are processed in several passes. First, neighboring TABs are merged, including a step that manually corrects the start and end position of each chromosome. Preliminary merges then remove exact duplicates (same chromosome, start, and end). Next, the overlap between TADs is determined — the overlap with the preceding TAD, the overlap with the following TAD, and TADs entirely contained within another TAD — with two overlap values tracked per TAD (preceding and following). Finally, TADs are merged recursively: each TAD is extended to the right boundary of the last TAD and to the left boundary of the next, repeating until no further merging is possible, which yields the set of generalized TADs.</p>
+</section>
+<section id="step-2-generate-tadb-enhanced-cis-windows-and-extended-tadbs">
+<h2>Step 2: Generate TADB-enhanced cis windows and extended TADBs<a class="headerlink" href="#step-2-generate-tadb-enhanced-cis-windows-and-extended-tadbs" title="Link to this heading">#</a></h2>
+<section id="how-to-find-boundaries-and-build-tadb">
+<h3>How to find boundaries and build TADB<a class="headerlink" href="#how-to-find-boundaries-and-build-tadb" title="Link to this heading">#</a></h3>
+<p>After the generalized TAD is built, the intervals between TADs are not simply the boundaries. Most generalized TADs have a structure like the one below.</p>
+<p><img alt="" src="_images/TADB_idealcase.png" /></p>
+<p>The black line is the genome, and the red and blue shaded triangles are TAD results from hippocampus and cortex, respectively; in the code they are denoted as <strong>specific TADs</strong> because they are specific to one tissue. The two specific TAD lists (blue and red) do not have overlaps internally, but when pooled together red and blue can overlap. If their overlap exceeds <strong>80%</strong>, they are merged into a larger TAD called a <strong>generalized TAD</strong> (green triangle), giving the generalized TAD list.</p>
+<p>It is not necessary that specific TADs line up this way. For example, if two specific TADs <strong>do not overlap enough</strong>, or if a specific TAD does not overlap any other TAD, each forms a generalized TAD <strong>solely</strong>, as shown below.</p>
+<p><img alt="" src="_images/sole_case.png" /></p>
+<p>At the boundary of a generalized TAD there are regions not covered by either of the two specific TADs, meaning not all information belongs to a TAD; these can belong to a TAB (boundary region). A <strong>generalized TAB</strong> is defined to include not only the intervals but also the ambiguous regions, shown as the <strong>yellow</strong> triangles below. To form TADBs, the generalized TAD is combined with its adjacent TABs — in the diagram, for generalized TAD2 the TADB is (generalized) TAB1 + TAD2 + TAB2.</p>
+<p><img alt="" src="_images/TADB_diagram.png" /></p>
+<p>Generalized TADs formed from a single specific TAD have no ambiguous regions, so their boundaries are also the boundaries of the generalized TAB; under this definition, adjacent generalized TADs such as TAD2 and TAD3 can share the same TADB.</p>
+<p>The strategy is to derive a list of left and right boundaries. For a generalized TAD formed by two or more specific TADs, the left boundary is the start of the second specific TAD; for one formed from a single TAD, the left boundary is just that TAD’s start. Right boundaries are defined symmetrically using the second-to-last specific TAD’s end. Left boundaries are shown as red vertical lines and right boundaries as blue vertical lines, and the definition also covers more complicated cases.</p>
+<p><img alt="" src="_images/left_right.png" /></p>
+<p>Given these boundaries, a TADB is built by extending the left side of a generalized TAD to the last right boundary (including the start of the chromosome, 0) and the right side to the next left boundary (including the end of each chromosome).</p>
+<section id="build-tadbs-and-remove-redundancy">
+<h4>Build TADBs and remove redundancy<a class="headerlink" href="#build-tadbs-and-remove-redundancy" title="Link to this heading">#</a></h4>
+<p>The procedure produces 1401 generalized TADs in total. Gene start and end coordinates are obtained from the gene-model GTF. Most generalized TADs are formed from 2 specific TADs, though some are formed from as many as 4; the same boundary strategy applies in every case, and generalized TADs formed from one versus more specific TADs have different boundary definitions.</p>
+<p>Left boundaries should include the <strong>end</strong> of the chromosome, because the left boundary of a TAD is the right boundary of the former TADB; the last TADB takes the end of the chromosome as its right boundary. Each TAD is then mapped to the closest left/right boundary. After extending to TADBs the number of regions does not change, as expected, but after merging some TADBs become fully covered by other TADBs — for example, the TADB formed by generalized TAD1 can be entirely contained within the extension of generalized TAD2 (blue: right boundary, red: left boundary).</p>
+<p><img alt="" src="_images/overlap.png" /></p>
+<p>Two steps are therefore used to exclude TADBs that are fully covered by another single TADB (including the case where two TADBs are identical). After removing subsets and duplicates, 1381 TADBs remain.</p>
+</section>
+<section id="length-distribution">
+<h4>Length distribution<a class="headerlink" href="#length-distribution" title="Link to this heading">#</a></h4>
+<p>The average length of the generalized TADs is a little shorter than 2Mb. The generalized TADBs have an average length a little longer than 2Mb, and the number of extreme cases increases; as expected, a TADB is longer than its TAD because it also includes the boundaries.</p>
+</section>
+<section id="compare-tadb-and-cis-windows">
+<h4>Compare TADB and cis windows<a class="headerlink" href="#compare-tadb-and-cis-windows" title="Link to this heading">#</a></h4>
+<p>Each TADB covers many genes. For fine-mapping, each gene is assigned a 1Mb cis window (2Mb total), so the next step checks whether the TADBs fully cover the cis windows of the genes inside them. Verifying that every gene is covered by a TADB confirms the TADBs are correct, since they should span the whole genome. The only genes in the full gene list not covered by a TADB are on chromosome Y, MT, or are ERCC spike-ins; these are expected to be absent because the TAD data does not include them. A value of 0 marks a cis window not fully covered by the TADB its gene lies in: even after constructing the TADBs, many genes still have a 1Mb cis window (2Mb total) that extends beyond its TADB region.</p>
+</section>
+<section id="construct-tadb-enhanced-cis-windows-and-extended-tadbs">
+<h4>Construct TADB-enhanced cis windows and extended TADBs<a class="headerlink" href="#construct-tadb-enhanced-cis-windows-and-extended-tadbs" title="Link to this heading">#</a></h4>
+<p>For each gene, its 1Mb upstream/downstream window (2Mb total) and the TADB it falls in are combined, extending the region outward to the smaller start and the larger end of the two. This yields one extended cis window per gene, most with a length close to or larger than the original 2Mb window, so that every gene maps to an extended cis window and none is left uncovered. Compared with the TADB-enhanced cis window, the extended TADB allows a single gene to belong to multiple extended regions.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/generalized_TADB.ipynb default \
+    --tad-input input/tadb/protocol_example.brain_TADs.txt \
+    --gene-coords input/tadb/protocol_example.gene_start_end.tsv \
+    --cwd output/tadb
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/generalized_TADB.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="id1">
+<h2>Output<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">generalized_TAD.tsv</span></code>: redundancy-managed (merged) generalized TADs (<code class="docutils literal notranslate"><span class="pre">chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generalized_TADB.tsv</span></code>: generalized TAD boundaries with a <code class="docutils literal notranslate"><span class="pre">TADB</span></code> index.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TADB_enhanced_cis.bed</span></code>: per-gene TADB-enhanced cis windows (<code class="docutils literal notranslate"><span class="pre">#chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extended_TADB.bed</span></code>: extended TAD boundaries (<code class="docutils literal notranslate"><span class="pre">#chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">index</span></code>).</p></li>
+</ul>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Step</p></th>
+<th class="head"><p>Substep</p></th>
+<th class="head"><p>Problem</p></th>
+<th class="head"><p>Possible Reason</p></th>
+<th class="head"><p>Solution</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
+<p>The cells below define the SoS workflow steps invoked by the command above. They are not meant to be edited for routine analysis.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+# Brain/tissue TAD coordinates: a tab-separated file with columns chr, start, end (no header)
+parameter: tad_input = path
+# Gene coordinates table derived from the gene-model GTF (columns: index, #chr, start, end, gene_id, gene_name)
+parameter: gene_coords = path
+# Output directory
+parameter: cwd = path(&quot;output/tadb&quot;)
+# Minimum percent overlap for two specific TADs to be merged into one generalized TAD
+parameter: overlap_cutoff = 80
+# Container image (kept empty; we no longer use containers)
+parameter: container = &#39;&#39;
+# Resource options (kept for parity with the protocol)
+parameter: job_size = 1
+parameter: walltime = &quot;20h&quot;
+parameter: mem = &quot;40G&quot;
+parameter: numThreads = 1
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[default]
+input: tad = tad_input, gene = gene_coords
+output: gentad = f&#39;{cwd}/generalized_TAD.tsv&#39;,
+        gentadb = f&#39;{cwd}/generalized_TADB.tsv&#39;,
+        cis = f&#39;{cwd}/TADB_enhanced_cis.bed&#39;,
+        ext = f&#39;{cwd}/extended_TADB.bed&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[&quot;cis&quot;]:bn}&#39;
+R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[&quot;cis&quot;]:n}.stderr&#39;, stdout = f&#39;{_output[&quot;cis&quot;]:n}.stdout&#39;
+    library(tidyverse)
+    
+    find_TAD_overlap &lt;- function(x, inputDF){
+        rowChr &lt;- x[&#39;chr&#39;]
+        rowStart &lt;- as.numeric(x[&#39;start&#39;])
+        rowEnd &lt;- as.numeric(x[&#39;end&#39;])
+        rowTADIndex &lt;- x[&#39;TAD_index&#39;]
+        TADsubset &lt;- inputDF %&gt;% filter(chr == rowChr)
+        TADsubset$start &lt;- as.numeric(TADsubset$start)
+        TADsubset$end &lt;- as.numeric(TADsubset$end)
+        priorTADsubset &lt;- TADsubset %&gt;%
+            filter(start &lt;= rowStart &amp; rowStart &lt;= end &amp;
+                (start != rowStart | end != rowEnd)) %&gt;% arrange(start)
+        nextTADsubset &lt;- TADsubset %&gt;%
+            filter(start &lt;= rowEnd &amp; rowEnd &lt;= end &amp;
+                (start != rowStart | end != rowEnd)) %&gt;% arrange(-end)
+        completeOverlapSubset &lt;- TADsubset %&gt;%
+            filter(start &lt;= rowStart &amp; rowEnd &lt;= end &amp;
+                (start != rowStart | end != rowEnd))
+        priorOverlap &lt;- 0
+        prior_TAD_index &lt;- rowTADIndex
+        nextOverlap &lt;- 0
+        next_TAD_index &lt;- rowTADIndex
+        completeOverlap &lt;- FALSE
+        if (nrow(priorTADsubset)) {
+            priorOverlap &lt;- priorTADsubset %&gt;%
+                mutate(inner_TAD_Length = end - rowStart,
+                    outer_TAD_Length = end - start,
+                    overlap = (inner_TAD_Length / outer_TAD_Length) * 100) %&gt;%
+                arrange(-overlap)
+            prior_TAD_index &lt;- priorOverlap$TAD_index[1]
+            priorOverlap &lt;- priorOverlap$overlap[1]
+            if(is.na(prior_TAD_index)) stop(paste(&quot;The following TAD has an issue:&quot;, rowTADIndex))
+        }
+        if (nrow(nextTADsubset)) {
+            nextOverlap &lt;- nextTADsubset %&gt;%
+                mutate(inner_TAD_Length = rowEnd - start,
+                    outer_TAD_Length = end - start,
+                    overlap = (inner_TAD_Length / outer_TAD_Length) * 100) %&gt;%
+                arrange(-overlap)
+            next_TAD_index &lt;- nextOverlap$TAD_index[1]
+            nextOverlap &lt;- nextOverlap$overlap[1]
+            if(is.na(next_TAD_index)) stop(paste(&quot;The following TAD has an issue:&quot;, rowTADIndex))
+        }
+        if (nrow(completeOverlapSubset)) { completeOverlap &lt;- TRUE }
+        return(list(prior=as.character(priorOverlap), subsequent=as.character(nextOverlap), com=as.character(completeOverlap), prior_tad=as.character(prior_TAD_index), next_tad=as.character(next_TAD_index)))
+    }
+    
+    merge_TADs &lt;- function(x, inputDF, cutoff = ${overlap_cutoff}){
+        rowChr &lt;- x[&quot;chr&quot;]
+        rowStart &lt;- as.numeric(x[&quot;start&quot;])
+        rowEnd &lt;- as.numeric(x[&quot;end&quot;])
+        rowTADIndex &lt;- as.character(x[&#39;TAD_index&#39;])
+        rowPriorOverlap &lt;- as.double(x[&quot;prior_overlap&quot;])
+        rowPriorTADIndex &lt;- as.character(x[&quot;prior_TAD_index&quot;])
+        rowNextOverlap &lt;- as.double(x[&quot;next_overlap&quot;])
+        rowNextTADIndex &lt;- as.character(x[&quot;next_TAD_index&quot;])
+        newStart &lt;- rowStart
+        newEnd &lt;- rowEnd
+        if (rowNextOverlap &gt;= cutoff &amp;&amp; rowNextTADIndex != rowTADIndex) {
+            newEnd &lt;- inputDF %&gt;% filter(TAD_index == rowNextTADIndex)
+            if(is.na(newEnd %&gt;% pull(end) %&gt;% length())) print(newEnd$end[1])
+            newEnd &lt;- newEnd$end[1]
+        }
+        if (rowPriorOverlap &gt;= cutoff &amp; rowPriorTADIndex != rowTADIndex) {
+            newStart &lt;- inputDF %&gt;% filter(TAD_index == rowPriorTADIndex)
+            newStart &lt;- newStart$start[1]
+        }
+        return(list(newstart=newStart, newend=newEnd))
+    }
+    
+    recursive_merge &lt;- function(tadDF){
+        tadDF$TAD_index &lt;- paste0(&#39;TAD_&#39;, seq(1, nrow(tadDF)))
+        overlap_results &lt;- apply(tadDF, 1, find_TAD_overlap, tadDF)
+        tadDF$prior_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;prior&#39;))
+        tadDF$prior_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;prior_tad&#39;))
+        tadDF$next_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;subsequent&#39;))
+        tadDF$next_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;next_tad&#39;))
+        tadDF$complete_overlap &lt;- as.logical(lapply(overlap_results, &quot;[[&quot;, &#39;com&#39;))
+        merge_results &lt;- apply(tadDF, 1, merge_TADs, tadDF, ${overlap_cutoff})
+        tadDF$end &lt;- as.numeric(lapply(merge_results, &quot;[[&quot;, &#39;newend&#39;))
+        tadDF$start &lt;- as.numeric(lapply(merge_results, &quot;[[&quot;, &#39;newstart&#39;))
+        candidateDF &lt;- tadDF %&gt;% distinct(chr, start, end, .keep_all=TRUE)
+        if (nrow(tadDF) == nrow(candidateDF)) {
+            return(candidateDF)
+        } else {
+            candidateDF$TAD_index &lt;- paste0(&#39;TAD_&#39;, seq(1, nrow(candidateDF)))
+            overlap_results &lt;- apply(candidateDF, 1, find_TAD_overlap, candidateDF)
+            candidateDF$prior_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;prior&#39;))
+            candidateDF$prior_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;prior_tad&#39;))
+            candidateDF$next_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;subsequent&#39;))
+            candidateDF$next_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;next_tad&#39;))
+            candidateDF$complete_overlap &lt;- as.logical(lapply(overlap_results, &quot;[[&quot;, &#39;com&#39;))
+            candidateDF &lt;- candidateDF %&gt;% filter(complete_overlap == FALSE)
+            candidateDF$TAD_index &lt;- paste0(&#39;TAD_&#39;, seq(1, nrow(candidateDF)))
+            overlap_results &lt;- apply(candidateDF, 1, find_TAD_overlap, candidateDF)
+            candidateDF$prior_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;prior&#39;))
+            candidateDF$prior_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;prior_tad&#39;))
+            candidateDF$next_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;subsequent&#39;))
+            candidateDF$next_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;next_tad&#39;))
+            candidateDF$complete_overlap &lt;- as.logical(lapply(overlap_results, &quot;[[&quot;, &#39;com&#39;))
+            return(recursive_merge(candidateDF))
+        }
+    }
+    
+    # ---- Step i. Manage TAD redundancy ----
+    general_TAD_DF &lt;- read_tsv(${_input[&quot;tad&quot;]:r}, col_names=c(&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;), show_col_types = FALSE)
+    general_TAD_DF &lt;- general_TAD_DF[with(general_TAD_DF, order(chr, start, -end)),]
+    final_brain_TAD_DF &lt;- recursive_merge(general_TAD_DF)
+    formatted_final_DF &lt;- final_brain_TAD_DF %&gt;% filter(chr %in% paste0(&#39;chr&#39;, seq(1,22))) %&gt;% subset(select=c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;))
+    formatted_final_DF$end &lt;- as.numeric(formatted_final_DF$end)
+    formatted_final_DF$start &lt;- as.numeric(formatted_final_DF$start)
+    formatted_final_DF &lt;- final_brain_TAD_DF %&gt;% subset(select=c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;))
+    formatted_final_DF$start &lt;- format(formatted_final_DF$start, scientific = FALSE)
+    formatted_final_DF$end &lt;- format(formatted_final_DF$end, scientific = FALSE)
+    write.table(formatted_final_DF, ${_output[&quot;gentad&quot;]:r}, sep=&quot;\t&quot;, append=FALSE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+    
+    # ---- Step ii. Generate TADB-enhanced cis windows and extended TADBs ----
+    general &lt;- read_tsv(${_output[&quot;gentad&quot;]:r}, col_names = c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;)) %&gt;% mutate(row_index = row_number())
+    specific &lt;- read_tsv(${_input[&quot;tad&quot;]:r}, col_names = c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;)) %&gt;% mutate(row_index = row_number())
+    
+    chromosomes &lt;- paste0(&#39;chr&#39;, seq(1:22))
+    chromosomes &lt;- c(chromosomes,&quot;chrX&quot;)
+    bplengths &lt;- c(248956422, 242193529, 198295559, 190214555, 181538259, 170805979, 159345973, 145138636,
+                   138394717, 133797422, 135086622,
+                   133275309, 114364328, 107043718, 101991189, 90338345, 83257441,
+                   80373285, 58617616, 64444167, 46709983, 50818468, 156040895)
+    chrDF &lt;- data.frame(chr = chromosomes, left = bplengths)
+    
+    find_left_boundary = function(chrm, start_pos, end_pos){
+        within_TAD = specific %&gt;% filter(chr == chrm &amp; start &gt;= start_pos &amp; end &lt;= end_pos)
+        within_TAD_num = nrow(within_TAD)
+        if(within_TAD_num == 1){
+            left = within_TAD %&gt;% pull(start) %&gt;% as.integer()
+        }else{
+            TAD_start_list = within_TAD %&gt;% pull(start) %&gt;% sort()
+            left = TAD_start_list[2] %&gt;% as.integer()
+        }
+        return(left)
+    }
+    left_table = general %&gt;% mutate(left = pmap(list(chrm = chr, start_pos = start, end_pos = end), find_left_boundary)) %&gt;% select(chr, left) %&gt;% mutate(left = as.integer(left))
+    left_table_final = rbind(left_table, chrDF)
+    
+    find_right_boundary = function(chrm, start_pos, end_pos){
+        within_TAD = specific %&gt;% filter(chr == chrm &amp; start &gt;= start_pos &amp; end &lt;= end_pos)
+        within_TAD_num = nrow(within_TAD)
+        if(within_TAD_num == 1){
+            right = within_TAD %&gt;% pull(end) %&gt;% as.integer()
+        }else{
+            TAD_end_list = within_TAD %&gt;% pull(end) %&gt;% sort(decreasing = T)
+            right = TAD_end_list[2] %&gt;% as.integer()
+        }
+        return(right)
+    }
+    right_table = general %&gt;% mutate(right = pmap(list(chrm = chr, start_pos = start, end_pos = end), find_right_boundary)) %&gt;% select(chr, right) %&gt;% mutate(right = as.integer(right))
+    chr_start = tibble(chr = chromosomes, right = 0)
+    right_table_final = rbind(right_table, chr_start)
+    
+    find_next_boundary = function(chrm, end_pos){
+        left_boundaries = left_table_final %&gt;% filter(chr == chrm, left &gt;= end_pos) %&gt;% pull(left) %&gt;% sort()
+        first_left = left_boundaries[1]
+        return(first_left)
+    }
+    find_previous_boundary = function(chrm, start_pos){
+        right_boundaries = right_table_final %&gt;% filter(chr == chrm, right &lt;= start_pos) %&gt;% pull(right) %&gt;% sort(decreasing = T)
+        first_right = right_boundaries[1]
+        return(first_right)
+    }
+    TADB = general %&gt;% mutate(previous_bound = pmap(list(chr, start), find_previous_boundary),
+        next_bound = pmap(list(chr, end), find_next_boundary)) %&gt;%
+        select(-start, -end) %&gt;% rename(start = previous_bound) %&gt;%
+        rename(end = next_bound) %&gt;% mutate(start = as.integer(start), end = as.integer(end)) %&gt;%
+        select(chr, start, end)
+    TADB = TADB %&gt;% distinct()
+    
+    if_fully_cover = function(chrm, start_pos, end_pos){
+        potential = TADB %&gt;% filter(chr == chrm, start &lt;= start_pos, end &gt;= end_pos)
+        if(nrow(potential) &lt;= 1){
+            return(0)
+        }else{
+            return(1)
+        }
+    }
+    TADB_final = TADB %&gt;% mutate(cover_status = pmap(list(chrm = chr, start_pos = start, end_pos = end), if_fully_cover)) %&gt;%
+        filter(cover_status != 1) %&gt;% mutate(index = paste0(&quot;TADB&quot;, row_number())) %&gt;% select(- cover_status) %&gt;%
+        rename(`#chr` = chr)
+    write_tsv(TADB_final, ${_output[&quot;gentadb&quot;]:r})
+    
+    # ---- gene cis windows ----
+    all_gene &lt;- read_tsv(${_input[&quot;gene&quot;]:r})
+    all_gene = all_gene %&gt;% select(-`...1`, -gene_name) %&gt;% rename(chr = `#chr`, gene_start = start, gene_end = end)  %&gt;% distinct()
+    TADB_final = TADB_final %&gt;% rename(chr = &quot;#chr&quot;)
+    gene_TADB_tb = left_join(all_gene, TADB_final, by = &quot;chr&quot;, relationship = &quot;many-to-many&quot;) %&gt;%
+        filter(!(gene_start &gt; end) &amp;  !(gene_end &lt; start))
+    
+    # extended TADB-enhanced cis windows
+    cis_TADB = left_join(gene_TADB_tb, chrDF, by = &quot;chr&quot;) %&gt;% rename(chr_end = left) %&gt;%
+        mutate(cis_start = pmax(0, gene_start - 1000000)) %&gt;%
+        mutate(cis_end = pmin(chr_end, gene_end + 1000000))
+    extended =  cis_TADB %&gt;%
+        mutate(true_start = pmin(start, cis_start),
+               true_end = pmax(end, cis_end)) %&gt;%
+        arrange(chr, true_start) %&gt;% ungroup() %&gt;%
+        select(chr, gene_id, true_start, true_end) %&gt;%
+        rename(start = true_start, end = true_end)
+    extended_final = extended %&gt;% group_by(chr, gene_id) %&gt;% summarize(start = min(start), end = max(end)) %&gt;% arrange(chr, start)
+    ordered_chr &lt;- c(paste0(&quot;chr&quot;, as.character(1:22)), &quot;chrX&quot;)
+    extend_cis_ordered &lt;- extended_final %&gt;% mutate(chr = factor(chr, levels = ordered_chr)) %&gt;%
+        arrange(chr) %&gt;% rename(`#chr` = chr) %&gt;% select(`#chr`, start, end, gene_id)
+    write_tsv(extend_cis_ordered, ${_output[&quot;cis&quot;]:r})
+    
+    # ---- extended TADB ----
+    cis_TADB = left_join(gene_TADB_tb, chrDF, by = &quot;chr&quot;) %&gt;% rename(chr_end = left) %&gt;%
+        mutate(cis_start = pmax(0, gene_start - 1000000)) %&gt;%
+        mutate(cis_end = pmin(chr_end, gene_end + 1000000))
+    cis_summary = cis_TADB %&gt;% group_by(index) %&gt;% summarize(min_start = min(cis_start), max_end = max(cis_end))
+    extend_TADB = left_join(cis_summary, TADB_final, by = &quot;index&quot;) %&gt;% mutate(new_start = pmin(start, min_start)) %&gt;%
+        mutate(new_end = pmax(end, max_end)) %&gt;% mutate(length = new_end - new_start) %&gt;%
+        mutate(old_length = end - start) %&gt;% mutate(length_diff = length - old_length) %&gt;% select(chr, new_start, new_end) %&gt;%
+        rename(start = new_start, end = new_end) %&gt;% mutate(index = paste0(&quot;TADB&quot;, row_number()))
+    extend_TADB &lt;- extend_TADB %&gt;% mutate(chr = factor(chr, levels = ordered_chr)) %&gt;%
+        arrange(chr, start) %&gt;% rename(`#chr` = chr) %&gt;% mutate(index = paste0(&quot;TADB_&quot;, row_number()))
+    write_tsv(extend_TADB, ${_output[&quot;ext&quot;]:r})
+    
+    cat(&quot;DONE: generalized TADs =&quot;, nrow(formatted_final_DF), &quot;| TADB_final =&quot;, nrow(TADB_final), &quot;| cis windows =&quot;, nrow(extend_cis_ordered), &quot;| extended TADB =&quot;, nrow(extend_TADB), &quot;\n&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="reference_data_preparation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Reference Data Standardization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ld_prune_reference.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Independent list of variants using LD clumping</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detailed-walkthrough">Detailed walkthrough</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-manage-tad-redundancy">Step 1: Manage TAD Redundancy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-generate-tadb-enhanced-cis-windows-and-extended-tadbs">Step 2: Generate TADB-enhanced cis windows and extended TADBs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-find-boundaries-and-build-tadb">How to find boundaries and build TADB</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#build-tadbs-and-remove-redundancy">Build TADBs and remove redundancy</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#length-distribution">Length distribution</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-tadb-and-cis-windows">Compare TADB and cis windows</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-tadb-enhanced-cis-windows-and-extended-tadbs">Construct TADB-enhanced cis windows and extended TADBs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

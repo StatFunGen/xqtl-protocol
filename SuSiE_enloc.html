@@ -1,0 +1,1208 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>xQTL-GWAS pairwise enrichment and colocalization &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'SuSiE_enloc';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="TWAS, cTWAS and MR" href="twas_ctwas.html" />
+    <link rel="prev" title="Fine-mapping result post-processing" href="mnm_postprocessing.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/SuSiE_enloc.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2FSuSiE_enloc.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/SuSiE_enloc.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>xQTL-GWAS pairwise enrichment and colocalization</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-logic">Analytical Logic</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Analytical Logic</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="xqtl-gwas-pairwise-enrichment-and-colocalization">
+<h1>xQTL-GWAS pairwise enrichment and colocalization<a class="headerlink" href="#xqtl-gwas-pairwise-enrichment-and-colocalization" title="Link to this heading">#</a></h1>
+<p>Run pairwise enrichment and colocalization between xQTL and GWAS SuSiE fine-mapping results on the toy dataset. The workflow first estimates a global enrichment between the two sets of signals, then performs colocalization (coloc) on the overlapping regions.</p>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>This workflow processes fine-mapping results for xQTL, generated by <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> in the <code class="docutils literal notranslate"><span class="pre">mnm_regression.ipynb</span></code> notebook for cis xQTL, and GWAS fine-mapping results produced by <code class="docutils literal notranslate"><span class="pre">susie_rss</span></code> in the <code class="docutils literal notranslate"><span class="pre">rss_analysis.ipynb</span></code> notebook. It is designed to perform enrichment and colocalization analysis, particularly when fine-mapping results originate from different regions in the case of cis-xQTL and GWAS. The pipeline is capable to integrate and analyze data across these distinct regions. Originally tailored for cis-xQTL and GWAS integration, this pipeline can be applied to other pairwise integrations. An example of such application is in trans analysis, where the fine-mapped regions might be identical between trans-xQTL and GWAS, representing a special case of this broader implementation.</p>
+</section>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<p>Lists of SuSiE fine-mapping output objects, in RDS format, of <code class="docutils literal notranslate"><span class="pre">class(susie)</span></code> in R.</p>
+<ul class="simple">
+<li><p>For xQTL the list is meta-data of format: <code class="docutils literal notranslate"><span class="pre">chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">original_data</span></code>, <code class="docutils literal notranslate"><span class="pre">conditions_top_loci</span></code>, <code class="docutils literal notranslate"><span class="pre">block_top_loci</span></code> where <code class="docutils literal notranslate"><span class="pre">original_data</span></code> is an RDS file, <code class="docutils literal notranslate"><span class="pre">conditions_top_loci</span></code> is showing which contexts have top loci table (potential signals) <code class="docutils literal notranslate"><span class="pre">block_top_loci</span></code> is the blocks have overlapped top loci variant with xQTL data. That file could be output from <code class="docutils literal notranslate"><span class="pre">fine_mapping_post_processing/overlap_qtl_gwas</span></code>.</p></li>
+<li><p>For GWAS the list is meta-data of format: <code class="docutils literal notranslate"><span class="pre">chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">original_data</span></code>, <code class="docutils literal notranslate"><span class="pre">block_top_loci...</span></code> where <code class="docutils literal notranslate"><span class="pre">original_data</span></code> is an RDS file. That file could be output from <code class="docutils literal notranslate"><span class="pre">fine_mapping_post_processing/gwas_results_export</span></code>.</p></li>
+<li><p>Context meta is a metafile that shows the analysis_names and the contained contexts. It can be used to identify the corresponding raw data for each context.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--gwas_meta_data</span></code><br />
+output from <code class="docutils literal notranslate"><span class="pre">fine_mapping_post_processing/gwas_results_export</span></code></p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr	start	end	region_id	TSS	original_data	combined_data	combined_data_sumstats	conditions	conditions_top_loci</span>
+<span class="n">chr1</span>	<span class="mi">101384274</span>	<span class="mi">104443097</span>	<span class="mi">1_101384274</span><span class="o">-</span><span class="mi">104443097</span>	<span class="n">NA</span>	<span class="mi">1_101384274</span><span class="o">-</span><span class="mf">104443097.</span><span class="n">susie_rss</span><span class="o">.</span><span class="n">rds</span>	<span class="n">gwas</span><span class="mf">.1_101384274</span><span class="o">-</span><span class="mf">104443097.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">rds</span>	<span class="n">gwas</span><span class="mf">.1_101384274</span><span class="o">-</span><span class="mf">104443097.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export_sumstats</span><span class="o">.</span><span class="n">rds</span>	<span class="n">NA</span>	<span class="n">NA</span>
+<span class="n">chr19</span>	<span class="mi">44935906</span>	<span class="mi">46842901</span>	<span class="mi">19_44935906</span><span class="o">-</span><span class="mi">46842901</span>	<span class="n">NA</span>	<span class="mi">19_44935906</span><span class="o">-</span><span class="mf">46842901.</span><span class="n">susie_rss</span><span class="o">.</span><span class="n">rds</span>	<span class="n">gwas</span><span class="mf">.19_44935906</span><span class="o">-</span><span class="mf">46842901.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">rds</span>	<span class="n">gwas</span><span class="mf">.19_44935906</span><span class="o">-</span><span class="mf">46842901.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export_sumstats</span><span class="o">.</span><span class="n">rds</span>	<span class="n">AD_Bellenguez_2022</span><span class="p">,</span><span class="n">AD_Jansen_2021</span><span class="p">,</span><span class="n">AD_Kunkle_Stage1_2019</span><span class="p">,</span><span class="n">AD_Wightman_Full_2021</span><span class="p">,</span><span class="n">AD_Wightman_Excluding23andMe_2021</span><span class="p">,</span><span class="n">AD_Wightman_ExcludingUKBand23andME_2021</span>	<span class="n">AD_Wightman_ExcludingUKBand23andME_2021</span><span class="o">.</span><span class="n">qc_impute</span><span class="p">,</span><span class="n">AD_Wightman_ExcludingUKBand23andME_2021</span><span class="o">.</span><span class="n">qc_only</span>	<span class="n">AD_Wightman_ExcludingUKBand23andME_2021</span><span class="o">.</span><span class="n">qc_impute</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--xqtl_meta_data</span></code></p></li>
+</ul>
+<p>for enrichment: output from <code class="docutils literal notranslate"><span class="pre">fine_mapping_post_processing/cis_results_export</span></code>; for coloc: output from <code class="docutils literal notranslate"><span class="pre">fine_mapping_post_processing/overlap_qtl_gwas</span></code>, the difference between them is without or with last 2 columns: <code class="docutils literal notranslate"><span class="pre">block_top_loci</span></code>, <code class="docutils literal notranslate"><span class="pre">final_combined_data</span></code> to document overlapped block info at variant level</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr	start	end	region_id	TSS	original_data	combined_data	combined_data_sumstats	conditions	conditions_top_loci	block_top_loci	final_combined_data</span>
+<span class="n">chr1</span>	<span class="mi">167600000</span>	<span class="mi">171480000</span>	<span class="n">ENSG00000000457</span>	<span class="mi">169894266</span>	<span class="n">MSBB_eQTL</span><span class="o">.</span><span class="n">ENSG00000000457</span><span class="o">.</span><span class="n">univariate_susie_twas_weights</span><span class="o">.</span><span class="n">rds</span><span class="p">,</span> <span class="n">ROSMAP_Kellis_eQTL</span><span class="o">.</span><span class="n">ENSG00000000457</span><span class="o">.</span><span class="n">univariate_susie_twas_weights</span><span class="o">.</span><span class="n">rds</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000000457</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">rds</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000000457</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export_sumstats</span><span class="o">.</span><span class="n">rds</span>	<span class="n">BM_10_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_22_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_36_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_44_MSBB_eQTL</span><span class="p">,</span><span class="n">Ast_Kellis_eQTL</span>	<span class="n">BM_22_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_44_MSBB_eQTL</span>		
+<span class="n">chr19</span>	<span class="mi">41840000</span>	<span class="mi">47960000</span>	<span class="n">ENSG00000130203</span>	<span class="mi">44905790</span>	<span class="n">ROSMAP_Kellis_eQTL</span><span class="o">.</span><span class="n">ENSG00000130203</span><span class="o">.</span><span class="n">univariate_susie_twas_weights</span><span class="o">.</span><span class="n">rds</span><span class="p">,</span> <span class="n">ROSMAP_Bennett_Klein_pQTL</span><span class="o">.</span><span class="n">ENSG00000130203</span><span class="o">.</span><span class="n">univariate_susie_twas_weights</span><span class="o">.</span><span class="n">rds</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000130203</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">rds</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000130203</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export_sumstats</span><span class="o">.</span><span class="n">rds</span>	<span class="n">Mic_Kellis_eQTL</span><span class="p">,</span><span class="n">DLPFC_Bennett_pQTL</span>	<span class="n">Mic_Kellis_eQTL</span>	<span class="mi">19_44935906</span><span class="o">-</span><span class="mi">46842901</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000130203</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">overlapped</span><span class="o">.</span><span class="n">gwas</span><span class="o">.</span><span class="n">rds</span>
+<span class="n">chr20</span>	<span class="mi">49934867</span>	<span class="mi">53560000</span>	<span class="n">ENSG00000000419</span>	<span class="mi">50958554</span>	<span class="n">MSBB_eQTL</span><span class="o">.</span><span class="n">ENSG00000000419</span><span class="o">.</span><span class="n">univariate_susie_twas_weights</span><span class="o">.</span><span class="n">rds</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000000419</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">rds</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000000419</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export_sumstats</span><span class="o">.</span><span class="n">rds</span>	<span class="n">BM_10_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_22_MSBB_eQTL</span>	<span class="n">BM_22_MSBB_eQTL</span>	<span class="n">Fungen_xQTL</span><span class="o">.</span><span class="n">ENSG00000000419</span><span class="o">.</span><span class="n">cis_results_db</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">overlapped</span><span class="o">.</span><span class="n">gwas</span><span class="o">.</span><span class="n">rds</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--context_meta</span></code></p></li>
+</ul>
+<p>should be updated as more analysis is done, we used analysis_name and context in this analysis</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">analysis_name</span>	<span class="n">cohort</span>	<span class="n">context</span>
+<span class="n">KNIGHT_pQTL</span>	<span class="n">KNIGHT</span>	<span class="n">Knight_pQTL_brain</span><span class="p">,</span><span class="n">Knight_eQTL_brain</span>
+<span class="n">MSBB_eQTL</span>	<span class="n">MSBB</span>	<span class="n">BM_10_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_22_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_36_MSBB_eQTL</span><span class="p">,</span><span class="n">BM_44_MSBB_eQTL</span>
+<span class="n">MIGA_eQTL</span>	<span class="n">MIGA</span>	<span class="n">MiGA_GTS_eQTL</span><span class="p">,</span><span class="n">MiGA_SVZ_eQTL</span><span class="p">,</span><span class="n">MiGA_THA_eQTL</span>
+</pre></div>
+</div>
+</section>
+<section id="analytical-logic">
+<h2>Analytical Logic<a class="headerlink" href="#analytical-logic" title="Link to this heading">#</a></h2>
+</section>
+<section id="id1">
+<h2>Analytical Logic<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Enrichment</p></li>
+</ul>
+<ol class="arabic simple">
+<li><p><strong>Identify GWAS Blocks:</strong> Select GWAS blocks with top loci from Bellenguez data and using a single variant regression method. Locate the original filenames (<code class="docutils literal notranslate"><span class="pre">original_data</span></code>) for these blocks and map the analysis regions to identify <strong>overlapping gene analysis regions</strong> and corresponding QTL files with top loci table (<code class="docutils literal notranslate"><span class="pre">condition_top_loci</span></code>).</p></li>
+<li><p><strong>Contexts in xQTL Meta-data:</strong> Find contexts within the xQTL meta-data that include top loci results for each gene. Retrieve the corresponding original xQTL files (<code class="docutils literal notranslate"><span class="pre">original_data</span></code>) by referencing the context meta-data.</p></li>
+<li><p><strong>Execute xQTL GWAS Enrichment:</strong> Perform <code class="docutils literal notranslate"><span class="pre">xqtl_gwas_enrichment</span></code> analysis to generate enrichment parameters (a0, a1) and calculate priors (p1, p2, p12).</p></li>
+</ol>
+<ul class="simple">
+<li><p>Coloc</p></li>
+</ul>
+<ol class="arabic simple">
+<li><p><strong>xQTL Meta-data Contexts:</strong> Within the xQTL meta-data, identify contexts that include top loci results for each gene, indicated by <code class="docutils literal notranslate"><span class="pre">condition_top_loci</span></code>. Retrieve the corresponding original xQTL files (<code class="docutils literal notranslate"><span class="pre">original_data</span></code>) by referring back to the context meta-data. (Optional) Subset the QTL table with specifies gene list.</p></li>
+<li><p><strong>Original GWAS Files:</strong> Identify GWAS blocks that contain <strong>overlapping top loci variants</strong> for each gene (<code class="docutils literal notranslate"><span class="pre">block_top_loci</span></code>) in above file. Utilize the GWAS list to locate the original filenames (<code class="docutils literal notranslate"><span class="pre">original_data</span></code>) for the identified GWAS block candidates.</p></li>
+<li><p><strong>Enrichment and Coloc Analysis:</strong> Automatically execute <code class="docutils literal notranslate"><span class="pre">xqtl_gwas_enrichment</span></code> to enable enrichment analysis, generating priors for subsequent coloc analysis through logic defined in <code class="docutils literal notranslate"><span class="pre">enrichment</span></code>. Then, apply <code class="docutils literal notranslate"><span class="pre">susie_coloc</span></code> for coloc analysis on the selected xQTL and GWAS original files, analyzing each gene under each identified condition.</p></li>
+</ol>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<p><strong>Step 1. Enrichment.</strong> Estimate the global xQTL-GWAS enrichment. <code class="docutils literal notranslate"><span class="pre">get_analysis_regions</span></code> first collects the overlapped regions per gene/block, then <code class="docutils literal notranslate"><span class="pre">xqtl_gwas_enrichment</span></code> produces the enrichment object used as the prior for coloc.</p>
+<p><strong>Timing:</strong> ~varies on typical compute infrastructure.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_enloc.ipynb xqtl_gwas_enrichment \
+    --gwas-meta-data input/susie_enloc_data/protocol_example.enloc.gwas_meta.tsv \
+    --xqtl-meta-data input/susie_enloc_data/protocol_example.enloc.xqtl_meta.tsv \
+    --xqtl-finemapping-obj preset_variants_result susie_result_trimmed \
+    --xqtl-varname-obj preset_variants_result variant_names \
+    --gwas-finemapping-obj AD_Bellenguez_2022 RSS_QC_RAISS_imputed susie_result_trimmed \
+    --gwas-varname-obj  AD_Bellenguez_2022 RSS_QC_RAISS_imputed variant_names \
+    --xqtl-region-obj   region_info grange \
+    --qtl-path input/susie_enloc_data \
+    --gwas-path input/susie_enloc_data \
+    --context-meta input/susie_enloc_data/protocol_example.enloc.context_meta.tsv \
+    --cwd output/xqtl_gwas_enrichment
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Step 2. Coloc.</strong> Run colocalization on the overlapping regions. <code class="docutils literal notranslate"><span class="pre">--skip-enrich</span></code> reuses the enrichment object produced in Step 1, so the <code class="docutils literal notranslate"><span class="pre">*enrichment.rds</span></code> file from that step must be present in <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>. Otherwise enrichment is triggered automatically. <code class="docutils literal notranslate"><span class="pre">get_overlapped_analysis_regions</span></code> selects the regions with overlapping variants before <code class="docutils literal notranslate"><span class="pre">susie_coloc</span></code> runs.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_enloc.ipynb susie_coloc \
+    --gwas-meta-data input/susie_enloc_data/protocol_example.enloc.gwas_meta.tsv \
+    --xqtl-meta-data input/susie_enloc_data/protocol_example.enloc.xqtl_meta.tsv \
+    --xqtl-finemapping-obj preset_variants_result susie_result_trimmed \
+    --xqtl-varname-obj preset_variants_result variant_names \
+    --gwas-finemapping-obj AD_Bellenguez_2022 RSS_QC_RAISS_imputed susie_result_trimmed \
+    --gwas-varname-obj  AD_Bellenguez_2022 RSS_QC_RAISS_imputed variant_names \
+    --xqtl-region-obj   region_info grange \
+    --qtl-path input/susie_enloc_data \
+    --gwas-path input/susie_enloc_data \
+    --context-meta input/susie_enloc_data/protocol_example.enloc.context_meta.tsv \
+    --ld-meta-file-path input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --skip-enrich \
+    --cwd output/susie_coloc
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_enloc.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+# Workdir
+parameter: cwd = path(&quot;output&quot;)
+# A list of file paths for fine-mapped GWAS results. 
+parameter: gwas_meta_data = path
+# A list of file paths for fine-mapped xQTL results. 
+parameter: xqtl_meta_data = path
+# Optional: if a region list is provide the enrichment analysis will be focused on provided region. 
+# The LAST column of this list will contain the ID of regions to focus on
+parameter: region_list = path()
+# Optional: if a region name is provided 
+# the analysis would be focused on the union of provides region list and region names
+parameter: region_name = []
+# It is required to input the name of the analysis
+parameter: name = f&quot;{xqtl_meta_data:bnn}.{gwas_meta_data:bnn}&quot;
+parameter: container = &quot;&quot;
+import re
+# For cluster jobs, number commands to run per job
+parameter: job_size = 200
+# Wall clock time expected
+parameter: walltime = &quot;5m&quot;
+# Memory expected: quite large for enrichment analysis but small for xQTL colocalization
+parameter: mem = &quot;16G&quot;
+# Number of threads
+parameter: numThreads = 1
+#Optional table name in xQTL RDS files to get fine mapping results (eg &#39;susie_result_trimmed &#39;).
+parameter: xqtl_finemapping_obj = []
+#Optional table name in xQTL RDS files to get variable names (eg &#39; variant_names &#39;).
+parameter: xqtl_varname_obj = []
+#Optional table name in GWAS RDS files to get fine mapping results (eg &#39;AD_Bellenguez_2022 single_effect_regression susie_result_trimmed &#39;).
+parameter: gwas_finemapping_obj = []
+#Optional table name in GWAS RDS files to get variable names(eg &#39;AD_Bellenguez_2022 single_effect_regression variant_names &#39;).
+parameter: gwas_varname_obj = []
+#Optional table name in xQTL RDS files to get region info (eg &#39;susie_result_trimmed region_info grange &#39;).
+parameter: xqtl_region_obj = []
+#Optional table name in GWAS RDS files to get region info (eg &#39;AD_Bellenguez_2022 single_effect_regression region_info grange &#39;).
+parameter: gwas_region_obj = []
+#Directory path for GWAS orignal finemapping results 
+parameter: gwas_path = &#39;&#39;
+#Directory path for xQTL orignal finemapping results 
+parameter: qtl_path = &#39;&#39;
+# a meta file showing the context and corresponding analysis_name
+parameter: context_meta = path()
+# Optional: if a region list is provide the analysis will be focused on provided region. 
+# The LAST column of this list will contain the ID of regions to focus on
+# Otherwise, all regions with both genotype and phenotype files will be analyzed
+parameter: region_list = path()
+# Optional: if a region name is provided 
+# the analysis would be focused on the union of provides region list and region names
+parameter: region_name = []
+# use conditions_top_loci_minp column or not, which can reduce a lot computing resource by pick top 1 isoform
+parameter: minp = False
+import os
+import pandas as pd
+import re
+def group_by_region(lst, partition):
+    # from itertools import accumulate
+    # partition = [len(x) for x in partition]
+    # Compute the cumulative sums once
+    # cumsum_vector = list(accumulate(partition))
+    # Use slicing based on the cumulative sums
+    # return [lst[(cumsum_vector[i-1] if i &gt; 0 else 0):cumsum_vector[i]] for i in range(len(partition))]
+    return partition
+
+def make_unique_data(data):
+    return &#39;,&#39;.join(set(data.split(&#39;,&#39;)))
+
+def generate_meta_dataframe(meta_data_path):
+    &quot;&quot;&quot;Generate a new long metadata by converting to context:analysis_name (1:1).&quot;&quot;&quot;
+    meta = pd.read_csv(meta_data_path, sep=&#39;\t&#39;)
+    new_meta = pd.DataFrame()
+    contexts = pd.unique(meta[&#39;context&#39;].str.split(&#39;,&#39;, expand=True).stack().str.strip())
+
+    for context in contexts:
+        if not isinstance(context, str):
+            continue
+        mask = meta[&#39;context&#39;].str.contains(context)
+        tmp = pd.DataFrame({
+            &#39;context&#39;: [context],
+            &#39;analysis_name&#39;: [&#39;,&#39;.join(meta.loc[mask, &#39;analysis_name&#39;])]
+        })
+        new_meta = pd.concat([new_meta, tmp], ignore_index=True)
+
+    return new_meta
+
+def generate_condition_based_dataframe(xqtl_df, minp):
+    &quot;&quot;&quot;Generate a new long table by converting to condition and region:original_data (1:1).&quot;&quot;&quot;
+    # only consider the QTL contexts that have top loci data
+    condition_column = &#39;conditions_top_loci_minp&#39; if minp else &#39;conditions_top_loci&#39;
+    conditions = pd.unique(xqtl_df[condition_column].str.split(&#39;,&#39;, expand=True).stack().str.strip())
+    new_df = pd.DataFrame()
+
+    for condition in conditions:
+        if not isinstance(condition, str):
+            continue
+        escaped_condition = re.escape(condition)
+        mask = xqtl_df[condition_column].str.contains(escaped_condition, case=False, regex=True)
+        
+        # Iterate through each unique region in the filtered data
+        unique_regions = pd.unique(xqtl_df.loc[mask, &#39;region_id&#39;])
+        for region_id in unique_regions:
+            region_mask = (xqtl_df[&#39;region_id&#39;] == region_id) &amp; mask
+            tmp = pd.DataFrame({
+                &#39;condition&#39;: [condition],
+                &#39;region_id&#39;: [region_id],
+                &#39;QTL_original_data&#39;: [&#39;,&#39;.join(xqtl_df.loc[region_mask, &#39;original_data&#39;])],
+                &#39;GWAS_original_data&#39;: [&#39;,&#39;.join(xqtl_df.loc[region_mask, &#39;block_data&#39;])]
+            })
+            new_df = pd.concat([new_df, tmp], ignore_index=True)
+
+    return new_df
+
+
+def merge_and_filter_dfs(new_df, new_meta):
+    &quot;&quot;&quot;Merge and filter the dataframes based on condition/context where context is a substring of condition, and analysis_name to pick the corresponding original files.&quot;&quot;&quot;
+    # Explode the QTL data into separate rows
+    new_df = new_df.set_index([&#39;condition&#39;, &#39;region_id&#39;, &#39;GWAS_original_data&#39;])[&#39;QTL_original_data&#39;].str.split(&#39;,&#39;, expand=True).stack().reset_index(name=&#39;QTL_original_data&#39;).drop(&#39;level_3&#39;, axis=1)
+    new_df[&#39;analysis_name_prefix&#39;] = new_df[&#39;QTL_original_data&#39;].apply(lambda x: x.split(&#39;.&#39;)[0])
+
+    # Create a custom merge logic to match context as a substring of condition
+    def custom_merge(row, df_meta):
+        # Filter meta dataframe to find any context that is part of the condition string
+        sub_df = df_meta[df_meta[&#39;context&#39;].apply(lambda x: x in row[&#39;condition&#39;])]
+        if not sub_df.empty:
+            return sub_df
+        else:
+            return pd.DataFrame(columns=df_meta.columns)  # Return an empty DataFrame with the same columns if no match found
+
+    # Apply custom merge function row-wise and concatenate results
+    results = [custom_merge(row, new_meta) for index, row in new_df.iterrows()]
+    merged_df = pd.concat(results, keys=new_df.index).reset_index(level=1, drop=True).join(new_df, how=&#39;outer&#39;)
+
+    # Filter rows where analysis_name_prefix matches analysis_name exactly
+    filtered_df = merged_df[merged_df[&#39;analysis_name_prefix&#39;].str.strip() == merged_df[&#39;analysis_name&#39;].str.strip()]
+
+    # Drop unnecessary columns and duplicates
+    filtered_df = filtered_df.drop(columns=[&#39;analysis_name_prefix&#39;, &#39;context&#39;]).drop_duplicates()
+    filtered_df[&#39;GWAS_original_data&#39;] = filtered_df[&#39;GWAS_original_data&#39;].apply(make_unique_data)
+
+    return filtered_df
+
+def prepare_final_paths(filtered_df, qtl_path, gwas_path):
+    &quot;&quot;&quot;Prepare final paths for QTL and GWAS original data.&quot;&quot;&quot;
+    filtered_df[&#39;QTL_original_data&#39;] = filtered_df[&#39;QTL_original_data&#39;].apply(
+        lambda x: &#39;,&#39;.join(f&quot;{qtl_path}/{file_name.strip()}&quot; for file_name in x.split(&#39;,&#39;))
+    )
+    filtered_df[&#39;GWAS_original_data&#39;] = filtered_df[&#39;GWAS_original_data&#39;].apply(
+        lambda x: &#39;,&#39;.join(f&quot;{gwas_path}/{file_name.strip()}&quot; for file_name in x.split(&#39;,&#39;))
+    )
+    return filtered_df
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># get overlapped regions by gene and block region for enrichment analysis
+[get_analysis_regions: shared = &quot;regional_data&quot;]
+import pandas as pd
+
+def process_dataframes_with_toploci(xqtl_meta_data, gwas_meta_data):
+    &quot;&quot;&quot;Process the XQTL and GWAS dataframes.&quot;&quot;&quot;
+    xqtl_df = pd.read_csv(xqtl_meta_data, sep=&quot;\t&quot;)
+    # filter xQTL data with the ones have overlapped top loci variants with GWAS data
+    xqtl_df = xqtl_df[xqtl_df[&#39;conditions_top_loci_minp&#39; if minp else &#39;conditions_top_loci&#39;].notna()]
+
+    gwas_df = pd.read_csv(gwas_meta_data, sep=&quot;\t&quot;)
+    gwas_df = gwas_df[gwas_df[&#39;conditions_top_loci&#39;].notna()]
+    # e.g. gwas_finemapping_obj = [&#39;AD_Bellenguez_2022&#39;, &#39;single_effect_regression&#39;, &#39;susie_result_trimmed&#39;]
+    # filter gwas data with find variants in specified cohort &#39;AD_Bellenguez_2022&#39; and method &#39;single_effect_regression&#39;
+    gwas_finemapping_obj_filtered = [obj for obj in gwas_finemapping_obj if obj != &#39;susie_result_trimmed&#39;]
+    if len(gwas_finemapping_obj_filtered) &gt; 0:
+        pattern = &#39;|&#39;.join(gwas_finemapping_obj_filtered)
+        gwas_df = gwas_df[gwas_df[&#39;conditions_top_loci&#39;].str.contains(pattern)]
+
+    xqtl_df = overlapped_analysis_region(xqtl_df, gwas_df)
+    return xqtl_df, gwas_df
+
+
+
+def overlapped_analysis_region(xqtl_df, gwas_df):
+    # Create an empty dataframe to store overlapping xQTL records
+    overlapped_xqtl_df = pd.DataFrame()
+    
+    # Iterate over each row in the GWAS dataframe
+    for index, gwas_row in gwas_df.iterrows():
+        gwas_chr = gwas_row[&#39;#chr&#39;]
+        gwas_start = gwas_row[&#39;start&#39;]
+        gwas_end = gwas_row[&#39;end&#39;]
+        gwas_block_id = gwas_row[&#39;original_data&#39;]  # Assuming each GWAS row has a unique block ID
+        
+        # Filter xQTL dataframe for the same chromosome
+        same_chr_xqtl_df = xqtl_df[xqtl_df[&#39;#chr&#39;] == gwas_chr]
+        
+        # Find overlapping xQTL regions with the current GWAS region
+        overlapping_xqtl = same_chr_xqtl_df[((same_chr_xqtl_df[&#39;start&#39;] &lt;= gwas_end) &amp; 
+                                             (same_chr_xqtl_df[&#39;end&#39;] &gt;= gwas_start))].copy() # Add .copy() to avoid SettingWithCopyWarning
+        
+        # Check if there are any overlapping xQTLs
+        if not overlapping_xqtl.empty:
+            # Use .loc to safely assign &#39;block_data&#39; to avoid the SettingWithCopyWarning
+            overlapping_xqtl.loc[:, &#39;block_data&#39;] = gwas_block_id
+            
+            # Append the overlapping xQTLs to the accumulated dataframe
+            overlapped_xqtl_df = pd.concat([overlapped_xqtl_df, overlapping_xqtl], ignore_index=True)
+        
+    # Group by xQTL region and concatenate &#39;block_data&#39;
+    overlapped_xqtl_df[&#39;block_data&#39;] = overlapped_xqtl_df.groupby([&#39;#chr&#39;, &#39;start&#39;, &#39;end&#39;])[&#39;block_data&#39;].transform(lambda x: &#39;,&#39;.join(x))
+    overlapped_xqtl_df = overlapped_xqtl_df.drop_duplicates().reset_index(drop=True)
+
+    return overlapped_xqtl_df
+
+
+xqtl_df, gwas_df = process_dataframes_with_toploci(xqtl_meta_data, gwas_meta_data)
+
+region_ids=[]
+# If region_list is provided, read the file and extract IDs
+if not region_list.is_dir():
+    if region_list.is_file():
+        region_list_df = pd.read_csv(region_list, sep=&#39;\t&#39;, header=None, comment = &quot;#&quot;)
+        region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
+    else:
+        raise ValueError(&quot;The region_list path provided is not a file.&quot;)
+        
+if len(region_name) &gt; 0:
+    region_ids = list(set(region_ids).union(set(region_name)))
+    
+if len(region_ids) &gt; 0:
+    xqtl_df = xqtl_df[xqtl_df[&#39;region_id&#39;].isin(region_ids)]
+    
+new_df = generate_condition_based_dataframe(xqtl_df, minp)
+
+# if there is only one original data file, we don&#39;t have to map to context meta
+if (new_df[&#39;QTL_original_data&#39;].str.split(&#39;,&#39;).apply(lambda x: len(x) in [0, 1]).all() and not context_meta.is_file()):
+    filtered_df = new_df.copy()
+    filtered_df[&#39;GWAS_original_data&#39;] = filtered_df[&#39;GWAS_original_data&#39;].apply(make_unique_data)
+else:
+    filtered_df = merge_and_filter_dfs(new_df, generate_meta_dataframe(context_meta))
+
+filtered_df = prepare_final_paths(filtered_df, qtl_path, gwas_path)
+filtered_df = filtered_df.groupby(&#39;condition&#39;).agg({
+    &#39;GWAS_original_data&#39;: lambda x: &#39;,&#39;.join(x),
+    &#39;QTL_original_data&#39;: lambda x: &#39;,&#39;.join(x)
+}).reset_index()
+regional_data = {
+    &#39;data&#39;: [row[&#39;QTL_original_data&#39;].split(&#39;,&#39;) for _, row in filtered_df.iterrows()],
+    &#39;conditions&#39;: [(f&quot;{row[&#39;condition&#39;]}&quot;, *row[&#39;GWAS_original_data&#39;].split(&#39;,&#39;)) for _, row in filtered_df.iterrows()]
+}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># get overlapped regions from flatten table, to get the regions with overlapped variants and select those regions for coloc analysis
+[get_overlapped_analysis_regions: shared = &quot;overlapped_regional_data&quot;]
+import pandas as pd
+def map_blocks_to_data(blocks, mapping_dict):
+    &quot;&quot;&quot;Map blocks to data using a provided mapping dictionary.&quot;&quot;&quot;
+    mapped_data = &#39;,&#39;.join(mapping_dict.get(block.strip(), &#39;NA&#39;) for block in blocks.split(&#39;,&#39;))
+    return mapped_data
+
+def process_dataframes(xqtl_meta_data, gwas_meta_data):
+    &quot;&quot;&quot;Process the XQTL and GWAS dataframes.&quot;&quot;&quot;
+    xqtl_df = pd.read_csv(xqtl_meta_data, sep=&quot;\t&quot;)
+    # filter xQTL data with the ones have overlapped top loci variants with GWAS data
+    xqtl_df = xqtl_df[xqtl_df[&#39;block_top_loci&#39;].notna()]
+
+    gwas_df = pd.read_csv(gwas_meta_data, sep=&quot;\t&quot;)    
+    gwas_df = gwas_df[gwas_df[&#39;conditions_top_loci&#39;].notna()]
+    # e.g. gwas_finemapping_obj = [&#39;AD_Bellenguez_2022&#39;, &#39;single_effect_regression&#39;, &#39;RSS_QC_RAISS_imputed&#39;]
+    # filter gwas data with find variants in specified cohort &#39;AD_Bellenguez_2022&#39; and method &#39;RSS_QC_RAISS_imputed&#39;
+    gwas_finemapping_obj_filtered = [obj for obj in gwas_finemapping_obj if obj != &#39;susie_result_trimmed&#39; and obj != &#39;RSS_QC_RAISS_imputed&#39;]
+    if len(gwas_finemapping_obj_filtered) &gt; 0:
+        pattern = &#39;|&#39;.join(gwas_finemapping_obj_filtered)
+        gwas_df = gwas_df[gwas_df[&#39;conditions_top_loci&#39;].str.contains(pattern)]
+
+    gwas_df = gwas_df[gwas_df[&#39;region_id&#39;].isin(xqtl_df[&#39;block_top_loci&#39;].str.split(&#39;,&#39;).explode().unique())]
+
+    region_to_combined_data = dict(zip(gwas_df[&#39;region_id&#39;], gwas_df[&#39;original_data&#39;]))
+    # and only consider the overlapped GWAS blocks
+    xqtl_df[&#39;block_data&#39;] = xqtl_df[&#39;block_top_loci&#39;].apply(map_blocks_to_data, args=(region_to_combined_data,))
+    xqtl_df[&#39;block_data&#39;] = xqtl_df[&#39;block_data&#39;].str.replace(&#39;,NA&#39;, &#39;&#39;).str.replace(&#39;NA,&#39;, &#39;&#39;)
+
+    return xqtl_df, gwas_df
+
+xqtl_df, gwas_df = process_dataframes(xqtl_meta_data, gwas_meta_data)
+
+region_ids=[]
+# If region_list is provided, read the file and extract IDs
+if not region_list.is_dir():
+    if region_list.is_file():
+        region_list_df = pd.read_csv(region_list, sep=&#39;\t&#39;, header=None, comment = &quot;#&quot;)
+        region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
+    else:
+        raise ValueError(&quot;The region_list path provided is not a file.&quot;)
+        
+if len(region_name) &gt; 0:
+    region_ids = list(set(region_ids).union(set(region_name)))
+    
+if len(region_ids) &gt; 0:
+    xqtl_df = xqtl_df[xqtl_df[&#39;region_id&#39;].isin(region_ids)]
+    
+    
+new_df = generate_condition_based_dataframe(xqtl_df, minp)
+
+# if there is only one original data file, we don&#39;t have to map to context meta
+if (new_df[&#39;QTL_original_data&#39;].str.split(&#39;,&#39;).apply(lambda x: len(x) in [0, 1]).all() and not context_meta.is_file()):
+    filtered_df = new_df.copy()
+    filtered_df[&#39;GWAS_original_data&#39;] = filtered_df[&#39;GWAS_original_data&#39;].apply(make_unique_data)
+else:
+    filtered_df = merge_and_filter_dfs(new_df, generate_meta_dataframe(context_meta))
+
+filtered_df = prepare_final_paths(filtered_df, qtl_path, gwas_path)
+
+overlapped_regional_data = {
+    &#39;data&#39;: [row[&#39;QTL_original_data&#39;].split(&#39;,&#39;) for _, row in filtered_df.iterrows()],
+    &#39;conditions&#39;: [(f&quot;{row[&#39;condition&#39;]}@{row[&#39;region_id&#39;]}&quot;, *row[&#39;GWAS_original_data&#39;].split(&#39;,&#39;)) for _, row in filtered_df.iterrows()]
+}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[xqtl_gwas_enrichment]
+depends: sos_variable(&quot;regional_data&quot;)
+stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;No files left for analysis&#39;)
+
+meta = regional_data[&#39;conditions&#39;]
+input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta&quot;
+output: f&#39;{cwd:a}/{name}.{_meta[0]}.enrichment.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
+    library(tidyverse)
+    library(pecotmr)
+    # RDS files for GWAS data
+    gwas_finemapped_data = c(${paths([x for x in _meta[1:len(_meta)]]):r,})
+    # RDS files for xQTL data
+    xqtl_finemapped_data = c(${paths([x for x in _input]):r,})
+    enrich_result = xqtl_enrichment_wrapper(gwas_files = gwas_finemapped_data, xqtl_files = xqtl_finemapped_data, 
+                                                xqtl_finemapping_obj =  c(&quot;${_meta[0]}&quot;,${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x  for x in xqtl_finemapping_obj]) if len(xqtl_finemapping_obj) != 0 else &quot;NULL&quot;}), 
+                                                xqtl_varname_obj =   c(&quot;${_meta[0]}&quot;,${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x  for x in xqtl_varname_obj]) if len(xqtl_varname_obj) != 0 else &quot;NULL&quot;}), 
+                                                gwas_finemapping_obj =  c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in gwas_finemapping_obj]) if len(gwas_finemapping_obj) != 0 else &quot;NULL&quot;}), 
+                                                gwas_varname_obj =  c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in gwas_varname_obj]) if len(gwas_varname_obj) != 0 else &quot;NULL&quot;}))
+    saveRDS(enrich_result, ${_output:ar})
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_coloc]
+depends: sos_variable(&quot;overlapped_regional_data&quot;)
+# depends: sos_step(&quot;xqtl_gwas_enrichment&quot;) #changed
+stop_if(len(overlapped_regional_data[&#39;data&#39;]) == 0, f&#39;No files left for analysis&#39;)
+# skip enrichment or not
+parameter: skip_enrich=False
+# filter lbf by cs as default in susie coloc. default is False means filtering by V &gt; prior_tol
+parameter: filter_lbf_cs = False
+# ld reference path for postprocessing 
+parameter: ld_meta_file_path = path()
+meta = overlapped_regional_data[&#39;conditions&#39;]
+input: overlapped_regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, overlapped_regional_data[&quot;data&quot;]), group_with = &quot;meta&quot;
+# output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta[0]}.coloc.rds&#39;
+output: f&#39;{cwd:a}/{step_name}/{name}.{_meta[0]}.coloc.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
+    library(tidyverse)
+    library(pecotmr)
+    library(coloc) 
+    # RDS files for xQTL data
+     # RDS files for xQTL data
+    xqtl_finemapped_datas = c(${paths([x for x in _input]):r,})
+    coloc_res &lt;- list()
+    # are we doing something like this? that means results are by each context, and each one has 
+    for(xqtl_finemapped_data in xqtl_finemapped_datas){
+      qtl_dat &lt;- readRDS(xqtl_finemapped_data)
+      gene = names(qtl_dat)
+      context = &quot;${_meta[0]}&quot; %&gt;% str_split(.,&quot;@&quot;,simplify = T) %&gt;% .[,1] 
+      gene_region = pecotmr:::get_nested_element(qtl_dat[[1]],  c(context,&quot;region_info&quot;, &quot;grange&quot;))
+  
+      # Step 1: find relevant GWAS regions that overlap each the xQTL region of interest
+      gwas_finemapped_datas &lt;- c(${ &quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in _meta[1:]])}) 
+      gwas_finemapped_datas &lt;- gwas_finemapped_datas[grep(&#39;rds$&#39;,gwas_finemapped_datas)]
+ 
+      gwas_regions &lt;- gwas_finemapped_datas %&gt;% basename %&gt;% str_extract(., &quot;chr\\d+_\\d+_\\d+&quot;)
+      overlap_index &lt;- NULL
+      for (i in 1:length(gwas_regions)) {
+        region &lt;- gwas_regions[i]
+        split_region &lt;- unlist(strsplit(region, &quot;_&quot;))
+        block_chrom &lt;- as.numeric(split_region[1] %&gt;% gsub(&quot;chr&quot;,&quot;&quot;,.))
+        block_start &lt;- as.numeric(split_region[2] %&gt;% strsplit(., &quot;-&quot;) %&gt;% unlist %&gt;% .[1])
+        block_end &lt;- as.numeric(split_region[2] %&gt;% strsplit(., &quot;-&quot;) %&gt;% unlist %&gt;% .[2])
+        if (gene_region$chrom == block_chrom &amp;&amp; (gene_region$start &lt;= block_end |  gene_region$end &gt;= block_start)) {
+          overlap_index &lt;- c(overlap_index, i)
+        }
+      }
+  
+     if (!is.null(overlap_index)) {
+       gwas_finemapped_data &lt;- gwas_finemapped_datas[overlap_index]
+  
+       # Step 2: load enrichment analysis results
+       # Extract values for p1, p2, and p12
+     if(${&quot;FALSE&quot; if skip_enrich else &quot;TRUE&quot;}){
+       enrich_file = paste0(&#39;${cwd:a}&#39;,&#39;/&#39;, &#39;${name}&#39;, &#39;.&#39; ,context,&#39;.enrichment.rds&#39;)
+       p1 &lt;-  readRDS(enrich_file)[[1]]$`Alternative (coloc) p1`
+       p2 &lt;-  readRDS(enrich_file)[[1]]$`Alternative (coloc) p2`
+       p12 &lt;-  readRDS(enrich_file)[[1]]$`Alternative (coloc) p12`
+      
+       message(&quot;Priors are P1:&quot;, p1, &quot;; p2: &quot;, p2, &quot;; p12: &quot;, p12)
+     } else {
+       p1 = 1e-4
+       p2 = 1e-4
+       p12 = 5e-6
+       message(&quot;Priors are using default, P1: 1e-4, P2: 1e-4, P12: 5e-6&quot; )
+     }
+       # Step 3: Apply colocalization analysis between each condition and GWAS
+       coloc_res[[gene]] &lt;- coloc_wrapper(xqtl_file = xqtl_finemapped_data, gwas_files = gwas_finemapped_data, 
+                                          xqtl_finemapping_obj =  c(context,${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x  for x in xqtl_finemapping_obj]) if len(xqtl_finemapping_obj) != 0 else &quot;NULL&quot;}), 
+                                          xqtl_varname_obj =   c(context,${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x  for x in xqtl_varname_obj]) if len(xqtl_varname_obj) != 0 else &quot;NULL&quot;}), 
+                                          gwas_finemapping_obj =  c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in gwas_finemapping_obj]) if len(gwas_finemapping_obj) != 0 else &quot;NULL&quot;}), 
+                                          gwas_varname_obj =  c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in gwas_varname_obj]) if len(gwas_varname_obj) != 0 else &quot;NULL&quot;}),
+                                          xqtl_region_obj =   c(context,${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x  for x in xqtl_region_obj]) if len(xqtl_region_obj) != 0 else &quot;NULL&quot;}), 
+                                          gwas_region_obj =  c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in gwas_region_obj]) if len(gwas_region_obj) != 0 else &quot;NULL&quot;}),
+                                          p1 = p1, p2 = p2, p12 = p12, filter_lbf_cs = ${&quot;FALSE&quot; if skip_enrich else &quot;TRUE&quot;})
+
+        if (${&quot;TRUE&quot; if ld_meta_file_path.is_file() else &quot;FALSE&quot;}) {
+          if(length(coloc_res[[gene]]) &gt; 2) {
+              coloc_res[[gene]] &lt;- coloc_post_processor(coloc_res[[gene]], LD_meta_file_path = ${ld_meta_file_path:r}, analysis_region = coloc_res[[gene]]$analysis_region)
+            if(!is.null(coloc_res[[gene]]$sets$cs))  writeLines(coloc_res[[gene]]$sets$cs %&gt;% unlist, gsub(&quot;rds$&quot;,&quot;coloc_res&quot;,&quot;${_output}&quot;))
+          } else { message(&quot;No coloc results were generated.&quot;) }
+        }
+      
+      } else {
+        message(&quot;No overlap was found between GWAS blocks and QTL analysis region.&quot;)
+        coloc_res &lt;-  &quot;No overlap was found between GWAS blocks and QTL analysis region.&quot;
+      }
+    }
+    saveRDS(coloc_res, ${_output:r})
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Enrichment analysis results — this is a global enrichment estimate that combines all input data for each context.</p></li>
+<li><p>Colocalization results for regions of interest — if <code class="docutils literal notranslate"><span class="pre">ld_meta_file_path</span></code> is provided, would also report coloc cs by coloc postprocessing.</p></li>
+</ol>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="mnm_postprocessing.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Fine-mapping result post-processing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="twas_ctwas.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">TWAS, cTWAS and MR</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-logic">Analytical Logic</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Analytical Logic</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

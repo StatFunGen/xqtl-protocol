@@ -1,0 +1,1317 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Principal Component Analysis &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'PCA';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Genomic Relationship Matrices" href="GRM.html" />
+    <link rel="prev" title="Genotype PLINK File Quality Control" href="GWAS_QC.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/PCA.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2FPCA.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/PCA.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Principal Component Analysis</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal Working Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-estimate-kinship-in-the-sample-prerequisite"><strong>Step 1.</strong> Estimate kinship in the sample (prerequisite)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-sample-selection-and-qc-of-the-genotype-data-prerequisite"><strong>Step 2.</strong> Sample selection and QC of the genotype data (prerequisite)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#variant-level-and-sample-level-qc-on-unrelated-individuals-in-preparation-for-pca-analysis">Variant level and sample level QC on unrelated individuals, in preparation for PCA analysis</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-run-pca-on-the-unrelated-samples-flashpca"><strong>Step 3.</strong> Run PCA on the unrelated samples (flashpca)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-project-the-related-individuals-onto-the-pca-model"><strong>Step 4.</strong> Project the related individuals onto the PCA model</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optional-analysis-by-population-admixed-multi-ancestry-data">Optional — Analysis by population (admixed / multi-ancestry data)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p1-qc-on-unrelated-samples-per-population">P1 — QC on unrelated samples, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p2-extract-the-selected-variants-from-related-samples-per-population">P2 — Extract the selected variants from related samples, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p3-run-pca-flashpca-on-unrelated-samples-per-population">P3 — Run PCA (flashpca) on unrelated samples, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p4-project-related-samples-onto-each-populations-pca-per-population">P4 — Project related samples onto each population’s PCA, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p5-finalize-genotypes-per-population">P5 — Finalize genotypes per population</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pca-analysis">PCA analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#project-related-individuals-back">Project related individuals back</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-pca-results">Plot PCA results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detect-outliers">Detect outliers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#add-plot-and-outlier-detection-to-pca-steps">Add plot and outlier detection to PCA steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="principal-component-analysis">
+<h1>Principal Component Analysis<a class="headerlink" href="#principal-component-analysis" title="Link to this heading">#</a></h1>
+<p>The intention of this notebook is to perform the PCA analysis on genotype data and generate plots.</p>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>This notebook performs PCA on genotype data of <strong>unrelated</strong> individuals and projects the remaining (related) samples back into that PCA space. The main steps are: remove related individuals, LD-prune the variants, run PCA on the unrelated set, and exclude PCA-space outliers.</p>
+<p>Relatedness estimation and sample QC are done upstream in <code class="docutils literal notranslate"><span class="pre">GWAS_QC.ipynb</span></code>.</p>
+</section>
+<section id="input-files">
+<h2>Input Files<a class="headerlink" href="#input-files" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed</span></code></p></td>
+<td><p>LD-pruned PLINK bundle for <strong>unrelated</strong> individuals (from GWAS_QC). PCA is computed on these samples.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/kinship/protocol_example.merged.plink_qc.protocol_example.king.related.bed</span></code></p></td>
+<td><p>PLINK bundle for <strong>related</strong> individuals (from GWAS_QC), projected back onto the PCA model.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.pca_pheno.txt</span></code></p></td>
+<td><p>Phenotype/label table with an <code class="docutils literal notranslate"><span class="pre">IID</span></code> column (plus optional <code class="docutils literal notranslate"><span class="pre">FID</span></code>) used to label/colour the projected samples. A PLINK <code class="docutils literal notranslate"><span class="pre">.fam</span></code> file may be used instead.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Genotypes must be in PLINK format (common variants, LD pruned) and split into related and unrelated sets. The phenotype file may also carry population/disease columns for labelling the PCA plots.</p>
+</section>
+<section id="output-files">
+<h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/pca_uf/*.pca.rds</span></code></p></td>
+<td><p>PCA model + PC scores for the unrelated samples (RDS).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/pca_uf/*.pca.txt</span></code></p></td>
+<td><p>PC scores table for the unrelated samples.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/pca_uf/*.pca.scree.png</span></code></p></td>
+<td><p>Scree plot of variance explained.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/pca_uf/*.pca.mahalanobis.*</span></code>, <code class="docutils literal notranslate"><span class="pre">*.pca.outliers</span></code></p></td>
+<td><p>Mahalanobis distances per population and the list of PC outliers.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/pca_uf/*.projected.rds</span></code> / <code class="docutils literal notranslate"><span class="pre">*.projected.txt</span></code></p></td>
+<td><p>Projected PC scores for the related individuals.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/pca_uf/*.projected.pc.png</span></code></p></td>
+<td><p>PCA plot including the projected related samples.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="minimal-working-example">
+<h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
+<p>The data can be found on <a class="reference external" href="https://www.synapse.org/#!Synapse:syn69670658/files/">Synapse</a>.</p>
+<p><strong>Note: parameters set for the MWE are meant to let the MWE work to show the workflow procedures. They may be unrealistic and should not be used in practice. The pipeline has reasonable default values for what we suggest to use in practice for most of the parameters.</strong></p>
+<section id="step-1-estimate-kinship-in-the-sample-prerequisite">
+<h3><strong>Step 1.</strong> Estimate kinship in the sample (prerequisite)<a class="headerlink" href="#step-1-estimate-kinship-in-the-sample-prerequisite" title="Link to this heading">#</a></h3>
+<p>Before PCA we need to know which individuals are related, because PCA must be computed on an <strong>unrelated</strong> subset and the related individuals are projected back afterwards. This step runs the <code class="docutils literal notranslate"><span class="pre">king</span></code> workflow from GWAS_QC to estimate pairwise kinship and split the samples into <em>unrelated</em> and <em>related</em> sets. It is an upstream prerequisite — its outputs (the <code class="docutils literal notranslate"><span class="pre">king.unrelated</span></code> and <code class="docutils literal notranslate"><span class="pre">king.related</span></code> PLINK bundles) feed the PCA steps below.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb king \
+    --cwd output/gwas_qc/kinship \
+    --genoFile output/gwas_qc/plink/protocol_example.merged.plink_qc.bed \
+    --name protocol_example.king \
+    --keep-samples output/gwas_qc/genotype/protocol_example.rnaseq.bed.sample_genotypes.txt
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-2-sample-selection-and-qc-of-the-genotype-data-prerequisite">
+<h3><strong>Step 2.</strong> Sample selection and QC of the genotype data (prerequisite)<a class="headerlink" href="#step-2-sample-selection-and-qc-of-the-genotype-data-prerequisite" title="Link to this heading">#</a></h3>
+<p>QC the genotypes that will go into PCA: filter on MAF, sample/variant missingness and Hardy-Weinberg equilibrium, and LD-prune the variants. You can restrict to one population or to the related / unrelated split. Here we QC and LD-prune the <strong>unrelated</strong> individuals to build the PCA reference, and separately extract the same variants for the related individuals so they can be projected later. These <code class="docutils literal notranslate"><span class="pre">qc</span></code> / <code class="docutils literal notranslate"><span class="pre">qc_no_prune</span></code> calls come from GWAS_QC and are upstream prerequisites for the PCA steps.</p>
+<section id="variant-level-and-sample-level-qc-on-unrelated-individuals-in-preparation-for-pca-analysis">
+<h4>Variant level and sample level QC on unrelated individuals, in preparation for PCA analysis<a class="headerlink" href="#variant-level-and-sample-level-qc-on-unrelated-individuals-in-preparation-for-pca-analysis" title="Link to this heading">#</a></h4>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
+    --cwd output/gwas_qc/genotype \
+    --genoFile output/gwas_qc/kinship/protocol_example.merged.plink_qc.protocol_example.king.unrelated.bed \
+    --mac-filter 5
+</pre></div>
+</div>
+</div>
+</div>
+<p>Extract the previously selected (LD-pruned) variants from the <strong>related</strong> individuals, applying only a sample-level missingness filter so the related samples carry exactly the same variant set as the unrelated reference.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
+    --cwd output/gwas_qc/cache \
+    --genoFile output/genotype_formatting/plink/protocol_example.merged.bed \
+    --geno-filter 0 --mind-filter 0.1 --maf-filter 0 \
+    --keep-variants output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.in \
+    --name for_pca
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="step-3-run-pca-on-the-unrelated-samples-flashpca">
+<h3><strong>Step 3.</strong> Run PCA on the unrelated samples (flashpca)<a class="headerlink" href="#step-3-run-pca-on-the-unrelated-samples-flashpca" title="Link to this heading">#</a></h3>
+<p>This is the core PCA step. It runs <code class="docutils literal notranslate"><span class="pre">flashpca</span></code> on the LD-pruned <strong>unrelated</strong> PLINK bundle to compute the principal components, then automatically computes Mahalanobis distances and flags PC outliers. Outputs: the fitted PCA model (<code class="docutils literal notranslate"><span class="pre">.pca.rds</span></code>), the PC score table (<code class="docutils literal notranslate"><span class="pre">.pca.txt</span></code>), a scree plot of variance explained, and the outlier list. Timing: &lt;2 min.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--name</span></code> argument tags all output files; point <code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> at the LD-pruned unrelated bed produced upstream.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/PCA.ipynb flashpca \
+    --cwd output/pca_uf \
+    --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
+    --name protocol_example
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>What you should see:</strong> the workflow runs <code class="docutils literal notranslate"><span class="pre">flashpca_1</span></code> (PCA), then <code class="docutils literal notranslate"><span class="pre">detect_outliers</span></code> (Mahalanobis distance per population) and <code class="docutils literal notranslate"><span class="pre">plot_pca</span></code>, finishing with “executed successfully with 5 completed steps”. The PCA model and PC scores are written to the <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> directory. The scree plot below shows the proportion of variance explained by each PC — use it to decide how many PCs to keep.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>%preview output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.scree.png
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-4-project-the-related-individuals-onto-the-pca-model">
+<h3><strong>Step 4.</strong> Project the related individuals onto the PCA model<a class="headerlink" href="#step-4-project-the-related-individuals-onto-the-pca-model" title="Link to this heading">#</a></h3>
+<p>The related individuals were held out of the PCA, so we now project them onto the model fitted from the unrelated samples. First reduce the related genotypes to <strong>exactly</strong> the same pruned variant set used to build the model (the <code class="docutils literal notranslate"><span class="pre">plink2</span> <span class="pre">--extract</span></code> cell below) — otherwise the projection errors with “Input number of variants should be the same as used in the previous PCA model”. Then run <code class="docutils literal notranslate"><span class="pre">project_samples</span></code>, passing a phenotype table (must contain an <code class="docutils literal notranslate"><span class="pre">IID</span></code> column) and, if available, a population/ethnicity column via <code class="docutils literal notranslate"><span class="pre">--label-col</span></code> / <code class="docutils literal notranslate"><span class="pre">--pop-col</span></code> (here the <code class="docutils literal notranslate"><span class="pre">race</span></code> column) so the projected samples can be coloured and the outlier detection can run.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/PCA.ipynb project_samples \
+    --cwd output/pca_uf \
+    --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
+    --phenoFile input/covariate/protocol_example.pca_pheno.txt \
+    --pca-model output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.rds \
+    --label-col race \
+    --pop-col race \
+    --maha-k 2
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>%preview output/pca_uf/protocol_example.pca_pheno.pca.projected.pc.png
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
+    --cwd output/pca_related \
+    --genoFile output/pca_related/protocol_example.related.for_pca.bed \
+    --remove-samples output/pca_uf/protocol_example.pca_pheno.pca.projected.outliers \
+    --name no_outlier
+</pre></div>
+</div>
+</div>
+</div>
+<p>Re-run the QC on the <strong>related</strong> individuals after dropping any PCA-detected outliers (passed via <code class="docutils literal notranslate"><span class="pre">--remove-samples</span></code>), keeping the same variant set as the unrelated samples. The output PLINK bundle <code class="docutils literal notranslate"><span class="pre">protocol_example.related.for_pca.no_outlier.plink_qc.*</span></code> is the outlier-free, QC’d genotype set for the related individuals.</p>
+<blockquote>
+<div><p>Note: for this clean toy dataset no outliers are detected, so the removal list is empty and this step simply re-emits the QC’d related set.</p>
+</div></blockquote>
+<p>Finally, merge back related and unrelated individuals as finalized genotype in PLINK format,</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb merge_plink \
+    --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
+               output/pca_related/protocol_example.related.for_pca.no_outlier.plink_qc.bed \
+    --cwd output/genotype_final \
+    --name protocol_example.qced
+</pre></div>
+</div>
+</div>
+</div>
+<p>You can stop here if you’re analyzing a homogenous population.</p>
+</section>
+</section>
+<section id="optional-analysis-by-population-admixed-multi-ancestry-data">
+<h2>Optional — Analysis by population (admixed / multi-ancestry data)<a class="headerlink" href="#optional-analysis-by-population-admixed-multi-ancestry-data" title="Link to this heading">#</a></h2>
+<p>The Steps 1–4 above produce a single PCA for the whole cohort, which is appropriate for a <strong>homogeneous</strong> population. If your cohort contains <strong>multiple ancestry groups</strong>, run the per-population workflow below instead: split the samples by population, then repeat the same QC → PCA → projection steps <strong>separately within each population</strong>.</p>
+<p>The sub-steps below mirror Steps 1–4 exactly, just looped over each population (<code class="docutils literal notranslate"><span class="pre">for</span> <span class="pre">i</span> <span class="pre">in</span> <span class="pre">race1</span> <span class="pre">race3</span></code>). Follow them in order:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Sub-step</p></th>
+<th class="head"><p>What it does</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>P0. Split by population</strong></p></td>
+<td><p>Write a per-population sample-ID list</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>P1. QC unrelated</strong></p></td>
+<td><p>Variant/sample QC within each population (unrelated samples)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>P2. Extract variants in related</strong></p></td>
+<td><p>Keep the P1 pruned variants in the related samples</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>P3. PCA on unrelated</strong></p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">flashpca</span></code> per population</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>P4. Project related</strong></p></td>
+<td><p>Project related samples onto each population’s PCA</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>P5. Finalize</strong></p></td>
+<td><p>Per-population QC to finalize genotypes</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Build per-population sample keep-lists from the phenotype table.
+# One file per ancestry group, named output/pca_uf/protocol_example.ID.&lt;race&gt;.txt
+# Each file holds two columns (FID, IID) with no header, matching plink&#39;s --keep format.
+pheno &lt;- read.table(&quot;input/covariate/protocol_example.pca_pheno.txt&quot;, header = TRUE, stringsAsFactors = FALSE)
+
+for (i in 1:3) {
+    race    &lt;- subset(pheno, race == i)
+    race_id &lt;- cbind(race$FID, race$IID)
+    write.table(race_id,
+                paste0(&quot;output/pca_uf/protocol_example.ID.&quot;, i, &quot;.txt&quot;),
+                quote = FALSE, sep = &quot;\t&quot;, col.names = FALSE, row.names = FALSE)
+}
+</pre></div>
+</div>
+</div>
+</div>
+<section id="p1-qc-on-unrelated-samples-per-population">
+<h3>P1 — QC on unrelated samples, per population<a class="headerlink" href="#p1-qc-on-unrelated-samples-per-population" title="Link to this heading">#</a></h3>
+<p>Same as Step 2 (QC), but looped over each population. Below we only show Populations 1 and 3 as an example. <strong>Next:</strong> once each population has a QC’d unrelated set, extract those variants from the related samples (P2).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
+    sos run pipeline/GWAS_QC.ipynb qc \
+        --cwd output/pca_uf \
+        --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.bed \
+        --keep-samples output/pca_uf/protocol_example.ID.$i.txt \
+        --mac-filter 5 \
+        --bad-ld True \
+        --name pop_$i
+done
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="p2-extract-the-selected-variants-from-related-samples-per-population">
+<h3>P2 — Extract the selected variants from related samples, per population<a class="headerlink" href="#p2-extract-the-selected-variants-from-related-samples-per-population" title="Link to this heading">#</a></h3>
+<p>Same as the extract part of Step 4, looped per population (sample-level missingness filter only).</p>
+<blockquote>
+<div><p>Note: Population 1 may have <strong>no related samples</strong>, in which case its <code class="docutils literal notranslate"><span class="pre">*.related.for_pca_race1.filtered.extracted.stderr</span></code> log will say <code class="docutils literal notranslate"><span class="pre">Error:</span> <span class="pre">No</span> <span class="pre">people</span> <span class="pre">remaining</span> <span class="pre">after</span> <span class="pre">--keep.</span></code> That is expected — just continue with the populations that do have related samples. <strong>Next:</strong> run PCA on each population’s unrelated set (P3).</p>
+</div></blockquote>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
+    sos run pipeline/GWAS_QC.ipynb qc_no_prune \
+        --cwd output/pca_uf \
+        --genoFile output/pca_related/protocol_example.related.for_pca.bed \
+        --keep-variants output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.pop_$i.plink_qc.prune.in \
+        --keep-samples output/pca_uf/protocol_example.ID.$i.txt \
+        --maf-filter 0 --geno-filter 0 --mind-filter 0.1 --hwe-filter 0 \
+        --name pop_$i
+done
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="p3-run-pca-flashpca-on-unrelated-samples-per-population">
+<h3>P3 — Run PCA (flashpca) on unrelated samples, per population<a class="headerlink" href="#p3-run-pca-flashpca-on-unrelated-samples-per-population" title="Link to this heading">#</a></h3>
+<p>Same as Step 3, looped per population. Here the number of PCs is set to 5 (<code class="docutils literal notranslate"><span class="pre">--k</span> <span class="pre">5</span></code>) because each population’s sample size is small. <strong>Next:</strong> project the related samples onto each population’s PCA model (P4).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
+    sos run pipeline/PCA.ipynb flashpca \
+        --name pop_$i \
+        --cwd output/pca_uf \
+        --genoFile output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.pop_$i.plink_qc.prune.bed \
+        --phenoFile input/covariate/protocol_example.pca_pheno.txt \
+        --label-col race \
+        --pop-col race \
+        --maha-k 2 \
+        --k 5
+done
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="p4-project-related-samples-onto-each-populations-pca-per-population">
+<h3>P4 — Project related samples onto each population’s PCA, per population<a class="headerlink" href="#p4-project-related-samples-onto-each-populations-pca-per-population" title="Link to this heading">#</a></h3>
+<p>Same as Step 4 (projection), looped per population. Only populations that actually have related samples are projected (here, Population 3 only). <strong>Next:</strong> finalize genotypes per population (P5).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
+    sos run pipeline/PCA.ipynb project_samples \
+        --name pop_$i \
+        --cwd output/pca_uf \
+        --genoFile output/pca_uf/protocol_example.related.for_pca.pop_$i.plink_qc.extracted.bed \
+        --phenoFile input/covariate/protocol_example.pca_pheno.txt \
+        --pca-model output/pca_uf/protocol_example.pca_pheno.pop_$i.pca.rds \
+        --label-col race \
+        --pop-col race \
+        --maha-k 2 \
+        --k 5
+done
+</pre></div>
+</div>
+</div>
+</div>
+<p>To visualize the results at this point,</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>%preview output/pca_uf/protocol_example.pca_pheno.pca.projected.pc.png
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="p5-finalize-genotypes-per-population">
+<h3>P5 — Finalize genotypes per population<a class="headerlink" href="#p5-finalize-genotypes-per-population" title="Link to this heading">#</a></h3>
+<p>Same as the <strong>Finalize genotype QC by PCA</strong> step for a homogeneous population, applied per population and taking the detected outliers into account. See the <code class="docutils literal notranslate"><span class="pre">GWAS_QC.ipynb</span></code> documentation for the available QC options and recommendations. This is the end of the per-population workflow.</p>
+</section>
+</section>
+<section id="command-interface">
+<h2>Command Interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run PCA.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+# the output directory for generated files
+parameter: cwd = path(&quot;output&quot;)
+# A string to identify your analysis run
+parameter: name = &quot;&quot;
+# Name of the population column in the phenoFile
+parameter: pop_col = &quot;&quot;
+# Name of the populations (from the population column) you would like to plot and show on the PCA plot
+parameter: pops = []
+# Name of the color label column in the phenoFile; can be the same as population column. Can also be a separate column eg a &quot;super population&quot; column as a way to enable you to combine selected populations based on another column.
+parameter: label_col = &quot;&quot;
+# Number of Principal Components to output,must be consistant between flashpca run and project samples run (flashpca partial PCA method).
+parameter: k = 20
+# Number of Principal Components based on which outliers should be evaluated. Default is 5 but this should be based on examine the scree plot
+parameter: maha_k = 5
+# Homogeneity of populations. Set to --homogeneous when true and --no-homogeneous when false
+parameter: homogeneous = False
+# Software container option
+parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= &quot;&quot;
+# For cluster jobs, number commands to run per job
+parameter: job_size = 1
+# Wall clock time expected
+parameter: walltime = &quot;5h&quot;
+# Memory expected
+parameter: mem = &quot;16G&quot;
+# Number of threads
+parameter: numThreads = 10
+suffix = &#39;_&#39;.join(pops)
+cwd = path(f&quot;{cwd:a}&quot;)
+if not pop_col:
+    homogeneous = True
+
+# Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
+def determine_plink_format(file_path):
+    &quot;&quot;&quot;
+    Determine the PLINK file format based on file extensions and companion files.
+    
+    Args:
+        file_path (str or Path): Path to the input file
+    
+    Returns:
+        str: &#39;plink1&#39; or &#39;plink2&#39;
+    &quot;&quot;&quot;
+    # Convert to string if it&#39;s a Path object
+    file_path = str(file_path)
+    
+    # Check direct file extensions
+    if file_path.endswith(&#39;.bed&#39;):
+        return &#39;plink1&#39;
+    elif file_path.endswith(&#39;.pgen&#39;):
+        return &#39;plink2&#39;
+    
+    # If the file doesn&#39;t have a standard extension, try to infer format
+    try:
+        # Remove the file extension if present
+        base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
+        
+        # Check for PLINK1 companion files
+        plink1_companion_files = [
+            f&quot;{base_path}.bim&quot;,
+            f&quot;{base_path}.fam&quot;
+        ]
+        
+        # Check for PLINK2 companion files
+        plink2_companion_files = [
+            f&quot;{base_path}.pvar&quot;,
+            f&quot;{base_path}.psam&quot;
+        ]
+        
+        # Check PLINK1 format
+        if all(os.path.exists(f) for f in plink1_companion_files):
+            return &#39;plink1&#39;
+        
+        # Check PLINK2 format
+        if all(os.path.exists(f) for f in plink2_companion_files):
+            return &#39;plink2&#39;
+    
+    except Exception as e:
+        print(f&quot;Error determining PLINK format: {e}&quot;)
+    
+    # Default to PLINK1 if can&#39;t determine
+    return &#39;plink1&#39;
+
+# Get the appropriate PLINK command prefix
+def get_plink_command_prefix(file_path):
+    format_type = determine_plink_format(file_path)
+    if format_type == &#39;plink1&#39;:
+        return &quot;--bfile&quot;
+    else:  # plink2
+        return &quot;--pfile&quot;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># PCA command with PLINK, as a sanity check
+[pca_plink]
+# PLINK binary file
+parameter: genoFile = path
+input: genoFile
+plink_command = get_plink_command_prefix(_input)
+output: f&#39;{cwd}/{genoFile:bn}.pca.eigenvec&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
+    plink2 ${plink_command} ${_input:n} --out ${_output:n} --pca ${k}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="pca-analysis">
+<h2>PCA analysis<a class="headerlink" href="#pca-analysis" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Run PCA analysis using flashpca 
+[flashpca_1]
+# Plink binary file
+parameter: genoFile = path
+# The phenotypic file
+parameter: phenoFile = path(f&#39;{genoFile}&#39;.replace(&quot;.bed&quot;, &quot;.fam&quot;).replace(&quot;.pgen&quot;, &quot;.psam&quot;))
+# minimum population size to consider in the analysis
+parameter: min_pop_size = 2
+# How to standardize X before PCA
+parameter: stand = &quot;binom2&quot;
+## Input genoFile here is for unrelated samples
+input: genoFile, phenoFile
+output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
+        --step flashpca \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input[0]}&quot; \
+        --phenoFile &quot;${_input[1]}&quot; \
+        --output &quot;${_output}&quot; \
+        --stand &quot;${stand}&quot; \
+        --min-pop-size ${min_pop_size} \
+        --homogeneous &quot;${homogeneous}&quot; \
+        --pop-col &quot;${pop_col}&quot; \
+        --label-col &quot;${label_col}&quot; \
+        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
+        --k ${k} \
+        --maha-k ${maha_k} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="project-related-individuals-back">
+<h2>Project related individuals back<a class="headerlink" href="#project-related-individuals-back" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Project back to PCA model additional samples
+[project_samples_1]
+# Plink binary file
+parameter: genoFile = path
+# The phenotypic file
+parameter: phenoFile = path(f&#39;{genoFile}&#39;.replace(&quot;.bed&quot;, &quot;.fam&quot;).replace(&quot;.pgen&quot;, &quot;.psam&quot;))
+# How to standardize X before PCA
+parameter: stand = &quot;binom2&quot;
+parameter: pca_model = f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;
+## Input genoFile here is for related samples
+input: genoFile, phenoFile, pca_model
+output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.pca.projected.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
+        --step project_samples \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input[0]}&quot; \
+        --phenoFile &quot;${_input[1]}&quot; \
+        --output &quot;${_output}&quot; \
+        --stand &quot;${stand}&quot; \
+        --pop-col &quot;${pop_col}&quot; \
+        --label-col &quot;${label_col}&quot; \
+        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
+        --pca-model &quot;${_input[2]}&quot; \
+        --maha-k ${maha_k} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="plot-pca-results">
+<h2>Plot PCA results<a class="headerlink" href="#plot-pca-results" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Plot PCA results. 
+# Can be used independently as &quot;plot_pca&quot; or combined with other workflow as eg &quot;flashpca+plot_pca&quot;
+[plot_pca]
+parameter: outlier_file = path()
+parameter: plot_data = path
+parameter: min_axis = &quot;&quot;
+parameter: max_axis = &quot;&quot;
+input: plot_data
+output: f&#39;{cwd}/{_input:bn}.pc.png&#39;,
+        f&#39;{cwd}/{_input:bn}.scree.png&#39;,
+        f&#39;{cwd}/{_input:bn}.scree.txt&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
+        --step plot_pca \
+        --cwd &quot;${cwd}&quot; \
+        --plot-data &quot;${_input}&quot; \
+        --outlier-file &quot;${outlier_file}&quot; \
+        --min-axis &quot;${min_axis}&quot; \
+        --max-axis &quot;${max_axis}&quot; \
+        --pop-col &quot;${pop_col}&quot; \
+        --label-col &quot;${label_col}&quot; \
+        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
+        --k ${k} \
+        --output-pc-plot &quot;${_output[0]}&quot; \
+        --output-scree-plot &quot;${_output[1]}&quot; \
+        --output-scree-text &quot;${_output[2]}&quot; \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="detect-outliers">
+<h2>Detect outliers<a class="headerlink" href="#detect-outliers" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Calculate Mahalanobis distance per population and report outliers
+[detect_outliers]
+# Set the probability to remove outliers eg 0.95 or 0.997
+parameter: prob = 0.997
+# Mahalanobis distance p-value cutoff
+parameter: pval = 0.05
+# Robust Mahalanobis to outliers
+parameter: robust = True
+parameter: pca_result = path
+input: pca_result
+output: distance=f&#39;{_input:n}.mahalanobis.rds&#39;,
+        identified_outliers=f&#39;{_input:n}.outliers&#39;,
+        analysis_summary=f&#39;{_input:n}.analysis_summary.md&#39;,
+        qqplot_mahalanobis=f&#39;{_input:n}.mahalanobis_qq.png&#39;,
+        hist_mahalanobis=f&#39;{_input:n}.mahalanobis_hist.png&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
+        --step detect_outliers \
+        --cwd &quot;${cwd}&quot; \
+        --pca-result &quot;${_input}&quot; \
+        --prob ${prob} \
+        --pval ${pval} \
+        --robust ${&quot;TRUE&quot; if robust else &quot;FALSE&quot;} \
+        --pop-col &quot;${pop_col}&quot; \
+        --k ${k} \
+        --distance-output &quot;${_output[&#39;distance&#39;]}&quot; \
+        --identified-outliers-output &quot;${_output[&#39;identified_outliers&#39;]}&quot; \
+        --analysis-summary-output &quot;${_output[&#39;analysis_summary&#39;]}&quot; \
+        --qqplot-output &quot;${_output[&#39;qqplot_mahalanobis&#39;]}&quot; \
+        --hist-output &quot;${_output[&#39;hist_mahalanobis&#39;]}&quot; \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="add-plot-and-outlier-detection-to-pca-steps">
+<h2>Add plot and outlier detection to PCA steps<a class="headerlink" href="#add-plot-and-outlier-detection-to-pca-steps" title="Link to this heading">#</a></h2>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[flashpca_2, project_samples_2]
+# Set the probability to remove outliers eg 0.95 or 0.997
+parameter: prob = 0.997
+# Robust Mahalanobis to outliers
+parameter: robust = True
+output: distance=f&#39;{_input:n}.mahalanobis.rds&#39;,
+        identified_outliers=f&#39;{_input:n}.outliers&#39;,
+        analysis_summary=f&#39;{_input:n}.analysis_summary.md&#39;,
+        qqplot_mahalanobis=f&#39;{_input:n}.mahalanobis_qq.png&#39;,
+        hist_mahalanobis=f&#39;{_input:n}.mahalanobis_hist.png&#39;
+sos_run(&quot;detect_outliers&quot;, pca_result=_input, prob=prob, robust=robust)
+
+[flashpca_3, project_samples_3]
+input: output_from(1), output_from(2)[&#39;identified_outliers&#39;]
+outliers = [x.strip() for x in open(_input[1]).readlines() if x.strip()]
+output: f&quot;{cwd}/{_input[0]:bn}.pc.png&quot;,
+        f&quot;{cwd}/{_input[0]:bn}.scree.png&quot;
+sos_run(&quot;plot_pca&quot;, plot_data = _input[0], outlier_file = _input[1] if len(outliers) else path())
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="GWAS_QC.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Genotype PLINK File Quality Control</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="GRM.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Genomic Relationship Matrices</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal Working Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-estimate-kinship-in-the-sample-prerequisite"><strong>Step 1.</strong> Estimate kinship in the sample (prerequisite)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-sample-selection-and-qc-of-the-genotype-data-prerequisite"><strong>Step 2.</strong> Sample selection and QC of the genotype data (prerequisite)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#variant-level-and-sample-level-qc-on-unrelated-individuals-in-preparation-for-pca-analysis">Variant level and sample level QC on unrelated individuals, in preparation for PCA analysis</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-run-pca-on-the-unrelated-samples-flashpca"><strong>Step 3.</strong> Run PCA on the unrelated samples (flashpca)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-project-the-related-individuals-onto-the-pca-model"><strong>Step 4.</strong> Project the related individuals onto the PCA model</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optional-analysis-by-population-admixed-multi-ancestry-data">Optional — Analysis by population (admixed / multi-ancestry data)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p1-qc-on-unrelated-samples-per-population">P1 — QC on unrelated samples, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p2-extract-the-selected-variants-from-related-samples-per-population">P2 — Extract the selected variants from related samples, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p3-run-pca-flashpca-on-unrelated-samples-per-population">P3 — Run PCA (flashpca) on unrelated samples, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p4-project-related-samples-onto-each-populations-pca-per-population">P4 — Project related samples onto each population’s PCA, per population</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#p5-finalize-genotypes-per-population">P5 — Finalize genotypes per population</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pca-analysis">PCA analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#project-related-individuals-back">Project related individuals back</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-pca-results">Plot PCA results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detect-outliers">Detect outliers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#add-plot-and-outlier-detection-to-pca-steps">Add plot and outlier detection to PCA steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

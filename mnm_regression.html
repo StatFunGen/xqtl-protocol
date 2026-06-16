@@ -1,0 +1,1956 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Advanced regression models for association analysis with individual-level data &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'mnm_regression';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="RSS Fine-mapping with GWAS Summary Statistics" href="rss_analysis.html" />
+    <link rel="prev" title="Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE" href="summary_stats_finemapping_vignette.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/mnm_regression.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fmnm_regression.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/mnm_regression.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Advanced regression models for association analysis with individual-level data</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-a-gene-expression-input-primary-example">Mode A: gene-expression input (primary example)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-b-peak-other-molecular-phenotypes-same-pipeline-different-input">Mode B: peak / other molecular phenotypes (same pipeline, different input)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-workflows">Other workflows</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multivariate-analysis-mvsusie-and-mr-mash-mnm">Multivariate analysis: mvSuSiE and mr.mash (<code class="docutils literal notranslate"><span class="pre">mnm</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-fine-mapping-across-multiple-genes-mnm-genes">xQTL fine-mapping across multiple genes (<code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functional-regression-fsusie-for-epigenomic-qtl-fine-mapping-fsusie">Functional regression fSuSiE for epigenomic QTL fine-mapping (<code class="docutils literal notranslate"><span class="pre">fsusie</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functional-regression-fsusie-with-other-modality-mvfsusie">Functional regression fSuSiE with other modality (<code class="docutils literal notranslate"><span class="pre">mvfsusie</span></code>)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mvfsusie-wip-placeholder">mvfsusie (WIP placeholder)</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="advanced-regression-models-for-association-analysis-with-individual-level-data">
+<h1>Advanced regression models for association analysis with individual-level data<a class="headerlink" href="#advanced-regression-models-for-association-analysis-with-individual-level-data" title="Link to this heading">#</a></h1>
+<p>This is a new-user-friendly minimal working example (MWE) of the <code class="docutils literal notranslate"><span class="pre">mnm_regression</span></code> pipeline. It runs end-to-end on the bundled chr22 toy dataset and shows how to compute SuSiE fine-mapping results and multi-method TWAS weights for a list of molecular-phenotype regions, then build the ensemble TWAS weights.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<p>Requires processed genotype (PLINK/VCF) and phenotype files from <code class="docutils literal notranslate"><span class="pre">data_preprocessing</span></code>. For TWAS, also requires the LD reference generated by <code class="docutils literal notranslate"><span class="pre">rss_ld_sketch</span></code>.</p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>This pipeline fits advanced statistical models for QTL association analysis using individual-level genotype and molecular-phenotype data. For each region in a phenotype list it runs univariate SuSiE fine-mapping and trains TWAS prediction weights with several methods, then combines them into an <strong>ensemble</strong> weight.</p>
+<p><strong>The primary example below uses gene expression</strong> as the molecular phenotype, running end-to-end on the same chr22 toy genotype:</p>
+<ul class="simple">
+<li><p><strong>Gene-expression input</strong> (<code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code>, Mode A): the phenotype is a bulk RNA-seq matrix with Ensembl <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>s; association windows are gene TSS +/- 500 kb. This is the main, fully verified example.</p></li>
+<li><p><strong>Peak / chromatin input</strong> (<code class="docutils literal notranslate"><span class="pre">input/</span></code>, Mode B): the <em>same</em> pipeline also accepts a list of chr22 peaks (or any other molecular phenotype) - the command is identical, you just swap in the phenotype BED and its manifest.</p></li>
+</ul>
+<p><strong>Workflows used here:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> – univariate SuSiE fine-mapping plus multi-method TWAS weights (one <code class="docutils literal notranslate"><span class="pre">*.univariate_twas_weights.rds</span></code> per region).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ensemble_twas_weight</span></code> – reads the univariate weights and adds the ensemble weight (one <code class="docutils literal notranslate"><span class="pre">*.ensemble_twas_weights.rds</span></code> per region).</p></li>
+</ul>
+<p>The notebook also documents the <code class="docutils literal notranslate"><span class="pre">mvsusie</span></code> (multivariate) and <code class="docutils literal notranslate"><span class="pre">fsusie</span></code> (functional) workflows that the pipeline supports, but the MWE focuses on the univariate + ensemble path that is runnable on the toy data.</p>
+<p><strong>Note on data:</strong> this example uses a small synthetic chr22 toy dataset (1,995 variants after subsetting). No access-controlled individual-level human data is used.</p>
+</section>
+<section id="input-files">
+<h2>Input Files<a class="headerlink" href="#input-files" title="Link to this heading">#</a></h2>
+<p>All paths below are relative to the <code class="docutils literal notranslate"><span class="pre">toy_example/</span></code> root (where you launch the commands).</p>
+<p><strong>Shared genotype (both modes):</strong></p>
+<ul class="simple">
+<li><p><strong>Genotype</strong> (<code class="docutils literal notranslate"><span class="pre">--genoFile</span></code>): PLINK1 binary set. Pass the <code class="docutils literal notranslate"><span class="pre">.bed</span></code> file; the <code class="docutils literal notranslate"><span class="pre">.bim</span></code>/<code class="docutils literal notranslate"><span class="pre">.fam</span></code> are read automatically. Gene-expression mode (<code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code>) uses <code class="docutils literal notranslate"><span class="pre">example.chr22.{bed,bim,fam}</span></code>; peak mode (<code class="docutils literal notranslate"><span class="pre">input/</span></code>) uses <code class="docutils literal notranslate"><span class="pre">protocol_example.genotype.chr22.{bed,bim,fam}</span></code> (chr22, 1,995 variants).</p></li>
+<li><p><strong>Covariates</strong> (<code class="docutils literal notranslate"><span class="pre">--covFile</span></code>): a TSV with covariate rows and one column per sample (gene-expression mode: <code class="docutils literal notranslate"><span class="pre">input_geneexpr/example_covariates.tsv</span></code>; peak mode: <code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.covariates.tsv</span></code>).</p></li>
+</ul>
+<p><strong>Gene-expression mode (<code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code>) - primary example:</strong></p>
+<ul class="simple">
+<li><p><strong>Phenotype list</strong> (<code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>): <code class="docutils literal notranslate"><span class="pre">input_geneexpr/pheno_manifest_1gene.tsv</span></code> (a single gene, fastest) or <code class="docutils literal notranslate"><span class="pre">input_geneexpr/pheno_manifest.tsv</span></code> (16 in-range chr22 genes). The <code class="docutils literal notranslate"><span class="pre">path</span></code> column points to the bgzipped + tabixed RNA-seq matrix <code class="docutils literal notranslate"><span class="pre">input_geneexpr/example_geneexpr.bed.gz</span></code> whose 4th column is the Ensembl <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>.</p></li>
+<li><p><strong>Association windows</strong> (<code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>): <code class="docutils literal notranslate"><span class="pre">input_geneexpr/association_windows.bed</span></code> (or <code class="docutils literal notranslate"><span class="pre">_1gene.bed</span></code>) – gene TSS +/- 500 kb, clamped to the genotype variant range.</p></li>
+</ul>
+<p><strong>Peak mode (<code class="docutils literal notranslate"><span class="pre">input/</span></code>) - same format, alternative input:</strong></p>
+<ul class="simple">
+<li><p><strong>Phenotype list</strong> (<code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>): <code class="docutils literal notranslate"><span class="pre">input/phenotype/protocol_example.pheno_manifest.tsv</span></code> – 5 columns <code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span> <span class="pre">path</span></code>, one row per peak (10 peaks). Each <code class="docutils literal notranslate"><span class="pre">path</span></code> points to a bgzipped per-peak phenotype BED under <code class="docutils literal notranslate"><span class="pre">input/proteomics/protocol_example.peaks_split/</span></code> (samples use the anonymized genotype IDs, e.g. <code class="docutils literal notranslate"><span class="pre">S0561</span></code>, matching the shared PLINK <code class="docutils literal notranslate"><span class="pre">.fam</span></code>).</p></li>
+<li><p><strong>Association windows</strong> (<code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>): <code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.association_windows.bed</span></code> – the cis window to analyze for each peak <code class="docutils literal notranslate"><span class="pre">ID</span></code>.</p></li>
+</ul>
+<p><strong>Key requirement:</strong> the 4th-column <code class="docutils literal notranslate"><span class="pre">ID</span></code> of the association-windows file must match the 4th-column <code class="docutils literal notranslate"><span class="pre">ID</span></code> of the phenotype list, otherwise the window for that region is not found and the region is skipped.</p>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<p>Run the two steps in order. <strong>Step 1</strong> (<code class="docutils literal notranslate"><span class="pre">susie_twas</span></code>) produces the per-region univariate TWAS weights; <strong>Step 2</strong> (<code class="docutils literal notranslate"><span class="pre">ensemble_twas_weight</span></code>) reads those weights and adds the ensemble. Run each command from inside <code class="docutils literal notranslate"><span class="pre">data/example_10peaks_susie_twas/</span></code>; the pipeline notebook is referenced as <code class="docutils literal notranslate"><span class="pre">../../pipeline/mnm_regression.ipynb</span></code>.</p>
+<p><strong>Step 1.</strong> SuSiE fine-mapping + multi-method TWAS weights for every region in the phenotype list.</p>
+<p><strong>Step 2.</strong> Build the ensemble TWAS weight from the Step-1 output. The ensemble is computed by default on the toy data (the <code class="docutils literal notranslate"><span class="pre">ensemble_r2_threshold</span></code> is relaxed so no method is silently dropped).</p>
+<p><em>Memory note:</em> run the peak loop with <code class="docutils literal notranslate"><span class="pre">-j1</span></code>. Running many regions in parallel (<code class="docutils literal notranslate"><span class="pre">-j4</span></code>) – or even all 10 serially in one process – can exhaust memory on heavier regions and trigger <code class="docutils literal notranslate"><span class="pre">ERROR:</span> <span class="pre">One</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">local</span> <span class="pre">workers</span> <span class="pre">has</span> <span class="pre">been</span> <span class="pre">killed</span></code>. If that happens, re-run the remaining heavy regions one at a time using a single-region phenotype list.</p>
+<section id="mode-a-gene-expression-input-primary-example">
+<h3>Mode A: gene-expression input (primary example)<a class="headerlink" href="#mode-a-gene-expression-input-primary-example" title="Link to this heading">#</a></h3>
+<p>This is the main example: cis xQTL fine-mapping on gene expression. Two steps, pointed at the <code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code> files. Use the 1-gene phenotype list for the fastest run; swap in <code class="docutils literal notranslate"><span class="pre">pheno_manifest.tsv</span></code> / <code class="docutils literal notranslate"><span class="pre">association_windows.bed</span></code> to analyze all 16 in-range genes.</p>
+<p><strong>Step 1 (gene expression): SuSiE + TWAS weights.</strong></p>
+<p><strong>Timing</strong> (toy chr22 dataset):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">susie_twas</span></code>: ~3 min (chr22 toy, 1 gene)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ensemble_twas_weight</span></code>: ~30 sec</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Univariate fine-mapping (susie_twas) - VERIFIED end-to-end on the toy gene-expression data.
+# Run from the toy_example root. --save-data writes univariate_data.rds, which supplies
+# the combined_data_sumstats that the downstream mnm_genes workflow consumes.
+sos run pipeline/mnm_regression.ipynb susie_twas \
+    --name test_uni --cwd output_uni \
+    --genoFile input_geneexpr/example.chr22.bed \
+    --phenoFile input_geneexpr/pheno_manifest.tsv \
+    --covFile input_geneexpr/example_covariates.tsv \
+    --customized-association-windows input_geneexpr/association_windows.bed \
+    --save-data -j1
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Step 2 (gene expression): ensemble TWAS weights.</strong></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb ensemble_twas_weight \
+    --name geneexpr_twas \
+    --cwd output_geneexpr \
+    --genoFile input_geneexpr/example.chr22.bed \
+    --phenoFile input_geneexpr/pheno_manifest_1gene.tsv \
+    --covFile input_geneexpr/example_covariates.tsv \
+    --customized-association-windows input_geneexpr/association_windows_1gene.bed \
+    -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="mode-b-peak-other-molecular-phenotypes-same-pipeline-different-input">
+<h3>Mode B: peak / other molecular phenotypes (same pipeline, different input)<a class="headerlink" href="#mode-b-peak-other-molecular-phenotypes-same-pipeline-different-input" title="Link to this heading">#</a></h3>
+<p>The same pipeline also accepts peaks (chromatin/epigenomic) or any other molecular phenotype - just swap in the phenotype <code class="docutils literal notranslate"><span class="pre">.bed.gz</span></code> and its manifest; the command is otherwise identical to Mode A. Example below uses the 10 toy chr22 peaks.</p>
+<p><strong>Step 1 (peak): SuSiE + TWAS weights for the 10 peaks.</strong></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb susie_twas \
+    --name example_10peaks_twas \
+    --cwd output_10peaks \
+    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
+    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
+    --covFile input/covariate/protocol_example.covariates.tsv \
+    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    -j1
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Step 2 (peak): ensemble TWAS weights.</strong></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb ensemble_twas_weight \
+    --name example_10peaks_twas \
+    --cwd output_10peaks \
+    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
+    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
+    --covFile input/covariate/protocol_example.covariates.tsv \
+    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="output-files">
+<h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
+<p>Under <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">output_10peaks/</span></code> or <code class="docutils literal notranslate"><span class="pre">output_geneexpr/</span></code>), in the <code class="docutils literal notranslate"><span class="pre">twas_weights/</span></code> subfolder:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{name}.&lt;region&gt;.univariate_twas_weights.rds</span></code> – Step 1 output, one per region: the SuSiE fine-mapping result plus TWAS weights from each method (e.g. lasso, enet, mrash, susie), variant names, region info and CV performance.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{name}.&lt;region&gt;.ensemble_twas_weights.rds</span></code> – Step 2 output, one per region: the same content with the added ensemble. The ensemble is stored under an <code class="docutils literal notranslate"><span class="pre">ensemble</span></code> entry as a list of <code class="docutils literal notranslate"><span class="pre">method_coef</span></code>, <code class="docutils literal notranslate"><span class="pre">ensemble_twas_weights</span></code>, and <code class="docutils literal notranslate"><span class="pre">method_performance</span></code>.</p></li>
+</ul>
+<p>Fine-mapping objects are also written under the <code class="docutils literal notranslate"><span class="pre">fine_mapping/</span></code> subfolder, and per-region <code class="docutils literal notranslate"><span class="pre">.stdout</span></code>/<code class="docutils literal notranslate"><span class="pre">.stderr</span></code> logs accompany each run.</p>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>For the 10-peak run you should get 10 <code class="docutils literal notranslate"><span class="pre">*.univariate_twas_weights.rds</span></code> and 10 <code class="docutils literal notranslate"><span class="pre">*.ensemble_twas_weights.rds</span></code> files (one per peak: C22P107555, 557, 559, 560, 562, 563, 564, 565, 567, 568). Step 2 reports something like <code class="docutils literal notranslate"><span class="pre">10</span> <span class="pre">items</span> <span class="pre">in</span> <span class="pre">10</span> <span class="pre">groups</span></code>. For the 1-gene gene-expression run you get one file of each type.</p>
+<p>You can sanity-check an ensemble in R:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># In R: inspect one ensemble output
+a &lt;- readRDS(&#39;output_10peaks/twas_weights/example_10peaks_twas.chr22_C22P107568.ensemble_twas_weights.rds&#39;)
+region &lt;- names(a)[1]; pheno &lt;- names(a[[region]])[1]
+en &lt;- a[[region]][[pheno]][[&#39;ensemble&#39;]]
+names(en)                       # method_coef, ensemble_twas_weights, method_performance
+length(en[[&#39;ensemble_twas_weights&#39;]])   # 1995 (one weight per variant)
+length(en[[&#39;method_coef&#39;]])             # number of contributing methods
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<p>Show all workflows and options of the pipeline:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="other-workflows">
+<h2>Other workflows<a class="headerlink" href="#other-workflows" title="Link to this heading">#</a></h2>
+<p>The same pipeline notebook also provides:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mvsusie</span></code> – multivariate SuSiE with mr.mash TWAS weights (for jointly analyzing multiple phenotypes that share a genotype).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fsusie</span></code> – functional SuSiE for functional/high-resolution modalities (e.g. methylation), with a <code class="docutils literal notranslate"><span class="pre">--fsusie-post-processing</span></code> option (<code class="docutils literal notranslate"><span class="pre">TI</span></code>, <code class="docutils literal notranslate"><span class="pre">HMM</span></code>, or <code class="docutils literal notranslate"><span class="pre">none</span></code>; <code class="docutils literal notranslate"><span class="pre">TI</span></code> is recommended).</p></li>
+</ul>
+<p>These follow the same <code class="docutils literal notranslate"><span class="pre">--genoFile</span> <span class="pre">/</span> <span class="pre">--phenoFile</span> <span class="pre">/</span> <span class="pre">--covFile</span></code> interface; they are documented here for completeness but the verified MWE above uses <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> + <code class="docutils literal notranslate"><span class="pre">ensemble_twas_weight</span></code>.</p>
+<p>The notebook also bundles the original protocol’s multivariate (<code class="docutils literal notranslate"><span class="pre">mnm</span></code>, <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code>) and functional (<code class="docutils literal notranslate"><span class="pre">fsusie</span></code>, <code class="docutils literal notranslate"><span class="pre">mvfsusie</span></code>) fine-mapping workflows, which operate on the same <code class="docutils literal notranslate"><span class="pre">regional_data</span></code> produced by <code class="docutils literal notranslate"><span class="pre">get_analysis_regions</span></code>. Of these, <strong><code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> (univariate), <code class="docutils literal notranslate"><span class="pre">fsusie</span></code>, <code class="docutils literal notranslate"><span class="pre">mnm</span></code>, and <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code> now run end-to-end on the toy data</strong> (<code class="docutils literal notranslate"><span class="pre">mnm</span></code> and <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code> use a synthetic second context, see below). <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code> consumes the univariate fine-mapping summary statistics (<code class="docutils literal notranslate"><span class="pre">combined_data_sumstats</span></code>) written by <code class="docutils literal notranslate"><span class="pre">susie_twas</span> <span class="pre">--save-data</span></code> together with the <code class="docutils literal notranslate"><span class="pre">mnm</span></code> outputs, wired together through a <code class="docutils literal notranslate"><span class="pre">--fine_mapping_meta</span></code> table; on the toy set it correctly returns NULL multigene results (no multi-gene/trans signal). <strong><code class="docutils literal notranslate"><span class="pre">mvfsusie</span></code></strong> remains <strong>still under development</strong> in the original protocol, so its command is given as a template for completeness.</p>
+<section id="multivariate-analysis-mvsusie-and-mr-mash-mnm">
+<h3>Multivariate analysis: mvSuSiE and mr.mash (<code class="docutils literal notranslate"><span class="pre">mnm</span></code>)<a class="headerlink" href="#multivariate-analysis-mvsusie-and-mr-mash-mnm" title="Link to this heading">#</a></h3>
+<p>Fine-maps multiple molecular phenotypes jointly across a shared window using mvSuSiE with mr.mash priors. This step needs <strong>multiple contexts</strong> (e.g. the same genes measured under two or more conditions). The toy set ships a single context, so for this MWE we add a <strong>second, synthetic context</strong> (<code class="docutils literal notranslate"><span class="pre">example_geneexpr_ctx2.bed.gz</span></code>, derived from context 1 with added noise — <em>demo data only, not a real measurement</em>) and a multi-context phenotype manifest. With that in place the <code class="docutils literal notranslate"><span class="pre">mnm</span></code> step now runs end-to-end on the toy data and produces <code class="docutils literal notranslate"><span class="pre">multicontext_bvsr.rds</span></code>, <code class="docutils literal notranslate"><span class="pre">multicontext_twas_weights.rds</span></code>, and <code class="docutils literal notranslate"><span class="pre">multicontext_data.rds</span></code> per gene.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Runs end-to-end on the toy dataset using a synthetic 2-context manifest.
+# Notes for new users:
+#  - mnm needs &gt;=2 contexts; pheno_manifest_multicontext.tsv supplies context1 (real)
+#    and context2 (example_geneexpr_ctx2.bed.gz, synthetic demo data).
+#  - Use the gene-expression genotype (input_geneexpr/example.chr22.bed, sample IDs
+#    SAMPLE_001..) so genotype and phenotype/covariate samples match.
+#  - Requires the mr.mashr R package (provided by mr.mash.alpha in this env).
+sos run pipeline/mnm_regression.ipynb mnm \
+    --name test_mnm --cwd output_mnm3 \
+    --genoFile input_geneexpr/example.chr22.bed \
+    --phenoFile input_geneexpr/pheno_manifest_multicontext.tsv \
+    --covFile input_geneexpr/example_covariates.tsv \
+    --customized-association-windows input_geneexpr/association_windows.bed \
+    --save-data -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="xqtl-fine-mapping-across-multiple-genes-mnm-genes">
+<h3>xQTL fine-mapping across multiple genes (<code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code>)<a class="headerlink" href="#xqtl-fine-mapping-across-multiple-genes-mnm-genes" title="Link to this heading">#</a></h3>
+<p>Multivariate fine-mapping treating each gene as a separate condition across a shared window. <strong>Verified end-to-end on the toy dataset</strong> using the univariate (<code class="docutils literal notranslate"><span class="pre">susie_twas</span> <span class="pre">--save-data</span></code>) and <code class="docutils literal notranslate"><span class="pre">mnm</span></code> outputs wired together through a <code class="docutils literal notranslate"><span class="pre">--fine_mapping_meta</span></code> table. On the toy set every region returns a NULL <code class="docutils literal notranslate"><span class="pre">multigene_bvsr</span></code> (no multi-gene/trans signal), which is the correct, honest result for these independent single-gene regions.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Multi-gene / trans fine-mapping (mnm_genes) - VERIFIED end-to-end on the toy data.
+# Run from the toy_example root. Requires:
+#   --pheno_id_map_file : maps phenotype IDs across the two contexts
+#   --fine_mapping_meta : per-region table pointing to the univariate (susie_twas, run above
+#                         with --save-data) and multivariate (mnm) fine-mapping outputs
+#   --keep-samples      : sample IDs to retain (matches the gene-expression genotype)
+# On this toy set all regions return a NULL multigene_bvsr (no multi-gene/trans signal),
+# which is the correct, honest result for independent single-gene toy regions.
+sos run pipeline/mnm_regression.ipynb mnm_genes \
+    --name test_mnmgenes --cwd output_mnmgenes \
+    --genoFile input_geneexpr/example.chr22.bed \
+    --phenoFile input_geneexpr/pheno_manifest_multicontext.tsv \
+    --covFile input_geneexpr/example_covariates.tsv \
+    --customized-association-windows input_geneexpr/association_windows.bed \
+    --pheno_id_map_file input_geneexpr/pheno_id_map.tsv \
+    --fine_mapping_meta input_geneexpr/fine_mapping_meta.tsv \
+    --keep-samples input_geneexpr/keep_samples.txt \
+    --save-data -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="functional-regression-fsusie-for-epigenomic-qtl-fine-mapping-fsusie">
+<h3>Functional regression fSuSiE for epigenomic QTL fine-mapping (<code class="docutils literal notranslate"><span class="pre">fsusie</span></code>)<a class="headerlink" href="#functional-regression-fsusie-for-epigenomic-qtl-fine-mapping-fsusie" title="Link to this heading">#</a></h3>
+<p>Functional SuSiE for fine-mapping a functional phenotype across genomic positions in a region. This workflow <strong>runs end-to-end on the toy peak data</strong> and produces a <code class="docutils literal notranslate"><span class="pre">*.fsusie_mixture_normal_TI__top_pc_weights.rds</span></code> weight file.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Functional SuSiE (fsusie) - VERIFIED end-to-end on the toy peak data.
+# Run from the toy_example root. Produces *.fsusie_mixture_normal_TI__top_pc_weights.rds.
+sos run pipeline/mnm_regression.ipynb fsusie \
+    --name test_fsusie --cwd output/fsusie \
+    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
+    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
+    --covFile input/covariate/protocol_example.covariates.tsv \
+    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    --cis-window 0 --max-cv-variants 5000 --save-data -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="functional-regression-fsusie-with-other-modality-mvfsusie">
+<h3>Functional regression fSuSiE with other modality (<code class="docutils literal notranslate"><span class="pre">mvfsusie</span></code>)<a class="headerlink" href="#functional-regression-fsusie-with-other-modality-mvfsusie" title="Link to this heading">#</a></h3>
+<p>Multivariate functional SuSiE (mvfSuSiE). <strong>Still under development</strong> for the toy dataset.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Still under development on the toy dataset (the mvfSuSiE R step errors out).
+# Command template:
+sos run pipeline/mnm_regression.ipynb mvfsusie \
+    --name test_mvfsusie --cwd output/mvfsusie \
+    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
+    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
+    --covFile input/covariate/protocol_example.covariates.tsv \
+    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    --save-data -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Step</p></th>
+<th class="head"><p>Problem</p></th>
+<th class="head"><p>Possible Reason</p></th>
+<th class="head"><p>Solution</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>susie_twas</p></td>
+<td><p>A region is skipped / no window found</p></td>
+<td><p>4th-column <code class="docutils literal notranslate"><span class="pre">ID</span></code> in the association-windows file does not match the phenotype list <code class="docutils literal notranslate"><span class="pre">ID</span></code></p></td>
+<td><p>Make the <code class="docutils literal notranslate"><span class="pre">ID</span></code> columns match exactly.</p></td>
+</tr>
+<tr class="row-odd"><td><p>susie_twas</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ERROR:</span> <span class="pre">One</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">local</span> <span class="pre">workers</span> <span class="pre">has</span> <span class="pre">been</span> <span class="pre">killed</span></code></p></td>
+<td><p>Out-of-memory: too many regions in one process (<code class="docutils literal notranslate"><span class="pre">-j4</span></code>, or all 10 serially)</p></td>
+<td><p>Use <code class="docutils literal notranslate"><span class="pre">-j1</span></code>; re-run heavy regions one at a time with a single-region phenotype list.</p></td>
+</tr>
+<tr class="row-even"><td><p>ensemble_twas_weight</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Missing</span> <span class="pre">upstream</span> <span class="pre">TWAS</span> <span class="pre">weights</span> <span class="pre">file</span></code></p></td>
+<td><p>Step 1 was not run for that region</p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> first so the <code class="docutils literal notranslate"><span class="pre">*.univariate_twas_weights.rds</span></code> exists.</p></td>
+</tr>
+<tr class="row-odd"><td><p>both</p></td>
+<td><p>Sample IDs do not overlap between genotype/covariates and phenotype</p></td>
+<td><p>Genotype <code class="docutils literal notranslate"><span class="pre">.fam</span></code> IDs differ from the phenotype matrix sample names</p></td>
+<td><p>Rename one side so they match (e.g. the gene-expression mode renames genotype/covariate IDs to <code class="docutils literal notranslate"><span class="pre">SAMPLE_001..049</span></code>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
+<p>The runnable SoS workflow sections below are carried over verbatim from the original <code class="docutils literal notranslate"><span class="pre">mnm_regression.ipynb</span></code>. Sections still under active development are marked as <strong>WIP placeholders</strong> and are not part of the supported MWE.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+# It is required to input the name of the analysis
+parameter: name = str
+parameter: cwd = path(&quot;output&quot;)
+# A list of file paths for genotype data, or the genotype data itself. 
+parameter: genoFile = path
+# One or multiple lists of file paths for phenotype data.
+parameter: phenoFile = paths
+# One or multiple lists of file paths for phenotype ID mapping file. The first column should be the original ID, the 2nd column should be the ID to be mapped to.
+parameter: phenoIDFile = paths()
+# Covariate file path
+parameter: covFile = paths
+# Optional: if a region list is provide the analysis will be focused on provided region. 
+# The LAST column of this list will contain the ID of regions to focus on
+# Otherwise, all regions with both genotype and phenotype files will be analyzed
+parameter: region_list = path()
+# Optional: if a region name is provided 
+# the analysis would be focused on the union of provides region list and region names
+parameter: region_name = []
+# Only focus on a subset of samples
+parameter: keep_samples = path()
+# Only focus on a subset of variants
+parameter: keep_variants = path()
+# An optional list documenting the custom association window for each region to analyze, with four column, chr, start, end, region ID (eg gene ID).
+# If this list is not provided, the default `window` parameter (see below) will be used.
+parameter: customized_association_windows = path()
+# Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp
+# When this is set to negative, we will rely on using customized_association_windows
+parameter: cis_window = -1
+# save data object or not
+parameter: save_data = False
+# Name of phenotypes
+parameter: phenotype_names = [f&#39;{x:bn}&#39; for x in phenoFile]
+# And indicator whether it is trans-analysis, ie, not using phenotypic coordinate information
+parameter: trans_analysis = False
+parameter: seed = 999
+
+# association analysis paramters
+# initial number of single effects for SuSiE
+parameter: init_L = 8
+# maximum number of single effects to use for SuSiE
+parameter: L = 30
+parameter: estimate_residual_variance = True
+# remove a variant if it has more than imiss missing individual level data
+parameter: imiss = 1.0
+# MAF and variance of X cutoff
+parameter: maf = 0.0025
+parameter: xvar_cutoff = 0.0
+# MAC cutoff, on top of MAF cutoff
+parameter: mac = 5
+# Remove indels if indel = False
+parameter: indel = True
+parameter: pip_cutoff = 0.025
+parameter: coverage = [0.95, 0.7, 0.5]
+# If this value is not 0, then an initial single effect analysis will be performed 
+# to determine if follow up analysis will be continued or to simply return NULL
+# If this is negative we use a default way to determine this cutoff which is conservative but still useful
+parameter: skip_analysis_pip_cutoff = []
+# Skip fine-mapping
+parameter: skip_fine_mapping = False
+# Skip TWAS weights computation
+parameter: skip_twas_weights = False
+# Perform K folds valiation CV for TWAS
+# Set it to zero if this is to be skipped
+parameter: twas_cv_folds = 5
+parameter: twas_cv_threads = twas_cv_folds
+# maximum number of variants to consider for CV
+# We will randomly pick a subset of it for CV purpose
+# We can set it to eg 8000 to save computational burden althought may risk overfitting for methods comparison purpose
+# When set to -1 we don&#39;t use this feature
+parameter: max_cv_variants = -1
+parameter: ld_reference_meta_file = path()
+# Analysis environment settings
+parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+# For cluster jobs, number commands to run per job
+parameter: job_size = 200
+# Wall clock time expected
+parameter: walltime = &quot;1h&quot;
+# Memory expected
+parameter: mem = &quot;20G&quot;
+# Number of threads
+parameter: numThreads = 1
+
+if len(phenoFile) != len(covFile):
+    raise ValueError(&quot;Number of input phenotypes files must match that of covariates files&quot;)
+if len(phenoFile) != len(phenotype_names):
+    raise ValueError(&quot;Number of input phenotypes files must match the number of phenotype names&quot;)
+if len(phenoIDFile) &gt; 0 and len(phenoFile) != len(phenoIDFile):
+    raise ValueError(&quot;Number of input phenotypes files must match the number of phenotype ID mapping files&quot;)
+
+if len(skip_analysis_pip_cutoff) == 0:
+    skip_analysis_pip_cutoff = [0.0] * len(phenoFile)
+if len(skip_analysis_pip_cutoff) == 1:
+    skip_analysis_pip_cutoff = skip_analysis_pip_cutoff * len(phenoFile)
+if len(skip_analysis_pip_cutoff) != len(phenoFile):
+    raise ValueError(f&quot;``skip_analysis_pip_cutoff`` should have either length 1 or length the same as phenotype files ({len(phenoFile)} in this case)&quot;)
+
+# make it into an R List string
+skip_analysis_pip_cutoff = [f&quot;&#39;{y}&#39;={x}&quot; for x,y in zip(skip_analysis_pip_cutoff, phenotype_names)]
+    
+def group_by_region(lst, partition):
+    # from itertools import accumulate
+    # partition = [len(x) for x in partition]
+    # Compute the cumulative sums once
+    # cumsum_vector = list(accumulate(partition))
+    # Use slicing based on the cumulative sums
+    # return [lst[(cumsum_vector[i-1] if i &gt; 0 else 0):cumsum_vector[i]] for i in range(len(partition))]
+    return partition
+
+import os
+import pandas as pd
+
+def adapt_file_path(file_path, reference_file):
+    &quot;&quot;&quot;
+    Adapt a single file path based on its existence and a reference file&#39;s path.
+
+    Args:
+    - file_path (str): The file path to adapt.
+    - reference_file (str): File path to use as a reference for adaptation.
+
+    Returns:
+    - str: Adapted file path.
+
+    Raises:
+    - FileNotFoundError: If no valid file path is found.
+    &quot;&quot;&quot;
+    reference_path = os.path.dirname(reference_file)
+
+    # Check if the file exists
+    if os.path.isfile(file_path):
+        return file_path
+
+    # Check file name without path
+    file_name = os.path.basename(file_path)
+    if os.path.isfile(file_name):
+        return file_name
+
+    # Check file name in reference file&#39;s directory
+    file_in_ref_dir = os.path.join(reference_path, file_name)
+    if os.path.isfile(file_in_ref_dir):
+        return file_in_ref_dir
+
+    # Check original file path prefixed with reference file&#39;s directory
+    file_prefixed = os.path.join(reference_path, file_path)
+    if os.path.isfile(file_prefixed):
+        return file_prefixed
+
+    # If all checks fail, raise an error
+    raise FileNotFoundError(f&quot;No valid path found for file: {file_path}&quot;)
+
+def adapt_file_path_all(df, column_name, reference_file):
+    return df[column_name].apply(lambda x: adapt_file_path(x, reference_file))
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_analysis_regions: shared = &quot;regional_data&quot;]
+# input is genoFile, phenoFile, covFile and optionally region_list. If region_list presents then we only analyze what&#39;s contained in the list.
+# regional_data should be a dictionary like:
+#{&#39;data&#39;: [(&quot;genotype_1.bed&quot;, &quot;phenotype_1.bed.gz&quot;, &quot;covariate_1.gz&quot;), (&quot;genotype_2.bed&quot;, &quot;phenotype_1.bed.gz&quot;, &quot;phenotype_2.bed.gz&quot;, &quot;covariate_1.gz&quot;, &quot;covariate_2.gz&quot;) ... ],
+# &#39;meta_info&#39;: [(&quot;chr12:752578-752579&quot;,&quot;chr12:752577-752580&quot;, &quot;gene_1&quot;, &quot;trait_1&quot;), (&quot;chr13:852580-852581&quot;,&quot;chr13:852579-852580&quot;, &quot;gene_2&quot;, &quot;trait_1&quot;, &quot;trait_2&quot;) ... ]}
+import numpy as np
+
+def preload_id_map(id_map_files):
+    id_maps = {}
+    for id_map_file in id_map_files:
+        if id_map_file is not None and os.path.isfile(id_map_file):
+            df = pd.read_csv(id_map_file, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;old_ID&#39;, &#39;new_ID&#39;])
+            id_maps[id_map_file] = df.set_index(&#39;old_ID&#39;)[&#39;new_ID&#39;].to_dict()
+    return id_maps
+
+def load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps):
+    pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0)
+    pheno_df[&#39;Original_ID&#39;] = pheno_df[&#39;ID&#39;]
+    if id_map_path in preloaded_id_maps:
+        id_map = preloaded_id_maps[id_map_path]
+        pheno_df[&#39;ID&#39;] = pheno_df[&#39;ID&#39;].map(id_map).fillna(pheno_df[&#39;ID&#39;])
+    return pheno_df
+
+def filter_by_region_ids(data, region_ids):
+    if region_ids is not None and len(region_ids) &gt; 0:
+        data = data[data[&#39;ID&#39;].isin(region_ids)]
+    return data
+
+def custom_join(series):
+    # Initialize an empty list to hold the processed items
+    result = []
+    for item in series:
+        if &#39;,&#39; in item:
+            # If the item contains commas, split by comma and convert to tuple
+            result.append(tuple(item.split(&#39;,&#39;)))
+        else:
+            # If the item does not contain commas, add it directly
+            result.append(item)
+    # Convert the list of items to a tuple and return
+    return tuple(result)
+
+def aggregate_phenotype_data(accumulated_pheno_df):
+    if not accumulated_pheno_df.empty:
+        accumulated_pheno_df = accumulated_pheno_df.groupby([&#39;#chr&#39;,&#39;ID&#39;,&#39;cond&#39;,&#39;path&#39;,&#39;cov_path&#39;], as_index=False).agg({
+            &#39;#chr&#39;: lambda x: np.unique(x).astype(str)[0],
+            &#39;ID&#39;: lambda x: np.unique(x).astype(str)[0],
+            &#39;Original_ID&#39;: &#39;,&#39;.join,
+            &#39;start&#39;: &#39;min&#39;,
+            &#39;end&#39;: &#39;max&#39;
+        }).groupby([&#39;#chr&#39;,&#39;ID&#39;], as_index=False).agg({
+            &#39;cond&#39;: &#39;,&#39;.join,
+            &#39;path&#39;: &#39;,&#39;.join,
+            &#39;Original_ID&#39;: custom_join,
+            &#39;cov_path&#39;: &#39;,&#39;.join,
+            &#39;start&#39;: &#39;min&#39;,
+            &#39;end&#39;: &#39;max&#39;
+        })
+    return accumulated_pheno_df
+
+def process_cis_files(pheno_files, cov_files, phenotype_names, pheno_id_files, region_ids, preloaded_id_maps):
+    &#39;&#39;&#39;
+    Example output:
+    #chr    start      end    ID  Original_ID   path     cov_path             cond
+    chr12   752578   752579  ENSG00000060237  Q9H4A3,P62873  protocol_example.protein_1.bed.gz,protocol_example.protein_2.bed.gz  covar_1.gz,covar_2.gz  trait_A,trait_B
+    &#39;&#39;&#39;
+    accumulated_pheno_df = pd.DataFrame()
+    pheno_id_files = [None] * len(pheno_files) if len(pheno_id_files) == 0 else pheno_id_files
+
+    for pheno_path, cov_path, phenotype_name, id_map_path in zip(pheno_files, cov_files, phenotype_names, pheno_id_files):
+        if not os.path.isfile(cov_path):
+            raise FileNotFoundError(f&quot;No valid path found for file: {cov_path}&quot;)
+        pheno_df = load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps)
+        pheno_df = filter_by_region_ids(pheno_df, region_ids)
+        
+        if not pheno_df.empty:
+            pheno_df.iloc[:, 4] = adapt_file_path_all(pheno_df, pheno_df.columns[4], f&quot;{pheno_path:a}&quot;)
+            pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)           
+            accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
+
+    accumulated_pheno_df = aggregate_phenotype_data(accumulated_pheno_df)
+    return accumulated_pheno_df
+
+def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files, region_ids, customized_association_windows):
+    &#39;&#39;&#39;
+    Example output:
+    #chr    start      end    ID  Original_ID   path     cov_path             cond
+    chr21   0   0  chr21_18133254_19330300  carnitine,benzoate,hippurate  metabolon_1.bed.gz,metabolon_2.bed.gz  covar_1.gz,covar_2.gz  trait_A,trait_B
+    &#39;&#39;&#39;
+    
+    if not os.path.isfile(customized_association_windows):
+        raise ValueError(&quot;Customized association analysis window must be specified for trans analysis.&quot;)
+    accumulated_pheno_df = pd.DataFrame()
+    pheno_id_files = [None] * len(pheno_files) if len(pheno_id_files) == 0 else pheno_id_files
+    genotype_windows = pd.read_csv(customized_association_windows, comment=&quot;#&quot;, header=None, names=[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;], sep=&quot;\t&quot;)
+    genotype_windows = filter_by_region_ids(genotype_windows, region_ids)
+    if genotype_windows.empty:
+        return accumulated_pheno_df
+    
+    for pheno_path, cov_path, phenotype_name, id_map_path in zip(pheno_files, cov_files, phenotype_names, pheno_id_files):
+        if not os.path.isfile(cov_path):
+            raise FileNotFoundError(f&quot;No valid path found for file: {cov_path}&quot;)
+        pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0, names=[&#39;Original_ID&#39;, &#39;path&#39;])
+        if not pheno_df.empty:
+            pheno_df.iloc[:, -1] = adapt_file_path_all(pheno_df, pheno_df.columns[-1], f&quot;{pheno_path:a}&quot;)
+            pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)
+            # Here we combine genotype_windows which contains &quot;#chr&quot; and &quot;ID&quot; to pheno_df by creating a cartesian product
+            pheno_df = pd.merge(genotype_windows.assign(key=1), pheno_df.assign(key=1), on=&#39;key&#39;).drop(&#39;key&#39;, axis=1)
+            # Only set start and end columns to zero if they don&#39;t exist
+            if &#39;start&#39; not in pheno_df.columns:
+                pheno_df[&#39;start&#39;] = 0
+            if &#39;end&#39; not in pheno_df.columns:
+                pheno_df[&#39;end&#39;] = 0
+            if id_map_path is not None:
+                # Filter pheno_df by specific association-window and phenotype pairs
+                association_analysis_pair = pd.read_csv(id_map_path, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;ID&#39;, &#39;Original_ID&#39;])
+                pheno_df = pd.merge(pheno_df, association_analysis_pair, on=[&#39;ID&#39;, &#39;Original_ID&#39;])
+            accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
+
+    accumulated_pheno_df = aggregate_phenotype_data(accumulated_pheno_df)
+    return accumulated_pheno_df
+
+# Load genotype meta data
+if f&quot;{genoFile:x}&quot; == &quot;.bed&quot;:
+    geno_meta_data = pd.DataFrame([(&quot;chr&quot;+str(x), f&quot;{genoFile:a}&quot;) for x in range(1,23)] + [(&quot;chrX&quot;, f&quot;{genoFile:a}&quot;)], columns=[&#39;#chr&#39;, &#39;geno_path&#39;])
+else:
+    geno_meta_data = pd.read_csv(f&quot;{genoFile:a}&quot;, sep =r&quot;\s+&quot;, header=0)
+    geno_meta_data.iloc[:, 1] = adapt_file_path_all(geno_meta_data, geno_meta_data.columns[1], f&quot;{genoFile:a}&quot;)
+    geno_meta_data.columns = [&#39;#chr&#39;, &#39;geno_path&#39;]
+    geno_meta_data[&#39;#chr&#39;] = geno_meta_data[&#39;#chr&#39;].apply(lambda x: str(x) if str(x).startswith(&#39;chr&#39;) else f&#39;chr{x}&#39;)
+
+# Checking the DataFrame
+valid_chr_values = [f&#39;chr{x}&#39; for x in range(1, 23)] + [&#39;chrX&#39;]
+if not all(value in valid_chr_values for value in geno_meta_data[&#39;#chr&#39;]):
+    raise ValueError(&quot;Invalid chromosome values found. Allowed values are chr1 to chr22 and chrX.&quot;)
+
+region_ids = []
+# If region_list is provided, read the file and extract IDs
+if region_list.is_file():
+    region_list_df = pd.read_csv(region_list, sep=r&quot;\s+&quot;, header=None, comment = &quot;#&quot;)
+    region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
+
+# If region_name is provided, include those IDs as well
+# --region-name A B C will result in a list of [&quot;A&quot;, &quot;B&quot;, &quot;C&quot;] here
+if len(region_name) &gt; 0:
+    region_ids = list(set(region_ids).union(set(region_name)))
+
+if trans_analysis:
+    meta_data = process_trans_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, customized_association_windows)
+else:
+    meta_data = process_cis_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, preload_id_map(phenoIDFile))
+    
+if not meta_data.empty:
+    meta_data = meta_data.merge(geno_meta_data, on=&#39;#chr&#39;, how=&#39;inner&#39;)
+    # Adjust association-window
+    if os.path.isfile(customized_association_windows):
+        print(f&quot;Loading customized association analysis window from {customized_association_windows}&quot;)
+        association_windows_list = pd.read_csv(customized_association_windows, comment=&quot;#&quot;, header=None, names=[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;], sep=&quot;\t&quot;)
+        meta_data = pd.merge(meta_data, association_windows_list, on=[&#39;#chr&#39;, &#39;ID&#39;], how=&#39;left&#39;, suffixes=(&#39;&#39;, &#39;_association&#39;))
+        mismatches = meta_data[meta_data[&#39;start_association&#39;].isna()]
+        if not mismatches.empty:
+            print(&quot;First 5 mismatches:&quot;)
+            print(mismatches[[&#39;ID&#39;]].head())
+            raise ValueError(f&quot;{len(mismatches)} regions to analyze cannot be found in ``{customized_association_windows}``. Please check your ``{customized_association_windows}`` database to make sure it contains all association-window definitions. &quot;)
+    else:
+        if cis_window &lt; 0 :
+            raise ValueError(&quot;Please either input valid path to association-window file via ``--customized-association-windows``, or set ``--cis-window`` to a non-negative integer.&quot;)
+        if cis_window == 0:
+            print(&quot;Warning: only variants within the range of start and end of molecular phenotype will be considered since cis_window is set to zero and no customized association window file was found. Please make sure this is by design.&quot;)
+        meta_data[&#39;start_association&#39;] = meta_data[&#39;start&#39;].apply(lambda x: max(x - cis_window, 0))
+        meta_data[&#39;end_association&#39;] = meta_data[&#39;end&#39;] + cis_window
+
+    # Example meta_data:
+    # #chr    start      end    start_association       end_association           ID  Original_ID   path     cov_path             cond             coordinate     geno_path
+    # 0  chr12   752578   752579  652578   852579  ENSG00000060237  Q9H4A3,P62873  protocol_example.protein_1.bed.gz,protocol_example.protein_2.bed.gz  covar_1.gz,covar_2.gz  trait_A,trait_B    chr12:752578-752579  protocol_example.genotype.chr21_22.bed       
+    # Create the final dictionary
+    regional_data = {
+        &#39;data&#39;: [(row[&#39;geno_path&#39;], *row[&#39;path&#39;].split(&#39;,&#39;), *row[&#39;cov_path&#39;].split(&#39;,&#39;)) for _, row in meta_data.iterrows()],
+        &#39;meta_info&#39;: [(f&quot;{row[&#39;#chr&#39;]}:{row[&#39;start&#39;]}-{row[&#39;end&#39;]}&quot;, # this is the phenotypic region to extract data from
+                       f&quot;{row[&#39;#chr&#39;]}:{row[&#39;start_association&#39;]}-{row[&#39;end_association&#39;]}&quot;, # this is the association window region
+                       row[&#39;ID&#39;], row[&#39;Original_ID&#39;], *row[&#39;cond&#39;].split(&#39;,&#39;)) for _, row in meta_data.iterrows()]
+    }
+else:
+    regional_data = {&#39;data&#39;:[], &#39;meta_info&#39;:[]}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_twas]
+# Further limit TWAS to only using selected variants
+parameter: min_twas_maf = 0.01
+parameter: min_twas_xvar = 0.01
+depends: sos_variable(&quot;regional_data&quot;)
+# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
+stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
+meta_info = regional_data[&#39;meta_info&#39;]
+input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
+
+if skip_fine_mapping and skip_twas_weights:
+    save_data = True
+    output_files = [f&#39;{cwd:a}/data/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.univariate_data.rds&#39;]
+elif not skip_fine_mapping and skip_twas_weights:
+    output_files = [f&#39;{cwd:a}/fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.univariate_bvsr.rds&#39;]
+elif skip_fine_mapping and not skip_twas_weights:
+    output_files = [f&#39;{cwd:a}/twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.univariate_twas_weights.rds&#39;]
+else:
+    output_files = [f&#39;{cwd:a}/fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.univariate_bvsr.rds&#39;,
+    f&#39;{cwd:a}/twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.univariate_twas_weights.rds&#39;]
+output: output_files
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&quot;{_output[0]:nn}.susie_twas.stderr&quot;, stdout = f&quot;{_output[0]:nn}.susie_twas.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/mnm_analysis/mnm_methods/susie_twas.R \
+        --genotype ${_input[0]:a} \
+        --phenotype &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[1:len(_input)//2+1]])}&quot; \
+        --covariate &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[len(_input)//2+1:]])}&quot; \
+        --region &quot;${_meta_info[0]}&quot; \
+        --window &quot;${_meta_info[1]}&quot; \
+        --region-name &quot;${_meta_info[2]}&quot; \
+        --extract-region-names &quot;${&quot;|&quot;.join([x if isinstance(x,str) else &quot;,&quot;.join(x) for x in _meta_info[3]])}&quot; \
+        --conditions &quot;${&quot;,&quot;.join(_meta_info[4:])}&quot; \
+        --skip-analysis-pip-cutoff &quot;${&quot;,&quot;.join(skip_analysis_pip_cutoff)}&quot; \
+        --maf ${maf} \
+        --mac ${mac} \
+        --imiss ${imiss} \
+        ${&quot;--indel&quot; if indel else &quot;&quot;} \
+        ${&quot;--keep-samples &quot; + str(keep_samples) if keep_samples.is_file() else &quot;&quot;} \
+        ${&quot;--keep-variants &quot; + str(keep_variants) if not keep_variants.is_dir() else &quot;&quot;} \
+        ${&quot;--save-data&quot; if save_data else &quot;&quot;} \
+        --pip-cutoff ${pip_cutoff} \
+        --coverage &quot;${&quot;,&quot;.join([str(x) for x in coverage])}&quot; \
+        --seed ${seed} \
+        --cwd ${cwd:a} \
+        ${&quot;--skip-fine-mapping&quot; if skip_fine_mapping else &quot;&quot;} \
+        ${&quot;--skip-twas-weights&quot; if skip_twas_weights else &quot;&quot;} \
+        ${&quot;--trans-analysis&quot; if trans_analysis else &quot;&quot;} \
+        --L-greedy ${init_L} \
+        --L ${L} \
+        --max-cv-variants ${max_cv_variants} \
+        --twas-cv-folds ${twas_cv_folds} \
+        --twas-cv-threads ${twas_cv_threads} \
+        --min-twas-maf ${min_twas_maf} \
+        --min-twas-xvar ${min_twas_xvar} \
+        ${&quot;--ld-reference-meta-file &quot; + str(ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;&quot;} \
+        --output-prefix ${_output[0]:nn}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[ensemble_twas_weight]
+# Ensemble multiple per-method TWAS weights (susie/susie_inf/mrash/enet/lasso/mcp/scad/l0learn/bayes_r/bayes_c)
+# into a single stacked-regression ensemble weight, using pecotmr::ensemble_weights().
+# Input: the *.univariate_twas_weights.rds produced by the [susie_twas] step (one per region/peak).
+# Output: *.ensemble_twas_weights.rds, identical structure but with an added `ensemble_weights` column.
+# Default -1e9 keeps every method (no R^2 filtering) so the ensemble always
+# computes; raise this (e.g. 0.01) on real data to drop poorly-predicting methods.
+parameter: ensemble_r2_threshold = -1e9
+parameter: ensemble_solver = &quot;quadprog&quot;
+parameter: ensemble_alpha = 1.0
+depends: sos_variable(&quot;regional_data&quot;)
+meta_info = regional_data[&#39;meta_info&#39;]
+input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
+output_files = [f&#39;{cwd:a}/twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.ensemble_twas_weights.rds&#39;]
+output: output_files
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.ensemble_twas_weight.stdout&quot;, stderr = f&quot;{_output[0]:nn}.ensemble_twas_weight.stderr&quot;, container = container
+    options(warn=1)
+    library(pecotmr)
+    # ---- locate the upstream univariate_twas_weights.rds for this region ----
+    region_tag &lt;- &quot;${_meta_info[0].split(&#39;:&#39;)[0]}_${_meta_info[2]}&quot;
+    in_rds &lt;- paste0(&quot;${cwd:a}&quot;, &quot;/twas_weights/&quot;, &quot;${name}&quot;, &quot;.&quot;, region_tag, &quot;.univariate_twas_weights.rds&quot;)
+    if (!file.exists(in_rds)) stop(paste0(&quot;Missing upstream TWAS weights file: &quot;, in_rds, &quot; -- run the susie_twas step first.&quot;))
+    obj &lt;- readRDS(in_rds)
+    # ---- reload the regional phenotype y (needed as the stacking response) ----
+    phenotype_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1:len(_input)//2+1]])})
+    covariate_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[len(_input)//2+1:]])})
+    conditions = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in _meta_info[4:]])})
+    fdat &lt;- load_regional_univariate_data(genotype = ${_input[0]:anr},
+                                          phenotype = phenotype_files,
+                                          covariate = covariate_files,
+                                          region = ${(&quot;&#39;%s&#39;&quot; % _meta_info[0]) if not trans_analysis else &#39;NULL&#39;},
+                                          association_window = &quot;${_meta_info[1]}&quot;,
+                                          conditions = conditions,
+                                          maf_cutoff = ${maf},
+                                          mac_cutoff = ${mac},
+                                          imiss_cutoff = ${imiss},
+                                          keep_indel = ${&quot;TRUE&quot; if indel else &quot;FALSE&quot;},
+                                          extract_region_name = list(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])}),
+                                          phenotype_header = ${&quot;4&quot; if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;},
+                                          region_name_col = ${&quot;4&quot; if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;},
+                                          scale_residuals = FALSE)
+    # ---- per region in this object, run the ensemble ----
+    ensemble_r2_threshold &lt;- ${ensemble_r2_threshold}
+    ensemble_solver &lt;- &quot;${ensemble_solver}&quot;
+    ensemble_alpha &lt;- ${ensemble_alpha}
+    for (rg in names(obj)) {
+        for (ph in names(obj[[rg]])) {
+            res &lt;- obj[[rg]][[ph]]
+            if (is.null(res$twas_cv_result) || is.null(res$twas_cv_result$performance) || is.null(res$twas_weights)) {
+                message(&quot;Skipping &quot;, rg, &quot;/&quot;, ph, &quot;: no twas_cv_result/twas_weights present.&quot;); next
+            }
+            # observed phenotype y for this condition (matched by name to the loaded fdat)
+            y &lt;- tryCatch(fdat$residual_Y[[ph]], error = function(e) NULL)
+            if (is.null(y)) y &lt;- tryCatch(fdat$residual_Y[[1]], error = function(e) NULL)
+            if (is.null(y)) { message(&quot;Skipping &quot;, rg, &quot;/&quot;, ph, &quot;: could not recover phenotype y.&quot;); next }
+            y &lt;- as.numeric(y)
+            # rank methods by CV R-squared (same logic as twas_weights_pipeline)
+            method_rsq &lt;- vapply(res$twas_cv_result$performance, function(perf) perf[1, &quot;rsq&quot;], numeric(1))
+            names(method_rsq) &lt;- gsub(&quot;_performance$&quot;, &quot;&quot;, names(method_rsq))
+            passing &lt;- !is.na(method_rsq) &amp; method_rsq &gt;= ensemble_r2_threshold
+            n_passing &lt;- sum(passing)
+            if (n_passing &lt; 2) {
+                surviving &lt;- if (n_passing == 1) names(method_rsq)[passing] else NA
+                message(&quot;Ensemble skipped for &quot;, rg, &quot;/&quot;, ph, &quot;: &quot;, n_passing, &quot; of &quot;, length(method_rsq),
+                        &quot; methods passed R-squared cutoff &quot;, ensemble_r2_threshold, &quot; (need &gt;= 2).&quot;)
+                obj[[rg]][[ph]]$ensemble_weights &lt;- NULL
+                next
+            }
+            passing_base &lt;- names(method_rsq)[passing]
+            passing_pred_names &lt;- paste0(passing_base, &quot;_predicted&quot;)
+            passing_weight_names &lt;- paste0(passing_base, &quot;_weights&quot;)
+            filtered_cv &lt;- res$twas_cv_result
+            filtered_cv$prediction &lt;- filtered_cv$prediction[passing_pred_names]
+            filtered_weights &lt;- res$twas_weights[passing_weight_names]
+            message(&quot;Computing ensemble TWAS weights via stacked regression for &quot;, rg, &quot;/&quot;, ph,
+                    &quot; using &quot;, n_passing, &quot; methods: &quot;, paste(passing_base, collapse=&quot;, &quot;))
+            ens_result &lt;- ensemble_weights(cv_results = filtered_cv, Y = y,
+                                           twas_weight_list = filtered_weights,
+                                           solver = ensemble_solver, alpha = ensemble_alpha)
+            if (!is.null(ens_result$ensemble_twas_weights)) {
+                ens_wt &lt;- ens_result$ensemble_twas_weights
+                if (!is.matrix(ens_wt)) ens_wt &lt;- matrix(ens_wt, ncol = 1)
+                obj[[rg]][[ph]]$twas_weights$ensemble_weights &lt;- ens_wt
+                obj[[rg]][[ph]]$ensemble &lt;- ens_result
+            }
+        }
+    }
+    dir.create(dirname(&quot;${_output[0]}&quot;), showWarnings = FALSE, recursive = TRUE)
+    saveRDS(obj, &quot;${_output[0]}&quot;, compress = &quot;xz&quot;)
+    message(&quot;Saved ensemble TWAS weights to: &quot;, &quot;${_output[0]}&quot;)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mnm]
+# Prior model file generated from mashr. 
+# Default will be used if it does not exist.
+parameter: mixture_prior = path()
+parameter: mixture_prior_cv = path()
+parameter: prior_weights_min = 5e-4
+parameter: prior_canonical_matrices = False
+parameter: sample_partition = path() 
+parameter: mvsusie_max_iter = 200
+parameter: mrmash_max_iter = 5000
+depends: sos_variable(&quot;regional_data&quot;)
+# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
+stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
+
+meta_info = regional_data[&#39;meta_info&#39;]
+
+input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
+if skip_fine_mapping and skip_twas_weights:
+    save_data = True
+    output_files = [f&#39;{cwd:a}/data/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_data.rds&#39;]
+elif not skip_fine_mapping and skip_twas_weights:
+    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_bvsr.rds&#39;]
+elif skip_fine_mapping and not skip_twas_weights:
+    # Warning that fine-mapping is required for TWAS weights
+    if not ld_reference_meta_file.is_dir():
+        print(&quot;WARNING: Fine-mapping is required to generate TWAS weights. Setting skip_fine_mapping to False. &quot;
+              &quot;Fine-mapping will be performed and saved on variants listed in %s.&quot; % ld_reference_meta_file)
+    else:
+        print(&quot;WARNING: Fine-mapping is required to generate TWAS weights. Setting skip_fine_mapping to False.&quot;)
+    skip_fine_mapping = False
+    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_bvsr.rds&#39;,
+                    f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_twas_weights.rds&#39;]
+else:    
+    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_bvsr.rds&#39;,
+                    f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_twas_weights.rds&#39;]   
+output: output_files
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&quot;{_output[0]:nn}.mnm.stderr&quot;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/mnm_analysis/mnm_methods/mnm.R \
+        --genotype ${_input[0]:a} \
+        --phenotype &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[1:len(_input)//2+1]])}&quot; \
+        --covariate &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[len(_input)//2+1:]])}&quot; \
+        --region &quot;${_meta_info[0]}&quot; \
+        --window &quot;${_meta_info[1]}&quot; \
+        --region-name &quot;${_meta_info[2]}&quot; \
+        --extract-region-names &quot;${&quot;|&quot;.join([x if isinstance(x,str) else &quot;,&quot;.join(x) for x in _meta_info[3]])}&quot; \
+        --conditions &quot;${&quot;,&quot;.join(_meta_info[4:])}&quot; \
+        --skip-analysis-pip-cutoff &quot;${&quot;,&quot;.join(skip_analysis_pip_cutoff)}&quot; \
+        --maf ${maf} \
+        --mac ${mac} \
+        --imiss ${imiss} \
+        ${&quot;--indel&quot; if indel else &quot;&quot;} \
+        ${&quot;--keep-samples &quot; + str(keep_samples) if keep_samples.is_file() else &quot;&quot;} \
+        ${&quot;--keep-variants &quot; + str(keep_variants) if not keep_variants.is_dir() else &quot;&quot;} \
+        ${&quot;--save-data&quot; if save_data else &quot;&quot;} \
+        --pip-cutoff ${pip_cutoff} \
+        --coverage &quot;${&quot;,&quot;.join([str(x) for x in coverage])}&quot; \
+        --seed ${seed} \
+        --cwd ${cwd:a} \
+        ${&quot;--skip-fine-mapping&quot; if skip_fine_mapping else &quot;&quot;} \
+        ${&quot;--skip-twas-weights&quot; if skip_twas_weights else &quot;&quot;} \
+        --xvar-cutoff ${xvar_cutoff} \
+        --mvsusie-max-iter ${mvsusie_max_iter} \
+        --mrmash-max-iter ${mrmash_max_iter} \
+        --max-cv-variants ${max_cv_variants} \
+        --twas-cv-folds ${twas_cv_folds} \
+        --twas-cv-threads ${twas_cv_threads} \
+        ${&quot;--ld-reference-meta-file &quot; + str(ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;&quot;} \
+        ${&quot;--mixture-prior &quot; + str(mixture_prior) if mixture_prior.is_file() else &quot;&quot;} \
+        ${&quot;--mixture-prior-cv &quot; + str(mixture_prior_cv) if mixture_prior_cv.is_file() else &quot;&quot;} \
+        --prior-weights-min ${prior_weights_min} \
+        ${&quot;--prior-canonical-matrices&quot; if prior_canonical_matrices else &quot;&quot;} \
+        ${&quot;--sample-partition &quot; + str(sample_partition) if sample_partition.is_file() else &quot;&quot;} \
+        --output-prefix ${_output[0]:nn}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mnm_genes]
+depends: sos_variable(&quot;regional_data&quot;)
+# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
+stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
+ 
+meta_info = regional_data[&#39;meta_info&#39;]
+genes = meta_info[0][3]
+if isinstance(genes, tuple):
+    genes = genes[0] if isinstance(genes[0], tuple) else list(genes)
+else:
+    genes = [genes]
+
+if len(skip_analysis_pip_cutoff) == 0:
+    skip_analysis_pip_cutoff = [0.0] * len(genes)
+
+if len(skip_analysis_pip_cutoff) == 1:
+    skip_analysis_pip_cutoff = skip_analysis_pip_cutoff * len(genes)
+
+skip_analysis_pip_cutoff = [&quot;&#39;{}&#39;={}&quot;.format(genes[i], skip_analysis_pip_cutoff[i].split(&#39;=&#39;)[1]) for i in range(len(genes))]
+
+parameter: pheno_id_map_file = path
+parameter: fine_mapping_meta = path
+parameter: data_driven_prior = False
+# Parameters below are relevant when we use data driven prior
+# which is an experimental feature
+parameter: n_random = 10
+parameter: n_null = 10
+parameter: independent_variant_list = path()
+parameter: prior_weights_min = 5e-4
+parameter: prior_canonical_matrices = False
+# This is relevant to cross-validation
+parameter: sample_partition = path() 
+parameter: mvsusie_max_iter = 200
+parameter: mrmash_max_iter = 5000
+
+if not data_driven_prior:
+     prior_canonical_matrices = True
+input: regional_data[&quot;data&quot;],group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
+
+if skip_fine_mapping and skip_twas_weights:
+    save_data = True
+    output_files = [f&#39;{cwd:a}/data/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_data.rds&#39;]
+elif not skip_fine_mapping and skip_twas_weights:
+    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_bvsr.rds&#39;]
+elif skip_fine_mapping and not skip_twas_weights:
+    output_files = [f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_twas_weights.rds&#39;]
+else:    
+    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_bvsr.rds&#39;,
+    f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_twas_weights.rds&#39;]    
+output: output_files
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm_genes.stderr&quot;, container = container, entrypoint = entrypoint
+
+    library(data.table)
+    library(dplyr)
+    library(pecotmr)
+    combine_result_list &lt;- function(univariate_finemapping_metadata, condition_name, conditions = NULL, extracted_region){
+        regional_window_combined_susie_result &lt;- list()
+        regional_window_combined_sumstats_result &lt;- list()
+        extracted_univariate_finemapping_metadata &lt;- univariate_finemapping_metadata%&gt;%filter(region_id%in%extracted_region)
+        for(i in 1:dim(extracted_univariate_finemapping_metadata)[1]){
+           gene_id &lt;- extracted_univariate_finemapping_metadata$region_id[i]
+           susie_result &lt;- readRDS(extracted_univariate_finemapping_metadata$combined_data[i])
+           sumstats_result &lt;- readRDS(extracted_univariate_finemapping_metadata$combined_data_sumstats[i]) 
+           if (!is.null(conditions)) {
+              if (any(names(susie_result[[gene_id]]) %in% conditions)) {
+                  extracted_conditions = names(susie_result[[gene_id]])[names(susie_result[[gene_id]]) %in% conditions]
+                 for (j in 1:length(extracted_conditions)){
+                     regional_window_combined_susie_result[[condition_name]][[extracted_conditions[j]]] &lt;- susie_result[[gene_id]][[extracted_conditions[j]]]
+                     regional_window_combined_sumstats_result[[condition_name]][[extracted_conditions[j]]] &lt;- sumstats_result[[gene_id]][[extracted_conditions[j]]]
+                 }
+              }
+           } else {
+                    regional_window_combined_susie_result[[condition_name]][[gene_id]] &lt;- susie_result[[gene_id]][[condition_name]]
+                    regional_window_combined_sumstats_result[[condition_name]][[gene_id]] &lt;- sumstats_result[[gene_id]][[condition_name]]
+                  }
+          }       
+           return(list(regional_window_combined_susie_result = regional_window_combined_susie_result, regional_window_combined_sumstats_result = regional_window_combined_sumstats_result))
+     }
+
+  
+    extract_non_null_cs_list &lt;- function(combined_list, condition_name, extracted_region) {
+        # List to store results for genes passing the first step
+        extracted_regional_window_combined_susie_result &lt;- list()
+        extracted_regional_window_combined_sumstats_result &lt;- list()
+
+        # Iterate over each gene&#39;s susie and sumstats results
+        filtered_region &lt;- extracted_region[extracted_region%in%names(combined_list[[&quot;regional_window_combined_susie_result&quot;]][[condition_name]])]
+        for (gene_id in filtered_region) {
+            susie_result &lt;- get_nested_element(combined_list,c(&quot;regional_window_combined_susie_result&quot;,condition_name,gene_id))
+
+           # Check if there exits top_loci.
+           if (!is.null(susie_result[[&quot;top_loci&quot;]])&amp;&amp;nrow(susie_result[[&quot;top_loci&quot;]])[1]!=0) {
+              # If not all zeros, add this gene&#39;s susie and sumstats results to the lists
+              extracted_regional_window_combined_susie_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list,c(&quot;regional_window_combined_susie_result&quot;,condition_name,gene_id))
+              extracted_regional_window_combined_sumstats_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list,c(&quot;regional_window_combined_sumstats_result&quot;,condition_name,gene_id))
+           }
+         }
+         return(list(extracted_regional_window_combined_susie_result = extracted_regional_window_combined_susie_result, extracted_regional_window_combined_sumstats_result = extracted_regional_window_combined_sumstats_result))
+     }
+  
+    process_and_compare_variants &lt;- function(combined_list, condition_name) {
+       extracted_regional_window_combined_susie_result &lt;- list()
+       extracted_regional_window_combined_sumstats_result &lt;- list()
+       compare_variants &lt;- function(variants1, variants2) {
+            return(any(variants1 %in% variants2) | any(variants2 %in% variants1))
+       }
+       subset_top_loci_variants &lt;- function(df) {
+          find_non_zero_rows &lt;- function(df) {
+                non_zero_indices &lt;- which(rowSums(df!= 0) &gt; 0)
+                return(non_zero_indices)
+           }
+           non_zero_indices &lt;- find_non_zero_rows(df)
+
+           if (length(non_zero_indices) &gt; 0) {
+              non_zero_index_variants &lt;- df[non_zero_indices, , drop = FALSE]%&gt;%select(variant_id)%&gt;%pull(variant_id)
+              zero_index_filtered_variants &lt;- df[-non_zero_indices, ,drop = FALSE]%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
+              top_loci_variants &lt;- c(non_zero_index_variants, zero_index_filtered_variants)
+           } else {
+              zero_index_filtered_variants &lt;- df%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
+              top_loci_variants &lt;- zero_index_filtered_variants
+           }
+             return(top_loci_variants)
+       }
+  
+       for (i in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
+           susie_result_1 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[i]]
+           gene_id &lt;- names(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])[i]
+    
+           # Extract top_loci variants
+           variants1 &lt;- subset_top_loci_variants(susie_result_1[[&quot;top_loci&quot;]])
+           if (length(variants1) &gt; 0) {
+              different_in_all_genes &lt;- TRUE
+    
+           for (j in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
+               if (i != j) {
+                  susie_result_2 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[j]]
+                  variants2 &lt;- subset_top_loci_variants(susie_result_2[[&quot;top_loci&quot;]])
+        
+                  # Compare variants
+                  if (length(variants2) &gt; 0) {
+                    if (compare_variants(variants1, variants2)) {
+                        # If variants are not totally different across all genes, set the flag to FALSE
+                       different_in_all_genes &lt;- FALSE
+                       break
+                     }
+                   }
+                 }
+               }
+    
+            # After the loop, check the flag
+            if (!different_in_all_genes) {
+               extracted_regional_window_combined_susie_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list, c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name, gene_id))
+               extracted_regional_window_combined_sumstats_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list, c(&quot;extracted_regional_window_combined_sumstats_result&quot;, condition_name, gene_id))
+            }
+          }
+        }
+      return(list(extracted_regional_window_combined_susie_result = extracted_regional_window_combined_susie_result, extracted_regional_window_combined_sumstats_result = extracted_regional_window_combined_sumstats_result))
+    }
+
+    fine_mapping_metadata = fread(${fine_mapping_meta:r})
+    phenotype_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1:len(_input)//2+1]])})
+    covariate_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[len(_input)//2+1:]])})
+    condition_name = ${(&quot;&#39;%s&#39;&quot; % _meta_info[-1])}
+    region_names = ${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])}
+    if (any(region_names %in% fine_mapping_metadata$region_id)) {
+       filtered_region &lt;- fine_mapping_metadata%&gt;%filter(region_id%in%region_names)%&gt;%select(region_id)%&gt;%pull(region_id)
+       filtered_event_names &lt;- filtered_region
+    } else {
+       pheno_id_map &lt;- fread(${pheno_id_map_file:r})
+       gene_ids &lt;- pheno_id_map%&gt;%filter(ID%in%region_names)%&gt;%select(gene)%&gt;%pull(gene)%&gt;%{.[!duplicated(.)]}
+       filtered_region &lt;- fine_mapping_metadata%&gt;%filter(region_id%in%gene_ids)%&gt;%select(region_id)%&gt;%pull(region_id)
+       filtered_event_names &lt;- pheno_id_map%&gt;%filter(ID%in%region_names&amp;gene%in%filtered_region)%&gt;%select(ID)%&gt;%pull(ID)
+     }
+    keep_samples = NULL
+    if (${&quot;TRUE&quot; if keep_samples.is_file() else &quot;FALSE&quot;}) {
+      keep_samples = unlist(strsplit(readLines(${keep_samples:ar}), &quot;\\s+&quot;))
+      message(paste(length(keep_samples), &quot;samples are selected to be loaded for analysis&quot;))
+    }
+                                     
+    fdat = load_regional_multivariate_data(genotype = ${_input[0]:anr},
+                                          phenotype = phenotype_files,
+                                          covariate = covariate_files,
+                                          region = ${(&quot;&#39;%s&#39;&quot; % _meta_info[1]) if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &#39;NULL&#39;},
+                                          maf_cutoff = ${maf},       
+                                          mac_cutoff = ${mac},
+                                          imiss_cutoff = ${imiss},
+                                          conditions = NULL,
+                                          association_window = ${(&quot;&#39;%s&#39;&quot; % _meta_info[1]) if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &#39;NULL&#39;},
+                                          extract_region_name = list(filtered_event_names),
+                                          region_name_col = ${&quot;4&quot; if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;},
+                                          keep_indel = ${&quot;TRUE&quot; if indel else &quot;FALSE&quot;},
+                                          keep_samples = keep_samples,
+                                          keep_variants = ${&#39;&quot;%s&quot;&#39; % keep_variants if not keep_variants.is_dir() else &quot;NULL&quot;},
+                                          phenotype_header = ${&quot;4&quot; if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;}, # skip first 4 rows of transposed phenotype for chr, start, end and ID
+                                          scale_residuals = FALSE)
+    if (${&quot;TRUE&quot; if save_data else &quot;FALSE&quot;}) {
+        saveRDS(fdat, &quot;${_output[0]:ann}.multigene_data.rds&quot;, compress=&#39;xz&#39;)
+    }
+    if (${&quot;FALSE&quot; if skip_fine_mapping and skip_twas_weights else &quot;TRUE&quot;}) {
+        # Extract and consolidate univariate results to determine which genes to focus on
+        if (grepl(&quot;sQTL&quot;, condition_name)) {conditions &lt;- paste(condition_name, filtered_event_names, sep = &quot;_&quot;)} else {conditions &lt;- NULL}
+        combined_regional_window_list &lt;- combine_result_list(fine_mapping_metadata, condition_name, conditions, filtered_region)
+        if (grepl(&quot;sQTL&quot;,condition_name)) { filtered_region &lt;- paste(condition_name, filtered_event_names, sep = &quot;_&quot;) }
+        extracted_non_null_combined_susie_list &lt;- extract_non_null_cs_list(combined_list = combined_regional_window_list, condition_name, filtered_region)
+        if (length(extracted_non_null_combined_susie_list[[&quot;extracted_regional_window_combined_susie_result&quot;]])!=0) {
+           extracted_combined_susie_list &lt;- process_and_compare_variants(combined_list = extracted_non_null_combined_susie_list, condition_name)
+        } else {
+           extracted_combined_susie_list &lt;- NULL
+        }
+        if (!is.null(extracted_combined_susie_list)&amp;length(extracted_combined_susie_list[[&quot;extracted_regional_window_combined_susie_result&quot;]])!=0) {
+           if (grepl(&quot;sQTL&quot;, condition_name)) {
+              filtered_event_names &lt;- sub(paste0(&quot;^&quot;, condition_name, &quot;_&quot;), &quot;&quot;, names(get_nested_element(extracted_combined_susie_list,c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name))))
+           }  else if (grepl(&quot;pQTL&quot;, condition_name)) {
+              filtered_event_names &lt;- pheno_id_map %&gt;%
+                              filter(ID%in%region_names)%&gt;%
+                              filter(gene %in% names(get_nested_element(extracted_combined_susie_list, c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name)))) %&gt;%
+                              select(ID) %&gt;% pull(ID)
+          } else {
+            filtered_event_names &lt;- names(get_nested_element(extracted_combined_susie_list, c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name)))
+          }
+        } else {
+          filtered_event_names &lt;- NULL
+        }
+
+        if (&quot;${_meta_info[2]}&quot; != &quot;${_meta_info[3]}&quot;) {
+          region_name = c(&quot;${_meta_info[2]}&quot;, c(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])}))
+        } else {
+          region_name = &quot;${_meta_info[2]}&quot;
+        }
+
+        region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
+            
+        dd_prior &lt;- NULL
+        if (${&quot;TRUE&quot; if data_driven_prior else &quot;FALSE&quot;}) {
+            # FIXME: please complete this function call
+            dd_prior &lt;- multigene_udr(extracted_combined_susie_list, coverage = paste0(&quot;cs_coverage_&quot;,${coverage[0]},sep=&quot;&quot;), independent_variant_list = ${independent_variant_list:r}, n_random = ${n_random}, n_null = ${n_null}, seed = ${seed})
+        }
+        if (length(filtered_event_names)&gt;=2) {
+           pip_cutoff_to_skip = list(${&quot;,&quot;.join(skip_analysis_pip_cutoff)})
+           pip_cutoff_to_skip = unlist(pip_cutoff_to_skip[filtered_event_names])
+           dd_prior_cv &lt;- dd_prior
+           set.seed(${seed})
+           result &lt;- multivariate_analysis_pipeline(
+                            X=fdat$X,
+                            Y=fdat$residual_Y[,filtered_event_names],
+                            maf=fdat$maf,
+                            X_variance = fdat$X_variance,
+                            other_quantities = list(dropped_samples = fdat$dropped_samples),
+                            # filters
+                            imiss_cutoff = ${imiss}, 
+                            maf_cutoff = ${maf},
+                            xvar_cutoff = ${xvar_cutoff},
+                            ld_reference_meta_file = ${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
+                            pip_cutoff_to_skip = pip_cutoff_to_skip,
+                            # methods parameter configuration
+                            max_L = -1,
+                            data_driven_prior_matrices = dd_prior, 
+                            data_driven_prior_matrices_cv = dd_prior_cv, 
+                            data_driven_prior_weights_cutoff = ${prior_weights_min}, 
+                            canonical_prior_matrices = ${&quot;TRUE&quot; if prior_canonical_matrices else &quot;FALSE&quot;},
+                            mvsusie_max_iter = ${mvsusie_max_iter}, 
+                            estimate_residual_variance = ${&#39;TRUE&#39; if estimate_residual_variance else &#39;FALSE&#39;},
+                            mrmash_max_iter = ${mrmash_max_iter},
+                            # fine-mapping results summary
+                            signal_cutoff = ${pip_cutoff},
+                            coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
+                            # TWAS weights and CV for TWAS weights
+                            twas_weights = ${&quot;TRUE&quot; if not skip_twas_weights else &quot;FALSE&quot;},
+                            sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else sample_partition},
+                            max_cv_variants = ${max_cv_variants}, 
+                            cv_folds = ${twas_cv_folds},
+                            cv_threads = ${twas_cv_threads}            
+                            )
+          result$region_info &lt;- region_info
+          if (!is.null(result$twas_weights_result)) {
+              for (r in names(result$twas_weights_result)) {
+                  result$twas_weights_result[[r]]$region_info &lt;- region_info
+              }
+              saveRDS(list(&quot;${_meta_info[2]}&quot; = result$twas_weights_result), &quot;${_output[0]:ann}.multigene_twas_weights.rds&quot;, compress=&#39;xz&#39;)
+              result$twas_weights_result &lt;- NULL
+          }
+          saveRDS(list(&quot;${_meta_info[2]}&quot; = result), &quot;${_output[0]:ann}.multigene_bvsr.rds&quot;, compress=&#39;xz&#39;)        
+        } else {
+          for (f in c(${_output:ar,})) {
+            saveRDS(NULL, f)
+          }
+        }
+    }
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[fsusie]
+# prior can be either of [&quot;mixture_normal&quot;, &quot;mixture_normal_per_scale&quot;]
+parameter: prior = &quot;mixture_normal&quot;
+parameter: max_SNP_EM = 100
+# Max scale is such that 2^max_scale being the number of phenotypes in the transformed space. Default to 2^10  = 1024. Don&#39;t change it unless you know what you are doing. Max_scale should be at least larger than 5.
+parameter:  max_scale = 10
+# Purity and coverage used to call cs
+parameter:  min_purity = 0.5
+# Epigenetics mark filter
+parameter: epigenetics_mark_treshold = 16
+# Run susie for top pc of the fsusie input
+parameter: susie_top_pc = 10
+# Run fsusie with this post-processing option. Available options are TI, HMM, and none. TI is recommended as default. HMM performs particularly well when analyzing data with, say, few sampling points (i.e., ncol(Y)&lt;30) or when the data are particularly noisy (low signal-to-noise ratio).
+parameter: post_processing =  &quot;TI&quot;
+# Run fsusie with small sample correction 
+parameter: small_sample_correction = False
+
+depends: sos_variable(&quot;regional_data&quot;)
+# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
+stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
+meta_info = regional_data[&#39;meta_info&#39;]
+input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
+output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0].replace(&quot;:&quot;, &quot;_&quot;).replace(&quot;-&quot;, &quot;_&quot;)}.fsusie_{prior}_{post_processing}_{&quot;_top_pc_weights&quot; if not skip_twas_weights else &quot;&quot;}.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/mnm_analysis/mnm_methods/fsusie.R \
+        --genotype ${_input[0]:a} \
+        --phenotype &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[1:len(_input)//2+1]])}&quot; \
+        --covariate &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[len(_input)//2+1:]])}&quot; \
+        --region &quot;${_meta_info[0]}&quot; \
+        --window &quot;${_meta_info[1]}&quot; \
+        --region-name &quot;${_meta_info[2]}&quot; \
+        --conditions &quot;${&quot;,&quot;.join(_meta_info[4:])}&quot; \
+        --maf ${maf} \
+        --mac ${mac} \
+        --imiss ${imiss} \
+        ${&quot;--indel&quot; if indel else &quot;&quot;} \
+        ${&quot;--keep-samples &quot; + str(keep_samples) if keep_samples.is_file() else &quot;&quot;} \
+        ${&quot;--keep-variants &quot; + str(keep_variants) if not keep_variants.is_dir() else &quot;&quot;} \
+        --prior &quot;${prior}&quot; \
+        --max-snp-em ${max_SNP_EM} \
+        --max-scale ${max_scale} \
+        --min-purity ${min_purity} \
+        --epigenetics-mark-threshold ${epigenetics_mark_treshold} \
+        --susie-top-pc ${susie_top_pc} \
+        --post-processing &quot;${post_processing}&quot; \
+        ${&quot;--small-sample-correction&quot; if small_sample_correction else &quot;&quot;} \
+        --pip-cutoff ${pip_cutoff} \
+        --coverage &quot;${&quot;,&quot;.join([str(x) for x in coverage])}&quot; \
+        --L-greedy ${init_L} \
+        --L ${L} \
+        ${&quot;--skip-twas-weights&quot; if skip_twas_weights else &quot;&quot;} \
+        --max-cv-variants ${max_cv_variants} \
+        --twas-cv-folds ${twas_cv_folds} \
+        --twas-cv-threads ${twas_cv_threads} \
+        ${&quot;--save-data&quot; if save_data else &quot;&quot;} \
+        --output-prefix ${_output:n} \
+        --cwd ${cwd:a}
+</pre></div>
+</div>
+</div>
+</div>
+<section id="mvfsusie-wip-placeholder">
+<h3>mvfsusie (WIP placeholder)<a class="headerlink" href="#mvfsusie-wip-placeholder" title="Link to this heading">#</a></h3>
+<blockquote>
+<div><p>This section is still under development in the original pipeline and is included here as a placeholder only. It is not part of the runnable MWE.</p>
+</div></blockquote>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mvfsusie]
+# prior can be either of [&quot;mixture_normal&quot;, &quot;mixture_normal_per_scale&quot;]
+parameter: prior  = &quot;mixture_normal_per_scale&quot;
+parameter: max_SNP_EM = 1000
+depends: sos_variable(&quot;regional_data&quot;)
+# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
+stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
+
+meta_info = regional_data[&#39;meta_info&#39;]
+input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
+output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0]}.mvfsusie_{prior}.rds&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+    # Load regional association data
+    fdat = load_regional_association_data(genotype = ${_input[0]:anr},
+                                          phenotype = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1::2]])}),
+                                          covariate = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[2::2]])}),
+                                          region = ${&#39;&quot;%s:%s-%s&quot;&#39; % (_meta_info[1], _meta_info[2], _meta_info[3])},
+                                          maf_cutoff = ${maf},
+                                          mac_cutoff = ${mac},
+                                          imiss_cutoff = ${imiss})
+    # Fine-mapping with mvfSuSiE
+    library(&quot;mvf.susie.alpha&quot;)
+    Y = map(fdat$residual_Y, ~left_join(fdat$X[,1]%&gt;%as.data.frame%&gt;%rownames_to_column(&quot;rowname&quot;), .x%&gt;%t%&gt;%as.data.frame%&gt;%rownames_to_column(&quot;rowname&quot;) , by = &quot;rowname&quot;)%&gt;%select(-2)%&gt;%column_to_rownames(&quot;rowname&quot;)%&gt;%as.matrix )
+    fitted &lt;- multfsusie(Y_f = list(Y[[1]],Y[[3]]), 
+                         Y_u = Reduce(cbind, Y[[2]]),
+                         pos = list(pos1 =fdat$phenotype_coordiates[[1]], pos2 = fdat$phenotype_coordiates[[3]]),
+                         X=X,
+                         L=${max_L},
+                         data.format=&quot;list_df&quot;)
+    saveRDS(fitted, ${_output:ar})
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="summary_stats_finemapping_vignette.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="rss_analysis.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">RSS Fine-mapping with GWAS Summary Statistics</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-a-gene-expression-input-primary-example">Mode A: gene-expression input (primary example)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-b-peak-other-molecular-phenotypes-same-pipeline-different-input">Mode B: peak / other molecular phenotypes (same pipeline, different input)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-workflows">Other workflows</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multivariate-analysis-mvsusie-and-mr-mash-mnm">Multivariate analysis: mvSuSiE and mr.mash (<code class="docutils literal notranslate"><span class="pre">mnm</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-fine-mapping-across-multiple-genes-mnm-genes">xQTL fine-mapping across multiple genes (<code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functional-regression-fsusie-for-epigenomic-qtl-fine-mapping-fsusie">Functional regression fSuSiE for epigenomic QTL fine-mapping (<code class="docutils literal notranslate"><span class="pre">fsusie</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functional-regression-fsusie-with-other-modality-mvfsusie">Functional regression fSuSiE with other modality (<code class="docutils literal notranslate"><span class="pre">mvfsusie</span></code>)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mvfsusie-wip-placeholder">mvfsusie (WIP placeholder)</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

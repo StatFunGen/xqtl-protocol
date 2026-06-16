@@ -1,0 +1,1111 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Phenotype data imputation &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'phenotype_imputation';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Phenotype Data Formatting" href="phenotype_formatting.html" />
+    <link rel="prev" title="Gene Coordinate Annotation" href="gene_annotation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="multivariate_mixture_vignette.html">Mixture Multivariate Distribution Estimate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/phenotype_imputation.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fphenotype_imputation.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/phenotype_imputation.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Phenotype data imputation</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gebmf-grouped-empirical-bayes-matrix-factorization">gEBMF (grouped Empirical Bayes Matrix Factorization)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ebmf-empirical-bayes-matrix-factorization">EBMF (Empirical Bayes Matrix Factorization)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missforest">missForest</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missxgboost">missXGBoost</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#knn-k-nearest-neighbours">KNN (k-nearest-neighbours)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#softimpute">SoftImpute</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-imputation">Mean imputation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lod-limit-of-detection-imputation">LOD (limit-of-detection) imputation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-global-parameters">Setup and global parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="phenotype-data-imputation">
+<h1>Phenotype data imputation<a class="headerlink" href="#phenotype-data-imputation" title="Link to this heading">#</a></h1>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
+<p>Empirical Bayes Matrix Factorization (EBMF) is the primary imputation method we use to impute molecular phenotype data [<a class="reference external" href="https://doi.org/10.1101/2023.11.29.23299181">cf. Qi et al., medRxiv,  2023</a>]. We also provide a collection of other methods to impute missing omics data values including missing forest, XGboost, k-nearest neighbors, soft impute, mean imputation, and limit of detection.</p>
+<p><strong>Timing:</strong> ~varies on typical compute infrastructure.</p>
+</section>
+<section id="input-files">
+<h2>Input Files<a class="headerlink" href="#input-files" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/proteomics/protocol_example.protein.missing.bed.gz</span></code></p></td>
+<td><p>Toy molecular phenotype matrix in BED format (first four columns <code class="docutils literal notranslate"><span class="pre">#chr</span></code>/<code class="docutils literal notranslate"><span class="pre">start</span></code>/<code class="docutils literal notranslate"><span class="pre">end</span></code>/<code class="docutils literal notranslate"><span class="pre">ID</span></code>, remaining columns one per sample) with ~10% values set to missing (<code class="docutils literal notranslate"><span class="pre">NA</span></code>) so the imputation methods have gaps to fill.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="output-files">
+<h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype_imputation_uf/protocol_example.protein.missing.bed.imputed.bed.gz</span></code> (+ <code class="docutils literal notranslate"><span class="pre">.tbi</span></code>)</p></td>
+<td><p>Imputed molecular phenotype matrix in the same BED layout, bgzipped and tabix-indexed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype_imputation_uf/protocol_example.protein.missing.bed.gEBMF_factors.rds</span></code></p></td>
+<td><p>Saved flashier factor object from the gEBMF fit (written only when <code class="docutils literal notranslate"><span class="pre">--save_flash</span> <span class="pre">True</span></code>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<p>The pipeline offers several imputation methods. Any one of them can be run on the toy file below; each writes an imputed BED next to the <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> output directory. Two practical notes for the toy data:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--num_factor</span></code> for the EBMF / gEBMF factor models must be smaller than the number of samples (the toy set has 60 samples), so the examples use <code class="docutils literal notranslate"><span class="pre">--num_factor</span> <span class="pre">30</span></code>.</p></li>
+<li><p>Leave quality control enabled (do not pass <code class="docutils literal notranslate"><span class="pre">--no-qc-prior-to-impute</span></code>) so that the QC matrix used for the output is available to every method.</p></li>
+</ul>
+<section id="gebmf-grouped-empirical-bayes-matrix-factorization">
+<h3>gEBMF (grouped Empirical Bayes Matrix Factorization)<a class="headerlink" href="#gebmf-grouped-empirical-bayes-matrix-factorization" title="Link to this heading">#</a></h3>
+<p>Grouped Empirical Bayes Matrix Factorization. Extends EBMF by fitting factors within row groups (here, by chromosome), so structure shared across molecular features in the same group is borrowed when filling in missing values. This is the recommended default for the protocol.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb gEBMF \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf \
+    --num_factor 30
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="ebmf-empirical-bayes-matrix-factorization">
+<h3>EBMF (Empirical Bayes Matrix Factorization)<a class="headerlink" href="#ebmf-empirical-bayes-matrix-factorization" title="Link to this heading">#</a></h3>
+<p>Empirical Bayes Matrix Factorization. Decomposes the phenotype matrix into a small number of latent factors with adaptive shrinkage priors, then reconstructs the matrix to impute missing entries. Captures global low-rank structure across all samples and features.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb EBMF \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf \
+    --num_factor 30
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="missforest">
+<h3>missForest<a class="headerlink" href="#missforest" title="Link to this heading">#</a></h3>
+<p>A non-parametric, iterative random-forest imputation. Each feature with missing values is predicted in turn from the other features using a random forest, repeating until the imputed values stabilize. Handles non-linear relationships but is computationally heavier.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb missforest \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="missxgboost">
+<h3>missXGBoost<a class="headerlink" href="#missxgboost" title="Link to this heading">#</a></h3>
+<p>Iterative imputation using gradient-boosted trees (XGBoost) as the per-feature predictor instead of random forests. Often faster and more accurate than missForest on large matrices while still modeling non-linear dependencies between features.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb missxgboost \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="knn-k-nearest-neighbours">
+<h3>KNN (k-nearest-neighbours)<a class="headerlink" href="#knn-k-nearest-neighbours" title="Link to this heading">#</a></h3>
+<p>k-Nearest-Neighbours imputation. A missing entry is filled with a (distance-weighted) average of the corresponding values from the k most similar samples. Simple and fast, and works well when samples cluster into similar profiles.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb knn \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="softimpute">
+<h3>SoftImpute<a class="headerlink" href="#softimpute" title="Link to this heading">#</a></h3>
+<p>Matrix-completion via iterative soft-thresholded singular value decomposition. Assumes the phenotype matrix is approximately low-rank and recovers missing entries by repeatedly shrinking the singular values. A good linear baseline for structured data.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb soft \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="mean-imputation">
+<h3>Mean imputation<a class="headerlink" href="#mean-imputation" title="Link to this heading">#</a></h3>
+<p>Mean imputation. Each missing value is replaced by the mean of the observed values for that feature. The simplest baseline; fast but ignores correlations between samples and features.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb mean \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="lod-limit-of-detection-imputation">
+<h3>LOD (limit-of-detection) imputation<a class="headerlink" href="#lod-limit-of-detection-imputation" title="Link to this heading">#</a></h3>
+<p>Limit-of-detection imputation. Missing values are replaced with a low constant derived from the smallest observed values, appropriate when missingness is driven by measurements falling below an assay’s detection threshold (e.g., low-abundance proteins/metabolites).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb lod \
+    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --cwd output/phenotype_imputation_uf
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="command-interface">
+<h2>Command Interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run phenotype_imputation.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">sos</span> <span class="n">run</span> <span class="n">phenotype_imputation</span><span class="o">.</span><span class="n">ipynb</span>
+               <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
+  <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
+  <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
+
+<span class="n">Workflows</span><span class="p">:</span>
+  <span class="n">EBMF</span>
+  <span class="n">gEBMF</span>
+  <span class="n">missforest</span>
+  <span class="n">missxgboost</span>
+  <span class="n">knn</span>
+  <span class="n">soft</span>
+  <span class="n">mean</span>
+  <span class="n">lod</span>
+  <span class="n">bed_filter_na</span>
+
+<span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+  <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
+                        <span class="n">Work</span> <span class="n">directory</span> <span class="o">&amp;</span> <span class="n">output</span> <span class="n">directory</span>
+  <span class="o">--</span><span class="n">phenoFile</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+                        <span class="n">Molecular</span> <span class="n">phenotype</span> <span class="n">matrix</span>
+  <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">qc</span><span class="o">-</span><span class="n">prior</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">impute</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">True</span><span class="p">)</span>
+                        <span class="n">QC</span> <span class="n">before</span> <span class="n">imputation</span> <span class="n">to</span> <span class="n">remove</span> <span class="n">unqualified</span> <span class="n">features</span>
+  <span class="o">--</span><span class="n">job</span><span class="o">-</span><span class="n">size</span> <span class="mi">1</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+                        <span class="n">For</span> <span class="n">cluster</span> <span class="n">jobs</span><span class="p">,</span> <span class="n">number</span> <span class="n">commands</span> <span class="n">to</span> <span class="n">run</span> <span class="n">per</span> <span class="n">job</span>
+  <span class="o">--</span><span class="n">walltime</span> <span class="mi">72</span><span class="n">h</span>
+                        <span class="n">Wall</span> <span class="n">clock</span> <span class="n">time</span> <span class="n">expected</span>
+  <span class="o">--</span><span class="n">mem</span> <span class="mi">16</span><span class="n">G</span>
+                        <span class="n">Memory</span> <span class="n">expected</span>
+  <span class="o">--</span><span class="n">numThreads</span> <span class="mi">20</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+                        <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+
+<span class="n">Sections</span>
+  <span class="n">EBMF</span><span class="p">:</span>
+    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+      <span class="o">--</span><span class="n">prior</span> <span class="s1">&#39;ebnm_point_laplace&#39;</span>
+                        <span class="n">prior</span> <span class="n">distribution</span> <span class="n">of</span> <span class="n">loadings</span> <span class="ow">and</span> <span class="n">factors</span>
+      <span class="o">--</span><span class="n">varType</span> <span class="mi">1</span>
+      <span class="o">--</span><span class="n">num</span><span class="o">-</span><span class="n">factor</span> <span class="mi">60</span>
+  <span class="n">gEBMF</span><span class="p">:</span>
+    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+      <span class="o">--</span><span class="n">nCores</span> <span class="mi">1</span>
+      <span class="o">--</span><span class="n">num</span><span class="o">-</span><span class="n">factor</span> <span class="mi">60</span>
+      <span class="o">--</span><span class="n">backfit</span><span class="o">-</span><span class="nb">iter</span> <span class="mi">3</span>
+      <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">save</span><span class="o">-</span><span class="n">flash</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">True</span><span class="p">)</span>
+      <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">null</span><span class="o">-</span><span class="n">check</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
+  <span class="n">missforest</span><span class="p">:</span>
+  <span class="n">missxgboost</span><span class="p">:</span>
+  <span class="n">knn</span><span class="p">:</span>
+  <span class="n">soft</span><span class="p">:</span>
+  <span class="n">mean</span><span class="p">:</span>
+  <span class="n">lod</span><span class="p">:</span>
+  <span class="n">bed_filter_na</span><span class="p">:</span>
+    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+      <span class="o">--</span><span class="n">rank</span><span class="o">-</span><span class="nb">max</span> <span class="mi">50</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+      <span class="o">--</span><span class="k">lambda</span><span class="o">-</span><span class="n">hyp</span> <span class="mi">30</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+      <span class="o">--</span><span class="n">impute</span><span class="o">-</span><span class="n">method</span> <span class="n">soft</span>
+      <span class="o">--</span><span class="n">tol</span><span class="o">-</span><span class="n">missing</span> <span class="mf">0.05</span> <span class="p">(</span><span class="k">as</span> <span class="nb">float</span><span class="p">)</span>
+                        <span class="n">Tolerance</span> <span class="n">of</span> <span class="n">missingness</span> <span class="n">rows</span> <span class="k">with</span> <span class="n">missing</span> <span class="n">rate</span> <span class="n">larger</span> <span class="n">than</span> <span class="n">tol_missing</span> <span class="n">will</span> <span class="n">be</span> <span class="n">removed</span><span class="p">,</span> <span class="k">with</span> <span class="n">missing</span> <span class="n">rate</span> <span class="n">smaller</span> <span class="n">than</span> <span class="n">tol_missing</span> <span class="n">will</span> <span class="n">be</span> <span class="n">mean_imputed</span><span class="o">.</span> <span class="n">Say</span> <span class="k">if</span>
+                        <span class="n">we</span> <span class="n">want</span> <span class="n">to</span> <span class="n">keep</span> <span class="n">rows</span> <span class="k">with</span> <span class="n">less</span> <span class="n">than</span> <span class="mi">5</span><span class="o">%</span> <span class="n">missing</span><span class="p">,</span> <span class="n">then</span> <span class="n">we</span> <span class="n">use</span> <span class="mf">0.05</span> <span class="k">as</span> <span class="n">tol_missing</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="setup-and-global-parameters">
+<h2>Setup and global parameters<a class="headerlink" href="#setup-and-global-parameters" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+# Work directory &amp; output directory
+parameter: cwd = path(&quot;output&quot;)
+# Molecular phenotype matrix
+parameter: phenoFile = path
+# QC before imputation to remove unqualified features 
+parameter: qc_prior_to_impute = True
+# For cluster jobs, number commands to run per job
+parameter: job_size = 1
+# Wall clock time expected
+parameter: walltime = &quot;72h&quot;
+# Memory expected
+parameter: mem = &quot;16G&quot;
+# Number of threads
+parameter: numThreads = 20
+parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= &quot;&quot;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[EBMF]
+# prior distribution of loadings and factors
+parameter: prior = &quot;ebnm_point_laplace&quot;
+parameter: varType = &#39;1&#39;
+parameter: num_factor = &#39;60&#39;
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step EBMF \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --prior &quot;${prior}&quot; \
+        --varType &quot;${varType}&quot; \
+        --num-factor ${num_factor} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[gEBMF]
+parameter: nCores = &#39;1&#39;
+parameter: num_factor = &#39;60&#39;
+parameter: backfit_iter = &#39;3&#39;
+parameter: save_flash = True
+parameter: null_check = False
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step gEBMF \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --num-factor ${num_factor} \
+        --nCores ${nCores} \
+        --backfit-iter ${backfit_iter} \
+        --save-flash ${&quot;TRUE&quot; if save_flash else &quot;FALSE&quot;} \
+        --null-check ${&quot;TRUE&quot; if null_check else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[missforest]
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step missforest \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[missxgboost]
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    bash ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.sh missxgboost \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[knn]
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step knn \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[soft]
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step soft \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mean]
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step mean \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[lod]
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step lod \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[bed_filter_na]
+parameter: rank_max = 50 # max rank estimated in the per-chr methyl matrix
+parameter: lambda_hyp = 30 # hyper par, indicating the importance of the nuclear norm
+parameter: impute_method = &quot;soft&quot;
+# Tolerance of missingness rows with missing rate larger than tol_missing will be removed,
+# with missing rate smaller than tol_missing will be mean_imputed. Say if we want to keep rows with less than 5% missing, then we use 0.05 as tol_missing.
+parameter: tol_missing = 0.05
+input: phenoFile
+output: f&#39;{cwd:a}/{_input:nn}.filter_na.{impute_method}.bed.gz&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step bed_filter_na \
+        --cwd &quot;${cwd}&quot; \
+        --phenoFile &quot;${_input}&quot; \
+        --output &quot;${_output}&quot; \
+        --rank-max ${rank_max} \
+        --lambda-hyp ${lambda_hyp} \
+        --impute-method &quot;${impute_method}&quot; \
+        --tol-missing ${tol_missing} \
+        --numThreads ${numThreads}
+</pre></div>
+</div>
+</div>
+</div>
+<p>The resource usage for softimputing 450K methylation data are as followed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">time</span> <span class="n">elapsed</span><span class="p">:</span> <span class="mf">880.90</span><span class="n">s</span>
+<span class="n">peak</span> <span class="n">first</span> <span class="n">occurred</span><span class="p">:</span> <span class="mf">152.11</span><span class="n">s</span>
+<span class="n">peak</span> <span class="n">last</span> <span class="n">occurred</span><span class="p">:</span> <span class="mf">175.41</span><span class="n">s</span>
+<span class="nb">max</span> <span class="n">vms_memory</span><span class="p">:</span> <span class="mf">38.95</span><span class="n">GB</span>
+<span class="nb">max</span> <span class="n">rss_memory</span><span class="p">:</span> <span class="mf">34.35</span><span class="n">GB</span>
+<span class="n">memory</span> <span class="n">check</span> <span class="n">interval</span><span class="p">:</span> <span class="mi">1</span><span class="n">s</span>
+<span class="k">return</span> <span class="n">code</span><span class="p">:</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "sos"
+        },
+        kernelOptions: {
+            name: "sos",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'sos'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="gene_annotation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Gene Coordinate Annotation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="phenotype_formatting.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Phenotype Data Formatting</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gebmf-grouped-empirical-bayes-matrix-factorization">gEBMF (grouped Empirical Bayes Matrix Factorization)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ebmf-empirical-bayes-matrix-factorization">EBMF (Empirical Bayes Matrix Factorization)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missforest">missForest</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missxgboost">missXGBoost</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#knn-k-nearest-neighbours">KNN (k-nearest-neighbours)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#softimpute">SoftImpute</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-imputation">Mean imputation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lod-limit-of-detection-imputation">LOD (limit-of-detection) imputation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-global-parameters">Setup and global parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
