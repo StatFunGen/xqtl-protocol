@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 TensorQTL.py
-Mirrors: code/association_scan/TensorQTL/TensorQTL.ipynb
+Mirrors: code/SoS/association_scan/TensorQTL/TensorQTL.ipynb
 
 Steps (selected via --step):
   cis   — cis-QTL: nominal pass + permutation test across all chromosomes
@@ -15,7 +15,6 @@ import glob
 import os
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -84,13 +83,6 @@ def phenotype_prefix(path: str) -> str:
     return strip_suffix(Path(path).name, ".bed.gz")
 
 
-def local_temp_dir() -> str:
-    """Use the workflow temp directory, falling back to ./tmp instead of /tmp."""
-    tmpdir = os.environ.get("TMPDIR") or os.path.join(os.getcwd(), "tmp")
-    os.makedirs(tmpdir, exist_ok=True)
-    return tmpdir
-
-
 def direct_input_mode(genotype_file: str, phenotype_file: str) -> bool:
     return (
         genotype_file.endswith((".bed", ".pgen"))
@@ -122,14 +114,15 @@ def infer_single_chrom_label(phenotype_file: str) -> str:
     return chroms[0] if len(chroms) == 1 else "0"
 
 
-def expected_cis_outputs(cwd: str, pheno_file: str, chrom_label: str) -> dict:
+def expected_cis_outputs(cwd: str, pheno_file: str, chrom_label: str, interaction: str = "") -> dict:
     prefix = phenotype_prefix(pheno_file)
     chrom_suffix = "" if str(chrom_label) == "0" else f"_chr{chrom_label}"
     parquet_suffix = "" if str(chrom_label) == "0" else str(chrom_label)
+    int_suffix = f"_{interaction}" if interaction else ""
     return {
-        "parquet": os.path.join(cwd, f"{prefix}.cis_qtl_pairs.{parquet_suffix}.parquet"),
-        "nominal": os.path.join(cwd, f"{prefix}{chrom_suffix}.cis_qtl.pairs.tsv.gz"),
-        "regional": os.path.join(cwd, f"{prefix}{chrom_suffix}.cis_qtl.regional.tsv.gz"),
+        "parquet": os.path.join(cwd, f"{prefix}{int_suffix}.cis_qtl_pairs.{parquet_suffix}.parquet"),
+        "nominal": os.path.join(cwd, f"{prefix}{chrom_suffix}{int_suffix}.cis_qtl.pairs.tsv.gz"),
+        "regional": os.path.join(cwd, f"{prefix}{chrom_suffix}{int_suffix}.cis_qtl.regional.tsv.gz"),
     }
 
 
@@ -216,6 +209,181 @@ def load_covariates(cov_file: str) -> pd.DataFrame:
     return df.T   # transpose to samples × covariates
 
 
+def apply_covariate_pattern(covariates_df: pd.DataFrame, patterns: list[str]) -> pd.DataFrame:
+    if not patterns:
+        return covariates_df
+    pattern_mapping = {
+        "pheno_PC": ["Hidden_Factor_PC"],
+        "geno_PC": ["PC"],
+    }
+    keep_cols = []
+    for col in covariates_df.columns:
+        if col in patterns:
+            keep_cols.append(col)
+            continue
+        for pattern in patterns:
+            for mapped_pattern in pattern_mapping.get(pattern, [pattern]):
+                if str(col).startswith(mapped_pattern):
+                    keep_cols.append(col)
+                    break
+            if col in keep_cols:
+                break
+    if not keep_cols:
+        print("WARNING: No covariate columns match --covariate-pattern; keeping all covariates.", flush=True)
+        return covariates_df
+    return covariates_df[keep_cols]
+
+
+def apply_keep_samples(covariates_df: pd.DataFrame, keep_sample: str) -> pd.DataFrame:
+    if not keep_sample or not os.path.isfile(keep_sample):
+        return covariates_df
+    sample_df = pd.read_csv(keep_sample, comment="#", header=None, names=["sample_id"], sep="\t")
+    sample_ids = sample_df["sample_id"].astype(str).str.strip().tolist()
+    return covariates_df.loc[covariates_df.index.intersection(sample_ids)]
+
+
+def read_region_phenotypes(region_list: str, phenotype_column: int) -> set[str]:
+    if not region_list or not os.path.isfile(region_list):
+        return set()
+    region = pd.read_csv(region_list, comment="#", header=None, sep="\t", dtype=str)
+    if region.empty:
+        return set()
+    column = 0 if len(region.columns) == 1 else max(int(phenotype_column) - 1, 0)
+    if column >= len(region.columns):
+        raise ValueError(
+            f"--region-list-phenotype-column {phenotype_column} is outside the {len(region.columns)}-column region list"
+        )
+    return set(region.iloc[:, column].astype(str).str.strip())
+
+
+def filter_phenotypes_by_region(pheno_df: pd.DataFrame, pheno_pos_df: pd.DataFrame,
+                                region_list: str, phenotype_column: int):
+    keep_region = read_region_phenotypes(region_list, phenotype_column)
+    if not keep_region:
+        return pheno_df, pheno_pos_df
+    keep = pheno_df.index.astype(str).isin(keep_region)
+    pheno_df = pheno_df.loc[keep]
+    pheno_pos_df = pheno_pos_df.loc[pheno_pos_df.index.astype(str).isin(keep_region)]
+    return pheno_df, pheno_pos_df
+
+
+def apply_custom_cis_windows(pheno_df: pd.DataFrame, pheno_pos_df: pd.DataFrame,
+                             customized_cis_windows: str):
+    if not customized_cis_windows or not os.path.isfile(customized_cis_windows):
+        return pheno_df, pheno_pos_df, None
+
+    phenotype_id = pheno_pos_df.index.name or "ID"
+    cis_list = pd.read_csv(
+        customized_cis_windows,
+        comment="#",
+        header=None,
+        names=["chr", "start", "end", phenotype_id],
+        sep="\t",
+    )
+    cis_list["chr"] = cis_list["chr"].astype(str).str.replace(r"^chr", "", regex=True)
+    if cis_list[["chr", phenotype_id]].duplicated().sum() != 0:
+        cis_list = (
+            cis_list.groupby([phenotype_id, "chr"])
+            .agg({"start": "min", "end": "max"})
+            .reset_index()[["chr", "start", "end", phenotype_id]]
+        )
+
+    pos_reset = pheno_pos_df.reset_index()
+    pos_id_col = pos_reset.columns[0]
+    merged_pos = pos_reset.merge(
+        cis_list,
+        left_on=["chr", pos_id_col],
+        right_on=["chr", phenotype_id],
+        suffixes=("_default", ""),
+    )
+    if merged_pos.empty:
+        raise ValueError("No phenotypes matched --customized-cis-windows")
+    if merged_pos[pos_id_col].duplicated().sum() != 0:
+        raise ValueError("customized cis windows did not uniquely match phenotype IDs")
+
+    matched_ids = merged_pos[pos_id_col].astype(str)
+    original_missing = set(pheno_df.index.astype(str)) - set(matched_ids)
+    if original_missing:
+        pheno_df = pheno_df.loc[pheno_df.index.astype(str).isin(matched_ids)]
+    if len(pheno_df.index) != len(merged_pos.index):
+        raise ValueError("cannot uniquely match all phenotype data to customized cis windows")
+
+    merged_pos = merged_pos.set_index(pos_id_col)[["chr", "start", "end"]]
+    merged_pos.index.name = pheno_pos_df.index.name
+    return pheno_df.loc[merged_pos.index], merged_pos, 0
+
+
+def load_phenotype_group(phenotype_group: str):
+    if not phenotype_group or not os.path.isfile(phenotype_group):
+        return None
+    return pd.read_csv(phenotype_group, sep="\t", header=None, index_col=0).squeeze("columns")
+
+
+def load_interaction(interaction: str, covariates_df: pd.DataFrame):
+    if not interaction:
+        return None, ""
+    if os.path.isfile(interaction):
+        interaction_s = pd.read_csv(interaction, sep="\t", index_col=0)
+        if interaction_s.shape[1] == 0:
+            raise ValueError(f"Interaction file has no value columns: {interaction}")
+        interaction_name = str(interaction_s.columns[0])
+        return interaction_s.iloc[:, [0]], interaction_name
+    if interaction in covariates_df.columns:
+        return covariates_df[[interaction]], interaction
+    raise ValueError(
+        f"--interaction must be either a file or a covariate column name; got {interaction}"
+    )
+
+
+def align_analysis_inputs(genotype_df: pd.DataFrame, pheno_df: pd.DataFrame,
+                          covariates_df: pd.DataFrame, interaction_df=None):
+    shared = genotype_df.columns.intersection(pheno_df.columns).intersection(covariates_df.index)
+    if interaction_df is not None:
+        shared = shared.intersection(interaction_df.index)
+    shared = list(shared)
+    if interaction_df is not None:
+        return shared, interaction_df.loc[shared]
+    return shared, None
+
+
+def rename_nominal_columns(pairs_df: pd.DataFrame, interaction_name: str,
+                           custom_cis_window: bool) -> pd.DataFrame:
+    distance_renames = {
+        "start_distance": "cis_window_start_distance" if custom_cis_window else "tss_distance",
+        "end_distance": "cis_window_end_distance" if custom_cis_window else "tes_distance",
+    }
+    if interaction_name:
+        interaction_renames = {
+            "phenotype_id": "molecular_trait_id",
+            "pval_g": "pvalue",
+            "b_g": "bhat",
+            "b_g_se": "sebhat",
+            "pval_i": f"pvalue_{interaction_name}",
+            "b_i": f"bhat_{interaction_name}",
+            "b_i_se": f"sebhat_{interaction_name}",
+            "pval_gi": f"pvalue_{interaction_name}_interaction",
+            "b_gi": f"bhat_{interaction_name}_interaction",
+            "b_gi_se": f"sebhat_{interaction_name}_interaction",
+        }
+        interaction_renames.update(distance_renames)
+        return pairs_df.rename(columns=interaction_renames)
+
+    plain_renames = {
+        "phenotype_id": "molecular_trait_id",
+        "pval_nominal": "pvalue",
+        "slope": "bhat",
+        "slope_se": "sebhat",
+    }
+    plain_renames.update(distance_renames)
+    return pairs_df.rename(columns=plain_renames)
+
+
+def genomic_inflation_by_trait(pairs_df: pd.DataFrame, pvalue_col: str = "pvalue") -> pd.Series:
+    return pairs_df.groupby("molecular_trait_object_id").apply(
+        lambda x: stats.chi2.ppf(1.0 - np.median(x[pvalue_col]), 1) / stats.chi2.ppf(0.5, 1)
+    )
+
+
 def load_phenotype_bed(bed_gz: str):
     """
     Load a phenotype BED.gz file.
@@ -263,6 +431,24 @@ def run_command(args: list[str]) -> None:
     subprocess.run(args, check=True)
 
 
+def str2bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    value = str(value).strip().lower()
+    if value in {"1", "true", "t", "yes", "y"}:
+        return True
+    if value in {"0", "false", "f", "no", "n"}:
+        return False
+    raise argparse.ArgumentTypeError(f"expected a boolean value, got {value}")
+
+
+def tensorqtl_r_script() -> str:
+    script_path = str(Path(__file__).with_suffix(".R"))
+    if not os.path.isfile(script_path):
+        sys.exit(f"ERROR: TensorQTL R helper missing: {script_path}")
+    return script_path
+
+
 def write_bgzip_table(df: pd.DataFrame, out_gz: str) -> None:
     out_tsv = strip_suffix(out_gz, ".gz")
     df.to_csv(out_tsv, sep="\t", index=False)
@@ -270,86 +456,20 @@ def write_bgzip_table(df: pd.DataFrame, out_gz: str) -> None:
     run_command(["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", out_gz])
 
 
-def apply_nominal_qvalues(tsv_path: str) -> None:
-    r_code = """
-args <- commandArgs(TRUE)
-file_path <- args[1]
-library(purrr)
-library(tidyr)
-library(readr)
-library(dplyr)
-library(qvalue)
-compute_qvalues <- function(pvalues) {
-    tryCatch({
-        if(length(pvalues) < 2) {
-            return(pvalues)
-        } else {
-            return(qvalue(pvalues)$qvalues)
-        }
-    }, error = function(e) {
-        message("Too few p-values to calculate qvalue; using BH")
-        p.adjust(pvalues, method = "BH")
-    })
-}
-pairs_df = read_delim(file_path, delim = '\\t')
-pairs_df = pairs_df %>% group_by(molecular_trait_id) %>% mutate(qvalue = compute_qvalues(pvalue))
-pairs_df %>% write_delim(file_path, '\\t')
-"""
-    with tempfile.NamedTemporaryFile("w", suffix=".R", delete=False, dir=local_temp_dir()) as handle:
-        handle.write(r_code)
-        script_path = handle.name
-    try:
-        run_command(["Rscript", script_path, tsv_path])
-    finally:
-        os.unlink(script_path)
+def apply_nominal_qvalues(tsv_path: str, interaction: str = "") -> None:
+    cmd = ["Rscript", tensorqtl_r_script(), "nominal_qvalues", tsv_path]
+    if interaction:
+        cmd.append(interaction)
+    run_command(cmd)
+
+
+def apply_trans_qvalues(tsv_path: str) -> None:
+    run_command(["Rscript", tensorqtl_r_script(), "trans_qvalues", tsv_path])
 
 
 def run_regional_postprocess(regional_files: list[str], out_tsv: str, out_summary: str) -> None:
-    r_code = """
-args <- commandArgs(TRUE)
-out_tsv <- args[1]
-out_summary <- args[2]
-input_files <- args[-c(1,2)]
-library(purrr)
-library(tidyr)
-library(dplyr)
-library(readr)
-library(qvalue)
-emprical_pd = tibble(map(input_files, ~read_delim(.x,'\\t')))%>%unnest()
-emprical_pd['q_beta'] = tryCatch(qvalue(emprical_pd$p_beta)$qvalue, error = function(e){print('Too few pvalue to calculate qvalue; using BH')
-                                                                                          p.adjust(emprical_pd$p_beta, method = 'BH')})
-emprical_pd['q_perm'] = tryCatch(qvalue(emprical_pd$p_perm)$qvalue, error = function(e){print('Too few pvalue to calculate qvalue; using BH')
-                                                                                          p.adjust(emprical_pd$p_perm, method = 'BH')})
-emprical_pd['fdr_beta'] = p.adjust(emprical_pd$p_beta,'fdr')
-emprical_pd['fdr_perm'] = p.adjust(emprical_pd$p_perm,'fdr')
-if (!all(is.na(emprical_pd$p_beta))) {
-  lb <- emprical_pd %>% filter(q_beta <= 0.05) %>% pull(p_beta) %>% sort()
-  ub <- emprical_pd %>% filter(q_beta > 0.05) %>% pull(p_beta) %>% sort()
-  if (length(lb) > 0) {
-    lb_val <- tail(lb, 1)
-    threshold <- if (length(ub) > 0) (lb_val + head(ub, 1)) / 2 else lb_val
-    message(sprintf('min p-value threshold @ FDR 0.05: %g', threshold))
-    emprical_pd <- emprical_pd %>% mutate(p_nominal_threshold = qbeta(threshold, beta_shape1, beta_shape2))
-  }
-}
-summary = tibble('fdr_perm_0.05' = sum(emprical_pd['fdr_perm'] < 0.05),
-                 'fdr_beta_0.05' = sum(emprical_pd['fdr_beta'] < 0.05),
-                 'q_perm_0.05' = sum(emprical_pd['q_perm'] < 0.05),
-                 'q_beta_0.05' = sum(emprical_pd['q_beta'] < 0.05),
-                 'fdr_perm_0.01' = sum(emprical_pd['fdr_perm'] < 0.01),
-                 'fdr_beta_0.01' = sum(emprical_pd['fdr_beta'] < 0.01),
-                 'q_perm_0.01' = sum(emprical_pd['q_perm'] < 0.01),
-                 'q_beta_0.01' = sum(emprical_pd['q_beta'] < 0.01))
-emprical_pd %>% write_delim(out_tsv, '\\t')
-summary %>% write_delim(out_summary, '\\t')
-"""
-    with tempfile.NamedTemporaryFile("w", suffix=".R", delete=False, dir=local_temp_dir()) as handle:
-        handle.write(r_code)
-        script_path = handle.name
-    try:
-        run_command(["Rscript", script_path, out_tsv, out_summary, *regional_files])
-    finally:
-        os.unlink(script_path)
+    run_command(["Rscript", tensorqtl_r_script(), "regional_postprocess",
+                 out_tsv, out_summary, *regional_files])
 
 
 def apply_mac_filter(genotype_df: pd.DataFrame, variant_df: pd.DataFrame,
@@ -411,6 +531,12 @@ def run_cis(args) -> None:
         return
 
     covariates_df = load_covariates(args.covariate_file)
+    covariates_df = apply_covariate_pattern(covariates_df, args.covariate_pattern)
+    covariates_df = apply_keep_samples(covariates_df, args.keep_sample)
+    interaction_df, interaction_name = load_interaction(args.interaction, covariates_df)
+    if interaction_name and interaction_name in covariates_df.columns:
+        covariates_df = covariates_df.drop(columns=[interaction_name])
+    group_s = load_phenotype_group(args.phenotype_group)
     input_pairs = resolve_cis_inputs(args.genotype_file, args.phenotype_file)
     requested_chroms = normalize_chromosomes(args.chromosome)
     if requested_chroms:
@@ -442,18 +568,23 @@ def run_cis(args) -> None:
         # Load genotype using the correct TensorQTL API
         genotype_df, variant_df = genotypeio.load_genotypes(geno_prefix, dosages=True)
         pheno_df, pheno_pos_df = load_phenotype_bed(pheno_file)
+        pheno_df, pheno_pos_df = filter_phenotypes_by_region(
+            pheno_df, pheno_pos_df, args.region_list, args.region_list_phenotype_column)
         if pair.get("filter_chrom"):
             genotype_df, variant_df, pheno_df, pheno_pos_df = filter_to_chromosome(
                 genotype_df, variant_df, pheno_df, pheno_pos_df, pair["filter_chrom"])
-        expected = expected_cis_outputs(args.cwd, pheno_file, chrom)
+        pheno_df, pheno_pos_df, custom_window = apply_custom_cis_windows(
+            pheno_df, pheno_pos_df, args.customized_cis_windows)
+        effective_window = args.window if custom_window is None else custom_window
+        expected = expected_cis_outputs(args.cwd, pheno_file, chrom, interaction_name)
 
         # Align samples across genotype, phenotype, and covariates
-        shared = (genotype_df.columns
-                  .intersection(pheno_df.columns)
-                  .intersection(covariates_df.index))
-        shared = list(shared)
+        shared, interaction_t = align_analysis_inputs(genotype_df, pheno_df, covariates_df, interaction_df)
         if not shared:
             print(f"  WARNING: No shared samples for {chrom}, skipping.", flush=True)
+            continue
+        if pheno_df.empty:
+            print(f"  WARNING: No phenotypes left for {chrom}, skipping.", flush=True)
             continue
 
         pheno_df     = pheno_df[shared].astype(float)
@@ -465,16 +596,31 @@ def run_cis(args) -> None:
             genotype_df, variant_df, n_samples=len(shared), mac_min=args.MAC)
 
         # map_nominal writes parquet output to disk; it does not return a DataFrame.
-        nominal_prefix = f"{pheno_prefix}{'' if chrom == '0' else f'_chr{chrom}'}"
-        cis.map_nominal(
-            genotype_df, variant_df, pheno_df, pheno_pos_df,
-            nominal_prefix,
-            covariates_df=covariates_t,
-            window=args.window,
-            maf_threshold=args.maf_threshold,
-            run_eigenmt=True,
-            output_dir=args.cwd,
-        )
+        nominal_prefix = f"{pheno_prefix}{'_' + interaction_name if interaction_name else ''}"
+        if not (args.skip_nominal_if_exist and os.path.isfile(expected["parquet"])):
+            if interaction_t is not None:
+                cis.map_nominal(
+                    genotype_df, variant_df, pheno_df, pheno_pos_df,
+                    nominal_prefix,
+                    covariates_df=covariates_t,
+                    interaction_df=interaction_t,
+                    maf_threshold_interaction=args.maf_threshold,
+                    window=effective_window,
+                    group_s=group_s,
+                    run_eigenmt=True,
+                    output_dir=args.cwd,
+                )
+            else:
+                cis.map_nominal(
+                    genotype_df, variant_df, pheno_df, pheno_pos_df,
+                    nominal_prefix,
+                    covariates_df=covariates_t,
+                    window=effective_window,
+                    maf_threshold=args.maf_threshold,
+                    run_eigenmt=not args.permutation,
+                    group_s=group_s,
+                    output_dir=args.cwd,
+                )
         parquet_candidates = sorted(glob.glob(os.path.join(args.cwd, f"{nominal_prefix}.cis_qtl_pairs.*.parquet")))
         if parquet_candidates:
             Path(expected["parquet"]).parent.mkdir(parents=True, exist_ok=True)
@@ -487,18 +633,14 @@ def run_cis(args) -> None:
         print(f"  Nominal pass complete -> {parquet_file}", flush=True)
 
         pairs_df = pd.read_parquet(parquet_file)
+        if interaction_t is not None and "pval_gi" in pairs_df.columns:
+            pairs_df = pairs_df.dropna(subset=["pval_gi"])
         pairs_df["molecular_trait_object_id"] = pairs_df["phenotype_id"]
         if "end_distance" not in pairs_df.columns:
             start_pos = pairs_df.columns.get_loc("start_distance")
             pairs_df.insert(start_pos + 1, "end_distance", pairs_df["start_distance"])
-        pairs_df.rename(columns={
-            "phenotype_id": "molecular_trait_id",
-            "pval_nominal": "pvalue",
-            "slope": "bhat",
-            "slope_se": "sebhat",
-            "start_distance": "tss_distance",
-            "end_distance": "tes_distance",
-        }, inplace=True)
+        pairs_df = rename_nominal_columns(
+            pairs_df, interaction_name, custom_cis_window=custom_window is not None)
         pairs_df["n"] = len(shared)
         pairs_df = variant_df.merge(pairs_df, right_on="variant_id", left_index=True)
         pairs_df.rename(columns={"a1": "a2", "a0": "a1"}, inplace=True)
@@ -506,31 +648,37 @@ def run_cis(args) -> None:
             pairs_df = pairs_df.sort_values(by=["chrom", "pos"])
         nominal_tsv = strip_suffix(expected["nominal"], ".gz")
         pairs_df.to_csv(nominal_tsv, sep="\t", index=False)
-        apply_nominal_qvalues(nominal_tsv)
+        apply_nominal_qvalues(nominal_tsv, args.interaction or interaction_name)
         run_command(["bgzip", "--compress-level", "9", "-f", nominal_tsv])
         run_command(["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", expected["nominal"]])
 
-        lambda_col = pairs_df.groupby("molecular_trait_object_id").apply(
-            lambda x: stats.chi2.ppf(1.0 - np.median(x["pvalue"]), 1) / stats.chi2.ppf(0.5, 1)
-        )
+        test_regional_association = args.permutation and interaction_t is None
+        if not test_regional_association:
+            print(f"  Nominal results  -> {expected['nominal']}", flush=True)
+            continue
+
+        lambda_col = genomic_inflation_by_trait(pairs_df)
 
         # Permutation pass — returns a DataFrame
         perm_df = cis.map_cis(
             genotype_df, variant_df, pheno_df, pheno_pos_df,
             covariates_df=covariates_t,
-            window=args.window,
+            window=effective_window,
             maf_threshold=args.maf_threshold,
+            group_s=group_s,
             seed=999,
         )
         perm_df.index.name = "molecular_trait_id"
         if "group_id" not in perm_df.columns:
             perm_df["group_id"] = perm_df.index
             perm_df["group_size"] = 1
-        perm_df.rename(columns={
+        regional_distance_renames = {
+            "start_distance": "cis_window_start_distance" if custom_window is not None else "tss_distance",
+            "end_distance": "cis_window_end_distance" if custom_window is not None else "tes_distance",
+        }
+        regional_renames = {
             "group_id": "molecular_trait_object_id",
             "group_size": "n_traits",
-            "start_distance": "tss_distance",
-            "end_distance": "tes_distance",
             "num_var": "n_variants",
             "pval_nominal": "p_nominal",
             "slope": "bhat",
@@ -538,7 +686,9 @@ def run_cis(args) -> None:
             "pval_true_df": "p_true_df",
             "pval_perm": "p_perm",
             "pval_beta": "p_beta",
-        }, inplace=True)
+        }
+        regional_renames.update(regional_distance_renames)
+        perm_df.rename(columns=regional_renames, inplace=True)
         perm_df["genomic_inflation"] = perm_df["molecular_trait_object_id"].map(lambda_col)
         perm_df = variant_df.merge(perm_df, right_on="variant_id", left_index=True)
         perm_df.rename(columns={"a1": "a2", "a0": "a1"}, inplace=True)
@@ -610,9 +760,12 @@ def run_trans(args) -> None:
         return
 
     covariates_df = load_covariates(args.covariate_file)
+    covariates_df = apply_covariate_pattern(covariates_df, args.covariate_pattern)
+    covariates_df = apply_keep_samples(covariates_df, args.keep_sample)
     trans_geno_chrom = str(args.trans_geno_chromosome).replace("chr", "") if args.trans_geno_chromosome else ""
     forced_geno_prefix = resolve_genotype_chrom(args.genotype_file, trans_geno_chrom) if trans_geno_chrom else ""
 
+    all_results = []
     input_pairs = resolve_cis_inputs(args.genotype_file, args.phenotype_file)
     for pair in input_pairs:
         chrom = str(pair["chrom"])
@@ -620,37 +773,153 @@ def run_trans(args) -> None:
         pheno_f = pair["pheno_file"]
 
         genotype_df, variant_df = genotypeio.load_genotypes(geno_prefix, dosages=True)
+        variant_df["chrom"] = variant_df["chrom"].astype(str).str.replace(r"^chr", "", regex=True)
         if trans_geno_chrom:
             chrom_filter = (
-                variant_df["chrom"].astype(str).str.replace(r"^chr", "", regex=True)
-                == trans_geno_chrom
+                variant_df["chrom"].astype(str).str.replace(r"^chr", "", regex=True) == trans_geno_chrom
             )
             if chrom_filter.sum() == 0:
                 raise ValueError(f"No variants found for chromosome {trans_geno_chrom} in genotype data")
             variant_df = variant_df[chrom_filter]
             genotype_df = genotype_df.loc[variant_df.index]
 
-        pheno_df, _ = load_phenotype_bed(pheno_f)
+        pheno_df, pheno_pos_df = load_phenotype_bed(pheno_f)
+        pheno_df, pheno_pos_df = filter_phenotypes_by_region(
+            pheno_df, pheno_pos_df, args.region_list, args.region_list_phenotype_column)
+        if pair.get("filter_chrom"):
+            genotype_df, variant_df, pheno_df, pheno_pos_df = filter_to_chromosome(
+                genotype_df, variant_df, pheno_df, pheno_pos_df, pair["filter_chrom"])
+        pheno_df, pheno_pos_df, custom_window = apply_custom_cis_windows(
+            pheno_df, pheno_pos_df, args.customized_cis_windows)
+        effective_window = args.window if custom_window is None else custom_window
 
-        shared = (genotype_df.columns
-                  .intersection(pheno_df.columns)
-                  .intersection(covariates_df.index))
-        shared = list(shared)
-        genotype_df = genotype_df[shared]
-        genotype_df, variant_df = apply_mac_filter(
-            genotype_df, variant_df, n_samples=len(shared), mac_min=args.MAC)
+        pheno_pos_df["chr"] = pheno_pos_df["chr"].astype(str).str.replace(r"^chr", "", regex=True)
+        pheno_chroms = sorted(pheno_pos_df["chr"].unique().tolist())
+        if chrom != "0" and chrom in pheno_chroms:
+            pheno_chroms = [chrom]
+        geno_chroms = sorted(variant_df["chrom"].astype(str).str.replace(r"^chr", "", regex=True).unique().tolist())
 
-        trans_df = trans.map_trans(
-            genotype_df, pheno_df[shared].astype(float),
-            covariates_df=covariates_df.loc[shared],
-            maf_threshold=args.maf_threshold,
+        for pheno_chrom in pheno_chroms:
+            phenotype_pos_df_filtered = pheno_pos_df.loc[pheno_pos_df["chr"] == pheno_chrom]
+            phenotype_df_filtered = pheno_df.loc[pheno_df.index.isin(phenotype_pos_df_filtered.index)]
+            if phenotype_df_filtered.empty:
+                print(f"  No phenotypes found for chromosome {pheno_chrom}, skipping.", flush=True)
+                continue
+
+            for geno_chrom in geno_chroms:
+                chrom_variants = variant_df.index[
+                    variant_df["chrom"].astype(str).str.replace(r"^chr", "", regex=True) == geno_chrom
+                ].tolist()
+                if not chrom_variants:
+                    print(f"  No variants found for chromosome {geno_chrom}, skipping.", flush=True)
+                    continue
+
+                genotype_df_chr = genotype_df.loc[chrom_variants]
+                variant_df_chr = variant_df.loc[chrom_variants]
+                shared = (
+                    genotype_df_chr.columns
+                    .intersection(phenotype_df_filtered.columns)
+                    .intersection(covariates_df.index)
+                )
+                shared = list(shared)
+                if not shared:
+                    print(
+                        f"  No common samples for phenotype chr{pheno_chrom} x genotype chr{geno_chrom}, skipping.",
+                        flush=True,
+                    )
+                    continue
+
+                phenotype_df_final = phenotype_df_filtered[shared].astype(float)
+                genotype_df_final = genotype_df_chr[shared]
+                covariates_df_final = covariates_df.loc[shared]
+                genotype_df_final, variant_df_chr = apply_mac_filter(
+                    genotype_df_final, variant_df_chr, n_samples=len(shared), mac_min=args.MAC)
+                if genotype_df_final.empty:
+                    print(
+                        f"  No variants left after MAC filter for phenotype chr{pheno_chrom} x genotype chr{geno_chrom}.",
+                        flush=True,
+                    )
+                    continue
+
+                trans_df = trans.map_trans(
+                    genotype_df_final,
+                    phenotype_df_final,
+                    covariates_df_final,
+                    batch_size=args.batch_size,
+                    return_sparse=True,
+                    return_r2=True,
+                    pval_threshold=args.pval_threshold,
+                    maf_threshold=args.maf_threshold,
+                )
+                if trans_df is None or trans_df.empty:
+                    print(f"  No trans-QTLs found for phenotype chr{pheno_chrom} x genotype chr{geno_chrom}.", flush=True)
+                    continue
+
+                trans_df = trans.filter_cis(trans_df, phenotype_pos_df_filtered, variant_df_chr, window=effective_window)
+                if trans_df is None or trans_df.empty:
+                    print(
+                        f"  No trans-QTLs found after cis filtering for phenotype chr{pheno_chrom} x genotype chr{geno_chrom}.",
+                        flush=True,
+                    )
+                    continue
+
+                trans_df.rename(columns={
+                    "phenotype_id": "molecular_trait_id",
+                    "pval": "pvalue",
+                    "b": "bhat",
+                    "b_se": "sebhat",
+                }, inplace=True)
+                trans_df["n"] = len(shared)
+                trans_df = variant_df_chr.merge(trans_df, right_on="variant_id", left_index=True)
+                trans_df.rename(columns={"a1": "a2", "a0": "a1"}, inplace=True)
+                trans_df["pheno_chrom"] = pheno_chrom
+                trans_df["geno_chrom"] = geno_chrom
+                all_results.append(trans_df)
+                print(
+                    f"  Trans phenotype chr{pheno_chrom} x genotype chr{geno_chrom}: {len(trans_df)} pairs",
+                    flush=True,
+                )
+
+    output_gz = args.output or os.path.join(args.cwd, "trans_qtl.pairs.tsv.gz")
+    os.makedirs(os.path.dirname(os.path.abspath(output_gz)), exist_ok=True)
+    output_tsv = strip_suffix(output_gz, ".gz")
+
+    if all_results:
+        combined_results = pd.concat(all_results, ignore_index=True)
+        lambda_col = combined_results.groupby("molecular_trait_id").apply(
+            lambda x: stats.chi2.ppf(1.0 - np.median(x["pvalue"]), 1) / stats.chi2.ppf(0.5, 1)
+        ).reset_index()
+        lambda_col.columns = ["molecular_trait_id", "genomic_inflation_lambda"]
+        inflation_prefix = strip_suffix(strip_suffix(strip_suffix(output_gz, ".gz"), ".tsv"), ".pairs")
+        lambda_col.to_csv(
+            f"{inflation_prefix}.genomic_inflation.tsv.gz",
+            sep="\t",
+            index=False,
+            compression={"method": "gzip", "compresslevel": 9},
         )
-        pheno_prefix = pair["pheno_prefix"]
-        out = os.path.join(args.cwd, f"{pheno_prefix}_chr{chrom}.trans_qtl.pairs.tsv.gz")
-        trans_df.to_csv(out, sep="\t", index=False, compression="gzip")
-        print(f"  Trans {chrom}: {len(trans_df)} pairs → {out}", flush=True)
 
-    print(f"\nTRANS QTL complete. Results in: {args.cwd}", flush=True)
+        combined_results = combined_results.sort_values(by=["chrom", "pos", "molecular_trait_id"])
+        if args.pval > 0:
+            initial_n = len(combined_results)
+            pval_percentiles = np.percentile(combined_results["pvalue"], np.arange(0, 110, 10))
+            combined_results = combined_results[combined_results["pvalue"] < args.pval]
+            summary_df = pd.DataFrame({
+                "metric": ["initial_n", "after_filtering"] + [f"{i}%" for i in range(0, 110, 10)],
+                "value": [initial_n, len(combined_results)] + list(pval_percentiles),
+            })
+            summary_prefix = strip_suffix(output_tsv, ".tsv")
+            summary_df.to_csv(f"{summary_prefix}.summary.tsv", sep="\t", index=False)
+    else:
+        combined_results = pd.DataFrame(columns=[
+            "chrom", "pos", "variant_id", "a1", "a2", "molecular_trait_id",
+            "pvalue", "bhat", "sebhat", "r2", "af", "n", "pheno_chrom", "geno_chrom",
+        ])
+
+    combined_results.to_csv(output_tsv, sep="\t", index=False)
+    apply_trans_qvalues(output_tsv)
+    run_command(["bgzip", "--compress-level", "9", "-f", output_tsv])
+    run_command(["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", output_gz])
+    print(f"\nTRANS QTL complete. Results: {output_gz}", flush=True)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -666,8 +935,24 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Path to a phenotype manifest or a direct BED.gz file")
     p.add_argument("--covariate-file", metavar="PATH",
                    help="Hidden factor covariate file (gzip TSV, covariates × samples)")
+    p.add_argument("--covariate-pattern", nargs="*", default=[],
+                   help="Covariate prefixes or exact names to retain")
     p.add_argument("--cwd", default="output", metavar="DIR",
                    help="Output directory")
+    p.add_argument("--output", default="", metavar="PATH",
+                   help="Nominal output path for --step trans")
+    p.add_argument("--region-list", default="", metavar="PATH",
+                   help="Optional list of phenotypes/regions to analyze")
+    p.add_argument("--region-list-phenotype-column", type=int, default=4,
+                   help="One-based phenotype ID column in --region-list")
+    p.add_argument("--keep-sample", default="", metavar="PATH",
+                   help="Optional one-column sample keep list")
+    p.add_argument("--interaction", default="",
+                   help="Interaction file or covariate column name for cis-QTL")
+    p.add_argument("--customized-cis-windows", default="", metavar="PATH",
+                   help="Optional chr/start/end/phenotype custom cis window table")
+    p.add_argument("--phenotype-group", default="", metavar="PATH",
+                   help="Optional phenotype-to-group mapping")
     p.add_argument("--chromosome", nargs="*", default=[],
                    help="Chromosomes to run for cis-QTL; accepts values with or without chr")
     p.add_argument("--window", type=int, default=1_000_000, metavar="BP",
@@ -678,6 +963,20 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Minimum MAF filter (0 = no filter)")
     p.add_argument("--trans-geno-chromosome", default="", metavar="CHR",
                    help="For trans-QTL, use this genotype chromosome instead of the per-phenotype chromosome")
+    p.add_argument("--batch-size", type=int, default=10000,
+                   help="TensorQTL trans batch size")
+    p.add_argument("--pval-threshold", type=float, default=1.0,
+                   help="TensorQTL trans sparse p-value threshold")
+    p.add_argument("--pval", type=float, default=0.0,
+                   help="Optional post-qvalue trans p-value filter")
+    p.add_argument("--pvalue-cutoff", default="",
+                   help="Compatibility option from the notebook interface")
+    p.add_argument("--qvalue-cutoff", default="",
+                   help="Compatibility option from the notebook interface")
+    p.add_argument("--skip-nominal-if-exist", action="store_true", default=False,
+                   help="Reuse an existing nominal parquet file if present")
+    p.add_argument("--permutation", type=str2bool, default=True,
+                   help="Whether to run cis permutation/regional association")
     p.add_argument("--skip-postprocess", action="store_true", default=False,
                    help="For --step cis, produce per-chromosome outputs only; run --step cis_postprocess separately.")
     p.add_argument("--output-tsv", default="", metavar="PATH",
