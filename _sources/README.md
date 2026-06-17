@@ -2,7 +2,7 @@
 
 Developed for reproducible & reusable molecular QTL analyses for the NIH/NIA Alzheimer's Disease Sequencing Project (ADSP) Functional Genomics xQTL (FunGen-xQTL) Project.
 
-![QTL Diagram](code/images/xQTL_Protocol_Feb_2024.png)
+![QTL Diagram](xQTL_Protocol_Feb_2024.png)
 
 
 ## Overview of the protocol
@@ -41,7 +41,7 @@ The website https://statfungen.github.io/xqtl-protocol is generated from files u
 - In order to run the xQTL protocol on your computer (or a High Performance Computing cluster), please see our pixi setup repository at [https://github.com/StatFunGen/pixi-setup](https://github.com/StatFunGen/pixi-setup) for instructions to install software. Native support is only provided for Linux and macOS (Intel and Apple Silicon) - Windows users will need to install Windows Subsystem For Linux (WSL) to locally install the software.
 - We have provided example data-sets in [this Synapse folder](https://www.synapse.org/#!Synapse:syn36416559/files/). For guidance on downloading the data programmatically, refer to [this documentation](https://help.synapse.org/docs/Upload-and-Download-Data-in-Bulk.2003796248.html). If you need to set up a Synapse client, once you have installed, `pixi`, use `pixi global install -c biconda -c conda-forge synapseclient`.
   - Within the `test_data` folder, datasets prefixed with **MWE** (Minimal Working Example) are provided. These are used for unit testing each module, ensuring the integrity of the code.
-  - The `protocol_data` folder houses a comprehensive set of data, illustrating the full extent of our protocol. This is showcased in [this notebook](https://statfungen.github.io/xqtl-protocol/code/xqtl_protocol_demo.html), with the [source code](https://github.com/statfungen/xqtl-protocol/blob/main/code/xqtl_protocol_demo.ipynb) available for reference.
+  - The `protocol_data` folder houses a comprehensive set of data, illustrating the full extent of our protocol. This is showcased in [this notebook](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_demo.html), with the [source code](https://github.com/statfungen/xqtl-protocol/blob/main/code/xqtl_protocol_demo.ipynb) available for reference.
 - Please clone this repository https://github.com/statfungen/xqtl-protocol onto your computer. This is the source code for this resource. All pipelines are symbolic links in the `pipeline` folder. Users are encouraged to execute from the root of the repository folders by typing `sos run pipeline/<pipeline_file>.ipynb`
 that is, executing the symbolic links directly to perform the analysis.
 
