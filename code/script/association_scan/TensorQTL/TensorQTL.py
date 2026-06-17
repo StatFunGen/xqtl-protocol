@@ -114,15 +114,20 @@ def infer_single_chrom_label(phenotype_file: str) -> str:
     return chroms[0] if len(chroms) == 1 else "0"
 
 
-def expected_cis_outputs(cwd: str, pheno_file: str, chrom_label: str, interaction: str = "") -> dict:
+def expected_cis_outputs(cwd: str, pheno_file: str, chrom_label: str) -> dict:
+    return expected_cis_outputs_for_interaction(cwd, pheno_file, chrom_label, "")
+
+
+def expected_cis_outputs_for_interaction(cwd: str, pheno_file: str, chrom_label: str,
+                                         interaction_name: str = "") -> dict:
     prefix = phenotype_prefix(pheno_file)
     chrom_suffix = "" if str(chrom_label) == "0" else f"_chr{chrom_label}"
     parquet_suffix = "" if str(chrom_label) == "0" else str(chrom_label)
-    int_suffix = f"_{interaction}" if interaction else ""
+    interaction_suffix = f"_{interaction_name}" if interaction_name else ""
     return {
-        "parquet": os.path.join(cwd, f"{prefix}{int_suffix}.cis_qtl_pairs.{parquet_suffix}.parquet"),
-        "nominal": os.path.join(cwd, f"{prefix}{chrom_suffix}{int_suffix}.cis_qtl.pairs.tsv.gz"),
-        "regional": os.path.join(cwd, f"{prefix}{chrom_suffix}{int_suffix}.cis_qtl.regional.tsv.gz"),
+        "parquet": os.path.join(cwd, f"{prefix}{interaction_suffix}.cis_qtl_pairs.{parquet_suffix}.parquet"),
+        "nominal": os.path.join(cwd, f"{prefix}{chrom_suffix}{interaction_suffix}.cis_qtl.pairs.tsv.gz"),
+        "regional": os.path.join(cwd, f"{prefix}{chrom_suffix}{interaction_suffix}.cis_qtl.regional.tsv.gz"),
     }
 
 
@@ -576,7 +581,7 @@ def run_cis(args) -> None:
         pheno_df, pheno_pos_df, custom_window = apply_custom_cis_windows(
             pheno_df, pheno_pos_df, args.customized_cis_windows)
         effective_window = args.window if custom_window is None else custom_window
-        expected = expected_cis_outputs(args.cwd, pheno_file, chrom, interaction_name)
+        expected = expected_cis_outputs_for_interaction(args.cwd, pheno_file, chrom, interaction_name)
 
         # Align samples across genotype, phenotype, and covariates
         shared, interaction_t = align_analysis_inputs(genotype_df, pheno_df, covariates_df, interaction_df)
