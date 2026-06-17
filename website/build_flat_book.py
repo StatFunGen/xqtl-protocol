@@ -22,6 +22,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = REPO_ROOT / "code" / "SoS"
+IMAGE_ROOT = REPO_ROOT / "code" / "images"
 WEBSITE_ROOT = REPO_ROOT / "website"
 SITE_NETLOC = "statfungen.github.io"
 SITE_PREFIX = "/xqtl-protocol/"
@@ -61,12 +62,15 @@ def notebook_index():
 
 def asset_index():
     assets = [
-        path
+        (path, path.relative_to(SOURCE_ROOT))
         for path in iter_files(SOURCE_ROOT, "*")
         if path.suffix != ".ipynb" and path.name != "README.md"
     ]
+    if IMAGE_ROOT.exists():
+        assets.extend((path, Path("code/images") / path.name) for path in iter_files(IMAGE_ROOT, "*"))
+
     by_name = {}
-    for path in assets:
+    for path, _ in assets:
         by_name.setdefault(path.name, path)
     return assets, by_name
 
@@ -148,6 +152,11 @@ def rewrite_markdown(text: str, notebooks: dict[str, Path], assets: dict[str, Pa
     return text
 
 
+def write_flat_markdown(src: Path, dst: Path, notebooks: dict[str, Path], assets: dict[str, Path]):
+    text = src.read_text(encoding="utf-8")
+    dst.write_text(rewrite_markdown(text, notebooks, assets), encoding="utf-8")
+
+
 def write_flat_notebook(src: Path, dst: Path, notebooks: dict[str, Path], assets: dict[str, Path]):
     nb = json.loads(src.read_text(encoding="utf-8"))
     for cell in nb.get("cells", []):
@@ -178,7 +187,7 @@ def stage_book(output: Path):
         shutil.rmtree(output)
     output.mkdir(parents=True)
 
-    shutil.copy2(REPO_ROOT / "README.md", output / "README.md")
+    write_flat_markdown(REPO_ROOT / "README.md", output / "README.md", notebooks, assets_by_name)
     website_out = output / "website"
     website_out.mkdir()
     for name in ["_config.yml", "_toc.yml", "references.bib", "xqtl_wf.png", "xqtl_wf.svg"]:
@@ -186,8 +195,7 @@ def stage_book(output: Path):
         if src.exists():
             shutil.copy2(src, website_out / name)
 
-    for asset in assets:
-        rel = asset.relative_to(SOURCE_ROOT)
+    for asset, rel in assets:
         copy_or_link(asset, output / rel)
         copy_or_link(asset, output / asset.name)
 
