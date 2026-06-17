@@ -50,7 +50,6 @@ filter_relatedness <- function(
   relatedness,
   relatednessTh         = 0.0625,
   analysis_type         = "maximize_unrelated",
-  output_prefix         = "output_prefix",
   otherCriterion        = NULL,
   otherCriterionTh      = NULL,
   otherCriterionThDirection = "ge",
@@ -259,12 +258,8 @@ filter_relatedness <- function(
   all_exclude <- c(all_exclude, high_related_indiv)
   dat <- data.frame(IID = all_exclude, FID = as.character(all_exclude))
 
-  output_related <- paste0(output_prefix, "_kinship_cutoff_", relatednessTh, ".related_id")
-  write.table(dat, output_related, quote = FALSE, row.names = FALSE, col.names = FALSE)
-
   if (verbose) {
     cat("\n[INFO]", nrow(dat), "excluded individuals (kinship threshold =", relatednessTh, ")\n")
-    cat("[OUTPUT]", normalizePath(output_related), "\n")
   }
 
   return(dat)
