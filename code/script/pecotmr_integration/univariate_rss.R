@@ -59,7 +59,10 @@ option_specs <- list(
   option_spec("--lamb", type = "double", default = 0.01),
   option_spec("--r2-threshold", type = "double", default = 0.6),
   option_spec("--minimum-ld", type = "integer", default = 5),
+  option_spec("--min-abs-corr", type = "double", default = 0.8),
+  option_spec("--median-abs-corr", type = "character", default = ""),
   option_spec("--qc-method", type = "character", default = ""),
+  option_spec("--allele-flip-kriging", action = "store_true", default = FALSE),
   option_spec("--comment-string", type = "character", default = "NULL"),
   option_spec("--diagnostics", action = "store_true", default = FALSE),
   option_spec("--output-prefix", type = "character"),
@@ -128,9 +131,15 @@ parse_long_options <- function(specs) {
 parse_options <- function(specs) {
   if (requireNamespace("optparse", quietly = TRUE)) {
     option_list <- lapply(specs, function(spec) {
+      # store_true flags are logical in optparse; passing type = "character"
+      # (the option_spec default) makes optparse's validObject reject them.
+      opt_type <- if (identical(spec$action, "store_true")) "logical" else spec$type
       optparse::make_option(
-        spec$flag, type = spec$type, default = spec$default,
-        action = spec$action, help = spec$help
+        spec$flag, type = opt_type, default = spec$default,
+        action = spec$action,
+        # optparse requires a character help slot; option_specs without help
+        # default to NULL, which fails validObject.
+        help = if (is.null(spec$help)) "" else spec$help
       )
     })
     return(optparse::parse_args(optparse::OptionParser(option_list = option_list)))
@@ -168,6 +177,11 @@ parse_numeric_vec <- function(s, n) {
 n_samples <- parse_numeric_vec(opt[["n-samples"]], length(studies))
 n_cases <- parse_numeric_vec(opt[["n-cases"]], length(studies))
 n_controls <- parse_numeric_vec(opt[["n-controls"]], length(studies))
+# Unspecified counts (".") parse to NA; rssAnalysisPipeline expects 0 as the
+# "read from sumstats" sentinel and rejects NA, so coerce NA -> 0.
+n_samples[is.na(n_samples)] <- 0
+n_cases[is.na(n_cases)] <- 0
+n_controls[is.na(n_controls)] <- 0
 
 parse_character_vec <- function(s, n, default) {
   if (nchar(s) == 0) {
@@ -250,8 +264,8 @@ load_ld_for_region <- function(ld_meta_path, region_coord) {
       filter(`#chr` == region_chr, start == region_start, end == region_end) %>%
       pull(path) %>%
       stringr::str_replace(".bed", "")
-    LD_data <- pecotmr:::filter_X(
-      load_genotype_region(geno_path, region_coord),
+    LD_data <- pecotmr:::filterX(
+      loadGenotypeRegion(geno_path, region_coord),
       missing_rate_thresh = opt$imiss,
       maf_thresh = opt$maf
     ) %>%
@@ -264,11 +278,7 @@ load_ld_for_region <- function(ld_meta_path, region_coord) {
                 combined_LD_variants = rownames(LD_data)))
   }
 
-  if (exists("load_study_LD", mode = "function")) {
-    load_study_LD(ld_meta_path, region_coord)
-  } else {
-    load_LD_matrix(ld_meta_path, region_coord)
-  }
+  loadStudyLd(ld_meta_path, region_coord)
 }
 
 res <- setNames(replicate(length(studies), list(), simplify = FALSE), studies)
@@ -291,63 +301,72 @@ for (r in seq_along(res)) {
     }
     LD_data <- ld_cache[[ld_key]]
 
+    # Translate the fine-mapping method to the camelCase pecotmr value.
+    fm_method_map <- c(single_effect = "singleEffect", susie_rss = "susieRss",
+                       bayesian_conditional_regression = "bayesianConditionalRegression")
+    fm_method_raw <- opt[["finemapping-method"]]
+    finemapping_method <- if (nchar(fm_method_raw) == 0) {
+      NULL
+    } else if (fm_method_raw %in% names(fm_method_map)) {
+      unname(fm_method_map[[fm_method_raw]])
+    } else {
+      fm_method_raw
+    }
+
+    # Fine-mapping options are a free-form passthrough to susie_rss; the purity
+    # keys (min_abs_corr / median_abs_corr) are isolated by susieRssPipeline and
+    # routed to susie_get_cs. init_L / max_L / l_step are dropped (no susie_rss
+    # equivalent; L / L_greedy already carry the values). R_finite / R_mismatch
+    # ride here (no longer pipeline arguments).
+    finemapping_opts <- list(
+      L = finemapping_max_l,
+      L_greedy = finemapping_l,
+      coverage = coverage,
+      signal_cutoff = opt[["pip-cutoff"]],
+      min_abs_corr = opt[["min-abs-corr"]],
+      R_finite = opt[["ld-reference-size"]]
+    )
+    if (opt[["ld-mismatch-correction"]]) finemapping_opts$R_mismatch <- "eb"
+    if (nchar(opt[["median-abs-corr"]]) > 0) {
+      finemapping_opts$median_abs_corr <- as.numeric(opt[["median-abs-corr"]])
+    }
+
     rss_args <- list(
-      sumstat_path = sumstat_paths[r],
-      column_file_path = col_paths[r],
-      LD_data = LD_data,
-      extract_region_name = extract_region_name,
-      region_name_col = region_name_col,
-      n_sample = n_samples[r],
-      n_case = n_cases[r],
-      n_control = n_controls[r],
-      skip_region = if (length(skip_region_vec) == 0) NULL else skip_region_vec,
-      qc_method = if (nchar(opt[["qc-method"]]) == 0) NULL else opt[["qc-method"]],
+      sumstatPath = sumstat_paths[r],
+      columnFilePath = col_paths[r],
+      ldData = LD_data,
+      region = region_coord,
+      extractRegionName = extract_region_name,
+      regionNameCol = region_name_col,
+      nSample = n_samples[r],
+      nCase = n_cases[r],
+      nControl = n_controls[r],
+      skipRegion = if (length(skip_region_vec) == 0) NULL else skip_region_vec,
+      zMismatchQc = if (nchar(opt[["qc-method"]]) == 0) "none" else opt[["qc-method"]],
+      alleleFlipKriging = opt[["allele-flip-kriging"]],
       impute = opt$impute,
-      impute_opts = list(
+      imputeOpts = list(
         rcond = opt$rcond,
-        R2_threshold = opt[["r2-threshold"]],
-        minimum_ld = opt[["minimum-ld"]],
+        r2Threshold = opt[["r2-threshold"]],
+        minimumLd = opt[["minimum-ld"]],
         lamb = opt$lamb
       ),
-      finemapping_method = if (nchar(opt[["finemapping-method"]]) == 0) {
-        NULL
-      } else {
-        opt[["finemapping-method"]]
-      },
-      finemapping_opts = list(
-        L = finemapping_max_l,
-        L_greedy = finemapping_l,
-        init_L = finemapping_l,
-        max_L = finemapping_max_l,
-        l_step = finemapping_l_step,
-        coverage = coverage,
-        signal_cutoff = opt[["pip-cutoff"]],
-        min_abs_corr = 0.8
-      ),
-      pip_cutoff_to_skip = opt[["skip-analysis-pip-cutoff"]],
-      comment_string = if (opt[["comment-string"]] == "NULL") {
+      finemappingMethod = finemapping_method,
+      finemappingOpts = finemapping_opts,
+      pipCutoffToSkip = opt[["skip-analysis-pip-cutoff"]],
+      commentString = if (opt[["comment-string"]] == "NULL") {
         NULL
       } else {
         opt[["comment-string"]]
-      }
+      },
+      diagnostics = opt$diagnostics
     )
-    rss_formals <- names(formals(rss_analysis_pipeline))
-    accepts_extra_args <- "..." %in% rss_formals
-    if (accepts_extra_args || "diagnostics" %in% rss_formals) {
-      rss_args$diagnostics <- opt$diagnostics
-    }
-    if (accepts_extra_args || "R_finite" %in% rss_formals) {
-      rss_args$R_finite <- opt[["ld-reference-size"]]
-    }
-    if (accepts_extra_args || "R_mismatch" %in% rss_formals) {
-      rss_args$R_mismatch <- if (opt[["ld-mismatch-correction"]]) "eb" else NULL
-    }
-    res[[r]] <- do.call(rss_analysis_pipeline, rss_args)
+    res[[r]] <- do.call(rssAnalysisPipeline, rss_args)
     region_label <- paste0(
       opt[["output-prefix"]], ".",
       if (is.null(extract_region_name)) "" else paste0(extract_region_name, "."),
       studies[r], ".sumstats.tsv.gz")
-    fwrite(res[[r]]$rss_data_analyzed, file = region_label,
+    fwrite(res[[r]]$rssDataAnalyzed, file = region_label,
            sep = "\t", col.names = TRUE, row.names = FALSE,
            quote = FALSE, compress = "gzip")
     if (is.null(res[[r]][[1]])) {
