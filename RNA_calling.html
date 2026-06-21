@@ -272,6 +272,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -623,7 +642,7 @@ If this is unknown, enter 0 and the pipeline will use a default read length of 1
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb fastqc \
     --cwd output/rnaseq/fastqc \
     --sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
-    --data-dir input/rnaseq/protocol_example.rnaseq.fastq 
+    --data-dir input/rnaseq/
 </pre></div>
 </div>
 </div>
@@ -637,9 +656,9 @@ If this is unknown, enter 0 and the pipeline will use a default read length of 1
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb fastp_trim_adaptor \
     --cwd output/rnaseq \
     --sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
-    --data-dir input/rnaseq/protocol_example.rnaseq.fastq \
+    --data-dir input/rnaseq/ \
     --STAR-index reference_data/STAR_Index \
-    --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
+    --gtf input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
     --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat 
 </pre></div>
@@ -655,11 +674,11 @@ If this is unknown, enter 0 and the pipeline will use a default read length of 1
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb STAR_align \
     --cwd output/rnaseq/bam \
     --sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
-    --data-dir input/rnaseq/protocol_example.rnaseq.fastq \
-    --STAR-index reference_data/STAR_Index \
-    --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
+    --data-dir input/rnaseq/ \
+    --STAR-index input/reference_data/STAR_Index \
+    --gtf input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
-    --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
+    --ref-flat input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
     --chimSegmentMin 0 \
     -J 2 --mem 16G --numThreads 2 
 </pre></div>
@@ -675,9 +694,9 @@ If this is unknown, enter 0 and the pipeline will use a default read length of 1
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rnaseqc_call \
     --cwd output/rnaseq/bam \
     --sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
-    --data-dir input/rnaseq/protocol_example.rnaseq.fastq \
-    --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
-    --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --data-dir input/rnaseq/ \
+    --gtf input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
+    --reference-fasta input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
     --bam_list output/rnaseq/bam/protocol_example.rnaseq.fastq.list.bam_file_list 
 </pre></div>
 </div>
@@ -692,7 +711,7 @@ If this is unknown, enter 0 and the pipeline will use a default read length of 1
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rsem_call \
     --cwd output/rnaseq/bam \
     --sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
-    --data-dir input/rnaseq/protocol_example.rnaseq.fastq \
+    --data-dir input/rnaseq/ \
     --STAR-index reference_data/STAR_Index \
     --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
     --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
@@ -803,6 +822,9 @@ import re
 parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 from sos.utils import expand_size
 cwd = path(f&#39;{cwd:a}&#39;)
+data_dir = path(f&#39;{data_dir:a}&#39;)
+sample_list = path(f&#39;{sample_list:a}&#39;)
+modular_script_dir = path(f&#39;{modular_script_dir:a}&#39;)
 ## Whether the fasta/fastq file is compressed or not.
 parameter: uncompressed = False
 import os
@@ -1084,6 +1106,8 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
 parameter: gtf = path
 # STAR indexing file
 parameter: STAR_index = path
+gtf = path(f&#39;{gtf:a}&#39;)
+STAR_index = path(f&#39;{STAR_index:a}&#39;)
 parameter: outFilterMultimapNmax = 20 
 parameter: alignSJoverhangMin = 8 
 parameter: alignSJDBoverhangMin = 1 
@@ -1253,6 +1277,9 @@ depends: sos_variable(&#39;strand&#39;)
 parameter: ref_flat = path
 # The fasta reference file used to generate star index
 parameter: reference_fasta = path
+gtf = path(f&#39;{gtf:a}&#39;)
+ref_flat = path(f&#39;{ref_flat:a}&#39;)
+reference_fasta = path(f&#39;{reference_fasta:a}&#39;)
 # For the patterned flowcell models (HiSeq X), change to 2500
 parameter: optical_distance = 100
 parameter: zap_raw_bam = False
@@ -1340,6 +1367,9 @@ parameter: bam_list = path
 # Reference gene model
 parameter: gtf = path
 parameter: reference_fasta = path
+bam_list = path(f&#39;{bam_list:a}&#39;)
+gtf = path(f&#39;{gtf:a}&#39;)
+reference_fasta = path(f&#39;{reference_fasta:a}&#39;)
 sample_inv = pd.read_csv(bam_list,sep = &quot;\t&quot;)
 parameter: detection_threshold = 5
 parameter: mapping_quality = 255
@@ -1420,6 +1450,8 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[rsem_call_1]
 parameter: bam_list = path
 parameter: RSEM_index = path
+bam_list = path(f&#39;{bam_list:a}&#39;)
+RSEM_index = path(f&#39;{RSEM_index:a}&#39;)
 parameter: max_frag_len = 1000
 parameter: estimate_rspd = True
 

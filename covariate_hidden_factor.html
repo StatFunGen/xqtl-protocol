@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -613,7 +632,7 @@
     --cwd output/covariate \
     --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
     --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
-    --choose_k_method Buja_Eyuboglu \
+    --choose_k_method Marchenko \
     --mean-impute-missing
 </pre></div>
 </div>
@@ -624,16 +643,13 @@
 <h3>BiCV factor analysis with APEX<a class="headerlink" href="#bicv-factor-analysis-with-apex" title="Link to this heading">#</a></h3>
 <p>BiCV chooses the number of hidden factors by bi-cross-validation using the APEX software (Owen et al. 2016). The pipeline computes residuals on the merged covariates, builds the inputs APEX expects (an indexed VCF placeholder and a phenotype matrix), then calls <code class="docutils literal notranslate"><span class="pre">apex</span> <span class="pre">factor</span></code>. The number of factors follows GTEx recommendations or can be fixed with <code class="docutils literal notranslate"><span class="pre">--N</span></code>.</p>
 <p>Timing: ~30 s.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb BiCV \
+<!-- BiCV requires the APEX tool (apex: command not found in this environment); skipped during automated testing -->
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb BiCV \
     --cwd output/covariate \
     --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
     --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
     --N 3
 </pre></div>
-</div>
-</div>
 </div>
 </section>
 </section>
@@ -772,7 +788,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout 
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[Marchenko_PC_2, PCA_2]
-# Marchenko or Buja_Eyuboglu
+# Marchenko or Marchenko
 parameter: choose_k_method = &quot;Marchenko&quot;
 parameter: N = 0
 output: f&#39;{cwd}/{_input:bnnn}.{choose_k_method}_PC.gz&#39;
@@ -895,7 +911,7 @@ parameter: N = 0
 parameter: iteration = 10
 
 import pandas as pd
-data = pd.read_csv(phenoFile,&quot;\t&quot;,index_col = 3).drop([&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;],axis = 1)
+data = pd.read_csv(phenoFile, sep=&quot;	&quot;, index_col = 3).drop([&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;],axis = 1)
 if N == 0:
     if len(data.columns) &lt; 150:
         N = 15

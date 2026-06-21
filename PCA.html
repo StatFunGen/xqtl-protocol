@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -537,10 +556,10 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/genotype/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed</span></code></p></td>
 <td><p>LD-pruned PLINK bundle for <strong>unrelated</strong> individuals (from GWAS_QC). PCA is computed on these samples.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/kinship/protocol_example.merged.plink_qc.protocol_example.king.related.bed</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/kinship/protocol_example.genotype.merged.plink_qc.protocol_example.king.related.bed</span></code></p></td>
 <td><p>PLINK bundle for <strong>related</strong> individuals (from GWAS_QC), projected back onto the PCA model.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.pca_pheno.txt</span></code></p></td>
@@ -591,11 +610,11 @@
 <p>Before PCA we need to know which individuals are related, because PCA must be computed on an <strong>unrelated</strong> subset and the related individuals are projected back afterwards. This step runs the <code class="docutils literal notranslate"><span class="pre">king</span></code> workflow from GWAS_QC to estimate pairwise kinship and split the samples into <em>unrelated</em> and <em>related</em> sets. It is an upstream prerequisite — its outputs (the <code class="docutils literal notranslate"><span class="pre">king.unrelated</span></code> and <code class="docutils literal notranslate"><span class="pre">king.related</span></code> PLINK bundles) feed the PCA steps below.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb king \
-    --cwd output/gwas_qc/kinship \
-    --genoFile output/gwas_qc/plink/protocol_example.merged.plink_qc.bed \
-    --name protocol_example.king \
-    --keep-samples output/gwas_qc/genotype/protocol_example.rnaseq.bed.sample_genotypes.txt
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">GWAS_QC.ipynb</span><span class="w"> </span><span class="n">king</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">kinship</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">plink</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.bed</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">protocol_example.king</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">keep</span><span class="o">-</span><span class="n">samples</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">protocol_example.rnaseq.bed.sample_genotypes.txt</span>
 </pre></div>
 </div>
 </div>
@@ -608,10 +627,10 @@
 <h4>Variant level and sample level QC on unrelated individuals, in preparation for PCA analysis<a class="headerlink" href="#variant-level-and-sample-level-qc-on-unrelated-individuals-in-preparation-for-pca-analysis" title="Link to this heading">#</a></h4>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
-    --cwd output/gwas_qc/genotype \
-    --genoFile output/gwas_qc/kinship/protocol_example.merged.plink_qc.protocol_example.king.unrelated.bed \
-    --mac-filter 5
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">GWAS_QC.ipynb</span><span class="w"> </span><span class="n">qc</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">genotype</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">kinship</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.bed</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">mac</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">5</span>
 </pre></div>
 </div>
 </div>
@@ -619,12 +638,12 @@
 <p>Extract the previously selected (LD-pruned) variants from the <strong>related</strong> individuals, applying only a sample-level missingness filter so the related samples carry exactly the same variant set as the unrelated reference.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
-    --cwd output/gwas_qc/cache \
-    --genoFile output/genotype_formatting/plink/protocol_example.merged.bed \
-    --geno-filter 0 --mind-filter 0.1 --maf-filter 0 \
-    --keep-variants output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.in \
-    --name for_pca
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">GWAS_QC.ipynb</span><span class="w"> </span><span class="n">qc_no_prune</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_related</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">kinship</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.related.bed</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">geno</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">--</span><span class="n">mind</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">0.1</span><span class="w"> </span><span class="o">--</span><span class="n">maf</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">keep</span><span class="o">-</span><span class="n">variants</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.in</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">for_pca</span>
 </pre></div>
 </div>
 </div>
@@ -637,10 +656,10 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">--name</span></code> argument tags all output files; point <code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> at the LD-pruned unrelated bed produced upstream.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/PCA.ipynb flashpca \
-    --cwd output/pca_uf \
-    --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
-    --name protocol_example
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">PCA.ipynb</span><span class="w"> </span><span class="n">flashpca</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">protocol_example</span>
 </pre></div>
 </div>
 </div>
@@ -648,7 +667,7 @@
 <p><strong>What you should see:</strong> the workflow runs <code class="docutils literal notranslate"><span class="pre">flashpca_1</span></code> (PCA), then <code class="docutils literal notranslate"><span class="pre">detect_outliers</span></code> (Mahalanobis distance per population) and <code class="docutils literal notranslate"><span class="pre">plot_pca</span></code>, finishing with “executed successfully with 5 completed steps”. The PCA model and PC scores are written to the <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> directory. The scree plot below shows the proportion of variance explained by each PC — use it to decide how many PCs to keep.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>%preview output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.scree.png
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span>%<span class="n">preview</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.scree.png</span>
 </pre></div>
 </div>
 </div>
@@ -659,32 +678,32 @@
 <p>The related individuals were held out of the PCA, so we now project them onto the model fitted from the unrelated samples. First reduce the related genotypes to <strong>exactly</strong> the same pruned variant set used to build the model (the <code class="docutils literal notranslate"><span class="pre">plink2</span> <span class="pre">--extract</span></code> cell below) — otherwise the projection errors with “Input number of variants should be the same as used in the previous PCA model”. Then run <code class="docutils literal notranslate"><span class="pre">project_samples</span></code>, passing a phenotype table (must contain an <code class="docutils literal notranslate"><span class="pre">IID</span></code> column) and, if available, a population/ethnicity column via <code class="docutils literal notranslate"><span class="pre">--label-col</span></code> / <code class="docutils literal notranslate"><span class="pre">--pop-col</span></code> (here the <code class="docutils literal notranslate"><span class="pre">race</span></code> column) so the projected samples can be coloured and the outlier detection can run.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/PCA.ipynb project_samples \
-    --cwd output/pca_uf \
-    --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
-    --phenoFile input/covariate/protocol_example.pca_pheno.txt \
-    --pca-model output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.rds \
-    --label-col race \
-    --pop-col race \
-    --maha-k 2
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">PCA.ipynb</span><span class="w"> </span><span class="n">project_samples</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_related</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">phenoFile</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">covariate</span><span class="o">/</span><span class="n">protocol_example.pca_pheno.txt</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">pca</span><span class="o">-</span><span class="n">model</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.rds</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">label</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="n">race</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">pop</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="n">race</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">maha</span><span class="o">-</span><span class="n">k</span><span class="w"> </span><span class="m">2</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>%preview output/pca_uf/protocol_example.pca_pheno.pca.projected.pc.png
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span>%<span class="n">preview</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.pca_pheno.pca.projected.pc.png</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
-    --cwd output/pca_related \
-    --genoFile output/pca_related/protocol_example.related.for_pca.bed \
-    --remove-samples output/pca_uf/protocol_example.pca_pheno.pca.projected.outliers \
-    --name no_outlier
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">GWAS_QC.ipynb</span><span class="w"> </span><span class="n">qc_no_prune</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_related</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_related</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">remove</span><span class="o">-</span><span class="n">samples</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.pca_pheno.pca.projected.outliers</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">no_outlier</span>
 </pre></div>
 </div>
 </div>
@@ -696,11 +715,11 @@
 <p>Finally, merge back related and unrelated individuals as finalized genotype in PLINK format,</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb merge_plink \
-    --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
-               output/pca_related/protocol_example.related.for_pca.no_outlier.plink_qc.bed \
-    --cwd output/genotype_final \
-    --name protocol_example.qced
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">genotype_formatting.ipynb</span><span class="w"> </span><span class="n">merge_plink</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed</span><span class="w"> </span>\
+<span class="w">               </span><span class="n">output</span><span class="o">/</span><span class="n">pca_related</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.no_outlier.plink_qc.bed</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">genotype_final</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">protocol_example.qced</span>
 </pre></div>
 </div>
 </div>
@@ -742,18 +761,21 @@
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Build per-population sample keep-lists from the phenotype table.
-# One file per ancestry group, named output/pca_uf/protocol_example.ID.&lt;race&gt;.txt
-# Each file holds two columns (FID, IID) with no header, matching plink&#39;s --keep format.
-pheno &lt;- read.table(&quot;input/covariate/protocol_example.pca_pheno.txt&quot;, header = TRUE, stringsAsFactors = FALSE)
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build per-population sample keep-lists from the phenotype table.</span>
+<span class="c1"># One file per ancestry group, named output/pca_uf/protocol_example.ID.&lt;race&gt;.txt</span>
+<span class="c1"># Each file holds two columns (FID, IID) with no header, matching plink&#39;s --keep format.</span>
+<span class="nf">setwd</span><span class="p">(</span><span class="s">&quot;/mnt/lustre/lab/gwang/home/rl3328/evo2/xqtl-protocol&quot;</span><span class="p">)</span>
+<span class="n">pheno</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">read.table</span><span class="p">(</span><span class="s">&quot;input/covariate/protocol_example.pca_pheno.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="n">stringsAsFactors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)</span>
 
-for (i in 1:3) {
-    race    &lt;- subset(pheno, race == i)
-    race_id &lt;- cbind(race$FID, race$IID)
-    write.table(race_id,
-                paste0(&quot;output/pca_uf/protocol_example.ID.&quot;, i, &quot;.txt&quot;),
-                quote = FALSE, sep = &quot;\t&quot;, col.names = FALSE, row.names = FALSE)
-}
+<span class="kr">if</span><span class="w"> </span><span class="p">(</span><span class="nf">all</span><span class="p">(</span><span class="n">pheno</span><span class="o">$</span><span class="n">FID</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">pheno</span><span class="o">$</span><span class="n">IID</span><span class="p">))</span><span class="w"> </span><span class="n">pheno</span><span class="o">$</span><span class="n">FID</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="s">&quot;0&quot;</span>
+
+<span class="kr">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="m">1</span><span class="o">:</span><span class="m">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">race</span><span class="w">    </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">subset</span><span class="p">(</span><span class="n">pheno</span><span class="p">,</span><span class="w"> </span><span class="n">race</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">i</span><span class="p">)</span>
+<span class="w">    </span><span class="n">race_id</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">cbind</span><span class="p">(</span><span class="n">race</span><span class="o">$</span><span class="n">FID</span><span class="p">,</span><span class="w"> </span><span class="n">race</span><span class="o">$</span><span class="n">IID</span><span class="p">)</span>
+<span class="w">    </span><span class="nf">write.table</span><span class="p">(</span><span class="n">race_id</span><span class="p">,</span>
+<span class="w">                </span><span class="nf">paste0</span><span class="p">(</span><span class="s">&quot;output/pca_uf/protocol_example.ID.&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.txt&quot;</span><span class="p">),</span>
+<span class="w">                </span><span class="n">quote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span><span class="w"> </span><span class="n">sep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;\t&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">col.names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span><span class="w"> </span><span class="n">row.names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -763,15 +785,15 @@ for (i in 1:3) {
 <p>Same as Step 2 (QC), but looped over each population. Below we only show Populations 1 and 3 as an example. <strong>Next:</strong> once each population has a QC’d unrelated set, extract those variants from the related samples (P2).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
-    sos run pipeline/GWAS_QC.ipynb qc \
-        --cwd output/pca_uf \
-        --genoFile output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.bed \
-        --keep-samples output/pca_uf/protocol_example.ID.$i.txt \
-        --mac-filter 5 \
-        --bad-ld True \
-        --name pop_$i
-done
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="kr">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="m">3</span><span class="p">;</span><span class="w"> </span><span class="n">do</span>
+<span class="w">    </span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">GWAS_QC.ipynb</span><span class="w"> </span><span class="n">qc</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">gwas_qc</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.bed</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">keep</span><span class="o">-</span><span class="n">samples</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.ID.</span><span class="o">$</span><span class="n">i.txt</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">mac</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">5</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">bad</span><span class="o">-</span><span class="n">ld</span><span class="w"> </span><span class="n">True</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">pop_</span><span class="o">$</span><span class="n">i</span>
+<span class="n">done</span>
 </pre></div>
 </div>
 </div>
@@ -785,15 +807,15 @@ done
 </div></blockquote>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
-    sos run pipeline/GWAS_QC.ipynb qc_no_prune \
-        --cwd output/pca_uf \
-        --genoFile output/pca_related/protocol_example.related.for_pca.bed \
-        --keep-variants output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.pop_$i.plink_qc.prune.in \
-        --keep-samples output/pca_uf/protocol_example.ID.$i.txt \
-        --maf-filter 0 --geno-filter 0 --mind-filter 0.1 --hwe-filter 0 \
-        --name pop_$i
-done
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="kr">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="m">3</span><span class="p">;</span><span class="w"> </span><span class="n">do</span>
+<span class="w">    </span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">GWAS_QC.ipynb</span><span class="w"> </span><span class="n">qc_no_prune</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_related</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">keep</span><span class="o">-</span><span class="n">variants</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.pop_</span><span class="o">$</span><span class="n">i.plink_qc.prune.in</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">keep</span><span class="o">-</span><span class="n">samples</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.ID.</span><span class="o">$</span><span class="n">i.txt</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">maf</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">--</span><span class="n">geno</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">--</span><span class="n">mind</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">0.1</span><span class="w"> </span><span class="o">--</span><span class="n">hwe</span><span class="o">-</span><span class="n">filter</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">pop_</span><span class="o">$</span><span class="n">i</span>
+<span class="n">done</span>
 </pre></div>
 </div>
 </div>
@@ -804,17 +826,17 @@ done
 <p>Same as Step 3, looped per population. Here the number of PCs is set to 5 (<code class="docutils literal notranslate"><span class="pre">--k</span> <span class="pre">5</span></code>) because each population’s sample size is small. <strong>Next:</strong> project the related samples onto each population’s PCA model (P4).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
-    sos run pipeline/PCA.ipynb flashpca \
-        --name pop_$i \
-        --cwd output/pca_uf \
-        --genoFile output/pca_uf/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.pop_$i.plink_qc.prune.bed \
-        --phenoFile input/covariate/protocol_example.pca_pheno.txt \
-        --label-col race \
-        --pop-col race \
-        --maha-k 2 \
-        --k 5
-done
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="kr">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="m">3</span><span class="p">;</span><span class="w"> </span><span class="n">do</span>
+<span class="w">    </span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">PCA.ipynb</span><span class="w"> </span><span class="n">flashpca</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">pop_</span><span class="o">$</span><span class="n">i</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.pop_</span><span class="o">$</span><span class="n">i.plink_qc.prune.bed</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">phenoFile</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">covariate</span><span class="o">/</span><span class="n">protocol_example.pca_pheno.txt</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">label</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="n">race</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pop</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="n">race</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">maha</span><span class="o">-</span><span class="n">k</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">k</span><span class="w"> </span><span class="m">5</span>
+<span class="n">done</span>
 </pre></div>
 </div>
 </div>
@@ -825,18 +847,18 @@ done
 <p>Same as Step 4 (projection), looped per population. Only populations that actually have related samples are projected (here, Population 3 only). <strong>Next:</strong> finalize genotypes per population (P5).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>for i in 3; do
-    sos run pipeline/PCA.ipynb project_samples \
-        --name pop_$i \
-        --cwd output/pca_uf \
-        --genoFile output/pca_uf/protocol_example.related.for_pca.pop_$i.plink_qc.extracted.bed \
-        --phenoFile input/covariate/protocol_example.pca_pheno.txt \
-        --pca-model output/pca_uf/protocol_example.pca_pheno.pop_$i.pca.rds \
-        --label-col race \
-        --pop-col race \
-        --maha-k 2 \
-        --k 5
-done
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="kr">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="m">3</span><span class="p">;</span><span class="w"> </span><span class="n">do</span>
+<span class="w">    </span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">PCA.ipynb</span><span class="w"> </span><span class="n">project_samples</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">name</span><span class="w"> </span><span class="n">pop_</span><span class="o">$</span><span class="n">i</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.pop_</span><span class="o">$</span><span class="n">i.plink_qc.extracted.bed</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">phenoFile</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">covariate</span><span class="o">/</span><span class="n">protocol_example.pca_pheno.txt</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pca</span><span class="o">-</span><span class="n">model</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.pca_pheno.pop_</span><span class="o">$</span><span class="n">i.pca.rds</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">label</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="n">race</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pop</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="n">race</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">maha</span><span class="o">-</span><span class="n">k</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">k</span><span class="w"> </span><span class="m">5</span>
+<span class="n">done</span>
 </pre></div>
 </div>
 </div>
@@ -844,7 +866,7 @@ done
 <p>To visualize the results at this point,</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>%preview output/pca_uf/protocol_example.pca_pheno.pca.projected.pc.png
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span>%<span class="n">preview</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">pca_uf</span><span class="o">/</span><span class="n">protocol_example.pca_pheno.pca.projected.pc.png</span>
 </pre></div>
 </div>
 </div>
@@ -859,122 +881,147 @@ done
 <h2>Command Interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run PCA.ipynb -h
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">PCA.ipynb</span><span class="w"> </span><span class="o">-</span><span class="n">h</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
-# the output directory for generated files
-parameter: cwd = path(&quot;output&quot;)
-# A string to identify your analysis run
-parameter: name = &quot;&quot;
-# Name of the population column in the phenoFile
-parameter: pop_col = &quot;&quot;
-# Name of the populations (from the population column) you would like to plot and show on the PCA plot
-parameter: pops = []
-# Name of the color label column in the phenoFile; can be the same as population column. Can also be a separate column eg a &quot;super population&quot; column as a way to enable you to combine selected populations based on another column.
-parameter: label_col = &quot;&quot;
-# Number of Principal Components to output,must be consistant between flashpca run and project samples run (flashpca partial PCA method).
-parameter: k = 20
-# Number of Principal Components based on which outliers should be evaluated. Default is 5 but this should be based on examine the scree plot
-parameter: maha_k = 5
-# Homogeneity of populations. Set to --homogeneous when true and --no-homogeneous when false
-parameter: homogeneous = False
-# Software container option
-parameter: container = &quot;&quot;
-import re
-parameter: entrypoint= &quot;&quot;
-# For cluster jobs, number commands to run per job
-parameter: job_size = 1
-# Wall clock time expected
-parameter: walltime = &quot;5h&quot;
-# Memory expected
-parameter: mem = &quot;16G&quot;
-# Number of threads
-parameter: numThreads = 10
-suffix = &#39;_&#39;.join(pops)
-cwd = path(f&quot;{cwd:a}&quot;)
-if not pop_col:
-    homogeneous = True
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">global</span><span class="p">]</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">modular_script_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="s">&#39;code/script&#39;</span><span class="p">)</span><span class="w">  </span><span class="c1"># override with --modular-script-dir</span>
+<span class="c1"># the output directory for generated files</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="s">&quot;output&quot;</span><span class="p">)</span>
+<span class="c1"># A string to identify your analysis run</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="c1"># Name of the population column in the phenoFile</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">pop_col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="c1"># Name of the populations (from the population column) you would like to plot and show on the PCA plot</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">pops</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="c1"># Name of the color label column in the phenoFile; can be the same as population column. Can also be a separate column eg a &quot;super population&quot; column as a way to enable you to combine selected populations based on another column.</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">label_col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="c1"># Number of Principal Components to output,must be consistant between flashpca run and project samples run (flashpca partial PCA method).</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">20</span>
+<span class="c1"># Number of Principal Components based on which outliers should be evaluated. Default is 5 but this should be based on examine the scree plot</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">maha_k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">5</span>
+<span class="c1"># Homogeneity of populations. Set to --homogeneous when true and --no-homogeneous when false</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">homogeneous</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">False</span>
+<span class="c1"># Software container option</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="n">import</span><span class="w"> </span><span class="n">re</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">entrypoint</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="c1"># For cluster jobs, number commands to run per job</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">job_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
+<span class="c1"># Wall clock time expected</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;5h&quot;</span>
+<span class="c1"># Memory expected</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;16G&quot;</span>
+<span class="c1"># Number of threads</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">numThreads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
+<span class="n">suffix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;_&#39;</span><span class="nf">.join</span><span class="p">(</span><span class="n">pops</span><span class="p">)</span>
+<span class="n">cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="n">f</span><span class="s">&quot;{cwd:a}&quot;</span><span class="p">)</span>
+<span class="kr">if</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">pop_col</span><span class="o">:</span>
+<span class="w">    </span><span class="n">homogeneous</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">True</span>
 
-# Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
-def determine_plink_format(file_path):
-    &quot;&quot;&quot;
-    Determine the PLINK file format based on file extensions and companion files.
-    
-    Args:
-        file_path (str or Path): Path to the input file
-    
-    Returns:
-        str: &#39;plink1&#39; or &#39;plink2&#39;
-    &quot;&quot;&quot;
-    # Convert to string if it&#39;s a Path object
-    file_path = str(file_path)
-    
-    # Check direct file extensions
-    if file_path.endswith(&#39;.bed&#39;):
-        return &#39;plink1&#39;
-    elif file_path.endswith(&#39;.pgen&#39;):
-        return &#39;plink2&#39;
-    
-    # If the file doesn&#39;t have a standard extension, try to infer format
-    try:
-        # Remove the file extension if present
-        base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
-        
-        # Check for PLINK1 companion files
-        plink1_companion_files = [
-            f&quot;{base_path}.bim&quot;,
-            f&quot;{base_path}.fam&quot;
-        ]
-        
-        # Check for PLINK2 companion files
-        plink2_companion_files = [
-            f&quot;{base_path}.pvar&quot;,
-            f&quot;{base_path}.psam&quot;
-        ]
-        
-        # Check PLINK1 format
-        if all(os.path.exists(f) for f in plink1_companion_files):
-            return &#39;plink1&#39;
-        
-        # Check PLINK2 format
-        if all(os.path.exists(f) for f in plink2_companion_files):
-            return &#39;plink2&#39;
-    
-    except Exception as e:
-        print(f&quot;Error determining PLINK format: {e}&quot;)
-    
-    # Default to PLINK1 if can&#39;t determine
-    return &#39;plink1&#39;
+<span class="c1"># Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format</span>
+<span class="n">def</span><span class="w"> </span><span class="nf">determine_plink_format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="o">:</span>
+<span class="w">    </span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    Determine the PLINK file format based on file extensions and companion files.</span>
+<span class="s">    </span>
+<span class="s">    Args:</span>
+<span class="s">        file_path (str or Path): Path to the input file</span>
+<span class="s">    </span>
+<span class="s">    Returns:</span>
+<span class="s">        str: &#39;plink1&#39; or &#39;plink2&#39;</span>
+<span class="s">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="c1"># Convert to string if it&#39;s a Path object</span>
+<span class="w">    </span><span class="n">file_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">str</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="c1"># Check direct file extensions</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="nf">file_path.endswith</span><span class="p">(</span><span class="s">&#39;.bed&#39;</span><span class="p">)</span><span class="o">:</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="s">&#39;plink1&#39;</span>
+<span class="w">    </span><span class="n">elif</span><span class="w"> </span><span class="nf">file_path.endswith</span><span class="p">(</span><span class="s">&#39;.pgen&#39;</span><span class="p">)</span><span class="o">:</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="s">&#39;plink2&#39;</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="c1"># If the file doesn&#39;t have a standard extension, try to infer format</span>
+<span class="w">    </span><span class="n">try</span><span class="o">:</span>
+<span class="w">        </span><span class="c1"># Remove the file extension if present</span>
+<span class="w">        </span><span class="n">base_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">file_path.rsplit</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="p">)[</span><span class="m">0</span><span class="p">]</span><span class="w"> </span><span class="kr">if</span><span class="w"> </span><span class="s">&#39;.&#39;</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="n">file_path</span><span class="w"> </span><span class="kr">else</span><span class="w"> </span><span class="n">file_path</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="c1"># Check for PLINK1 companion files</span>
+<span class="w">        </span><span class="n">plink1_companion_files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="n">f</span><span class="s">&quot;{base_path}.bim&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="n">f</span><span class="s">&quot;{base_path}.fam&quot;</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="c1"># Check for PLINK2 companion files</span>
+<span class="w">        </span><span class="n">plink2_companion_files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="n">f</span><span class="s">&quot;{base_path}.pvar&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="n">f</span><span class="s">&quot;{base_path}.psam&quot;</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="c1"># Check PLINK1 format</span>
+<span class="w">        </span><span class="kr">if</span><span class="w"> </span><span class="nf">all</span><span class="p">(</span><span class="nf">os.path.exists</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="kr">for</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="n">plink1_companion_files</span><span class="p">)</span><span class="o">:</span>
+<span class="w">            </span><span class="kr">return</span><span class="w"> </span><span class="s">&#39;plink1&#39;</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="c1"># Check PLINK2 format</span>
+<span class="w">        </span><span class="kr">if</span><span class="w"> </span><span class="nf">all</span><span class="p">(</span><span class="nf">os.path.exists</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="kr">for</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="n">plink2_companion_files</span><span class="p">)</span><span class="o">:</span>
+<span class="w">            </span><span class="kr">return</span><span class="w"> </span><span class="s">&#39;plink2&#39;</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="n">except</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="n">e</span><span class="o">:</span>
+<span class="w">        </span><span class="nf">print</span><span class="p">(</span><span class="n">f</span><span class="s">&quot;Error determining PLINK format: {e}&quot;</span><span class="p">)</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="c1"># Default to PLINK1 if can&#39;t determine</span>
+<span class="w">    </span><span class="kr">return</span><span class="w"> </span><span class="s">&#39;plink1&#39;</span>
 
-# Get the appropriate PLINK command prefix
-def get_plink_command_prefix(file_path):
-    format_type = determine_plink_format(file_path)
-    if format_type == &#39;plink1&#39;:
-        return &quot;--bfile&quot;
-    else:  # plink2
-        return &quot;--pfile&quot;
+<span class="c1"># Get the appropriate PLINK command prefix</span>
+<span class="n">def</span><span class="w"> </span><span class="nf">get_plink_command_prefix</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="o">:</span>
+<span class="w">    </span><span class="n">format_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">determine_plink_format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="n">format_type</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&#39;plink1&#39;</span><span class="o">:</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="s">&quot;--bfile&quot;</span>
+<span class="w">    </span><span class="kr">else</span><span class="o">:</span><span class="w">  </span><span class="c1"># plink2</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="s">&quot;--pfile&quot;</span>
+
+<span class="n">def</span><span class="w"> </span><span class="nf">normalize_phenoFile</span><span class="p">(</span><span class="n">pheno_path</span><span class="p">,</span><span class="w"> </span><span class="n">out_dir</span><span class="p">)</span><span class="o">:</span>
+<span class="w">    </span><span class="s">&quot;&quot;&quot;Return a phenoFile path where FID=0 if the file has FID==IID in every data row.</span>
+<span class="s">    Writes a normalized copy to out_dir when needed; otherwise returns the original path.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="n">import</span><span class="w"> </span><span class="n">os</span><span class="p">,</span><span class="w"> </span><span class="n">csv</span>
+<span class="w">    </span><span class="n">pheno_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">str</span><span class="p">(</span><span class="n">pheno_path</span><span class="p">)</span>
+<span class="w">    </span><span class="n">with</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="n">pheno_path</span><span class="p">)</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="n">fh</span><span class="o">:</span>
+<span class="w">        </span><span class="n">rows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="n">r</span><span class="w"> </span><span class="kr">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="nf">csv.reader</span><span class="p">(</span><span class="n">fh</span><span class="p">,</span><span class="w"> </span><span class="n">delimiter</span><span class="o">=</span><span class="s">&#39;\t&#39;</span><span class="p">)]</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">rows</span><span class="o">:</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="n">pheno_path</span><span class="p">)</span>
+<span class="w">    </span><span class="c1"># Detect header: first row is a header when its first cell is not a sample value</span>
+<span class="w">    </span><span class="n">has_header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rows</span><span class="p">[</span><span class="m">0</span><span class="p">][</span><span class="m">0</span><span class="p">]</span><span class="nf">.upper</span><span class="p">()</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="p">(</span><span class="s">&#39;FID&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;#FID&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;IID&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;SAMPLE&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;SAMPLE_ID&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">data_rows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rows</span><span class="p">[</span><span class="m">1</span><span class="o">:</span><span class="p">]</span><span class="w"> </span><span class="kr">if</span><span class="w"> </span><span class="n">has_header</span><span class="w"> </span><span class="kr">else</span><span class="w"> </span><span class="n">rows</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">data_rows</span><span class="w"> </span><span class="n">or</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="nf">all</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="m">0</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="m">1</span><span class="p">]</span><span class="w"> </span><span class="kr">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="n">data_rows</span><span class="p">)</span><span class="o">:</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="n">pheno_path</span><span class="p">)</span>
+<span class="w">    </span><span class="c1"># FID==IID everywhere — write a normalized copy to out_dir with FID=0</span>
+<span class="w">    </span><span class="n">out_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">os.path.join</span><span class="p">(</span><span class="nf">str</span><span class="p">(</span><span class="n">out_dir</span><span class="p">),</span><span class="w"> </span><span class="nf">os.path.basename</span><span class="p">(</span><span class="n">pheno_path</span><span class="p">))</span>
+<span class="w">    </span><span class="n">with</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;w&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">newline</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span><span class="w"> </span><span class="n">as</span><span class="w"> </span><span class="n">fh</span><span class="o">:</span>
+<span class="w">        </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">csv.writer</span><span class="p">(</span><span class="n">fh</span><span class="p">,</span><span class="w"> </span><span class="n">delimiter</span><span class="o">=</span><span class="s">&#39;\t&#39;</span><span class="p">)</span>
+<span class="w">        </span><span class="kr">if</span><span class="w"> </span><span class="n">has_header</span><span class="o">:</span>
+<span class="w">            </span><span class="nf">w.writerow</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
+<span class="w">        </span><span class="kr">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="n">data_rows</span><span class="o">:</span>
+<span class="w">            </span><span class="n">r</span><span class="p">[</span><span class="m">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;0&#39;</span>
+<span class="w">            </span><span class="nf">w.writerow</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+<span class="w">    </span><span class="kr">return</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># PCA command with PLINK, as a sanity check
-[pca_plink]
-# PLINK binary file
-parameter: genoFile = path
-input: genoFile
-plink_command = get_plink_command_prefix(_input)
-output: f&#39;{cwd}/{genoFile:bn}.pca.eigenvec&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, entrypoint=entrypoint
-    plink2 ${plink_command} ${_input:n} --out ${_output:n} --pca ${k}
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="c1"># PCA command with PLINK, as a sanity check</span>
+<span class="p">[</span><span class="n">pca_plink</span><span class="p">]</span>
+<span class="c1"># PLINK binary file</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">genoFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span>
+<span class="n">input</span><span class="o">:</span><span class="w"> </span><span class="n">genoFile</span>
+<span class="n">plink_command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">get_plink_command_prefix</span><span class="p">(</span>_<span class="n">input</span><span class="p">)</span>
+<span class="n">output</span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{cwd}/{genoFile:bn}.pca.eigenvec&#39;</span>
+<span class="n">task</span><span class="o">:</span><span class="w"> </span><span class="n">trunk_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">trunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">job_size</span><span class="p">,</span><span class="w"> </span><span class="n">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">walltime</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mem</span><span class="p">,</span><span class="w"> </span><span class="n">cores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numThreads</span><span class="p">,</span><span class="w"> </span><span class="n">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{step_name}_{_output[0]:bn}&#39;</span>
+<span class="n">bash</span><span class="o">:</span><span class="w"> </span><span class="n">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">container</span><span class="p">,</span><span class="w"> </span><span class="n">expand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;${ }&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output[0]:n}.stderr&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output[0]:n}.stdout&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">entrypoint</span><span class="o">=</span><span class="n">entrypoint</span>
+<span class="w">    </span><span class="n">plink2</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">plink_command</span><span class="p">}</span><span class="w"> </span><span class="o">$</span><span class="p">{</span>_<span class="n">input</span><span class="o">:</span><span class="n">n</span><span class="p">}</span><span class="w"> </span><span class="o">--</span><span class="n">out</span><span class="w"> </span><span class="o">$</span><span class="p">{</span>_<span class="n">output</span><span class="o">:</span><span class="n">n</span><span class="p">}</span><span class="w"> </span><span class="o">--</span><span class="n">pca</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">k</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -984,36 +1031,37 @@ bash: container = container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[
 <h2>PCA analysis<a class="headerlink" href="#pca-analysis" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Run PCA analysis using flashpca 
-[flashpca_1]
-# Plink binary file
-parameter: genoFile = path
-# The phenotypic file
-parameter: phenoFile = path(f&#39;{genoFile}&#39;.replace(&quot;.bed&quot;, &quot;.fam&quot;).replace(&quot;.pgen&quot;, &quot;.psam&quot;))
-# minimum population size to consider in the analysis
-parameter: min_pop_size = 2
-# How to standardize X before PCA
-parameter: stand = &quot;binom2&quot;
-## Input genoFile here is for unrelated samples
-input: genoFile, phenoFile
-output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
-        --step flashpca \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input[0]}&quot; \
-        --phenoFile &quot;${_input[1]}&quot; \
-        --output &quot;${_output}&quot; \
-        --stand &quot;${stand}&quot; \
-        --min-pop-size ${min_pop_size} \
-        --homogeneous &quot;${homogeneous}&quot; \
-        --pop-col &quot;${pop_col}&quot; \
-        --label-col &quot;${label_col}&quot; \
-        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
-        --k ${k} \
-        --maha-k ${maha_k} \
-        --numThreads ${numThreads}
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run PCA analysis using flashpca </span>
+<span class="p">[</span><span class="n">flashpca_1</span><span class="p">]</span>
+<span class="c1"># Plink binary file</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">genoFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span>
+<span class="c1"># The phenotypic file</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">phenoFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="n">f</span><span class="s">&#39;{genoFile}&#39;</span><span class="nf">.replace</span><span class="p">(</span><span class="s">&quot;.bed&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.fam&quot;</span><span class="p">)</span><span class="nf">.replace</span><span class="p">(</span><span class="s">&quot;.pgen&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.psam&quot;</span><span class="p">))</span>
+<span class="c1"># minimum population size to consider in the analysis</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">min_pop_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span>
+<span class="c1"># How to standardize X before PCA</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">stand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;binom2&quot;</span>
+<span class="c1">## Input genoFile here is for unrelated samples</span>
+<span class="n">phenoFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">normalize_phenoFile</span><span class="p">(</span><span class="n">phenoFile</span><span class="p">,</span><span class="w"> </span><span class="n">cwd</span><span class="p">)</span>
+<span class="n">input</span><span class="o">:</span><span class="w"> </span><span class="n">genoFile</span><span class="p">,</span><span class="w"> </span><span class="n">phenoFile</span>
+<span class="n">output</span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;</span>
+<span class="n">task</span><span class="o">:</span><span class="w"> </span><span class="n">trunk_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">trunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">job_size</span><span class="p">,</span><span class="w"> </span><span class="n">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">walltime</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mem</span><span class="p">,</span><span class="w"> </span><span class="n">cores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numThreads</span><span class="p">,</span><span class="w"> </span><span class="n">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{step_name}_{_output[0]:bn}&#39;</span>
+<span class="n">bash</span><span class="o">:</span><span class="w"> </span><span class="n">expand</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;${ }&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output:n}.stderr&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output:n}.stdout&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">container</span><span class="p">,</span><span class="w"> </span><span class="n">entrypoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">entrypoint</span>
+<span class="w">    </span><span class="n">Rscript</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">modular_script_dir</span><span class="p">}</span><span class="o">/</span><span class="n">data_preprocessing</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">PCA.R</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">step</span><span class="w"> </span><span class="n">flashpca</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="s">&quot;${cwd}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="s">&quot;${_input[0]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">phenoFile</span><span class="w"> </span><span class="s">&quot;${_input[1]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">output</span><span class="w"> </span><span class="s">&quot;${_output}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">stand</span><span class="w"> </span><span class="s">&quot;${stand}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">min</span><span class="o">-</span><span class="n">pop</span><span class="o">-</span><span class="n">size</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">min_pop_size</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">homogeneous</span><span class="w"> </span><span class="s">&quot;${homogeneous}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pop</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="s">&quot;${pop_col}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">label</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="s">&quot;${label_col}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pops</span><span class="w"> </span><span class="s">&quot;${&quot;</span><span class="p">,</span><span class="s">&quot;.join([str(x) for x in pops])}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">k</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">k</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">maha</span><span class="o">-</span><span class="n">k</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">maha_k</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">numThreads</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">numThreads</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -1023,33 +1071,34 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <h2>Project related individuals back<a class="headerlink" href="#project-related-individuals-back" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Project back to PCA model additional samples
-[project_samples_1]
-# Plink binary file
-parameter: genoFile = path
-# The phenotypic file
-parameter: phenoFile = path(f&#39;{genoFile}&#39;.replace(&quot;.bed&quot;, &quot;.fam&quot;).replace(&quot;.pgen&quot;, &quot;.psam&quot;))
-# How to standardize X before PCA
-parameter: stand = &quot;binom2&quot;
-parameter: pca_model = f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;
-## Input genoFile here is for related samples
-input: genoFile, phenoFile, pca_model
-output: f&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.pca.projected.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
-        --step project_samples \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input[0]}&quot; \
-        --phenoFile &quot;${_input[1]}&quot; \
-        --output &quot;${_output}&quot; \
-        --stand &quot;${stand}&quot; \
-        --pop-col &quot;${pop_col}&quot; \
-        --label-col &quot;${label_col}&quot; \
-        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
-        --pca-model &quot;${_input[2]}&quot; \
-        --maha-k ${maha_k} \
-        --numThreads ${numThreads}
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="c1"># Project back to PCA model additional samples</span>
+<span class="p">[</span><span class="n">project_samples_1</span><span class="p">]</span>
+<span class="c1"># Plink binary file</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">genoFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span>
+<span class="c1"># The phenotypic file</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">phenoFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="n">f</span><span class="s">&#39;{genoFile}&#39;</span><span class="nf">.replace</span><span class="p">(</span><span class="s">&quot;.bed&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.fam&quot;</span><span class="p">)</span><span class="nf">.replace</span><span class="p">(</span><span class="s">&quot;.pgen&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.psam&quot;</span><span class="p">))</span>
+<span class="c1"># How to standardize X before PCA</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">stand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;binom2&quot;</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">pca_model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.{(suffix+&quot;.&quot;) if suffix != &quot;&quot; else &quot;&quot;}pca.rds&#39;</span>
+<span class="c1">## Input genoFile here is for related samples</span>
+<span class="n">phenoFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">normalize_phenoFile</span><span class="p">(</span><span class="n">phenoFile</span><span class="p">,</span><span class="w"> </span><span class="n">cwd</span><span class="p">)</span>
+<span class="n">input</span><span class="o">:</span><span class="w"> </span><span class="n">genoFile</span><span class="p">,</span><span class="w"> </span><span class="n">phenoFile</span><span class="p">,</span><span class="w"> </span><span class="n">pca_model</span>
+<span class="n">output</span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{cwd}/{phenoFile:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.pca.projected.rds&#39;</span>
+<span class="n">task</span><span class="o">:</span><span class="w"> </span><span class="n">trunk_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">trunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">job_size</span><span class="p">,</span><span class="w"> </span><span class="n">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">walltime</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mem</span><span class="p">,</span><span class="w"> </span><span class="n">cores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numThreads</span><span class="p">,</span><span class="w"> </span><span class="n">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{step_name}_{_output[0]:bn}&#39;</span>
+<span class="n">bash</span><span class="o">:</span><span class="w"> </span><span class="n">expand</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;${ }&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output:n}.stderr&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output:n}.stdout&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">container</span><span class="p">,</span><span class="w"> </span><span class="n">entrypoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">entrypoint</span>
+<span class="w">    </span><span class="n">Rscript</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">modular_script_dir</span><span class="p">}</span><span class="o">/</span><span class="n">data_preprocessing</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">PCA.R</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">step</span><span class="w"> </span><span class="n">project_samples</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="s">&quot;${cwd}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">genoFile</span><span class="w"> </span><span class="s">&quot;${_input[0]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">phenoFile</span><span class="w"> </span><span class="s">&quot;${_input[1]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">output</span><span class="w"> </span><span class="s">&quot;${_output}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">stand</span><span class="w"> </span><span class="s">&quot;${stand}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pop</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="s">&quot;${pop_col}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">label</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="s">&quot;${label_col}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pops</span><span class="w"> </span><span class="s">&quot;${&quot;</span><span class="p">,</span><span class="s">&quot;.join([str(x) for x in pops])}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pca</span><span class="o">-</span><span class="n">model</span><span class="w"> </span><span class="s">&quot;${_input[2]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">maha</span><span class="o">-</span><span class="n">k</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">maha_k</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">numThreads</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">numThreads</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -1059,34 +1108,34 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <h2>Plot PCA results<a class="headerlink" href="#plot-pca-results" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Plot PCA results. 
-# Can be used independently as &quot;plot_pca&quot; or combined with other workflow as eg &quot;flashpca+plot_pca&quot;
-[plot_pca]
-parameter: outlier_file = path()
-parameter: plot_data = path
-parameter: min_axis = &quot;&quot;
-parameter: max_axis = &quot;&quot;
-input: plot_data
-output: f&#39;{cwd}/{_input:bn}.pc.png&#39;,
-        f&#39;{cwd}/{_input:bn}.scree.png&#39;,
-        f&#39;{cwd}/{_input:bn}.scree.txt&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
-        --step plot_pca \
-        --cwd &quot;${cwd}&quot; \
-        --plot-data &quot;${_input}&quot; \
-        --outlier-file &quot;${outlier_file}&quot; \
-        --min-axis &quot;${min_axis}&quot; \
-        --max-axis &quot;${max_axis}&quot; \
-        --pop-col &quot;${pop_col}&quot; \
-        --label-col &quot;${label_col}&quot; \
-        --pops &quot;${&quot;,&quot;.join([str(x) for x in pops])}&quot; \
-        --k ${k} \
-        --output-pc-plot &quot;${_output[0]}&quot; \
-        --output-scree-plot &quot;${_output[1]}&quot; \
-        --output-scree-text &quot;${_output[2]}&quot; \
-        --numThreads ${numThreads}
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot PCA results. </span>
+<span class="c1"># Can be used independently as &quot;plot_pca&quot; or combined with other workflow as eg &quot;flashpca+plot_pca&quot;</span>
+<span class="p">[</span><span class="n">plot_pca</span><span class="p">]</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">outlier_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">path</span><span class="p">()</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">plot_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">min_axis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">max_axis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="n">input</span><span class="o">:</span><span class="w"> </span><span class="n">plot_data</span>
+<span class="n">output</span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{cwd}/{_input:bn}.pc.png&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">f</span><span class="s">&#39;{cwd}/{_input:bn}.scree.png&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">f</span><span class="s">&#39;{cwd}/{_input:bn}.scree.txt&#39;</span>
+<span class="n">task</span><span class="o">:</span><span class="w"> </span><span class="n">trunk_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">trunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">job_size</span><span class="p">,</span><span class="w"> </span><span class="n">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">walltime</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mem</span><span class="p">,</span><span class="w"> </span><span class="n">cores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{step_name}_{_output[0]:bn}&#39;</span>
+<span class="n">bash</span><span class="o">:</span><span class="w"> </span><span class="n">expand</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;${ }&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output[0]:n}.stderr&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output[0]:n}.stdout&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">container</span><span class="p">,</span><span class="w"> </span><span class="n">entrypoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">entrypoint</span>
+<span class="w">    </span><span class="n">Rscript</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">modular_script_dir</span><span class="p">}</span><span class="o">/</span><span class="n">data_preprocessing</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">PCA.R</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">step</span><span class="w"> </span><span class="n">plot_pca</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="s">&quot;${cwd}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">plot</span><span class="o">-</span><span class="n">data</span><span class="w"> </span><span class="s">&quot;${_input}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">outlier</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="s">&quot;${outlier_file}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">min</span><span class="o">-</span><span class="n">axis</span><span class="w"> </span><span class="s">&quot;${min_axis}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">max</span><span class="o">-</span><span class="n">axis</span><span class="w"> </span><span class="s">&quot;${max_axis}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pop</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="s">&quot;${pop_col}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">label</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="s">&quot;${label_col}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pops</span><span class="w"> </span><span class="s">&quot;${&quot;</span><span class="p">,</span><span class="s">&quot;.join([str(x) for x in pops])}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">k</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">k</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">pc</span><span class="o">-</span><span class="n">plot</span><span class="w"> </span><span class="s">&quot;${_output[0]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">scree</span><span class="o">-</span><span class="n">plot</span><span class="w"> </span><span class="s">&quot;${_output[1]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">scree</span><span class="o">-</span><span class="n">text</span><span class="w"> </span><span class="s">&quot;${_output[2]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">numThreads</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">numThreads</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -1096,38 +1145,38 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <h2>Detect outliers<a class="headerlink" href="#detect-outliers" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Calculate Mahalanobis distance per population and report outliers
-[detect_outliers]
-# Set the probability to remove outliers eg 0.95 or 0.997
-parameter: prob = 0.997
-# Mahalanobis distance p-value cutoff
-parameter: pval = 0.05
-# Robust Mahalanobis to outliers
-parameter: robust = True
-parameter: pca_result = path
-input: pca_result
-output: distance=f&#39;{_input:n}.mahalanobis.rds&#39;,
-        identified_outliers=f&#39;{_input:n}.outliers&#39;,
-        analysis_summary=f&#39;{_input:n}.analysis_summary.md&#39;,
-        qqplot_mahalanobis=f&#39;{_input:n}.mahalanobis_qq.png&#39;,
-        hist_mahalanobis=f&#39;{_input:n}.mahalanobis_hist.png&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = 1, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/data_preprocessing/genotype/PCA.R \
-        --step detect_outliers \
-        --cwd &quot;${cwd}&quot; \
-        --pca-result &quot;${_input}&quot; \
-        --prob ${prob} \
-        --pval ${pval} \
-        --robust ${&quot;TRUE&quot; if robust else &quot;FALSE&quot;} \
-        --pop-col &quot;${pop_col}&quot; \
-        --k ${k} \
-        --distance-output &quot;${_output[&#39;distance&#39;]}&quot; \
-        --identified-outliers-output &quot;${_output[&#39;identified_outliers&#39;]}&quot; \
-        --analysis-summary-output &quot;${_output[&#39;analysis_summary&#39;]}&quot; \
-        --qqplot-output &quot;${_output[&#39;qqplot_mahalanobis&#39;]}&quot; \
-        --hist-output &quot;${_output[&#39;hist_mahalanobis&#39;]}&quot; \
-        --numThreads ${numThreads}
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="c1"># Calculate Mahalanobis distance per population and report outliers</span>
+<span class="p">[</span><span class="n">detect_outliers</span><span class="p">]</span>
+<span class="c1"># Set the probability to remove outliers eg 0.95 or 0.997</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">prob</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.997</span>
+<span class="c1"># Mahalanobis distance p-value cutoff</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">pval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.05</span>
+<span class="c1"># Robust Mahalanobis to outliers</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">robust</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">True</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">pca_result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span>
+<span class="n">input</span><span class="o">:</span><span class="w"> </span><span class="n">pca_result</span>
+<span class="n">output</span><span class="o">:</span><span class="w"> </span><span class="n">distance</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.mahalanobis.rds&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">identified_outliers</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.outliers&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">analysis_summary</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.analysis_summary.md&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">qqplot_mahalanobis</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.mahalanobis_qq.png&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">hist_mahalanobis</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.mahalanobis_hist.png&#39;</span>
+<span class="n">task</span><span class="o">:</span><span class="w"> </span><span class="n">trunk_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">trunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">job_size</span><span class="p">,</span><span class="w"> </span><span class="n">walltime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">walltime</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mem</span><span class="p">,</span><span class="w"> </span><span class="n">cores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{step_name}_{_output[0]:bn}&#39;</span>
+<span class="n">bash</span><span class="o">:</span><span class="w"> </span><span class="n">expand</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;${ }&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output[0]:n}.stderr&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s">&#39;{_output[0]:n}.stdout&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">container</span><span class="p">,</span><span class="w"> </span><span class="n">entrypoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">entrypoint</span>
+<span class="w">    </span><span class="n">Rscript</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">modular_script_dir</span><span class="p">}</span><span class="o">/</span><span class="n">data_preprocessing</span><span class="o">/</span><span class="n">genotype</span><span class="o">/</span><span class="n">PCA.R</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">step</span><span class="w"> </span><span class="n">detect_outliers</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">cwd</span><span class="w"> </span><span class="s">&quot;${cwd}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pca</span><span class="o">-</span><span class="n">result</span><span class="w"> </span><span class="s">&quot;${_input}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">prob</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">prob</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pval</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">pval</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">robust</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="s">&quot;TRUE&quot;</span><span class="w"> </span><span class="kr">if</span><span class="w"> </span><span class="n">robust</span><span class="w"> </span><span class="kr">else</span><span class="w"> </span><span class="s">&quot;FALSE&quot;</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">pop</span><span class="o">-</span><span class="n">col</span><span class="w"> </span><span class="s">&quot;${pop_col}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">k</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">k</span><span class="p">}</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">distance</span><span class="o">-</span><span class="n">output</span><span class="w"> </span><span class="s">&quot;${_output[&#39;distance&#39;]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">identified</span><span class="o">-</span><span class="n">outliers</span><span class="o">-</span><span class="n">output</span><span class="w"> </span><span class="s">&quot;${_output[&#39;identified_outliers&#39;]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">analysis</span><span class="o">-</span><span class="n">summary</span><span class="o">-</span><span class="n">output</span><span class="w"> </span><span class="s">&quot;${_output[&#39;analysis_summary&#39;]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">qqplot</span><span class="o">-</span><span class="n">output</span><span class="w"> </span><span class="s">&quot;${_output[&#39;qqplot_mahalanobis&#39;]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">hist</span><span class="o">-</span><span class="n">output</span><span class="w"> </span><span class="s">&quot;${_output[&#39;hist_mahalanobis&#39;]}&quot;</span><span class="w"> </span>\
+<span class="w">        </span><span class="o">--</span><span class="n">numThreads</span><span class="w"> </span><span class="o">$</span><span class="p">{</span><span class="n">numThreads</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -1141,24 +1190,24 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[flashpca_2, project_samples_2]
-# Set the probability to remove outliers eg 0.95 or 0.997
-parameter: prob = 0.997
-# Robust Mahalanobis to outliers
-parameter: robust = True
-output: distance=f&#39;{_input:n}.mahalanobis.rds&#39;,
-        identified_outliers=f&#39;{_input:n}.outliers&#39;,
-        analysis_summary=f&#39;{_input:n}.analysis_summary.md&#39;,
-        qqplot_mahalanobis=f&#39;{_input:n}.mahalanobis_qq.png&#39;,
-        hist_mahalanobis=f&#39;{_input:n}.mahalanobis_hist.png&#39;
-sos_run(&quot;detect_outliers&quot;, pca_result=_input, prob=prob, robust=robust)
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">flashpca_2</span><span class="p">,</span><span class="w"> </span><span class="n">project_samples_2</span><span class="p">]</span>
+<span class="c1"># Set the probability to remove outliers eg 0.95 or 0.997</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">prob</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.997</span>
+<span class="c1"># Robust Mahalanobis to outliers</span>
+<span class="n">parameter</span><span class="o">:</span><span class="w"> </span><span class="n">robust</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">True</span>
+<span class="n">output</span><span class="o">:</span><span class="w"> </span><span class="n">distance</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.mahalanobis.rds&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">identified_outliers</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.outliers&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">analysis_summary</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.analysis_summary.md&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">qqplot_mahalanobis</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.mahalanobis_qq.png&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">hist_mahalanobis</span><span class="o">=</span><span class="n">f</span><span class="s">&#39;{_input:n}.mahalanobis_hist.png&#39;</span>
+<span class="nf">sos_run</span><span class="p">(</span><span class="s">&quot;detect_outliers&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pca_result</span><span class="o">=</span>_<span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">prob</span><span class="o">=</span><span class="n">prob</span><span class="p">,</span><span class="w"> </span><span class="n">robust</span><span class="o">=</span><span class="n">robust</span><span class="p">)</span>
 
-[flashpca_3, project_samples_3]
-input: output_from(1), output_from(2)[&#39;identified_outliers&#39;]
-outliers = [x.strip() for x in open(_input[1]).readlines() if x.strip()]
-output: f&quot;{cwd}/{_input[0]:bn}.pc.png&quot;,
-        f&quot;{cwd}/{_input[0]:bn}.scree.png&quot;
-sos_run(&quot;plot_pca&quot;, plot_data = _input[0], outlier_file = _input[1] if len(outliers) else path())
+<span class="p">[</span><span class="n">flashpca_3</span><span class="p">,</span><span class="w"> </span><span class="n">project_samples_3</span><span class="p">]</span>
+<span class="n">input</span><span class="o">:</span><span class="w"> </span><span class="nf">output_from</span><span class="p">(</span><span class="m">1</span><span class="p">),</span><span class="w"> </span><span class="nf">output_from</span><span class="p">(</span><span class="m">2</span><span class="p">)[</span><span class="s">&#39;identified_outliers&#39;</span><span class="p">]</span>
+<span class="n">outliers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nf">x.strip</span><span class="p">()</span><span class="w"> </span><span class="kr">for</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span>_<span class="n">input</span><span class="p">[</span><span class="m">1</span><span class="p">])</span><span class="nf">.readlines</span><span class="p">()</span><span class="w"> </span><span class="kr">if</span><span class="w"> </span><span class="nf">x.strip</span><span class="p">()]</span>
+<span class="n">output</span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="s">&quot;{cwd}/{_input[0]:bn}.pc.png&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">f</span><span class="s">&quot;{cwd}/{_input[0]:bn}.scree.png&quot;</span>
+<span class="nf">sos_run</span><span class="p">(</span><span class="s">&quot;plot_pca&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">plot_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>_<span class="n">input</span><span class="p">[</span><span class="m">0</span><span class="p">],</span><span class="w"> </span><span class="n">outlier_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>_<span class="n">input</span><span class="p">[</span><span class="m">1</span><span class="p">]</span><span class="w"> </span><span class="kr">if</span><span class="w"> </span><span class="nf">len</span><span class="p">(</span><span class="n">outliers</span><span class="p">)</span><span class="w"> </span><span class="kr">else</span><span class="w"> </span><span class="nf">path</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -1175,16 +1224,16 @@ sos_run(&quot;plot_pca&quot;, plot_data = _input[0], outlier_file = _input[1] if
         },
         codeMirrorConfig: {
             theme: "abcdef",
-            mode: "sos"
+            mode: "r"
         },
         kernelOptions: {
-            name: "sos",
+            name: "ir",
             path: "./."
         },
         predefinedOutput: true
     }
     </script>
-    <script>kernelName = 'sos'</script>
+    <script>kernelName = 'ir'</script>
 
                 </article>
               

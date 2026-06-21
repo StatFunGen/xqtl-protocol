@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -866,7 +885,7 @@ if not all(value in valid_chr_values for value in geno_meta_data[&#39;#chr&#39;]
 region_ids = []
 # If region_list is provided, read the file and extract IDs
 if region_list.is_file():
-    region_list_df = pd.read_csv(region_list, delim_whitespace=True, header=None, comment = &quot;#&quot;)
+    region_list_df = pd.read_csv(region_list, sep=r&#39;\s+&#39;, header=None, comment = &quot;#&quot;)
     region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
 # If region_name is provided, include those IDs as well
 # --region-name A B C will result in a list of [&quot;A&quot;, &quot;B&quot;, &quot;C&quot;] here

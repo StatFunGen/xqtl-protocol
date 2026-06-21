@@ -272,6 +272,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -785,16 +804,15 @@ with \)</span>B = 200$, used as the per-trait input to cross-trait meta-analysis
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb make_annotation_files_ldscore \
-    --annotation_file data/polyfun_new/input/colocboost_test_annotation_path.txt \
-    --reference_anno_file data/polyfun_new/input/reference_annotation0.txt \
-    --genome_ref_file data/polyfun_new/input/genome_reference_bfile.txt \
-    --annotation_name protocol_example \
-    --plink_name reference. \
-    --baseline_name annotations. \
-    --weight_name weights. \
-    --python_exec python \
-    --polyfun_path data/github/polyfun \
-    --cwd output/sldsc_ldscore -j 4
+  --annotation_file input/enrichment/sldsc/colocboost_test_annotation_path.txt \
+  --reference_anno_file input/enrichment/sldsc/reference_annotation0.txt \
+  --genome_ref_file input/enrichment/sldsc/genome_reference_bfile.txt \
+  --annotation_name protocol_example \
+  --plink_name reference. --baseline_name annotations. --weight_name weights. \
+  --python_exec python \
+  --polyfun_path ../polyfun \
+  --cwd output/sldsc_ldscore -j 4
+
 </pre></div>
 </div>
 </div>
@@ -806,14 +824,14 @@ with \)</span>B = 200$, used as the per-trait input to cross-trait meta-analysis
 <p>Before estimating heritability, each raw GWAS summary-statistics file must be converted into the LDSC-compatible format consumed by <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code>. Run <code class="docutils literal notranslate"><span class="pre">munge_sumstats_polyfun</span></code> once per trait; the munged files are then collected in the directory passed to <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> via <code class="docutils literal notranslate"><span class="pre">--sumstat_dir</span></code>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb munge_sumstats_polyfun \
-    --sumstats data/polyfun_new/example_data/trait_raw_sumstats.tsv \
-    --n 0 \
-    --min-info 0.6 \
-    --min-maf 0.001 \
-    --chi2-cutoff 30 \
-    --polyfun_path data/github/polyfun \
-    --cwd data/polyfun_new/example_data
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># sos run pipeline/sldsc_enrichment.ipynb munge_sumstats_polyfun \
+#     --sumstats data/polyfun_new/example_data/trait_raw_sumstats.tsv \
+#     --n 0 \
+#     --min-info 0.6 \
+#     --min-maf 0.001 \
+#     --chi2-cutoff 30 \
+#     --polyfun_path data/github/polyfun \
+#     --cwd data/polyfun_new/example_data
 </pre></div>
 </div>
 </div>
@@ -843,19 +861,16 @@ with \)</span>B = 200$, used as the per-trait input to cross-trait meta-analysis
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb get_heritability \
-    --target_anno_dirs output/sldsc_ldscore/protocol_example_single_1 \
-    --all_traits_file data/polyfun_new/input/sumstats_test_all.txt \
-    --sumstat_dir data/polyfun_new/example_data \
-    --baseline_ld_dir data/polyfun_new/example_data \
-    --weights_dir data/polyfun_new/example_data \
-    --plink_name reference. \
-    --baseline_name annotations. \
-    --weight_name weights. \
-    --annotation_name protocol_example \
-    --python_exec python \
-    --polyfun_path data/github/polyfun \
-    --maf_cutoff 0 \
-    --cwd output/sldsc_heritability -j 4
+  --target_anno_dirs output/sldsc_ldscore/protocol_example_single_1 \
+  --all_traits_file input/enrichment/sldsc/sumstats_test_all.txt \
+  --sumstat_dir input/enrichment/sldsc \
+  --baseline_ld_dir input/enrichment/sldsc \
+  --weights_dir input/enrichment/sldsc \
+  --plink_name reference. --baseline_name annotations. --weight_name weights. \
+  --annotation_name protocol_example --python_exec python \
+  --polyfun_path ../polyfun \
+  --maf_cutoff 0 --cwd output/sldsc_heritability -j 4
+
 </pre></div>
 </div>
 </div>
@@ -884,16 +899,14 @@ meta across all traits.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb postprocess \
-    --traits_file data/polyfun_new/input/sumstats_test_all.txt \
-    --heritability_cwd output/sldsc_heritability \
-    --target_categories ANNOT_0 \
-    --target_categories_label protocol_example_annotation \
-    --target_anno_dir output/sldsc_ldscore/protocol_example_single_1 \
-    --annotation_name protocol_example \
-    --python_exec python \
-    --polyfun_path data/github/polyfun \
-    --maf_cutoff 0 \
-    --cwd output/sldsc_postprocess -j 4
+  --traits_file input/enrichment/sldsc/sumstats_test_all.txt \
+  --heritability_cwd output/sldsc_heritability \
+  --target_categories ANNOT_0 --target_categories_label protocol_example_annotation \
+  --target_anno_dir output/sldsc_ldscore/protocol_example_single_1 \
+  --annotation_name protocol_example --python_exec python \
+  --polyfun_path ../polyfun \
+  --maf_cutoff 0 --cwd output/sldsc_postprocess -j 4
+
 </pre></div>
 </div>
 </div>
@@ -914,15 +927,12 @@ meta across all traits.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/sldsc_enrichment.ipynb meta_subset \
-    --postprocess_rds output/sldsc_postprocess/protocol_example.sldsc_postprocess.rds \
-    --subset_traits_file data/polyfun_new/input/sumstats_test_category1.txt \
-    --subset_name category1 \
-    --target_categories ANNOT_0 \
-    --annotation_name protocol_example \
-    --python_exec python \
-    --polyfun_path data/github/polyfun \
-    --maf_cutoff 0 \
-    --cwd output/sldsc_postprocess -j 4
+  --postprocess_rds output/sldsc_postprocess/protocol_example.sldsc_postprocess.rds \
+  --subset_traits_file input/enrichment/sldsc/sumstats_test_category1.txt \
+  --subset_name category1 --target_categories ANNOT_0 \
+  --annotation_name protocol_example --python_exec python \
+  --polyfun_path ../polyfun \
+  --maf_cutoff 0 --cwd output/sldsc_postprocess -j 4
 </pre></div>
 </div>
 </div>

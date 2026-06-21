@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -563,7 +582,7 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_formatting/plink/protocol_example.merged.{bed,bim,fam}</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_formatting/plink/protocol_example.genotype.merged.{bed,bim,fam}</span></code></p></td>
 <td><p>Merged genome-wide PLINK bundle from genotype_formatting (Step 1 input)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.rnaseq.bed.gz</span></code></p></td>
@@ -583,7 +602,7 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/plink/protocol_example.merged.plink_qc.{bed,bim,fam}</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.{bed,bim,fam}</span></code></p></td>
 <td><p>Basic-QC genotype (Step 1)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/gwas_qc/genotype/protocol_example.rnaseq.bed.sample_genotypes.txt</span></code></p></td>
@@ -613,7 +632,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
     --cwd output/gwas_qc/plink \
-    --genoFile output/genotype_formatting/plink/protocol_example.merged.bed \
+    --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged.bed \
     --geno-filter 0.1 \
     --mind-filter 0.1 \
     --hwe-filter 1e-08 \
@@ -630,7 +649,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
     --cwd output/gwas_qc/genotype \
-    --genoFile output/gwas_qc/plink/protocol_example.merged.plink_qc.fam \
+    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.fam \
     --phenoFile input/rnaseq/protocol_example.rnaseq.bed.gz
 </pre></div>
 </div>
@@ -645,7 +664,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb king \
     --cwd output/gwas_qc/kinship \
-    --genoFile output/gwas_qc/plink/protocol_example.merged.plink_qc.bed \
+    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.bed \
     --name protocol_example.king \
     --keep-samples output/gwas_qc/genotype/protocol_example.rnaseq.bed.sample_genotypes.txt
 </pre></div>
@@ -661,7 +680,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
     --cwd output/gwas_qc/genotype \
-    --genoFile output/gwas_qc/kinship/protocol_example.merged.plink_qc.protocol_example.king.unrelated.bed \
+    --genoFile output/gwas_qc/kinship/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.bed \
     --mac-filter 5
 </pre></div>
 </div>
@@ -673,7 +692,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
     --cwd output/gwas_qc/genotype \
-    --genoFile output/gwas_qc/plink/protocol_example.merged.plink_qc.bed \
+    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.bed \
     --mac-filter 5
 </pre></div>
 </div>
@@ -687,11 +706,11 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
     --cwd output/gwas_qc/cache \
-    --genoFile output/genotype_formatting/plink/protocol_example.merged.bed \
+    --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged.bed \
     --geno-filter 0 \
     --mind-filter 0.1 \
     --maf-filter 0 \
-    --keep-variants output/gwas_qc/genotype/protocol_example.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.in \
+    --keep-variants output/gwas_qc/genotype/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.in \
     --name for_pca
 </pre></div>
 </div>
@@ -1008,6 +1027,8 @@ parameter: shift = 10
 parameter: r2 = 0.1
 parameter: mac_filter = 0.0
 parameter: other_args = []
+# Use PLINK --bad-ld flag (skip LD pruning diagnostics for regions with extreme LD)
+parameter: bad_ld = False
 stop_if(r2==0)
 plink_command = get_plink_command_prefix(_input)
 output_format = determine_plink_format(_input)
@@ -1029,6 +1050,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
         --window ${window} \
         --shift ${shift} \
         --r2 ${r2} \
+        ${&quot;--bad-ld&quot; if bad_ld else &quot;&quot;} \
         ${other_args_flags} \
         --numThreads ${numThreads}
 </pre></div>

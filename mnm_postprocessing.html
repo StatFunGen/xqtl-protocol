@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -481,18 +500,43 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Fine-mapping result post-processing</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prep-build-the-toy-inputs-one-off">Prep: build the toy inputs (one-off)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-susie-to-tsv-verified-end-to-end-on-the-toy-data">Step 1: <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> (VERIFIED end-to-end on the toy data)</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#required-cli-args-substitute-placeholders-with-your-real-values">Required CLI args (substitute placeholders &lt;…&gt; with your real values):</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#file-path-dir-containing-fine-mapping-rds-files">–file_path                  dir containing fine-mapping RDS files</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#prefix-fm-rds-prefix-filename-part-before-the-region-id">–prefix &lt;fm_rds_prefix&gt;     filename part BEFORE the region id</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#suffix-fm-rds-suffix-filename-part-after-the-region-id">–suffix &lt;fm_rds_suffix&gt;     filename part AFTER  the region id</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#expected-per-region-path">expected per-region path:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#file-path-prefix-region-suffix">{file_path}/{prefix}.{region}.{suffix}</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#example-rosmap-ac-eqtl-ensg00000012779-univariate-bvsr-rds">example: ROSMAP_AC_eQTL.ENSG00000012779.univariate_bvsr.rds</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#prefix-region-suffix">__ prefix <strong>/  _</strong> region _<strong>/  _</strong> suffix ___/</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#name-study-name-tag-used-in-output-filenames-and-intermediate-rds-names">–name   &lt;study_name&gt;        tag used in output filenames and intermediate RDS names</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#final-output-cwd-summary-name-qtl-type-top-loci-bed-gz">(final output: {cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz)</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#qtl-type-cis-trans-trans-appears-in-the-combined-filename">–qtl_type cis | trans | trans_<program>  appears in the combined filename</program></a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#region-file-bed-of-regions-chr-start-end-region-id-to-enumerate">–region_file                bed of regions (chr, start, end, region_id) to enumerate</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#geno-ref-tabix-indexed-bim-gz-for-allele-flipping-checks">–geno_ref                   tabix-indexed bim.gz for allele-flipping checks</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"></a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#outputs-produced">Outputs produced:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cwd-name-region-cis-results-db-rds-per-region-intermediate-rds">{cwd}/{name}.{region}.cis_results_db.rds        per-region intermediate RDS</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cwd-summary-name-region-top-loci-bed-gz-per-region-top-loci">{cwd}/summary/{name}.{region}.top_loci.bed.gz   per-region top_loci</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cwd-summary-name-qtl-type-top-loci-bed-gz-combined-public-facing-file">{cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz combined public-facing file</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#full-run-export-all-regions-via-slurm-and-combine-into-one-study-level-file">Full run: export all regions via SLURM and combine into one study-level file.</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-susie-to-tsv-verified-end-to-end-on-the-toy-data">Step 1: <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> (VERIFIED end-to-end on the toy data)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-workflows-command-templates">Other workflows (command templates)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-configuration-and-the-susie-to-tsv-workflow">Pipeline configuration and the <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> workflow</a></li>
 </ul>
+</li>
+</ul>
+
             </nav>
         </div>
     </div>
@@ -525,47 +569,79 @@
 <h3>Prep: build the toy inputs (one-off)<a class="headerlink" href="#prep-build-the-toy-inputs-one-off" title="Link to this heading">#</a></h3>
 <p>Reshape the univariate SuSiE results into flat per-region <code class="docutils literal notranslate"><span class="pre">susie</span></code> RDS files and a matching region list. Run from the toy_example root.</p>
 <p><strong>Timing:</strong> Runtime varies by dataset size and compute resources. For the toy chr22 MWE dataset, most steps complete in under 10 minutes on a standard HPC node.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Required CLI args (substitute placeholders &lt;...&gt; with your real values):
-#   --file_path                  dir containing fine-mapping RDS files
-#   --prefix &lt;fm_rds_prefix&gt;     filename part BEFORE the region id
-#   --suffix &lt;fm_rds_suffix&gt;     filename part AFTER  the region id
-#                                expected per-region path:
-#                                  {file_path}/{prefix}.{region}.{suffix}
-#                                example: ROSMAP_AC_eQTL.ENSG00000012779.univariate_bvsr.rds
-#                                         \__ prefix __/  \___ region ___/  \___ suffix ___/
-#   --name   &lt;study_name&gt;        tag used in output filenames and intermediate RDS names
-#                                (final output: {cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz)
-#   --qtl_type cis | trans | trans_&lt;program&gt;  appears in the combined filename
-#   --region_file                bed of regions (chr, start, end, region_id) to enumerate
-#   --geno_ref                   tabix-indexed bim.gz for allele-flipping checks
-#
-# Outputs produced:
-#   {cwd}/{name}.{region}.cis_results_db.rds        per-region intermediate RDS
-#   {cwd}/summary/{name}.{region}.top_loci.bed.gz   per-region top_loci
-#   {cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz combined public-facing file
-
-# Full run: export all regions via SLURM and combine into one study-level file.
-sos run ./mnm_postprocessing.ipynb export_top_loci \
-    --region_file ./TADB_enhanced_cis.coding.bed \
-    --file_path /path/to/fine_mapping \
-    --prefix &lt;fm_rds_prefix&gt; \
-    --suffix &lt;fm_rds_suffix&gt; \
-    --name &lt;study_name&gt; \
-    --min_corr 0.8 \
-    --geno_ref ./Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz \
-    --qtl_type cis \
-    --cwd ~/tmp/export_run \
-    --mem 14G --walltime 72h \
-    -q slurm -j 100 -s build
-</pre></div>
-</div>
-</div>
-</div>
 </section>
+</section>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="required-cli-args-substitute-placeholders-with-your-real-values">
+<h1>Required CLI args (substitute placeholders &lt;…&gt; with your real values):<a class="headerlink" href="#required-cli-args-substitute-placeholders-with-your-real-values" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="file-path-dir-containing-fine-mapping-rds-files">
+<h1>–file_path                  dir containing fine-mapping RDS files<a class="headerlink" href="#file-path-dir-containing-fine-mapping-rds-files" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="prefix-fm-rds-prefix-filename-part-before-the-region-id">
+<h1>–prefix &lt;fm_rds_prefix&gt;     filename part BEFORE the region id<a class="headerlink" href="#prefix-fm-rds-prefix-filename-part-before-the-region-id" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="suffix-fm-rds-suffix-filename-part-after-the-region-id">
+<h1>–suffix &lt;fm_rds_suffix&gt;     filename part AFTER  the region id<a class="headerlink" href="#suffix-fm-rds-suffix-filename-part-after-the-region-id" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="expected-per-region-path">
+<h1>expected per-region path:<a class="headerlink" href="#expected-per-region-path" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="file-path-prefix-region-suffix">
+<h1>{file_path}/{prefix}.{region}.{suffix}<a class="headerlink" href="#file-path-prefix-region-suffix" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="example-rosmap-ac-eqtl-ensg00000012779-univariate-bvsr-rds">
+<h1>example: ROSMAP_AC_eQTL.ENSG00000012779.univariate_bvsr.rds<a class="headerlink" href="#example-rosmap-ac-eqtl-ensg00000012779-univariate-bvsr-rds" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="prefix-region-suffix">
+<h1>__ prefix <strong>/  _</strong> region _<strong>/  _</strong> suffix ___/<a class="headerlink" href="#prefix-region-suffix" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="name-study-name-tag-used-in-output-filenames-and-intermediate-rds-names">
+<h1>–name   &lt;study_name&gt;        tag used in output filenames and intermediate RDS names<a class="headerlink" href="#name-study-name-tag-used-in-output-filenames-and-intermediate-rds-names" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="final-output-cwd-summary-name-qtl-type-top-loci-bed-gz">
+<h1>(final output: {cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz)<a class="headerlink" href="#final-output-cwd-summary-name-qtl-type-top-loci-bed-gz" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="qtl-type-cis-trans-trans-appears-in-the-combined-filename">
+<h1>–qtl_type cis | trans | trans_<program>  appears in the combined filename<a class="headerlink" href="#qtl-type-cis-trans-trans-appears-in-the-combined-filename" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="region-file-bed-of-regions-chr-start-end-region-id-to-enumerate">
+<h1>–region_file                bed of regions (chr, start, end, region_id) to enumerate<a class="headerlink" href="#region-file-bed-of-regions-chr-start-end-region-id-to-enumerate" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="geno-ref-tabix-indexed-bim-gz-for-allele-flipping-checks">
+<h1>–geno_ref                   tabix-indexed bim.gz for allele-flipping checks<a class="headerlink" href="#geno-ref-tabix-indexed-bim-gz-for-allele-flipping-checks" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1><a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="outputs-produced">
+<h1>Outputs produced:<a class="headerlink" href="#outputs-produced" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="cwd-name-region-cis-results-db-rds-per-region-intermediate-rds">
+<h1>{cwd}/{name}.{region}.cis_results_db.rds        per-region intermediate RDS<a class="headerlink" href="#cwd-name-region-cis-results-db-rds-per-region-intermediate-rds" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="cwd-summary-name-region-top-loci-bed-gz-per-region-top-loci">
+<h1>{cwd}/summary/{name}.{region}.top_loci.bed.gz   per-region top_loci<a class="headerlink" href="#cwd-summary-name-region-top-loci-bed-gz-per-region-top-loci" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="cwd-summary-name-qtl-type-top-loci-bed-gz-combined-public-facing-file">
+<h1>{cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz combined public-facing file<a class="headerlink" href="#cwd-summary-name-qtl-type-top-loci-bed-gz-combined-public-facing-file" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="full-run-export-all-regions-via-slurm-and-combine-into-one-study-level-file">
+<h1>Full run: export all regions via SLURM and combine into one study-level file.<a class="headerlink" href="#full-run-export-all-regions-via-slurm-and-combine-into-one-study-level-file" title="Link to this heading">#</a></h1>
+<p>sos run ./mnm_postprocessing.ipynb export_top_loci <br />
+–region_file ./TADB_enhanced_cis.coding.bed <br />
+–file_path /path/to/fine_mapping <br />
+–prefix &lt;fm_rds_prefix&gt; <br />
+–suffix &lt;fm_rds_suffix&gt; <br />
+–name &lt;study_name&gt; <br />
+–min_corr 0.8 <br />
+–geno_ref ./Fungen_xQTL.ROSMAP_NIA_WGS.ROSMAP_NIA_WGS.MSBB_WGS_ADSP_hg38.MiGA.MAP_Brain-xQTL_Gwas_geno_0.STARNET.aligned.bim.gz <br />
+–qtl_type cis <br />
+–cwd ~/tmp/export_run <br />
+–mem 14G –walltime 72h <br />
+-q slurm -j 100 -s build</p>
 <section id="step-1-susie-to-tsv-verified-end-to-end-on-the-toy-data">
-<h3>Step 1: <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> (VERIFIED end-to-end on the toy data)<a class="headerlink" href="#step-1-susie-to-tsv-verified-end-to-end-on-the-toy-data" title="Link to this heading">#</a></h3>
+<h2>Step 1: <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> (VERIFIED end-to-end on the toy data)<a class="headerlink" href="#step-1-susie-to-tsv-verified-end-to-end-on-the-toy-data" title="Link to this heading">#</a></h2>
 <p>Convert the SuSiE objects to per-variant / lbf / effect TSV tables. The <code class="docutils literal notranslate"><span class="pre">--container</span></code> argument is left empty so the step runs natively in the project environment.</p>
 <p><em>Note: the preserved <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> code (last cell) was written for full, untrimmed SuSiE objects. Four small compatibility fixes were applied in this userfriendly copy so it runs on the trimmed <code class="docutils literal notranslate"><span class="pre">output_uni</span></code> objects: keep variant IDs as character when parsing chr/pos; derive ref/alt from the <code class="docutils literal notranslate"><span class="pre">:</span></code>-separated variant ID; align <code class="docutils literal notranslate"><span class="pre">coef.susie()</span></code> length to the variant count; and use a per-effect summary of <code class="docutils literal notranslate"><span class="pre">lbf_variable</span></code> when a true per-effect <code class="docutils literal notranslate"><span class="pre">$lbf</span></code> is absent. These only reshape/realign genuine values - no results are fabricated. The original notebook is unchanged.</em></p>
 <div class="cell docutils container">
@@ -579,7 +655,6 @@ sos run ./mnm_postprocessing.ipynb export_top_loci \
 </div>
 </div>
 </div>
-</section>
 </section>
 <section id="output-files">
 <h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
@@ -2899,18 +2974,43 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Fine-mapping result post-processing</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prep-build-the-toy-inputs-one-off">Prep: build the toy inputs (one-off)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-susie-to-tsv-verified-end-to-end-on-the-toy-data">Step 1: <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> (VERIFIED end-to-end on the toy data)</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#required-cli-args-substitute-placeholders-with-your-real-values">Required CLI args (substitute placeholders &lt;…&gt; with your real values):</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#file-path-dir-containing-fine-mapping-rds-files">–file_path                  dir containing fine-mapping RDS files</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#prefix-fm-rds-prefix-filename-part-before-the-region-id">–prefix &lt;fm_rds_prefix&gt;     filename part BEFORE the region id</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#suffix-fm-rds-suffix-filename-part-after-the-region-id">–suffix &lt;fm_rds_suffix&gt;     filename part AFTER  the region id</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#expected-per-region-path">expected per-region path:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#file-path-prefix-region-suffix">{file_path}/{prefix}.{region}.{suffix}</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#example-rosmap-ac-eqtl-ensg00000012779-univariate-bvsr-rds">example: ROSMAP_AC_eQTL.ENSG00000012779.univariate_bvsr.rds</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#prefix-region-suffix">__ prefix <strong>/  _</strong> region _<strong>/  _</strong> suffix ___/</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#name-study-name-tag-used-in-output-filenames-and-intermediate-rds-names">–name   &lt;study_name&gt;        tag used in output filenames and intermediate RDS names</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#final-output-cwd-summary-name-qtl-type-top-loci-bed-gz">(final output: {cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz)</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#qtl-type-cis-trans-trans-appears-in-the-combined-filename">–qtl_type cis | trans | trans_<program>  appears in the combined filename</program></a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#region-file-bed-of-regions-chr-start-end-region-id-to-enumerate">–region_file                bed of regions (chr, start, end, region_id) to enumerate</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#geno-ref-tabix-indexed-bim-gz-for-allele-flipping-checks">–geno_ref                   tabix-indexed bim.gz for allele-flipping checks</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"></a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#outputs-produced">Outputs produced:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cwd-name-region-cis-results-db-rds-per-region-intermediate-rds">{cwd}/{name}.{region}.cis_results_db.rds        per-region intermediate RDS</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cwd-summary-name-region-top-loci-bed-gz-per-region-top-loci">{cwd}/summary/{name}.{region}.top_loci.bed.gz   per-region top_loci</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cwd-summary-name-qtl-type-top-loci-bed-gz-combined-public-facing-file">{cwd}/summary/{name}.{qtl_type}.top_loci.bed.gz combined public-facing file</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#full-run-export-all-regions-via-slurm-and-combine-into-one-study-level-file">Full run: export all regions via SLURM and combine into one study-level file.</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-susie-to-tsv-verified-end-to-end-on-the-toy-data">Step 1: <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> (VERIFIED end-to-end on the toy data)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-workflows-command-templates">Other workflows (command templates)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-configuration-and-the-susie-to-tsv-workflow">Pipeline configuration and the <code class="docutils literal notranslate"><span class="pre">susie_to_tsv</span></code> workflow</a></li>
 </ul>
+</li>
+</ul>
+
   </nav></div>
 
 </div></div>

@@ -272,6 +272,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -622,7 +641,7 @@ pheno[1:5, 1:8]
 # Example genotype file (MWE: protocol_example)
 # ------------------------------------------------------------------
 # A text file with two columns: chromosome ID and PLINK prefix path.
-geno_path &lt;- fread(file.path(output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt&quot;)
+geno_path &lt;- fread(file.path(&quot;output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt&quot;))
 head(geno_path)
 
 # Read the merged PLINK set (.bed/.bim/.fam) for the toy sample.
@@ -648,11 +667,11 @@ genotypes[1:5, 1:5]
 	<tr><td>11</td><td>/restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.11.bed</td></tr>
 </tbody>
 </table>
-</div><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Reading: /restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/plink/protocol_example.genotype.merged.plink_qc.bim
+</div><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Reading: output/plink/protocol_example.genotype.merged.plink_qc.bim
 
-Reading: /restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/plink/protocol_example.genotype.merged.plink_qc.fam
+Reading: output/plink/protocol_example.genotype.merged.plink_qc.fam
 
-Reading: /restricted/projectnb/xqtl/jaempawi/xqtl_protocol/toy_example/output/plink/protocol_example.genotype.merged.plink_qc.bed
+Reading: output/plink/protocol_example.genotype.merged.plink_qc.bed
 </pre></div>
 </div>
 <div class="output text_html"><table class="dataframe">
@@ -740,7 +759,7 @@ dim(cov)
 # ------------------------------------------------------------------
 # Gene-level cis-window (start/end) defining the SNP search region per gene.
 # Omit to use --window for a symmetric +/-1Mb window around each gene TSS.
-window &lt;- fread(file.path(out,&quot;output/tadb/TADB_enhanced_cis.bed&quot;))
+window &lt;- fread(&quot;input/reference_data/TAD/TADB_enhanced_cis.bed&quot;)
 head(window)
 </pre></div>
 </div>
@@ -753,12 +772,12 @@ head(window)
 	<tr><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;int&gt;</th><th scope=col>&lt;int&gt;</th><th scope=col>&lt;chr&gt;</th></tr>
 </thead>
 <tbody>
-	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000226444</td></tr>
-	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000276871</td></tr>
-	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000277248</td></tr>
-	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000279973</td></tr>
-	<tr><td>chr22</td><td>0</td><td>13626642</td><td>ENSG00000283023</td></tr>
-	<tr><td>chr22</td><td>0</td><td>13000000</td><td>ENSG00000283047</td></tr>
+	<tr><td>chr1</td><td>0</td><td>6480000</td><td>ENSG00000008128</td></tr>
+	<tr><td>chr1</td><td>0</td><td>6480000</td><td>ENSG00000008130</td></tr>
+	<tr><td>chr1</td><td>0</td><td>6480000</td><td>ENSG00000067606</td></tr>
+	<tr><td>chr1</td><td>0</td><td>7101193</td><td>ENSG00000069424</td></tr>
+	<tr><td>chr1</td><td>0</td><td>7960000</td><td>ENSG00000069812</td></tr>
+	<tr><td>chr1</td><td>0</td><td>6480000</td><td>ENSG00000078369</td></tr>
 </tbody>
 </table>
 </div></div>
@@ -779,22 +798,17 @@ head(int)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_html"><table class="dataframe">
-<caption>A data.table: 6 × 2</caption>
-<thead>
-	<tr><th scope=col>#id</th><th scope=col>msex</th></tr>
-	<tr><th scope=col>&lt;chr&gt;</th><th scope=col>&lt;int&gt;</th></tr>
-</thead>
-<tbody>
-	<tr><td>SAMPLE_001</td><td>1</td></tr>
-	<tr><td>SAMPLE_002</td><td>1</td></tr>
-	<tr><td>SAMPLE_003</td><td>1</td></tr>
-	<tr><td>SAMPLE_004</td><td>1</td></tr>
-	<tr><td>SAMPLE_005</td><td>1</td></tr>
-	<tr><td>SAMPLE_006</td><td>0</td></tr>
-</tbody>
-</table>
-</div></div>
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span> <span class="ow">in</span> <span class="n">fread</span><span class="p">(</span><span class="s2">&quot;input/ROSMAP_interaction_example.tsv&quot;</span><span class="p">):</span> <span class="n">File</span> <span class="s1">&#39;input/ROSMAP_interaction_example.tsv&#39;</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">exist</span> <span class="ow">or</span> <span class="ow">is</span> <span class="n">non</span><span class="o">-</span><span class="n">readable</span><span class="o">.</span> <span class="n">getwd</span><span class="p">()</span><span class="o">==</span><span class="s1">&#39;/mnt/lustre/lab/gwang/home/rl3328/protocol_testing/xqtl-protocol_archived&#39;</span>
+<span class="ne">Traceback</span>:
+
+<span class="mi">1</span><span class="o">.</span> <span class="n">stopf</span><span class="p">(</span><span class="s2">&quot;File &#39;</span><span class="si">%s</span><span class="s2">&#39; does not exist or is non-readable. getwd()==&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> 
+ <span class="o">.</span>     <span class="n">file</span><span class="p">,</span> <span class="n">getwd</span><span class="p">())</span>
+<span class="mi">2</span><span class="o">.</span> <span class="n">raise_condition</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="n">gettextf</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span><span class="p">),</span> <span class="n">c</span><span class="p">(</span><span class="n">class</span><span class="p">,</span> 
+ <span class="o">.</span>     <span class="s2">&quot;simpleError&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;condition&quot;</span><span class="p">))</span>
+<span class="mi">3</span><span class="o">.</span> <span class="n">signal</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 </section>

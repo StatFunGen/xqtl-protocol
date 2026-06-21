@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -527,7 +546,7 @@
 <p>This pipeline fits advanced statistical models for QTL association analysis using individual-level genotype and molecular-phenotype data. For each region in a phenotype list it runs univariate SuSiE fine-mapping and trains TWAS prediction weights with several methods, then combines them into an <strong>ensemble</strong> weight.</p>
 <p><strong>The primary example below uses gene expression</strong> as the molecular phenotype, running end-to-end on the same chr22 toy genotype:</p>
 <ul class="simple">
-<li><p><strong>Gene-expression input</strong> (<code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code>, Mode A): the phenotype is a bulk RNA-seq matrix with Ensembl <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>s; association windows are gene TSS +/- 500 kb. This is the main, fully verified example.</p></li>
+<li><p><strong>Gene-expression input</strong> (<code class="docutils literal notranslate"><span class="pre">input/colocboost/</span></code>, Mode A): the phenotype is a bulk RNA-seq matrix with Ensembl <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>s; association windows are gene TSS +/- 500 kb. This is the main, fully verified example.</p></li>
 <li><p><strong>Peak / chromatin input</strong> (<code class="docutils literal notranslate"><span class="pre">input/</span></code>, Mode B): the <em>same</em> pipeline also accepts a list of chr22 peaks (or any other molecular phenotype) - the command is identical, you just swap in the phenotype BED and its manifest.</p></li>
 </ul>
 <p><strong>Workflows used here:</strong></p>
@@ -543,13 +562,13 @@
 <p>All paths below are relative to the <code class="docutils literal notranslate"><span class="pre">toy_example/</span></code> root (where you launch the commands).</p>
 <p><strong>Shared genotype (both modes):</strong></p>
 <ul class="simple">
-<li><p><strong>Genotype</strong> (<code class="docutils literal notranslate"><span class="pre">--genoFile</span></code>): PLINK1 binary set. Pass the <code class="docutils literal notranslate"><span class="pre">.bed</span></code> file; the <code class="docutils literal notranslate"><span class="pre">.bim</span></code>/<code class="docutils literal notranslate"><span class="pre">.fam</span></code> are read automatically. Gene-expression mode (<code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code>) uses <code class="docutils literal notranslate"><span class="pre">example.chr22.{bed,bim,fam}</span></code>; peak mode (<code class="docutils literal notranslate"><span class="pre">input/</span></code>) uses <code class="docutils literal notranslate"><span class="pre">protocol_example.genotype.chr22.{bed,bim,fam}</span></code> (chr22, 1,995 variants).</p></li>
-<li><p><strong>Covariates</strong> (<code class="docutils literal notranslate"><span class="pre">--covFile</span></code>): a TSV with covariate rows and one column per sample (gene-expression mode: <code class="docutils literal notranslate"><span class="pre">input_geneexpr/example_covariates.tsv</span></code>; peak mode: <code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.covariates.tsv</span></code>).</p></li>
+<li><p><strong>Genotype</strong> (<code class="docutils literal notranslate"><span class="pre">--genoFile</span></code>): PLINK1 binary set. Pass the <code class="docutils literal notranslate"><span class="pre">.bed</span></code> file; the <code class="docutils literal notranslate"><span class="pre">.bim</span></code>/<code class="docutils literal notranslate"><span class="pre">.fam</span></code> are read automatically. Gene-expression mode (<code class="docutils literal notranslate"><span class="pre">input/colocboost/</span></code>) uses <code class="docutils literal notranslate"><span class="pre">example.chr22.{bed,bim,fam}</span></code>; peak mode (<code class="docutils literal notranslate"><span class="pre">input/</span></code>) uses <code class="docutils literal notranslate"><span class="pre">protocol_example.genotype.chr22.{bed,bim,fam}</span></code> (chr22, 1,995 variants).</p></li>
+<li><p><strong>Covariates</strong> (<code class="docutils literal notranslate"><span class="pre">--covFile</span></code>): a TSV with covariate rows and one column per sample (gene-expression mode: <code class="docutils literal notranslate"><span class="pre">input/colocboost/example_covariates.tsv</span></code>; peak mode: <code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.covariates.tsv</span></code>).</p></li>
 </ul>
-<p><strong>Gene-expression mode (<code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code>) - primary example:</strong></p>
+<p><strong>Gene-expression mode (<code class="docutils literal notranslate"><span class="pre">input/colocboost/</span></code>) - primary example:</strong></p>
 <ul class="simple">
-<li><p><strong>Phenotype list</strong> (<code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>): <code class="docutils literal notranslate"><span class="pre">input_geneexpr/pheno_manifest_1gene.tsv</span></code> (a single gene, fastest) or <code class="docutils literal notranslate"><span class="pre">input_geneexpr/pheno_manifest.tsv</span></code> (16 in-range chr22 genes). The <code class="docutils literal notranslate"><span class="pre">path</span></code> column points to the bgzipped + tabixed RNA-seq matrix <code class="docutils literal notranslate"><span class="pre">input_geneexpr/example_geneexpr.bed.gz</span></code> whose 4th column is the Ensembl <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>.</p></li>
-<li><p><strong>Association windows</strong> (<code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>): <code class="docutils literal notranslate"><span class="pre">input_geneexpr/association_windows.bed</span></code> (or <code class="docutils literal notranslate"><span class="pre">_1gene.bed</span></code>) – gene TSS +/- 500 kb, clamped to the genotype variant range.</p></li>
+<li><p><strong>Phenotype list</strong> (<code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>): <code class="docutils literal notranslate"><span class="pre">input/colocboost/pheno_manifest_1gene.tsv</span></code> (a single gene, fastest) or <code class="docutils literal notranslate"><span class="pre">input/colocboost/pheno_manifest.tsv</span></code> (16 in-range chr22 genes). The <code class="docutils literal notranslate"><span class="pre">path</span></code> column points to the bgzipped + tabixed RNA-seq matrix <code class="docutils literal notranslate"><span class="pre">input/colocboost/example/colocboost.bed.gz</span></code> whose 4th column is the Ensembl <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>.</p></li>
+<li><p><strong>Association windows</strong> (<code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>): <code class="docutils literal notranslate"><span class="pre">input/colocboost/association_windows.bed</span></code> (or <code class="docutils literal notranslate"><span class="pre">_1gene.bed</span></code>) – gene TSS +/- 500 kb, clamped to the genotype variant range.</p></li>
 </ul>
 <p><strong>Peak mode (<code class="docutils literal notranslate"><span class="pre">input/</span></code>) - same format, alternative input:</strong></p>
 <ul class="simple">
@@ -566,7 +585,7 @@
 <p><em>Memory note:</em> run the peak loop with <code class="docutils literal notranslate"><span class="pre">-j1</span></code>. Running many regions in parallel (<code class="docutils literal notranslate"><span class="pre">-j4</span></code>) – or even all 10 serially in one process – can exhaust memory on heavier regions and trigger <code class="docutils literal notranslate"><span class="pre">ERROR:</span> <span class="pre">One</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">local</span> <span class="pre">workers</span> <span class="pre">has</span> <span class="pre">been</span> <span class="pre">killed</span></code>. If that happens, re-run the remaining heavy regions one at a time using a single-region phenotype list.</p>
 <section id="mode-a-gene-expression-input-primary-example">
 <h3>Mode A: gene-expression input (primary example)<a class="headerlink" href="#mode-a-gene-expression-input-primary-example" title="Link to this heading">#</a></h3>
-<p>This is the main example: cis xQTL fine-mapping on gene expression. Two steps, pointed at the <code class="docutils literal notranslate"><span class="pre">input_geneexpr/</span></code> files. Use the 1-gene phenotype list for the fastest run; swap in <code class="docutils literal notranslate"><span class="pre">pheno_manifest.tsv</span></code> / <code class="docutils literal notranslate"><span class="pre">association_windows.bed</span></code> to analyze all 16 in-range genes.</p>
+<p>This is the main example: cis xQTL fine-mapping on gene expression. Two steps, pointed at the <code class="docutils literal notranslate"><span class="pre">input/colocboost/</span></code> files. Use the 1-gene phenotype list for the fastest run; swap in <code class="docutils literal notranslate"><span class="pre">pheno_manifest.tsv</span></code> / <code class="docutils literal notranslate"><span class="pre">association_windows.bed</span></code> to analyze all 16 in-range genes.</p>
 <p><strong>Step 1 (gene expression): SuSiE + TWAS weights.</strong></p>
 <p><strong>Timing</strong> (toy chr22 dataset):</p>
 <ul class="simple">
@@ -580,10 +599,10 @@
 # the combined_data_sumstats that the downstream mnm_genes workflow consumes.
 sos run pipeline/mnm_regression.ipynb susie_twas \
     --name test_uni --cwd output_uni \
-    --genoFile input_geneexpr/example.chr22.bed \
-    --phenoFile input_geneexpr/pheno_manifest.tsv \
-    --covFile input_geneexpr/example_covariates.tsv \
-    --customized-association-windows input_geneexpr/association_windows.bed \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest.tsv \
+    --covFile input/colocboost/example_covariates.tsv \
+    --customized-association-windows input/colocboost/association_windows.bed \
     --save-data -j1
 </pre></div>
 </div>
@@ -594,11 +613,11 @@ sos run pipeline/mnm_regression.ipynb susie_twas \
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb ensemble_twas_weight \
     --name geneexpr_twas \
-    --cwd output_geneexpr \
-    --genoFile input_geneexpr/example.chr22.bed \
-    --phenoFile input_geneexpr/pheno_manifest_1gene.tsv \
-    --covFile input_geneexpr/example_covariates.tsv \
-    --customized-association-windows input_geneexpr/association_windows_1gene.bed \
+    --cwd output/colocboost \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_1gene.tsv \
+    --covFile input/colocboost/example_covariates.tsv \
+    --customized-association-windows input/colocboost/association_windows_1gene.bed \
     -j1
 </pre></div>
 </div>
@@ -642,7 +661,7 @@ sos run pipeline/mnm_regression.ipynb susie_twas \
 </section>
 <section id="output-files">
 <h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
-<p>Under <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">output_10peaks/</span></code> or <code class="docutils literal notranslate"><span class="pre">output_geneexpr/</span></code>), in the <code class="docutils literal notranslate"><span class="pre">twas_weights/</span></code> subfolder:</p>
+<p>Under <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">output_10peaks/</span></code> or <code class="docutils literal notranslate"><span class="pre">output/colocboost/</span></code>), in the <code class="docutils literal notranslate"><span class="pre">twas_weights/</span></code> subfolder:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">{name}.&lt;region&gt;.univariate_twas_weights.rds</span></code> – Step 1 output, one per region: the SuSiE fine-mapping result plus TWAS weights from each method (e.g. lasso, enet, mrash, susie), variant names, region info and CV performance.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">{name}.&lt;region&gt;.ensemble_twas_weights.rds</span></code> – Step 2 output, one per region: the same content with the added ensemble. The ensemble is stored under an <code class="docutils literal notranslate"><span class="pre">ensemble</span></code> entry as a list of <code class="docutils literal notranslate"><span class="pre">method_coef</span></code>, <code class="docutils literal notranslate"><span class="pre">ensemble_twas_weights</span></code>, and <code class="docutils literal notranslate"><span class="pre">method_performance</span></code>.</p></li>
@@ -689,22 +708,22 @@ length(en[[&#39;method_coef&#39;]])             # number of contributing methods
 <p>The notebook also bundles the original protocol’s multivariate (<code class="docutils literal notranslate"><span class="pre">mnm</span></code>, <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code>) and functional (<code class="docutils literal notranslate"><span class="pre">fsusie</span></code>, <code class="docutils literal notranslate"><span class="pre">mvfsusie</span></code>) fine-mapping workflows, which operate on the same <code class="docutils literal notranslate"><span class="pre">regional_data</span></code> produced by <code class="docutils literal notranslate"><span class="pre">get_analysis_regions</span></code>. Of these, <strong><code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> (univariate), <code class="docutils literal notranslate"><span class="pre">fsusie</span></code>, <code class="docutils literal notranslate"><span class="pre">mnm</span></code>, and <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code> now run end-to-end on the toy data</strong> (<code class="docutils literal notranslate"><span class="pre">mnm</span></code> and <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code> use a synthetic second context, see below). <code class="docutils literal notranslate"><span class="pre">mnm_genes</span></code> consumes the univariate fine-mapping summary statistics (<code class="docutils literal notranslate"><span class="pre">combined_data_sumstats</span></code>) written by <code class="docutils literal notranslate"><span class="pre">susie_twas</span> <span class="pre">--save-data</span></code> together with the <code class="docutils literal notranslate"><span class="pre">mnm</span></code> outputs, wired together through a <code class="docutils literal notranslate"><span class="pre">--fine_mapping_meta</span></code> table; on the toy set it correctly returns NULL multigene results (no multi-gene/trans signal). <strong><code class="docutils literal notranslate"><span class="pre">mvfsusie</span></code></strong> remains <strong>still under development</strong> in the original protocol, so its command is given as a template for completeness.</p>
 <section id="multivariate-analysis-mvsusie-and-mr-mash-mnm">
 <h3>Multivariate analysis: mvSuSiE and mr.mash (<code class="docutils literal notranslate"><span class="pre">mnm</span></code>)<a class="headerlink" href="#multivariate-analysis-mvsusie-and-mr-mash-mnm" title="Link to this heading">#</a></h3>
-<p>Fine-maps multiple molecular phenotypes jointly across a shared window using mvSuSiE with mr.mash priors. This step needs <strong>multiple contexts</strong> (e.g. the same genes measured under two or more conditions). The toy set ships a single context, so for this MWE we add a <strong>second, synthetic context</strong> (<code class="docutils literal notranslate"><span class="pre">example_geneexpr_ctx2.bed.gz</span></code>, derived from context 1 with added noise — <em>demo data only, not a real measurement</em>) and a multi-context phenotype manifest. With that in place the <code class="docutils literal notranslate"><span class="pre">mnm</span></code> step now runs end-to-end on the toy data and produces <code class="docutils literal notranslate"><span class="pre">multicontext_bvsr.rds</span></code>, <code class="docutils literal notranslate"><span class="pre">multicontext_twas_weights.rds</span></code>, and <code class="docutils literal notranslate"><span class="pre">multicontext_data.rds</span></code> per gene.</p>
+<p>Fine-maps multiple molecular phenotypes jointly across a shared window using mvSuSiE with mr.mash priors. This step needs <strong>multiple contexts</strong> (e.g. the same genes measured under two or more conditions). The toy set ships a single context, so for this MWE we add a <strong>second, synthetic context</strong> (<code class="docutils literal notranslate"><span class="pre">example/colocboost_ctx2.bed.gz</span></code>, derived from context 1 with added noise — <em>demo data only, not a real measurement</em>) and a multi-context phenotype manifest. With that in place the <code class="docutils literal notranslate"><span class="pre">mnm</span></code> step now runs end-to-end on the toy data and produces <code class="docutils literal notranslate"><span class="pre">multicontext_bvsr.rds</span></code>, <code class="docutils literal notranslate"><span class="pre">multicontext_twas_weights.rds</span></code>, and <code class="docutils literal notranslate"><span class="pre">multicontext_data.rds</span></code> per gene.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Runs end-to-end on the toy dataset using a synthetic 2-context manifest.
 # Notes for new users:
 #  - mnm needs &gt;=2 contexts; pheno_manifest_multicontext.tsv supplies context1 (real)
-#    and context2 (example_geneexpr_ctx2.bed.gz, synthetic demo data).
-#  - Use the gene-expression genotype (input_geneexpr/example.chr22.bed, sample IDs
+#    and context2 (example/colocboost_ctx2.bed.gz, synthetic demo data).
+#  - Use the gene-expression genotype (input/colocboost/example.chr22.bed, sample IDs
 #    SAMPLE_001..) so genotype and phenotype/covariate samples match.
 #  - Requires the mr.mashr R package (provided by mr.mash.alpha in this env).
 sos run pipeline/mnm_regression.ipynb mnm \
     --name test_mnm --cwd output_mnm3 \
-    --genoFile input_geneexpr/example.chr22.bed \
-    --phenoFile input_geneexpr/pheno_manifest_multicontext.tsv \
-    --covFile input_geneexpr/example_covariates.tsv \
-    --customized-association-windows input_geneexpr/association_windows.bed \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
+    --covFile input/colocboost/example_covariates.tsv \
+    --customized-association-windows input/colocboost/association_windows.bed \
     --save-data -j1
 </pre></div>
 </div>
@@ -726,13 +745,13 @@ sos run pipeline/mnm_regression.ipynb mnm \
 # which is the correct, honest result for independent single-gene toy regions.
 sos run pipeline/mnm_regression.ipynb mnm_genes \
     --name test_mnmgenes --cwd output_mnmgenes \
-    --genoFile input_geneexpr/example.chr22.bed \
-    --phenoFile input_geneexpr/pheno_manifest_multicontext.tsv \
-    --covFile input_geneexpr/example_covariates.tsv \
-    --customized-association-windows input_geneexpr/association_windows.bed \
-    --pheno_id_map_file input_geneexpr/pheno_id_map.tsv \
-    --fine_mapping_meta input_geneexpr/fine_mapping_meta.tsv \
-    --keep-samples input_geneexpr/keep_samples.txt \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
+    --covFile input/colocboost/example_covariates.tsv \
+    --customized-association-windows input/colocboost/association_windows.bed \
+    --pheno_id_map_file input/colocboost/pheno_id_map.tsv \
+    --fine_mapping_meta input/colocboost/fine_mapping_meta.tsv \
+    --keep-samples input/colocboost/keep_samples.txt \
     --save-data -j1
 </pre></div>
 </div>

@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
@@ -503,6 +522,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#split-plink-by-chromosome">Split PLINK by Chromosome</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pls-note-that-pvar-file-have-meta-file-headers-before-the-variant-info-dataframe">Pls note that .pvar file have meta_file headers before the variant info dataframe</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#split-vcf-by-chromosome">Split VCF by Chromosome</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#merge-plink-files">Merge PLINK files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#merge-vcf-files">Merge VCF files</a></li>
@@ -555,10 +575,10 @@
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_formatting/plink/protocol_example.genotype.chr{1..22}.{bed,bim,fam}</span></code></p></td>
 <td><p>Per-chromosome PLINK bundles (Step 1)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_formatting/plink/protocol_example.merged.{bed,bim,fam}</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_formatting/plink/protocol_example.genotype.merged.{bed,bim,fam}</span></code></p></td>
 <td><p>Single merged genome-wide PLINK bundle (Step 2)</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_formatting/genotype_by_chrom/protocol_example.merged.{1..22}.{bed,bim,fam}</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/genotype_formatting/genotype_by_chrom/protocol_example.genotype.merged.{1..22}.{bed,bim,fam}</span></code></p></td>
 <td><p>Merged bundle partitioned back by chromosome (Step 3)</p></td>
 </tr>
 </tbody>
@@ -592,7 +612,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb merge_plink \
     --genoFile `ls output/genotype_formatting/plink/protocol_example.genotype.chr*.bed` \
-    --name protocol_example.merged \
+    --name protocol_example.genotype.merged \
     --cwd output/genotype_formatting/plink \
     -j 2
 </pre></div>
@@ -606,9 +626,9 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
-    --genoFile output/genotype_formatting/plink/protocol_example.merged.bed \
+    --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged.bed \
     --cwd output/genotype_formatting/genotype_by_chrom \
-    --chrom `cut -f 1 output/genotype_formatting/plink/protocol_example.merged.bim | uniq | sed &quot;s/chr//g&quot;` \
+    --chrom `cut -f 1 output/genotype_formatting/plink/protocol_example.genotype.merged.bim | uniq | sed &quot;s/chr//g&quot;` \
     -j 4
 </pre></div>
 </div>
@@ -918,17 +938,13 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 </section>
 <section id="split-plink-by-chromosome">
 <h2>Split PLINK by Chromosome<a class="headerlink" href="#split-plink-by-chromosome" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>## Pls note that .pvar file have meta_file headers before the variant info dataframe
-sos run /home/rl3328/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.ipynb genotype_by_chrom \
-    --genoFile /home/rl3328/motor_data/geno_data/final/LD_pruning/chrAll_GRCh38_biallelic.motor_eQTL.plink_qc.pgen \
-    --cwd /home/rl3328/motor_data/geno_data/final/genotype_by_chrom \
-    --chrom  `grep -v &#39;^#&#39; /home/rl3328/motor_data/geno_data/final/LD_pruning/chrAll_GRCh38_biallelic.motor_eQTL.plink_qc.pvar | cut -f 1 | uniq | sed &quot;s/chr//g&quot;`
-</pre></div>
-</div>
-</div>
-</div>
+</section>
+<section id="pls-note-that-pvar-file-have-meta-file-headers-before-the-variant-info-dataframe">
+<h2>Pls note that .pvar file have meta_file headers before the variant info dataframe<a class="headerlink" href="#pls-note-that-pvar-file-have-meta-file-headers-before-the-variant-info-dataframe" title="Link to this heading">#</a></h2>
+<p>sos run /home/rl3328/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.ipynb genotype_by_chrom <br />
+–genoFile /home/rl3328/motor_data/geno_data/final/LD_pruning/chrAll_GRCh38_biallelic.motor_eQTL.plink_qc.pgen <br />
+–cwd /home/rl3328/motor_data/geno_data/final/genotype_by_chrom <br />
+–chrom  <code class="docutils literal notranslate"><span class="pre">grep</span> <span class="pre">-v</span> <span class="pre">'^#'</span> <span class="pre">/home/rl3328/motor_data/geno_data/final/LD_pruning/chrAll_GRCh38_biallelic.motor_eQTL.plink_qc.pvar</span> <span class="pre">|</span> <span class="pre">cut</span> <span class="pre">-f</span> <span class="pre">1</span> <span class="pre">|</span> <span class="pre">uniq</span> <span class="pre">|</span> <span class="pre">sed</span> <span class="pre">&quot;s/chr//g&quot;</span></code></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[genotype_by_chrom_1]
@@ -1173,6 +1189,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#split-plink-by-chromosome">Split PLINK by Chromosome</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pls-note-that-pvar-file-have-meta-file-headers-before-the-variant-info-dataframe">Pls note that .pvar file have meta_file headers before the variant info dataframe</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#split-vcf-by-chromosome">Split VCF by Chromosome</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#merge-plink-files">Merge PLINK files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#merge-vcf-files">Merge VCF files</a></li>

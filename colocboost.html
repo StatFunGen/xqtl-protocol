@@ -270,6 +270,25 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="current nav bd-sidenav">
@@ -581,10 +600,10 @@ per-study LD reference via the <code class="docutils literal notranslate"><span 
 # xQTL-only ColocBoost on a single gene region. Produces *.cb_xqtl.rds.
 sos run pipeline/colocboost.ipynb colocboost \
     --name colocboost_xqtl --cwd output/colocboost_xqtl \
-    --genoFile input_geneexpr/example.chr22.bed \
-    --phenoFile input_geneexpr/pheno_manifest_1gene.tsv \
-    --covFile input_geneexpr/example_covariates.tsv \
-    --customized-association-windows input_geneexpr/association_windows_1gene.bed \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_1gene.tsv \
+    --covFile input/colocboost/example_covariates.tsv \
+    --customized-association-windows input/colocboost/association_windows_1gene.bed \
     --region-name ENSG00000130538 \
     --no-separate-gwas --xqtl-coloc -j1
 </pre></div>
@@ -603,10 +622,10 @@ sos run pipeline/colocboost.ipynb colocboost \
 # &quot;Separate GWAS ColocBoost ... failed: unused argument (X_ref = ...)&quot;.
 sos run pipeline/colocboost.ipynb colocboost \
     --name colocboost_gwas --cwd output/colocboost_gwas \
-    --genoFile input_geneexpr/example.chr22.bed \
-    --phenoFile input_geneexpr/pheno_manifest_1gene.tsv \
-    --covFile input_geneexpr/example_covariates.tsv \
-    --customized-association-windows input_geneexpr/association_windows_1gene.bed \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_1gene.tsv \
+    --covFile input/colocboost/example_covariates.tsv \
+    --customized-association-windows input/colocboost/association_windows_1gene.bed \
     --gwas-meta-data input_colocboost/gwas_meta.tsv \
     --ld-meta-data data/input/data/LD_sketch/meta.tsv \
     --region-name ENSG00000130538 \
@@ -627,10 +646,10 @@ sos run pipeline/colocboost.ipynb colocboost \
 # Step 2, so it is currently blocked by the same package issue. Command template:
 sos run pipeline/colocboost.ipynb colocboost \
     --name colocboost_multi_ld --cwd output/colocboost_multi_ld \
-    --genoFile input_geneexpr/example.chr22.bed \
-    --phenoFile input_geneexpr/pheno_manifest_1gene.tsv \
-    --covFile input_geneexpr/example_covariates.tsv \
-    --customized-association-windows input_geneexpr/association_windows_1gene.bed \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_1gene.tsv \
+    --covFile input/colocboost/example_covariates.tsv \
+    --customized-association-windows input/colocboost/association_windows_1gene.bed \
     --gwas-meta-data input_colocboost/gwas_meta.tsv \
     --ld-meta-data data/input/data/LD_sketch/meta.tsv \
     --region-name ENSG00000130538 \
@@ -938,7 +957,7 @@ def preload_id_map(id_map_files):
     for id_map_file in id_map_files:
         if id_map_file is not None:
             if os.path.isfile(id_map_file):
-                df = pd.read_csv(id_map_file, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;old_ID&#39;, &#39;new_ID&#39;])
+                df = pd.read_csv(id_map_file, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;old_ID&#39;, &#39;new_ID&#39;], engine=&#39;python&#39;)
                 id_maps[id_map_file] = df.set_index(&#39;old_ID&#39;)[&#39;new_ID&#39;].to_dict()
             else:
                 missing_files.append(id_map_file)
@@ -952,7 +971,7 @@ def preload_id_map(id_map_files):
     return id_maps
 
 def load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps):
-    pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0)
+    pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0, engine=&#39;python&#39;)
     pheno_df[&#39;Original_ID&#39;] = pheno_df[&#39;ID&#39;]
     
     # Check if id_map_path is specified
@@ -1046,7 +1065,7 @@ def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files,
     for pheno_path, cov_path, phenotype_name, id_map_path in zip(pheno_files, cov_files, phenotype_names, pheno_id_files):
         if not os.path.isfile(cov_path):
             raise FileNotFoundError(f&quot;No valid path found for file: {cov_path}&quot;)
-        pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0, names=[&#39;Original_ID&#39;, &#39;path&#39;])
+        pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0, names=[&#39;Original_ID&#39;, &#39;path&#39;], engine=&#39;python&#39;)
         if not pheno_df.empty:
             pheno_df.iloc[:, -1] = adapt_file_path_all(pheno_df, pheno_df.columns[-1], f&quot;{pheno_path:a}&quot;)
             pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)
@@ -1057,7 +1076,7 @@ def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files,
             pheno_df[&#39;end&#39;] = 0
             if id_map_path is not None:
                 # Filter pheno_df by specific association-window and phenotype pairs
-                association_analysis_pair = pd.read_csv(id_map_path, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;ID&#39;, &#39;Original_ID&#39;])
+                association_analysis_pair = pd.read_csv(id_map_path, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;ID&#39;, &#39;Original_ID&#39;], engine=&#39;python&#39;)
                 pheno_df = pd.merge(pheno_df, association_analysis_pair, on=[&#39;ID&#39;, &#39;Original_ID&#39;])
             accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
 
@@ -1075,7 +1094,7 @@ def load_regional_data(genoFile, phenoFile, covFile, phenotype_names, phenoIDFil
     if f&quot;{genoFile:x}&quot; == &quot;.bed&quot;:
         geno_meta_data = pd.DataFrame([(&quot;chr&quot;+str(x), f&quot;{genoFile:a}&quot;) for x in range(1,23)] + [(&quot;chrX&quot;, f&quot;{genoFile:a}&quot;)], columns=[&#39;#chr&#39;, &#39;geno_path&#39;])
     else:
-        geno_meta_data = pd.read_csv(f&quot;{genoFile:a}&quot;, sep=r&quot;\s+&quot;, header=0)
+        geno_meta_data = pd.read_csv(f&quot;{genoFile:a}&quot;, sep=r&quot;\s+&quot;, header=0, engine=&#39;python&#39;)
         geno_meta_data.iloc[:, 1] = adapt_file_path_all(geno_meta_data, geno_meta_data.columns[1], f&quot;{genoFile:a}&quot;)
         geno_meta_data.columns = [&#39;#chr&#39;, &#39;geno_path&#39;]
         geno_meta_data[&#39;#chr&#39;] = geno_meta_data[&#39;#chr&#39;].apply(lambda x: str(x) if str(x).startswith(&#39;chr&#39;) else f&#39;chr{x}&#39;)
@@ -1088,7 +1107,7 @@ def load_regional_data(genoFile, phenoFile, covFile, phenotype_names, phenoIDFil
     region_ids = []
     # If region_list is provided, read the file and extract IDs
     if region_list is not None and region_list.is_file():
-        region_list_df = pd.read_csv(region_list, delim_whitespace=True, header=None, comment=&quot;#&quot;)
+        region_list_df = pd.read_csv(region_list, sep=r&#39;\s+&#39;, header=None, comment=&quot;#&quot;, engine=&#39;python&#39;)
         region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
 
     # If region_name is provided, include those IDs as well
