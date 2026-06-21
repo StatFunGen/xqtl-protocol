@@ -105,7 +105,7 @@ region_name_sym <- opt[["region-name"]]
 prefix <- opt[["output-prefix"]]
 
 tryCatch({
-  fdat <- load_regional_multivariate_data(
+  fdat <- loadRegionalMultivariateData(
     genotype          = opt$genotype,
     phenotype         = phenotype_files,
     covariate         = covariate_files,
@@ -143,8 +143,8 @@ region_name_vec <- if (region_name_sym != as.character(extract_region_name[[1]][
 
 context_regions <- setNames(extract_region_name, colnames(fdat$residual_Y))
 region_info <- list(
-  region_coord = parse_region(opt$region),
-  grange       = parse_region(opt$window),
+  region_coord = parseRegion(opt$region),
+  grange       = parseRegion(opt$window),
   region_name  = region_name_vec
 )
 
@@ -156,11 +156,11 @@ use_canonical_prior <- (opt[["prior-canonical-matrices"]] && !is.null(dd_prior))
 sample_part <- if (file.exists(opt[["sample-partition"]])) opt[["sample-partition"]] else NULL
 
 set.seed(opt$seed)
-result <- multivariate_analysis_pipeline(
-  X                             = fdat$X,
+result <- multivariateAnalysisPipeline(
+  X                             = getGenotypeMatrix(fdat),
   Y                             = fdat$residual_Y,
-  maf                           = fdat$maf,
-  X_variance                    = fdat$X_variance,
+  maf                           = getMaf(fdat),
+  X_variance                    = getXVariance(fdat),
   other_quantities              = list(dropped_samples=fdat$dropped_samples),
   imiss_cutoff                  = opt$imiss,
   maf_cutoff                    = opt$maf,

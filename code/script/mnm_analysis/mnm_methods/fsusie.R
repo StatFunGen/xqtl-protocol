@@ -87,7 +87,7 @@ keep_samples <- if (file.exists(opt[["keep-samples"]])) {
 keep_variants <- if (file.exists(opt[["keep-variants"]])) opt[["keep-variants"]] else NULL
 
 tryCatch({
-  fdat <- load_regional_functional_data(
+  fdat <- loadRegionalFunctionalData(
     genotype          = opt$genotype,
     phenotype         = phenotype_files,
     covariate         = covariate_files,
@@ -135,27 +135,27 @@ if (opt[["save-data"]]) {
           paste0(prefix, ".", mark_thresh, "_marks.dataset.rds"), compress="xz")
 }
 
-fitted <- setNames(replicate(length(fdat$residual_Y), list(), simplify=FALSE),
-                   names(fdat$residual_Y))
+fitted <- setNames(replicate(length(getPhenotypes(fdat)), list(), simplify=FALSE),
+                   names(getPhenotypes(fdat)))
 
 for (r in seq_along(fitted)) {
   st <- proc.time()
   fitted[[r]] <- list()
-  message(paste("Y matrix:", nrow(fdat$residual_Y[[r]]), "rows x", ncol(fdat$residual_Y[[r]]), "cols"))
+  message(paste("Y matrix:", nrow(getResidualY(fdat, r)), "rows x", ncol(getResidualY(fdat, r)), "cols"))
 
   if (opt[["susie-top-pc"]] > 0 || !opt[["skip-twas-weights"]]) {
-    top_pc_data <- prcomp(fdat$residual_Y[[r]], center=TRUE, scale.=TRUE)$x
+    top_pc_data <- prcomp(getResidualY(fdat, r), center=TRUE, scale.=TRUE)$x
     k <- min(opt[["susie-top-pc"]], ncol(top_pc_data))
     if (k > 0) top_pc_data <- top_pc_data[, 1:k, drop=FALSE]
 
     fitted[[r]]$susie_on_top_pc <- list()
     for (i in seq_len(ncol(top_pc_data))) {
-      s <- susie_wrapper(fdat$residual_X[[r]], top_pc_data[, i],
+      s <- susie_wrapper(getResidualX(fdat, r), top_pc_data[, i],
                          init_L=opt[["init-l"]], max_L=opt[["max-l"]],
                          refine=TRUE, coverage=coverage[1])
       fitted[[r]]$susie_on_top_pc[[i]] <- susie_post_processor(
-        s, fdat$residual_X[[r]], top_pc_data[, i],
-        fdat$residual_X_scalar[[r]], 1, fdat$maf[[r]],
+        s, getResidualX(fdat, r), top_pc_data[, i],
+        getResidualXScalar(fdat, r), 1, getMaf(fdat)[[r]],
         secondary_coverage = coverage[-1],
         signal_cutoff      = opt[["pip-cutoff"]],
         other_quantities   = list(dropped_samples=list(
@@ -166,8 +166,8 @@ for (r in seq_along(fitted)) {
     }
 
     if (!opt[["skip-twas-weights"]]) {
-      twas_out <- twas_weights_pipeline(
-        fdat$residual_X[[r]], top_pc_data[, 1],
+      twas_out <- twasWeightsPipeline(
+        getResidualX(fdat, r), top_pc_data[, 1],
         susie_fit  = fitted[[r]]$susie_on_top_pc[[1]]$susie_result_trimmed,
         cv_folds   = opt[["twas-cv-folds"]],
         max_cv_variants = opt[["max-cv-variants"]],
@@ -180,8 +180,8 @@ for (r in seq_along(fitted)) {
   }
 
   fsusie_args <- list(
-    X              = fdat$residual_X[[r]],
-    Y              = fdat$residual_Y[[r]],
+    X              = getResidualX(fdat, r),
+    Y              = getResidualY(fdat, r),
     pos            = fdat$Y_coordinates[[r]]$start,
     L              = opt[["max-l"]],
     prior          = opt$prior,
@@ -195,12 +195,12 @@ for (r in seq_along(fitted)) {
   fitted[[r]]$fsusie_result <- do.call(fsusie_wrapper, fsusie_args)
 
   fitted[[r]]$Y_coordinates <- fdat$Y_coordinates[[r]]
-  names(fitted[[r]]$fsusie_result$pip) <- colnames(fdat$residual_X[[r]])
+  names(fitted[[r]]$fsusie_result$pip) <- colnames(getResidualX(fdat, r))
 
   fitted[[r]]$fsusie_summary <- susie_post_processor(
     fitted[[r]]$fsusie_result,
-    fdat$residual_X[[r]], NULL,
-    fdat$residual_X_scalar[[r]], 1, fdat$maf[[r]],
+    getResidualX(fdat, r), NULL,
+    getResidualXScalar(fdat, r), 1, getMaf(fdat)[[r]],
     secondary_coverage = coverage[-1],
     signal_cutoff      = opt[["pip-cutoff"]],
     other_quantities   = list(dropped_samples=list(
@@ -211,8 +211,8 @@ for (r in seq_along(fitted)) {
 
   fitted[[r]]$total_time_elapsed <- proc.time() - st
   fitted[[r]]$region_info <- list(
-    region_coord = parse_region(opt$region),
-    grange       = parse_region(opt$window),
+    region_coord = parseRegion(opt$region),
+    grange       = parseRegion(opt$window),
     region_name  = opt[["region-name"]]
   )
   fdat$residual_X[[r]] <- NA
