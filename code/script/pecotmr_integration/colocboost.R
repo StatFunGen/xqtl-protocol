@@ -15,27 +15,34 @@
 #   --output         Output RDS path (one colocboost-pipeline list)
 
 suppressPackageStartupMessages({
-  library(optparse)
+  library(argparser)
   library(pecotmr)
 })
 
-opt <- parse_args(OptionParser(option_list = list(
-  make_option("--qtl-dataset", type = "character"),
-  make_option("--gene-id",     type = "character"),
-  make_option("--cis-window",  type = "integer", default = 1000000L),
-  make_option("--output",      type = "character")
-)))
+parser <- arg_parser("Per-gene cross-context colocboost over a pre-built QtlDataset")
+parser <- add_argument(parser, "--qtl-dataset",
+                       help = "Path to a QtlDataset RDS",
+                       type = "character")
+parser <- add_argument(parser, "--gene-id",
+                       help = "Focal trait identifier",
+                       type = "character")
+parser <- add_argument(parser, "--cis-window",
+                       help = "cis-window in bp around the trait's TSS",
+                       type = "integer", default = 1000000L)
+parser <- add_argument(parser, "--output",
+                       help = "Output RDS path", type = "character")
+argv <- parse_args(parser)
 
-qd <- readRDS(opt[["qtl-dataset"]])
+qd <- readRDS(argv$qtl_dataset)
 
 res <- colocboostPipeline(
   qd,
-  traitId    = opt[["gene-id"]],
-  cisWindow  = opt[["cis-window"]],
-  focalTrait = opt[["gene-id"]],
+  traitId    = argv$gene_id,
+  cisWindow  = argv$cis_window,
+  focalTrait = argv$gene_id,
   xqtlColoc  = TRUE)
 
-dir.create(dirname(opt$output), showWarnings = FALSE, recursive = TRUE)
-saveRDS(res, opt$output)
+dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
+saveRDS(res, argv$output)
 cat(sprintf("Wrote colocboost result for gene '%s' to %s\n",
-            opt[["gene-id"]], opt$output))
+            argv$gene_id, argv$output))

@@ -24,23 +24,37 @@
 #   --output               Output RDS path
 
 suppressPackageStartupMessages({
-  library(optparse)
+  library(argparser)
   library(pecotmr)
   library(SummarizedExperiment)
   library(GenomicRanges)
   library(S4Vectors)
 })
 
-opt <- parse_args(OptionParser(option_list = list(
-  make_option("--study",                type = "character"),
-  make_option("--genotype-prefix",      type = "character"),
-  make_option("--phenotype",            type = "character"),
-  make_option("--phenotype-covariates", type = "character", default = ""),
-  make_option("--genotype-covariates",  type = "character", default = ""),
-  make_option("--maf-cutoff",           type = "double",    default = 0),
-  make_option("--xvar-cutoff",          type = "double",    default = 0),
-  make_option("--output",               type = "character")
-)))
+parser <- arg_parser("Build a pecotmr QtlDataset for one study and save to RDS")
+parser <- add_argument(parser, "--study",
+                       help = "Study identifier", type = "character")
+parser <- add_argument(parser, "--genotype-prefix",
+                       help = "PLINK2 pgen/pvar/psam prefix",
+                       type = "character")
+parser <- add_argument(parser, "--phenotype",
+                       help = "Comma-joined CONTEXT=PATH phenotype BED files",
+                       type = "character")
+parser <- add_argument(parser, "--phenotype-covariates",
+                       help = "Comma-joined CONTEXT=PATH PC TSV files",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--genotype-covariates",
+                       help = "TSV of uniformly-applied genotype PCs",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--maf-cutoff",
+                       help = "Pass-through MAF cutoff for QtlDataset()",
+                       type = "numeric", default = 0)
+parser <- add_argument(parser, "--xvar-cutoff",
+                       help = "Pass-through variance cutoff for QtlDataset()",
+                       type = "numeric", default = 0)
+parser <- add_argument(parser, "--output",
+                       help = "Output RDS path", type = "character")
+argv <- parse_args(parser)
 
 # ----- CONTEXT=PATH list parser ---------------------------------------------
 parse_kv <- function(s) {
@@ -54,8 +68,8 @@ parse_kv <- function(s) {
   out
 }
 
-phenotype_files <- parse_kv(opt$phenotype)
-pheno_cov_files <- parse_kv(opt[["phenotype-covariates"]])
+phenotype_files <- parse_kv(argv$phenotype)
+pheno_cov_files <- parse_kv(argv$phenotype_covariates)
 contexts <- names(phenotype_files)
 if (length(contexts) == 0L) stop("--phenotype must list at least one context")
 
@@ -121,9 +135,9 @@ phenotypes <- setNames(
   contexts)
 
 # ----- Genotype handle (PLINK2) + uniform genotype covariates ---------------
-geno_handle <- GenotypeHandle(plink2Prefix = opt[["genotype-prefix"]])
+geno_handle <- GenotypeHandle(plink2Prefix = argv$genotype_prefix)
 
-geno_cov_path <- opt[["genotype-covariates"]]
+geno_cov_path <- argv$genotype_covariates
 has_geno_cov <- nzchar(geno_cov_path) && geno_cov_path != "." &&
                 file.exists(geno_cov_path)
 genoCov <- if (has_geno_cov) {
@@ -134,14 +148,14 @@ genoCov <- if (has_geno_cov) {
 
 # ----- Construct + save ------------------------------------------------------
 qd <- QtlDataset(
-  study              = opt$study,
+  study              = argv$study,
   genotypes          = geno_handle,
   phenotypes         = phenotypes,
   genotypeCovariates = genoCov,
-  mafCutoff          = opt[["maf-cutoff"]],
-  xvarCutoff         = opt[["xvar-cutoff"]])
+  mafCutoff          = argv$maf_cutoff,
+  xvarCutoff         = argv$xvar_cutoff)
 
-dir.create(dirname(opt$output), showWarnings = FALSE, recursive = TRUE)
-saveRDS(qd, opt$output)
+dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
+saveRDS(qd, argv$output)
 cat(sprintf("Wrote QtlDataset for study '%s' (%d contexts) to %s\n",
-            opt$study, length(phenotypes), opt$output))
+            argv$study, length(phenotypes), argv$output))

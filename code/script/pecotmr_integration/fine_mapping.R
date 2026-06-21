@@ -13,28 +13,37 @@
 #   --output         Output RDS path (one QtlFineMappingResult)
 
 suppressPackageStartupMessages({
-  library(optparse)
+  library(argparser)
   library(pecotmr)
 })
 
-opt <- parse_args(OptionParser(option_list = list(
-  make_option("--qtl-dataset", type = "character"),
-  make_option("--gene-id",     type = "character"),
-  make_option("--cis-window",  type = "integer", default = 1000000L),
-  make_option("--coverage",    type = "double",  default = 0.95),
-  make_option("--output",      type = "character")
-)))
+parser <- arg_parser("Per-gene SuSiE fine-mapping over a pre-built QtlDataset")
+parser <- add_argument(parser, "--qtl-dataset",
+                       help = "Path to a QtlDataset RDS",
+                       type = "character")
+parser <- add_argument(parser, "--gene-id",
+                       help = "Single trait identifier to fine-map",
+                       type = "character")
+parser <- add_argument(parser, "--cis-window",
+                       help = "cis-window in bp around the trait's TSS",
+                       type = "integer", default = 1000000L)
+parser <- add_argument(parser, "--coverage",
+                       help = "SuSiE credible-set coverage",
+                       type = "numeric", default = 0.95)
+parser <- add_argument(parser, "--output",
+                       help = "Output RDS path", type = "character")
+argv <- parse_args(parser)
 
-qd <- readRDS(opt[["qtl-dataset"]])
+qd <- readRDS(argv$qtl_dataset)
 
 res <- fineMappingPipeline(
   qd,
   methods    = "susie",
-  traitId    = opt[["gene-id"]],
-  cisWindow  = opt[["cis-window"]],
-  coverage   = opt$coverage)
+  traitId    = argv$gene_id,
+  cisWindow  = argv$cis_window,
+  coverage   = argv$coverage)
 
-dir.create(dirname(opt$output), showWarnings = FALSE, recursive = TRUE)
-saveRDS(res, opt$output)
+dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
+saveRDS(res, argv$output)
 cat(sprintf("Wrote fineMapping result for gene '%s' (%d row(s)) to %s\n",
-            opt[["gene-id"]], nrow(res), opt$output))
+            argv$gene_id, nrow(res), argv$output))

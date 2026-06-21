@@ -17,21 +17,30 @@
 #   --output                Output RDS path (one TwasWeights)
 
 suppressPackageStartupMessages({
-  library(optparse)
+  library(argparser)
   library(pecotmr)
 })
 
-opt <- parse_args(OptionParser(option_list = list(
-  make_option("--qtl-dataset",         type = "character"),
-  make_option("--gene-id",             type = "character"),
-  make_option("--cis-window",          type = "integer",   default = 1000000L),
-  make_option("--fine-mapping-result", type = "character", default = ""),
-  make_option("--output",              type = "character")
-)))
+parser <- arg_parser("Per-gene default-preset TWAS weights over a pre-built QtlDataset")
+parser <- add_argument(parser, "--qtl-dataset",
+                       help = "Path to a QtlDataset RDS",
+                       type = "character")
+parser <- add_argument(parser, "--gene-id",
+                       help = "Single trait identifier",
+                       type = "character")
+parser <- add_argument(parser, "--cis-window",
+                       help = "cis-window in bp around the trait's TSS",
+                       type = "integer", default = 1000000L)
+parser <- add_argument(parser, "--fine-mapping-result",
+                       help = "Optional pre-fit FineMappingResult RDS",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--output",
+                       help = "Output RDS path", type = "character")
+argv <- parse_args(parser)
 
-qd <- readRDS(opt[["qtl-dataset"]])
+qd <- readRDS(argv$qtl_dataset)
 
-fmr_path <- opt[["fine-mapping-result"]]
+fmr_path <- argv$fine_mapping_result
 fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
   readRDS(fmr_path)
 } else {
@@ -41,11 +50,11 @@ fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
 res <- twasWeightsPipeline(
   qd,
   methods           = "default",
-  traitId           = opt[["gene-id"]],
-  cisWindow         = opt[["cis-window"]],
+  traitId           = argv$gene_id,
+  cisWindow         = argv$cis_window,
   fineMappingResult = fmr)
 
-dir.create(dirname(opt$output), showWarnings = FALSE, recursive = TRUE)
-saveRDS(res, opt$output)
+dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
+saveRDS(res, argv$output)
 cat(sprintf("Wrote TWAS weights for gene '%s' (%d row(s)) to %s\n",
-            opt[["gene-id"]], nrow(res), opt$output))
+            argv$gene_id, nrow(res), argv$output))
