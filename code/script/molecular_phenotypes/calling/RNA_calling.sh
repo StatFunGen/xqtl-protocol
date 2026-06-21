@@ -320,7 +320,7 @@ _star_align_1() {
     mkdir -p "$(dirname "$OUTPUT_CORD_BAM")" "$(dirname "$OUTPUT_TRANS_BAM")"
 
     local -a input_reads quant_mode_args out_sam_attr_rgline_args out_sam_attributes_args chim_out_type_args var_args
-    read -r -a input_reads <<< "$INPUT_READS"
+    eval "input_reads=($INPUT_READS)"
     read -r -a quant_mode_args <<< "$QUANT_MODE"
     read -r -a out_sam_attr_rgline_args <<< "$OUT_SAM_ATTR_RG_LINE"
     read -r -a out_sam_attributes_args <<< "$OUT_SAM_ATTRIBUTES"

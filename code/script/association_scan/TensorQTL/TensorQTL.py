@@ -63,6 +63,18 @@ def read_manifest_entries(path: str) -> list[dict]:
     return [{"id": None, "path": line.strip()} for line in lines]
 
 
+def adapt_manifest_path(path: str, manifest_path: str) -> str:
+    """Resolve a path that may have been written on a different machine."""
+    if os.path.isfile(path):
+        return path
+    basename = os.path.basename(path)
+    manifest_dir = os.path.dirname(os.path.abspath(manifest_path))
+    candidate = os.path.join(manifest_dir, basename)
+    if os.path.isfile(candidate):
+        return candidate
+    return path
+
+
 def strip_suffix(text: str, suffix: str) -> str:
     return text[:-len(suffix)] if text.endswith(suffix) else text
 
@@ -129,6 +141,18 @@ def resolve_cis_inputs(genotype_file: str, phenotype_file: str) -> list[dict]:
             "pheno_prefix": phenotype_prefix(phenotype_file),
         }]
 
+    # Mixed mode: pheno is a direct .bed.gz but geno is a manifest
+    if phenotype_file.endswith(".bed.gz") and os.path.isfile(phenotype_file):
+        chrom_label = infer_single_chrom_label(phenotype_file)
+        geno_entries = read_manifest_entries(genotype_file)
+        geno_path = adapt_manifest_path(geno_entries[0]["path"], genotype_file) if geno_entries else genotype_file
+        return [{
+            "chrom": chrom_label,
+            "geno_prefix": genotype_prefix(geno_path),
+            "pheno_file": phenotype_file,
+            "pheno_prefix": phenotype_prefix(phenotype_file),
+        }]
+
     geno_entries = read_manifest_entries(genotype_file)
     pheno_entries = read_manifest_entries(phenotype_file)
 
@@ -173,7 +197,7 @@ def resolve_genotype_chrom(genotype_file: str, chrom: str) -> str:
     for entry in read_manifest_entries(genotype_file):
         entry_chrom = infer_manifest_chrom(entry["id"], entry["path"])
         if str(entry_chrom).replace("chr", "") == chrom:
-            return genotype_prefix(entry["path"])
+            return genotype_prefix(adapt_manifest_path(entry["path"], genotype_file))
 
     raise ValueError(f"No genotype file found for chromosome {chrom}")
 
