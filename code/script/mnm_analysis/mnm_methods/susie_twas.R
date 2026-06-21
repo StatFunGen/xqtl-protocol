@@ -306,7 +306,7 @@ write_empty_region_outputs <- function(message_text) {
 }
 
 tryCatch({
-  fdat <- loadRegionalUnivariateData(
+  fdat <- load_regional_univariate_data(
     genotype          = genotype_prefix,
     phenotype         = phenotype_files,
     covariate         = covariate_files,
@@ -355,8 +355,8 @@ region_name_vec <- if (length(extract_region_name) > 0) {
 }
 
 region_info <- list(
-  region_coord = parseRegion(opt$region),
-  grange       = parseRegion(opt$window),
+  region_coord = parse_region(opt$region),
+  grange       = parse_region(opt$window),
   region_name  = region_name_vec
 )
 
@@ -365,30 +365,30 @@ preset_variants_result <- list()
 condition_names      <- character(0)
 empty_elements_cnt   <- 0L
 
-for (r in seq_along(getPhenotypes(fdat))) {
+for (r in seq_along(fdat$residual_Y)) {
   dropped_samples <- list(
     X     = fdat$dropped_sample$dropped_samples_X[[r]],
     y     = fdat$dropped_sample$dropped_samples_Y[[r]],
     covar = fdat$dropped_sample$dropped_samples_covar[[r]]
   )
-  new_names     <- names(getPhenotypes(fdat))[r]
+  new_names     <- names(fdat$residual_Y)[r]
   new_col_names <- extract_region_name[[r]]
-  if (is.null(new_col_names)) new_col_names <- seq_len(ncol(getResidualY(fdat, r)))
+  if (is.null(new_col_names)) new_col_names <- seq_len(ncol(fdat$residual_Y[[r]]))
   if (!identical(new_names, new_col_names))
     new_names <- paste(new_names, new_col_names, sep="_")
 
   out <- list()
 
   if (!opt[["skip-fine-mapping"]]) {
-    out$finemapping <- lapply(seq_len(ncol(getResidualY(fdat, r))), function(i) {
+    out$finemapping <- lapply(seq_len(ncol(fdat$residual_Y[[r]])), function(i) {
       set.seed(opt$seed)
-      univariateAnalysisPipeline(
-        X              = getResidualX(fdat, r),
-        Y              = getResidualY(fdat, r)[, i, drop=FALSE],
-        maf            = getMaf(fdat)[[r]],
-        X_scalar       = getResidualXScalar(fdat, r),
-        Y_scalar       = if (identical(getResidualYScalar(fdat, r), 1)) 1 else getResidualYScalar(fdat, r)[, i, drop=FALSE],
-        X_variance     = getXVariance(fdat, r),
+      univariate_analysis_pipeline(
+        X              = fdat$residual_X[[r]],
+        Y              = fdat$residual_Y[[r]][, i, drop=FALSE],
+        maf            = fdat$maf[[r]],
+        X_scalar       = fdat$residual_X_scalar[[r]],
+        Y_scalar       = if (identical(fdat$residual_Y_scalar[[r]], 1)) 1 else fdat$residual_Y_scalar[[r]][, i, drop=FALSE],
+        X_variance     = fdat$X_variance[[r]],
         other_quantities = list(dropped_samples=dropped_samples),
         imiss_cutoff   = opt$imiss,
         maf_cutoff     = NULL,
@@ -410,18 +410,18 @@ for (r in seq_along(getPhenotypes(fdat))) {
   }
 
   if (!opt[["skip-twas-weights"]]) {
-    common_cols <- intersect(colnames(getGenotypeMatrix(fdat)), colnames(getResidualX(fdat, r)))
-    X_r  <- getGenotypeMatrix(fdat)[rownames(getResidualX(fdat, r)), common_cols, drop=FALSE]
-    maf_r <- getMaf(fdat)[[r]][common_cols]
-    out$twas_models <- lapply(seq_len(ncol(getResidualY(fdat, r))), function(i) {
+    common_cols <- intersect(colnames(fdat$X), colnames(fdat$residual_X[[r]]))
+    X_r  <- fdat$X[rownames(fdat$residual_X[[r]]), common_cols, drop=FALSE]
+    maf_r <- fdat$maf[[r]][common_cols]
+    out$twas_models <- lapply(seq_len(ncol(fdat$residual_Y[[r]])), function(i) {
       set.seed(opt$seed)
-      univariateAnalysisPipeline(
+      univariate_analysis_pipeline(
         X              = X_r,
-        Y              = getResidualY(fdat, r)[, i, drop=FALSE],
+        Y              = fdat$residual_Y[[r]][, i, drop=FALSE],
         maf            = maf_r,
-        X_scalar       = getResidualXScalar(fdat, r),
-        Y_scalar       = if (identical(getResidualYScalar(fdat, r), 1)) 1 else getResidualYScalar(fdat, r)[, i, drop=FALSE],
-        X_variance     = getXVariance(fdat, r),
+        X_scalar       = fdat$residual_X_scalar[[r]],
+        Y_scalar       = if (identical(fdat$residual_Y_scalar[[r]], 1)) 1 else fdat$residual_Y_scalar[[r]][, i, drop=FALSE],
+        X_variance     = fdat$X_variance[[r]],
         other_quantities = list(dropped_samples=dropped_samples),
         imiss_cutoff   = opt$imiss,
         maf_cutoff     = opt[["min-twas-maf"]],
