@@ -63,7 +63,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'VCF_QC';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Genotype PLINK File Quality Control" href="GWAS_QC.html" />
+    <link rel="next" title="Genotype Data Formatting" href="genotype_formatting.html" />
     <link rel="prev" title="Genotype Preprocessing" href="genotype_preprocessing.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -196,8 +196,6 @@
 <li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -219,10 +217,10 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
 <li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
-<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -294,7 +292,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Per-gene colocboost across contexts in a single study</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="nav bd-sidenav">
@@ -511,6 +509,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal Working Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-rename-chromosomes-optional"><strong>Step 1.</strong> Rename Chromosomes (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-merge-separated-bed-files-into-one"><strong>Step 2.</strong> Merge separated bed files into one</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-quality-control"><strong>Step 3.</strong> Quality Control</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3b-quality-control-on-data-with-dp-gq-ad-tags-default-path">Step 3b — Quality Control on data with DP/GQ/AD tags (default path)</a></li>
 </ul>
@@ -647,6 +646,24 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb dbsnp_annotate \
     --genoFile input/genotype/protocol_example.genotype.chr22.vcf.gz \
     --cwd output/vcf_qc
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-2-merge-separated-bed-files-into-one">
+<h3><strong>Step 2.</strong> Merge separated bed files into one<a class="headerlink" href="#step-2-merge-separated-bed-files-into-one" title="Link to this heading">#</a></h3>
+<p>Converting VCF to PLINK keeping only the ROSMAP samples.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink \
+    --genoFile `ls input/genotype/protocol_example.genotype.chr*.vcf.gz` \
+    --cwd output/plink/
+
+sos run pipeline/genotype_formatting.ipynb merge_plink \
+    --genoFile `ls output/plink/protocol_example.genotype.chr*.bed` \
+    --name protocol_example.genotype.merged \
+    --cwd output/plink/
 </pre></div>
 </div>
 </div>
@@ -1019,11 +1036,11 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
       </div>
     </a>
     <a class="right-next"
-       href="GWAS_QC.html"
+       href="genotype_formatting.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Genotype PLINK File Quality Control</p>
+        <p class="prev-next-title">Genotype Data Formatting</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1056,6 +1073,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal Working Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-rename-chromosomes-optional"><strong>Step 1.</strong> Rename Chromosomes (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-merge-separated-bed-files-into-one"><strong>Step 2.</strong> Merge separated bed files into one</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-quality-control"><strong>Step 3.</strong> Quality Control</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3b-quality-control-on-data-with-dp-gq-ad-tags-default-path">Step 3b — Quality Control on data with DP/GQ/AD tags (default path)</a></li>
 </ul>

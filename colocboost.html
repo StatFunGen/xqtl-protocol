@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Multi-trait colocalization using ColocBoost &#8212; FunGen-xQTL Consortium</title>
+    <title>Per-gene colocboost across contexts in a single study &#8212; FunGen-xQTL Consortium</title>
   
   
   
@@ -196,8 +196,6 @@
 <li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pseudobulk_expression_aggregation_QC_norm.html">Pseudobulk eQTL phenotype aggregation, QC and normalization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pseudobulk_mega_expression_QC_and_normalization.html">QC and normalization for Pseudobulk Mega phenotype data</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -219,10 +217,10 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
 <li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
-<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -294,7 +292,7 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Multi-trait colocalization using ColocBoost</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Per-gene colocboost across contexts in a single study</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="nav bd-sidenav">
@@ -490,7 +488,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Multi-trait colocalization using ColocBoost</h1>
+    <h1>Per-gene colocboost across contexts in a single study</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -500,27 +498,10 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-genotype-phenotype-and-association-analysis-windows">Example genotype, phenotype and association analysis windows</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-summary-statistics-and-ld-reference">Example summary statistics and LD reference</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#about-indels">About indels</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs">Inputs</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-analysis">xQTL only analysis</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-colocboost-with-xqtl-only"><strong>Step 1.</strong> ColocBoost with xQTL only</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-colocboost-with-gwas"><strong>Step 2.</strong> ColocBoost with GWAS</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-colocboost-with-multiple-ld-references-multi-ancestry"><strong>Step 3.</strong> ColocBoost with multiple LD references (multi-ancestry)</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colocboost-analysis">ColocBoost analysis</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
 </ul>
             </nav>
         </div>
@@ -532,1168 +513,69 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="multi-trait-colocalization-using-colocboost">
-<h1>Multi-trait colocalization using ColocBoost<a class="headerlink" href="#multi-trait-colocalization-using-colocboost" title="Link to this heading">#</a></h1>
-<section id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
-<p>Requires fine-mapping outputs (<code class="docutils literal notranslate"><span class="pre">.susie.rds</span></code> files) from <code class="docutils literal notranslate"><span class="pre">mnm_regression</span></code> or <code class="docutils literal notranslate"><span class="pre">rss_analysis</span></code>.</p>
-</section>
+  <section class="tex2jax_ignore mathjax_ignore" id="per-gene-colocboost-across-contexts-in-a-single-study">
+<h1>Per-gene colocboost across contexts in a single study<a class="headerlink" href="#per-gene-colocboost-across-contexts-in-a-single-study" title="Link to this heading">#</a></h1>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>We use ColocBoost to perform colocalization analyses <a class="reference external" href="https://www.medrxiv.org/content/10.1101/2025.04.17.25326042v1">cf. Cao et al (2025)</a>. In short, ColocBoost performs colocalization while accounting for multiple causal variants within a genomic region of interest and can scale to hundreds of traits. We allow users to include or omit GWAS summary statistics. Required inputs are individual xQTL data from the same cohort (multiple phenotypes, same genotype). Linkage disequilibrium reference data is required if GWAS summary statistics are used.</p>
+<p>For a single study’s <code class="docutils literal notranslate"><span class="pre">QtlDataset</span></code> RDS, run <code class="docutils literal notranslate"><span class="pre">pecotmr::colocboostPipeline()</span></code> per focal gene. Each task colocalizes the focal gene’s signal across the QtlDataset’s contexts (the within-study, cross-context case — no GWAS input). Gene-level parallelization is via SoS task fan-out: every task loads the same RDS and runs one focal gene.</p>
 </section>
-<section id="input">
-<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
-<ol class="arabic simple">
-<li><p>A list of regions to be analyzed (optional); the last column of this file should be region name.</p></li>
-<li><p>Either a list of per chromosome genotype files, or one file for genotype data of the entire genome. Genotype data has to be in PLINK <code class="docutils literal notranslate"><span class="pre">bed</span></code> format.</p></li>
-<li><p>Vector of lists of phenotype files per region to be analyzed, in UCSC <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> with index in <code class="docutils literal notranslate"><span class="pre">bed.gz.tbi</span></code> formats.</p></li>
-<li><p>Vector of covariate files corresponding to the lists above.</p></li>
-<li><p>Customized association windows file for variants (cis or trans). If it is not provided, a fixed sized window will be used around the region (a cis-window)</p></li>
-<li><p>Optionally a vector of names of the phenotypic conditions in the form of <code class="docutils literal notranslate"><span class="pre">cond1</span> <span class="pre">cond2</span> <span class="pre">cond3</span></code> separated with whitespace.</p></li>
-<li><p>Optionally summary statistics meta-data file and LD reference meta-data file.</p></li>
-</ol>
-<p>Input 2 and 3 should be outputs from <code class="docutils literal notranslate"><span class="pre">genotype_per_region</span></code> and <code class="docutils literal notranslate"><span class="pre">annotate_coord</span></code> modules in previous preprocessing steps. 4 should be output of <code class="docutils literal notranslate"><span class="pre">covariate_preprocessing</span></code> pipeline that contains genotype PC, phenotypic hidden confounders and fixed covariates.</p>
-<section id="example-genotype-phenotype-and-association-analysis-windows">
-<h3>Example genotype, phenotype and association analysis windows<a class="headerlink" href="#example-genotype-phenotype-and-association-analysis-windows" title="Link to this heading">#</a></h3>
-<p>See <a class="reference internal" href="#mnm_regression.html"><span class="xref myst">this page</span></a> for example inputs of these information.</p>
-</section>
-<section id="example-summary-statistics-and-ld-reference">
-<h3>Example summary statistics and LD reference<a class="headerlink" href="#example-summary-statistics-and-ld-reference" title="Link to this heading">#</a></h3>
-<p>See <a class="reference internal" href="#rss_analysis.html"><span class="xref myst">rss_analysis</span></a> for LD reference formats (pre-computed blocks and PLINK genotype files),
-per-study LD reference via the <code class="docutils literal notranslate"><span class="pre">ld_meta_data</span></code> column in GWAS meta-data, and mixture LD panels.</p>
-</section>
-<section id="about-indels">
-<h3>About indels<a class="headerlink" href="#about-indels" title="Link to this heading">#</a></h3>
-<p>Use <code class="docutils literal notranslate"><span class="pre">--no-indel</span></code> to remove indel variants from analysis. This applies to both individual-level genotype loading and summary statistics QC. Default keeps indels.</p>
-</section>
+<section id="inputs">
+<h2>Inputs<a class="headerlink" href="#inputs" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--qtl-dataset</span></code> — path to the QtlDataset RDS produced by <code class="docutils literal notranslate"><span class="pre">qtl_dataset.ipynb</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--genes</span></code> — explicit gene-ID list (one focal gene per task).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> — bp window around each focal gene’s TSS for variant selection. Default 1,000,000.</p></li>
+</ul>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
-<p>For each analysis region the pipeline fits ColocBoost and saves the model in RDS format — one RDS per gene of interest (and per GWAS, when GWAS integration is used). Each RDS contains:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">ucos_summary</span></code> — a summary table of the colocalization events.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">vpa</span></code> — the variable colocalized probability for each variant (the probability of a variant being colocalized with at least one trait).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">data_info</span></code> — information on the input data.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">model_info</span></code> — information on the fitted ColocBoost model.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ucos_details</span></code> — trait-specific (uncolocalized) effects information.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">region_info</span></code> — information on the region(s) of interest.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">computing_time</span></code> — time taken for each step (loading, QC and analysis).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{study}.{gene}.colocboost.rds</span></code> per gene.</p></li>
 </ul>
-<p><strong>Note:</strong> the suggested output naming convention is <code class="docutils literal notranslate"><span class="pre">cohort_...</span></code>.</p>
 </section>
-<section id="minimal-working-example-steps">
-<h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
-<p>Timing: ~X min</p>
-<section id="xqtl-only-analysis">
-<h3>xQTL only analysis<a class="headerlink" href="#xqtl-only-analysis" title="Link to this heading">#</a></h3>
-<p>Below we duplicate the examples for phenotype and covariates to demonstrate that when there are multiple phenotypes for the same genotype it is possible to use this pipeline to analyze all of them (more than two is accepted as well).</p>
-<p>Here using <code class="docutils literal notranslate"><span class="pre">--region-name</span></code> we focus the analysis on 3 genes. In practice if this parameter is dropped, the union of all regions in all phenotype region lists will be analyzed. It is possible for some of the regions there are no genotype data, in which case the pipeline will output RDS files with a warning message to indicate the lack of genotype data to analyze.</p>
-<p><strong>Note:</strong> Suggested output naming convention is cohort_modality, eg ROSMAP_snRNA_pseudobulk.</p>
-</section>
-<section id="step-1-colocboost-with-xqtl-only">
-<h3><strong>Step 1.</strong> ColocBoost with xQTL only<a class="headerlink" href="#step-1-colocboost-with-xqtl-only" title="Link to this heading">#</a></h3>
-<p>This is the minimal working example and <strong>runs end-to-end on the toy gene-expression data</strong>, producing a <code class="docutils literal notranslate"><span class="pre">*.cb_xqtl.rds</span></code> colocalization result for the region. The same command also accepts peaks or any other molecular phenotype - just swap in the phenotype <code class="docutils literal notranslate"><span class="pre">.bed.gz</span></code>/manifest.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># VERIFIED end-to-end on the toy gene-expression data (run from the toy_example root).
-# xQTL-only ColocBoost on a single gene region. Produces *.cb_xqtl.rds.
-sos run pipeline/colocboost.ipynb colocboost \
-    --name colocboost_xqtl --cwd output/colocboost_xqtl \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_1gene.tsv \
-    --covFile input/colocboost/example_covariates.tsv \
-    --customized-association-windows input/colocboost/association_windows_1gene.bed \
-    --region-name ENSG00000130538 \
-    --no-separate-gwas --xqtl-coloc -j1
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/colocboost.ipynb<span class="w"> </span>colocboost<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>output<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--study<span class="w"> </span>ROSMAP_DLPFC<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qtl-dataset<span class="w"> </span>output/ROSMAP_DLPFC.qtl_dataset.rds<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genes<span class="w"> </span>ENSG00000060237<span class="w"> </span>ENSG00000234593<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cis-window<span class="w"> </span><span class="m">1000000</span>
 </pre></div>
 </div>
-</div>
-</div>
-</section>
-<section id="step-2-colocboost-with-gwas">
-<h3><strong>Step 2.</strong> ColocBoost with GWAS<a class="headerlink" href="#step-2-colocboost-with-gwas" title="Link to this heading">#</a></h3>
-<p>Adds GWAS summary statistics (via <code class="docutils literal notranslate"><span class="pre">--gwas-meta-data</span></code>) and an LD reference (via <code class="docutils literal notranslate"><span class="pre">--ld-meta-data</span></code>). The xQTL ColocBoost completes, but the separate GWAS-xQTL colocalization is <strong>still under development</strong> with the installed package (see the note in the command cell).</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Partially runnable on the toy data (run from the toy_example root).
-# The xQTL ColocBoost completes and writes *.cb_xqtl.rds, but the separate GWAS-xQTL
-# colocalization step is STILL UNDER DEVELOPMENT: the installed ColocBoost errors with
-# &quot;Separate GWAS ColocBoost ... failed: unused argument (X_ref = ...)&quot;.
-sos run pipeline/colocboost.ipynb colocboost \
-    --name colocboost_gwas --cwd output/colocboost_gwas \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_1gene.tsv \
-    --covFile input/colocboost/example_covariates.tsv \
-    --customized-association-windows input/colocboost/association_windows_1gene.bed \
-    --gwas-meta-data input_colocboost/gwas_meta.tsv \
-    --ld-meta-data data/input/data/LD_sketch/meta.tsv \
-    --region-name ENSG00000130538 \
-    --separate-gwas --xqtl-coloc -j1
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="step-3-colocboost-with-multiple-ld-references-multi-ancestry">
-<h3><strong>Step 3.</strong> ColocBoost with multiple LD references (multi-ancestry)<a class="headerlink" href="#step-3-colocboost-with-multiple-ld-references-multi-ancestry" title="Link to this heading">#</a></h3>
-<p>Uses a per-study LD reference declared in the GWAS meta-data. It shares the separate-GWAS code path with Step 2 and is therefore <strong>still under development</strong> on the toy dataset.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Still under development on the toy dataset.
-# Multi-ancestry uses the per-study LD reference given in the gwas meta-data
-# ld_meta_data column. It relies on the same separate-GWAS ColocBoost code path as
-# Step 2, so it is currently blocked by the same package issue. Command template:
-sos run pipeline/colocboost.ipynb colocboost \
-    --name colocboost_multi_ld --cwd output/colocboost_multi_ld \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_1gene.tsv \
-    --covFile input/colocboost/example_covariates.tsv \
-    --customized-association-windows input/colocboost/association_windows_1gene.bed \
-    --gwas-meta-data input_colocboost/gwas_meta.tsv \
-    --ld-meta-data data/input/data/LD_sketch/meta.tsv \
-    --region-name ENSG00000130538 \
-    --separate-gwas --xqtl-coloc -j1
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-</section>
-<section id="command-interface">
-<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb -h
-</pre></div>
-</div>
-</div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: sos run /restricted/projectnb/xqtl/xqtl_protocol/xqtl-protocol/code/mnm_analysis/mnm_methods/colocboost.ipynb
-               [workflow_name | -t targets] [options] [workflow_options]
-  workflow_name:        Single or combined workflows defined in this script
-  targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
-  workflow_options:     Double-hyphen workflow-specific parameters
-
-Workflows:
-  get_analysis_regions
-  get_rss_analysis_regions
-  colocboost
-
-Global Workflow Options:
-  --name VAL (as str, required)
-                        It is required to input the name of the analysis
-  --cwd output (as path)
-  --genoFile VAL (as path, required)
-                        A list of file paths for genotype data, or the genotype data itself.
-  --phenoFile  paths
-
-                        One or multiple lists of file paths for phenotype data.
-  --phenoIDFile  paths()
-
-                        One or multiple lists of file paths for phenotype ID mapping file. The first column should be the original ID, the 2nd column should be the ID to be mapped to.
-  --covFile  paths
-
-                        Covariate file path
-  --gwas-meta-data . (as path)
-                        Summary statistics interface, see `rss_analysis.ipynb` for details
-  --ld-meta-data . (as path)
-  --gwas-name  (as list)
-  --gwas-data  (as list)
-  --column-mapping  (as list)
-  --region-list . (as path)
-                        Optional: if a region list is provide the analysis will be focused on provided region. The LAST column of this list will contain the ID of regions to focus on when
-                        region_name is given Otherwise, all regions with both genotype and phenotype files will be analyzed
-  --region-name  (as list)
-                        Optional: if a region name is provided the analysis would be focused on the union of provides region list and region names
-  --keep-samples . (as path)
-                        Only focus on a subset of samples
-  --keep-variants . (as path)
-                        Only focus on a subset of variants
-  --customized-association-windows . (as path)
-                        An optional list documenting the custom association window for each region to analyze, with four column, chr, start, end, region ID (eg gene ID). If this list is not
-                        provided, the default `window` parameter (see below) will be used.
-  --cis-window -1 (as int)
-                        Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp When this is set to negative, we will rely on using
-                        customized_association_windows
-  --[no-]save-data (default to False)
-                        save data object or not
-  --phenotype-names  [f&#39;{x:bn}&#39; for x in phenoFile]
-
-                        Name of phenotypes
-  --[no-]trans-analysis (default to False)
-                        And indicator whether it is trans-analysis, ie, not using phenotypic coordinate information
-  --imiss 1.0 (as float)
-                        remove a variant if it has more than imiss missing individual level data
-  --maf 0.0025 (as float)
-                        MAF and variance of X cutoff
-  --xvar-cutoff 0.0 (as float)
-  --mac 5 (as int)
-                        MAC cutoff, on top of MAF cutoff
-  --[no-]indel (default to True)
-                        Remove indels if indel = False
-  --event-filter-rules . (as path)
-  --skip-analysis-pip-cutoff  (as list)
-                        If this value is not 0, then an initial single effect analysis will be performed to determine if follow up analysis will be continued or to simply return NULL If this is
-                        negative we use a default way to determine this cutoff which is conservative but still useful
-  --skip-sumstats-analysis-pip-cutoff -1.0 (as float)
-  --[no-]xqtl-coloc (default to True)
-                        Perform xQTL colocalization
-  --[no-]joint-gwas (default to False)
-                        Perform joint colocalization with many traits
-  --[no-]separate-gwas (default to True)
-                        Perform separate GWAS targeted anlaysis one at a time
-  --[no-]impute (default to False)
-                        Whether to impute the sumstat for all the snp in LD but not in sumstat.
-  --rcond 0.01 (as float)
-  --lamb 0.01 (as float)
-  --R2-threshold 0.6 (as float)
-  --minimum-ld 5 (as int)
-  --qc-method NULL
-                        summary stats QC methods: slalom, dentist
-  --extract-sumstats-region-name NULL
-  --sumstats-region-name-col NULL
-                        Either an index number in str format or &quot;NULL&quot; as a string
-  --comment-string NULL
-  --ld-data-name  (as list)
-  --container &#39;&#39;
-                        Analysis environment settings
-  --job-size 200 (as int)
-                        For cluster jobs, number commands to run per job
-  --walltime 1h
-                        Wall clock time expected
-  --mem 20G
-                        Memory expected
-  --numThreads 1 (as int)
-                        Number of threads
-
-Sections
-  get_analysis_regions:
-  get_rss_analysis_regions:
-  colocboost:
-</pre></div>
-</div>
-</section>
-<section id="workflow-implementation">
-<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-# It is required to input the name of the analysis
-parameter: name = str
-parameter: cwd = path(&quot;output&quot;)
-# A list of file paths for genotype data, or the genotype data itself. 
-parameter: genoFile = path
-# One or multiple lists of file paths for phenotype data.
-parameter: phenoFile = paths
-# One or multiple lists of file paths for phenotype ID mapping file. The first column should be the original ID, the 2nd column should be the ID to be mapped to.
-parameter: phenoIDFile = paths()
-# Covariate file path
-parameter: covFile = paths
-# Summary statistics interface, see `rss_analysis.ipynb` for details
-parameter: gwas_meta_data = path()
-# Default LD reference. Can be overridden per-study via ld_meta_data column in gwas_meta_data.
-parameter: ld_meta_data = path()
-parameter: gwas_name = []
-parameter: gwas_data = []
-parameter: column_mapping = []
-# Optional: if a region list is provide the analysis will be focused on provided region. 
-# The LAST column of this list will contain the ID of regions to focus on when region_name is given
-# Otherwise, all regions with both genotype and phenotype files will be analyzed
-parameter: region_list = path()
-# Optional: if a region name is provided 
-# the analysis would be focused on the union of provides region list and region names
-parameter: region_name = []
-# Only focus on a subset of samples
-parameter: keep_samples = path()
-# Only focus on a subset of variants
-parameter: keep_variants = path()
-# An optional list documenting the custom association window for each region to analyze, with four column, chr, start, end, region ID (eg gene ID).
-# If this list is not provided, the default `window` parameter (see below) will be used.
-parameter: customized_association_windows = path()
-# Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp
-# When this is set to negative, we will rely on using customized_association_windows
-parameter: cis_window = -1
-# save data object or not
-parameter: save_data = False
-# Name of phenotypes
-parameter: phenotype_names = [f&#39;{x:bn}&#39; for x in phenoFile]
-# And indicator whether it is trans-analysis, ie, not using phenotypic coordinate information
-parameter: trans_analysis = False
-
-# remove a variant if it has more than imiss missing individual level data
-parameter: imiss = 1.0
-# MAF and variance of X cutoff
-parameter: maf = 0.0025
-parameter: xvar_cutoff = 0.0
-# MAC cutoff, on top of MAF cutoff
-parameter: mac = 5
-# Remove indels if indel = False
-parameter: indel = True
-parameter: event_filter_rules = path()
-# If this value is not 0, then an initial single effect analysis will be performed 
-# to determine if follow up analysis will be continued or to simply return NULL
-# If this is negative we use a default way to determine this cutoff which is conservative but still useful
-parameter: skip_analysis_pip_cutoff = []
-parameter: skip_sumstats_analysis_pip_cutoff = -1.0
-# Perform xQTL colocalization
-parameter: xqtl_coloc = True
-# Perform joint colocalization with many traits
-parameter: joint_gwas = False
-# Perform separate GWAS targeted anlaysis one at a time
-parameter: separate_gwas = True
-# Whether to impute the sumstat for all the snp in LD but not in sumstat.
-parameter: impute = False 
-parameter: rcond = 0.01
-parameter: lamb = 0.01
-parameter: R2_threshold = 0.6
-parameter: minimum_ld = 5
-# summary stats QC methods: slalom, dentist
-parameter: qc_method = &quot;NULL&quot;
-parameter: extract_sumstats_region_name = &quot;NULL&quot;
-# Either an index number in str format or &quot;NULL&quot; as a string
-parameter: sumstats_region_name_col = &quot;NULL&quot;
-parameter: comment_string = &quot;NULL&quot;
-# Maps each GWAS study to an LD reference name. If empty, all studies use the first LD reference.
-
-# Analysis environment settings
-parameter: container = &quot;&quot;
-# For cluster jobs, number commands to run per job
-parameter: job_size = 200
-# Wall clock time expected
-parameter: walltime = &quot;1h&quot;
-# Memory expected
-parameter: mem = &quot;20G&quot;
-# Number of threads
+parameter: cwd = path(&#39;output&#39;)
+parameter: study = str
+parameter: qtl_dataset = path
+parameter: genes = []
+parameter: cis_window = 1000000
+parameter: container = &#39;&#39;
+parameter: job_size = 1
+parameter: walltime = &#39;1h&#39;
+parameter: mem = &#39;16G&#39;
 parameter: numThreads = 1
-
-if len(phenoFile) != len(covFile):
-    raise ValueError(&quot;Number of input phenotypes files must match that of covariates files&quot;)
-if len(phenoFile) != len(phenotype_names):
-    raise ValueError(&quot;Number of input phenotypes files must match the number of phenotype names&quot;)
-if len(phenoIDFile) &gt; 0 and len(phenoFile) != len(phenoIDFile):
-    raise ValueError(&quot;Number of input phenotypes files must match the number of phenotype ID mapping files&quot;)
-
-if len(skip_analysis_pip_cutoff) == 0:
-    skip_analysis_pip_cutoff = [0.0] * len(phenoFile)
-if len(skip_analysis_pip_cutoff) == 1:
-    skip_analysis_pip_cutoff = skip_analysis_pip_cutoff * len(phenoFile)
-if len(skip_analysis_pip_cutoff) != len(phenoFile):
-    raise ValueError(f&quot;``skip_analysis_pip_cutoff`` should have either length 1 or length the same as phenotype files ({len(phenoFile)} in this case)&quot;)
-
-# make it into an R List string
-skip_analysis_pip_cutoff = [f&quot;&#39;{y}&#39;={x}&quot; for x,y in zip(skip_analysis_pip_cutoff, phenotype_names)]
-    
-def group_by_region(lst, partition):
-    # from itertools import accumulate
-    # partition = [len(x) for x in partition]
-    # Compute the cumulative sums once
-    # cumsum_vector = list(accumulate(partition))
-    # Use slicing based on the cumulative sums
-    # return [lst[(cumsum_vector[i-1] if i &gt; 0 else 0):cumsum_vector[i]] for i in range(len(partition))]
-    return partition
-
-import os
-import pandas as pd
-
-def adapt_file_path(file_path, reference_file):
-    &quot;&quot;&quot;
-    Adapt a single file path based on its existence and a reference file&#39;s path.
-
-    Args:
-    - file_path (str): The file path to adapt.
-    - reference_file (str): File path to use as a reference for adaptation.
-
-    Returns:
-    - str: Adapted file path.
-
-    Raises:
-    - FileNotFoundError: If no valid file path is found.
-    &quot;&quot;&quot;
-    reference_path = os.path.dirname(reference_file)
-
-    # Check if the file exists
-    if os.path.isfile(file_path):
-        return file_path
-
-    # Check file name without path
-    file_name = os.path.basename(file_path)
-    if os.path.isfile(file_name):
-        return file_name
-
-    # Check file name in reference file&#39;s directory
-    file_in_ref_dir = os.path.join(reference_path, file_name)
-    if os.path.isfile(file_in_ref_dir):
-        return file_in_ref_dir
-
-    # Check original file path prefixed with reference file&#39;s directory
-    file_prefixed = os.path.join(reference_path, file_path)
-    if os.path.isfile(file_prefixed):
-        return file_prefixed
-
-    # If all checks fail, raise an error
-    raise FileNotFoundError(f&quot;No valid path found for file: {file_path}&quot;)
-
-def adapt_file_path_all(df, column_name, reference_file):
-    return df[column_name].apply(lambda x: adapt_file_path(x, reference_file))
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_analysis_regions: shared = &quot;regional_data&quot;]
-# input is genoFile, phenoFile, covFile and optionally region_list. If region_list presents then we only analyze what&#39;s contained in the list.
-# regional_data should be a dictionary like:
-#{&#39;data&#39;: [(&quot;genotype_1.bed&quot;, &quot;phenotype_1.bed.gz&quot;, &quot;covariate_1.gz&quot;), (&quot;genotype_2.bed&quot;, &quot;phenotype_1.bed.gz&quot;, &quot;phenotype_2.bed.gz&quot;, &quot;covariate_1.gz&quot;, &quot;covariate_2.gz&quot;) ... ],
-# &#39;meta_info&#39;: [(&quot;chr12:752578-752579&quot;,&quot;chr12:752577-752580&quot;, &quot;gene_1&quot;, &quot;trait_1&quot;), (&quot;chr13:852580-852581&quot;,&quot;chr13:852579-852580&quot;, &quot;gene_2&quot;, &quot;trait_1&quot;, &quot;trait_2&quot;) ... ]}
-import numpy as np
-
-def preload_id_map(id_map_files):
-    id_maps = {}
-    missing_files = []
-    
-    for id_map_file in id_map_files:
-        if id_map_file is not None:
-            if os.path.isfile(id_map_file):
-                df = pd.read_csv(id_map_file, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;old_ID&#39;, &#39;new_ID&#39;], engine=&#39;python&#39;)
-                id_maps[id_map_file] = df.set_index(&#39;old_ID&#39;)[&#39;new_ID&#39;].to_dict()
-            else:
-                missing_files.append(id_map_file)
-    
-    # If there are missing files, print a summary
-    # if missing_files:
-    #    print(f&quot;Warning: {len(missing_files)} ID map file(s) specified but not found:&quot;)
-    #    for file in missing_files:
-    #        print(f&quot;  - {file}&quot;)
-    
-    return id_maps
-
-def load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps):
-    pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0, engine=&#39;python&#39;)
-    pheno_df[&#39;Original_ID&#39;] = pheno_df[&#39;ID&#39;]
-    
-    # Check if id_map_path is specified
-    if id_map_path is not None:
-        # Check if the id_map_path exists in preloaded maps
-        if id_map_path in preloaded_id_maps:
-            id_map = preloaded_id_maps[id_map_path]
-            pheno_df[&#39;ID&#39;] = pheno_df[&#39;ID&#39;].map(id_map).fillna(pheno_df[&#39;ID&#39;])
-        else:
-            # ID map file was specified but doesn&#39;t exist or wasn&#39;t loaded
-            print(f&quot;Warning: ID map file &#39;{id_map_path}&#39; was specified but does not exist. Using original IDs.&quot;)
-            # No mapping is done here, so ID remains the same as Original_ID
-    
-    return pheno_df
-
-def filter_by_region_ids(data, region_ids):
-    if region_ids is not None and len(region_ids) &gt; 0:
-        data = data[data[&#39;ID&#39;].isin(region_ids)]
-    return data
-
-def custom_join(series):
-    # Initialize an empty list to hold the processed items
-    result = []
-    for item in series:
-        if &#39;,&#39; in item:
-            # If the item contains commas, split by comma and convert to tuple
-            result.append(tuple(item.split(&#39;,&#39;)))
-        else:
-            # If the item does not contain commas, add it directly
-            result.append(item)
-    # Convert the list of items to a tuple and return
-    return tuple(result)
-
-def aggregate_phenotype_data(accumulated_pheno_df):
-    if not accumulated_pheno_df.empty:
-        accumulated_pheno_df = accumulated_pheno_df.groupby([&#39;#chr&#39;,&#39;ID&#39;,&#39;cond&#39;,&#39;path&#39;,&#39;cov_path&#39;], as_index=False).agg({
-            &#39;#chr&#39;: lambda x: np.unique(x).astype(str)[0],
-            &#39;ID&#39;: lambda x: np.unique(x).astype(str)[0],
-            &#39;Original_ID&#39;: &#39;,&#39;.join,
-            &#39;start&#39;: &#39;min&#39;,
-            &#39;end&#39;: &#39;max&#39;
-        }).groupby([&#39;#chr&#39;,&#39;ID&#39;], as_index=False).agg({
-            &#39;cond&#39;: &#39;,&#39;.join,
-            &#39;path&#39;: &#39;,&#39;.join,
-            &#39;Original_ID&#39;: custom_join,
-            &#39;cov_path&#39;: &#39;,&#39;.join,
-            &#39;start&#39;: &#39;min&#39;,
-            &#39;end&#39;: &#39;max&#39;
-        })
-    return accumulated_pheno_df
-
-def process_cis_files(pheno_files, cov_files, phenotype_names, pheno_id_files, region_ids, preloaded_id_maps):
-    &#39;&#39;&#39;
-    Example output:
-    #chr    start      end    ID  Original_ID   path     cov_path             cond
-    chr12   752578   752579  ENSG00000060237  Q9H4A3,P62873  protocol_example.protein_1.bed.gz,protocol_example.protein_2.bed.gz  covar_1.gz,covar_2.gz  trait_A,trait_B
-    &#39;&#39;&#39;
-    accumulated_pheno_df = pd.DataFrame()
-    pheno_id_files = [None] * len(pheno_files) if len(pheno_id_files) == 0 else pheno_id_files
-
-    for pheno_path, cov_path, phenotype_name, id_map_path in zip(pheno_files, cov_files, phenotype_names, pheno_id_files):
-        if not os.path.isfile(cov_path):
-            raise FileNotFoundError(f&quot;No valid path found for file: {cov_path}&quot;)
-        pheno_df = load_and_apply_id_map(pheno_path, id_map_path, preloaded_id_maps)
-        pheno_df = filter_by_region_ids(pheno_df, region_ids)
-        
-        if not pheno_df.empty:
-            pheno_df.iloc[:, 4] = adapt_file_path_all(pheno_df, pheno_df.columns[4], f&quot;{pheno_path:a}&quot;)
-            pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)           
-            accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
-
-    accumulated_pheno_df = aggregate_phenotype_data(accumulated_pheno_df)
-    return accumulated_pheno_df
-
-def process_trans_files(pheno_files, cov_files, phenotype_names, pheno_id_files, region_ids, customized_association_windows):
-    &#39;&#39;&#39;
-    Example output:
-    #chr    start      end    ID  Original_ID   path     cov_path             cond
-    chr21   0   0  chr21_18133254_19330300  carnitine,benzoate,hippurate  metabolon_1.bed.gz,metabolon_2.bed.gz  covar_1.gz,covar_2.gz  trait_A,trait_B
-    &#39;&#39;&#39;
-    
-    if not os.path.isfile(customized_association_windows):
-        raise ValueError(&quot;Customized association analysis window must be specified for trans analysis.&quot;)
-    accumulated_pheno_df = pd.DataFrame()
-    pheno_id_files = [None] * len(pheno_files) if len(pheno_id_files) == 0 else pheno_id_files
-    genotype_windows = pd.read_csv(customized_association_windows, comment=&quot;#&quot;, header=None, names=[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;], sep=&quot;\t&quot;)
-    genotype_windows = filter_by_region_ids(genotype_windows, region_ids)
-    if genotype_windows.empty:
-        return accumulated_pheno_df
-    
-    for pheno_path, cov_path, phenotype_name, id_map_path in zip(pheno_files, cov_files, phenotype_names, pheno_id_files):
-        if not os.path.isfile(cov_path):
-            raise FileNotFoundError(f&quot;No valid path found for file: {cov_path}&quot;)
-        pheno_df = pd.read_csv(pheno_path, sep=r&quot;\s+&quot;, header=0, names=[&#39;Original_ID&#39;, &#39;path&#39;], engine=&#39;python&#39;)
-        if not pheno_df.empty:
-            pheno_df.iloc[:, -1] = adapt_file_path_all(pheno_df, pheno_df.columns[-1], f&quot;{pheno_path:a}&quot;)
-            pheno_df = pheno_df.assign(cov_path=str(cov_path), cond=phenotype_name)
-            # Here we combine genotype_windows which contains &quot;#chr&quot; and &quot;ID&quot; to pheno_df by creating a cartesian product
-            pheno_df = pd.merge(genotype_windows.assign(key=1), pheno_df.assign(key=1), on=&#39;key&#39;).drop(&#39;key&#39;, axis=1)
-            # then set start and end columns to zero
-            pheno_df[&#39;start&#39;] = 0
-            pheno_df[&#39;end&#39;] = 0
-            if id_map_path is not None:
-                # Filter pheno_df by specific association-window and phenotype pairs
-                association_analysis_pair = pd.read_csv(id_map_path, sep=r&quot;\s+&quot;, header=None, comment=&#39;#&#39;, names=[&#39;ID&#39;, &#39;Original_ID&#39;], engine=&#39;python&#39;)
-                pheno_df = pd.merge(pheno_df, association_analysis_pair, on=[&#39;ID&#39;, &#39;Original_ID&#39;])
-            accumulated_pheno_df = pd.concat([accumulated_pheno_df, pheno_df], ignore_index=True)
-
-    accumulated_pheno_df = aggregate_phenotype_data(accumulated_pheno_df)
-    return accumulated_pheno_df
-
-def load_regional_data(genoFile, phenoFile, covFile, phenotype_names, phenoIDFile, 
-                      region_list=None, region_name=None, trans_analysis=False, 
-                      customized_association_windows=None, cis_window=-1):   
-    # Ensure region_name is a list
-    if region_name is None:
-        region_name = []
-    
-    # Load genotype meta data
-    if f&quot;{genoFile:x}&quot; == &quot;.bed&quot;:
-        geno_meta_data = pd.DataFrame([(&quot;chr&quot;+str(x), f&quot;{genoFile:a}&quot;) for x in range(1,23)] + [(&quot;chrX&quot;, f&quot;{genoFile:a}&quot;)], columns=[&#39;#chr&#39;, &#39;geno_path&#39;])
-    else:
-        geno_meta_data = pd.read_csv(f&quot;{genoFile:a}&quot;, sep=r&quot;\s+&quot;, header=0, engine=&#39;python&#39;)
-        geno_meta_data.iloc[:, 1] = adapt_file_path_all(geno_meta_data, geno_meta_data.columns[1], f&quot;{genoFile:a}&quot;)
-        geno_meta_data.columns = [&#39;#chr&#39;, &#39;geno_path&#39;]
-        geno_meta_data[&#39;#chr&#39;] = geno_meta_data[&#39;#chr&#39;].apply(lambda x: str(x) if str(x).startswith(&#39;chr&#39;) else f&#39;chr{x}&#39;)
-
-    # Checking the DataFrame
-    valid_chr_values = [f&#39;chr{x}&#39; for x in range(1, 23)] + [&#39;chrX&#39;]
-    if not all(value in valid_chr_values for value in geno_meta_data[&#39;#chr&#39;]):
-        raise ValueError(&quot;Invalid chromosome values found. Allowed values are chr1 to chr22 and chrX.&quot;)
-
-    region_ids = []
-    # If region_list is provided, read the file and extract IDs
-    if region_list is not None and region_list.is_file():
-        region_list_df = pd.read_csv(region_list, sep=r&#39;\s+&#39;, header=None, comment=&quot;#&quot;, engine=&#39;python&#39;)
-        region_ids = region_list_df.iloc[:, -1].unique()  # Extracting the last column for IDs
-
-    # If region_name is provided, include those IDs as well
-    # --region-name A B C will result in a list of [&quot;A&quot;, &quot;B&quot;, &quot;C&quot;] here
-    if len(region_name) &gt; 0:
-        region_ids = list(set(region_ids).union(set(region_name)))
-
-    if trans_analysis:
-        meta_data = process_trans_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, customized_association_windows)
-    else:
-        meta_data = process_cis_files(phenoFile, covFile, phenotype_names, phenoIDFile, region_ids, preload_id_map(phenoIDFile))
-        
-    if not meta_data.empty:
-        meta_data = meta_data.merge(geno_meta_data, on=&#39;#chr&#39;, how=&#39;inner&#39;)
-        # Adjust association-window
-        if customized_association_windows is not None and os.path.isfile(customized_association_windows):
-            print(f&quot;Loading customized association analysis window from {customized_association_windows}&quot;)
-            association_windows_list = pd.read_csv(customized_association_windows, comment=&quot;#&quot;, header=None, 
-                                                  names=[&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;,&quot;ID&quot;], sep=&quot;\t&quot;)
-            meta_data = pd.merge(meta_data, association_windows_list, on=[&#39;#chr&#39;, &#39;ID&#39;], how=&#39;left&#39;, suffixes=(&#39;&#39;, &#39;_association&#39;))
-            mismatches = meta_data[meta_data[&#39;start_association&#39;].isna()]
-            if not mismatches.empty:
-                print(&quot;First 5 mismatches:&quot;)
-                print(mismatches[[&#39;ID&#39;]].head())
-                raise ValueError(f&quot;{len(mismatches)} regions to analyze cannot be found in ``{customized_association_windows}``. &quot;
-                                f&quot;Please check your ``{customized_association_windows}`` database to make sure it contains all &quot;
-                                f&quot;association-window definitions. &quot;)
-        else:
-            if cis_window &lt; 0:
-                raise ValueError(&quot;Please either input valid path to association-window file via ``--customized-association-windows``, &quot;
-                                &quot;or set ``--cis-window`` to a non-negative integer.&quot;)
-            if cis_window == 0:
-                print(&quot;Warning: only variants within the range of start and end of molecular phenotype will be considered &quot;
-                     &quot;since cis_window is set to zero and no customized association window file was found. &quot;
-                     &quot;Please make sure this is by design.&quot;)
-            meta_data[&#39;start_association&#39;] = meta_data[&#39;start&#39;].apply(lambda x: max(x - cis_window, 0))
-            meta_data[&#39;end_association&#39;] = meta_data[&#39;end&#39;] + cis_window
-
-        # Example meta_data:
-        # #chr    start      end    start_association       end_association           ID  Original_ID   path     cov_path             cond             coordinate     geno_path
-        # 0  chr12   752578   752579  652578   852579  ENSG00000060237  Q9H4A3,P62873  protocol_example.protein_1.bed.gz,protocol_example.protein_2.bed.gz  covar_1.gz,covar_2.gz  trait_A,trait_B    chr12:752578-752579  protocol_example.genotype.chr21_22.bed       
-        # Create the final dictionary
-        regional_data = {
-            &#39;data&#39;: [(row[&#39;geno_path&#39;], *row[&#39;path&#39;].split(&#39;,&#39;), *row[&#39;cov_path&#39;].split(&#39;,&#39;)) for _, row in meta_data.iterrows()],
-            &#39;meta_info&#39;: [(f&quot;{row[&#39;#chr&#39;]}:{row[&#39;start&#39;]}-{row[&#39;end&#39;]}&quot;, # this is the phenotypic region to extract data from
-                          f&quot;{row[&#39;#chr&#39;]}:{row[&#39;start_association&#39;]}-{row[&#39;end_association&#39;]}&quot;, # this is the association window region
-                          row[&#39;ID&#39;], row[&#39;Original_ID&#39;], *row[&#39;cond&#39;].split(&#39;,&#39;)) for _, row in meta_data.iterrows()]
-        }
-    else:
-        regional_data = {&#39;data&#39;: [], &#39;meta_info&#39;: []}
-        
-    return regional_data
-
-
-# Modified main code section to document the key format alignment
-regional_data = load_regional_data(
-    genoFile=genoFile, 
-    phenoFile=phenoFile, 
-    covFile=covFile, 
-    phenotype_names=phenotype_names, 
-    phenoIDFile=phenoIDFile,
-    region_list=region_list, 
-    region_name=region_name, 
-    trans_analysis=trans_analysis,
-    customized_association_windows=customized_association_windows, 
-    cis_window=cis_window
-)
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_rss_analysis_regions: shared = &quot;regional_rss_data&quot;]
-
-from collections import OrderedDict
-
-def file_exists(file_path, relative_path=None):
-    &quot;&quot;&quot;Check if a file exists at the given path or relative to a specified path.&quot;&quot;&quot;
-    if os.path.exists(file_path) and os.path.isfile(file_path):
-        return True
-    elif relative_path:
-        relative_file_path = os.path.join(relative_path, file_path)
-        return os.path.exists(relative_file_path) and os.path.isfile(relative_file_path)
-    return False
-
-def check_required_columns(df, required_columns):
-    &quot;&quot;&quot;Check if the required columns are present in the dataframe.&quot;&quot;&quot;
-    missing_columns = [col for col in required_columns if col not in df.columns]
-    if missing_columns:
-        raise ValueError(f&quot;Missing required columns: {&#39;, &#39;.join(missing_columns)}&quot;)
-
-def parse_region(region):
-    &quot;&quot;&quot;
-    Parse a region string in &#39;chr:start-end&#39; format into a list [chr, start, end].
-    Returns a list containing [chromosome_with_chr_prefix, start_position, end_position].
-    &quot;&quot;&quot;
-    # Handle both numeric and &#39;chr&#39; prefixed chromosome formats
-    if &#39;:&#39; in region:
-        chrom, rest = region.split(&#39;:&#39;)
-        # Store original chrom value with &#39;chr&#39; prefix preserved
-        original_chrom = chrom
-        
-        # Strip &#39;chr&#39; prefix if present (for internal processing)
-        if chrom.startswith(&#39;chr&#39;):
-            chrom = chrom[3:]  # Remove &#39;chr&#39; prefix if present
-        
-        # Handle both hyphen and underscore separators for start-end
-        if &#39;-&#39; in rest:
-            start, end = rest.split(&#39;-&#39;)
-        elif &#39;_&#39; in rest:
-            start, end = rest.split(&#39;_&#39;)
-        else:
-            raise ValueError(f&quot;Invalid region format: {region}. Expected format: chr:start-end or chr:start_end&quot;)
-            
-        # Return with the original chromosome format that includes &#39;chr&#39; prefix
-        return [original_chrom, int(start), int(end)]
-    else:
-        raise ValueError(f&quot;Invalid region format: {region}. Expected format: chr:start-end or chr:start_end&quot;)
-
-def format_region_key(region):
-    chrom = str(region[0])
-    if not chrom.startswith(&#39;chr&#39;):
-        chrom = f&#39;chr{chrom}&#39;
-    return f&quot;{chrom}:{region[1]}-{region[2]}&quot;
-
-def resolve_region_names(region_name, customized_association_windows=None, region_list=None):
-    &quot;&quot;&quot;
-    Resolve region names by looking them up in either customized_association_windows or region_list.
-    Returns a dictionary mapping region keys to parsed regions.
-    &quot;&quot;&quot;
-    region_dict = {}
-    
-    # If no region names provided, return empty dict
-    if not region_name:
-        return region_dict
-    
-    # Check if either file exists
-    if not ((customized_association_windows and os.path.isfile(customized_association_windows)) or 
-            (region_list and os.path.isfile(region_list))):
-        raise ValueError(&quot;Either customized association window file or region list file must exist when region names are provided&quot;)
-    
-    # Determine which file to use (prioritize customized_association_windows)
-    region_file = None
-    if customized_association_windows and os.path.isfile(customized_association_windows):
-        region_file = customized_association_windows
-        print(f&quot;Using customized association window file: {region_file}&quot;)
-    elif region_list and os.path.isfile(region_list):
-        region_file = region_list
-        print(f&quot;Using region list file: {region_file}&quot;)
-    
-    # Load region definitions from the file
-    name_to_region_map = {}
-    with open(region_file, &#39;r&#39;) as file:
-        for line in file:
-            # Skip empty lines and comments
-            if not line.strip() or line.startswith(&quot;#&quot;):
-                continue
-                
-            parts = line.strip().split()
-            if len(parts) &gt;= 4:  # Ensure there&#39;s at least 4 columns
-                # Extract ID column (4th column)
-                region_id = parts[3]
-                
-                # Extract chromosome, start, and end positions
-                chrom = parts[0].replace(&quot;chr&quot;, &quot;&quot;)  # Remove &#39;chr&#39; prefix if present
-                try:
-                    # Create the region info
-                    parsed_region = [int(chrom) if chrom.isdigit() else chrom, 
-                                    int(parts[1]), 
-                                    int(parts[2])]
-                    
-                    # Include the ID
-                    parsed_region.append(parts[3])
-                    
-                    # Add to the mapping
-                    name_to_region_map[region_id] = parsed_region
-                except ValueError:
-                    # Skip lines with non-integer positions
-                    print(f&quot;Warning: Skipping invalid region definition: {line.strip()}&quot;)
-    
-    # Process each region name
-    for region in region_name:
-        # Check if this region name exists in our mapping
-        if region in name_to_region_map:
-            parsed_region = name_to_region_map[region]
-        else:
-            # Try to parse it as a coordinate string as a last resort
-            try:
-                parsed_region = parse_region(region)
-                print(f&quot;Warning: Region &#39;{region}&#39; not found in file, parsing as coordinate string&quot;)
-            except ValueError:
-                raise ValueError(f&quot;Could not parse region &#39;{region}&#39; and it was not found in the region file&quot;)
-        
-        # Format the region key
-        region_key = format_region_key(parsed_region)
-        if region_key not in region_dict:
-            region_dict[region_key] = parsed_region
-    
-    return region_dict
-
-def load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping, region_name, region_list):
-    &quot;&quot;&quot;
-    Extracts data from GWAS metadata files and additional GWAS data provided. 
-    Uses the same region information as load_regional_data to ensure consistent
-    region identification across both data structures.
-    
-    IMPORTANT: This function processes the same regions as load_regional_data and 
-    formats the region keys in regional_rss_data[&quot;regions&quot;] to exactly match the 
-    2nd element of regional_data[&quot;meta_info&quot;] tuples (chr:start-end format).
-
-    Args:
-    - gwas_meta_data (str): File path to the GWAS metadata file.
-    - gwas_name (list): Vector of GWAS study names.
-    - gwas_data (list): Vector of GWAS data.
-    - column_mapping (list, optional): Vector of column mapping files.
-    - region_name (list, optional): List of region names (same as in load_regional_data).
-    - region_list (str, required): File path to a file containing region mapping between names and coordinates (same file used in load_regional_data).
-
-    Returns:
-    - GWAS Dictionary: Maps study IDs to a list containing chromosome number, 
-      GWAS file path, and optional column mapping file path.
-    - Region Dictionary: Maps region names to lists [chr, start, end] using the same
-      key format as regional_data[&quot;meta_info&quot;][1] (chr:start-end).
-
-    Raises:
-    - FileNotFoundError: If any specified file path does not exist.
-    - ValueError: If required columns are missing in the input files or vector lengths mismatch.
-    &quot;&quot;&quot;
-    # Check vector lengths
-    if len(gwas_name) != len(gwas_data):
-        raise ValueError(&quot;gwas_name and gwas_data must be of equal length&quot;)
-    
-    if len(column_mapping) &gt; 0 and len(column_mapping) != len(gwas_name):
-        raise ValueError(&quot;If column_mapping is provided, it must be of the same length as gwas_name and gwas_data&quot;)
-
-    # Required columns for GWAS file type
-    required_gwas_columns = [&#39;study_id&#39;, &#39;chrom&#39;, &#39;file_path&#39;]
-
-    # Base directory of the metadata files
-    gwas_base_dir = os.path.dirname(gwas_meta_data)
-    
-    # Reading the GWAS metadata file
-    gwas_df = pd.read_csv(gwas_meta_data, sep=&quot;\t&quot;)
-    check_required_columns(gwas_df, required_gwas_columns)
-    gwas_dict = OrderedDict()
-
-        # If one LD name provided, apply to all studies
-        # If multiple LD names provided, ensure they match the number of studies
-        # Apply specific LD name to each study using vectorized operations
-        
-    # Process additional GWAS data from vectors
-    for name, data, mapping in zip(gwas_name, gwas_data, column_mapping or [None]*len(gwas_name)):
-        gwas_dict[name] = {0: [data, mapping]}
-
-    for _, row in gwas_df.iterrows():
-        file_path = row[&#39;file_path&#39;]
-        mapping_file = row.get(&#39;column_mapping_file&#39;)
-        n_sample = row.get(&#39;n_sample&#39;)
-        n_case = row.get(&#39;n_case&#39;)
-        n_control = row.get(&#39;n_control&#39;)
-
-        # Check if the file and optional mapping file exist
-        if not file_exists(file_path, gwas_base_dir) or (mapping_file and not file_exists(mapping_file, gwas_base_dir)):
-            raise FileNotFoundError(f&quot;File {file_path} not found for {row[&#39;study_id&#39;]}&quot;)
-        
-        # Adjust paths if necessary
-        file_path = file_path if file_exists(file_path) else os.path.join(gwas_base_dir, file_path)
-        if mapping_file:
-            mapping_file = mapping_file if file_exists(mapping_file) else os.path.join(gwas_base_dir, mapping_file)
-        
-        # Create or update the entry for the study_id
-        if row[&#39;study_id&#39;] not in gwas_dict:
-            gwas_dict[row[&#39;study_id&#39;]] = {}
-
-        # Expand chrom 0 to chrom 1-22 or use the specified chrom
-        chrom_range = range(1, 23) if row[&#39;chrom&#39;] == 0 else [row[&#39;chrom&#39;]]
-        for chrom in chrom_range:
-            if chrom in gwas_dict[row[&#39;study_id&#39;]]:
-                existing_entry = gwas_dict[row[&#39;study_id&#39;]][chrom]
-                raise ValueError(f&quot;Duplicate chromosome specification for study_id {row[&#39;study_id&#39;]}, chrom {chrom}. &quot;
-                                 f&quot;Conflicting entries: {existing_entry} and {[file_path, mapping_file]}&quot;)
-            gwas_dict[row[&#39;study_id&#39;]][chrom] = [file_path, mapping_file, n_sample, n_case, n_control, row.get(&#39;ld_meta_data&#39;, str(ld_meta_data))]
-
-    # Process region_list and region_name
-    region_dict = dict()
- 
-    if region_name:
-        for region in region_name:
-            try:
-                # First try parsing the region as a coordinate
-                parsed_region = parse_region(region)
-                region_key = format_region_key(parsed_region)
-                if region_key not in region_dict:
-                    region_dict[region_key] = parsed_region
-            except ValueError:
-                # If that fails, it means it&#39;s a name that needs to be resolved
-                resolved_regions = resolve_region_names([region], customized_association_windows, region_list)
-                region_dict.update(resolved_regions)
-    else:
-        # Analyze all regions found in region list
-        with open(region_list, &#39;r&#39;) as file:
-            for line in file:
-                # Skip empty lines and comments
-                if not line.strip() or line.startswith(&quot;#&quot;):
-                    continue
-                    
-                parts = line.strip().split()
-                if len(parts) == 1:
-                    # Format: &quot;chr:start-end&quot;
-                    region = parse_region(parts[0])
-                elif len(parts) == 3:
-                    # Format: chr start end
-                    chrom = parts[0]
-                    # Ensure &#39;chr&#39; prefix is preserved
-                    if not chrom.startswith(&#39;chr&#39;):
-                        chrom = f&quot;chr{chrom}&quot;
-                    region = [chrom, int(parts[1]), int(parts[2])]
-                elif len(parts) &gt;= 4:
-                    # Format for eQTL: chr start end gene_id gene_name ...
-                    chrom = parts[0]
-                    # Ensure &#39;chr&#39; prefix is preserved
-                    if not chrom.startswith(&#39;chr&#39;):
-                        chrom = f&quot;chr{chrom}&quot;
-                    region = [chrom, int(parts[1]), int(parts[2]), parts[3]]
-                else:
-                    raise ValueError(f&quot;Invalid region format in region_list: {line.strip()}&quot;)
-                
-                # Create key in the same format as regional_data[&quot;meta_info&quot;][1]
-                region_key = format_region_key(region)
-                region_dict[region_key] = region
-
-    return gwas_dict, region_dict
-
-if gwas_meta_data.is_file():
-    # Load GWAS data with region keys formatted to match regional_data[&quot;meta_info&quot;]
-    # Using the same region_list and region_name as load_regional_data ensures consistency
-    gwas_dict, region_dict = load_regional_rss_data(gwas_meta_data, gwas_name, gwas_data, column_mapping, region_name, region_list)
-    regional_rss_data = dict([(&quot;GWAS&quot;, gwas_dict), (&quot;regions&quot;, region_dict)])
-    
-    # The keys in regional_rss_data[&quot;regions&quot;] are now formatted as &quot;chr:start-end&quot;
-    # to match the second element of each tuple in regional_data[&quot;meta_info&quot;],
-    # with both formats ensuring the chromosome includes the &#39;chr&#39; prefix.
-    # Since we use the same region_list and region_name parameters for both 
-    # load_regional_data and load_regional_rss_data, we guarantee consistent
-    # region identification across both data structures.
-    # The expected format for shared keys is: &quot;chr1:12345-67890&quot;
-else:
-    regional_rss_data = dict()
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="colocboost-analysis">
-<h2>ColocBoost analysis<a class="headerlink" href="#colocboost-analysis" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[colocboost]
-depends: sos_variable(&quot;regional_data&quot;), sos_variable(&quot;regional_rss_data&quot;)
-# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
-stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
-meta_info = regional_data[&#39;meta_info&#39;]
-input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
-
-base_dir = f&#39;{cwd:a}&#39;
-chr_info = _meta_info[0].split(&quot;:&quot;)[0]
-gene_id = _meta_info[2]
-base_filename = f&#39;{name}.{chr_info}_{gene_id}&#39;
-
-# Initialize output_files list
-output_files = []
-
-# Default case: if all analysis flags are False, save data
-if not xqtl_coloc and not joint_gwas and not separate_gwas:
-    save_data = True
-
-if save_data:
-    output_files.append(f&#39;{base_dir}/data/{base_filename}.cb_data.rds&#39;)
-
-if xqtl_coloc:
-    output_files.append(f&#39;{base_dir}/colocboost/{base_filename}.cb_xqtl.rds&#39;)
-
-if joint_gwas:
-    output_files.append(f&#39;{base_dir}/colocboost/{base_filename}.cb_xqtl_joint_gwas.rds&#39;)
-
-if separate_gwas and &quot;GWAS&quot; in regional_rss_data and regional_rss_data[&quot;GWAS&quot;]:
-    for study_name in regional_rss_data[&quot;GWAS&quot;].keys():
-        output_files.append(f&#39;{base_dir}/colocboost/{base_filename}.cb_xqtl_{study_name}.rds&#39;)
-   
-output: output_files
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&quot;, stderr = f&quot;{_output[0]:nn}.colocboost.stderr&quot;, container = container
-    options(warn=1)
-    
-    library(colocboost)
-    library(pecotmr)
-    library(dplyr)
-  
-    ##### ======= set up all input parameters ====== #####
-  
-    # individual level data
-    region = ${(&quot;&#39;%s&#39;&quot; % _meta_info[0]) if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &#39;NULL&#39;} # if the end position is zero return NULL
-    genotype_list = ${_input[0]:anr}
-    phenotype_list = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1:len(_input)//2+1]])})
-    covariate_list = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[len(_input)//2+1:]])})
-    conditions_list_individual = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x for x in _meta_info[4:]])})
-    maf_cutoff = ${maf}
-    mac_cutoff = ${mac}
-    imiss_cutoff = ${imiss}
-    association_window = &quot;${_meta_info[1]}&quot;
-    extract_region_name = list(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])})
-    region_name_col = ${&quot;4&quot; if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;}
-    keep_indel = ${&quot;TRUE&quot; if indel else &quot;FALSE&quot;}
-    # extract subset of samples
-    keep_samples = NULL
-    if (${&quot;TRUE&quot; if keep_samples.is_file() else &quot;FALSE&quot;}) {
-      keep_samples = unlist(strsplit(readLines(${keep_samples:ar}), &quot;\\s+&quot;))
-      message(paste(length(keep_samples), &quot;samples are selected to be loaded for analysis&quot;))
-    }
-    phenotype_header = ${&quot;4&quot; if int(_meta_info[0].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;}
-    scale_residuals = FALSE
-    keep_variants = ${&#39;&quot;%s&quot;&#39; % keep_variants if not keep_variants.is_dir() else &quot;NULL&quot;} # use &quot;not keep_variants.is_dir()&quot; in case user input filename is wrong without realizing
-    
-    # - summary statistics
-    sumstat_path_list = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][0] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,})
-    column_file_path_list = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][1] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,})
-    # Replace _regions with _meta_info[1] which is the association window region
-    n_samples = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][2] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
-    n_cases = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][3] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
-    n_controls = c(${paths([regional_rss_data[&#39;GWAS&#39;][x][regional_rss_data[&#39;regions&#39;][_meta_info[1]][0]][4] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else []):r,}) %&gt;% as.numeric
-    if(&quot;${extract_sumstats_region_name}&quot; == &quot;NULL&quot;){
-        extract_sumstats_region_name = NULL
-    } else {
-        extract_sumstats_region_name = &quot;${extract_sumstats_region_name}&quot;
-    }
-    sumstats_region_name_col = ${sumstats_region_name_col}
-    comment_string = ${&quot;NULL&quot; if comment_string == &quot;NULL&quot; else f&quot;&#39;{comment_string}&#39;&quot;}
-    qc_method = ${&quot;NULL&quot; if qc_method == &quot;NULL&quot; else &quot;&#39;%s&#39;&quot; % qc_method}
-    impute = ${&quot;TRUE&quot; if impute else &quot;FALSE&quot;}
-    impute_opts = list(rcond = ${rcond}, R2_threshold = ${R2_threshold}, minimum_ld = ${minimum_ld}, lamb=${lamb})
-    keep_indel = ${&quot;TRUE&quot; if indel else &quot;FALSE&quot;}
-  
-    # Summary stats data - Using the 2nd element (association window) from _meta_info directly
-    studies = c(${&#39;, &#39;.join([&#39;&quot;{}&quot;&#39;.format(item) for item in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else [])})
-    # Build LD-to-study mapping from per-study ld_meta_data in GWAS metadata.
-    # Each study&#39;s ld_meta_data path comes from the GWAS meta TSV (index [5]).
-    # Falls back to --ld-meta-data default when the column is absent.
-    match_LD_sumstat &lt;- list()
-    study_ld_paths &lt;- c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % regional_rss_data[&quot;GWAS&quot;][x][regional_rss_data[&quot;regions&quot;][_meta_info[1]][0]][5] for x in regional_rss_data[&quot;GWAS&quot;].keys()] if &quot;GWAS&quot; in regional_rss_data else [])})
-    names(study_ld_paths) &lt;- studies
-    for (ld_path in unique(study_ld_paths)) {
-      match_LD_sumstat[[ld_path]] &lt;- names(study_ld_paths)[study_ld_paths == ld_path]
-    }
-    LD_meta_file_path_list &lt;- unique(study_ld_paths)
-
-
-    # If we have any LD data names
-    # About analysis
-    xqtl_coloc = ${&quot;TRUE&quot; if xqtl_coloc else &quot;FALSE&quot;}
-    joint_gwas = ${&quot;TRUE&quot; if joint_gwas else &quot;FALSE&quot;}
-    separate_gwas = ${&quot;TRUE&quot; if separate_gwas else &quot;FALSE&quot;}
-    # About QC parameters
-    pip_cutoff_to_skip_ind = unlist(list(${&quot;,&quot;.join(skip_analysis_pip_cutoff)})[conditions_list_individual])
-    pip_cutoff_to_skip_sumstat = rep(${skip_sumstats_analysis_pip_cutoff}, length(studies)) %&gt;% setNames(studies)
-    event_filter_rules = ${&quot;NULL&quot; if not event_filter_rules.is_file() else &quot;&#39;%s&#39;&quot; % event_filter_rules}
-    if (!is.null(event_filter_rules)) {
-        event_filters &lt;- read.table(&quot;${event_filter_rules}&quot;)
-        event_filters &lt;- lapply(1:nrow(event_filters), function(ii) as.list(event_filters[ii,] %&gt;% unlist))
-    } else { event_filters &lt;- NULL }
-    
-    # Add computational time
-    computing_time = list()
-    # Load regional multitask data
-    t1 &lt;- Sys.time()
-    tryCatch({
-        fdat = load_multitask_regional_data(region = region, 
-                                            # individual
-                                            genotype_list = genotype_list,
-                                            phenotype_list = phenotype_list, 
-                                            covariate_list = covariate_list, 
-                                            conditions_list_individual = conditions_list_individual,
-                                            maf_cutoff = maf_cutoff, mac_cutoff = mac_cutoff,
-                                            imiss_cutoff = imiss_cutoff,
-                                            association_window = association_window, 
-                                            extract_region_name = extract_region_name,
-                                            region_name_col = region_name_col,
-                                            keep_indel = keep_indel, keep_samples = keep_samples,
-                                            phenotype_header = phenotype_header, scale_residuals = scale_residuals,
-                                            keep_variants = keep_variants,
-                                            # summary stats
-                                            sumstat_path_list = sumstat_path_list,
-                                            column_file_path_list = column_file_path_list,
-                                            LD_meta_file_path_list = LD_meta_file_path_list,
-                                            match_LD_sumstat = match_LD_sumstat,
-                                            conditions_list_sumstat = studies,
-                                            n_samples = n_samples, n_cases = n_cases, n_controls = n_controls,
-                                            extract_sumstats_region_name = extract_sumstats_region_name, sumstats_region_name_col = sumstats_region_name_col,
-                                            comment_string = comment_string)
-    }, NoSNPsError = function(e) {
-        message(&quot;Error: &quot;, paste(e$message, &quot;${_meta_info[2] + &#39;@&#39; + _meta_info[1]}&quot;))
-        quit(save=&quot;no&quot;)
-    })   
-    t2 &lt;- Sys.time()
-    computing_time$Loading = t2 - t1
-
-  
-    # save data-set
-    if (${&quot;TRUE&quot; if save_data else &quot;FALSE&quot;}) {
-        saveRDS(list(${_meta_info[2]} = fdat), &quot;${_output[0]:ann}.cb_data.rds&quot;, compress=&#39;xz&#39;)
-    }
-    if (&quot;${_meta_info[2]}&quot; != &quot;${_meta_info[3]}&quot;) {
-        region_name = c(&quot;${_meta_info[2]}&quot;, c(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])}))
-    } else {
-        region_name = &quot;${_meta_info[2]}&quot;
-    }
-  
-    # - analysis parameters
-    region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
-    res &lt;- colocboost_analysis_pipeline(region_data = fdat, 
-                                        event_filters = event_filters,
-                                        # - analysis
-                                        xqtl_coloc = xqtl_coloc,
-                                        joint_gwas = joint_gwas,
-                                        separate_gwas = separate_gwas,
-                                        # - individual QC
-                                        maf_cutoff = maf_cutoff, 
-                                        pip_cutoff_to_skip_ind = pip_cutoff_to_skip_ind,
-                                        # - sumstat QC
-                                        pip_cutoff_to_skip_sumstat = pip_cutoff_to_skip_sumstat,
-                                        keep_indel = keep_indel,
-                                        qc_method = qc_method,
-                                        impute = impute, 
-                                        impute_opts = impute_opts)
-
-    # Reorganize outputs
-    computing_time &lt;- c(computing_time, res$computing_time)
-    if (xqtl_coloc) {
-      res$xqtl_coloc$region_info &lt;- region_info
-      res$xqtl_coloc$computing_time &lt;- computing_time
-      saveRDS(list(&quot;${_meta_info[2]}&quot; = res$xqtl_coloc), &quot;${_output[0]:ann}.cb_xqtl.rds&quot;, compress=&#39;xz&#39;)
-    }
-    if (joint_gwas) {
-      res$joint_gwas$region_info &lt;- region_info
-      res$joint_gwas$computing_time &lt;- computing_time
-      saveRDS(list(&quot;${_meta_info[2]}&quot; = res$joint_gwas), &quot;${_output[0]:ann}.cb_xqtl_joint_gwas.rds&quot;, compress=&#39;xz&#39;)
-    }
-    if (separate_gwas) {
-      if (any(is.na(names(res$separate_gwas))) || is.null(names(res$separate_gwas))) { names(res$separate_gwas) &lt;- studies[seq_along(res$separate_gwas)] }
-      for (name in names(res$separate_gwas)) {
-          res$separate_gwas[[name]]$region_info &lt;- region_info
-          res$separate_gwas[[name]]$computing_time &lt;- computing_time
-          saveRDS(list(&quot;${_meta_info[2]}&quot; = res$separate_gwas[[name]]), paste0(&quot;${_output[0]:ann}.cb_xqtl_&quot;, name, &quot;.rds&quot;), compress=&#39;xz&#39;)
-        }
-    }
-    
+input: qtl_dataset, for_each = &#39;genes&#39;
+output: f&quot;{cwd}/{study}.{_genes}.colocboost.rds&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = f&quot;{_output}.stdout&quot;, container = container
+    Rscript ${path(&quot;code/script/pecotmr_integration/colocboost.R&quot;, absolute=True)} \
+        --qtl-dataset ${_input} \
+        --gene-id ${_genes} \
+        --cis-window ${cis_window} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
 </div>
-</section>
-<section id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Step</p></th>
-<th class="head"><p>Substep</p></th>
-<th class="head"><p>Problem</p></th>
-<th class="head"><p>Possible Reason</p></th>
-<th class="head"><p>Solution</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p></p></td>
-<td><p></p></td>
-<td><p></p></td>
-<td><p></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="anticipated-results">
-<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
-<p>For the toy chr22 dataset, produces <code class="docutils literal notranslate"><span class="pre">protocol_example.colocboost.rds</span></code> with ColocBoost posteriors. Expect a convergence message and sparse result for the single-region toy example.</p>
 </section>
 </section>
 
@@ -1763,27 +645,10 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.colocboost.stdout&qu
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-genotype-phenotype-and-association-analysis-windows">Example genotype, phenotype and association analysis windows</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-summary-statistics-and-ld-reference">Example summary statistics and LD reference</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#about-indels">About indels</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs">Inputs</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-analysis">xQTL only analysis</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-colocboost-with-xqtl-only"><strong>Step 1.</strong> ColocBoost with xQTL only</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-colocboost-with-gwas"><strong>Step 2.</strong> ColocBoost with GWAS</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-colocboost-with-multiple-ld-references-multi-ancestry"><strong>Step 3.</strong> ColocBoost with multiple LD references (multi-ancestry)</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colocboost-analysis">ColocBoost analysis</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
 </ul>
   </nav></div>
 
