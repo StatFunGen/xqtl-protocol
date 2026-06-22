@@ -43,7 +43,11 @@ def unique_by_basename(paths, label: str):
     for path in paths:
         name = path.name
         if name in seen:
-            duplicates.setdefault(name, [seen[name]]).append(path)
+            # Prefer pecotmr_integration over other locations when basename conflicts
+            if "pecotmr_integration" in path.parts:
+                seen[name] = path
+            elif "pecotmr_integration" not in seen[name].parts:
+                duplicates.setdefault(name, [seen[name]]).append(path)
         else:
             seen[name] = path
     if duplicates:
