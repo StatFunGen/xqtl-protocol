@@ -6,6 +6,7 @@ on:
     paths:
     - 'code/**/*.ipynb'
     - 'website/**'
+    - 'xqtl_flowchart.html'
 
 jobs:
   build_website:
@@ -35,6 +36,7 @@ jobs:
           rm -f pipeline/*.ipynb
           jupyter-book build .  --path-output . --config website/_config.yml --toc website/_toc.yml
           rsync -auzP code/images/* _build/html/_images/
+          cp xqtl_flowchart.html _build/html/
           ghp-import -n -p -f _build/html
 
           # Link notebooks
