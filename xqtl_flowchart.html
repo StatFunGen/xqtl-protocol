@@ -175,8 +175,8 @@ footer a:hover{text-decoration:underline}
 <!-- 1. Reference Data -->
 <div class="row">
 <div class="sc s-ref" id="ref-data"
-  data-out="mol-pheno,geno-prep"
-  data-tip="Outputs: reference genome &amp; gene annotations → Molecular Phenotypes; variant annotations → Genotype Preprocessing; LD matrices &amp; TADB → Fine-mapping">
+  data-out="mol-pheno,geno-prep,fine-map,gwas-integ,enrich"
+  data-tip="Outputs: ref genome &amp; annotations → Molecular Phenotypes; variant annotations → Genotype Preprocessing; LD reference → Fine-mapping (RSS); LD + gene annotations → GWAS Integration; LD scores → Enrichment (S-LDSC)">
   <div class="sh"><div class="si">📚</div>
     <div><div class="sn">Step 1</div><div class="st">Reference Data</div>
     <div class="sd">Reference genome, gene annotations, LD matrices, and TADB boundaries shared across all downstream steps</div></div>
@@ -374,8 +374,8 @@ footer a:hover{text-decoration:underline}
 <div class="row">
 <div class="sc s-qtl" id="qtl-assoc"
   data-in="geno-prep,pheno-prep,cov-prep"
-  data-out="mash,fine-map"
-  data-tip="Inputs: formatted genotypes + phenotype BED + covariate files&#10;Outputs: cis/trans summary stats → MASH &amp; Fine-mapping">
+  data-out="mash,gwas-integ"
+  data-tip="Inputs: formatted genotypes + phenotype BED + covariate files&#10;Outputs: per-context effect sizes &amp; SEs → MASH; QTL sumstats → GWAS Integration (ColocBoost)">
   <div class="sh"><div class="si">⚡</div>
     <div><div class="sn">Step 4</div><div class="st">QTL Association Testing</div>
     <div class="sd">Scan all variant–phenotype pairs (cis &amp; trans) with TensorQTL, then apply hierarchical multiple-testing correction</div></div>
@@ -432,9 +432,9 @@ footer a:hover{text-decoration:underline}
 
   <!-- Fine-mapping -->
   <div class="sc s-fine" id="fine-map"
-    data-in="qtl-assoc,mash,geno-prep,pheno-prep,cov-prep"
+    data-in="mash,geno-prep,pheno-prep,cov-prep,ref-data"
     data-out="gwas-integ,enrich,ems"
-    data-tip="Inputs: summary stats ← QTL Testing; mixture priors ← MASH; individual genotypes, phenotypes &amp; covariates ← Step 3 (for SuSiE/mvSuSiE/fSuSiE)&#10;Outputs: credible sets + PIPs + TWAS weights → GWAS Integration, Enrichment, EMS">
+    data-tip="Inputs: individual genotypes, phenotypes &amp; covariates ← Step 3 (SuSiE/mvSuSiE/fSuSiE); mixture priors ← MASH (mvSuSiE); LD reference ← Reference Data (RSS)&#10;Outputs: credible sets + PIPs + TWAS weights → GWAS Integration, Enrichment, EMS">
     <div class="sh"><div class="si">🎯</div>
       <div><div class="sn">Step 5b</div><div class="st">Multiomics Regression / Fine-mapping</div>
       <div class="sd">Pinpoint causal variants within QTL loci using Bayesian credible sets (SuSiE, mvSuSiE, RSS) and generate TWAS weights</div></div>
@@ -473,9 +473,9 @@ footer a:hover{text-decoration:underline}
 <!-- 6. GWAS Integration -->
 <div class="row">
 <div class="sc s-gwas" id="gwas-integ"
-  data-in="fine-map"
+  data-in="fine-map,ref-data,qtl-assoc"
   data-out="enrich"
-  data-tip="Inputs: credible sets, PIPs, TWAS weights ← Fine-mapping&#10;Outputs: colocalization posteriors, gene associations → Enrichment">
+  data-tip="Inputs: credible sets, PIPs, TWAS weights ← Fine-mapping; GWAS sumstats, LD reference &amp; gene annotations ← Reference Data; QTL sumstats ← QTL Association (ColocBoost)&#10;Outputs: colocalization posteriors, gene associations → Enrichment">
   <div class="sh"><div class="si">🔗</div>
     <div><div class="sn">Step 6</div><div class="st">GWAS Integration</div>
     <div class="sd">Link QTL signals to GWAS loci via colocalization (SuSiE-enloc, ColocBoost) and gene-level associations (TWAS / cTWAS)</div></div>
@@ -503,7 +503,7 @@ footer a:hover{text-decoration:underline}
 <div class="row">
   <!-- Enrichment -->
   <div class="sc s-enrich" id="enrich"
-    data-in="fine-map,gwas-integ"
+    data-in="fine-map,gwas-integ,ref-data"
     data-out=""
     data-tip="Inputs: fine-mapped variants ← Fine-mapping; colocalization results ← GWAS Integration&#10;Outputs: annotation enrichments, heritability partitioning (terminal)">
     <div class="sh"><div class="si">📉</div>
@@ -573,12 +573,15 @@ const CONN = [
   ['pheno-prep', 'qtl-assoc',  'phenotype BED files',          '#0891b2'],
   ['cov-prep',   'qtl-assoc',  'covariate files',              '#0f766e'],
   ['qtl-assoc',  'mash',       'per-context effect sizes',     '#b45309'],
-  ['qtl-assoc',  'fine-map',   'nominal summary stats',        '#b45309'],
   ['geno-prep',  'fine-map',   'individual genotypes (SuSiE/mvSuSiE/fSuSiE)', '#1d4ed8'],
   ['pheno-prep', 'fine-map',   'individual phenotypes (SuSiE/mvSuSiE/fSuSiE)', '#0891b2'],
   ['cov-prep',   'fine-map',   'covariates (SuSiE/mvSuSiE/fSuSiE)',            '#0f766e'],
+  ['ref-data',   'fine-map',   'LD reference (RSS)',            '#7c3aed'],
   ['mash',       'fine-map',   'mixture priors (mvSuSiE)',     '#1e40af'],
   ['fine-map',   'gwas-integ', 'credible sets + TWAS weights', '#be123c'],
+  ['ref-data',   'gwas-integ', 'GWAS sumstats + LD reference', '#7c3aed'],
+  ['qtl-assoc',  'gwas-integ', 'QTL sumstats (ColocBoost)',    '#b45309'],
+  ['ref-data',   'enrich',     'LD scores (S-LDSC)',            '#7c3aed'],
   ['fine-map',   'enrich',     'fine-mapped variants',         '#be123c'],
   ['fine-map',   'ems',        'variant features',             '#be123c'],
   ['gwas-integ', 'enrich',     'colocalization posteriors',    '#7e22ce'],
