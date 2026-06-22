@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FunGen-xQTL Protocol — Interactive Workflow</title>
+<style>
+:root {
+  --c-ref:#7c3aed; --c-pheno:#059669; --c-geno:#1d4ed8;
+  --c-phenoprep:#0891b2; --c-covprep:#0f766e; --c-qtl:#b45309;
+  --c-mash:#1e40af; --c-fine:#be123c; --c-gwas:#7e22ce;
+  --c-enrich:#3f6212; --c-ems:#475569;
+  --bg:#f1f5f9; --card:#fff; --sub:#f8fafc;
+  --txt:#1e293b; --muted:#64748b; --bdr:#e2e8f0;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 2px 8px rgba(0,0,0,.05);
+  --shh:0 4px 16px rgba(0,0,0,.12),0 8px 28px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#064e3b 100%);
+  color:#fff;padding:36px 48px 28px;text-align:center;position:relative;overflow:hidden}
+.hdr::before{content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z' fill='%23ffffff' fill-opacity='.03'/%3E%3C/svg%3E")}
+.hdr h1{font-size:28px;font-weight:800;letter-spacing:-.3px;margin-bottom:8px;position:relative}
+.hdr .sub{font-size:14px;opacity:.75;max-width:580px;margin:0 auto 18px;position:relative}
+.hdr-links{display:flex;gap:10px;justify-content:center;position:relative;flex-wrap:wrap}
+.hdr-links a{color:rgba(255,255,255,.8);text-decoration:none;font-size:12px;
+  padding:4px 12px;border:1px solid rgba(255,255,255,.2);border-radius:4px;transition:.2s}
+.hdr-links a:hover{color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.4)}
+
+/* ── LEGEND ── */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;
+  padding:14px 40px;background:#fff;border-bottom:1px solid var(--bdr)}
+.li{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted)}
+.ld{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+
+/* ── LAYOUT ── */
+.wrap{position:relative;max-width:1120px;margin:0 auto;padding:36px 28px 80px}
+#svg-layer{position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;overflow:visible;z-index:0}
+.row{position:relative;z-index:1;display:flex;gap:14px;margin-bottom:0}
+.gap{height:56px;position:relative;z-index:1}
+
+/* ── SECTION CARDS ── */
+.sc{background:var(--card);border-radius:12px;box-shadow:var(--sh);
+  padding:15px 17px 17px;flex:1;border-top:4px solid transparent;
+  transition:box-shadow .25s,transform .25s,opacity .25s;cursor:default}
+.sc.dim{opacity:.35}
+.sc.hi{box-shadow:var(--shh);transform:translateY(-2px)}
+.sc.act{transform:translateY(-3px);box-shadow:var(--shh)}
+.s-ref{border-top-color:var(--c-ref)}
+.s-pheno{border-top-color:var(--c-pheno)}
+.s-geno{border-top-color:var(--c-geno)}
+.s-pp{border-top-color:var(--c-phenoprep)}
+.s-cp{border-top-color:var(--c-covprep)}
+.s-qtl{border-top-color:var(--c-qtl)}
+.s-mash{border-top-color:var(--c-mash)}
+.s-fine{border-top-color:var(--c-fine)}
+.s-gwas{border-top-color:var(--c-gwas)}
+.s-enrich{border-top-color:var(--c-enrich)}
+.s-ems{border-top-color:var(--c-ems)}
+
+/* ── SECTION HEADER ── */
+.sh{display:flex;align-items:flex-start;gap:9px;margin-bottom:11px}
+.si{width:27px;height:27px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;font-size:13px;flex-shrink:0;color:#fff}
+.s-ref .si{background:var(--c-ref)}.s-pheno .si{background:var(--c-pheno)}
+.s-geno .si{background:var(--c-geno)}.s-pp .si{background:var(--c-phenoprep)}
+.s-cp .si{background:var(--c-covprep)}.s-qtl .si{background:var(--c-qtl)}
+.s-mash .si{background:var(--c-mash)}.s-fine .si{background:var(--c-fine)}
+.s-gwas .si{background:var(--c-gwas)}.s-enrich .si{background:var(--c-enrich)}
+.s-ems .si{background:var(--c-ems)}
+.sn{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.45}
+.st{font-size:14.5px;font-weight:700;line-height:1.25;margin-top:1px}
+.sd{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+
+/* ── MODULE GRID ── */
+.mg{display:grid;gap:5px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.mc-full{grid-column:1/-1}
+.pheno-cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
+.pheno-col-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:5px}
+.s-pheno .pheno-col-title{color:var(--c-pheno)}
+.pheno-ge-wrap{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px}
+.pheno-subcol-title{font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.4px;margin-bottom:4px;padding:2px 5px;border-radius:4px;
+  background:rgba(5,150,105,.08);color:var(--c-pheno)}
+
+/* ── MODULE CARDS ── */
+.mc{background:var(--sub);border:1px solid var(--bdr);border-radius:6px;
+  padding:7px 38px 7px 9px;text-decoration:none;color:inherit;display:block;
+  transition:.18s;position:relative;margin-top:5px}
+.mc:first-child{margin-top:0}
+.mc:hover{background:#fff;border-color:#93c5fd;
+  box-shadow:0 0 0 2px rgba(59,130,246,.12);transform:translateY(-1px)}
+.mc:hover .mn{color:#1d4ed8}
+.mn{font-size:12.5px;font-weight:600;display:block;margin-bottom:1px;
+  color:var(--txt);transition:color .18s}
+.md{font-size:11px;color:var(--muted);display:block;line-height:1.35}
+.mt{position:absolute;top:4px;right:5px;background:#fef3c7;color:#92400e;
+  font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px}
+.mp{position:absolute;top:4px;right:5px;background:#f1f5f9;color:#94a3b8;
+  font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;
+  border:1px dashed #cbd5e1}
+
+/* ── GITHUB BADGE ── */
+.gh-link{position:absolute;bottom:5px;right:6px;color:#94a3b8;
+  opacity:0;transition:opacity .18s,color .18s;line-height:0;z-index:2;
+  display:inline-flex;align-items:center;gap:3px;font-size:10px;
+  text-decoration:none;padding:2px 4px;border-radius:3px}
+.mc:hover .gh-link{opacity:.75}
+.gh-link:hover{opacity:1!important;color:#1d4ed8;background:rgba(29,78,216,.08)}
+.mc{padding-bottom:22px} /* room for the github badge */
+
+/* ── TOOLTIP ── */
+#tip{position:fixed;background:rgba(15,23,42,.93);color:#fff;padding:10px 14px;
+  border-radius:8px;font-size:12px;max-width:260px;pointer-events:none;
+  z-index:1000;opacity:0;transition:opacity .15s;line-height:1.5;
+  box-shadow:0 4px 16px rgba(0,0,0,.3)}
+
+/* ── FOOTER ── */
+footer{text-align:center;padding:22px;color:var(--muted);font-size:12px;
+  border-top:1px solid var(--bdr);background:#fff}
+footer a{color:#3b82f6;text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+/* ── RESPONSIVE ── */
+@media(max-width:800px){
+  .row{flex-direction:column}
+  .pheno-cols{grid-template-columns:1fr 1fr}
+  .pheno-ge-wrap{grid-template-columns:1fr}
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .wrap{padding:20px 14px 40px}
+  .hdr{padding:24px 18px}
+  .hdr h1{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <h1>FunGen-xQTL Computational Protocol</h1>
+  <p class="sub">End-to-end pipeline for molecular QTL analysis — from raw genotypes &amp; phenotypes through discovery, fine-mapping, and GWAS integration</p>
+  <div class="hdr-links">
+    <a href="https://statfungen.github.io/xqtl-protocol/" target="_blank">Protocol Website</a>
+    <a href="https://github.com/statfungen/xqtl-protocol" target="_blank">GitHub</a>
+    <a href="https://www.synapse.org/#!Synapse:syn36416559/files/" target="_blank">Example Data</a>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="li"><div class="ld" style="background:#7c3aed"></div>Reference Data</div>
+  <div class="li"><div class="ld" style="background:#059669"></div>Molecular Phenotypes</div>
+  <div class="li"><div class="ld" style="background:#1d4ed8"></div>Genotype Preprocessing</div>
+  <div class="li"><div class="ld" style="background:#0891b2"></div>Phenotype Preprocessing</div>
+  <div class="li"><div class="ld" style="background:#0f766e"></div>Covariate Preprocessing</div>
+  <div class="li"><div class="ld" style="background:#b45309"></div>QTL Association Testing</div>
+  <div class="li"><div class="ld" style="background:#1e40af"></div>Multivariate Mixture (MASH)</div>
+  <div class="li"><div class="ld" style="background:#be123c"></div>Fine-mapping</div>
+  <div class="li"><div class="ld" style="background:#7e22ce"></div>GWAS Integration</div>
+  <div class="li"><div class="ld" style="background:#3f6212"></div>Enrichment &amp; Validation</div>
+  <div class="li"><div class="ld" style="background:#475569"></div>xQTL Modifier Score</div>
+</div>
+
+<div class="wrap" id="fc">
+<svg id="svg-layer"></svg>
+
+<!-- 1. Reference Data -->
+<div class="row">
+<div class="sc s-ref" id="ref-data"
+  data-out="mol-pheno,geno-prep"
+  data-tip="Outputs: reference genome &amp; gene annotations → Molecular Phenotypes; variant annotations → Genotype Preprocessing; LD matrices &amp; TADB → Fine-mapping">
+  <div class="sh"><div class="si">📚</div>
+    <div><div class="sn">Step 1</div><div class="st">Reference Data</div>
+    <div class="sd">Reference genome, gene annotations, LD matrices, and TADB boundaries shared across all downstream steps</div></div>
+  </div>
+  <div class="mg g3">
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data.html" target="_blank">
+      <span class="mn">Reference Data</span>
+      <span class="md">Overview &amp; required input files</span>
+    </a>
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/reference_data_preparation.html" target="_blank">
+      <span class="mn">Ref. Preparation</span>
+      <span class="md">Download &amp; standardize reference files</span>
+    </a>
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/generalized_TADB.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">Generalized TADB</span>
+      <span class="md">Topologically associating domain annotations</span>
+    </a>
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/ld_prune_reference.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">LD Reference Pruning</span>
+      <span class="md">Pruned LD reference panels</span>
+    </a>
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/reference_data/rss_ld_sketch.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">RSS LD Sketching</span>
+      <span class="md">LD matrix sketches for summary-stats methods</span>
+    </a>
+  </div>
+</div>
+</div>
+
+<div class="gap"></div>
+
+<!-- 2. Molecular Phenotypes -->
+<div class="row">
+<div class="sc s-pheno" id="mol-pheno"
+  data-in="ref-data"
+  data-out="pheno-prep"
+  data-tip="Inputs: ref genome &amp; annotations ← Reference Data&#10;Outputs: raw phenotype matrices (counts/PSI/beta/usage) → Phenotype Preprocessing">
+  <div class="sh"><div class="si">🧬</div>
+    <div><div class="sn">Step 2</div><div class="st">Molecular Phenotype Quantification</div>
+    <div class="sd">Quantify RNA expression (bulk &amp; single-cell), splicing, DNA methylation, and polyadenylation from raw sequencing data</div></div>
+  </div>
+  <div class="pheno-cols">
+    <div>
+      <div class="pheno-col-title">Gene Expression</div>
+      <div class="pheno-ge-wrap">
+        <div>
+          <div class="pheno-subcol-title">Bulk RNA-seq</div>
+          <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/RNA_calling.html" target="_blank">
+            <span class="mt">MWE</span><span class="mn">Quantifying Expression</span><span class="md">STAR alignment + RNA-SeQC / RSEM</span>
+          </a>
+          <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/bulk_expression_QC.html" target="_blank">
+            <span class="mt">MWE</span><span class="mn">Sample-level QC</span><span class="md">Outlier removal, QC metrics</span>
+          </a>
+          <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/bulk_expression_normalization.html" target="_blank">
+            <span class="mt">MWE</span><span class="mn">Counts Normalization</span><span class="md">TMM / TPM normalization</span>
+          </a>
+        </div>
+        <div>
+          <div class="pheno-subcol-title">Pseudobulk (scRNA)</div>
+          <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/snRNAseq_preprocessing.html" target="_blank">
+            <span class="mt">MWE</span><span class="mn">snRNA-seq Preprocessing</span><span class="md">Cell QC, clustering, cell-type annotation</span>
+          </a>
+          <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/pseudobulk_preprocessing.html" target="_blank">
+            <span class="mt">MWE</span><span class="mn">Pseudobulk Preprocessing</span><span class="md">Single-nuclei aggregation for RNA-seq &amp; ATAC-seq</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="pheno-col-title">Alt. Splicing</div>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/splicing.html" target="_blank">
+        <span class="mn">Splicing (Leafcutter2)</span><span class="md">Splice junction quantification</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/splicing_calling.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">Splicing Calling</span><span class="md">Intron cluster identification</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/splicing_normalization.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">Splicing Normalization</span><span class="md">Normalization &amp; filtering</span>
+      </a>
+    </div>
+    <div>
+      <div class="pheno-col-title">DNA Methylation</div>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/methylation.html" target="_blank">
+        <span class="mn">Methylation (SeSAMe)</span><span class="md">Beta value estimation</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/methylation_calling.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">Methylation Calling</span><span class="md">Array-based methylation pipeline</span>
+      </a>
+    </div>
+    <div>
+      <div class="pheno-col-title">Polyadenylation</div>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/apa.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">APA (DaPars2)</span><span class="md">3′ UTR usage quantification</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/calling/apa_calling.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">APA Calling</span><span class="md">Polyadenylation site calling</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/molecular_phenotypes/QC/apa_impute.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">APA Imputation &amp; QC</span><span class="md">Missing value imputation</span>
+      </a>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="gap"></div>
+
+<!-- 3. Data Pre-processing (3 tracks) -->
+<div class="row">
+  <!-- Genotype -->
+  <div class="sc s-geno" id="geno-prep"
+    data-in="ref-data"
+    data-out="cov-prep,qtl-assoc"
+    data-tip="Inputs: variant annotations ← Reference Data&#10;Outputs: formatted genotypes (PLINK BED) → QTL Testing; genotype PCs → Covariate Preprocessing">
+    <div class="sh"><div class="si">🧪</div>
+      <div><div class="sn">Step 3a</div><div class="st">Genotype Preprocessing</div>
+      <div class="sd">QC raw VCF, convert to PLINK, filter by HWE/missingness, compute kinship and genotype PCs</div></div>
+    </div>
+    <div class="mg g2">
+      <a class="mc mc-full" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype_preprocessing.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Overview</span>
+        <span class="md">Full genotype preprocessing pipeline</span>
+      </a>
+      <a class="mc mc-full" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/VCF_QC.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">VCF QC</span><span class="md">Variant-level filters on raw VCF (bcftools)</span>
+      </a>
+      <a class="mc mc-full" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/genotype_formatting.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Genotype Formatting</span><span class="md">Convert VCF → PLINK BED for downstream QC &amp; QTL</span>
+      </a>
+      <a class="mc mc-full" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/GWAS_QC.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">GWAS QC</span><span class="md">PLINK QC + KING kinship; identifies unrelated samples for PCA</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/PCA.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">PCA</span><span class="md">Genetic PCs on unrelated samples → covariate input</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/genotype/GRM.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">GRM</span><span class="md">Genomic relationship matrix for mixed-model QTL (APEX)</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Phenotype -->
+  <div class="sc s-pp" id="pheno-prep"
+    data-in="mol-pheno"
+    data-out="cov-prep,qtl-assoc"
+    data-tip="Inputs: raw phenotype matrices ← Molecular Phenotypes&#10;Outputs: phenotype BED files → QTL Testing; phenotype data → Covariate Preprocessing">
+    <div class="sh"><div class="si">📊</div>
+      <div><div class="sn">Step 3b</div><div class="st">Phenotype Preprocessing</div>
+      <div class="sd">Annotate genomic coordinates, impute missing values, and reformat phenotype matrices into BED files for QTL testing</div></div>
+    </div>
+    <div class="mg">
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype_preprocessing.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Overview</span>
+        <span class="md">Full phenotype preprocessing pipeline</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/gene_annotation.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Gene Annotation</span><span class="md">Attach genomic coordinates to features</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/phenotype_imputation.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Phenotype Imputation</span><span class="md">Impute missing phenotype values</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/phenotype/phenotype_formatting.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Phenotype Formatting</span><span class="md">Convert to BED format for TensorQTL</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Covariate -->
+  <div class="sc s-cp" id="cov-prep"
+    data-in="geno-prep,pheno-prep"
+    data-out="qtl-assoc"
+    data-tip="Inputs: genotype PCs ← Genotype Preprocessing; phenotype data ← Phenotype Preprocessing&#10;Outputs: covariate files (PCs + hidden factors) → QTL Testing">
+    <div class="sh"><div class="si">🔧</div>
+      <div><div class="sn">Step 3c</div><div class="st">Covariate Preprocessing</div>
+      <div class="sd">Merge genotype PCs with phenotypic covariates, then estimate hidden confounders (PEER / Marchenko PCA)</div></div>
+    </div>
+    <div class="mg">
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate_preprocessing.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Overview</span>
+        <span class="md">Merge PCs &amp; hidden factor estimation</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate/covariate_formatting.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Covariate Formatting</span><span class="md">Merge PCs with phenotypic covariates</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/data_preprocessing/covariate/covariate_hidden_factor.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Hidden Factors</span><span class="md">PEER / PCA hidden factor estimation</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="gap"></div>
+
+<!-- 4. QTL Association Testing -->
+<div class="row">
+<div class="sc s-qtl" id="qtl-assoc"
+  data-in="geno-prep,pheno-prep,cov-prep"
+  data-out="mash,fine-map"
+  data-tip="Inputs: formatted genotypes + phenotype BED + covariate files&#10;Outputs: cis/trans summary stats → MASH &amp; Fine-mapping">
+  <div class="sh"><div class="si">⚡</div>
+    <div><div class="sn">Step 4</div><div class="st">QTL Association Testing</div>
+    <div class="sd">Scan all variant–phenotype pairs (cis &amp; trans) with TensorQTL, then apply hierarchical multiple-testing correction</div></div>
+  </div>
+  <div class="mg g3">
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_testing.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">QTL Testing Overview</span>
+      <span class="md">cis and trans QTL analysis pipeline</span>
+    </a>
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/TensorQTL/TensorQTL.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">TensorQTL</span>
+      <span class="md">GPU-accelerated cis/trans QTL scans with optional interaction terms</span>
+    </a>
+
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/association_scan/qtl_association_postprocessing.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">Post-processing</span>
+      <span class="md">Hierarchical multiple testing correction (BH, Storey)</span>
+    </a>
+  </div>
+</div>
+</div>
+
+<div class="gap"></div>
+
+<!-- 5. MASH + Fine-mapping (parallel) -->
+<div class="row">
+  <!-- MASH -->
+  <div class="sc s-mash" id="mash"
+    data-in="qtl-assoc"
+    data-out="fine-map"
+    data-tip="Inputs: per-context effect sizes &amp; SEs ← QTL Testing&#10;Outputs: multi-context mixture priors → Fine-mapping (mvSuSiE)">
+    <div class="sh"><div class="si">📈</div>
+      <div><div class="sn">Step 5a</div><div class="st">Multivariate Mixture Model (MASH)</div>
+      <div class="sd">Learn data-driven covariance patterns to characterize how QTL effects are shared or specific across cell types and conditions</div></div>
+    </div>
+    <div class="mg">
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/multivariate_mixture_vignette.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">MASH Overview</span><span class="md">Multi-context eQTL sharing analysis</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mash_preprocessing.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">MASH Preprocessing</span><span class="md">Prepare per-context effect sizes &amp; SEs</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mixture_prior.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">Mixture Prior</span><span class="md">Learn data-driven covariance matrices</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mash_fit.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">MASH Fitting</span><span class="md">Fit model &amp; compute posteriors</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/multivariate_genome/MASH/mash_posterior.html" target="_blank">
+        <span class="mp">MWE pending</span><span class="mn">MASH Posterior</span><span class="md">Posterior effect size summaries</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Fine-mapping -->
+  <div class="sc s-fine" id="fine-map"
+    data-in="qtl-assoc,mash"
+    data-out="gwas-integ,enrich,ems"
+    data-tip="Inputs: summary stats ← QTL Testing; mixture priors ← MASH&#10;Outputs: credible sets + PIPs + TWAS weights → GWAS Integration, Enrichment, EMS">
+    <div class="sh"><div class="si">🎯</div>
+      <div><div class="sn">Step 5b</div><div class="st">Multiomics Regression / Fine-mapping</div>
+      <div class="sd">Pinpoint causal variants within QTL loci using Bayesian credible sets (SuSiE, mvSuSiE, RSS) and generate TWAS weights</div></div>
+    </div>
+    <div class="mg g2">
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_miniprotocol.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Fine-mapping Overview</span>
+        <span class="md">Recommended starting point</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/univariate_fine_mapping_twas_vignette.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Univariate SuSiE</span>
+        <span class="md">Univariate fine-mapping with SuSiE credible sets</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/univariate_fine_mapping_twas_vignette.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">TWAS Weights</span>
+        <span class="md">Transcriptome-wide association study weight generation</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/univariate_fine_mapping_fsusie_vignette.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">fSuSiE</span>
+        <span class="md">Functional fine-mapping with epigenomic annotations</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/multivariate_fine_mapping_vignette.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">mvSuSiE</span>
+        <span class="md">Multivariate multi-context fine-mapping</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/summary_stats_finemapping_vignette.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Summary Stats (RSS)</span>
+        <span class="md">Fine-mapping from GWAS summary statistics via regression with summary statistics</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="gap"></div>
+
+<!-- 6. GWAS Integration -->
+<div class="row">
+<div class="sc s-gwas" id="gwas-integ"
+  data-in="fine-map"
+  data-out="enrich"
+  data-tip="Inputs: credible sets, PIPs, TWAS weights ← Fine-mapping&#10;Outputs: colocalization posteriors, gene associations → Enrichment">
+  <div class="sh"><div class="si">🔗</div>
+    <div><div class="sn">Step 6</div><div class="st">GWAS Integration</div>
+    <div class="sd">Link QTL signals to GWAS loci via colocalization (SuSiE-enloc, ColocBoost) and gene-level associations (TWAS / cTWAS)</div></div>
+  </div>
+  <div class="mg g3">
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/pecotmr_integration/SuSiE_enloc.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">SuSiE-enloc</span>
+      <span class="md">Pairwise xQTL–GWAS colocalization</span>
+    </a>
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/pecotmr_integration/twas_ctwas.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">TWAS &amp; cTWAS</span>
+      <span class="md">Gene-level trait association using expression weights</span>
+    </a>
+    <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/mnm_analysis/mnm_methods/colocboost.html" target="_blank">
+      <span class="mt">MWE</span><span class="mn">ColocBoost</span>
+      <span class="md">Shared-variant discovery across molecular traits</span>
+    </a>
+  </div>
+</div>
+</div>
+
+<div class="gap"></div>
+
+<!-- 7. Enrichment + EMS (parallel) -->
+<div class="row">
+  <!-- Enrichment -->
+  <div class="sc s-enrich" id="enrich"
+    data-in="fine-map,gwas-integ"
+    data-out=""
+    data-tip="Inputs: fine-mapped variants ← Fine-mapping; colocalization results ← GWAS Integration&#10;Outputs: annotation enrichments, heritability partitioning (terminal)">
+    <div class="sh"><div class="si">📉</div>
+      <div><div class="sn">Step 7a</div><div class="st">Enrichment &amp; Validation</div>
+      <div class="sd">Test whether fine-mapped variants are enriched in functional genomic annotations and pathways; partition heritability with S-LDSC</div></div>
+    </div>
+    <div class="mg g2">
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/eoo_enrichment.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">Excess of Overlap</span>
+        <span class="md">Variant enrichment in genomic annotations</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/gsea.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">GSEA</span>
+        <span class="md">Gene set enrichment — overrepresented pathways</span>
+      </a>
+
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/enrichment/sldsc_enrichment.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">S-LDSC</span>
+        <span class="md">Stratified LD score regression, heritability partitioning</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- EMS -->
+  <div class="sc s-ems" id="ems"
+    data-in="fine-map"
+    data-out=""
+    data-tip="Inputs: fine-mapped variant features ← Fine-mapping&#10;Outputs: per-variant regulatory modifier scores (terminal)">
+    <div class="sh"><div class="si">🏆</div>
+      <div><div class="sn">Step 7b</div><div class="st">xQTL Modifier Score (EMS)</div>
+      <div class="sd">Train and apply a model that scores each variant's regulatory impact using fine-mapping features and functional annotations</div></div>
+    </div>
+    <div class="mg">
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/xqtl_modifier_score/ems_training.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">EMS Training</span>
+        <span class="md">Fit per-variant model using functional annotation features</span>
+      </a>
+      <a class="mc" href="https://statfungen.github.io/xqtl-protocol/code/xqtl_modifier_score/ems_prediction.html" target="_blank">
+        <span class="mt">MWE</span><span class="mn">EMS Prediction</span>
+        <span class="md">Score new variants with trained EMS model</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<div id="tip"></div>
+
+<footer>
+  <strong>FunGen-xQTL Computational Protocol</strong> —
+  NIH/NIA Alzheimer's Disease Sequencing Project (ADSP) FunGen-xQTL Project &nbsp;|&nbsp;
+  <a href="https://statfungen.github.io/xqtl-protocol/" target="_blank">Protocol Website</a> &nbsp;|&nbsp;
+  <a href="https://github.com/statfungen/xqtl-protocol" target="_blank">GitHub</a> &nbsp;|&nbsp;
+  Hover over any section to trace data flow · Click any module to open notebook
+</footer>
+
+<script>
+// ── Connection definitions: [from, to, label, color]
+const CONN = [
+  ['ref-data',   'mol-pheno',  'ref genome + annotations',     '#7c3aed'],
+  ['ref-data',   'geno-prep',  'variant annotations',          '#7c3aed'],
+  ['mol-pheno',  'pheno-prep', 'raw phenotype matrices',       '#059669'],
+  ['geno-prep',  'cov-prep',   'genotype PCs',                 '#1d4ed8'],
+  ['geno-prep',  'qtl-assoc',  'formatted genotypes (PLINK)',  '#1d4ed8'],
+  ['pheno-prep', 'cov-prep',   'phenotype data',               '#0891b2'],
+  ['pheno-prep', 'qtl-assoc',  'phenotype BED files',          '#0891b2'],
+  ['cov-prep',   'qtl-assoc',  'covariate files',              '#0f766e'],
+  ['qtl-assoc',  'mash',       'per-context effect sizes',     '#b45309'],
+  ['qtl-assoc',  'fine-map',   'nominal summary stats',        '#b45309'],
+  ['mash',       'fine-map',   'mixture priors (mvSuSiE)',     '#1e40af'],
+  ['fine-map',   'gwas-integ', 'credible sets + TWAS weights', '#be123c'],
+  ['fine-map',   'enrich',     'fine-mapped variants',         '#be123c'],
+  ['fine-map',   'ems',        'variant features',             '#be123c'],
+  ['gwas-integ', 'enrich',     'colocalization posteriors',    '#7e22ce'],
+];
+
+// Build adjacency sets for highlight
+const ADJ = {};
+CONN.forEach(([f,t]) => {
+  [f,t].forEach(id => { if (!ADJ[id]) ADJ[id] = new Set([id]); });
+  ADJ[f].add(t);
+  ADJ[t].add(f);
+});
+
+const fc   = document.getElementById('fc');
+const svgl = document.getElementById('svg-layer');
+const tip  = document.getElementById('tip');
+let arrows = [];
+
+// ── Arrow drawing ──────────────────────────────────────────
+function pt(el) {
+  const r = el.getBoundingClientRect();
+  const c = fc.getBoundingClientRect();
+  return {
+    cx: r.left + r.width/2  - c.left,
+    cy: r.top  + r.height/2 - c.top,
+    t:  r.top    - c.top,
+    b:  r.bottom - c.top,
+    l:  r.left   - c.left,
+    r:  r.right  - c.left,
+    w:  r.width,
+    h:  r.height,
+  };
+}
+
+function mkMarker(defs, id, color) {
+  const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  m.setAttribute('id', id);
+  m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','8');
+  m.setAttribute('refX','6'); m.setAttribute('refY','3');
+  m.setAttribute('orient','auto');
+  const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d','M0,0 L0,6 L8,3 z');
+  p.setAttribute('fill', color);
+  m.appendChild(p); defs.appendChild(m);
+}
+
+function drawArrows() {
+  svgl.setAttribute('width',  fc.scrollWidth);
+  svgl.setAttribute('height', fc.scrollHeight);
+  svgl.innerHTML = '';
+  arrows = [];
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const done = new Set();
+  CONN.forEach(([,,, c]) => {
+    const sid = 'm'+c.replace('#','');
+    if (!done.has(sid)) { mkMarker(defs, sid, c); done.add(sid); }
+  });
+  svgl.appendChild(defs);
+
+  CONN.forEach(([fid, tid, lbl, color]) => {
+    const fe = document.getElementById(fid);
+    const te = document.getElementById(tid);
+    if (!fe || !te) return;
+
+    const f = pt(fe), t = pt(te);
+    let x1, y1, x2, y2, cx1, cy1, cx2, cy2;
+
+    const dy = t.t - f.b;  // gap between bottom of source and top of target
+    const dx = t.cx - f.cx;
+
+    if (dy > -10) {
+      // Mostly vertical — connect bottom → top
+      // Offset x slightly toward target to separate parallel arrows
+      const offX = dx * 0.08;
+      x1 = f.cx + offX; y1 = f.b;
+      x2 = t.cx - offX; y2 = t.t;
+      const mid = (y1 + y2) / 2;
+      cx1 = x1; cy1 = mid;
+      cx2 = x2; cy2 = mid;
+    } else {
+      // Same row — horizontal, curve above or below
+      if (f.cx < t.cx) {
+        x1 = f.r; y1 = f.cy;
+        x2 = t.l; y2 = t.cy;
+      } else {
+        x1 = f.l; y1 = f.cy;
+        x2 = t.r; y2 = t.cy;
+      }
+      const midX = (x1 + x2) / 2;
+      cx1 = midX; cy1 = y1;
+      cx2 = midX; cy2 = y2;
+    }
+
+    const d = `M${x1},${y1} C${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}`;
+    const mid = { x:(x1+x2)/2, y:(y1+y2)/2 };
+    const sid = 'm'+color.replace('#','');
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.dataset.f = fid; g.dataset.t = tid;
+
+    // Hit area
+    const bg = document.createElementNS('http://www.w3.org/2000/svg','path');
+    bg.setAttribute('d',d); bg.setAttribute('stroke','transparent');
+    bg.setAttribute('stroke-width','14'); bg.setAttribute('fill','none');
+    g.appendChild(bg);
+
+    // Visible path
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','path');
+    ln.setAttribute('d',d); ln.setAttribute('stroke',color);
+    ln.setAttribute('stroke-width','1.8'); ln.setAttribute('fill','none');
+    ln.setAttribute('stroke-opacity','0.35');
+    ln.setAttribute('marker-end',`url(#${sid})`);
+    g.appendChild(ln);
+
+    // Label
+    const tx = document.createElementNS('http://www.w3.org/2000/svg','text');
+    tx.setAttribute('x', mid.x); tx.setAttribute('y', mid.y - 5);
+    tx.setAttribute('text-anchor','middle'); tx.setAttribute('font-size','10');
+    tx.setAttribute('fill', color); tx.setAttribute('opacity','0');
+    tx.setAttribute('font-family','system-ui,sans-serif');
+    tx.setAttribute('font-weight','600');
+    // Background rect for label readability
+    const txbg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    txbg.setAttribute('rx','3'); txbg.setAttribute('ry','3');
+    txbg.setAttribute('fill','white'); txbg.setAttribute('opacity','0');
+    txbg.setAttribute('class','lbg');
+    tx.textContent = lbl;
+    g.appendChild(txbg); g.appendChild(tx);
+
+    svgl.appendChild(g);
+    arrows.push({ g, ln, tx, txbg, fid, tid });
+
+    // Position label bg after append (need layout)
+    requestAnimationFrame(() => {
+      try {
+        const bb = tx.getBBox();
+        txbg.setAttribute('x',  bb.x  - 3);
+        txbg.setAttribute('y',  bb.y  - 2);
+        txbg.setAttribute('width',  bb.width  + 6);
+        txbg.setAttribute('height', bb.height + 4);
+      } catch(e){}
+    });
+  });
+}
+
+// ── Highlight logic ────────────────────────────────────────
+function highlight(hovId) {
+  const rel = ADJ[hovId] || new Set([hovId]);
+  document.querySelectorAll('.sc').forEach(el => {
+    if (rel.has(el.id)) {
+      el.classList.remove('dim');
+      el.classList.add(el.id === hovId ? 'act' : 'hi');
+    } else {
+      el.classList.add('dim');
+      el.classList.remove('hi','act');
+    }
+  });
+  arrows.forEach(({ ln, tx, txbg, fid, tid }) => {
+    if (rel.has(fid) && rel.has(tid)) {
+      ln.setAttribute('stroke-opacity','0.95');
+      ln.setAttribute('stroke-width','2.5');
+      tx.setAttribute('opacity','1');
+      txbg.setAttribute('opacity','0.88');
+    } else {
+      ln.setAttribute('stroke-opacity','0.08');
+      ln.setAttribute('stroke-width','1.5');
+      tx.setAttribute('opacity','0');
+      txbg.setAttribute('opacity','0');
+    }
+  });
+}
+
+function clearHL() {
+  document.querySelectorAll('.sc').forEach(el =>
+    el.classList.remove('dim','hi','act'));
+  arrows.forEach(({ ln, tx, txbg }) => {
+    ln.setAttribute('stroke-opacity','0.35');
+    ln.setAttribute('stroke-width','1.8');
+    tx.setAttribute('opacity','0');
+    txbg.setAttribute('opacity','0');
+  });
+}
+
+// ── Events ─────────────────────────────────────────────────
+document.querySelectorAll('.sc').forEach(card => {
+  card.addEventListener('mouseenter', () => {
+    highlight(card.id);
+    const t = card.dataset.tip;
+    if (t) {
+      tip.innerHTML = `<strong>${card.querySelector('.st').textContent}</strong><br>
+        <span style="opacity:.85;white-space:pre-line">${t.replace(/&#10;/g,'\n')}</span>`;
+      tip.style.opacity = '1';
+    }
+  });
+  card.addEventListener('mousemove', e => {
+    tip.style.left = (e.clientX + 18) + 'px';
+    tip.style.top  = (e.clientY - 14) + 'px';
+  });
+  card.addEventListener('mouseleave', () => {
+    clearHL();
+    tip.style.opacity = '0';
+  });
+});
+
+// ── GitHub ipynb badges ────────────────────────────────────
+const GH_BASE = 'https://github.com/statfungen/xqtl-protocol/blob/main/code/SoS/';
+const WIKI_BASE = 'https://statfungen.github.io/xqtl-protocol/code/';
+const GH_SVG = `<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>`;
+
+document.querySelectorAll('a.mc').forEach(card => {
+  const wikiUrl = card.getAttribute('href') || '';
+  if (!wikiUrl.includes(WIKI_BASE)) return;
+  const path = wikiUrl.replace(WIKI_BASE, '').replace('.html', '.ipynb');
+  const ghUrl = GH_BASE + path;
+  const badge = document.createElement('a');
+  badge.href = ghUrl;
+  badge.target = '_blank';
+  badge.rel = 'noopener';
+  badge.title = 'View source .ipynb on GitHub';
+  badge.className = 'gh-link';
+  badge.innerHTML = GH_SVG + '<span>.ipynb</span>';
+  badge.addEventListener('click', e => e.stopPropagation());
+  badge.addEventListener('mouseenter', e => e.stopPropagation());
+  card.appendChild(badge);
+});
+
+// ── Init ───────────────────────────────────────────────────
+drawArrows();
+window.addEventListener('resize', drawArrows);
+window.addEventListener('load', () => setTimeout(drawArrows, 150));
+</script>
+</body>
+</html>
