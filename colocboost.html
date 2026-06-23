@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Per-gene colocboost across contexts in a single study &#8212; FunGen-xQTL Consortium</title>
+    <title>Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study &#8212; FunGen-xQTL Consortium</title>
   
   
   
@@ -292,7 +292,7 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Per-gene colocboost across contexts in a single study</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="nav bd-sidenav">
@@ -488,7 +488,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Per-gene colocboost across contexts in a single study</h1>
+    <h1>Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -513,34 +513,52 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="per-gene-colocboost-across-contexts-in-a-single-study">
-<h1>Per-gene colocboost across contexts in a single study<a class="headerlink" href="#per-gene-colocboost-across-contexts-in-a-single-study" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="per-gene-per-region-colocboost-across-contexts-and-optionally-gwas-in-a-single-study">
+<h1>Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study<a class="headerlink" href="#per-gene-per-region-colocboost-across-contexts-and-optionally-gwas-in-a-single-study" title="Link to this heading">#</a></h1>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>For a single study’s <code class="docutils literal notranslate"><span class="pre">QtlDataset</span></code> RDS, run <code class="docutils literal notranslate"><span class="pre">pecotmr::colocboostPipeline()</span></code> per focal gene. Each task colocalizes the focal gene’s signal across the QtlDataset’s contexts (the within-study, cross-context case — no GWAS input). Gene-level parallelization is via SoS task fan-out: every task loads the same RDS and runs one focal gene.</p>
+<p>For a single study’s <code class="docutils literal notranslate"><span class="pre">QtlDataset</span></code> RDS, run <code class="docutils literal notranslate"><span class="pre">pecotmr::colocboostPipeline()</span></code> per fan-out unit (gene or region). Three pipeline variants can be enabled independently:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--xqtl-coloc</span></code> (default ON; opt out with <code class="docutils literal notranslate"><span class="pre">--no-xqtl-coloc=true</span></code> or <code class="docutils literal notranslate"><span class="pre">xqtl_coloc=False</span></code> in SoS): within-study cross-context QTL coloc.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--joint-gwas</span></code> (default OFF): xQTL + GWAS joint coloc with the focal outcome from the GWAS. Requires <code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--separate-gwas</span></code> (default OFF): one focal-GWAS coloc per GWAS study. Requires <code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code>.</p></li>
+</ul>
+<p>When <code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code> is supplied it must point at a QC’d <code class="docutils literal notranslate"><span class="pre">GwasSumStats</span></code> RDS (output of <code class="docutils literal notranslate"><span class="pre">summaryStatsQc()</span></code> upstream).</p>
 </section>
 <section id="inputs">
 <h2>Inputs<a class="headerlink" href="#inputs" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--qtl-dataset</span></code> — path to the QtlDataset RDS produced by <code class="docutils literal notranslate"><span class="pre">qtl_dataset.ipynb</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--genes</span></code> — explicit gene-ID list (one focal gene per task).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> — bp window around each focal gene’s TSS for variant selection. Default 1,000,000.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--qtl-dataset</span></code> — QtlDataset RDS produced by <code class="docutils literal notranslate"><span class="pre">qtl_dataset.ipynb</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--genes</span> <span class="pre">ID1</span> <span class="pre">ID2</span> <span class="pre">…</span></code> <strong>or</strong> <code class="docutils literal notranslate"><span class="pre">--regions</span> <span class="pre">chr:start-end</span> <span class="pre">…</span></code> (mutually exclusive).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> — bp window (gene mode default 1e6).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code> — QC’d GwasSumStats RDS path (required for joint/separate variants).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--xqtl-coloc</span></code> / <code class="docutils literal notranslate"><span class="pre">--joint-gwas</span></code> / <code class="docutils literal notranslate"><span class="pre">--separate-gwas</span></code> — pipeline-variant toggles.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--modular-script-dir</span></code> — directory containing the per-gene worker R scripts. Default <code class="docutils literal notranslate"><span class="pre">code/script</span></code>.</p></li>
 </ul>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{study}.{gene}.colocboost.rds</span></code> per gene.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{study}.{gene|region}.colocboost.rds</span></code> per fan-out unit. The RDS holds the colocboostPipeline list with slots <code class="docutils literal notranslate"><span class="pre">xqtl_coloc</span></code>, <code class="docutils literal notranslate"><span class="pre">joint_gwas</span></code>, <code class="docutils literal notranslate"><span class="pre">separate_gwas</span></code>, <code class="docutils literal notranslate"><span class="pre">computing_time</span></code>; unused-variant slots are NULL.</p></li>
 </ul>
 </section>
 <section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/colocboost.ipynb<span class="w"> </span>colocboost<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>output<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--study<span class="w"> </span>ROSMAP_DLPFC<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--qtl-dataset<span class="w"> </span>output/ROSMAP_DLPFC.qtl_dataset.rds<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genes<span class="w"> </span>ENSG00000060237<span class="w"> </span>ENSG00000234593<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cis-window<span class="w"> </span><span class="m">1000000</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># xQTL-only (default)</span>
+sos<span class="w"> </span>run<span class="w"> </span>pipeline/colocboost.ipynb<span class="w"> </span>colocboost<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>output<span class="w"> </span>--modular-script-dir<span class="w"> </span>/path/to/code/script<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--study<span class="w"> </span>TEST_STUDY<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qtl-dataset<span class="w"> </span>output/TEST_STUDY.qtl_dataset.rds<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genes<span class="w"> </span>ENSG00000060237
+
+<span class="c1"># xQTL + joint-GWAS</span>
+sos<span class="w"> </span>run<span class="w"> </span>pipeline/colocboost.ipynb<span class="w"> </span>colocboost<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>output<span class="w"> </span>--modular-script-dir<span class="w"> </span>/path/to/code/script<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--study<span class="w"> </span>TEST_STUDY<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--qtl-dataset<span class="w"> </span>output/TEST_STUDY.qtl_dataset.rds<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gwas-sumstats<span class="w"> </span>output/GWAS.qcd.rds<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--joint-gwas<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genes<span class="w"> </span>ENSG00000060237
 </pre></div>
 </div>
 <div class="cell docutils container">
@@ -549,12 +567,21 @@
 parameter: cwd = path(&#39;output&#39;)
 parameter: study = str
 parameter: qtl_dataset = path
+parameter: modular_script_dir = path(&#39;code/script&#39;)
+# Mutually exclusive fan-out sources.
 parameter: genes = []
+parameter: regions = []
 parameter: cis_window = 1000000
+# GWAS-side input: a QC&#39;d GwasSumStats RDS (build it upstream).
+parameter: gwas_sumstats = path(&#39;.&#39;)
+# Pipeline variants.
+parameter: xqtl_coloc = True       # within-study cross-context (default ON)
+parameter: joint_gwas = False      # xQTL + GWAS joint (requires gwas_sumstats)
+parameter: separate_gwas = False   # per-GWAS-study separate-focal (requires gwas_sumstats)
 parameter: container = &#39;&#39;
 parameter: job_size = 1
-parameter: walltime = &#39;1h&#39;
-parameter: mem = &#39;16G&#39;
+parameter: walltime = &#39;30m&#39;
+parameter: mem = &#39;8G&#39;
 parameter: numThreads = 1
 </pre></div>
 </div>
@@ -563,14 +590,27 @@ parameter: numThreads = 1
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[colocboost]
-input: qtl_dataset, for_each = &#39;genes&#39;
-output: f&quot;{cwd}/{study}.{_genes}.colocboost.rds&quot;
+if bool(genes) == bool(regions):
+    raise ValueError(&quot;Specify exactly one of --genes (trait IDs) or --regions (chr:start-end strings).&quot;)
+if (joint_gwas or separate_gwas) and not gwas_sumstats.is_file():
+    raise ValueError(&quot;--joint-gwas / --separate-gwas require --gwas-sumstats pointing at a QC&#39;d GwasSumStats RDS.&quot;)
+if not (xqtl_coloc or joint_gwas or separate_gwas):
+    raise ValueError(&quot;Enable at least one of xqtl_coloc, joint_gwas, separate_gwas.&quot;)
+fanout_items = genes if genes else regions
+fanout_kind  = &#39;gene&#39; if genes else &#39;region&#39;
+def _fanout_safe(s):
+    return s.replace(&#39;:&#39;, &#39;_&#39;).replace(&#39;-&#39;, &#39;_&#39;)
+input: qtl_dataset, for_each = &#39;fanout_items&#39;
+output: f&quot;{cwd}/{study}.{_fanout_safe(_fanout_items)}.colocboost.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
 bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = f&quot;{_output}.stdout&quot;, container = container
-    Rscript ${path(&quot;code/script/pecotmr_integration/colocboost.R&quot;, absolute=True)} \
+    Rscript ${modular_script_dir}/pecotmr_integration/colocboost.R \
         --qtl-dataset ${_input} \
-        --gene-id ${_genes} \
-        --cis-window ${cis_window} \
+        ${(&#39;--gene-id &#39; + _fanout_items + &#39; --cis-window &#39; + str(cis_window)) if fanout_kind == &#39;gene&#39; else (&#39;--region &#39; + _fanout_items)} \
+        ${&#39;--gwas-sumstats &#39; + str(gwas_sumstats) if gwas_sumstats.is_file() else &#39;&#39;} \
+        ${&#39;--no-xqtl-coloc&#39; if not xqtl_coloc else &#39;&#39;} \
+        ${&#39;--joint-gwas&#39; if joint_gwas else &#39;&#39;} \
+        ${&#39;--separate-gwas&#39; if separate_gwas else &#39;&#39;} \
         --output ${_output}
 </pre></div>
 </div>
