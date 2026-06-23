@@ -52,10 +52,9 @@ if (is.null(opt[["tpm-gct"]])) stop("--tpm-gct is required")
 
 dir.create(opt$cwd, showWarnings = FALSE, recursive = TRUE)
 
-normalize_output_prefix <- function(path) {
-  stem <- sub("\\.(gct|GCT)(\\.gz)?$", "", basename(path))
-  stem <- sub("\\.gene_tpm$", "", stem)
-  stem <- sub("\\.tpm$", "", stem)
+normalize_output_prefix <- function(path, n_ext = 3) {
+  stem <- basename(path)
+  for (i in seq_len(n_ext)) stem <- sub("\\.[^.]+$", "", stem)
   stem
 }
 
