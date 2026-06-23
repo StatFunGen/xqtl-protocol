@@ -59,8 +59,26 @@ parser <- add_argument(parser, "--methods",
                        help = "Comma-separated fine-mapping method tokens",
                        type = "character", default = "susie")
 parser <- add_argument(parser, "--coverage",
-                       help = "SuSiE credible-set coverage",
+                       help = "SuSiE primary credible-set coverage",
                        type = "numeric", default = 0.95)
+parser <- add_argument(parser, "--secondary-coverage",
+                       help = "Comma-separated secondary credible-set coverages (fineMappingPipeline secondaryCoverage)",
+                       type = "character", default = "0.7,0.5")
+parser <- add_argument(parser, "--min-abs-corr",
+                       help = "Credible-set purity threshold (fineMappingPipeline minAbsCorr)",
+                       type = "numeric", default = 0.8)
+parser <- add_argument(parser, "--median-abs-corr",
+                       help = "Optional median-abs-corr purity, OR-logic with --min-abs-corr (fineMappingPipeline medianAbsCorr; requires pecotmr step-1). Omit to leave off.",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--pip-cutoff",
+                       help = "PIP signal cutoff (fineMappingPipeline signalCutoff)",
+                       type = "numeric", default = 0.025)
+parser <- add_argument(parser, "--L",
+                       help = "SuSiE number of single effects (susie L); pipeline default 20",
+                       type = "integer", default = 20L)
+parser <- add_argument(parser, "--L-greedy",
+                       help = "SuSiE greedy init count (susie L_greedy); pipeline default 5",
+                       type = "integer", default = 5L)
 parser <- add_argument(parser, "--method-args",
                        help = "JSON object {token: {kwarg: value, ...}, ...} for fineMappingPipeline()",
                        type = "character", default = "")
@@ -91,6 +109,13 @@ parsed_method_args <- if (nzchar(argv$method_args) && argv$method_args != "." &&
   NULL
 }
 
+# Secondary coverages: comma-separated -> numeric vector. medianAbsCorr: NA
+# (unset) -> NULL so we omit it from the call (off, and back-compatible with a
+# pecotmr that predates the medianAbsCorr argument).
+secondary_cov <- as.numeric(trimws(strsplit(argv$secondary_coverage, ",", fixed = TRUE)[[1L]]))
+median_abs_corr <- if (length(argv$median_abs_corr) != 1L || is.na(argv$median_abs_corr))
+                     NULL else argv$median_abs_corr
+
 parse_region <- function(s) {
   m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
   if (length(m) != 4L)
@@ -109,33 +134,41 @@ if (!has_qtl && !has_gwas)
 
 methods <- trimws(strsplit(argv$methods, ",", fixed = TRUE)[[1L]])
 
-# Build the final `methods` argument for fineMappingPipeline. When the
-# user supplied --method-args, validate that every key is one of the
-# --methods tokens (no silent typos) and build the named-list form
-# {token: kwargs} that fineMappingPipeline expects. Every token in
-# --methods is represented in the list (with an empty kwargs list when
-# the user didn't supply one). When --method-args is empty we just pass
-# the character vector, which fineMappingPipeline accepts unchanged.
-methods_arg <- if (is.null(parsed_method_args)) {
-  methods
-} else {
+# Build the final `methods` argument for fineMappingPipeline as the named-list
+# form {token: kwargs}. The pipeline's SuSiE fit defaults (L = --L,
+# L_greedy = --L-greedy) seed every SuSiE-family token; any matching
+# --method-args entry overrides them per key (explicit > default). Keys in
+# --method-args must be among the --methods tokens (no silent typos).
+if (!is.null(parsed_method_args)) {
   unknown <- setdiff(names(parsed_method_args), methods)
   if (length(unknown) > 0L)
     stop("--method-args has keys not listed in --methods (got '",
          paste(unknown, collapse = ", "),
          "'; --methods = '", paste(methods, collapse = ", "), "').")
-  setNames(lapply(methods, function(tk) {
-    if (tk %in% names(parsed_method_args)) parsed_method_args[[tk]]
-    else list()
-  }), methods)
 }
+.susie_family <- c("susie", "susieInf", "susieAsh")
+.fit_defaults <- list(L = argv$L, L_greedy = argv[["L_greedy"]])
+methods_arg <- setNames(lapply(methods, function(tk) {
+  base <- if (tk %in% .susie_family) .fit_defaults else list()
+  user <- if (!is.null(parsed_method_args) && tk %in% names(parsed_method_args))
+            parsed_method_args[[tk]] else list()
+  modifyList(base, user)
+}), methods)
+
+# Credible-set / coverage knobs common to both modes. medianAbsCorr is added
+# only when set (NULL -> omitted), so the call also works against a pecotmr
+# that predates that argument.
+cs_args <- list(methods           = methods_arg,
+                coverage          = argv$coverage,
+                secondaryCoverage = secondary_cov,
+                signalCutoff      = argv$pip_cutoff,
+                minAbsCorr        = argv$min_abs_corr)
+if (!is.null(median_abs_corr)) cs_args$medianAbsCorr <- median_abs_corr
 
 if (has_gwas) {
   # ----- GWAS mode -------------------------------------------------------
   gss <- readRDS(argv$gwas_sumstats)
-  res <- fineMappingPipeline(gss,
-                             methods  = methods_arg,
-                             coverage = argv$coverage)
+  res <- do.call(fineMappingPipeline, c(list(gss), cs_args))
   label <- paste0("GwasSumStats '", basename(argv$gwas_sumstats), "'")
 } else {
   # ----- QTL mode --------------------------------------------------------
@@ -146,16 +179,11 @@ if (has_gwas) {
   if (!has_gene && !has_region)
     stop("QTL mode requires --gene-id (with --cis-window) or --region.")
   qd <- readRDS(argv$qtl_dataset)
+  qtl_args <- c(list(qd), cs_args, list(cisWindow = argv$cis_window))
   res <- if (has_region) {
-    fineMappingPipeline(qd, methods = methods_arg,
-                        region    = parse_region(argv$region),
-                        cisWindow = argv$cis_window,
-                        coverage  = argv$coverage)
+    do.call(fineMappingPipeline, c(qtl_args, list(region = parse_region(argv$region))))
   } else {
-    fineMappingPipeline(qd, methods = methods_arg,
-                        traitId   = argv$gene_id,
-                        cisWindow = argv$cis_window,
-                        coverage  = argv$coverage)
+    do.call(fineMappingPipeline, c(qtl_args, list(traitId = argv$gene_id)))
   }
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
