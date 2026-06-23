@@ -22,6 +22,13 @@
 # Shared:
 #   --methods       Comma-separated method tokens. Default "susie".
 #   --coverage      SuSiE credible-set coverage. Default 0.95.
+#   --method-args   Optional JSON object of per-method kwargs spliced
+#                   into fineMappingPipeline() via its named-list
+#                   methods= argument. Keys are method tokens (must be
+#                   a subset of --methods); values are kwargs lists
+#                   forwarded to the underlying fitter (susieR::susie,
+#                   susieR::susie_rss, mvsusieR::mvsusie, fsusieR::susiF,
+#                   etc.). Example: '{"susie":{"L":1,"refine":false}}'.
 #   --output        Output RDS path.
 
 suppressPackageStartupMessages({
@@ -29,6 +36,7 @@ suppressPackageStartupMessages({
   library(pecotmr)
   library(GenomicRanges)
   library(IRanges)
+  library(jsonlite)
 })
 
 parser <- arg_parser("SuSiE fine-mapping over a pecotmr S4 input (QtlDataset or GwasSumStats)")
@@ -53,9 +61,35 @@ parser <- add_argument(parser, "--methods",
 parser <- add_argument(parser, "--coverage",
                        help = "SuSiE credible-set coverage",
                        type = "numeric", default = 0.95)
+parser <- add_argument(parser, "--method-args",
+                       help = "JSON object {token: {kwarg: value, ...}, ...} for fineMappingPipeline()",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
+
+# Parse --method-args into a nested named list of per-method kwargs.
+# Empty / '.' / '{}' all yield NULL (which makes us pass the char-vector
+# form of methods= to fineMappingPipeline).
+parsed_method_args <- if (nzchar(argv$method_args) && argv$method_args != "." &&
+                          argv$method_args != "{}") {
+  parsed <- tryCatch(jsonlite::fromJSON(argv$method_args, simplifyVector = FALSE),
+                     error = function(e) stop(
+                       "--method-args must be a JSON object string (got: ",
+                       argv$method_args, "). Error: ", conditionMessage(e)))
+  if (!is.list(parsed) || is.null(names(parsed)) || any(names(parsed) == ""))
+    stop("--method-args must be a JSON object whose keys are method ",
+         "tokens, e.g. '{\"susie\":{\"L\":1}}'.")
+  nonObject <- vapply(parsed, function(x) !is.list(x), logical(1))
+  if (any(nonObject))
+    stop("--method-args: each value must itself be an object of kwargs ",
+         "(got non-object for: ",
+         paste(names(parsed)[nonObject], collapse = ", "),
+         "). Did you mean '{\"susie\":", argv$method_args, "}'?")
+  parsed
+} else {
+  NULL
+}
 
 parse_region <- function(s) {
   m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
@@ -75,13 +109,33 @@ if (!has_qtl && !has_gwas)
 
 methods <- trimws(strsplit(argv$methods, ",", fixed = TRUE)[[1L]])
 
+# Build the final `methods` argument for fineMappingPipeline. When the
+# user supplied --method-args, validate that every key is one of the
+# --methods tokens (no silent typos) and build the named-list form
+# {token: kwargs} that fineMappingPipeline expects. Every token in
+# --methods is represented in the list (with an empty kwargs list when
+# the user didn't supply one). When --method-args is empty we just pass
+# the character vector, which fineMappingPipeline accepts unchanged.
+methods_arg <- if (is.null(parsed_method_args)) {
+  methods
+} else {
+  unknown <- setdiff(names(parsed_method_args), methods)
+  if (length(unknown) > 0L)
+    stop("--method-args has keys not listed in --methods (got '",
+         paste(unknown, collapse = ", "),
+         "'; --methods = '", paste(methods, collapse = ", "), "').")
+  setNames(lapply(methods, function(tk) {
+    if (tk %in% names(parsed_method_args)) parsed_method_args[[tk]]
+    else list()
+  }), methods)
+}
+
 if (has_gwas) {
   # ----- GWAS mode -------------------------------------------------------
   gss <- readRDS(argv$gwas_sumstats)
-  res <- fineMappingPipeline(
-    gss,
-    methods  = methods,
-    coverage = argv$coverage)
+  res <- fineMappingPipeline(gss,
+                             methods  = methods_arg,
+                             coverage = argv$coverage)
   label <- paste0("GwasSumStats '", basename(argv$gwas_sumstats), "'")
 } else {
   # ----- QTL mode --------------------------------------------------------
@@ -93,19 +147,15 @@ if (has_gwas) {
     stop("QTL mode requires --gene-id (with --cis-window) or --region.")
   qd <- readRDS(argv$qtl_dataset)
   res <- if (has_region) {
-    fineMappingPipeline(
-      qd,
-      methods   = methods,
-      region    = parse_region(argv$region),
-      cisWindow = argv$cis_window,
-      coverage  = argv$coverage)
+    fineMappingPipeline(qd, methods = methods_arg,
+                        region    = parse_region(argv$region),
+                        cisWindow = argv$cis_window,
+                        coverage  = argv$coverage)
   } else {
-    fineMappingPipeline(
-      qd,
-      methods    = methods,
-      traitId    = argv$gene_id,
-      cisWindow  = argv$cis_window,
-      coverage   = argv$coverage)
+    fineMappingPipeline(qd, methods = methods_arg,
+                        traitId   = argv$gene_id,
+                        cisWindow = argv$cis_window,
+                        coverage  = argv$coverage)
   }
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
