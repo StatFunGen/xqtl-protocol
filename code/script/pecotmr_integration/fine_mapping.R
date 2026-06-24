@@ -85,9 +85,55 @@ parser <- add_argument(parser, "--L-greedy",
 parser <- add_argument(parser, "--method-args",
                        help = "JSON object {token: {kwarg: value, ...}, ...} for fineMappingPipeline()",
                        type = "character", default = "")
+parser <- add_argument(parser, "--seed",
+                       help = "Integer RNG seed set before fitting (reproducibility); unset = no seeding",
+                       type = "integer", default = NA)
+parser <- add_argument(parser, "--pip-cutoff-to-skip",
+                       help = "Single-effect (SER) pre-screen cutoff (fineMappingPipeline pipCutoffToSkip), QTL mode; 0 = off, <0 = adaptive 3/nVariants",
+                       type = "numeric", default = 0)
+# --- Per-analysis overrides of the QtlDataset's construct-time filters. Each is
+# opt-in (unset leaves the dataset's stored value); applied to the loaded object
+# before the pipeline runs (QTL mode only).
+parser <- add_argument(parser, "--maf-cutoff",
+                       help = "Override QtlDataset mafCutoff for this analysis",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--mac-cutoff",
+                       help = "Override QtlDataset macCutoff",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--xvar-cutoff",
+                       help = "Override QtlDataset xvarCutoff",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--imiss-cutoff",
+                       help = "Override QtlDataset imissCutoff",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--drop-indel",
+                       help = "Drop indels (sets keepIndel = FALSE); omit to use the dataset's stored value",
+                       flag = TRUE)
+parser <- add_argument(parser, "--keep-samples",
+                       help = "Path to a whitespace-delimited file of sample IDs to restrict to (overrides keepSamples)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--keep-variants",
+                       help = "Path to a whitespace-delimited file of variant IDs to restrict to (overrides keepVariants)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
+
+# Opt-in overrides of a loaded QtlDataset's construct-time filter slots. Filters
+# apply lazily at extraction, so mutating the slot re-filters without rebuilding
+# the RDS. Shared by both QTL workers (see twas_weights.R).
+apply_qd_filter_overrides <- function(qd, argv) {
+  if (!is.na(argv$maf_cutoff))   qd@mafCutoff   <- argv$maf_cutoff
+  if (!is.na(argv$mac_cutoff))   qd@macCutoff   <- argv$mac_cutoff
+  if (!is.na(argv$xvar_cutoff))  qd@xvarCutoff  <- argv$xvar_cutoff
+  if (!is.na(argv$imiss_cutoff)) qd@imissCutoff <- argv$imiss_cutoff
+  if (isTRUE(argv$drop_indel))   qd@keepIndel   <- FALSE
+  read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
+    unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
+  ks <- read_ids(argv$keep_samples);  if (!is.null(ks)) qd@keepSamples  <- ks
+  kv <- read_ids(argv$keep_variants); if (!is.null(kv)) qd@keepVariants <- kv
+  qd
+}
 
 # Parse --method-args into a nested named list of per-method kwargs.
 # Empty / '.' / '{}' all yield NULL (which makes us pass the char-vector
@@ -118,6 +164,9 @@ parsed_method_args <- if (nzchar(argv$method_args) && argv$method_args != "." &&
 secondary_cov <- as.numeric(trimws(strsplit(argv$secondary_coverage, ",", fixed = TRUE)[[1L]]))
 median_abs_corr <- if (length(argv$median_abs_corr) != 1L || is.na(argv$median_abs_corr))
                      NULL else argv$median_abs_corr
+
+# Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
+if (length(argv$seed) == 1L && !is.na(argv$seed)) set.seed(as.integer(argv$seed))
 
 parse_region <- function(s) {
   m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
@@ -186,10 +235,13 @@ if (has_gwas) {
   if (!has_gene && !has_region)
     stop("QTL mode requires --gene-id (with --cis-window) or --region.")
   qd <- readRDS(argv$qtl_dataset)
-  # `contexts` is QTL-mode only (NULL = all contexts), so it rides on qtl_args
+  qd <- apply_qd_filter_overrides(qd, argv)
+  # `contexts` and `pipCutoffToSkip` are QTL-mode only, so they ride on qtl_args
   # rather than the mode-shared cs_args.
   qtl_args <- c(list(qd), cs_args,
-                list(cisWindow = argv$cis_window, contexts = contexts_arg))
+                list(cisWindow       = argv$cis_window,
+                     contexts        = contexts_arg,
+                     pipCutoffToSkip = argv$pip_cutoff_to_skip))
   res <- if (has_region) {
     do.call(fineMappingPipeline, c(qtl_args, list(region = parse_region(argv$region))))
   } else {

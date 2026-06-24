@@ -61,6 +61,21 @@ parser <- add_argument(parser, "--maf-cutoff",
 parser <- add_argument(parser, "--xvar-cutoff",
                        help = "QtlDataset() variance cutoff",
                        type = "numeric", default = 0)
+parser <- add_argument(parser, "--mac-cutoff",
+                       help = "QtlDataset() minor-allele-count cutoff",
+                       type = "numeric", default = 0)
+parser <- add_argument(parser, "--imiss-cutoff",
+                       help = "QtlDataset() per-variant missingness cutoff",
+                       type = "numeric", default = 0)
+parser <- add_argument(parser, "--drop-indel",
+                       help = "Drop indel variants (sets keepIndel = FALSE); default keeps them, matching QtlDataset()",
+                       flag = TRUE)
+parser <- add_argument(parser, "--keep-samples",
+                       help = "Path to a whitespace-delimited file of sample IDs to restrict to (QtlDataset keepSamples)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--keep-variants",
+                       help = "Path to a whitespace-delimited file of variant IDs to restrict to (QtlDataset keepVariants)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
@@ -193,13 +208,26 @@ genoCov <- if (has_geno_cov) {
 }
 
 # ----- Construct + save ------------------------------------------------------
-qd <- QtlDataset(
+read_id_file <- function(p) if (nzchar(p) && p != "." && file.exists(p))
+  unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else character(0)
+keep_samples  <- read_id_file(argv$keep_samples)
+keep_variants <- read_id_file(argv$keep_variants)
+
+qd_args <- list(
   study              = argv$study,
   genotypes          = geno_handle,
   phenotypes         = phenotypes,
   genotypeCovariates = genoCov,
   mafCutoff          = argv$maf_cutoff,
-  xvarCutoff         = argv$xvar_cutoff)
+  macCutoff          = argv$mac_cutoff,
+  xvarCutoff         = argv$xvar_cutoff,
+  imissCutoff        = argv$imiss_cutoff,
+  keepIndel          = !isTRUE(argv$drop_indel))
+# keepSamples / keepVariants only when a file was given (else the constructor
+# default = keep all).
+if (length(keep_samples)  > 0L) qd_args$keepSamples  <- keep_samples
+if (length(keep_variants) > 0L) qd_args$keepVariants <- keep_variants
+qd <- do.call(QtlDataset, qd_args)
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(qd, argv$output)
