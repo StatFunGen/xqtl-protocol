@@ -53,6 +53,9 @@ parser <- add_argument(parser, "--cis-window",
 parser <- add_argument(parser, "--region",
                        help = "Genomic region as chr:start-end (region mode); mutually exclusive with --gene-id",
                        type = "character", default = "")
+parser <- add_argument(parser, "--contexts",
+                       help = "Comma-separated context names to restrict to; empty = all contexts",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--methods",
                        help = "Comma-separated TWAS method tokens (default 'default')",
                        type = "character", default = "default")
@@ -92,6 +95,10 @@ parsed_method_args <- if (nzchar(argv$method_args) && argv$method_args != "." &&
 # that twasWeightsPipeline accepts directly. The "default" preset can't
 # carry per-method kwargs (it expands inside pecotmr to a fixed token
 # set we can't see here) — explicit --methods is required in that case.
+# Optional context restriction: NULL = all contexts in the dataset.
+contexts_arg <- if (nzchar(argv$contexts) && argv$contexts != ".")
+  trimws(strsplit(argv$contexts, ",", fixed = TRUE)[[1L]]) else NULL
+
 methods <- trimws(strsplit(argv$methods, ",", fixed = TRUE)[[1L]])
 methods_arg <- if (is.null(parsed_method_args)) {
   if (length(methods) == 1L && methods == "default") "default" else methods
@@ -140,11 +147,13 @@ res <- if (has_region) {
   twasWeightsPipeline(qd, methods = methods_arg,
                       region    = parse_region(argv$region),
                       cisWindow = argv$cis_window,
+                      contexts  = contexts_arg,
                       fineMappingResult = fmr)
 } else {
   twasWeightsPipeline(qd, methods = methods_arg,
                       traitId   = argv$gene_id,
                       cisWindow = argv$cis_window,
+                      contexts  = contexts_arg,
                       fineMappingResult = fmr)
 }
 

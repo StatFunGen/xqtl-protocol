@@ -55,6 +55,9 @@ parser <- add_argument(parser, "--cis-window",
 parser <- add_argument(parser, "--region",
                        help = "Genomic region as chr:start-end (QTL region mode)",
                        type = "character", default = "")
+parser <- add_argument(parser, "--contexts",
+                       help = "Comma-separated context names to restrict to (QTL mode); empty = all contexts",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--methods",
                        help = "Comma-separated fine-mapping method tokens",
                        type = "character", default = "susie")
@@ -132,6 +135,10 @@ if (has_qtl && has_gwas)
 if (!has_qtl && !has_gwas)
   stop("Specify either --qtl-dataset (QTL mode) or --gwas-sumstats (GWAS mode).")
 
+# Optional context restriction (QTL mode): NULL = all contexts in the dataset.
+contexts_arg <- if (nzchar(argv$contexts) && argv$contexts != ".")
+  trimws(strsplit(argv$contexts, ",", fixed = TRUE)[[1L]]) else NULL
+
 methods <- trimws(strsplit(argv$methods, ",", fixed = TRUE)[[1L]])
 
 # Build the final `methods` argument for fineMappingPipeline as the named-list
@@ -179,7 +186,10 @@ if (has_gwas) {
   if (!has_gene && !has_region)
     stop("QTL mode requires --gene-id (with --cis-window) or --region.")
   qd <- readRDS(argv$qtl_dataset)
-  qtl_args <- c(list(qd), cs_args, list(cisWindow = argv$cis_window))
+  # `contexts` is QTL-mode only (NULL = all contexts), so it rides on qtl_args
+  # rather than the mode-shared cs_args.
+  qtl_args <- c(list(qd), cs_args,
+                list(cisWindow = argv$cis_window, contexts = contexts_arg))
   res <- if (has_region) {
     do.call(fineMappingPipeline, c(qtl_args, list(region = parse_region(argv$region))))
   } else {
