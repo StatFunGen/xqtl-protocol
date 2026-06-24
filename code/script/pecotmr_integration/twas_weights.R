@@ -65,9 +65,70 @@ parser <- add_argument(parser, "--fine-mapping-result",
 parser <- add_argument(parser, "--method-args",
                        help = "JSON object {token: {kwarg: value, ...}, ...} for twasWeightsPipeline()",
                        type = "character", default = "")
+parser <- add_argument(parser, "--min-twas-maf",
+                       help = "Minimum MAF for the variants used to learn TWAS weights (twasWeightsPipeline minTwasMaf), applied on top of the dataset's construct-time mafCutoff",
+                       type = "numeric", default = 0.01)
+parser <- add_argument(parser, "--min-twas-xvar",
+                       help = "Minimum per-variant genotype variance for TWAS weight learning (twasWeightsPipeline minTwasXvar)",
+                       type = "numeric", default = 0.01)
+parser <- add_argument(parser, "--max-cv-variants",
+                       help = "Cap on the number of variants used in cross-validation (twasWeightsPipeline maxCvVariants); -1 = no cap",
+                       type = "integer", default = 5000L)
+parser <- add_argument(parser, "--cv-folds",
+                       help = "Cross-validation folds for TWAS weight evaluation (twasWeightsPipeline cvFolds)",
+                       type = "integer", default = 5L)
+parser <- add_argument(parser, "--cv-threads",
+                       help = "Threads for the cross-validation refits (twasWeightsPipeline cvThreads)",
+                       type = "integer", default = 1L)
+parser <- add_argument(parser, "--seed",
+                       help = "Integer RNG seed set before fitting (reproducibility); unset = no seeding",
+                       type = "integer", default = NA)
+# --- Per-analysis overrides of the QtlDataset's construct-time filters. Each is
+# opt-in (unset leaves the dataset's stored value); applied to the loaded object
+# before the pipeline runs.
+parser <- add_argument(parser, "--maf-cutoff",
+                       help = "Override QtlDataset mafCutoff for this analysis",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--mac-cutoff",
+                       help = "Override QtlDataset macCutoff",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--xvar-cutoff",
+                       help = "Override QtlDataset xvarCutoff",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--imiss-cutoff",
+                       help = "Override QtlDataset imissCutoff",
+                       type = "numeric", default = NA)
+parser <- add_argument(parser, "--drop-indel",
+                       help = "Drop indels (sets keepIndel = FALSE); omit to use the dataset's stored value",
+                       flag = TRUE)
+parser <- add_argument(parser, "--keep-samples",
+                       help = "Path to a whitespace-delimited file of sample IDs to restrict to (overrides keepSamples)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--keep-variants",
+                       help = "Path to a whitespace-delimited file of variant IDs to restrict to (overrides keepVariants)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
+
+# Opt-in overrides of a loaded QtlDataset's construct-time filter slots. Filters
+# apply lazily at extraction, so mutating the slot re-filters without rebuilding
+# the RDS. Mirrors fine_mapping.R.
+apply_qd_filter_overrides <- function(qd, argv) {
+  if (!is.na(argv$maf_cutoff))   qd@mafCutoff   <- argv$maf_cutoff
+  if (!is.na(argv$mac_cutoff))   qd@macCutoff   <- argv$mac_cutoff
+  if (!is.na(argv$xvar_cutoff))  qd@xvarCutoff  <- argv$xvar_cutoff
+  if (!is.na(argv$imiss_cutoff)) qd@imissCutoff <- argv$imiss_cutoff
+  if (isTRUE(argv$drop_indel))   qd@keepIndel   <- FALSE
+  read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
+    unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
+  ks <- read_ids(argv$keep_samples);  if (!is.null(ks)) qd@keepSamples  <- ks
+  kv <- read_ids(argv$keep_variants); if (!is.null(kv)) qd@keepVariants <- kv
+  qd
+}
+
+# Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
+if (length(argv$seed) == 1L && !is.na(argv$seed)) set.seed(as.integer(argv$seed))
 
 # Parse --method-args into a nested named list of per-method kwargs.
 parsed_method_args <- if (nzchar(argv$method_args) && argv$method_args != "." &&
@@ -135,6 +196,7 @@ if (!has_gene && !has_region)
   stop("Specify either --gene-id (with --cis-window) or --region.")
 
 qd <- readRDS(argv$qtl_dataset)
+qd <- apply_qd_filter_overrides(qd, argv)
 
 fmr_path <- argv$fine_mapping_result
 fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
@@ -143,18 +205,24 @@ fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
   NULL
 }
 
+# Shared args for both modes. minTwas* tighten the variant set used to learn
+# the weights (on top of the QtlDataset's construct-time cutoffs); the cv* knobs
+# control the cross-validated predictive-performance refits.
+tw_args <- list(methods           = methods_arg,
+                cisWindow         = argv$cis_window,
+                contexts          = contexts_arg,
+                minTwasMaf        = argv$min_twas_maf,
+                minTwasXvar       = argv$min_twas_xvar,
+                maxCvVariants     = argv$max_cv_variants,
+                cvFolds           = argv$cv_folds,
+                cvThreads         = argv$cv_threads,
+                fineMappingResult = fmr)
 res <- if (has_region) {
-  twasWeightsPipeline(qd, methods = methods_arg,
-                      region    = parse_region(argv$region),
-                      cisWindow = argv$cis_window,
-                      contexts  = contexts_arg,
-                      fineMappingResult = fmr)
+  do.call(twasWeightsPipeline,
+          c(list(qd), tw_args, list(region = parse_region(argv$region))))
 } else {
-  twasWeightsPipeline(qd, methods = methods_arg,
-                      traitId   = argv$gene_id,
-                      cisWindow = argv$cis_window,
-                      contexts  = contexts_arg,
-                      fineMappingResult = fmr)
+  do.call(twasWeightsPipeline,
+          c(list(qd), tw_args, list(traitId = argv$gene_id)))
 }
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
