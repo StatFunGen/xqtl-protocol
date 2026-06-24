@@ -36,9 +36,25 @@ parser <- add_argument(parser, "--mr-pip-cutoff",
 parser <- add_argument(parser, "--mr-method",
                        help = "MR method: ivwPerVariant or csAware",
                        type = "character", default = "ivwPerVariant")
+parser <- add_argument(parser, "--rsq-cutoff",
+                       help = "CV-R^2 weight selection: per (study,context,trait) keep only the best method whose cvPerformance rsq >= this; 0 disables (legacy twas_pipeline rsq_cutoff)",
+                       type = "numeric", default = 0.01)
+parser <- add_argument(parser, "--mr-pval-cutoff",
+                       help = "Run MR only where TWAS p-value < this; 1 disables the gate (legacy twas_pipeline mr_pval_cutoff)",
+                       type = "numeric", default = 0.05)
+parser <- add_argument(parser, "--mr-cpip-cutoff",
+                       help = "Cumulative-PIP cutoff for csAware MR (causalInferencePipeline mrCpipCutoff)",
+                       type = "numeric", default = 0.5)
+parser <- add_argument(parser, "--combine-methods",
+                       help = "Comma-separated method tokens for cross-method p-value combination (combinePValues); empty = none",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
+
+# Cross-method combination: empty / "." -> NULL (skip), else split on comma.
+combine_methods <- if (nzchar(argv$combine_methods) && argv$combine_methods != ".")
+  trimws(strsplit(argv$combine_methods, ",", fixed = TRUE)[[1L]]) else NULL
 
 tw  <- readRDS(argv$twas_weights)
 gss <- readRDS(argv$gwas_sumstats)
@@ -54,8 +70,12 @@ res <- causalInferencePipeline(
   gwasSumStats      = gss,
   twasWeights       = tw,
   fineMappingResult = fmr,
+  rsqCutoff         = argv$rsq_cutoff,
   mrPipCutoff       = argv$mr_pip_cutoff,
-  mrMethod          = argv$mr_method)
+  mrMethod          = argv$mr_method,
+  mrCpipCutoff      = argv$mr_cpip_cutoff,
+  mrPvalCutoff      = argv$mr_pval_cutoff,
+  combineMethods    = combine_methods)
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(res, argv$output)
