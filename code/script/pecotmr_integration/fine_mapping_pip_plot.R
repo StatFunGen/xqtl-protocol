@@ -4,7 +4,7 @@
 # Render a per-region PIP landscape plot from a QtlFineMappingResult or
 # GwasFineMappingResult RDS (output of fine_mapping.ipynb /
 # multivariate_fine_mapping.ipynb / functional_fine_mapping.ipynb /
-# gwas_rss_fine_mapping.ipynb). One PNG per input RDS, one facet panel
+# rss_analysis.ipynb). One PNG per input RDS, one facet panel
 # per row in the FMR.
 #
 # Inputs:

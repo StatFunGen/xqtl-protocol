@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # gwas_rss_manifest.R
 #
-# Resolve `gwas_rss_fine_mapping.ipynb`'s per-study GWAS sources (a
+# Resolve `rss_analysis.ipynb`'s per-study GWAS sources (a
 # --gwas-meta TSV and/or --gwas-tsv-list STUDY=PATH items) together with
 # its region inputs (a --region-list BED-ish file and/or --regions
 # chr:start-end strings) into a single per-job manifest TSV. One row per
