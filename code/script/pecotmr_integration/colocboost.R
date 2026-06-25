@@ -30,6 +30,13 @@
 #   --no-xqtl-coloc  Flag: disable xQTL-only cross-context coloc
 #   --joint-gwas     Flag: run xQTL+GWAS joint coloc
 #   --separate-gwas  Flag: run per-GWAS-study separate-focal coloc
+#   --pip-cutoff-to-skip
+#                    Optional per-context single-effect skip cutoff passed to
+#                    colocboostPipeline(pipCutoffToSkip = ). Either a single
+#                    number applied to every context, or comma-separated
+#                    context=value pairs (e.g. "context1=0.1,context2=0").
+#                    A negative value selects the data-driven 3/ncol(X)
+#                    default. Empty (default) disables the skip (0).
 #   --output         Output RDS path (one colocboost-pipeline list)
 
 suppressPackageStartupMessages({
@@ -64,9 +71,26 @@ parser <- add_argument(parser, "--joint-gwas",
 parser <- add_argument(parser, "--separate-gwas",
                        help = "Run per-GWAS-study separate-focal coloc (requires --gwas-sumstats)",
                        flag = TRUE)
+parser <- add_argument(parser, "--pip-cutoff-to-skip",
+                       help = "Per-context single-effect skip cutoff: a scalar or comma-separated context=value pairs (negative = data-driven default; empty = 0)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
+
+# Parse --pip-cutoff-to-skip into the scalar / context-named-vector shape
+# colocboostPipeline(pipCutoffToSkip = ) accepts. Mirrors susie_twas.R.
+parse_pip_cutoff <- function(s) {
+  if (is.null(s) || !nzchar(s)) return(0)
+  pairs <- strsplit(s, ",")[[1L]]
+  if (any(grepl("=", pairs, fixed = TRUE))) {
+    setNames(as.numeric(sub(".*=", "", pairs)),
+             gsub("'", "", sub("=.*", "", pairs)))
+  } else {
+    as.numeric(pairs[[1L]])
+  }
+}
+pip_cutoff_to_skip <- parse_pip_cutoff(argv$pip_cutoff_to_skip)
 
 parse_region <- function(s) {
   m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
@@ -103,22 +127,24 @@ gss <- if (has_gwas) readRDS(gwas_path) else NULL
 res <- if (has_region) {
   colocboostPipeline(
     qd,
-    gwasSumStats = gss,
-    region       = parse_region(argv$region),
-    cisWindow    = argv$cis_window,
-    xqtlColoc    = xqtl_coloc,
-    jointGwas    = joint_gwas,
-    separateGwas = separate_gwas)
+    gwasSumStats    = gss,
+    region          = parse_region(argv$region),
+    cisWindow       = argv$cis_window,
+    xqtlColoc       = xqtl_coloc,
+    jointGwas       = joint_gwas,
+    separateGwas    = separate_gwas,
+    pipCutoffToSkip = pip_cutoff_to_skip)
 } else {
   colocboostPipeline(
     qd,
-    gwasSumStats = gss,
-    traitId      = argv$gene_id,
-    cisWindow    = argv$cis_window,
-    focalTrait   = argv$gene_id,
-    xqtlColoc    = xqtl_coloc,
-    jointGwas    = joint_gwas,
-    separateGwas = separate_gwas)
+    gwasSumStats    = gss,
+    traitId         = argv$gene_id,
+    cisWindow       = argv$cis_window,
+    focalTrait      = argv$gene_id,
+    xqtlColoc       = xqtl_coloc,
+    jointGwas       = joint_gwas,
+    separateGwas    = separate_gwas,
+    pipCutoffToSkip = pip_cutoff_to_skip)
 }
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)

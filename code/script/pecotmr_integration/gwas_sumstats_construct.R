@@ -78,6 +78,15 @@ parser <- add_argument(parser, "--genome",
 parser <- add_argument(parser, "--column-mapping",
                        help = "Optional YAML mapping file(s), comma-separated (none / one-for-all / one-per-study)",
                        type = "character", default = "")
+parser <- add_argument(parser, "--n-case",
+                       help = "Optional per-study case counts, comma-separated (one per study; NA for quantitative). Stored on GwasSumStats for case/control effective-N downstream.",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--n-control",
+                       help = "Optional per-study control counts, comma-separated (one per study; NA for quantitative).",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--pip-cutoff-to-skip",
+                       help = "Skip a study whose single-trait max PIP is below this cutoff (summaryStatsQc pipCutoffToSkip); 0 disables, <0 uses 3/n_variants.",
+                       type = "numeric", default = 0)
 parser <- add_argument(parser, "--qc-method",
                        help = "LD-mismatch QC: 'none' (default), 'slalom', or 'dentist'",
                        type = "character", default = "none")
@@ -123,6 +132,22 @@ mappings <- if (length(mappings) == 0L) {
        "study), or one file per study (got ", length(mappings),
        " for ", length(studies), " studies).")
 }
+
+# ----- Optional per-study case/control counts -------------------------------
+# Comma-separated, one per study; "NA"/"" entries allowed for quantitative
+# studies in a mixed collection. NULL (unset) leaves the columns off entirely.
+parseCounts <- function(s, nm) {
+  v <- splitCsv(s)
+  if (length(v) == 0L) return(NULL)
+  num <- suppressWarnings(as.numeric(v))
+  if (length(num) == 1L) num <- rep(num, length(studies))
+  if (length(num) != length(studies))
+    stop("--", nm, " must supply one value per study (got ", length(num),
+         " for ", length(studies), " studies).")
+  num
+}
+nCase    <- parseCounts(argv$n_case, "n-case")
+nControl <- parseCounts(argv$n_control, "n-control")
 
 # ----- Parse --qc-args JSON -------------------------------------------------
 qc_extra <- if (nzchar(argv$qc_args) && argv$qc_args != "." &&
@@ -299,14 +324,17 @@ gss <- GwasSumStats(
   study    = studies,
   entry    = entries,
   genome   = argv$genome,
-  ldSketch = ld_handle)
+  ldSketch = ld_handle,
+  nCase    = nCase,
+  nControl = nControl)
 gss_out <- if (argv$skip_qc) {
   message("--skip-qc set; serialising raw GwasSumStats without summaryStatsQc().")
   gss
 } else {
   qc_call_args <- c(list(gss,
-                          zMismatchQc = qc_method,
-                          impute      = isTRUE(argv$impute)),
+                          zMismatchQc     = qc_method,
+                          impute          = isTRUE(argv$impute),
+                          pipCutoffToSkip = argv$pip_cutoff_to_skip),
                     qc_extra)
   do.call(summaryStatsQc, qc_call_args)
 }
