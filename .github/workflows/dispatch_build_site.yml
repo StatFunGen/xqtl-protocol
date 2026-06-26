@@ -35,6 +35,7 @@ jobs:
           jupyter-book build "$BOOK_SRC" --path-output . --config "$BOOK_SRC/website/_config.yml" --toc "$BOOK_SRC/website/_toc.yml"
           python website/build_flat_book.py --redirects _build/html
           rsync -auzP code/images/* _build/html/_images/
+          cp xqtl_flowchart.html _build/html/
           ghp-import -n -p -f _build/html
 
           # Link notebooks
