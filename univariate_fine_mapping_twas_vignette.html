@@ -292,7 +292,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="nav bd-sidenav">
@@ -506,12 +506,18 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-prepare-the-phenotype-manifest-and-association-windows-bed">Step 1 – Prepare the phenotype manifest and association-windows BED</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-run-susie-twas">Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-run-susie-twas-mnm">Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> + <code class="docutils literal notranslate"><span class="pre">mnm</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output Format</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qtlfinemappingresult-s4-structure"><code class="docutils literal notranslate"><span class="pre">QtlFineMappingResult</span></code> S4 structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#twasweights-s4-structure"><code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4 structure</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fine-mapping-result-qtlfinemappingresult-s4">Fine-Mapping Result: <code class="docutils literal notranslate"><span class="pre">QtlFineMappingResult</span></code> S4</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#twas-weights-result-twasweights-s4">TWAS Weights Result: <code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-pitfalls">Common pitfalls</a></li>
 </ul>
 </li>
@@ -537,24 +543,19 @@
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
 <p>This pipeline performs per-region univariate fine-mapping with SuSiE and computes TWAS
-weights, via the <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> workflow of <code class="docutils literal notranslate"><span class="pre">pipeline/mnm_regression.ipynb</span></code>. For each
-region the workflow fits SuSiE on the covariate-residualized phenotype × genotype
-matrix and then cross-validates five prediction models (<strong>enet</strong>, <strong>lasso</strong>,
-<strong>bayes_r</strong>, <strong>mrash</strong>, <strong>susie</strong>) to pick TWAS weights.</p>
-<p>SuSiE searches for up to five independent signals per region; if all five are found,
-the cap is raised. SuSiE itself does not accept covariates, so covariates are regressed
-out of both the phenotype and the genotype matrix beforehand.</p>
+weights, via the <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> and <code class="docutils literal notranslate"><span class="pre">mnm</span></code> workflows of <strong><code class="docutils literal notranslate"><span class="pre">pipeline/mnm_regression.ipynb</span></code></strong>.</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">qtl_dataset_construct+susie_twas</span></code></strong> — builds a <code class="docutils literal notranslate"><span class="pre">QtlDataset</span></code> RDS from genotype/phenotype/covariate files, then for each region fits SuSiE fine-mapping and trains TWAS prediction weights with 10 methods (mrash, susie, susie_inf, enet, lasso, mcp, scad, l0learn, bayes_r, bayes_c), plus a CV-based ensemble weight. Produces <code class="docutils literal notranslate"><span class="pre">*.univariate_bvsr.rds</span></code> (fine-mapping) and <code class="docutils literal notranslate"><span class="pre">*.univariate_twas_weights.rds</span></code> (TWAS weights).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">mnm</span></code></strong> — reads all <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> outputs (via <code class="docutils literal notranslate"><span class="pre">--fine-mapping-meta</span></code>), pools CV predictions across multiple contexts, solves a constrained QP to find the optimal method/context mixture, and produces <code class="docutils literal notranslate"><span class="pre">*.multicontext_twas_weights.rds</span></code>.</p></li>
+</ul>
+<p>SuSiE searches for up to L=5 independent signals per region. Covariates are regressed out of both phenotype and genotype matrices before fitting (SuSiE itself does not accept covariates).</p>
 <section id="what-is-a-region">
 <h3>What is a “region”?<a class="headerlink" href="#what-is-a-region" title="Link to this heading">#</a></h3>
 <p>A region is <strong>one row in the phenotype manifest</strong> (<code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>) plus its association
-window (from <code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>, or a symmetric <code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> around
-<code class="docutils literal notranslate"><span class="pre">start/end</span></code>). One <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> call fits one SuSiE + TWAS model per region.</p>
+window (from <code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code>). One <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> call fits one SuSiE + TWAS model per region.</p>
 <ul class="simple">
-<li><p><strong>Gene-based phenotypes.</strong> Manifest row = one gene; window = gene’s containing TAD (or
-± cis-window around the TSS).</p></li>
-<li><p><strong>Peak-based phenotypes (caQTL, mQTL).</strong> Manifest row = one peak/CpG; window = the
-peak’s containing <a class="reference internal" href="#generalized_TADB.html"><span class="xref myst">extended-TAD</span></a>. A peak is
-2–5 kb and cannot serve as its own window.</p></li>
+<li><p><strong>Gene-based phenotypes.</strong> Manifest row = one gene; window = gene’s TSS ± cis window (or from a pre-built TADB BED).</p></li>
+<li><p><strong>Peak-based phenotypes (caQTL, mQTL).</strong> Manifest row = one peak/CpG; window = the peak’s containing extended-TAD.</p></li>
 </ul>
 </section>
 </section>
@@ -610,57 +611,57 @@ containing extended-TAD.</p>
 </div>
 </div>
 </section>
-<section id="step-2-run-susie-twas">
-<h3>Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code><a class="headerlink" href="#step-2-run-susie-twas" title="Link to this heading">#</a></h3>
-<p><strong>Gene-based example</strong> (3 genes, default bulk-RNA-seq preprocessing):</p>
+<section id="step-2-run-susie-twas-mnm">
+<h3>Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> + <code class="docutils literal notranslate"><span class="pre">mnm</span></code><a class="headerlink" href="#step-2-run-susie-twas-mnm" title="Link to this heading">#</a></h3>
+<p><strong>Gene-based example</strong> (single gene, 2-context toy dataset):</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w">        </span>test_susie_twas<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w">         </span>output/mnm_regression/susie_twas<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genoFile<span class="w">    </span>output/genotype_by_chrom/wgs.merged.plink_qc.1.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--phenoFile<span class="w">   </span>output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--covFile<span class="w">     </span>output/covariate/bulk_rnaseq_tmp_matrix.low_expression_filtered.outlier_removed.tmm.expression.covariates.wgs.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--customized-association-windows<span class="w"> </span>reference_data/TAD/TADB_enhanced_cis.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--phenotype-names<span class="w"> </span>test_pheno<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--max-cv-variants<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--ld_reference_meta_file<span class="w"> </span>data/ld_meta_file_with_bim.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--region-name<span class="w"> </span>ENSG00000049246<span class="w"> </span>ENSG00000054116<span class="w"> </span>ENSG00000116678<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--save-data
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Step 1: build QtlDataset + run SuSiE fine-mapping + TWAS weights (all-in-one)</span>
+sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>qtl_dataset_construct+susie_twas<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span>protocol_example<span class="w"> </span>--cwd<span class="w"> </span>output_uni<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genoFile<span class="w"> </span>input/colocboost/example.chr22.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenoFile<span class="w"> </span>input/colocboost/pheno_manifest_multicontext.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--covFile<span class="w"> </span>input/colocboost/example_covariates.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--customized-association-windows<span class="w"> </span>input/colocboost/association_windows.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--region-name<span class="w"> </span>ENSG00000130538<span class="w"> </span>--transpose-covariates<span class="w"> </span>--save-data<span class="w"> </span>-j1
+
+<span class="c1"># Step 2: multi-context ensemble TWAS weights (mnm)</span>
+sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>mnm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span>protocol_example<span class="w"> </span>--cwd<span class="w"> </span>output_mnm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genoFile<span class="w"> </span>input/colocboost/example.chr22.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenoFile<span class="w"> </span>input/colocboost/pheno_manifest_multicontext.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--covFile<span class="w"> </span>input/colocboost/example_covariates.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--customized-association-windows<span class="w"> </span>input/colocboost/association_windows.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--fine-mapping-meta<span class="w"> </span>input/colocboost/fine_mapping_meta.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--transpose-covariates<span class="w"> </span>--save-data<span class="w"> </span>-j1
 </pre></div>
 </div>
 </div>
 </div>
-<p><strong>Peak-based example</strong> (caQTL; 10 chr22 peaks, 1,287 samples):</p>
+<p><strong>Peak-based example</strong> (same pipeline, swap phenotype/covariate inputs):</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w">        </span>example_10peaks_twas<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w">         </span>output/susie_twas_out<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genoFile<span class="w">    </span>input/example.chr22.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--phenoFile<span class="w">   </span>output/inputs_ready/pheno_manifest.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--covFile<span class="w">     </span>input/example_covariates.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--customized-association-windows<span class="w"> </span>output/inputs_ready/association_windows.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--phenotype-names<span class="w"> </span>caQTL<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--max-cv-variants<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--save-data
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Peak/chromatin example (same pipeline, different input)</span>
+sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span>protocol_example<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--cwd<span class="w"> </span>output_10peaks<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--genoFile<span class="w"> </span>input/genotype/protocol_example.genotype.chr22.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--phenoFile<span class="w"> </span>input/phenotype/protocol_example.pheno_manifest.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--covFile<span class="w"> </span>input/covariate/protocol_example.covariates.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--customized-association-windows<span class="w"> </span>input/finemapping/protocol_example.association_windows.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-j1
 </pre></div>
 </div>
 </div>
 </div>
-<p>Expected log (both cases):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>INFO: Running get_analysis_regions:
-Loading customized association analysis window from &lt;windows_bed&gt;
-INFO: get_analysis_regions is completed.
-INFO: get_analysis_regions output:   regional_data
-INFO: Running susie_twas:
-INFO: susie_twas (index=0) is completed.
-INFO: susie_twas (index=1) is completed.
-...
-INFO: susie_twas output:   &lt;cwd&gt;/fine_mapping/&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_bvsr.rds
-                           &lt;cwd&gt;/twas_weights/&lt;name&gt;.&lt;chrom&gt;_&lt;ID&gt;.univariate_twas_weights.rds
-                           ...  (2 × N_regions items)
-INFO: Workflow susie_twas is executed successfully.
+<p>Expected output files after <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>output_uni/fine_mapping/protocol_example.ENSG00000130538.univariate_bvsr.rds
+output_uni/twas_weights/protocol_example.ENSG00000130538.univariate_twas_weights.rds
+output_uni/fine_mapping_meta.tsv   ← auto-generated, used by mnm as --fine-mapping-meta
+</pre></div>
+</div>
+<p>After <code class="docutils literal notranslate"><span class="pre">mnm</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output_mnm</span><span class="o">/</span><span class="n">twas_weights</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">ENSG00000130538</span><span class="o">.</span><span class="n">multicontext_twas_weights</span><span class="o">.</span><span class="n">rds</span>
 </pre></div>
 </div>
 </section>
@@ -669,50 +670,460 @@ INFO: Workflow susie_twas is executed successfully.
 <h2>Command Interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span>-h
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>-h
 </pre></div>
 </div>
 </div>
 </div>
-<p>Flags consumed by <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code>:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> — path to a PLINK1 <code class="docutils literal notranslate"><span class="pre">.bed</span></code> file (pass the <code class="docutils literal notranslate"><span class="pre">.bed</span></code> path, not the prefix).
-FID/IID in the <code class="docutils literal notranslate"><span class="pre">.fam</span></code> must match the phenotype/covariate sample IDs.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> — 5-column <code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span> <span class="pre">path</span></code> manifest. One row per region; <code class="docutils literal notranslate"><span class="pre">path</span></code>
-points at a bgzipped+tabixed phenotype BED restricted to that region. Pass multiple
-files for multi-condition analyses.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> — tab-delimited, literal <code class="docutils literal notranslate"><span class="pre">ID</span></code> header in column 1; covariate names in rows,
-sample IDs across the header row.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> — 4-column <code class="docutils literal notranslate"><span class="pre">chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span></code> BED. Required unless
-<code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> is non-negative.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> — symmetric cis radius (bp) around each region’s <code class="docutils literal notranslate"><span class="pre">start/end</span></code>. Default
-<code class="docutils literal notranslate"><span class="pre">-1</span></code> (forces the customized-windows path).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--phenotype-names</span></code> — condition name(s), one per <code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--max-cv-variants</span></code> — cap on variants used in cross-validation (default 5,000).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--ld_reference_meta_file</span></code> — summary-stats / RSS mode only; omit for individual-level.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--region-name</span></code> — restrict to one or more region IDs for sanity checks.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--save-data</span></code> — also emit <code class="docutils literal notranslate"><span class="pre">*.univariate_data.rds</span></code> with the residualized X/Y matrices.</p></li>
-</ul>
+<p>Key parameters for <code class="docutils literal notranslate"><span class="pre">qtl_dataset_construct+susie_twas</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--name</span></code></p></td>
+<td><p>Study name prefix; all output files are named <code class="docutils literal notranslate"><span class="pre">{name}.{region_id}.*</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--cwd</span></code></p></td>
+<td><p>Output root directory; subdirs <code class="docutils literal notranslate"><span class="pre">qtl_dataset/</span></code>, <code class="docutils literal notranslate"><span class="pre">fine_mapping/</span></code>, <code class="docutils literal notranslate"><span class="pre">twas_weights/</span></code> are created automatically</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code></p></td>
+<td><p>PLINK1 <code class="docutils literal notranslate"><span class="pre">.bed</span></code> file path (<code class="docutils literal notranslate"><span class="pre">.bim</span></code>/<code class="docutils literal notranslate"><span class="pre">.fam</span></code> auto-located); FID/IID must match phenotype/covariate sample IDs</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code></p></td>
+<td><p>Phenotype manifest TSV — columns <code class="docutils literal notranslate"><span class="pre">ID</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code>, <code class="docutils literal notranslate"><span class="pre">cond</span></code> (one row per context); <code class="docutils literal notranslate"><span class="pre">path</span></code> points to a bgzipped+tabix-indexed phenotype BED</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code></p></td>
+<td><p>Covariate TSV — rows = covariates, columns = samples (use <code class="docutils literal notranslate"><span class="pre">--transpose-covariates</span></code> if rows = samples)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code></p></td>
+<td><p>4-column <code class="docutils literal notranslate"><span class="pre">chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span></code> BED defining the cis search window per region</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--region-name</span></code></p></td>
+<td><p>Restrict analysis to one or more region IDs (space-separated); omit to run all regions</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--transpose-covariates</span></code></p></td>
+<td><p>Transpose covariate file before reading (needed when rows = samples)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--save-data</span></code></p></td>
+<td><p>Also emit <code class="docutils literal notranslate"><span class="pre">*.univariate_data.rds</span></code> with residualized X/Y matrices; <strong>required</strong> for downstream <code class="docutils literal notranslate"><span class="pre">mnm</span></code> step</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-j1</span></code></p></td>
+<td><p>Number of parallel jobs (set to 1 for debugging)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Additional parameter for <code class="docutils literal notranslate"><span class="pre">mnm</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--fine-mapping-meta</span></code></p></td>
+<td><p>TSV auto-generated by <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> (at <code class="docutils literal notranslate"><span class="pre">{cwd}/fine_mapping_meta.tsv</span></code>); maps each region to its <code class="docutils literal notranslate"><span class="pre">univariate_bvsr.rds</span></code> and <code class="docutils literal notranslate"><span class="pre">univariate_twas_weights.rds</span></code> paths</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </section>
 <section id="output-format">
-<h2>Output format<a class="headerlink" href="#output-format" title="Link to this heading">#</a></h2>
-<p>All results are written under <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">output/mnm_regression/susie_twas/twas_weights/</span></code>), one set of files per region:</p>
+<h2>Output Format<a class="headerlink" href="#output-format" title="Link to this heading">#</a></h2>
+<p>All outputs are written under <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>, one set per region:</p>
+<p><strong>Fine-mapping</strong> (<code class="docutils literal notranslate"><span class="pre">output_uni/fine_mapping/</span></code>):</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">{name}.{chr}_{region_id}.univariate_twas_weights.rds</span></code> — the fitted SuSiE fine-mapping result plus the trained TWAS weights for that region/gene; this is the main output consumed by downstream TWAS.</p></li>
-<li><p>a companion fine-mapping RDS keyed by region <code class="docutils literal notranslate"><span class="pre">ID</span></code> and phenotype condition (and a third data RDS when <code class="docutils literal notranslate"><span class="pre">--save-data</span></code> is set), holding the per-region SuSiE posterior summaries and credible sets.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{name}.{region_id}.univariate_bvsr.rds</span></code> — <code class="docutils literal notranslate"><span class="pre">QtlFineMappingResult</span></code> S4 object, one entry per context</p></li>
 </ul>
+<p><strong>TWAS weights</strong> (<code class="docutils literal notranslate"><span class="pre">output_uni/twas_weights/</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{name}.{region_id}.univariate_twas_weights.rds</span></code> — <code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4 object (per-method + ensemble)</p></li>
+</ul>
+<p><strong>Ensemble TWAS weights</strong> (after <code class="docutils literal notranslate"><span class="pre">mnm</span></code> step, <code class="docutils literal notranslate"><span class="pre">output_mnm/twas_weights/</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{name}.{region_id}.multicontext_twas_weights.rds</span></code> — multi-context ensemble <code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4</p></li>
+</ul>
+<section id="qtlfinemappingresult-s4-structure">
+<h3><code class="docutils literal notranslate"><span class="pre">QtlFineMappingResult</span></code> S4 structure<a class="headerlink" href="#qtlfinemappingresult-s4-structure" title="Link to this heading">#</a></h3>
+<p>Top-level via <code class="docutils literal notranslate"><span class="pre">attr(rds,</span> <span class="pre">&quot;listData&quot;)</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">study</span></code></p></td>
+<td><p>Study name (from <code class="docutils literal notranslate"><span class="pre">--name</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">context</span></code></p></td>
+<td><p>Context label per entry</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">trait</span></code></p></td>
+<td><p>Gene/trait ID</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">method</span></code></p></td>
+<td><p>Fine-mapping method (<code class="docutils literal notranslate"><span class="pre">&quot;susie&quot;</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">entry</span></code></p></td>
+<td><p>List of <code class="docutils literal notranslate"><span class="pre">FineMappingEntry</span></code> S4 objects (one per context)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">FineMappingEntry</span></code> has these attributes:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">variantIds</span></code></p></td>
+<td><p>SNP IDs (<code class="docutils literal notranslate"><span class="pre">chr:pos:ref:alt</span></code>) for all variants in the region</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">susieFit</span></code></p></td>
+<td><p>Raw <code class="docutils literal notranslate"><span class="pre">susie()</span></code> output — <code class="docutils literal notranslate"><span class="pre">sets$cs</span></code> (credible sets after purity filter), <code class="docutils literal notranslate"><span class="pre">lbf</span></code> (log Bayes factors per effect component), <code class="docutils literal notranslate"><span class="pre">alpha</span></code> (posterior inclusion per effect)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">topLoci</span></code></p></td>
+<td><p>Per-variant summary data.frame (see column reference in Anticipated Results)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cvResult</span></code></p></td>
+<td><p>Cross-validation result used in TWAS weight computation</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="twasweights-s4-structure">
+<h3><code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4 structure<a class="headerlink" href="#twasweights-s4-structure" title="Link to this heading">#</a></h3>
+<p>Top-level via <code class="docutils literal notranslate"><span class="pre">attr(tw,</span> <span class="pre">&quot;listData&quot;)</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">study</span></code></p></td>
+<td><p>Study name</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">context</span></code></p></td>
+<td><p>Context label per entry (repeated per method)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">trait</span></code></p></td>
+<td><p>Gene/trait ID</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">method</span></code></p></td>
+<td><p>Method name: <code class="docutils literal notranslate"><span class="pre">mrash</span></code>, <code class="docutils literal notranslate"><span class="pre">susie</span></code>, <code class="docutils literal notranslate"><span class="pre">susie_inf</span></code>, <code class="docutils literal notranslate"><span class="pre">enet</span></code>, <code class="docutils literal notranslate"><span class="pre">lasso</span></code>, <code class="docutils literal notranslate"><span class="pre">mcp</span></code>, <code class="docutils literal notranslate"><span class="pre">scad</span></code>, <code class="docutils literal notranslate"><span class="pre">l0learn</span></code>, <code class="docutils literal notranslate"><span class="pre">bayes_r</span></code>, <code class="docutils literal notranslate"><span class="pre">bayes_c</span></code>, <code class="docutils literal notranslate"><span class="pre">ensemble</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">entry</span></code></p></td>
+<td><p>List of <code class="docutils literal notranslate"><span class="pre">TwasWeightsEntry</span></code> S4 objects (N_contexts × 11 methods total)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">TwasWeightsEntry</span></code> accessed via <code class="docutils literal notranslate"><span class="pre">attr(entry,</span> <span class="pre">&quot;&lt;name&gt;&quot;)</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">variantIds</span></code></p></td>
+<td><p>SNP IDs in the region</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">weights</span></code></p></td>
+<td><p>Per-SNP TWAS weights (β from genotype→expression model)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fits</span></code></p></td>
+<td><p>Fitted model object (class-specific)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cvPerformance</span></code></p></td>
+<td><p>CV results: <code class="docutils literal notranslate"><span class="pre">$metrics</span></code> (corr, rsq, adj_rsq, pval, RMSE, MAE) for per-method entries; <code class="docutils literal notranslate"><span class="pre">$methodCoef</span></code> + <code class="docutils literal notranslate"><span class="pre">$methodPerformance</span></code> for ensemble</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">standardized</span></code></p></td>
+<td><p>Whether X/Y were standardized (default <code class="docutils literal notranslate"><span class="pre">FALSE</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 </section>
 <section id="anticipated-results">
 <h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
 <p>Quick sanity check — inspect cross-validation performance for the first region:</p>
+<section id="fine-mapping-result-qtlfinemappingresult-s4">
+<h3>Fine-Mapping Result: <code class="docutils literal notranslate"><span class="pre">QtlFineMappingResult</span></code> S4<a class="headerlink" href="#fine-mapping-result-qtlfinemappingresult-s4" title="Link to this heading">#</a></h3>
+<p>The fine-mapping RDS holds <strong>all contexts for one gene</strong> in a single object.
+Access the structured data via <code class="docutils literal notranslate"><span class="pre">attr(rds,</span> <span class="pre">&quot;listData&quot;)</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">study</span></code></p></td>
+<td><p>Study name string (from <code class="docutils literal notranslate"><span class="pre">--study</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">context</span></code></p></td>
+<td><p>Context label for each entry (one entry per context)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">trait</span></code></p></td>
+<td><p>Gene/trait ID (Ensembl)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">method</span></code></p></td>
+<td><p>Fine-mapping method used (<code class="docutils literal notranslate"><span class="pre">&quot;susie&quot;</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">entry</span></code></p></td>
+<td><p>List of <code class="docutils literal notranslate"><span class="pre">FineMappingEntry</span></code> S4 objects, one per context</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">FineMappingEntry</span></code> has these attributes:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Class</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">variantIds</span></code></p></td>
+<td><p>character</p></td>
+<td><p>SNP IDs in the region (<code class="docutils literal notranslate"><span class="pre">chr:pos:ref:alt</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">susieFit</span></code></p></td>
+<td><p>susie</p></td>
+<td><p>Raw <code class="docutils literal notranslate"><span class="pre">susie()</span></code> output — contains <code class="docutils literal notranslate"><span class="pre">sets$cs</span></code> (credible sets), <code class="docutils literal notranslate"><span class="pre">lbf</span></code> (log Bayes factors), <code class="docutils literal notranslate"><span class="pre">alpha</span></code> (posterior inclusion probabilities per effect)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">topLoci</span></code></p></td>
+<td><p>data.frame</p></td>
+<td><p>Per-variant summary table (see column reference below)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cvResult</span></code></p></td>
+<td><p>list</p></td>
+<td><p>Cross-validation result used to compute TWAS weights</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong><code class="docutils literal notranslate"><span class="pre">topLoci</span></code> column reference</strong> (1024 rows × 23 columns for this example):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">variant_id</span></code></p></td>
+<td><p>SNP ID (<code class="docutils literal notranslate"><span class="pre">chr:pos:ref:alt</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">pos</span></code></p></td>
+<td><p>Chromosome and position</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">A1</span></code>, <code class="docutils literal notranslate"><span class="pre">A2</span></code></p></td>
+<td><p>Effect and reference alleles</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">N</span></code></p></td>
+<td><p>Sample size</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">af</span></code></p></td>
+<td><p>Allele frequency of A1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">marginal_beta</span></code>, <code class="docutils literal notranslate"><span class="pre">marginal_se</span></code></p></td>
+<td><p>Marginal effect estimate and standard error</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">marginal_z</span></code>, <code class="docutils literal notranslate"><span class="pre">marginal_p</span></code></p></td>
+<td><p>Marginal z-score and p-value</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pip</span></code></p></td>
+<td><p><strong>Posterior Inclusion Probability</strong> — probability this variant is causal (0–1)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">posterior_mean</span></code>, <code class="docutils literal notranslate"><span class="pre">posterior_sd</span></code></p></td>
+<td><p>Posterior effect size estimate and uncertainty</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cs_95</span></code>, <code class="docutils literal notranslate"><span class="pre">cs_70</span></code>, <code class="docutils literal notranslate"><span class="pre">cs_50</span></code></p></td>
+<td><p>Which credible set the variant belongs to at each coverage level; empty string = not in any CS</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cs_95_purity</span></code></p></td>
+<td><p>Min pairwise LD r² within the 95% CS; <strong>≥ 0.5 required</strong> for a credible CS</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">method</span></code></p></td>
+<td><p>Fine-mapping method (<code class="docutils literal notranslate"><span class="pre">&quot;susie&quot;</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gene</span></code>, <code class="docutils literal notranslate"><span class="pre">event</span></code></p></td>
+<td><p>Gene ID and molecular event type</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">grange_start</span></code>, <code class="docutils literal notranslate"><span class="pre">grange_end</span></code></p></td>
+<td><p>Association window boundaries</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Rscript<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;</span>
-<span class="s1">fp &lt;- &quot;output/mnm_regression/susie_twas/twas_weights/test_susie_twas.chr1_ENSG00000049246.univariate_twas_weights.rds&quot;</span>
-<span class="s1">x  &lt;- readRDS(fp)</span>
-<span class="s1">cat(&quot;methods:&quot;, names(x[[1]][[1]]$twas_weights), &quot;\n&quot;)</span>
-<span class="s1">print(x[[1]][[1]]$twas_cv_result$performance)</span>
-<span class="s1">&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>suppressPackageStartupMessages<span class="o">(</span>library<span class="o">(</span>pecotmr<span class="o">))</span>
+
+<span class="c1"># Load QtlFineMappingResult</span>
+rds<span class="w"> </span>&lt;-<span class="w"> </span>readRDS<span class="o">(</span><span class="s2">&quot;output_uni/fine_mapping/protocol_example.ENSG00000130538.univariate_bvsr.rds&quot;</span><span class="o">)</span>
+class<span class="o">(</span>rds<span class="o">)</span><span class="w">   </span><span class="c1"># &quot;QtlFineMappingResult&quot;</span>
+
+ld<span class="w"> </span>&lt;-<span class="w"> </span>attr<span class="o">(</span>rds,<span class="w"> </span><span class="s2">&quot;listData&quot;</span><span class="o">)</span>
+ld<span class="nv">$context</span><span class="w">   </span><span class="c1"># &quot;context1&quot;  &quot;context2&quot;</span>
+ld<span class="nv">$method</span><span class="w">    </span><span class="c1"># &quot;susie&quot;  &quot;susie&quot;</span>
+
+<span class="c1"># --- topLoci: dimensions and column names ---</span>
+e1<span class="w"> </span>&lt;-<span class="w"> </span>ld<span class="nv">$entry</span><span class="o">[[</span><span class="m">1</span><span class="o">]]</span><span class="w">          </span><span class="c1"># context1</span>
+tl<span class="w"> </span>&lt;-<span class="w"> </span>attr<span class="o">(</span>e1,<span class="w"> </span><span class="s2">&quot;topLoci&quot;</span><span class="o">)</span>
+
+dim<span class="o">(</span>tl<span class="o">)</span><span class="w">        </span><span class="c1"># 1024 x 23  (one row per variant in the region)</span>
+names<span class="o">(</span>tl<span class="o">)</span>
+<span class="c1"># [1] &quot;variant_id&quot;     &quot;chrom&quot;          &quot;pos&quot;            &quot;A1&quot;             &quot;A2&quot;</span>
+<span class="c1"># [6] &quot;N&quot;              &quot;af&quot;             &quot;marginal_beta&quot;  &quot;marginal_se&quot;    &quot;marginal_z&quot;</span>
+<span class="c1"># [11] &quot;marginal_p&quot;     &quot;pip&quot;            &quot;posterior_mean&quot; &quot;posterior_sd&quot;   &quot;cs_95&quot;</span>
+<span class="c1"># [16] &quot;cs_70&quot;          &quot;cs_50&quot;          &quot;cs_95_purity&quot;   &quot;method&quot;         &quot;gene&quot;</span>
+<span class="c1"># [21] &quot;event&quot;          &quot;grange_start&quot;   &quot;grange_end&quot;</span>
+
+<span class="c1"># --- Step 1: check for valid credible sets ---</span>
+sf<span class="w"> </span>&lt;-<span class="w"> </span>attr<span class="o">(</span>e1,<span class="w"> </span><span class="s2">&quot;susieFit&quot;</span><span class="o">)</span>
+sf<span class="nv">$sets$cs</span><span class="w">    </span><span class="c1"># NULL -&gt; no credible set passed purity filter (toy data n=49)</span>
+sf<span class="nv">$lbf</span><span class="w">        </span><span class="c1"># 0.027 0.027 0.027 0.028 0.028 -&gt; all near zero -&gt; no detectable signal</span>
+
+<span class="c1"># --- Step 2: top variants by PIP ---</span>
+tl_s<span class="w"> </span>&lt;-<span class="w"> </span>tl<span class="o">[</span>order<span class="o">(</span>tl<span class="nv">$pip</span>,<span class="w"> </span><span class="nv">decreasing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>TRUE<span class="o">)</span>,<span class="w"> </span><span class="o">]</span>
+head<span class="o">(</span>tl_s<span class="o">[</span>,<span class="w"> </span>c<span class="o">(</span><span class="s2">&quot;variant_id&quot;</span>,<span class="w"> </span><span class="s2">&quot;af&quot;</span>,<span class="w"> </span><span class="s2">&quot;marginal_z&quot;</span>,<span class="w"> </span><span class="s2">&quot;marginal_p&quot;</span>,
+<span class="w">               </span><span class="s2">&quot;pip&quot;</span>,<span class="w"> </span><span class="s2">&quot;cs_95&quot;</span>,<span class="w"> </span><span class="s2">&quot;cs_95_purity&quot;</span><span class="o">)]</span>,<span class="w"> </span><span class="m">5</span><span class="o">)</span>
+<span class="c1">#             variant_id        af  marginal_z  marginal_p    pip     cs_95  cs_95_purity</span>
+<span class="c1"># chr22:16445263:A:T  0.837    3.482    4.99e-04  0.032  susie_0             0</span>
+<span class="c1"># chr22:16418860:A:T  0.704   -3.436    5.91e-04  0.031  susie_0             0</span>
+<span class="c1"># chr22:16214125:A:T  0.612    3.307    9.42e-04  0.027  susie_0             0</span>
+
+<span class="c1"># cs_95 = &quot;susie_0&quot; but cs_95_purity = 0 on every row:</span>
+<span class="c1">#   SuSiE found one CS spanning the whole region (all 1024 SNPs),</span>
+<span class="c1">#   purity = 0 -&gt; not a meaningful credible set.</span>
+<span class="c1"># In real data (n &gt;= 500): expect PIP &gt; 0.5 lead variants</span>
+<span class="c1">#   and cs_95_purity &gt;= 0.5 with 1-10 SNPs per CS.</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="twas-weights-result-twasweights-s4">
+<h3>TWAS Weights Result: <code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4<a class="headerlink" href="#twas-weights-result-twasweights-s4" title="Link to this heading">#</a></h3>
+<p>The TWAS weights RDS holds weights from <strong>all methods × all contexts</strong> for one gene.
+Top-level structure via <code class="docutils literal notranslate"><span class="pre">attr(tw,</span> <span class="pre">&quot;listData&quot;)</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">study</span></code></p></td>
+<td><p>Study name</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">context</span></code></p></td>
+<td><p>Context label for each entry (repeated per method)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">trait</span></code></p></td>
+<td><p>Gene/trait ID</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">method</span></code></p></td>
+<td><p>Method name: <code class="docutils literal notranslate"><span class="pre">mrash</span></code>, <code class="docutils literal notranslate"><span class="pre">susie</span></code>, <code class="docutils literal notranslate"><span class="pre">susie_inf</span></code>, <code class="docutils literal notranslate"><span class="pre">enet</span></code>, <code class="docutils literal notranslate"><span class="pre">lasso</span></code>, <code class="docutils literal notranslate"><span class="pre">mcp</span></code>, <code class="docutils literal notranslate"><span class="pre">scad</span></code>, <code class="docutils literal notranslate"><span class="pre">l0learn</span></code>, <code class="docutils literal notranslate"><span class="pre">bayes_r</span></code>, <code class="docutils literal notranslate"><span class="pre">bayes_c</span></code>, <code class="docutils literal notranslate"><span class="pre">ensemble</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">entry</span></code></p></td>
+<td><p>List of <code class="docutils literal notranslate"><span class="pre">TwasWeightsEntry</span></code> S4 objects (N_contexts × 11 methods total)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">TwasWeightsEntry</span></code> is accessed via <code class="docutils literal notranslate"><span class="pre">attr(entry,</span> <span class="pre">&quot;&lt;name&gt;&quot;)</span></code> — <strong>not</strong> <code class="docutils literal notranslate"><span class="pre">$</span></code> notation:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">variantIds</span></code></p></td>
+<td><p>SNP IDs (<code class="docutils literal notranslate"><span class="pre">chr:pos:ref:alt</span></code>) for all variants in the region</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">weights</span></code></p></td>
+<td><p><strong>Per-SNP TWAS weights</strong> — the β vector used in Z_TWAS = <strong>w</strong>ᵀ<strong>z</strong> / √(<strong>w</strong>ᵀR<strong>w</strong>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fits</span></code></p></td>
+<td><p>Fitted model object (class-specific: <code class="docutils literal notranslate"><span class="pre">mr.ash</span></code>, <code class="docutils literal notranslate"><span class="pre">susie</span></code>, <code class="docutils literal notranslate"><span class="pre">glmnet</span></code>, etc.)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cvPerformance</span></code></p></td>
+<td><p>CV results — for per-method entries: <code class="docutils literal notranslate"><span class="pre">$metrics</span></code> with <code class="docutils literal notranslate"><span class="pre">corr</span></code>, <code class="docutils literal notranslate"><span class="pre">rsq</span></code>, <code class="docutils literal notranslate"><span class="pre">adj_rsq</span></code>, <code class="docutils literal notranslate"><span class="pre">pval</span></code>, <code class="docutils literal notranslate"><span class="pre">RMSE</span></code>, <code class="docutils literal notranslate"><span class="pre">MAE</span></code>; for ensemble entry: <code class="docutils literal notranslate"><span class="pre">$methodCoef</span></code> (ζ per method) and <code class="docutils literal notranslate"><span class="pre">$methodPerformance</span></code> (CV R² per method)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">standardized</span></code></p></td>
+<td><p>Whether X/Y were z-score standardized before fitting (default: <code class="docutils literal notranslate"><span class="pre">FALSE</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>CV performance metrics</strong> tell you how well each method predicts expression using out-of-fold cross-validation:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rsq</span></code> / <code class="docutils literal notranslate"><span class="pre">adj_rsq</span></code>: cross-validated R² — the primary metric for method quality</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">corr</span></code>: Pearson correlation between predicted and observed expression</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pval</span></code>: p-value of the cross-validated prediction</p></li>
+</ul>
+<p><strong>Ensemble <code class="docutils literal notranslate"><span class="pre">methodCoef</span></code></strong> (ζ): non-negative weights summing to 1 that determine how much each method contributes to the final ensemble prediction. <code class="docutils literal notranslate"><span class="pre">w_ensemble</span> <span class="pre">=</span> <span class="pre">Σ</span> <span class="pre">ζ_k</span> <span class="pre">×</span> <span class="pre">w_k</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>suppressPackageStartupMessages<span class="o">(</span>library<span class="o">(</span>pecotmr<span class="o">))</span>
+
+tw<span class="w">  </span>&lt;-<span class="w"> </span>readRDS<span class="o">(</span><span class="s2">&quot;output_uni/twas_weights/protocol_example.ENSG00000130538.univariate_twas_weights.rds&quot;</span><span class="o">)</span>
+class<span class="o">(</span>tw<span class="o">)</span><span class="w">     </span><span class="c1"># &quot;TwasWeights&quot;</span>
+
+ld<span class="w">  </span>&lt;-<span class="w"> </span>attr<span class="o">(</span>tw,<span class="w"> </span><span class="s2">&quot;listData&quot;</span><span class="o">)</span>
+unique<span class="o">(</span>ld<span class="nv">$context</span><span class="o">)</span><span class="w">   </span><span class="c1"># &quot;context1&quot;  &quot;context2&quot;</span>
+unique<span class="o">(</span>ld<span class="nv">$method</span><span class="o">)</span><span class="w">    </span><span class="c1"># &quot;mrash&quot; &quot;susie&quot; &quot;susie_inf&quot; &quot;enet&quot; &quot;lasso&quot; &quot;mcp&quot; &quot;scad&quot; &quot;l0learn&quot; &quot;bayes_r&quot; &quot;bayes_c&quot; &quot;ensemble&quot;</span>
+length<span class="o">(</span>ld<span class="nv">$entry</span><span class="o">)</span><span class="w">     </span><span class="c1"># 22</span>
+
+<span class="c1"># Inspect one entry (context1 / susie)</span>
+e_susie<span class="w"> </span>&lt;-<span class="w"> </span>ld<span class="nv">$entry</span><span class="o">[</span>ld<span class="nv">$context</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;context1&quot;</span><span class="w"> </span><span class="p">&amp;</span><span class="w"> </span>ld<span class="nv">$method</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;susie&quot;</span><span class="o">][[</span><span class="m">1</span><span class="o">]]</span>
+wt<span class="w"> </span>&lt;-<span class="w"> </span>attr<span class="o">(</span>e_susie,<span class="w"> </span><span class="s2">&quot;weights&quot;</span><span class="o">)</span>
+cat<span class="o">(</span><span class="s2">&quot;non-zero weights:&quot;</span>,<span class="w"> </span>sum<span class="o">(</span>wt<span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="m">0</span><span class="o">)</span>,<span class="w"> </span><span class="s2">&quot;/&quot;</span>,<span class="w"> </span>length<span class="o">(</span>wt<span class="o">)</span>,<span class="w"> </span><span class="s2">&quot;\n&quot;</span><span class="o">)</span>
+
+m<span class="w"> </span>&lt;-<span class="w"> </span>attr<span class="o">(</span>e_susie,<span class="w"> </span><span class="s2">&quot;cvPerformance&quot;</span><span class="o">)</span><span class="nv">$metrics</span>
+round<span class="o">(</span>m<span class="o">[</span>c<span class="o">(</span><span class="s2">&quot;corr&quot;</span>,<span class="s2">&quot;rsq&quot;</span>,<span class="s2">&quot;adj_rsq&quot;</span>,<span class="s2">&quot;pval&quot;</span><span class="o">)]</span>,<span class="w"> </span><span class="m">4</span><span class="o">)</span>
+<span class="c1">#    corr     rsq adj_rsq    pval</span>
+<span class="c1">#  0.9798  0.9599  0.9591  0.0000</span>
+
+<span class="c1"># Method summary for context1</span>
+idx1<span class="w"> </span>&lt;-<span class="w"> </span>which<span class="o">(</span>ld<span class="nv">$context</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;context1&quot;</span><span class="o">)</span>
+<span class="k">for</span><span class="w"> </span><span class="o">(</span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>idx1<span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">  </span>e<span class="w"> </span>&lt;-<span class="w"> </span>ld<span class="nv">$entry</span><span class="o">[[</span>i<span class="o">]]</span>
+<span class="w">  </span>m<span class="w"> </span>&lt;-<span class="w"> </span>tryCatch<span class="o">(</span>attr<span class="o">(</span>e,<span class="s2">&quot;cvPerformance&quot;</span><span class="o">)</span><span class="nv">$metrics</span>,<span class="w"> </span><span class="nv">error</span><span class="o">=</span><span class="k">function</span><span class="o">(</span>e<span class="o">)</span><span class="w"> </span>NULL<span class="o">)</span>
+<span class="w">  </span>rsq<span class="w"> </span>&lt;-<span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="o">(</span>!is.null<span class="o">(</span>m<span class="o">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>is.numeric<span class="o">(</span>m<span class="o">))</span><span class="w"> </span>round<span class="o">(</span>m<span class="o">[</span><span class="s2">&quot;rsq&quot;</span><span class="o">]</span>,<span class="w"> </span><span class="m">3</span><span class="o">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span>NA
+<span class="w">  </span>cat<span class="o">(</span>sprintf<span class="o">(</span><span class="s2">&quot;%-12s  rsq=%s\n&quot;</span>,<span class="w"> </span>ld<span class="nv">$method</span><span class="o">[</span>i<span class="o">]</span>,<span class="w"> </span>rsq<span class="o">))</span>
+<span class="o">}</span>
+<span class="c1"># mrash         rsq=0.466</span>
+<span class="c1"># susie         rsq=0.960</span>
+<span class="c1"># susie_inf     rsq=0.305</span>
+<span class="c1"># enet          rsq=0.060</span>
+<span class="c1"># lasso         rsq=0.160</span>
+<span class="c1"># mcp           rsq=NA</span>
+<span class="c1"># scad          rsq=0.005</span>
+<span class="c1"># l0learn       rsq=0.031</span>
+<span class="c1"># bayes_r       rsq=0.520</span>
+<span class="c1"># bayes_c       rsq=0.577</span>
+<span class="c1"># ensemble      rsq=NA</span>
+
+<span class="c1"># Ensemble coefficients</span>
+ens<span class="w"> </span>&lt;-<span class="w"> </span>ld<span class="nv">$entry</span><span class="o">[</span>ld<span class="nv">$context</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;context1&quot;</span><span class="w"> </span><span class="p">&amp;</span><span class="w"> </span>ld<span class="nv">$method</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;ensemble&quot;</span><span class="o">][[</span><span class="m">1</span><span class="o">]]</span>
+cv<span class="w">  </span>&lt;-<span class="w"> </span>attr<span class="o">(</span>ens,<span class="w"> </span><span class="s2">&quot;cvPerformance&quot;</span><span class="o">)</span>
+round<span class="o">(</span>cv<span class="nv">$methodCoef</span><span class="o">[</span>cv<span class="nv">$methodCoef</span><span class="w"> </span>&gt;<span class="w"> </span><span class="m">0</span>.001<span class="o">]</span>,<span class="w"> </span><span class="m">3</span><span class="o">)</span><span class="w">   </span><span class="c1"># bayes_r=0.802, bayes_c=0.198</span>
+round<span class="o">(</span>cv<span class="nv">$methodPerformance</span>,<span class="w"> </span><span class="m">3</span><span class="o">)</span>
 </pre></div>
 </div>
 </div>
@@ -724,6 +1135,7 @@ sample IDs across the header row.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">top_loci</span></code> in <code class="docutils literal notranslate"><span class="pre">univariate_bvsr.rds</span></code> — lead variants and credible-set coverages.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">susie_result_trimmed$sets$cs</span></code> — indices of variants in each 95% credible set.</p></li>
 </ul>
+</section>
 <section id="common-pitfalls">
 <h3>Common pitfalls<a class="headerlink" href="#common-pitfalls" title="Link to this heading">#</a></h3>
 <ul class="simple">
@@ -815,12 +1227,18 @@ path explicitly.</p></li>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-prepare-the-phenotype-manifest-and-association-windows-bed">Step 1 – Prepare the phenotype manifest and association-windows BED</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-run-susie-twas">Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-run-susie-twas-mnm">Step 2 – Run <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> + <code class="docutils literal notranslate"><span class="pre">mnm</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output Format</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qtlfinemappingresult-s4-structure"><code class="docutils literal notranslate"><span class="pre">QtlFineMappingResult</span></code> S4 structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#twasweights-s4-structure"><code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4 structure</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fine-mapping-result-qtlfinemappingresult-s4">Fine-Mapping Result: <code class="docutils literal notranslate"><span class="pre">QtlFineMappingResult</span></code> S4</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#twas-weights-result-twasweights-s4">TWAS Weights Result: <code class="docutils literal notranslate"><span class="pre">TwasWeights</span></code> S4</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-pitfalls">Common pitfalls</a></li>
 </ul>
 </li>

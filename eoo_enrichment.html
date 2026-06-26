@@ -66,7 +66,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Pathway Analysis" href="gsea.html" />
-    <link rel="prev" title="Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study" href="colocboost.html" />
+    <link rel="prev" title="Multi-trait colocalization using ColocBoost" href="colocboost.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -294,7 +294,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="current nav bd-sidenav">
@@ -536,7 +536,7 @@
 <h3>Odds Ratio (OR)<a class="headerlink" href="#odds-ratio-or" title="Link to this heading">#</a></h3>
 <p>Strength of association between significant variants and an annotation:</p>
 <div class="math notranslate nohighlight">
-\[OR = \frac{\left| AB \right| / \left| A \setminus B \right|}{\left| \text{noA-noB} \right| / \left| B \setminus A \right|}\]</div>
+\[OR = \frac{\left| AB \right| / \left| A \setminus B \right|}{\left| B \setminus A \right| / \left| \text{noA-noB} \right|}\]</div>
 <p>where <span class="math notranslate nohighlight">\(A\)</span> = SNPs in the annotation, <span class="math notranslate nohighlight">\(B\)</span> = significant SNPs, <span class="math notranslate nohighlight">\(AB\)</span> = their intersection, and noA-noB = SNPs in neither.</p>
 </section>
 <section id="enrichment">
@@ -551,6 +551,109 @@
 <p>Standard errors are estimated by removing one chromosome at a time and recomputing the statistic, capturing variability due to genomic structure. With <span class="math notranslate nohighlight">\(\theta_i\)</span> the statistic (<span class="math notranslate nohighlight">\(OR_i\)</span> or <span class="math notranslate nohighlight">\(\text{Enrichment}_i\)</span>) excluding chromosome <span class="math notranslate nohighlight">\(i\)</span>, <span class="math notranslate nohighlight">\(\bar{\theta}\)</span> its mean, and <span class="math notranslate nohighlight">\(N\)</span> the number of chromosomes (22 for autosomes):</p>
 <div class="math notranslate nohighlight">
 \[\text{SE}(\theta) = \sqrt{\frac{\sum_{i=1}^{N} (\theta_i - \bar{\theta})^2}{N \cdot (N-1)}}\]</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import PathPatch, Circle, FancyBboxPatch
+from matplotlib.path import Path
+
+def make_lens_path(c1, c2, r, n=400):
+    x1, y1 = c1; x2, y2 = c2
+    d = np.hypot(x2 - x1, y2 - y1)
+    if d &gt;= 2 * r:
+        return None
+    a   = np.arccos(d / (2 * r))
+    phi = np.arctan2(y2 - y1, x2 - x1)
+    t1  = np.linspace(phi - a, phi + a, n)
+    t2  = np.linspace(phi + np.pi + a, phi + np.pi - a, n)
+    verts = (list(zip(x1 + r*np.cos(t1), y1 + r*np.sin(t1))) +
+             list(zip(x2 + r*np.cos(t2), y2 + r*np.sin(t2))) +
+             [(x1 + r*np.cos(phi - a), y1 + r*np.sin(phi - a))])
+    codes = [Path.MOVETO] + [Path.LINETO]*(2*n - 1) + [Path.CLOSEPOLY]
+    return Path(verts, codes)
+
+fig, ax = plt.subplots(figsize=(14, 11))
+ax.set_xlim(0, 14); ax.set_ylim(0, 11); ax.axis(&#39;off&#39;)
+fig.patch.set_facecolor(&#39;white&#39;)
+
+# Background box (C)
+bg = FancyBboxPatch((0.2, 3.1), 13.6, 7.5, boxstyle=&#39;round,pad=0.15&#39;,
+                    facecolor=&#39;#F0F3F7&#39;, edgecolor=&#39;#99A9BB&#39;,
+                    linewidth=2.0, zorder=0)
+ax.add_patch(bg)
+
+ax.text(7.0, 10.38, r&#39;$\mathbf{C}$ : Target Set (All SNPs)&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=17, fontweight=&#39;bold&#39;, color=&#39;#1C2833&#39;)
+ax.text(0.55, 9.85, r&#39;$|C|$&#39; + &#39;\nAll SNPs&#39;,
+        ha=&#39;left&#39;, va=&#39;top&#39;, fontsize=12, color=&#39;#707B7C&#39;, linespacing=1.5)
+
+# Circles
+cx_a, cy, r = 4.8, 6.7, 2.75
+cx_b = 9.2
+circ_a = Circle((cx_a, cy), r, facecolor=&#39;#AED6F1&#39;, edgecolor=&#39;#2471A3&#39;,
+                linewidth=3.0, alpha=0.70, zorder=1)
+circ_b = Circle((cx_b, cy), r, facecolor=&#39;#FADBD8&#39;, edgecolor=&#39;#C0392B&#39;,
+                linewidth=3.0, alpha=0.70, zorder=1)
+ax.add_patch(circ_a); ax.add_patch(circ_b)
+
+lens = PathPatch(make_lens_path((cx_a, cy), (cx_b, cy), r),
+                 facecolor=&#39;#F0B429&#39;, edgecolor=&#39;none&#39;, alpha=0.90, zorder=2)
+ax.add_patch(lens)
+
+ax.text(cx_a - 1.0, cy + r*0.78, r&#39;$\mathbf{A}$ : Annotated SNPs&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=14, fontweight=&#39;bold&#39;, color=&#39;#1A5276&#39;)
+ax.text(cx_b + 1.0, cy + r*0.78, r&#39;$\mathbf{B}$ : Significant SNPs&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=14, fontweight=&#39;bold&#39;, color=&#39;#7B241C&#39;)
+
+mid_x = (cx_a + cx_b) / 2
+ax.text(cx_a - 1.55, cy, r&#39;$|A \setminus B|$&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=13, color=&#39;#1A5276&#39;, style=&#39;italic&#39;)
+ax.text(mid_x, cy, r&#39;$|A \cap B|$&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=14, fontweight=&#39;bold&#39;, color=&#39;#6E2F05&#39;, style=&#39;italic&#39;)
+ax.text(cx_b + 1.55, cy, r&#39;$|B \setminus A|$&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=13, color=&#39;#7B241C&#39;, style=&#39;italic&#39;)
+
+ax.text(13.05, 9.1, r&#39;$|\neg A \cap \neg B|$&#39;,
+        ha=&#39;right&#39;, va=&#39;center&#39;, fontsize=13, color=&#39;#4A4A4A&#39;, style=&#39;italic&#39;)
+
+# Formula box
+ax.add_patch(FancyBboxPatch((0.3, 0.08), 13.4, 2.75,
+                             boxstyle=&#39;round,pad=0.12&#39;,
+                             facecolor=&#39;#FDFEFE&#39;, edgecolor=&#39;#BDC3C7&#39;,
+                             linewidth=1.4, zorder=0))
+
+# OR: formula centered, explanation centered below
+ax.text(7.0, 2.38,
+        r&#39;$\mathrm{Odds\ Ratio} = \dfrac{|A \cap B|\;/\;|A \setminus B|}&#39;
+        r&#39;{|B \setminus A|\;/\;|\neg A \cap \neg B|}&#39;
+        r&#39;\ =\ \dfrac{|A \cap B| \times |\neg A \cap \neg B|}&#39;
+        r&#39;{|A \setminus B| \times |B \setminus A|}$&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=12.5, color=&#39;#1C2833&#39;)
+ax.text(7.0, 1.72,
+        &#39;odds of overlap in annotated SNPs  /  odds of overlap in non-annotated SNPs&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=11, color=&#39;#7F8C8D&#39;, style=&#39;italic&#39;)
+
+# Divider
+ax.plot([0.6, 13.4], [1.28, 1.28], color=&#39;#D5D8DC&#39;, linewidth=0.8)
+
+# Enrichment: formula centered, explanation centered below
+ax.text(7.0, 0.92,
+        r&#39;$\mathrm{Enrichment} = \dfrac{|A \cap B|\;/\;|B|}{|A|\;/\;|C|}$&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=12.5, color=&#39;#1C2833&#39;)
+ax.text(7.0, 0.35,
+        &#39;fraction of significant SNPs in annotation  /  background rate of annotation in all SNPs&#39;,
+        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=11, color=&#39;#7F8C8D&#39;, style=&#39;italic&#39;)
+
+plt.tight_layout(pad=0.2)
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="_images/ef42ad1553473f496163d10deabe1fd00964ed94fc7b0fd1eaad035655741904.png" src="_images/ef42ad1553473f496163d10deabe1fd00964ed94fc7b0fd1eaad035655741904.png" />
+</div>
+</div>
 </section>
 </section>
 <section id="input">
@@ -917,7 +1020,7 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</p>
+        <p class="prev-next-title">Multi-trait colocalization using ColocBoost</p>
       </div>
     </a>
     <a class="right-next"

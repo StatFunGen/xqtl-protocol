@@ -292,7 +292,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="nav bd-sidenav">
@@ -573,10 +573,10 @@
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.psichomics.phenotype.tsv</span></code></p></td>
 <td><p>Toy psichomics phenotype matrix (IDs end in <code class="docutils literal notranslate"><span class="pre">_&lt;gene_id&gt;</span></code>).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf</span></code></p></td>
 <td><p>Collapsed gene-model GTF (gene/protein annotation).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">reference_data/Homo_sapiens.GRCh38.103.chr.gtf</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.gtf</span></code></p></td>
 <td><p>Full gene-model GTF with exons (leafcutter/psichomics).</p></td>
 </tr>
 </tbody>
@@ -617,7 +617,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_coord \
     --cwd output/gene_annotation \
     --phenoFile input/rnaseq/protocol_example.rnaseq.bed.gz \
-    --coordinate-annotation reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
+    --coordinate-annotation input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
     --phenotype-id-column gene_id
 </pre></div>
 </div>
@@ -634,7 +634,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_coord \
     --cwd output/gene_annotation \
     --phenoFile input/proteomics/protocol_example.protein.no_coord.tsv \
-    --coordinate-annotation reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
+    --coordinate-annotation input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
     --phenotype-id-column gene_id \
     --molecular-trait-type protein
 </pre></div>
@@ -652,7 +652,7 @@
     --cwd output/gene_annotation \
     --phenoFile input/rnaseq/protocol_example.leafcutter.phenotype.bed.gz \
     --intron-count input/rnaseq/protocol_example.leafcutter.intron_count.tsv \
-    --coordinate-annotation reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
+    --coordinate-annotation input/reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
     --map-stra site
 </pre></div>
 </div>
@@ -733,7 +733,7 @@
     --cwd output/gene_annotation \
     --phenoFile input/rnaseq/protocol_example.leafcutter.phenotype.bed.gz \
     --intron-count input/rnaseq/protocol_example.leafcutter.intron_count.tsv \
-    --coordinate-annotation reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
+    --coordinate-annotation input/reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
     --map-stra site
 </pre></div>
 </div>
@@ -749,7 +749,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_psichomics_isoforms \
     --cwd output/gene_annotation \
     --phenoFile input/rnaseq/protocol_example.psichomics.phenotype.tsv \
-    --coordinate-annotation reference_data/Homo_sapiens.GRCh38.103.chr.gtf
+    --coordinate-annotation input/reference_data/Homo_sapiens.GRCh38.103.chr.gtf
 </pre></div>
 </div>
 </div>

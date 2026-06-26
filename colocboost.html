@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study &#8212; FunGen-xQTL Consortium</title>
+    <title>Multi-trait colocalization using ColocBoost &#8212; FunGen-xQTL Consortium</title>
   
   
   
@@ -292,7 +292,7 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Multi-trait colocalization using ColocBoost</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="nav bd-sidenav">
@@ -488,7 +488,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study</h1>
+    <h1>Multi-trait colocalization using ColocBoost</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -498,10 +498,27 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs">Inputs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-genotype-phenotype-and-association-analysis-windows">Example genotype, phenotype and association analysis windows</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-summary-statistics-and-ld-reference">Example summary statistics and LD reference</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#about-indels">About indels</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-analysis">xQTL only analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-colocboost-with-xqtl-only"><strong>Step 1.</strong> ColocBoost with xQTL only</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-colocboost-with-gwas"><strong>Step 2.</strong> ColocBoost with GWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-colocboost-with-multiple-ld-references-multi-ancestry"><strong>Step 3.</strong> ColocBoost with multiple LD references (multi-ancestry)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colocboost-analysis">ColocBoost analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
 </ul>
             </nav>
         </div>
@@ -513,75 +530,326 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="per-gene-per-region-colocboost-across-contexts-and-optionally-gwas-in-a-single-study">
-<h1>Per-gene / per-region colocboost across contexts (and optionally GWAS) in a single study<a class="headerlink" href="#per-gene-per-region-colocboost-across-contexts-and-optionally-gwas-in-a-single-study" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="multi-trait-colocalization-using-colocboost">
+<h1>Multi-trait colocalization using ColocBoost<a class="headerlink" href="#multi-trait-colocalization-using-colocboost" title="Link to this heading">#</a></h1>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<p>Requires fine-mapping outputs (<code class="docutils literal notranslate"><span class="pre">.susie.rds</span></code> files) from <code class="docutils literal notranslate"><span class="pre">mnm_regression</span></code> or <code class="docutils literal notranslate"><span class="pre">rss_analysis</span></code>.</p>
+</section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>For a single study’s <code class="docutils literal notranslate"><span class="pre">QtlDataset</span></code> RDS, run <code class="docutils literal notranslate"><span class="pre">pecotmr::colocboostPipeline()</span></code> per fan-out unit (gene or region). Three pipeline variants can be enabled independently:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--xqtl-coloc</span></code> (default ON; opt out with <code class="docutils literal notranslate"><span class="pre">--no-xqtl-coloc=true</span></code> or <code class="docutils literal notranslate"><span class="pre">xqtl_coloc=False</span></code> in SoS): within-study cross-context QTL coloc.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--joint-gwas</span></code> (default OFF): xQTL + GWAS joint coloc with the focal outcome from the GWAS. Requires <code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--separate-gwas</span></code> (default OFF): one focal-GWAS coloc per GWAS study. Requires <code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code>.</p></li>
-</ul>
-<p>When <code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code> is supplied it must point at a QC’d <code class="docutils literal notranslate"><span class="pre">GwasSumStats</span></code> RDS (output of <code class="docutils literal notranslate"><span class="pre">summaryStatsQc()</span></code> upstream).</p>
+<p>We use ColocBoost to perform colocalization analyses <a class="reference external" href="https://www.medrxiv.org/content/10.1101/2025.04.17.25326042v1">cf. Cao et al (2025)</a>. In short, ColocBoost performs colocalization while accounting for multiple causal variants within a genomic region of interest and can scale to hundreds of traits. We allow users to include or omit GWAS summary statistics. Required inputs are individual xQTL data from the same cohort (multiple phenotypes, same genotype). Linkage disequilibrium reference data is required if GWAS summary statistics are used.</p>
 </section>
-<section id="inputs">
-<h2>Inputs<a class="headerlink" href="#inputs" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--qtl-dataset</span></code> — QtlDataset RDS produced by <code class="docutils literal notranslate"><span class="pre">qtl_dataset.ipynb</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--genes</span> <span class="pre">ID1</span> <span class="pre">ID2</span> <span class="pre">…</span></code> <strong>or</strong> <code class="docutils literal notranslate"><span class="pre">--regions</span> <span class="pre">chr:start-end</span> <span class="pre">…</span></code> (mutually exclusive).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> — bp window (gene mode default 1e6).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--gwas-sumstats</span></code> — QC’d GwasSumStats RDS path (required for joint/separate variants).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--xqtl-coloc</span></code> / <code class="docutils literal notranslate"><span class="pre">--joint-gwas</span></code> / <code class="docutils literal notranslate"><span class="pre">--separate-gwas</span></code> — pipeline-variant toggles.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--modular-script-dir</span></code> — directory containing the per-gene worker R scripts. Default <code class="docutils literal notranslate"><span class="pre">code/script</span></code>.</p></li>
-</ul>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>A list of regions to be analyzed (optional); the last column of this file should be region name.</p></li>
+<li><p>Either a list of per chromosome genotype files, or one file for genotype data of the entire genome. Genotype data has to be in PLINK <code class="docutils literal notranslate"><span class="pre">bed</span></code> format.</p></li>
+<li><p>Vector of lists of phenotype files per region to be analyzed, in UCSC <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> with index in <code class="docutils literal notranslate"><span class="pre">bed.gz.tbi</span></code> formats.</p></li>
+<li><p>Vector of covariate files corresponding to the lists above.</p></li>
+<li><p>Customized association windows file for variants (cis or trans). If it is not provided, a fixed sized window will be used around the region (a cis-window)</p></li>
+<li><p>Optionally a vector of names of the phenotypic conditions in the form of <code class="docutils literal notranslate"><span class="pre">cond1</span> <span class="pre">cond2</span> <span class="pre">cond3</span></code> separated with whitespace.</p></li>
+<li><p>Optionally summary statistics meta-data file and LD reference meta-data file.</p></li>
+</ol>
+<p>Input 2 and 3 should be outputs from <code class="docutils literal notranslate"><span class="pre">genotype_per_region</span></code> and <code class="docutils literal notranslate"><span class="pre">annotate_coord</span></code> modules in previous preprocessing steps. 4 should be output of <code class="docutils literal notranslate"><span class="pre">covariate_preprocessing</span></code> pipeline that contains genotype PC, phenotypic hidden confounders and fixed covariates.</p>
+<section id="example-genotype-phenotype-and-association-analysis-windows">
+<h3>Example genotype, phenotype and association analysis windows<a class="headerlink" href="#example-genotype-phenotype-and-association-analysis-windows" title="Link to this heading">#</a></h3>
+<p>See <a class="reference internal" href="#mnm_regression.html"><span class="xref myst">this page</span></a> for example inputs of these information.</p>
+</section>
+<section id="example-summary-statistics-and-ld-reference">
+<h3>Example summary statistics and LD reference<a class="headerlink" href="#example-summary-statistics-and-ld-reference" title="Link to this heading">#</a></h3>
+<p>See <a class="reference internal" href="#rss_analysis.html"><span class="xref myst">rss_analysis</span></a> for LD reference formats (pre-computed blocks and PLINK genotype files),
+per-study LD reference via the <code class="docutils literal notranslate"><span class="pre">ld_meta_data</span></code> column in GWAS meta-data, and mixture LD panels.</p>
+</section>
+<section id="about-indels">
+<h3>About indels<a class="headerlink" href="#about-indels" title="Link to this heading">#</a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--no-indel</span></code> to remove indel variants from analysis. This applies to both individual-level genotype loading and summary statistics QC. Default keeps indels.</p>
+</section>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<p>For each analysis region the pipeline fits ColocBoost and saves the model in RDS format — one RDS per gene of interest (and per GWAS, when GWAS integration is used). Each RDS contains:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{study}.{gene|region}.colocboost.rds</span></code> per fan-out unit. The RDS holds the colocboostPipeline list with slots <code class="docutils literal notranslate"><span class="pre">xqtl_coloc</span></code>, <code class="docutils literal notranslate"><span class="pre">joint_gwas</span></code>, <code class="docutils literal notranslate"><span class="pre">separate_gwas</span></code>, <code class="docutils literal notranslate"><span class="pre">computing_time</span></code>; unused-variant slots are NULL.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ucos_summary</span></code> — a summary table of the colocalization events.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vpa</span></code> — the variable colocalized probability for each variant (the probability of a variant being colocalized with at least one trait).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data_info</span></code> — information on the input data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model_info</span></code> — information on the fitted ColocBoost model.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ucos_details</span></code> — trait-specific (uncolocalized) effects information.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">region_info</span></code> — information on the region(s) of interest.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">computing_time</span></code> — time taken for each step (loading, QC and analysis).</p></li>
 </ul>
+<p><strong>Note:</strong> the suggested output naming convention is <code class="docutils literal notranslate"><span class="pre">cohort_...</span></code>.</p>
 </section>
-<section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># xQTL-only (default)</span>
-sos<span class="w"> </span>run<span class="w"> </span>pipeline/colocboost.ipynb<span class="w"> </span>colocboost<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>output<span class="w"> </span>--modular-script-dir<span class="w"> </span>/path/to/code/script<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--study<span class="w"> </span>TEST_STUDY<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--qtl-dataset<span class="w"> </span>output/TEST_STUDY.qtl_dataset.rds<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genes<span class="w"> </span>ENSG00000060237
-
-<span class="c1"># xQTL + joint-GWAS</span>
-sos<span class="w"> </span>run<span class="w"> </span>pipeline/colocboost.ipynb<span class="w"> </span>colocboost<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>output<span class="w"> </span>--modular-script-dir<span class="w"> </span>/path/to/code/script<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--study<span class="w"> </span>TEST_STUDY<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--qtl-dataset<span class="w"> </span>output/TEST_STUDY.qtl_dataset.rds<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--gwas-sumstats<span class="w"> </span>output/GWAS.qcd.rds<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--joint-gwas<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genes<span class="w"> </span>ENSG00000060237
+<section id="minimal-working-example-steps">
+<h2>Minimal Working Example Steps<a class="headerlink" href="#minimal-working-example-steps" title="Link to this heading">#</a></h2>
+<p>Timing: ~X min</p>
+<section id="xqtl-only-analysis">
+<h3>xQTL only analysis<a class="headerlink" href="#xqtl-only-analysis" title="Link to this heading">#</a></h3>
+<p>Below we duplicate the examples for phenotype and covariates to demonstrate that when there are multiple phenotypes for the same genotype it is possible to use this pipeline to analyze all of them (more than two is accepted as well).</p>
+<p>Here using <code class="docutils literal notranslate"><span class="pre">--region-name</span></code> we focus the analysis on 3 genes. In practice if this parameter is dropped, the union of all regions in all phenotype region lists will be analyzed. It is possible for some of the regions there are no genotype data, in which case the pipeline will output RDS files with a warning message to indicate the lack of genotype data to analyze.</p>
+<p><strong>Note:</strong> Suggested output naming convention is cohort_modality, eg ROSMAP_snRNA_pseudobulk.</p>
+</section>
+<section id="step-1-colocboost-with-xqtl-only">
+<h3><strong>Step 1.</strong> ColocBoost with xQTL only<a class="headerlink" href="#step-1-colocboost-with-xqtl-only" title="Link to this heading">#</a></h3>
+<p>This is the minimal working example and <strong>runs end-to-end on the toy gene-expression data</strong>, producing a <code class="docutils literal notranslate"><span class="pre">*.cb_xqtl.rds</span></code> colocalization result for the region. The same command also accepts peaks or any other molecular phenotype - just swap in the phenotype <code class="docutils literal notranslate"><span class="pre">.bed.gz</span></code>/manifest.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Toy gene-expression example (run from the toy_example root).
+# xQTL-only ColocBoost: builds one QtlDataset, then per-gene ColocBoost into
+# {name}.{gene}.colocboost.rds.
+sos run pipeline/colocboost.ipynb colocboost \
+    --name colocboost_xqtl --cwd output/colocboost_xqtl \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
+    --covFile input/colocboost/example_covariates.tsv --transpose-covariates \
+    --customized-association-windows input/colocboost/association_windows.bed \
+    --region-name ENSG00000130538 \
+    --no-separate-gwas --xqtl-coloc -j1
 </pre></div>
 </div>
+</div>
+</div>
+</section>
+<section id="step-2-colocboost-with-gwas">
+<h3><strong>Step 2.</strong> ColocBoost with GWAS<a class="headerlink" href="#step-2-colocboost-with-gwas" title="Link to this heading">#</a></h3>
+<p>Adds GWAS summary statistics (via <code class="docutils literal notranslate"><span class="pre">--gwas-meta-data</span></code>) and an LD reference (via <code class="docutils literal notranslate"><span class="pre">--ld-meta-data</span></code>). The xQTL ColocBoost completes, but the separate GWAS-xQTL colocalization is <strong>still under development</strong> with the installed package (see the note in the command cell).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Toy example with GWAS (separate-focal coloc per study), from toy_example root.
+# Per gene a region GwasSumStats is built, then xQTL + separate-GWAS coloc are
+# written to one combined {name}.{gene}.colocboost.rds.
+sos run pipeline/colocboost.ipynb colocboost \
+    --name colocboost_gwas --cwd output/colocboost_gwas \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
+    --covFile input/colocboost/example_covariates.tsv --transpose-covariates \
+    --customized-association-windows input/colocboost/association_windows.bed \
+    --gwas-meta-data input/colocboost/gwas_meta.txt \
+    --ld-meta-data input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --region-name ENSG00000130538 \
+    --separate-gwas --xqtl-coloc -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-3-colocboost-with-multiple-ld-references-multi-ancestry">
+<h3><strong>Step 3.</strong> ColocBoost with multiple LD references (multi-ancestry)<a class="headerlink" href="#step-3-colocboost-with-multiple-ld-references-multi-ancestry" title="Link to this heading">#</a></h3>
+<p>Uses a per-study LD reference declared in the GWAS meta-data. It shares the separate-GWAS code path with Step 2 and is therefore <strong>still under development</strong> on the toy dataset.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Multi-ancestry template: each study uses the per-study LD reference named in
+# the gwas meta ld_meta_data column (gwas_sumstats_construct.R resolves a single
+# shared panel per region, so genuinely distinct per-study panels are not merged
+# here). Same separate-GWAS code path as the example above.
+sos run pipeline/colocboost.ipynb colocboost \
+    --name colocboost_multi_ld --cwd output/colocboost_multi_ld \
+    --genoFile input/colocboost/example.chr22.bed \
+    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
+    --covFile input/colocboost/example_covariates.tsv --transpose-covariates \
+    --customized-association-windows input/colocboost/association_windows.bed \
+    --gwas-meta-data input/colocboost/gwas_meta.txt \
+    --ld-meta-data input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --region-name ENSG00000130538 \
+    --separate-gwas --xqtl-coloc -j1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb -h
+</pre></div>
+</div>
+</div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: sos run /restricted/projectnb/xqtl/xqtl_protocol/xqtl-protocol/code/mnm_analysis/mnm_methods/colocboost.ipynb
+               [workflow_name | -t targets] [options] [workflow_options]
+  workflow_name:        Single or combined workflows defined in this script
+  targets:              One or more targets to generate
+  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  workflow_options:     Double-hyphen workflow-specific parameters
+
+Workflows:
+  get_analysis_regions
+  get_rss_analysis_regions
+  colocboost
+
+Global Workflow Options:
+  --name VAL (as str, required)
+                        It is required to input the name of the analysis
+  --cwd output (as path)
+  --genoFile VAL (as path, required)
+                        A list of file paths for genotype data, or the genotype data itself.
+  --phenoFile  paths
+
+                        One or multiple lists of file paths for phenotype data.
+  --phenoIDFile  paths()
+
+                        One or multiple lists of file paths for phenotype ID mapping file. The first column should be the original ID, the 2nd column should be the ID to be mapped to.
+  --covFile  paths
+
+                        Covariate file path
+  --gwas-meta-data . (as path)
+                        Summary statistics interface, see `rss_analysis.ipynb` for details
+  --ld-meta-data . (as path)
+  --gwas-name  (as list)
+  --gwas-data  (as list)
+  --column-mapping  (as list)
+  --region-list . (as path)
+                        Optional: if a region list is provide the analysis will be focused on provided region. The LAST column of this list will contain the ID of regions to focus on when
+                        region_name is given Otherwise, all regions with both genotype and phenotype files will be analyzed
+  --region-name  (as list)
+                        Optional: if a region name is provided the analysis would be focused on the union of provides region list and region names
+  --keep-samples . (as path)
+                        Only focus on a subset of samples
+  --keep-variants . (as path)
+                        Only focus on a subset of variants
+  --customized-association-windows . (as path)
+                        An optional list documenting the custom association window for each region to analyze, with four column, chr, start, end, region ID (eg gene ID). If this list is not
+                        provided, the default `window` parameter (see below) will be used.
+  --cis-window -1 (as int)
+                        Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp When this is set to negative, we will rely on using
+                        customized_association_windows
+  --[no-]save-data (default to False)
+                        save data object or not
+  --phenotype-names  [f&#39;{x:bn}&#39; for x in phenoFile]
+
+                        Name of phenotypes
+  --[no-]trans-analysis (default to False)
+                        And indicator whether it is trans-analysis, ie, not using phenotypic coordinate information
+  --imiss 1.0 (as float)
+                        remove a variant if it has more than imiss missing individual level data
+  --maf 0.0025 (as float)
+                        MAF and variance of X cutoff
+  --xvar-cutoff 0.0 (as float)
+  --mac 5 (as int)
+                        MAC cutoff, on top of MAF cutoff
+  --[no-]indel (default to True)
+                        Remove indels if indel = False
+  --event-filter-rules . (as path)
+  --skip-analysis-pip-cutoff  (as list)
+                        If this value is not 0, then an initial single effect analysis will be performed to determine if follow up analysis will be continued or to simply return NULL If this is
+                        negative we use a default way to determine this cutoff which is conservative but still useful
+  --skip-sumstats-analysis-pip-cutoff -1.0 (as float)
+  --[no-]xqtl-coloc (default to True)
+                        Perform xQTL colocalization
+  --[no-]joint-gwas (default to False)
+                        Perform joint colocalization with many traits
+  --[no-]separate-gwas (default to True)
+                        Perform separate GWAS targeted anlaysis one at a time
+  --[no-]impute (default to False)
+                        Whether to impute the sumstat for all the snp in LD but not in sumstat.
+  --rcond 0.01 (as float)
+  --lamb 0.01 (as float)
+  --R2-threshold 0.6 (as float)
+  --minimum-ld 5 (as int)
+  --qc-method NULL
+                        summary stats QC methods: slalom, dentist
+  --extract-sumstats-region-name NULL
+  --sumstats-region-name-col NULL
+                        Either an index number in str format or &quot;NULL&quot; as a string
+  --comment-string NULL
+  --ld-data-name  (as list)
+  --container &#39;&#39;
+                        Analysis environment settings
+  --job-size 200 (as int)
+                        For cluster jobs, number commands to run per job
+  --walltime 1h
+                        Wall clock time expected
+  --mem 20G
+                        Memory expected
+  --numThreads 1 (as int)
+                        Number of threads
+
+Sections
+  get_analysis_regions:
+  get_rss_analysis_regions:
+  colocboost:
+</pre></div>
+</div>
+</section>
+<section id="workflow-implementation">
+<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: cwd = path(&#39;output&#39;)
-parameter: study = str
-parameter: qtl_dataset = path
-parameter: modular_script_dir = path(&#39;code/script&#39;)
-# Mutually exclusive fan-out sources.
-parameter: genes = []
-parameter: regions = []
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+# It is required to input the name of the analysis
+parameter: name = str
+parameter: cwd = path(&quot;output&quot;)
+# PLINK1 genotype: pass the .bed file (.bim/.fam are read automatically).
+parameter: genoFile = path
+# QtlDataset phenotype manifest TSV. Columns: ID, #chr, start, end, path,
+# cond, and an optional cov_path (per-context covariates). The first path is
+# used. Replaces the legacy list-of-phenotype-BEDs input.
+parameter: phenoFile = paths
+# Legacy phenotype ID-mapping file(s); accepted for CLI compatibility but not
+# consumed by the manifest-based flow (the manifest carries the IDs).
+parameter: phenoIDFile = paths()
+# Uniform covariate file applied across all contexts (QTLtools-format
+# rows=covariates supported via --transpose-covariates). Per-context
+# covariates instead come from the manifest cov_path column.
+parameter: covFile = paths()
+# GWAS summary-statistics meta TSV. Columns: study_id, chrom, file_path;
+# optional n_sample, n_case, n_control, ld_meta_data, column_mapping_file.
+parameter: gwas_meta_data = path()
+# Default LD-reference meta (#chr, start, end, path). Per-study overrides come
+# from the gwas meta ld_meta_data column.
+parameter: ld_meta_data = path()
+# Optional region list whose LAST column lists region/gene IDs to analyze.
+parameter: region_list = path()
+# Region/gene IDs to analyze (space separated on the CLI).
+parameter: region_name = []
+# Optional per-gene association windows (BED: #chr start end ID) overriding the
+# default cis_window for the GWAS extraction window.
+parameter: customized_association_windows = path()
+# cis window (bp) on each side of the gene for fine-mapping and the default
+# GWAS extraction window.
 parameter: cis_window = 1000000
-# GWAS-side input: a QC&#39;d GwasSumStats RDS (build it upstream).
-parameter: gwas_sumstats = path(&#39;.&#39;)
-# Pipeline variants.
-parameter: xqtl_coloc = True       # within-study cross-context (default ON)
-parameter: joint_gwas = False      # xQTL + GWAS joint (requires gwas_sumstats)
-parameter: separate_gwas = False   # per-GWAS-study separate-focal (requires gwas_sumstats)
-parameter: container = &#39;&#39;
-parameter: job_size = 1
-parameter: walltime = &#39;30m&#39;
-parameter: mem = &#39;8G&#39;
+# Save the per-gene colocboost input bundle (currently unused; reserved).
+parameter: save_data = False
+# QtlDataset study label and covariate handling (legacy CLI retained).
+parameter: study = name
+parameter: transpose_covariates = False
+parameter: genotype_covariates = path(&#39;.&#39;)
+# Remove a variant if it has more than imiss fraction missing genotypes.
+parameter: imiss = 1.0
+# MAF and variance-of-X cutoffs.
+parameter: maf = 0.0025
+parameter: xvar_cutoff = 0.0
+# MAC cutoff, on top of the MAF cutoff.
+parameter: mac = 5
+# Keep indels when True.
+parameter: indel = True
+# Only keep a subset of samples / variants (whitespace/newline-separated IDs).
+parameter: keep_samples = path()
+parameter: keep_variants = path()
+# Per-context single-effect skip cutoff passed to colocboost.R
+# (--pip-cutoff-to-skip): a scalar applied to every context, or one or more
+# context=value items (negative -&gt; data-driven 3/ncol(X); empty -&gt; 0).
+parameter: skip_analysis_pip_cutoff = []
+# Summary-stats single-effect skip cutoff passed to summaryStatsQc via
+# gwas_sumstats_construct.R.
+parameter: skip_sumstats_analysis_pip_cutoff = -1.0
+# ColocBoost variants to run.
+parameter: xqtl_coloc = True
+parameter: joint_gwas = False
+parameter: separate_gwas = True
+# Summary-stats LD-mismatch QC method (none | slalom | dentist).
+parameter: qc_method = &quot;none&quot;
+# Analysis environment settings.
+parameter: container = &quot;&quot;
+import re
+parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+# For cluster jobs, number of commands to run per job.
+parameter: job_size = 200
+parameter: walltime = &quot;1h&quot;
+parameter: mem = &quot;20G&quot;
 parameter: numThreads = 1
 </pre></div>
 </div>
@@ -589,33 +857,139 @@ parameter: numThreads = 1
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[colocboost]
-if bool(genes) == bool(regions):
-    raise ValueError(&quot;Specify exactly one of --genes (trait IDs) or --regions (chr:start-end strings).&quot;)
-if (joint_gwas or separate_gwas) and not gwas_sumstats.is_file():
-    raise ValueError(&quot;--joint-gwas / --separate-gwas require --gwas-sumstats pointing at a QC&#39;d GwasSumStats RDS.&quot;)
-if not (xqtl_coloc or joint_gwas or separate_gwas):
-    raise ValueError(&quot;Enable at least one of xqtl_coloc, joint_gwas, separate_gwas.&quot;)
-fanout_items = genes if genes else regions
-fanout_kind  = &#39;gene&#39; if genes else &#39;region&#39;
-def _fanout_safe(s):
-    return s.replace(&#39;:&#39;, &#39;_&#39;).replace(&#39;-&#39;, &#39;_&#39;)
-input: qtl_dataset, for_each = &#39;fanout_items&#39;
-output: f&quot;{cwd}/{study}.{_fanout_safe(_fanout_items)}.colocboost.rds&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
-bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = f&quot;{_output}.stdout&quot;, container = container
-    Rscript ${modular_script_dir}/pecotmr_integration/colocboost.R \
-        --qtl-dataset ${_input} \
-        ${(&#39;--gene-id &#39; + _fanout_items + &#39; --cis-window &#39; + str(cis_window)) if fanout_kind == &#39;gene&#39; else (&#39;--region &#39; + _fanout_items)} \
-        ${&#39;--gwas-sumstats &#39; + str(gwas_sumstats) if gwas_sumstats.is_file() else &#39;&#39;} \
-        ${&#39;--no-xqtl-coloc&#39; if not xqtl_coloc else &#39;&#39;} \
-        ${&#39;--joint-gwas&#39; if joint_gwas else &#39;&#39;} \
-        ${&#39;--separate-gwas&#39; if separate_gwas else &#39;&#39;} \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[colocboost_1]
+# Build one pecotmr::QtlDataset from the phenotype manifest + shared genotype
+# and serialize to RDS (mirrors mnm_regression&#39;s qtl_dataset_construct). No
+# fan-out: the per-gene [colocboost_3] step loads this single RDS and selects
+# the focal gene/contexts at analysis time. Per-context covariates come from
+# the manifest cov_path column; a uniform --covFile (or --genotype-covariates)
+# applies across all contexts. ColocBoost runs on unscaled residuals
+# (--no-scale-residuals), matching the legacy pipeline.
+cov_arg = covFile[0] if (len(covFile) &gt; 0 and covFile[0].is_file()) else genotype_covariates
+input: None
+output: f&quot;{cwd:a}/qtl_dataset/{study}.qtl_dataset.rds&quot;
+task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = f&quot;{_output}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/pecotmr_integration/qtl_dataset_construct.R \
+        --study ${study} \
+        --genotype-prefix ${genoFile:n} \
+        --phenotype-manifest ${phenoFile[0]} \
+        --genotype-covariates ${cov_arg if cov_arg.is_file() else &#39;&quot;&quot;&#39;} \
+        ${&#39;--transpose-covariates&#39; if transpose_covariates else &#39;&#39;} \
+        --maf-cutoff ${maf} \
+        --xvar-cutoff ${xvar_cutoff} \
+        --mac-cutoff ${mac} \
+        --imiss-cutoff ${imiss} \
+        ${(&#39;--keep-samples &#39; + str(keep_samples)) if keep_samples.is_file() else &#39;&#39;} \
+        ${(&#39;--keep-variants &#39; + str(keep_variants)) if keep_variants.is_file() else &#39;&#39;} \
+        ${&#39;&#39; if indel else &#39;--drop-indel&#39;} \
+        --no-scale-residuals \
         --output ${_output}
 </pre></div>
 </div>
 </div>
 </div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[colocboost_2]
+# Resolve per-gene analysis units (gene -&gt; ld_block + grouped GWAS sources)
+# into one manifest TSV via colocboost_manifest.R, so the next step can fan out
+# over its rows with inline csv.DictReader (no notebook-local Python parsing).
+input: None
+output: f&quot;{cwd:a}/colocboost/{name}.colocboost_manifest.tsv&quot;
+task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = f&quot;{_output}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/pecotmr_integration/colocboost_manifest.R \
+        --pheno-manifest ${phenoFile[0]} \
+        --cis-window ${cis_window} \
+        ${(&#39;--customized-association-windows &#39; + str(customized_association_windows)) if customized_association_windows.is_file() else &#39;&#39;} \
+        ${(&#39;--region-name &#39; + &#39;,&#39;.join(region_name)) if len(region_name) &gt; 0 else &#39;&#39;} \
+        ${(&#39;--region-list &#39; + str(region_list)) if region_list.is_file() else &#39;&#39;} \
+        ${(&#39;--gwas-meta &#39; + str(gwas_meta_data)) if gwas_meta_data.is_file() else &#39;&#39;} \
+        ${(&#39;--ld-meta &#39; + str(ld_meta_data)) if ld_meta_data.is_file() else &#39;&#39;} \
+        --output ${_output}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="colocboost-analysis">
+<h2>ColocBoost analysis<a class="headerlink" href="#colocboost-analysis" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[colocboost_3]
+# Per-gene ColocBoost over the pre-built QtlDataset. Fans out over the manifest
+# rows; per gene (1) builds a region GwasSumStats via gwas_sumstats_construct.R
+# when the gene has GWAS studies, then (2) runs colocboost.R (xQTL /
+# joint-GWAS / separate-GWAS variants) into ONE combined RDS. Replaces the
+# legacy load_multitask_regional_data + colocboost_analysis_pipeline path.
+import csv
+manifest = f&quot;{cwd:a}/colocboost/{name}.colocboost_manifest.tsv&quot;
+jobs = list(csv.DictReader(open(manifest), delimiter=&#39;\t&#39;))
+stop_if(len(jobs) == 0, &quot;colocboost: empty manifest; check --region-name / phenotype manifest.&quot;)
+input: f&quot;{cwd:a}/qtl_dataset/{name}.qtl_dataset.rds&quot;, for_each = &quot;jobs&quot;
+output: f&quot;{cwd:a}/colocboost/{name}.{_jobs[&#39;region_id&#39;]}.colocboost.rds&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+    set -e
+    gene=${_jobs[&#39;gene_id&#39;]}
+    studies=&quot;${_jobs[&#39;studies&#39;]}&quot;
+    gss_arg=&quot;&quot;
+    if [ -n &quot;$studies&quot; ]; then
+        gss=&quot;${_output:nn}.gwas_sumstats.rds&quot;
+        Rscript ${modular_script_dir}/pecotmr_integration/gwas_sumstats_construct.R \
+            --study &quot;$studies&quot; \
+            --gwas-tsv &quot;${_jobs[&#39;gwas_tsvs&#39;]}&quot; \
+            --ld-block &quot;${_jobs[&#39;ld_block&#39;]}&quot; \
+            --ld-meta &quot;${_jobs[&#39;ld_meta&#39;]}&quot; \
+            --n-case &quot;${_jobs[&#39;n_cases&#39;]}&quot; \
+            --n-control &quot;${_jobs[&#39;n_controls&#39;]}&quot; \
+            --pip-cutoff-to-skip ${skip_sumstats_analysis_pip_cutoff} \
+            --qc-method ${qc_method} \
+            ${(&#39;--column-mapping &quot;&#39; + _jobs[&#39;column_mappings&#39;] + &#39;&quot;&#39;) if _jobs[&#39;column_mappings&#39;] else &#39;&#39;} \
+            --output &quot;$gss&quot;
+        gss_arg=&quot;--gwas-sumstats $gss&quot;
+    fi
+    Rscript ${modular_script_dir}/pecotmr_integration/colocboost.R \
+        --qtl-dataset ${_input} \
+        --gene-id $gene \
+        --cis-window ${cis_window} \
+        $gss_arg \
+        ${&#39;&#39; if xqtl_coloc else &#39;--no-xqtl-coloc&#39;} \
+        ${&#39;--joint-gwas&#39; if joint_gwas else &#39;&#39;} \
+        ${&#39;--separate-gwas&#39; if separate_gwas else &#39;&#39;} \
+        --pip-cutoff-to-skip &quot;${&quot;,&quot;.join([str(x) for x in skip_analysis_pip_cutoff])}&quot; \
+        --output ${_output}
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Step</p></th>
+<th class="head"><p>Substep</p></th>
+<th class="head"><p>Problem</p></th>
+<th class="head"><p>Possible Reason</p></th>
+<th class="head"><p>Solution</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>For the toy chr22 dataset, produces <code class="docutils literal notranslate"><span class="pre">protocol_example.colocboost.rds</span></code> with ColocBoost posteriors. Expect a convergence message and sparse result for the single-region toy example.</p>
 </section>
 </section>
 
@@ -685,10 +1059,27 @@ bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = 
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs">Inputs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-genotype-phenotype-and-association-analysis-windows">Example genotype, phenotype and association analysis windows</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-summary-statistics-and-ld-reference">Example summary statistics and LD reference</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#about-indels">About indels</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example-steps">Minimal Working Example Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xqtl-only-analysis">xQTL only analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-colocboost-with-xqtl-only"><strong>Step 1.</strong> ColocBoost with xQTL only</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-colocboost-with-gwas"><strong>Step 2.</strong> ColocBoost with GWAS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-colocboost-with-multiple-ld-references-multi-ancestry"><strong>Step 3.</strong> ColocBoost with multiple LD references (multi-ancestry)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colocboost-analysis">ColocBoost analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
 </ul>
   </nav></div>
 
