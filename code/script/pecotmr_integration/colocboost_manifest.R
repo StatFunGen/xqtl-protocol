@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # colocboost_manifest.R
 #
-# Resolve `colocboost_mnm.ipynb`'s per-gene analysis units into a single
+# Resolve `colocboost.ipynb`'s per-gene analysis units into a single
 # manifest TSV, so the downstream [colocboost] step can fan out over its
 # rows via inline csv.DictReader without any notebook-local Python parsing.
 # One row per gene (= one colocboost focal-trait task).
