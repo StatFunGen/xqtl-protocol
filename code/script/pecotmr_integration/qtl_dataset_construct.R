@@ -31,6 +31,12 @@
 #                          columns are samples.
 #   --maf-cutoff           Pass-through MAF cutoff for QtlDataset().
 #   --xvar-cutoff          Pass-through variance cutoff for QtlDataset().
+#   --mac-cutoff           Pass-through minor-allele-count cutoff.
+#   --imiss-cutoff         Pass-through per-variant missingness cutoff.
+#   --keep-samples         Optional file of sample IDs to keep.
+#   --keep-variants        Optional file of variant IDs to keep.
+#   --drop-indel           Drop indels (QtlDataset keepIndel = FALSE).
+#   --no-scale-residuals   Disable residual scaling (scaleResiduals = FALSE).
 #   --output               Output RDS path.
 
 suppressPackageStartupMessages({
@@ -76,6 +82,9 @@ parser <- add_argument(parser, "--keep-samples",
 parser <- add_argument(parser, "--keep-variants",
                        help = "Path to a whitespace-delimited file of variant IDs to restrict to (QtlDataset keepVariants)",
                        type = "character", default = "")
+parser <- add_argument(parser, "--no-scale-residuals",
+                       help = "Do not scale residuals (QtlDataset scaleResiduals = FALSE; default scales)",
+                       flag = TRUE)
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
@@ -222,7 +231,8 @@ qd_args <- list(
   macCutoff          = argv$mac_cutoff,
   xvarCutoff         = argv$xvar_cutoff,
   imissCutoff        = argv$imiss_cutoff,
-  keepIndel          = !isTRUE(argv$drop_indel))
+  keepIndel          = !isTRUE(argv$drop_indel),
+  scaleResiduals     = !isTRUE(argv$no_scale_residuals))
 # keepSamples / keepVariants only when a file was given (else the constructor
 # default = keep all).
 if (length(keep_samples)  > 0L) qd_args$keepSamples  <- keep_samples
