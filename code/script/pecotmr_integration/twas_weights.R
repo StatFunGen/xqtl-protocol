@@ -30,6 +30,14 @@
 #                           values are kwargs lists forwarded to the
 #                           underlying per-method learner. Example:
 #                           '{"lasso":{"nfolds":10}}'.
+#   --mixture-prior         Optional RDS of mr.mash data-driven prior
+#                           covariance matrices (dataDrivenPriorMatrices)
+#                           for the 'mrmash' method. Omitted -> canonical
+#                           prior (canonicalPriorMatrices = TRUE). mr.mash
+#                           requires one of these; this wrapper supplies a
+#                           default so 'mrmash' runs out of the box, and is
+#                           also the producer of the mvSuSiE data-driven
+#                           prior consumed by fine_mapping.R --twas-weights.
 #   --output                Output RDS path (one TwasWeights)
 
 suppressPackageStartupMessages({
@@ -64,6 +72,13 @@ parser <- add_argument(parser, "--fine-mapping-result",
                        type = "character", default = "")
 parser <- add_argument(parser, "--method-args",
                        help = "JSON object {token: {kwarg: value, ...}, ...} for twasWeightsPipeline()",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--mixture-prior",
+                       help = paste0("Path to an RDS of mr.mash data-driven prior covariance matrices ",
+                                     "(dataDrivenPriorMatrices) for the 'mrmash' method. When omitted, ",
+                                     "mr.mash uses the canonical prior set (canonicalPriorMatrices = TRUE). ",
+                                     "Only consulted when 'mrmash' is in --methods and the prior is not ",
+                                     "already set via --method-args."),
                        type = "character", default = "")
 parser <- add_argument(parser, "--min-twas-maf",
                        help = "Minimum MAF for the variants used to learn TWAS weights (twasWeightsPipeline minTwasMaf), applied on top of the dataset's construct-time mafCutoff",
@@ -179,6 +194,15 @@ methods_arg <- if (is.null(parsed_method_args)) {
   }), methods)
 }
 
+# mr.mash data-driven prior override. The wrapper stays thin: it hands the prior
+# covariance set to pecotmr as a MashPrior object; twasWeightsPipeline unpacks it
+# (.unpackMashPrior) and injects it into the mr.mash fit. pecotmr's mrmash method
+# default supplies the canonical set, so the common case needs no prior here.
+mash_prior <- if (nzchar(argv$mixture_prior) && argv$mixture_prior != "." &&
+                  file.exists(argv$mixture_prior)) {
+  MashPrior(fullFit = readRDS(argv$mixture_prior))
+} else NULL
+
 parse_region <- function(s) {
   m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
   if (length(m) != 4L)
@@ -209,6 +233,7 @@ fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
 # the weights (on top of the QtlDataset's construct-time cutoffs); the cv* knobs
 # control the cross-validated predictive-performance refits.
 tw_args <- list(methods           = methods_arg,
+                mashPrior         = mash_prior,
                 cisWindow         = argv$cis_window,
                 contexts          = contexts_arg,
                 minTwasMaf        = argv$min_twas_maf,

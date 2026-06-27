@@ -29,6 +29,26 @@
 #                   forwarded to the underlying fitter (susieR::susie,
 #                   susieR::susie_rss, mvsusieR::mvsusie, fsusieR::susiF,
 #                   etc.). Example: '{"susie":{"L":1,"refine":false}}'.
+#                   For mvsusie / fsusie this is how you pass their kwargs,
+#                   e.g. '{"mvsusie":{"max_iter":200}}' or
+#                   '{"fsusie":{"prior":"mixture_normal","max_scale":10}}'.
+#
+# Multivariate / joint fits (QTL mode only; mvsusie / fsusie tokens):
+#   --joint-specification  Comma-separated joint-fit axes (subset of
+#                   context,trait,study). "context" joins a gene's contexts
+#                   (cross-context mvSuSiE); "trait" joins the genes in the
+#                   region (cross-trait / multi-gene). Empty (default) leaves
+#                   the implicit per-(context,trait) branch.
+#   --twas-weights  Optional TwasWeights RDS from a preceding mr.mash run
+#                   (twas_weights.R --methods mrmash) supplying the mvSuSiE
+#                   data-driven reweighted prior. Omit for the canonical
+#                   prior. Requires a pecotmr build with twasWeights support.
+#   --data-driven-prior-weights-cutoff  Prior-component weight floor for the
+#                   reweighted mvSuSiE prior (fineMappingPipeline
+#                   dataDrivenPriorWeightsCutoff). Only used with --twas-weights.
+#   --use-pca / --n-pcs  Fine-map each multi-trait context's top principal
+#                   components with univariate SuSiE (ports fsusie.R
+#                   susie_on_top_pc). Requires a pecotmr build with usePCA.
 #   --output        Output RDS path.
 
 suppressPackageStartupMessages({
@@ -91,6 +111,24 @@ parser <- add_argument(parser, "--seed",
 parser <- add_argument(parser, "--pip-cutoff-to-skip",
                        help = "Single-effect (SER) pre-screen cutoff (fineMappingPipeline pipCutoffToSkip), QTL mode; 0 = off, <0 = adaptive 3/nVariants",
                        type = "numeric", default = 0)
+# --- Multivariate / joint-fit knobs (QTL mode; mvsusie / fsusie). Each is
+# opt-in and omitted from the pipeline call when left at its default, so this
+# wrapper also runs against a pecotmr build that predates twasWeights / usePCA.
+parser <- add_argument(parser, "--joint-specification",
+                       help = "Comma-separated joint-fit axes (context,trait,study) for mvsusie/fsusie; empty = implicit per-(context,trait) branch",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--twas-weights",
+                       help = "Optional TwasWeights RDS (preceding mr.mash run) supplying the mvSuSiE data-driven prior; omit for the canonical prior",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--data-driven-prior-weights-cutoff",
+                       help = "Prior-component weight floor for the reweighted mvSuSiE prior (only used with --twas-weights)",
+                       type = "numeric", default = 1e-10)
+parser <- add_argument(parser, "--use-pca",
+                       help = "Fine-map each multi-trait context's top PCs with univariate SuSiE (usePCA; ports fsusie.R susie_on_top_pc)",
+                       flag = TRUE)
+parser <- add_argument(parser, "--n-pcs",
+                       help = "Cap on top principal components per context when --use-pca (nPCs)",
+                       type = "integer", default = 10L)
 # --- Per-analysis overrides of the QtlDataset's construct-time filters. Each is
 # opt-in (unset leaves the dataset's stored value); applied to the loaded object
 # before the pipeline runs (QTL mode only).
@@ -190,11 +228,18 @@ contexts_arg <- if (nzchar(argv$contexts) && argv$contexts != ".")
 
 methods <- trimws(strsplit(argv$methods, ",", fixed = TRUE)[[1L]])
 
-# Build the final `methods` argument for fineMappingPipeline as the named-list
-# form {token: kwargs}. The pipeline's SuSiE fit defaults (L = --L,
-# L_greedy = --L-greedy) seed every SuSiE-family token; any matching
-# --method-args entry overrides them per key (explicit > default). Keys in
-# --method-args must be among the --methods tokens (no silent typos).
+# Joint-fit axes for mvsusie/fsusie: "" -> NULL (implicit per-tuple branch).
+joint_spec <- if (nzchar(argv$joint_specification) && argv$joint_specification != ".")
+  trimws(strsplit(argv$joint_specification, ",", fixed = TRUE)[[1L]]) else NULL
+# Optional mr.mash data-driven prior (TwasWeights from a preceding mrmash run).
+twas_weights_obj <- if (nzchar(argv$twas_weights) && argv$twas_weights != "." &&
+                        file.exists(argv$twas_weights)) readRDS(argv$twas_weights) else NULL
+
+# Build the `methods` argument: the bare tokens, or the named-list {token: kwargs}
+# form when --method-args is given. SuSiE L / L_greedy defaults + susie-family
+# routing live in pecotmr (.fmNormalizeMethods); the wrapper only forwards the
+# --L / --L-greedy values as top-level args (see cs_args). --method-args keys
+# must be among the --methods tokens (no silent typos).
 if (!is.null(parsed_method_args)) {
   unknown <- setdiff(names(parsed_method_args), methods)
   if (length(unknown) > 0L)
@@ -202,19 +247,18 @@ if (!is.null(parsed_method_args)) {
          paste(unknown, collapse = ", "),
          "'; --methods = '", paste(methods, collapse = ", "), "').")
 }
-.susie_family <- c("susie", "susieInf", "susieAsh")
-.fit_defaults <- list(L = argv$L, L_greedy = argv[["L_greedy"]])
-methods_arg <- setNames(lapply(methods, function(tk) {
-  base <- if (tk %in% .susie_family) .fit_defaults else list()
-  user <- if (!is.null(parsed_method_args) && tk %in% names(parsed_method_args))
-            parsed_method_args[[tk]] else list()
-  modifyList(base, user)
-}), methods)
+methods_arg <- if (is.null(parsed_method_args)) methods else
+  setNames(lapply(methods, function(tk)
+    if (tk %in% names(parsed_method_args)) parsed_method_args[[tk]] else list()),
+    methods)
 
 # Credible-set / coverage knobs common to both modes. medianAbsCorr is added
 # only when set (NULL -> omitted), so the call also works against a pecotmr
-# that predates that argument.
+# that predates that argument. L / L_greedy are forwarded top-level; pecotmr
+# seeds the susie-family tokens and applies explicit --method-args overrides.
 cs_args <- list(methods           = methods_arg,
+                L                 = argv$L,
+                Lgreedy           = argv[["L_greedy"]],
                 coverage          = argv$coverage,
                 secondaryCoverage = secondary_cov,
                 signalCutoff      = argv$pip_cutoff,
@@ -238,20 +282,55 @@ if (has_gwas) {
   qd <- apply_qd_filter_overrides(qd, argv)
   # `contexts` and `pipCutoffToSkip` are QTL-mode only, so they ride on qtl_args
   # rather than the mode-shared cs_args.
+  # cisWindow is a gene-mode (traitId) knob — it expands each trait's own
+  # coordinates. In region mode the literal variant window comes from --region,
+  # and passing both is an error, so cisWindow rides on the traitId branch only.
   qtl_args <- c(list(qd), cs_args,
-                list(cisWindow       = argv$cis_window,
-                     contexts        = contexts_arg,
+                list(contexts        = contexts_arg,
                      pipCutoffToSkip = argv$pip_cutoff_to_skip))
-  res <- if (has_region) {
-    do.call(fineMappingPipeline, c(qtl_args, list(region = parse_region(argv$region))))
-  } else {
-    do.call(fineMappingPipeline, c(qtl_args, list(traitId = argv$gene_id)))
+  # Opt-in multivariate / joint knobs. Each is added only when the user set it,
+  # so the call stays compatible with a pecotmr that predates the argument
+  # (mirrors the medianAbsCorr handling above).
+  if (!is.null(joint_spec)) qtl_args$jointSpecification <- joint_spec
+  if (!is.null(twas_weights_obj)) {
+    qtl_args$twasWeights <- twas_weights_obj
+    qtl_args$dataDrivenPriorWeightsCutoff <- argv$data_driven_prior_weights_cutoff
+  }
+  if (isTRUE(argv$use_pca)) {
+    qtl_args$usePCA <- TRUE
+    qtl_args$nPCs   <- argv$n_pcs
   }
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
+  run_fm <- function() if (has_region) {
+    do.call(fineMappingPipeline, c(qtl_args, list(region = parse_region(argv$region))))
+  } else {
+    do.call(fineMappingPipeline, c(qtl_args,
+                                   list(traitId = argv$gene_id,
+                                        cisWindow = argv$cis_window)))
+  }
+  # A multivariate fan-out unit can legitimately have nothing to jointly fit:
+  # a locus with < 2 genes overlapping it (cross-trait / mnm_genes / fsusie), a
+  # single-context trait (cross-context), etc. fineMappingPipeline signals this
+  # in two ways that only the multivariate paths (explicit jointSpecification AND
+  # auto-detected mvsusie / fsusie) raise -- the univariate SuSiE family never
+  # does: the early multivariate guard ("mvsusie/fsusie requires multi-trait
+  # [or multi-context] input ...") and the late dispatch check ("no joint fits
+  # produced"). For a per-locus batch each is the honest NULL result, not a
+  # failure, so write NULL rather than aborting the substep; every other error
+  # propagates unchanged.
+  res <- tryCatch(run_fm(), error = function(e) {
+    if (grepl("no joint fits produced|requires multi-trait|requires multi-context",
+              conditionMessage(e))) {
+      message("fine_mapping.R: no multivariate fit for ", label,
+              " (scope yields < 2 joinable conditions); writing NULL.")
+      NULL
+    } else stop(e)
+  })
 }
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(res, argv$output)
+n_rows <- if (is.null(res)) 0L else nrow(res)
 cat(sprintf("Wrote fineMapping result for %s (%d row(s)) to %s\n",
-            label, nrow(res), argv$output))
+            label, n_rows, argv$output))
