@@ -45,8 +45,13 @@
 #                     (default), "slalom", "dentist".
 #   --impute          Flag: run RAISS sumstat imputation in
 #                     summaryStatsQc(impute = TRUE) against the LD sketch.
+#   --maf             MAF cutoff (summaryStatsQc mafCutoff). Default 0.0025.
+#   --skip-region     Comma-separated chr:start-end window(s) whose variants
+#                     are dropped (summaryStatsQc skipRegion).
 #   --qc-args         Optional JSON object of extra named kwargs spliced
-#                     into summaryStatsQc().
+#                     into summaryStatsQc(). May not set a key already
+#                     controlled by a dedicated flag (mafCutoff / skipRegion /
+#                     pipCutoffToSkip / zMismatchQc / impute).
 #   --output          Output RDS path
 
 suppressPackageStartupMessages({
@@ -87,6 +92,12 @@ parser <- add_argument(parser, "--n-control",
 parser <- add_argument(parser, "--pip-cutoff-to-skip",
                        help = "Skip a study whose single-trait max PIP is below this cutoff (summaryStatsQc pipCutoffToSkip); 0 disables, <0 uses 3/n_variants.",
                        type = "numeric", default = 0)
+parser <- add_argument(parser, "--maf",
+                       help = "Minor-allele-frequency cutoff (summaryStatsQc mafCutoff); drop variants below it. 0 disables.",
+                       type = "numeric", default = 0.0025)
+parser <- add_argument(parser, "--skip-region",
+                       help = "Comma-separated chr:start-end window(s) whose overlapping variants are dropped (summaryStatsQc skipRegion). Empty = none.",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--qc-method",
                        help = "LD-mismatch QC: 'none' (default), 'slalom', or 'dentist'",
                        type = "character", default = "none")
@@ -163,12 +174,21 @@ qc_extra <- if (nzchar(argv$qc_args) && argv$qc_args != "." &&
 } else {
   list()
 }
-# Reject collisions between explicit flags and --qc-args.
-clash <- intersect(names(qc_extra), c("zMismatchQc", "impute"))
+# Reject collisions between explicit flags and --qc-args. Dedicated flags win;
+# passing the same key via --qc-args is an error so behavior is unambiguous.
+clash <- intersect(names(qc_extra),
+                   c("zMismatchQc", "impute", "mafCutoff", "skipRegion",
+                     "pipCutoffToSkip"))
 if (length(clash) > 0L)
   stop("--qc-args sets ", paste(clash, collapse = ", "),
        " which is also controlled by a dedicated flag (--qc-method / ",
-       "--impute). Pass it via the dedicated flag.")
+       "--impute / --maf / --skip-region / --pip-cutoff-to-skip). Pass it via ",
+       "the dedicated flag.")
+
+# --skip-region: comma-separated chr:start-end windows -> character vector
+# (NULL when unset so summaryStatsQc's skipRegion default applies).
+skip_region_vec <- splitCsv(argv$skip_region)
+if (length(skip_region_vec) == 0L) skip_region_vec <- NULL
 
 qc_method <- match.arg(argv$qc_method, c("none", "slalom", "dentist"))
 
@@ -334,7 +354,10 @@ gss_out <- if (argv$skip_qc) {
   qc_call_args <- c(list(gss,
                           zMismatchQc     = qc_method,
                           impute          = isTRUE(argv$impute),
-                          pipCutoffToSkip = argv$pip_cutoff_to_skip),
+                          pipCutoffToSkip = argv$pip_cutoff_to_skip,
+                          mafCutoff       = argv$maf),
+                    if (!is.null(skip_region_vec))
+                      list(skipRegion = skip_region_vec) else list(),
                     qc_extra)
   do.call(summaryStatsQc, qc_call_args)
 }
