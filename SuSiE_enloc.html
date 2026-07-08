@@ -501,8 +501,11 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-logic">Analytical Logic</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Analytical Logic</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Output</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
@@ -562,9 +565,6 @@ output from <code class="docutils literal notranslate"><span class="pre">fine_ma
 </section>
 <section id="analytical-logic">
 <h2>Analytical Logic<a class="headerlink" href="#analytical-logic" title="Link to this heading">#</a></h2>
-</section>
-<section id="id1">
-<h2>Analytical Logic<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Enrichment</p></li>
 </ul>
@@ -604,6 +604,35 @@ output from <code class="docutils literal notranslate"><span class="pre">fine_ma
 </div>
 </div>
 </div>
+<section id="output">
+<h3>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h3>
+<p>Output file: <code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.{context}.enrichment.rds</span></code></p>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">enrich</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;output/output/xqtl_gwas_enrichment/protocol_example.enloc.Knight_eQTL_brain.enrichment.rds&quot;</span><span class="p">)</span>
+
+<span class="nf">length</span><span class="p">(</span><span class="n">enrich</span><span class="p">)</span><span class="w">   </span><span class="c1"># 2</span>
+<span class="nf">names</span><span class="p">(</span><span class="n">enrich</span><span class="p">)</span><span class="w">    </span><span class="c1"># [1] &quot;&quot;                     &quot;unused_xqtl_variants&quot;</span>
+
+<span class="nf">str</span><span class="p">(</span><span class="n">enrich</span><span class="p">[[</span><span class="m">1</span><span class="p">]])</span>
+<span class="c1"># List of 10</span>
+<span class="c1">#  $ Alternative (coloc) p1   : num 0.000558   prior prob. a random SNP is a causal xQTL variant</span>
+<span class="c1">#  $ Alternative (coloc) p12  : num 6.31e-08   prior prob. a random SNP is causal for both xQTL and GWAS</span>
+<span class="c1">#  $ Alternative (coloc) p2   : num 0.000113   prior prob. a random SNP is a causal GWAS variant</span>
+<span class="c1">#  $ Effective MI rounds      : num 25          number of multiple-imputation iterations</span>
+<span class="c1">#  $ Enrichment (no shrinkage): num -0.241      enrichment slope a1 (raw)</span>
+<span class="c1">#  $ Enrichment (w/ shrinkage): num -0.000102   enrichment slope a1 (shrinkage-regularised, used for p12)</span>
+<span class="c1">#  $ Intercept                : num -7.49       baseline log-odds a0</span>
+<span class="c1">#  $ sd (intercept)           : num 0.316       SE of a0</span>
+<span class="c1">#  $ sd (no shrinkage)        : num 48.6        SE of a1 (raw)</span>
+<span class="c1">#  $ sd (w/ shrinkage)        : num 1           SE of a1 (shrinkage)</span>
+
+<span class="nf">length</span><span class="p">(</span><span class="n">enrich</span><span class="o">$</span><span class="n">unused_xqtl_variants</span><span class="p">[[</span><span class="m">1</span><span class="p">]])</span><span class="w">   </span><span class="c1"># 18</span>
+<span class="nf">head</span><span class="p">(</span><span class="n">enrich</span><span class="o">$</span><span class="n">unused_xqtl_variants</span><span class="p">[[</span><span class="m">1</span><span class="p">]])</span>
+<span class="c1"># [1] &quot;1:20568238:C:T&quot; &quot;1:20621145:G:A&quot; &quot;1:21427833:C:G&quot; ...</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note on toy data</strong>: estimates are produced but unreliable (1 gene × 1 GWAS region). <code class="docutils literal notranslate"><span class="pre">sd</span> <span class="pre">(no</span> <span class="pre">shrinkage)</span></code> = 48.6 reflects near-zero information; shrinkage regularises <code class="docutils literal notranslate"><span class="pre">a1</span></code> to ≈ 0. Reliable a0/a1 require thousands of gene × GWAS region pairs.</p>
+</div></blockquote>
 <p><strong>Step 2. Coloc.</strong> Run colocalization on the overlapping regions. <code class="docutils literal notranslate"><span class="pre">--skip-enrich</span></code> reuses the enrichment object produced in Step 1, so the <code class="docutils literal notranslate"><span class="pre">*enrichment.rds</span></code> file from that step must be present in <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>. Otherwise enrichment is triggered automatically. <code class="docutils literal notranslate"><span class="pre">get_overlapped_analysis_regions</span></code> selects the regions with overlapping variants before <code class="docutils literal notranslate"><span class="pre">susie_coloc</span></code> runs.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -625,6 +654,69 @@ output from <code class="docutils literal notranslate"><span class="pre">fine_ma
 </div>
 </div>
 </div>
+</section>
+<section id="id1">
+<h3>Output<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>Output file: <code class="docutils literal notranslate"><span class="pre">{cwd}/{step_name}/{name}.{context}&#64;{gene}.coloc.rds</span></code></p>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;output/output/susie_coloc/susie_coloc/protocol_example.enloc.Knight_eQTL_brain@ENSG00000142798.coloc.rds&quot;</span><span class="p">)</span>
+
+<span class="nf">length</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="w">   </span><span class="c1"># 1</span>
+<span class="nf">names</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="w">    </span><span class="c1"># [1] &quot;ENSG00000142798&quot;</span>
+
+<span class="nf">str</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">max.level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span><span class="p">)</span>
+<span class="c1"># List of 1</span>
+<span class="c1">#  $ ENSG00000142798:List of 2</span>
+<span class="c1">#   ..$ (unnamed)      : chr &quot;No coloc results due to the absence of a GWAS log Bayes factor matrix filtered by prior tolerance.&quot;</span>
+<span class="c1">#   ..$ analysis_region: chr &quot;chr1_20110062_22020160&quot;</span>
+
+<span class="n">res</span><span class="o">$</span><span class="n">ENSG00000142798</span><span class="o">$</span><span class="n">analysis_region</span><span class="w">   </span><span class="c1"># &quot;chr1_20110062_22020160&quot;</span>
+</pre></div>
+</div>
+<p>The output is a named list with one entry per gene. Each gene entry contains:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">[[1]]</span></code> (unnamed)</strong>: the colocalization result — either a data.frame of PP values (positive result) or a character string explaining why coloc was skipped.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">$analysis_region</span></code></strong>: the genomic block ID (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;chr1_20110062_22020160&quot;</span></code>) that was analyzed.</p></li>
+</ul>
+<p>When colocalization runs successfully, <code class="docutils literal notranslate"><span class="pre">res[[gene]][[1]]</span></code> is a data.frame with one row per SuSiE effect pair (xQTL effect × GWAS effect) and columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nsnps</span></code></p></td>
+<td><p>Number of variants in the shared analysis window</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PP.H0.abf</span></code></p></td>
+<td><p>Posterior probability: neither trait has a causal variant in this region</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PP.H1.abf</span></code></p></td>
+<td><p>Posterior probability: only xQTL has a causal variant</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PP.H2.abf</span></code></p></td>
+<td><p>Posterior probability: only GWAS has a causal variant</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PP.H3.abf</span></code></p></td>
+<td><p>Posterior probability: both have causal variants, but different ones</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PP.H4.abf</span></code></p></td>
+<td><p>Posterior probability: both traits share the same causal variant (colocalization)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hit1</span></code></p></td>
+<td><p>Top variant ID from the xQTL credible set</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hit2</span></code></p></td>
+<td><p>Top variant ID from the GWAS credible set</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>PP.H0 + PP.H1 + PP.H2 + PP.H3 + PP.H4 = 1. <strong>PP.H4.abf &gt; 0.8</strong> is the standard threshold for strong colocalization evidence.</p>
+<blockquote>
+<div><p><strong>Note on toy data</strong>: this example returns a message string instead of a data.frame because the toy GWAS fine-mapping signal in this region is too weak (max PIP ≈ 0.04, no credible set). This is an expected negative result for a toy dataset, not a pipeline error.</p>
+</div></blockquote>
+</section>
 </section>
 <section id="command-interface">
 <h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
@@ -1052,10 +1144,7 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 </section>
 <section id="anticipated-results">
 <h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
-<ol class="arabic simple">
-<li><p>Enrichment analysis results — this is a global enrichment estimate that combines all input data for each context.</p></li>
-<li><p>Colocalization results for regions of interest — if <code class="docutils literal notranslate"><span class="pre">ld_meta_file_path</span></code> is provided, would also report coloc cs by coloc postprocessing.</p></li>
-</ol>
+<p>See the <strong>Output</strong> sections under Step 1 and Step 2 above for actual output structures with real field names and toy dataset values.</p>
 </section>
 </section>
 
@@ -1128,8 +1217,11 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-logic">Analytical Logic</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Analytical Logic</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Output</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>

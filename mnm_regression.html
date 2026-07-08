@@ -1153,438 +1153,167 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output[0]:nn}.susie_twas.stde
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mnm]
-# Prior model file generated from mashr. 
-# Default will be used if it does not exist.
-parameter: mixture_prior = path()
-parameter: mixture_prior_cv = path()
-parameter: prior_weights_min = 5e-4
-parameter: prior_canonical_matrices = False
-parameter: sample_partition = path() 
+# Multivariate cross-context fine-mapping with mvSuSiE over the pre-built
+# QtlDataset (from qtl_dataset_construct), one gene per fan-out unit. Each gene&#39;s
+# contexts are fit jointly (jointSpecification=&quot;context&quot;). The canonical mixture
+# prior is used by default; pass --prior-twas-weights (a TwasWeights RDS from a
+# preceding `twas_weights.R --methods mrmash` run) for the mr.mash data-driven
+# reweighted prior. Replaces the legacy mnm.R + multivariate_analysis_pipeline.
+parameter: cis_window = 1000000
 parameter: mvsusie_max_iter = 200
-parameter: mrmash_max_iter = 5000
-depends: sos_variable(&quot;regional_data&quot;)
-# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
-stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
-
-meta_info = regional_data[&#39;meta_info&#39;]
-
-input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
-if skip_fine_mapping and skip_twas_weights:
-    save_data = True
-    output_files = [f&#39;{cwd:a}/data/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_data.rds&#39;]
-elif not skip_fine_mapping and skip_twas_weights:
-    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_bvsr.rds&#39;]
-elif skip_fine_mapping and not skip_twas_weights:
-    # Warning that fine-mapping is required for TWAS weights
-    if not ld_reference_meta_file.is_dir():
-        print(&quot;WARNING: Fine-mapping is required to generate TWAS weights. Setting skip_fine_mapping to False. &quot;
-              &quot;Fine-mapping will be performed and saved on variants listed in %s.&quot; % ld_reference_meta_file)
-    else:
-        print(&quot;WARNING: Fine-mapping is required to generate TWAS weights. Setting skip_fine_mapping to False.&quot;)
-    skip_fine_mapping = False
-    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_bvsr.rds&#39;,
-                    f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_twas_weights.rds&#39;]
-else:    
-    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_bvsr.rds&#39;,
-                    f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multicontext_twas_weights.rds&#39;]   
-output: output_files
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&quot;{_output[0]:nn}.mnm.stderr&quot;, stdout = f&quot;{_output[0]:nn}.mnm.stdout&quot;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/mnm_analysis/mnm_methods/mnm.R \
-        --genotype ${_input[0]:a} \
-        --phenotype &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[1:len(_input)//2+1]])}&quot; \
-        --covariate &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[len(_input)//2+1:]])}&quot; \
-        --region &quot;${_meta_info[0]}&quot; \
-        --window &quot;${_meta_info[1]}&quot; \
-        --region-name &quot;${_meta_info[2]}&quot; \
-        --extract-region-names &quot;${&quot;|&quot;.join([x if isinstance(x,str) else &quot;,&quot;.join(x) for x in _meta_info[3]])}&quot; \
-        --conditions &quot;${&quot;,&quot;.join(_meta_info[4:])}&quot; \
-        --skip-analysis-pip-cutoff &quot;${&quot;,&quot;.join(skip_analysis_pip_cutoff)}&quot; \
-        --maf ${maf} \
-        --mac ${mac} \
-        --imiss ${imiss} \
-        ${&quot;--indel&quot; if indel else &quot;&quot;} \
-        ${&quot;--keep-samples &quot; + str(keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-        ${&quot;--keep-variants &quot; + str(keep_variants) if not keep_variants.is_dir() else &quot;&quot;} \
-        ${&quot;--save-data&quot; if save_data else &quot;&quot;} \
+parameter: pip_cutoff_to_skip = 0.0
+# Comma-separated context names to restrict to; empty = all contexts.
+parameter: contexts = &quot;&quot;
+# Optional TwasWeights RDS (preceding mr.mash run) supplying the data-driven prior.
+parameter: prior_twas_weights = path()
+parameter: prior_weights_min = 1e-10
+# Optional JSON of extra mvsusie kwargs (overrides the max_iter default), e.g. &#39;{&quot;mvsusie&quot;:{&quot;max_iter&quot;:500}}&#39;.
+parameter: mvsusie_method_args = &quot;&quot;
+fail_if(len(region_name) == 0, &quot;mnm: pass --region-name &lt;gene-id&gt; [&lt;gene-id&gt; ...] to choose which gene(s) to analyze.&quot;)
+qtl_dataset = path(f&quot;{cwd:a}/qtl_dataset/{name}.qtl_dataset.rds&quot;)
+mvsusie_args = mvsusie_method_args if mvsusie_method_args else f&#39;{{&quot;mvsusie&quot;:{{&quot;max_iter&quot;:{mvsusie_max_iter}}}}}&#39;
+input: qtl_dataset, for_each = &quot;region_name&quot;
+output: f&quot;{cwd:a}/multivariate_fine_mapping/{name}.{_region_name}.multicontext_bvsr.rds&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping.R \
+        --qtl-dataset ${_input} \
+        --gene-id ${_region_name} \
+        --cis-window ${cis_window} \
+        --methods mvsusie \
+        --joint-specification context \
+        --coverage ${coverage[0]} \
+        ${(&quot;--secondary-coverage &quot; + &quot;,&quot;.join([str(x) for x in coverage[1:]])) if len(coverage) &gt; 1 else &quot;&quot;} \
         --pip-cutoff ${pip_cutoff} \
-        --coverage &quot;${&quot;,&quot;.join([str(x) for x in coverage])}&quot; \
+        --pip-cutoff-to-skip ${pip_cutoff_to_skip} \
         --seed ${seed} \
-        --cwd ${cwd:a} \
-        ${&quot;--skip-fine-mapping&quot; if skip_fine_mapping else &quot;&quot;} \
-        ${&quot;--skip-twas-weights&quot; if skip_twas_weights else &quot;&quot;} \
-        --xvar-cutoff ${xvar_cutoff} \
-        --mvsusie-max-iter ${mvsusie_max_iter} \
-        --mrmash-max-iter ${mrmash_max_iter} \
-        --max-cv-variants ${max_cv_variants} \
-        --twas-cv-folds ${twas_cv_folds} \
-        --twas-cv-threads ${twas_cv_threads} \
-        ${&quot;--ld-reference-meta-file &quot; + str(ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;&quot;} \
-        ${&quot;--mixture-prior &quot; + str(mixture_prior) if mixture_prior.is_file() else &quot;&quot;} \
-        ${&quot;--mixture-prior-cv &quot; + str(mixture_prior_cv) if mixture_prior_cv.is_file() else &quot;&quot;} \
-        --prior-weights-min ${prior_weights_min} \
-        ${&quot;--prior-canonical-matrices&quot; if prior_canonical_matrices else &quot;&quot;} \
-        ${&quot;--sample-partition &quot; + str(sample_partition) if sample_partition.is_file() else &quot;&quot;} \
-        --output-prefix ${_output[0]:nn}
+        ${(&quot;--contexts &quot; + contexts) if contexts else &quot;&quot;} \
+        --method-args &#39;${mvsusie_args}&#39; \
+        ${(&quot;--twas-weights &quot; + str(prior_twas_weights)) if prior_twas_weights.is_file() else &quot;&quot;} \
+        --data-driven-prior-weights-cutoff ${prior_weights_min} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mnm_genes]
-depends: sos_variable(&quot;regional_data&quot;)
-# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
-stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
- 
-meta_info = regional_data[&#39;meta_info&#39;]
-genes = meta_info[0][3]
-if isinstance(genes, tuple):
-    genes = genes[0] if isinstance(genes[0], tuple) else list(genes)
-else:
-    genes = [genes]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mnm_genes_1]
+# Resolve per-locus regions (region_id -&gt; chr:start-end) into a manifest via
+# region_manifest.R for the cross-gene (jointSpecification=&quot;trait&quot;) mvSuSiE fit.
+# Loci come from --customized-association-windows (or --region-list); restrict
+# with --region-name. Falls back to per-gene cis windows from the manifest.
+input: None
+output: f&quot;{cwd:a}/multivariate_fine_mapping/{name}.mnm_genes_region_manifest.tsv&quot;
+task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output}.stderr&quot;, stdout = f&quot;{_output}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/pecotmr_integration/region_manifest.R \
+        --pheno-manifest ${phenoFile[0]} \
+        --cis-window ${cis_window if cis_window &gt; 0 else 1000000} \
+        ${(&quot;--customized-association-windows &quot; + str(customized_association_windows)) if customized_association_windows.is_file() else &quot;&quot;} \
+        ${(&quot;--region-name &quot; + &quot;,&quot;.join(region_name)) if len(region_name) &gt; 0 else &quot;&quot;} \
+        ${(&quot;--region-list &quot; + str(region_list)) if region_list.is_file() else &quot;&quot;} \
+        --output ${_output}
 
-if len(skip_analysis_pip_cutoff) == 0:
-    skip_analysis_pip_cutoff = [0.0] * len(genes)
-
-if len(skip_analysis_pip_cutoff) == 1:
-    skip_analysis_pip_cutoff = skip_analysis_pip_cutoff * len(genes)
-
-skip_analysis_pip_cutoff = [&quot;&#39;{}&#39;={}&quot;.format(genes[i], skip_analysis_pip_cutoff[i].split(&#39;=&#39;)[1]) for i in range(len(genes))]
-
-parameter: pheno_id_map_file = path
-parameter: fine_mapping_meta = path
-parameter: data_driven_prior = False
-# Parameters below are relevant when we use data driven prior
-# which is an experimental feature
-parameter: n_random = 10
-parameter: n_null = 10
-parameter: independent_variant_list = path()
-parameter: prior_weights_min = 5e-4
-parameter: prior_canonical_matrices = False
-# This is relevant to cross-validation
-parameter: sample_partition = path() 
+[mnm_genes_2]
+# Cross-gene (multi-trait) mvSuSiE per locus: region mode +
+# jointSpecification=&quot;trait&quot; joins the genes whose coordinates overlap the
+# locus. Optional mr.mash data-driven prior via --prior-twas-weights (canonical
+# otherwise). Replaces the legacy multigene combine + multigene_udr machinery.
 parameter: mvsusie_max_iter = 200
-parameter: mrmash_max_iter = 5000
-
-if not data_driven_prior:
-     prior_canonical_matrices = True
-input: regional_data[&quot;data&quot;],group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
-
-if skip_fine_mapping and skip_twas_weights:
-    save_data = True
-    output_files = [f&#39;{cwd:a}/data/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_data.rds&#39;]
-elif not skip_fine_mapping and skip_twas_weights:
-    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_bvsr.rds&#39;]
-elif skip_fine_mapping and not skip_twas_weights:
-    output_files = [f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_twas_weights.rds&#39;]
-else:    
-    output_files = [f&#39;{cwd:a}/multivariate_fine_mapping/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_bvsr.rds&#39;,
-    f&#39;{cwd:a}/multivariate_twas_weights/{name}.{_meta_info[0].split(&quot;:&quot;)[0]}_{_meta_info[2]}.multigene_twas_weights.rds&#39;]    
-output: output_files
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.mnm_genes.stdout&quot;, stderr = f&quot;{_output[0]:nn}.mnm_genes.stderr&quot;, container = container, entrypoint = entrypoint
-
-    library(data.table)
-    library(dplyr)
-    library(pecotmr)
-    combine_result_list &lt;- function(univariate_finemapping_metadata, condition_name, conditions = NULL, extracted_region){
-        regional_window_combined_susie_result &lt;- list()
-        regional_window_combined_sumstats_result &lt;- list()
-        extracted_univariate_finemapping_metadata &lt;- univariate_finemapping_metadata%&gt;%filter(region_id%in%extracted_region)
-        for(i in 1:dim(extracted_univariate_finemapping_metadata)[1]){
-           gene_id &lt;- extracted_univariate_finemapping_metadata$region_id[i]
-           susie_result &lt;- readRDS(extracted_univariate_finemapping_metadata$combined_data[i])
-           sumstats_result &lt;- readRDS(extracted_univariate_finemapping_metadata$combined_data_sumstats[i]) 
-           if (!is.null(conditions)) {
-              if (any(names(susie_result[[gene_id]]) %in% conditions)) {
-                  extracted_conditions = names(susie_result[[gene_id]])[names(susie_result[[gene_id]]) %in% conditions]
-                 for (j in 1:length(extracted_conditions)){
-                     regional_window_combined_susie_result[[condition_name]][[extracted_conditions[j]]] &lt;- susie_result[[gene_id]][[extracted_conditions[j]]]
-                     regional_window_combined_sumstats_result[[condition_name]][[extracted_conditions[j]]] &lt;- sumstats_result[[gene_id]][[extracted_conditions[j]]]
-                 }
-              }
-           } else {
-                    regional_window_combined_susie_result[[condition_name]][[gene_id]] &lt;- susie_result[[gene_id]][[condition_name]]
-                    regional_window_combined_sumstats_result[[condition_name]][[gene_id]] &lt;- sumstats_result[[gene_id]][[condition_name]]
-                  }
-          }       
-           return(list(regional_window_combined_susie_result = regional_window_combined_susie_result, regional_window_combined_sumstats_result = regional_window_combined_sumstats_result))
-     }
-
-  
-    extract_non_null_cs_list &lt;- function(combined_list, condition_name, extracted_region) {
-        # List to store results for genes passing the first step
-        extracted_regional_window_combined_susie_result &lt;- list()
-        extracted_regional_window_combined_sumstats_result &lt;- list()
-
-        # Iterate over each gene&#39;s susie and sumstats results
-        filtered_region &lt;- extracted_region[extracted_region%in%names(combined_list[[&quot;regional_window_combined_susie_result&quot;]][[condition_name]])]
-        for (gene_id in filtered_region) {
-            susie_result &lt;- get_nested_element(combined_list,c(&quot;regional_window_combined_susie_result&quot;,condition_name,gene_id))
-
-           # Check if there exits top_loci.
-           if (!is.null(susie_result[[&quot;top_loci&quot;]])&amp;&amp;nrow(susie_result[[&quot;top_loci&quot;]])[1]!=0) {
-              # If not all zeros, add this gene&#39;s susie and sumstats results to the lists
-              extracted_regional_window_combined_susie_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list,c(&quot;regional_window_combined_susie_result&quot;,condition_name,gene_id))
-              extracted_regional_window_combined_sumstats_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list,c(&quot;regional_window_combined_sumstats_result&quot;,condition_name,gene_id))
-           }
-         }
-         return(list(extracted_regional_window_combined_susie_result = extracted_regional_window_combined_susie_result, extracted_regional_window_combined_sumstats_result = extracted_regional_window_combined_sumstats_result))
-     }
-  
-    process_and_compare_variants &lt;- function(combined_list, condition_name) {
-       extracted_regional_window_combined_susie_result &lt;- list()
-       extracted_regional_window_combined_sumstats_result &lt;- list()
-       compare_variants &lt;- function(variants1, variants2) {
-            return(any(variants1 %in% variants2) | any(variants2 %in% variants1))
-       }
-       subset_top_loci_variants &lt;- function(df) {
-          find_non_zero_rows &lt;- function(df) {
-                non_zero_indices &lt;- which(rowSums(df!= 0) &gt; 0)
-                return(non_zero_indices)
-           }
-           non_zero_indices &lt;- find_non_zero_rows(df)
-
-           if (length(non_zero_indices) &gt; 0) {
-              non_zero_index_variants &lt;- df[non_zero_indices, , drop = FALSE]%&gt;%select(variant_id)%&gt;%pull(variant_id)
-              zero_index_filtered_variants &lt;- df[-non_zero_indices, ,drop = FALSE]%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
-              top_loci_variants &lt;- c(non_zero_index_variants, zero_index_filtered_variants)
-           } else {
-              zero_index_filtered_variants &lt;- df%&gt;%filter(pip&gt;=0.01)%&gt;%select(variant_id)%&gt;%pull(variant_id)
-              top_loci_variants &lt;- zero_index_filtered_variants
-           }
-             return(top_loci_variants)
-       }
-  
-       for (i in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
-           susie_result_1 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[i]]
-           gene_id &lt;- names(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])[i]
-    
-           # Extract top_loci variants
-           variants1 &lt;- subset_top_loci_variants(susie_result_1[[&quot;top_loci&quot;]])
-           if (length(variants1) &gt; 0) {
-              different_in_all_genes &lt;- TRUE
-    
-           for (j in 1:length(combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]])) {
-               if (i != j) {
-                  susie_result_2 &lt;- combined_list[[&quot;extracted_regional_window_combined_susie_result&quot;]][[condition_name]][[j]]
-                  variants2 &lt;- subset_top_loci_variants(susie_result_2[[&quot;top_loci&quot;]])
-        
-                  # Compare variants
-                  if (length(variants2) &gt; 0) {
-                    if (compare_variants(variants1, variants2)) {
-                        # If variants are not totally different across all genes, set the flag to FALSE
-                       different_in_all_genes &lt;- FALSE
-                       break
-                     }
-                   }
-                 }
-               }
-    
-            # After the loop, check the flag
-            if (!different_in_all_genes) {
-               extracted_regional_window_combined_susie_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list, c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name, gene_id))
-               extracted_regional_window_combined_sumstats_result[[condition_name]][[gene_id]] &lt;- get_nested_element(combined_list, c(&quot;extracted_regional_window_combined_sumstats_result&quot;, condition_name, gene_id))
-            }
-          }
-        }
-      return(list(extracted_regional_window_combined_susie_result = extracted_regional_window_combined_susie_result, extracted_regional_window_combined_sumstats_result = extracted_regional_window_combined_sumstats_result))
-    }
-
-    fine_mapping_metadata = fread(${fine_mapping_meta:r})
-    phenotype_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[1:len(_input)//2+1]])})
-    covariate_files = c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input[len(_input)//2+1:]])})
-    condition_name = ${(&quot;&#39;%s&#39;&quot; % _meta_info[-1])}
-    region_names = ${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])}
-    if (any(region_names %in% fine_mapping_metadata$region_id)) {
-       filtered_region &lt;- fine_mapping_metadata%&gt;%filter(region_id%in%region_names)%&gt;%select(region_id)%&gt;%pull(region_id)
-       filtered_event_names &lt;- filtered_region
-    } else {
-       pheno_id_map &lt;- fread(${pheno_id_map_file:r})
-       gene_ids &lt;- pheno_id_map%&gt;%filter(ID%in%region_names)%&gt;%select(gene)%&gt;%pull(gene)%&gt;%{.[!duplicated(.)]}
-       filtered_region &lt;- fine_mapping_metadata%&gt;%filter(region_id%in%gene_ids)%&gt;%select(region_id)%&gt;%pull(region_id)
-       filtered_event_names &lt;- pheno_id_map%&gt;%filter(ID%in%region_names&amp;gene%in%filtered_region)%&gt;%select(ID)%&gt;%pull(ID)
-     }
-    keep_samples = NULL
-    if (${&quot;TRUE&quot; if keep_samples.is_file() else &quot;FALSE&quot;}) {
-      keep_samples = unlist(strsplit(readLines(${keep_samples:ar}), &quot;\\s+&quot;))
-      message(paste(length(keep_samples), &quot;samples are selected to be loaded for analysis&quot;))
-    }
-                                     
-    fdat = load_regional_multivariate_data(genotype = ${_input[0]:anr},
-                                          phenotype = phenotype_files,
-                                          covariate = covariate_files,
-                                          region = ${(&quot;&#39;%s&#39;&quot; % _meta_info[1]) if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &#39;NULL&#39;},
-                                          maf_cutoff = ${maf},       
-                                          mac_cutoff = ${mac},
-                                          imiss_cutoff = ${imiss},
-                                          conditions = NULL,
-                                          association_window = ${(&quot;&#39;%s&#39;&quot; % _meta_info[1]) if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &#39;NULL&#39;},
-                                          extract_region_name = list(filtered_event_names),
-                                          region_name_col = ${&quot;4&quot; if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;},
-                                          keep_indel = ${&quot;TRUE&quot; if indel else &quot;FALSE&quot;},
-                                          keep_samples = keep_samples,
-                                          keep_variants = ${&#39;&quot;%s&quot;&#39; % keep_variants if not keep_variants.is_dir() else &quot;NULL&quot;},
-                                          phenotype_header = ${&quot;4&quot; if int(_meta_info[1].split(&#39;-&#39;)[-1])&gt;0 else &quot;1&quot;}, # skip first 4 rows of transposed phenotype for chr, start, end and ID
-                                          scale_residuals = FALSE)
-    if (${&quot;TRUE&quot; if save_data else &quot;FALSE&quot;}) {
-        saveRDS(fdat, &quot;${_output[0]:ann}.multigene_data.rds&quot;, compress=&#39;xz&#39;)
-    }
-    if (${&quot;FALSE&quot; if skip_fine_mapping and skip_twas_weights else &quot;TRUE&quot;}) {
-        # Extract and consolidate univariate results to determine which genes to focus on
-        if (grepl(&quot;sQTL&quot;, condition_name)) {conditions &lt;- paste(condition_name, filtered_event_names, sep = &quot;_&quot;)} else {conditions &lt;- NULL}
-        combined_regional_window_list &lt;- combine_result_list(fine_mapping_metadata, condition_name, conditions, filtered_region)
-        if (grepl(&quot;sQTL&quot;,condition_name)) { filtered_region &lt;- paste(condition_name, filtered_event_names, sep = &quot;_&quot;) }
-        extracted_non_null_combined_susie_list &lt;- extract_non_null_cs_list(combined_list = combined_regional_window_list, condition_name, filtered_region)
-        if (length(extracted_non_null_combined_susie_list[[&quot;extracted_regional_window_combined_susie_result&quot;]])!=0) {
-           extracted_combined_susie_list &lt;- process_and_compare_variants(combined_list = extracted_non_null_combined_susie_list, condition_name)
-        } else {
-           extracted_combined_susie_list &lt;- NULL
-        }
-        if (!is.null(extracted_combined_susie_list)&amp;length(extracted_combined_susie_list[[&quot;extracted_regional_window_combined_susie_result&quot;]])!=0) {
-           if (grepl(&quot;sQTL&quot;, condition_name)) {
-              filtered_event_names &lt;- sub(paste0(&quot;^&quot;, condition_name, &quot;_&quot;), &quot;&quot;, names(get_nested_element(extracted_combined_susie_list,c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name))))
-           }  else if (grepl(&quot;pQTL&quot;, condition_name)) {
-              filtered_event_names &lt;- pheno_id_map %&gt;%
-                              filter(ID%in%region_names)%&gt;%
-                              filter(gene %in% names(get_nested_element(extracted_combined_susie_list, c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name)))) %&gt;%
-                              select(ID) %&gt;% pull(ID)
-          } else {
-            filtered_event_names &lt;- names(get_nested_element(extracted_combined_susie_list, c(&quot;extracted_regional_window_combined_susie_result&quot;, condition_name)))
-          }
-        } else {
-          filtered_event_names &lt;- NULL
-        }
-
-        if (&quot;${_meta_info[2]}&quot; != &quot;${_meta_info[3]}&quot;) {
-          region_name = c(&quot;${_meta_info[2]}&quot;, c(${&quot;,&quot;.join([(&quot;c(&#39;&quot;+x+&quot;&#39;)&quot;) if isinstance(x, str) else (&quot;c&quot;+ str(x)) for x in _meta_info[3]])}))
-        } else {
-          region_name = &quot;${_meta_info[2]}&quot;
-        }
-
-        region_info = list(region_coord=parse_region(&quot;${_meta_info[0]}&quot;), grange=parse_region(&quot;${_meta_info[1]}&quot;), region_name=region_name)
-            
-        dd_prior &lt;- NULL
-        if (${&quot;TRUE&quot; if data_driven_prior else &quot;FALSE&quot;}) {
-            # FIXME: please complete this function call
-            dd_prior &lt;- multigene_udr(extracted_combined_susie_list, coverage = paste0(&quot;cs_coverage_&quot;,${coverage[0]},sep=&quot;&quot;), independent_variant_list = ${independent_variant_list:r}, n_random = ${n_random}, n_null = ${n_null}, seed = ${seed})
-        }
-        if (length(filtered_event_names)&gt;=2) {
-           pip_cutoff_to_skip = list(${&quot;,&quot;.join(skip_analysis_pip_cutoff)})
-           pip_cutoff_to_skip = unlist(pip_cutoff_to_skip[filtered_event_names])
-           dd_prior_cv &lt;- dd_prior
-           set.seed(${seed})
-           result &lt;- multivariate_analysis_pipeline(
-                            X=fdat$X,
-                            Y=fdat$residual_Y[,filtered_event_names],
-                            maf=fdat$maf,
-                            X_variance = fdat$X_variance,
-                            other_quantities = list(dropped_samples = fdat$dropped_samples),
-                            # filters
-                            imiss_cutoff = ${imiss}, 
-                            maf_cutoff = ${maf},
-                            xvar_cutoff = ${xvar_cutoff},
-                            ld_reference_meta_file = ${(&#39;&quot;%s&quot;&#39; % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else &quot;NULL&quot;},
-                            pip_cutoff_to_skip = pip_cutoff_to_skip,
-                            # methods parameter configuration
-                            max_L = -1,
-                            data_driven_prior_matrices = dd_prior, 
-                            data_driven_prior_matrices_cv = dd_prior_cv, 
-                            data_driven_prior_weights_cutoff = ${prior_weights_min}, 
-                            canonical_prior_matrices = ${&quot;TRUE&quot; if prior_canonical_matrices else &quot;FALSE&quot;},
-                            mvsusie_max_iter = ${mvsusie_max_iter}, 
-                            estimate_residual_variance = ${&#39;TRUE&#39; if estimate_residual_variance else &#39;FALSE&#39;},
-                            mrmash_max_iter = ${mrmash_max_iter},
-                            # fine-mapping results summary
-                            signal_cutoff = ${pip_cutoff},
-                            coverage = c(${&quot;,&quot;.join([str(x) for x in coverage])}),
-                            # TWAS weights and CV for TWAS weights
-                            twas_weights = ${&quot;TRUE&quot; if not skip_twas_weights else &quot;FALSE&quot;},
-                            sample_partition = ${&quot;NULL&quot; if sample_partition==&#39;.&#39; or sample_partition==&#39;&#39; else sample_partition},
-                            max_cv_variants = ${max_cv_variants}, 
-                            cv_folds = ${twas_cv_folds},
-                            cv_threads = ${twas_cv_threads}            
-                            )
-          result$region_info &lt;- region_info
-          if (!is.null(result$twas_weights_result)) {
-              for (r in names(result$twas_weights_result)) {
-                  result$twas_weights_result[[r]]$region_info &lt;- region_info
-              }
-              saveRDS(list(&quot;${_meta_info[2]}&quot; = result$twas_weights_result), &quot;${_output[0]:ann}.multigene_twas_weights.rds&quot;, compress=&#39;xz&#39;)
-              result$twas_weights_result &lt;- NULL
-          }
-          saveRDS(list(&quot;${_meta_info[2]}&quot; = result), &quot;${_output[0]:ann}.multigene_bvsr.rds&quot;, compress=&#39;xz&#39;)        
-        } else {
-          for (f in c(${_output:ar,})) {
-            saveRDS(NULL, f)
-          }
-        }
-    }
+parameter: pip_cutoff_to_skip = 0.0
+parameter: contexts = &quot;&quot;
+parameter: prior_twas_weights = path()
+parameter: prior_weights_min = 1e-10
+parameter: mvsusie_method_args = &quot;&quot;
+import csv
+manifest = path(f&quot;{cwd:a}/multivariate_fine_mapping/{name}.mnm_genes_region_manifest.tsv&quot;)
+jobs = list(csv.DictReader(open(manifest), delimiter=&#39;\t&#39;))
+stop_if(len(jobs) == 0, &quot;mnm_genes: empty region manifest; check --region-name / --customized-association-windows.&quot;)
+qtl_dataset = path(f&quot;{cwd:a}/qtl_dataset/{name}.qtl_dataset.rds&quot;)
+mvsusie_args = mvsusie_method_args if mvsusie_method_args else f&#39;{{&quot;mvsusie&quot;:{{&quot;max_iter&quot;:{mvsusie_max_iter}}}}}&#39;
+input: qtl_dataset, for_each = &quot;jobs&quot;
+output: f&quot;{cwd:a}/multivariate_fine_mapping/{name}.{_jobs[&#39;region_id&#39;]}.multigene_bvsr.rds&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping.R \
+        --qtl-dataset ${_input} \
+        --region ${_jobs[&#39;ld_block&#39;]} \
+        --methods mvsusie \
+        --joint-specification trait \
+        --coverage ${coverage[0]} \
+        ${(&quot;--secondary-coverage &quot; + &quot;,&quot;.join([str(x) for x in coverage[1:]])) if len(coverage) &gt; 1 else &quot;&quot;} \
+        --pip-cutoff ${pip_cutoff} \
+        --pip-cutoff-to-skip ${pip_cutoff_to_skip} \
+        --seed ${seed} \
+        ${(&quot;--contexts &quot; + contexts) if contexts else &quot;&quot;} \
+        --method-args &#39;${mvsusie_args}&#39; \
+        ${(&quot;--twas-weights &quot; + str(prior_twas_weights)) if prior_twas_weights.is_file() else &quot;&quot;} \
+        --data-driven-prior-weights-cutoff ${prior_weights_min} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[fsusie]
-# prior can be either of [&quot;mixture_normal&quot;, &quot;mixture_normal_per_scale&quot;]
-parameter: prior = &quot;mixture_normal&quot;
-parameter: max_SNP_EM = 100
-# Max scale is such that 2^max_scale being the number of phenotypes in the transformed space. Default to 2^10  = 1024. Don&#39;t change it unless you know what you are doing. Max_scale should be at least larger than 5.
-parameter:  max_scale = 10
-# Purity and coverage used to call cs
-parameter:  min_purity = 0.5
-# Epigenetics mark filter
-parameter: epigenetics_mark_treshold = 16
-# Run susie for top pc of the fsusie input
-parameter: susie_top_pc = 10
-# Run fsusie with this post-processing option. Available options are TI, HMM, and none. TI is recommended as default. HMM performs particularly well when analyzing data with, say, few sampling points (i.e., ncol(Y)&lt;30) or when the data are particularly noisy (low signal-to-noise ratio).
-parameter: post_processing =  &quot;TI&quot;
-# Run fsusie with small sample correction 
-parameter: small_sample_correction = False
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[fsusie_1]
+# Resolve per-locus regions into a manifest via region_manifest.R for the
+# functional SuSiE fit (one locus = one fsusie unit; fsusieR::susiF jointly fits
+# the multi-trait function within each context). Loci come from
+# --customized-association-windows (or --region-list); restrict with --region-name.
+input: None
+output: f&quot;{cwd:a}/fsusie/{name}.fsusie_region_manifest.tsv&quot;
+task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output}.stderr&quot;, stdout = f&quot;{_output}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/pecotmr_integration/region_manifest.R \
+        --pheno-manifest ${phenoFile[0]} \
+        --cis-window ${cis_window if cis_window &gt; 0 else 1000000} \
+        ${(&quot;--customized-association-windows &quot; + str(customized_association_windows)) if customized_association_windows.is_file() else &quot;&quot;} \
+        ${(&quot;--region-name &quot; + &quot;,&quot;.join(region_name)) if len(region_name) &gt; 0 else &quot;&quot;} \
+        ${(&quot;--region-list &quot; + str(region_list)) if region_list.is_file() else &quot;&quot;} \
+        --output ${_output}
 
-depends: sos_variable(&quot;regional_data&quot;)
-# Check if both &#39;data&#39; and &#39;meta_info&#39; are empty lists
-stop_if(len(regional_data[&#39;data&#39;]) == 0, f&#39;Either genotype or phenotype data are not available for region {&quot;, &quot;.join(region_name)}.&#39;)
-meta_info = regional_data[&#39;meta_info&#39;]
-input: regional_data[&quot;data&quot;], group_by = lambda x: group_by_region(x, regional_data[&quot;data&quot;]), group_with = &quot;meta_info&quot;
-output: f&#39;{cwd:a}/{step_name[:-2]}/{name}.{_meta_info[0].replace(&quot;:&quot;, &quot;_&quot;).replace(&quot;-&quot;, &quot;_&quot;)}.fsusie_{prior}_{post_processing}_{&quot;_top_pc_weights&quot; if not skip_twas_weights else &quot;&quot;}.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/mnm_analysis/mnm_methods/fsusie.R \
-        --genotype ${_input[0]:a} \
-        --phenotype &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[1:len(_input)//2+1]])}&quot; \
-        --covariate &quot;${&quot;,&quot;.join([str(x.absolute()) for x in _input[len(_input)//2+1:]])}&quot; \
-        --region &quot;${_meta_info[0]}&quot; \
-        --window &quot;${_meta_info[1]}&quot; \
-        --region-name &quot;${_meta_info[2]}&quot; \
-        --conditions &quot;${&quot;,&quot;.join(_meta_info[4:])}&quot; \
-        --maf ${maf} \
-        --mac ${mac} \
-        --imiss ${imiss} \
-        ${&quot;--indel&quot; if indel else &quot;&quot;} \
-        ${&quot;--keep-samples &quot; + str(keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-        ${&quot;--keep-variants &quot; + str(keep_variants) if not keep_variants.is_dir() else &quot;&quot;} \
-        --prior &quot;${prior}&quot; \
-        --max-snp-em ${max_SNP_EM} \
-        --max-scale ${max_scale} \
-        --min-purity ${min_purity} \
-        --epigenetics-mark-threshold ${epigenetics_mark_treshold} \
-        --susie-top-pc ${susie_top_pc} \
-        --post-processing &quot;${post_processing}&quot; \
-        ${&quot;--small-sample-correction&quot; if small_sample_correction else &quot;&quot;} \
+[fsusie_2]
+# Functional SuSiE per locus (fsusieR::susiF) over the pre-built QtlDataset.
+# fsusie-specific knobs ride on --method-args; --susie-top-pc&gt;0 additionally
+# fine-maps each context&#39;s top principal components with univariate SuSiE
+# (usePCA; ports the legacy fsusie.R susie_on_top_pc). Replaces fsusie.R.
+parameter: prior = &quot;mixture_normal&quot;
+parameter: max_scale = 10
+parameter: min_purity = 0.5
+parameter: post_processing = &quot;TI&quot;
+parameter: max_SNP_EM = 100
+parameter: small_sample_correction = False
+# &gt;0 -&gt; also fine-map the top `susie_top_pc` PCs per context with univariate SuSiE.
+parameter: susie_top_pc = 0
+parameter: pip_cutoff_to_skip = 0.0
+parameter: contexts = &quot;&quot;
+# Optional JSON overriding the assembled fsusie kwargs, e.g. &#39;{&quot;fsusie&quot;:{&quot;prior&quot;:&quot;mixture_normal_per_scale&quot;}}&#39;.
+parameter: fsusie_method_args = &quot;&quot;
+import csv, json
+manifest = path(f&quot;{cwd:a}/fsusie/{name}.fsusie_region_manifest.tsv&quot;)
+jobs = list(csv.DictReader(open(manifest), delimiter=&#39;\t&#39;))
+stop_if(len(jobs) == 0, &quot;fsusie: empty region manifest; check --region-name / --customized-association-windows.&quot;)
+qtl_dataset = path(f&quot;{cwd:a}/qtl_dataset/{name}.qtl_dataset.rds&quot;)
+fsusie_args = fsusie_method_args if fsusie_method_args else json.dumps({&quot;fsusie&quot;: {&quot;prior&quot;: prior, &quot;max_scale&quot;: max_scale, &quot;min_purity&quot;: min_purity, &quot;post_processing&quot;: post_processing, &quot;max_SNP_EM&quot;: max_SNP_EM, &quot;cor_small&quot;: bool(small_sample_correction)}})
+input: qtl_dataset, for_each = &quot;jobs&quot;
+output: f&quot;{cwd:a}/fsusie/{name}.{_jobs[&#39;region_id&#39;]}.fsusie.rds&quot;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
+bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping.R \
+        --qtl-dataset ${_input} \
+        --region ${_jobs[&#39;ld_block&#39;]} \
+        --methods fsusie \
+        --coverage ${coverage[0]} \
+        ${(&quot;--secondary-coverage &quot; + &quot;,&quot;.join([str(x) for x in coverage[1:]])) if len(coverage) &gt; 1 else &quot;&quot;} \
         --pip-cutoff ${pip_cutoff} \
-        --coverage &quot;${&quot;,&quot;.join([str(x) for x in coverage])}&quot; \
-        --L-greedy ${init_L} \
-        --L ${L} \
-        ${&quot;--skip-twas-weights&quot; if skip_twas_weights else &quot;&quot;} \
-        --max-cv-variants ${max_cv_variants} \
-        --twas-cv-folds ${twas_cv_folds} \
-        --twas-cv-threads ${twas_cv_threads} \
-        ${&quot;--save-data&quot; if save_data else &quot;&quot;} \
-        --output-prefix ${_output:n} \
-        --cwd ${cwd:a}
+        --pip-cutoff-to-skip ${pip_cutoff_to_skip} \
+        --seed ${seed} \
+        ${(&quot;--contexts &quot; + contexts) if contexts else &quot;&quot;} \
+        --method-args &#39;${fsusie_args}&#39; \
+        ${(&quot;--use-pca --n-pcs &quot; + str(susie_top_pc)) if susie_top_pc &gt; 0 else &quot;&quot;} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
