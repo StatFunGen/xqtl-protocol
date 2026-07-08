@@ -556,6 +556,9 @@ per row (or one row with <code class="docutils literal notranslate"><span class=
 <li><p><code class="docutils literal notranslate"><span class="pre">--impute</span></code> — enable RAISS sumstat imputation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--qc-args</span> <span class="pre">'{&quot;key&quot;:value,...}'</span></code> — JSON passthrough for any other <code class="docutils literal notranslate"><span class="pre">summaryStatsQc()</span></code> kwarg (e.g.
 <code class="docutils literal notranslate"><span class="pre">{&quot;mafCutoff&quot;:0.01,&quot;nCutoff&quot;:0,&quot;alleleFlipKriging&quot;:true}</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--maf</span></code> — MAF cutoff (<code class="docutils literal notranslate"><span class="pre">mafCutoff</span></code>). Default <strong>0.0025</strong>; 0 disables.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--skip-regions</span> <span class="pre">chr:start-end</span> <span class="pre">…</span></code> — drop variants overlapping these window(s) (<code class="docutils literal notranslate"><span class="pre">skipRegion</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--skip-analysis-pip-cutoff</span></code> — skip a region whose single-effect max PIP is below this (<code class="docutils literal notranslate"><span class="pre">pipCutoffToSkip</span></code>). Default <strong>0.025</strong>; 0 disables.</p></li>
 </ul>
 </section>
 <section id="fine-mapping-knobs-forwarded-to-fine-mapping-r">
@@ -632,6 +635,9 @@ parameter: genome = &#39;GRCh38&#39;
 parameter: qc_method = &#39;none&#39;   # none | slalom | dentist
 parameter: impute = False
 parameter: qc_args = &#39;&#39;         # JSON object spliced into summaryStatsQc()
+parameter: maf = 0.0025         # MAF cutoff (summaryStatsQc mafCutoff); 0 disables
+parameter: skip_regions = []    # chr:start-end window(s) whose variants are dropped (skipRegion)
+parameter: skip_analysis_pip_cutoff = 0.025   # skip a region below this max PIP (pipCutoffToSkip); 0 disables
 # --- fine-mapping knobs (forwarded to fine_mapping.R) ---------------
 parameter: methods = &#39;susie&#39;
 parameter: coverage = 0.95
@@ -696,6 +702,9 @@ bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = 
         --genome ${genome} \
         ${(&#39;--column-mapping &#39; + _jobs[&#39;column_mapping&#39;]) if _jobs[&#39;column_mapping&#39;] else &#39;&#39;} \
         --qc-method ${qc_method} \
+        --maf ${maf} \
+        --pip-cutoff-to-skip ${skip_analysis_pip_cutoff} \
+        ${(&#39;--skip-region &#39; + &#39;,&#39;.join(str(x) for x in skip_regions)) if skip_regions else &#39;&#39;} \
         ${&#39;--impute&#39; if impute else &#39;&#39;} \
         ${(&#39;--qc-args &#39; + repr(qc_args)) if qc_args else &#39;&#39;} \
         --output ${_output}

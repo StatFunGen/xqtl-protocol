@@ -631,6 +631,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc_no_prune \
     --cwd output/gwas_qc/plink \
     --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged.bed \
+    --name protocol_example \
     --geno-filter 0.1 \
     --mind-filter 0.1 \
     --hwe-filter 1e-08 \
@@ -648,7 +649,8 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
     --cwd output/gwas_qc/genotype \
     --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.fam \
-    --phenoFile input/rnaseq/protocol_example.rnaseq.bed.gz
+    --phenoFile input/rnaseq/protocol_example.rnaseq.bed.gz \
+    --name protocol_example
 </pre></div>
 </div>
 </div>
@@ -679,6 +681,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
     --cwd output/gwas_qc/genotype \
     --genoFile output/gwas_qc/kinship/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.bed \
+    --name protocol_example \
     --mac-filter 5
 </pre></div>
 </div>
@@ -691,6 +694,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb qc \
     --cwd output/gwas_qc/genotype \
     --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.bed \
+    --name protocol_example \
     --mac-filter 5
 </pre></div>
 </div>
@@ -732,7 +736,7 @@ parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --m
 # the output directory for generated files
 parameter: cwd = path(&quot;output&quot;)
 # A string to identify your analysis run
-parameter: name = &quot;&quot;
+parameter: name = str
 # PLINK binary files (either BED/BIM/FAM or PGEN/PVAR/PSAM format)
 parameter: genoFile = paths
 # The path to the file that contains the list of samples to remove (format FID, IID)

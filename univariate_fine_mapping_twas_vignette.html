@@ -642,14 +642,18 @@ sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ip
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Peak/chromatin example (same pipeline, different input)</span>
-sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>susie_twas<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span>protocol_example<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>output_10peaks<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genoFile<span class="w"> </span>input/genotype/protocol_example.genotype.chr22.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--phenoFile<span class="w"> </span>input/phenotype/protocol_example.pheno_manifest.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--covFile<span class="w"> </span>input/covariate/protocol_example.covariates.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--customized-association-windows<span class="w"> </span>input/finemapping/protocol_example.association_windows.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-j1
+<span class="c1"># NOTE: this is a peak catalog with one phenotype file per peak; the</span>
+<span class="c1"># qtl_dataset_construct manifest schema (ID, path, cond) instead expects a</span>
+<span class="c1"># single multi-trait phenotype file per context. protocol_example.peaks_merged.bed.gz</span>
+<span class="c1"># (all 10 peaks, built from peaks_split/) and protocol_example.pheno_manifest_context.tsv</span>
+<span class="c1"># match that schema; run qtl_dataset_construct before susie_twas (as in Step 1 above).</span>
+sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>qtl_dataset_construct+susie_twas<span class="w"> </span><span class="se">\</span>
+--name<span class="w"> </span>protocol_example<span class="w"> </span>--cwd<span class="w"> </span>output/susie_twas_peaks<span class="w"> </span><span class="se">\</span>
+--genoFile<span class="w"> </span>input/genotype/protocol_example.genotype.chr22.bed<span class="w"> </span><span class="se">\</span>
+--phenoFile<span class="w"> </span>input/phenotype/protocol_example.pheno_manifest_context.tsv<span class="w"> </span><span class="se">\</span>
+--covFile<span class="w"> </span>input/covariate/protocol_example.covariates.tsv<span class="w"> </span><span class="se">\</span>
+--customized-association-windows<span class="w"> </span>input/finemapping/protocol_example.association_windows.bed<span class="w"> </span><span class="se">\</span>
+--region-name<span class="w"> </span>C22P107555<span class="w"> </span>-j1
 </pre></div>
 </div>
 </div>

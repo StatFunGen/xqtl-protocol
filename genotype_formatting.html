@@ -596,6 +596,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink \
     --genoFile `ls input/genotype/protocol_example.genotype.chr*.vcf.gz | grep -vE &quot;rawchr|withfmt|add_chr&quot;` \
     --cwd output/genotype_formatting/plink \
+    --name protocol_example \
     -j 4
 </pre></div>
 </div>
@@ -663,7 +664,7 @@ parameter: mem = &quot;16G&quot;
 parameter: numThreads = 20
 # the path to a bed file or VCF file, a vector of bed files or VCF files, or a text file listing the bed files or VCF files to process
 parameter: genoFile = paths
-parameter: name = &quot;&quot;
+parameter: name = str
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = f&quot;{cwd:a}&quot;

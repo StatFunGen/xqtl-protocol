@@ -541,11 +541,18 @@
 </section>
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<p>This notebook has two workflow targets that are run in sequence.</p>
+<p><code class="docutils literal notranslate"><span class="pre">posterior</span></code> (computes per-region posterior mean/covariance):</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--mash-model</span></code>: a fitted MASH model RDS (the bare <code class="docutils literal notranslate"><span class="pre">mash</span></code> object), e.g. produced by <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--analysis-units</span></code>: a text file whose first column lists paths to posterior-input RDS chunks (one region per line).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--posterior-input</span></code> / <code class="docutils literal notranslate"><span class="pre">--posterior-vhat-files</span></code>: posterior input chunk(s) (each a list with <code class="docutils literal notranslate"><span class="pre">bhat</span></code>/<code class="docutils literal notranslate"><span class="pre">sbhat</span></code>/<code class="docutils literal notranslate"><span class="pre">Z</span></code> matrices and <code class="docutils literal notranslate"><span class="pre">snp</span></code>) and matching residual-variance (vhat) matrices.</p></li>
-<li><p>Downstream workflows additionally take <code class="docutils literal notranslate"><span class="pre">--posterior-file</span></code> and <code class="docutils literal notranslate"><span class="pre">--sum-file</span></code> produced by the <code class="docutils literal notranslate"><span class="pre">posterior</span></code> step.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--posterior-vhat-files</span></code>: matching residual-variance (vhat) matrix RDS file(s).</p></li>
+<li><p>Produces a manifest file (<code class="docutils literal notranslate"><span class="pre">mash_output_list_all</span></code>, tab-separated <code class="docutils literal notranslate"><span class="pre">id</span> <span class="pre">path</span></code> pairs) pointing to the per-region posterior RDS outputs.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">mash_posterior_contrast</span></code> (computes contrasts from the posterior output):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--posterior-file</span></code>: a tab-separated manifest (<code class="docutils literal notranslate"><span class="pre">id</span> <span class="pre">path</span></code>) where each path is a per-region posterior RDS produced by the <code class="docutils literal notranslate"><span class="pre">posterior</span></code> step above.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--sum-file</span></code>: a tab-separated manifest (<code class="docutils literal notranslate"><span class="pre">id</span> <span class="pre">path</span></code>) where each path is the corresponding raw summary-statistics RDS for that region, containing top-level <code class="docutils literal notranslate"><span class="pre">bhat</span></code>/<code class="docutils literal notranslate"><span class="pre">sbhat</span></code> matrices (the same data used to compute the posterior). The <code class="docutils literal notranslate"><span class="pre">id</span></code> values must match between <code class="docutils literal notranslate"><span class="pre">--posterior-file</span></code> and <code class="docutils literal notranslate"><span class="pre">--sum-file</span></code>.</p></li>
 </ul>
 </section>
 <section id="output">
@@ -580,11 +587,29 @@
 <p><strong>Step 2.</strong> Compute posterior contrasts between conditions for the sliced data:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_posterior.ipynb mash_posterior_contrast \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Step 1: compute per-region posterior mean/covariance
+sos run pipeline/mash_posterior.ipynb posterior \
     --cwd output/mash_posterior \
     --analysis-units input/finemapping/protocol_example.analysis_units.txt \
     --mash-model input/mash/protocol_example.mash_model.rds \
-    --posterior-input input/twas/protocol_example.posterior_input.rds
+    --posterior-vhat-files input/twas/protocol_example.posterior_vhat.rds \
+    --data-table-name strong --exclude-condition 1 3
+
+# Step 2: --posterior-file and --sum-file are tab-separated &quot;id path&quot; manifests
+# whose ids must match. --sum-file must point to the RAW summary-stats RDS for
+# each region with top-level bhat/sbhat (i.e. NOT nested under --data-table-name).
+# For production multi-region runs, --posterior-file is typically
+# output/mash_posterior/mash_output_list_all (auto-generated above). For this
+# single-region toy example we derive --sum-file from the same posterior-input
+# file used above, and build both manifests explicitly:
+Rscript -e &#39;p &lt;- strsplit(readLines(&quot;input/finemapping/protocol_example.analysis_units.txt&quot;)[1], &quot;\\s+&quot;)[[1]][1]; saveRDS(readRDS(p)$strong, &quot;output/mash_posterior/protocol_example.region1_sumstats.rds&quot;)&#39;
+printf &#39;region1\t%s\n&#39; &quot;$PWD/output/mash_posterior/cache/protocol_example.posterior_input.posterior.rds&quot; &gt; output/mash_posterior/posterior_manifest.txt
+printf &#39;region1\t%s\n&#39; &quot;$PWD/output/mash_posterior/protocol_example.region1_sumstats.rds&quot; &gt; output/mash_posterior/sum_manifest.txt
+
+sos run pipeline/mash_posterior.ipynb mash_posterior_contrast \
+    --cwd output/mash_posterior \
+    --posterior-file output/mash_posterior/posterior_manifest.txt \
+    --sum-file output/mash_posterior/sum_manifest.txt
 </pre></div>
 </div>
 </div>
@@ -722,6 +747,7 @@ parameter: mash_model = path()
 mash_model = mash_model.absolute()
 parameter: posterior_input = [path(x[0]) for x in regions]
 parameter: posterior_vhat_files = paths()
+posterior_vhat_files = paths([x.absolute() for x in posterior_vhat_files])
 # eg, if data is saved in R list as data$strong, then
 # when you specify `--data-table-name strong` it will read the data as
 # readRDS(&#39;{_input:r}&#39;)$strong

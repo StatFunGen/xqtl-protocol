@@ -631,7 +631,8 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/apa_calling.ipynb APAmain \
     --cwd output/apa \
     --chrlist chr22 \
-    --dapars-path code/molecular_phenotypes/calling/apa/Dapars2_Multi_Sample.py
+    --chr-prefix true \
+    --dapars-path code/SoS/molecular_phenotypes/calling/apa
 </pre></div>
 </div>
 </div>
@@ -673,15 +674,17 @@ parameter: container = &#39;&#39;
 [UTR_reference]
 # gtf file
 parameter: hg_gtf = path
+# directory containing the DaPars2 helper scripts (gtf2bed12.py, DaPars_Extract_Anno.py, Dapars2_Multi_Sample.py)
+parameter: dapars_path = path(&#39;code/SoS/molecular_phenotypes/calling/apa&#39;)
 input: hg_gtf
 output: f&#39;{cwd}/{_input:bn}.bed&#39;, 
         f&#39;{cwd}/{_input:bn}.transcript_to_geneName.txt&#39;,
         f&#39;{cwd}/{_input:bn}_3UTR.bed&#39;
 bash: expand = &#39;${ }&#39;, container = container
-    gtf2bed12.py --gtf ${_input} --out ${cwd}
+    python2 ${dapars_path}/gtf2bed12.py --gtf ${_input} --out ${cwd}
     mv ${cwd}/gene_annotation.bed ${_output[0]}
     mv ${cwd}/transcript_to_geneName.txt ${_output[1]}
-    DaPars_Extract_Anno.py -b ${_output[0]} -s ${_output[1]} -o ${_output[2]}
+    python2 ${dapars_path}/DaPars_Extract_Anno.py -b ${_output[0]} -s ${_output[1]} -o ${_output[2]}
 </pre></div>
 </div>
 </div>
@@ -872,11 +875,13 @@ python3: expand = &quot;${ }&quot;, container = container
 [APAmain]
 parameter: chr_prefix = False
 parameter: chrlist = list
+# directory containing the DaPars2 helper scripts (gtf2bed12.py, DaPars_Extract_Anno.py, Dapars2_Multi_Sample.py)
+parameter: dapars_path = path(&#39;code/SoS/molecular_phenotypes/calling/apa&#39;)
 input: for_each = &#39;chrlist&#39;
 output: [f&#39;{cwd}/apa_{x}/Dapars_result_result_temp.{x}.txt&#39; for x in chrlist], group_by = 1
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = ncore
 bash: expand = True, container = container
-    python2 /mnt/mfs/statgen/ls3751/github/xqtl-protocol/code/Dapars2_Multi_Sample.py {cwd}/sample_configuration_file.txt {_chrlist} {&quot;F&quot; if chr_prefix else &quot;T&quot;}
+    python2 {dapars_path}/Dapars2_Multi_Sample.py {cwd}/sample_configuration_file.txt {_chrlist} {&quot;F&quot; if chr_prefix else &quot;T&quot;}
 </pre></div>
 </div>
 </div>

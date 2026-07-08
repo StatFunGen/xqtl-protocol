@@ -746,7 +746,8 @@ plt.show()
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/eoo_enrichment.ipynb enrichment \
     --significant_variants_path input/enrichment/protocol_example.eoo_significant_variants.tsv.gz \
     --baseline_anno_path input/enrichment/protocol_example.eoo_baseline_annotation.tsv \
-    --name protocol_example \
+    --trait protocol_example \
+    --annotation-name baseline \
     --cwd output/eoo_enrichment
 </pre></div>
 </div>
@@ -781,7 +782,9 @@ parameter: baseline_anno_path = path
 # Number of threads
 parameter: numThreads = 8
 # For cluster jobs, number commands to run per job
-parameter: name = &#39;eoo&#39;
+parameter: trait = str
+parameter: annotation_name = str
+name = f&quot;{trait}.{annotation_name}&quot;
 parameter: job_size = 1
 parameter: walltime = &#39;12h&#39;
 parameter: mem = &#39;16G&#39;

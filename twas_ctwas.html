@@ -1226,6 +1226,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
 
     if (length(weight_db_list_update) == 0 || all(sapply(weight_db_list_update, length) == 0)) {
         message(&quot;No valid twas weight files found after filtering. Exiting the script.&quot;)
+        for (of in c(${_output:r,})) { if (grepl(&quot;[.]rds$&quot;, of)) saveRDS(list(), of) else readr::write_tsv(data.frame(message = character(0)), of) }
         quit(save = &quot;no&quot;, status = 0) 
     }
 
@@ -1273,6 +1274,7 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stderr 
     # Merging with xQTL meta-data      
     if (is.null(twas_results_db$twas_result) || nrow(twas_results_db$twas_result) == 0) {
         message(&quot;twas_results_db$twas_result is NULL. Exiting script normally.&quot;)
+        for (of in c(${_output:r,})) { if (grepl(&quot;[.]rds$&quot;, of)) saveRDS(list(), of) else readr::write_tsv(data.frame(message = character(0)), of) }
         quit(save = &quot;no&quot;, status = 0)  
     }
 

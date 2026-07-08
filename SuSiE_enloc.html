@@ -607,31 +607,20 @@ output from <code class="docutils literal notranslate"><span class="pre">fine_ma
 <section id="output">
 <h3>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h3>
 <p>Output file: <code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.{context}.enrichment.rds</span></code></p>
-<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">enrich</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;output/output/xqtl_gwas_enrichment/protocol_example.enloc.Knight_eQTL_brain.enrichment.rds&quot;</span><span class="p">)</span>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">enrich</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;output/xqtl_gwas_enrichment/protocol_example.enloc.protocol_example.enloc.Knight_eQTL_brain.enrichment.rds&quot;</span><span class="p">)</span>
 
-<span class="nf">length</span><span class="p">(</span><span class="n">enrich</span><span class="p">)</span><span class="w">   </span><span class="c1"># 2</span>
-<span class="nf">names</span><span class="p">(</span><span class="n">enrich</span><span class="p">)</span><span class="w">    </span><span class="c1"># [1] &quot;&quot;                     &quot;unused_xqtl_variants&quot;</span>
-
-<span class="nf">str</span><span class="p">(</span><span class="n">enrich</span><span class="p">[[</span><span class="m">1</span><span class="p">]])</span>
-<span class="c1"># List of 10</span>
-<span class="c1">#  $ Alternative (coloc) p1   : num 0.000558   prior prob. a random SNP is a causal xQTL variant</span>
-<span class="c1">#  $ Alternative (coloc) p12  : num 6.31e-08   prior prob. a random SNP is causal for both xQTL and GWAS</span>
-<span class="c1">#  $ Alternative (coloc) p2   : num 0.000113   prior prob. a random SNP is a causal GWAS variant</span>
-<span class="c1">#  $ Effective MI rounds      : num 25          number of multiple-imputation iterations</span>
-<span class="c1">#  $ Enrichment (no shrinkage): num -0.241      enrichment slope a1 (raw)</span>
-<span class="c1">#  $ Enrichment (w/ shrinkage): num -0.000102   enrichment slope a1 (shrinkage-regularised, used for p12)</span>
-<span class="c1">#  $ Intercept                : num -7.49       baseline log-odds a0</span>
-<span class="c1">#  $ sd (intercept)           : num 0.316       SE of a0</span>
-<span class="c1">#  $ sd (no shrinkage)        : num 48.6        SE of a1 (raw)</span>
-<span class="c1">#  $ sd (w/ shrinkage)        : num 1           SE of a1 (shrinkage)</span>
-
-<span class="nf">length</span><span class="p">(</span><span class="n">enrich</span><span class="o">$</span><span class="n">unused_xqtl_variants</span><span class="p">[[</span><span class="m">1</span><span class="p">]])</span><span class="w">   </span><span class="c1"># 18</span>
-<span class="nf">head</span><span class="p">(</span><span class="n">enrich</span><span class="o">$</span><span class="n">unused_xqtl_variants</span><span class="p">[[</span><span class="m">1</span><span class="p">]])</span>
-<span class="c1"># [1] &quot;1:20568238:C:T&quot; &quot;1:20621145:G:A&quot; &quot;1:21427833:C:G&quot; ...</span>
+<span class="nf">str</span><span class="p">(</span><span class="n">enrich</span><span class="p">)</span>
+<span class="c1"># data.frame:  1 obs. of  6 variables:</span>
+<span class="c1"># $ gwasStudy         : chr &quot;AD_Bellenguez_2022&quot;</span>
+<span class="c1"># $ qtlStudy          : chr &quot;protocol_example.enloc.protocol_example.enloc&quot;</span>
+<span class="c1"># $ qtlContext        : chr &quot;Knight_eQTL_brain&quot;</span>
+<span class="c1"># $ enrichment        : num NA</span>
+<span class="c1"># $ enrichmentSe      : num NA</span>
+<span class="c1"># $ enrichmentLogOdds : num NA</span>
 </pre></div>
 </div>
 <blockquote>
-<div><p><strong>Note on toy data</strong>: estimates are produced but unreliable (1 gene × 1 GWAS region). <code class="docutils literal notranslate"><span class="pre">sd</span> <span class="pre">(no</span> <span class="pre">shrinkage)</span></code> = 48.6 reflects near-zero information; shrinkage regularises <code class="docutils literal notranslate"><span class="pre">a1</span></code> to ≈ 0. Reliable a0/a1 require thousands of gene × GWAS region pairs.</p>
+<div><p><strong>Note on toy data</strong>: one row per gwas/qtl-context pair. Enrichment values are <code class="docutils literal notranslate"><span class="pre">NA</span></code> here because a single gene x single GWAS block does not give the underlying logistic-regression enrichment model enough data to fit; this is expected for the toy MWE, not a pipeline error. Reliable enrichment estimates require many gene x GWAS-region pairs.</p>
 </div></blockquote>
 <p><strong>Step 2. Coloc.</strong> Run colocalization on the overlapping regions. <code class="docutils literal notranslate"><span class="pre">--skip-enrich</span></code> reuses the enrichment object produced in Step 1, so the <code class="docutils literal notranslate"><span class="pre">*enrichment.rds</span></code> file from that step must be present in <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>. Otherwise enrichment is triggered automatically. <code class="docutils literal notranslate"><span class="pre">get_overlapped_analysis_regions</span></code> selects the regions with overlapping variants before <code class="docutils literal notranslate"><span class="pre">susie_coloc</span></code> runs.</p>
 <div class="cell docutils container">
@@ -849,7 +838,7 @@ def merge_and_filter_dfs(new_df, new_meta):
     &quot;&quot;&quot;Merge and filter the dataframes based on condition/context where context is a substring of condition, and analysis_name to pick the corresponding original files.&quot;&quot;&quot;
     # Explode the QTL data into separate rows
     new_df = new_df.set_index([&#39;condition&#39;, &#39;region_id&#39;, &#39;GWAS_original_data&#39;])[&#39;QTL_original_data&#39;].str.split(&#39;,&#39;, expand=True).stack().reset_index(name=&#39;QTL_original_data&#39;).drop(&#39;level_3&#39;, axis=1)
-    new_df[&#39;analysis_name_prefix&#39;] = new_df[&#39;QTL_original_data&#39;].apply(lambda x: x.split(&#39;.&#39;)[0])
+    new_df[&#39;analysis_name_prefix&#39;] = new_df[&#39;QTL_original_data&#39;]  # bugfix: keep full filename; matched via substring below, not position[0], since real file names are &#39;{prefix}.{cohort}.{analysis_name}.{gene}...rds&#39; not &#39;{analysis_name}...rds&#39;
 
     # Create a custom merge logic to match context as a substring of condition
     def custom_merge(row, df_meta):
@@ -865,7 +854,7 @@ def merge_and_filter_dfs(new_df, new_meta):
     merged_df = pd.concat(results, keys=new_df.index).reset_index(level=1, drop=True).join(new_df, how=&#39;outer&#39;)
 
     # Filter rows where analysis_name_prefix matches analysis_name exactly
-    filtered_df = merged_df[merged_df[&#39;analysis_name_prefix&#39;].str.strip() == merged_df[&#39;analysis_name&#39;].str.strip()]
+    filtered_df = merged_df[merged_df.apply(lambda r: str(r[&#39;analysis_name&#39;]).strip().lower() in str(r[&#39;analysis_name_prefix&#39;]).lower(), axis=1)]  # bugfix: case-insensitive substring match instead of exact-equality on a mis-parsed prefix
 
     # Drop unnecessary columns and duplicates
     filtered_df = filtered_df.drop(columns=[&#39;analysis_name_prefix&#39;, &#39;context&#39;]).drop_duplicates()

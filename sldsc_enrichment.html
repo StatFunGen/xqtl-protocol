@@ -538,7 +538,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-post-processing-pecotmr-and-meta-analysis">Step 3. <code class="docutils literal notranslate"><span class="pre">Post-processing</span> <span class="pre">(pecotmr)</span> <span class="pre">and</span> <span class="pre">meta-analysis</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional">Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::meta_sldsc_random<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-subset-meta-analysis-pecotmr-metasldscrandom-optional">Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::metaSldscRandom<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-summary">Output summary</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-stage-outputs">Per-stage outputs</a></li>
@@ -564,7 +564,7 @@
 <h1>Stratified LD Score Regression (S-LDSC) Enrichment<a class="headerlink" href="#stratified-ld-score-regression-s-ldsc-enrichment" title="Link to this heading">#</a></h1>
 <p>Minimal working-example driver for the S-LDSC functional-enrichment pipeline. The <strong>Steps</strong> section below gives one ready-to-run <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span></code> command per workflow, using the toy inputs symlinked under <code class="docutils literal notranslate"><span class="pre">input/</span></code>.</p>
 <blockquote>
-<div><p><strong>Environment note.</strong> Steps 1–2 (<code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code>, <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code>) wrap the external <strong>polyfun</strong> toolkit (<code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code>, <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code>, <code class="docutils literal notranslate"><span class="pre">munge_polyfun_sumstats.py</span></code>) and require pre-computed reference-panel files (baseline-LD scores, LD weights, <code class="docutils literal notranslate"><span class="pre">.frq</span></code>, and PLINK <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>). polyfun is <strong>not installed in this environment</strong> and the reference panel is not shipped with the toy example, so those two steps cannot be executed here; their commands are provided for use on a system where polyfun and a matching panel are available. Steps 3–4 (<code class="docutils literal notranslate"><span class="pre">postprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">meta_subset</span></code>) use <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code> (available here) and read the <code class="docutils literal notranslate"><span class="pre">.results</span></code>/<code class="docutils literal notranslate"><span class="pre">.log</span></code> files produced by Step 2.</p>
+<div><p><strong>Environment note.</strong> Steps 1–2 (<code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code>, <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code>) wrap the external <strong>polyfun</strong> toolkit (<code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code>, <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code>, <code class="docutils literal notranslate"><span class="pre">munge_polyfun_sumstats.py</span></code>) and require pre-computed reference-panel files (baseline-LD scores, LD weights, <code class="docutils literal notranslate"><span class="pre">.frq</span></code>, and PLINK <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>). polyfun is <strong>not installed in this environment</strong> and the reference panel is not shipped with the toy example, so those two steps cannot be executed here; their commands are provided for use on a system where polyfun and a matching panel are available. Steps 3–4 (<code class="docutils literal notranslate"><span class="pre">postprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">meta_subset</span></code>) use <code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline</span></code> (available here) and read the <code class="docutils literal notranslate"><span class="pre">.results</span></code>/<code class="docutils literal notranslate"><span class="pre">.log</span></code> files produced by Step 2.</p>
 </div></blockquote>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
@@ -577,12 +577,13 @@
 <h2>Methods - Workflow Overview<a class="headerlink" href="#methods-workflow-overview" title="Link to this heading">#</a></h2>
 <p>The pipeline runs in three stages: (1) annotation preparation and the S-LDSC regression (polyfun), (2) post-processing into standardized <span class="math notranslate nohighlight">\(\tau^*\)</span> and meta-analysis (the <code class="docutils literal notranslate"><span class="pre">pecotmr</span></code> package), and (3) optional re-meta on user-defined trait subsets. The concrete commands for stages 1-2 are in the <strong>Steps</strong> section below.</p>
 <p><strong>Stage 1 - polyfun.</strong> Three SoS workflows wrap polyfun: <code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code> converts target annotations into polyfun <code class="docutils literal notranslate"><span class="pre">.annot.gz</span></code> and runs <code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code> (toggles <code class="docutils literal notranslate"><span class="pre">compute_single</span></code> and <code class="docutils literal notranslate"><span class="pre">compute_joint</span></code>, both default <code class="docutils literal notranslate"><span class="pre">True</span></code>; the joint dir is only emitted when <span class="math notranslate nohighlight">\(N \geq 2\)</span>); <code class="docutils literal notranslate"><span class="pre">munge_sumstats_polyfun</span></code> preprocesses each GWAS into LDSC format; <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> runs polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code> once per <code class="docutils literal notranslate"><span class="pre">--target-anno-dir</span></code>, enforcing the MAF cutoff via <code class="docutils literal notranslate"><span class="pre">--frqfile-chr</span></code> (<code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> accepts only <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">0.05</span></code>).</p>
-<p><strong>Stage 2 - pecotmr post-processing.</strong> A single <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code> call consumes all polyfun outputs: it extracts <span class="math notranslate nohighlight">\(\tau\)</span>, <span class="math notranslate nohighlight">\(E\)</span>, <span class="math notranslate nohighlight">\(h^2_g\)</span>, EnrichStat p-value and per-block jackknife <span class="math notranslate nohighlight">\(\tau\)</span> values; computes <span class="math notranslate nohighlight">\(sd_C\)</span> and <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> over the regression’s MAF-cutoff SNP set; standardizes <span class="math notranslate nohighlight">\(\tau \to \tau^*\)</span> for single and joint modes; auto-detects binary vs continuous annotations; and runs a DerSimonian-Laird random-effects meta-analysis across traits, producing three meta tables (<span class="math notranslate nohighlight">\(\tau^*\)</span> cross-type comparable, <span class="math notranslate nohighlight">\(E\)</span> within-binary, EnrichStat within-binary). Output is an R list with <code class="docutils literal notranslate"><span class="pre">per_trait</span></code> and <code class="docutils literal notranslate"><span class="pre">meta</span></code> entries.</p>
-<p><strong>Stage 3 - subset meta-analysis.</strong> <code class="docutils literal notranslate"><span class="pre">pecotmr::meta_sldsc_random</span></code> re-runs the meta on a trait subset without re-running the regression (lightweight, interactive):</p>
+<p><strong>Stage 2 - pecotmr post-processing.</strong> A single <code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline</span></code> call consumes all polyfun outputs: it extracts <span class="math notranslate nohighlight">\(\tau\)</span>, <span class="math notranslate nohighlight">\(E\)</span>, <span class="math notranslate nohighlight">\(h^2_g\)</span>, EnrichStat p-value and per-block jackknife <span class="math notranslate nohighlight">\(\tau\)</span> values; computes <span class="math notranslate nohighlight">\(sd_C\)</span> and <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> over the regression’s MAF-cutoff SNP set; standardizes <span class="math notranslate nohighlight">\(\tau \to \tau^*\)</span> for single and joint modes; auto-detects binary vs continuous annotations; and runs a DerSimonian-Laird random-effects meta-analysis across traits, producing three meta tables (<span class="math notranslate nohighlight">\(\tau^*\)</span> cross-type comparable, <span class="math notranslate nohighlight">\(E\)</span> within-binary, EnrichStat within-binary). Output is an R list with <code class="docutils literal notranslate"><span class="pre">per_trait</span></code> and <code class="docutils literal notranslate"><span class="pre">meta</span></code> entries.</p>
+<p><strong>Stage 3 - subset meta-analysis.</strong> <code class="docutils literal notranslate"><span class="pre">pecotmr::metaSldscRandom</span></code> re-runs the meta on a trait subset without re-running the regression (lightweight, interactive):</p>
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;sldsc_results.rds&quot;</span><span class="p">)</span>
 <span class="n">neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="s">&quot;AD_GWAX&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;PD_meta&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ALS_meta&quot;</span><span class="p">)</span>
-<span class="n">meta_neuro_taustar</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">::</span><span class="nf">meta_sldsc_random</span><span class="p">(</span>
-<span class="w">  </span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_target_anno&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tau_star&quot;</span>
+<span class="n">view_neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">:::</span><span class="nf">.sldscViewForMeta</span><span class="p">(</span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="s">&quot;single&quot;</span><span class="p">)</span>
+<span class="n">meta_neuro_taustar</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">::</span><span class="nf">metaSldscRandom</span><span class="p">(</span>
+<span class="w">  </span><span class="n">view_neuro</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_target_anno&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tauStar&quot;</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -668,9 +669,9 @@
 <li><p>Whether each annotation is binary or continuous — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">is_binary_sldsc_annot</span></code>)</strong>.</p></li>
 <li><p><span class="math notranslate nohighlight">\(\tau^*_C\)</span> point estimate and per-block <span class="math notranslate nohighlight">\(\tau^*_C\)</span> — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">standardize_sldsc_trait</span></code>)</strong>.</p></li>
 <li><p>EnrichStat point estimate and its standard error (formula below) — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">standardize_sldsc_trait</span></code>)</strong>.</p></li>
-<li><p>DerSimonian-Laird random-effects meta-analysis of <span class="math notranslate nohighlight">\(\tau^*_C\)</span>, <span class="math notranslate nohighlight">\(E_C\)</span>, or EnrichStat across traits — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">meta_sldsc_random</span></code>)</strong>.</p></li>
+<li><p>DerSimonian-Laird random-effects meta-analysis of <span class="math notranslate nohighlight">\(\tau^*_C\)</span>, <span class="math notranslate nohighlight">\(E_C\)</span>, or EnrichStat across traits — <strong>(pecotmr: <code class="docutils literal notranslate"><span class="pre">metaSldscRandom</span></code>)</strong>.</p></li>
 </ul>
-<p>The top-level entry point <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code> orchestrates all of the above.</p>
+<p>The top-level entry point <code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline</span></code> orchestrates all of the above.</p>
 </section>
 <section id="standardized-tau-tau-pecotmr">
 <h4>Standardized tau (<span class="math notranslate nohighlight">\(\tau^*\)</span>)  —  (pecotmr)<a class="headerlink" href="#standardized-tau-tau-pecotmr" title="Link to this heading">#</a></h4>
@@ -716,7 +717,7 @@ with \)</span>B = 200$, used as the per-trait input to cross-trait meta-analysis
 </section>
 <section id="meta-analysis-across-traits-random-effects-pecotmr">
 <h3>Meta-Analysis across Traits (Random Effects)  —  (pecotmr)<a class="headerlink" href="#meta-analysis-across-traits-random-effects-pecotmr" title="Link to this heading">#</a></h3>
-<p>DerSimonian-Laird random-effects meta-analysis of per-annotation estimates across traits, implemented in <code class="docutils literal notranslate"><span class="pre">pecotmr::meta_sldsc_random</span></code> (which delegates the numerics to <code class="docutils literal notranslate"><span class="pre">rmeta::meta.summaries(...,</span> <span class="pre">method</span> <span class="pre">=</span> <span class="pre">&quot;random&quot;)</span></code>):</p>
+<p>DerSimonian-Laird random-effects meta-analysis of per-annotation estimates across traits, implemented in <code class="docutils literal notranslate"><span class="pre">pecotmr::metaSldscRandom</span></code> (which delegates the numerics to <code class="docutils literal notranslate"><span class="pre">rmeta::meta.summaries(...,</span> <span class="pre">method</span> <span class="pre">=</span> <span class="pre">&quot;random&quot;)</span></code>):</p>
 <div class="math notranslate nohighlight">
 \[\hat\theta_{\mathrm{meta}} \;=\; \frac{\sum_i w_i\, \hat\theta_i}{\sum_i w_i}, \qquad SE_{\mathrm{meta}} \;=\; \sqrt{\frac{1}{\sum_i w_i}}, \qquad w_i \;=\; \frac{1}{SE_i^2 + \hat\sigma^2}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\hat\theta_i\)</span> is the per-trait estimate and <span class="math notranslate nohighlight">\(SE_i\)</span> its standard error:</p>
@@ -925,7 +926,7 @@ INFO: Workflow get_heritability (ID=wa79eac1662f5dd2d) is executed successfully 
 </section>
 <section id="step-3-post-processing-pecotmr-and-meta-analysis">
 <h2>Step 3. <code class="docutils literal notranslate"><span class="pre">Post-processing</span> <span class="pre">(pecotmr)</span> <span class="pre">and</span> <span class="pre">meta-analysis</span></code><a class="headerlink" href="#step-3-post-processing-pecotmr-and-meta-analysis" title="Link to this heading">#</a></h2>
-<p><em>Post-Processing (<code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline</span></code>)</em></p>
+<p><em>Post-Processing (<code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline</span></code>)</em></p>
 <p>A single R function call consumes all polyfun outputs for the run and produces the final tables:</p>
 <ul class="simple">
 <li><p>Reads each polyfun output and extracts <span class="math notranslate nohighlight">\(\tau\)</span>, <span class="math notranslate nohighlight">\(E\)</span>, <span class="math notranslate nohighlight">\(h^2_g\)</span>, EnrichStat p-value, and per-block jackknife <span class="math notranslate nohighlight">\(\tau\)</span> values.</p></li>
@@ -938,7 +939,7 @@ INFO: Workflow get_heritability (ID=wa79eac1662f5dd2d) is executed successfully 
 <p>Outputs are returned as an R list with two top-level entries: <code class="docutils literal notranslate"><span class="pre">per_trait</span></code> (one tidy data frame per trait, single + joint estimates side-by-side per target) and <code class="docutils literal notranslate"><span class="pre">meta</span></code> (three tables, one per quantity, with rows = target annotations and columns = single/joint mean/SE/p plus an <code class="docutils literal notranslate"><span class="pre">is_binary</span></code> flag).</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">[postprocess]</span></code> step reads all polyfun outputs under <code class="docutils literal notranslate"><span class="pre">heritability_cwd</span></code>
 (which contains the <span class="math notranslate nohighlight">\(N\)</span> single-target subdirectories and optionally the
-joint subdirectory) and calls <code class="docutils literal notranslate"><span class="pre">pecotmr::sldsc_postprocessing_pipeline()</span></code>
+joint subdirectory) and calls <code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline()</span></code>
 to produce per-trait standardized tables and the default random-effects
 meta across all traits.</p>
 <p>Use <code class="docutils literal notranslate"><span class="pre">--target-categories-label</span></code> (same order as <code class="docutils literal notranslate"><span class="pre">--target-categories</span></code>) to give the target annotations friendly names in the output — e.g. <code class="docutils literal notranslate"><span class="pre">--target-categories</span> <span class="pre">ANNOT_1_0</span> <span class="pre">ANNOT_2_0</span> <span class="pre">--target-categories-label</span> <span class="pre">quantile_eQTL</span> <span class="pre">eQTL</span></code> makes the <code class="docutils literal notranslate"><span class="pre">target</span></code> column read <code class="docutils literal notranslate"><span class="pre">quantile_eQTL</span></code> / <code class="docutils literal notranslate"><span class="pre">eQTL</span></code> instead of <code class="docutils literal notranslate"><span class="pre">ANNOT_1_0</span></code> / <code class="docutils literal notranslate"><span class="pre">ANNOT_2_0</span></code> (the original names are kept in <code class="docutils literal notranslate"><span class="pre">params$target_categories_orig</span></code>). Omit it to keep the polyfun <code class="docutils literal notranslate"><span class="pre">.results</span></code> names.</p>
@@ -968,13 +969,14 @@ INFO: Workflow postprocess (ID=wb64dc2b84958960c) is executed successfully with 
 </div>
 </div>
 </section>
-<section id="step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional">
-<h2>Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::meta_sldsc_random<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)<a class="headerlink" href="#step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional" title="Link to this heading">#</a></h2>
+<section id="step-4-subset-meta-analysis-pecotmr-metasldscrandom-optional">
+<h2>Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::metaSldscRandom<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)<a class="headerlink" href="#step-4-subset-meta-analysis-pecotmr-metasldscrandom-optional" title="Link to this heading">#</a></h2>
 <p>The default meta in Step 2 pools all traits the user supplied. To re-run the meta on a subset (e.g., neurodegenerative traits only, or autoimmune traits only) without re-running the regression layer:</p>
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;sldsc_results.rds&quot;</span><span class="p">)</span>
 <span class="n">neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="s">&quot;AD_GWAX&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;PD_meta&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ALS_meta&quot;</span><span class="p">)</span>
-<span class="n">meta_neuro_taustar</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">::</span><span class="nf">meta_sldsc_random</span><span class="p">(</span>
-<span class="w">  </span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_target_anno&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tau_star&quot;</span>
+<span class="n">view_neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">:::</span><span class="nf">.sldscViewForMeta</span><span class="p">(</span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="s">&quot;single&quot;</span><span class="p">)</span>
+<span class="n">meta_neuro_taustar</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">::</span><span class="nf">metaSldscRandom</span><span class="p">(</span>
+<span class="w">  </span><span class="n">view_neuro</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_target_anno&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tauStar&quot;</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1084,6 +1086,8 @@ parameter: cwd = path(&#39;output&#39;)
 parameter: annotation_name = str
 parameter: python_exec = &quot;python&quot; # e.g. &quot;/home/you/.conda/envs/polyfun/bin/python&quot;
 parameter: polyfun_path   = path # e.g. &quot;/home/you/tools/polyfun&quot;
+# Directory holding the modular R wrapper scripts (code/script).
+parameter: modular_script_dir = path(&#39;code/script&#39;)
 
 # MAF cutoff for sLDSC. Default 0.05 per sLDSC recommendation (rare-variant LD is unstable
 # and HapMap3-style regression weights are common-variant by construction).
@@ -1672,12 +1676,14 @@ bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[postprocess]
-# Post-processing of polyfun outputs via pecotmr::sldsc_postprocessing_pipeline.
-# Reads .results / .log / .part_delete for all traits in `traits_file`, both
-# single-target and (when present) joint-target runs, computes Gazal-style
+# Post-processing of polyfun outputs via pecotmr::sldscPostprocessingPipeline,
+# driven by the sldsc_postprocess.R wrapper. The wrapper reads .results / .log /
+# .part_delete for all traits in `traits_file` (both single-target and, when
+# present, joint-target runs), the target .annot.gz files, and the reference
+# .frq files, bundles them into a pecotmr SldscData object, computes Gazal-style
 # tau*, EnrichStat with back-solved jackknife SE, and runs the default
-# DerSimonian-Laird random-effects meta across all supplied traits. Writes
-# one RDS containing per-trait tables and three meta tables (tau*, E, EnrichStat).
+# DerSimonian-Laird random-effects meta across all supplied traits. Writes one
+# RDS with per-trait tables and the meta tables (tauStar, enrichment, enrichstat).
 
 parameter: traits_file = path()             # text file: one trait sumstats filename per line
 parameter: heritability_cwd = path()        # parent directory of [get_heritability] outputs (contains &lt;annotation_name&gt;_single_&lt;i&gt;/ subdirs and optionally &lt;annotation_name&gt;_joint/)
@@ -1692,52 +1698,18 @@ input: traits_file
 output: f&quot;{cwd:a}/{annotation_name}.sldsc_postprocess.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    library(pecotmr)
-
-    traits &lt;- readLines(&quot;${traits_file}&quot;)
-    target_cats &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % c for c in target_categories)})
-    target_lab  &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % c for c in target_categories_label)})
-
-    # Auto-detect single-target and joint-target output directories.
-    her_root  &lt;- &quot;${heritability_cwd}&quot;
-    all_subdirs &lt;- list.dirs(her_root, recursive = FALSE)
-    single_pattern &lt;- paste0(&quot;^&quot;, &quot;${annotation_name}&quot;, &quot;_single_([0-9]+)$&quot;)
-    joint_name     &lt;- paste0(&quot;${annotation_name}&quot;, &quot;_joint&quot;)
-    single_dirs &lt;- all_subdirs[grepl(single_pattern, basename(all_subdirs))]
-    single_indices &lt;- as.integer(sub(single_pattern, &quot;\\1&quot;, basename(single_dirs)))
-    single_dirs &lt;- single_dirs[order(single_indices)]
-    joint_dir   &lt;- file.path(her_root, joint_name)
-    has_joint   &lt;- dir.exists(joint_dir)
-
-    message(sprintf(&quot;Detected %d single-target dirs%s&quot;,
-                    length(single_dirs),
-                    if (has_joint) &quot;; joint-target dir present&quot; else &quot;; no joint-target dir&quot;))
-
-    # Build per-trait prefix maps. Each trait&#39;s polyfun output is at &lt;dir&gt;/&lt;trait&gt;
-    # (polyfun appends .results / .log / .part_delete).
-    trait_single_prefixes &lt;- lapply(traits, function(t) file.path(single_dirs, t))
-    names(trait_single_prefixes) &lt;- traits
-
-    if (has_joint) {
-        trait_joint_prefix &lt;- setNames(file.path(joint_dir, traits), traits)
-    } else {
-        trait_joint_prefix &lt;- setNames(rep(NA_character_, length(traits)), traits)
-    }
-
-    res &lt;- sldsc_postprocessing_pipeline(
-        trait_single_prefixes = trait_single_prefixes,
-        trait_joint_prefix    = trait_joint_prefix,
-        target_anno_dir       = &quot;${target_anno_dir}&quot;,
-        frqfile_dir          = &quot;${frqfile_dir}&quot;,
-        plink_name           = &quot;${plink_name}&quot;,
-        maf_cutoff           = ${maf_cutoff},
-        target_categories    = if (length(target_cats) &gt; 0) target_cats else NULL,
-        target_labels        = if (length(target_lab)  &gt; 0) target_lab  else NULL
-    )
-
-    saveRDS(res, &quot;${_output[0]}&quot;)
-    message(&quot;S-LDSC post-processing complete; results written to ${_output[0]}&quot;)
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    Rscript ${modular_script_dir}/pecotmr_integration/sldsc_postprocess.R \
+        --traits-file ${traits_file} \
+        --heritability-cwd ${heritability_cwd} \
+        --annotation-name ${annotation_name} \
+        --target-anno-dir ${target_anno_dir} \
+        --frqfile-dir ${frqfile_dir} \
+        --plink-name ${plink_name} \
+        --maf-cutoff ${maf_cutoff} \
+        ${(&#39;--target-categories &#39; + &#39;,&#39;.join(target_categories)) if target_categories else &#39;&#39;} \
+        ${(&#39;--target-categories-label &#39; + &#39;,&#39;.join(target_categories_label)) if target_categories_label else &#39;&#39;} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -1746,7 +1718,8 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[meta_subset]
 # Optional: re-run random-effects meta on a user-defined subset of traits, using
-# the cached per-trait standardized results from [postprocess]. No regression rerun.
+# the cached per-trait standardized results from [postprocess] via the
+# sldsc_meta_subset.R wrapper. No regression rerun.
 
 parameter: postprocess_rds = path()           # output of [postprocess]
 parameter: subset_traits_file = path()        # text file: one trait id per line, subset of those passed to [postprocess]
@@ -1760,29 +1733,12 @@ input: postprocess_rds, subset_traits_file
 output: f&quot;{cwd:a}/{annotation_name}.{subset_name}.meta.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    library(pecotmr)
-
-    res &lt;- readRDS(&quot;${postprocess_rds}&quot;)
-    subset_traits &lt;- readLines(&quot;${subset_traits_file}&quot;)
-    target_cats &lt;- c(${&quot;,&quot;.join([f&#39;&quot;{c}&quot;&#39; for c in target_categories])})
-    if (length(target_cats) == 0) target_cats &lt;- res$params$target_categories
-
-    subset_per_trait &lt;- res$per_trait[subset_traits]
-
-    # Map wide names (tau_star_single/joint) to bare names meta_sldsc_random expects.
-    view_single &lt;- pecotmr:::.sldsc_view_for_meta(subset_per_trait, &quot;single&quot;)
-    view_joint  &lt;- pecotmr:::.sldsc_view_for_meta(subset_per_trait, &quot;joint&quot;)
-
-    out &lt;- list(
-        tau_star_single = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_single, c, &quot;tau_star&quot;)),   target_cats),
-        tau_star_joint  = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_joint,  c, &quot;tau_star&quot;)),   target_cats),
-        enrichment      = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_single, c, &quot;enrichment&quot;)), target_cats),
-        enrichstat      = setNames(lapply(target_cats, function(c) meta_sldsc_random(view_single, c, &quot;enrichstat&quot;)), target_cats)
-    )
-
-    saveRDS(out, &quot;${_output[0]}&quot;)
-    message(&quot;Subset meta complete; results written to ${_output[0]}&quot;)
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    Rscript ${modular_script_dir}/pecotmr_integration/sldsc_meta_subset.R \
+        --postprocess-rds ${postprocess_rds} \
+        --subset-traits-file ${subset_traits_file} \
+        ${(&#39;--target-categories &#39; + &#39;,&#39;.join(target_categories)) if target_categories else &#39;&#39;} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -1894,7 +1850,7 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-post-processing-pecotmr-and-meta-analysis">Step 3. <code class="docutils literal notranslate"><span class="pre">Post-processing</span> <span class="pre">(pecotmr)</span> <span class="pre">and</span> <span class="pre">meta-analysis</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-subset-meta-analysis-pecotmr-meta-sldsc-random-optional">Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::meta_sldsc_random<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-subset-meta-analysis-pecotmr-metasldscrandom-optional">Step 4. <code class="docutils literal notranslate"><span class="pre">Subset</span> <span class="pre">Meta-Analysis</span> <span class="pre">(</span></code>pecotmr::metaSldscRandom<code class="docutils literal notranslate"><span class="pre">)</span></code> (optional)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-summary">Output summary</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-stage-outputs">Per-stage outputs</a></li>

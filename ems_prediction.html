@@ -552,7 +552,7 @@
 </section>
 <section id="step-2-execute-prediction-pipeline">
 <h3>Step 2: Execute Prediction Pipeline<a class="headerlink" href="#step-2-execute-prediction-pipeline" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/xqtl-protocol/code/xqtl_modifier_score/
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/xqtl-protocol/code/SoS/xqtl_modifier_score/
 python<span class="w"> </span>model_training_model5_only.py<span class="w"> </span>Mic_mega_eQTL<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--model_config<span class="w"> </span>model_config.yaml
@@ -852,8 +852,8 @@ python<span class="w"> </span>model_training_model5_only.py<span class="w"> </sp
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">ems_prediction</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">predict</span> \
     <span class="o">--</span><span class="n">cohort</span> <span class="n">protocol_example</span> \
     <span class="o">--</span><span class="n">chromosome</span> <span class="mi">2</span> \
-    <span class="o">--</span><span class="n">model_path</span> <span class="n">output</span><span class="o">/</span><span class="n">ems_training</span><span class="o">/</span><span class="n">protocol_example_chr2_scEEMS_model</span><span class="o">.</span><span class="n">joblib</span> \
-    <span class="o">--</span><span class="n">data_config</span> <span class="n">code</span><span class="o">/</span><span class="n">xqtl_modifier_score</span><span class="o">/</span><span class="n">data_config</span><span class="o">.</span><span class="n">yaml</span> \
+    <span class="o">--</span><span class="n">model_path</span> <span class="n">output</span><span class="o">/</span><span class="n">xqtl_modifier_score</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">/</span><span class="n">model_results</span><span class="o">/</span><span class="n">model_standard_subset_weighted_chr_chr2_NPR_1</span><span class="o">.</span><span class="n">joblib</span> \
+    <span class="o">--</span><span class="n">data_config</span> <span class="n">code</span><span class="o">/</span><span class="n">SoS</span><span class="o">/</span><span class="n">xqtl_modifier_score</span><span class="o">/</span><span class="n">data_config</span><span class="o">.</span><span class="n">yaml</span> \
     <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">ems_prediction</span>
 </pre></div>
 </div>
@@ -884,11 +884,11 @@ python<span class="w"> </span>model_training_model5_only.py<span class="w"> </sp
 <span class="c1"># Chromosome to score</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">chromosome</span> <span class="o">=</span> <span class="s1">&#39;2&#39;</span>
 <span class="c1"># Trained CatBoost model (.joblib) from the EMS Training workflow</span>
-<span class="n">parameter</span><span class="p">:</span> <span class="n">model_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;output/ems_training/protocol_example_chr2_scEEMS_model.joblib&#39;</span><span class="p">)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">model_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;output/xqtl_modifier_score/protocol_example/model_results/model_standard_subset_weighted_chr_chr2_NPR_1.joblib&#39;</span><span class="p">)</span>
 <span class="c1"># Data configuration YAML (cohort, variant list, feature set)</span>
-<span class="n">parameter</span><span class="p">:</span> <span class="n">data_config</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/xqtl_modifier_score/data_config.yaml&#39;</span><span class="p">)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">data_config</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/SoS/xqtl_modifier_score/data_config.yaml&#39;</span><span class="p">)</span>
 <span class="c1"># Directory holding gems_pipeline.py</span>
-<span class="n">parameter</span><span class="p">:</span> <span class="n">pipeline_dir</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/xqtl_modifier_score&#39;</span><span class="p">)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">pipeline_dir</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/SoS/xqtl_modifier_score&#39;</span><span class="p">)</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">job_size</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">mem</span> <span class="o">=</span> <span class="s1">&#39;60G&#39;</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">walltime</span> <span class="o">=</span> <span class="s1">&#39;24h&#39;</span>

@@ -866,8 +866,8 @@ R: expand = &quot;${ }&quot;
     )
     cat(sprintf(&quot;Built mash_input for region %s: %d variants x %d conditions\n&quot;,
                 region_id, nrow(z_only), ncol(z_only)))
-    saveRDS(res, &quot;${_output:r}&quot;, compress = &quot;xz&quot;)
-    cat(&quot;Saved:&quot;, &quot;${_output:r}&quot;, &quot;\n&quot;)
+    dir.create(dirname(${_output:r}), recursive = TRUE, showWarnings = FALSE); saveRDS(res, ${_output:r}, compress = &quot;xz&quot;)
+    cat(&quot;Saved:&quot;, ${_output:r}, &quot;\n&quot;)
 </pre></div>
 </div>
 </div>
@@ -939,15 +939,15 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
       renamed_res_reformatted &lt;- rename_rownames(res_reformatted)
       merged_data &lt;- list()
       for(region in names(renamed_res_reformatted)){
-        merged_data &lt;- merge_mash_data(merged_data, renamed_res_reformatted[[region]])
+        merged_data &lt;- mergeMashData(merged_data, renamed_res_reformatted[[region]])
       }
-      batch_combined_data &lt;- merge_mash_data(batch_combined_data,merged_data)
+      batch_combined_data &lt;- mergeMashData(batch_combined_data,merged_data)
     } 
     saveRDS(batch_combined_data, &quot;${_output:n}.with_na.rds&quot;, compress=&quot;xz&quot;)
     print(head(batch_combined_data))
     conditions = c(&quot;strong&quot;, &quot;random&quot;, &quot;null&quot;)
     for (cond in conditions){
-      batch_combined_data &lt;- filter_invalid_summary_stat(batch_combined_data, z = paste0(cond,&quot;.z&quot;))
+      batch_combined_data &lt;- filterInvalidSummaryStat(batch_combined_data, z = paste0(cond,&quot;.z&quot;))
     }
     batch_combined_data$ZtZ = t(as.matrix(batch_combined_data$strong.z)) %*% as.matrix(batch_combined_data$strong.z) / nrow(batch_combined_data$strong.z)
     saveRDS(batch_combined_data, ${_output:r}, compress=&quot;xz&quot;)
