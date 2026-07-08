@@ -34,7 +34,7 @@ def extract_exon(gtf_file,skip_rows):
 			transcript_patt_1 = re.search(r'transcript_id\s"(\w+)";',w[8])
 			transcript_patt_2 = re.search(r'transcript_id\s"(\w+\.\d+)";',w[8])#with version number
 			genename_patt = re.search(r'gene_name\s"(.*?)";',w[8])
-			genetype_patt = re.search(r'gene_type\s"(.*?)";',w[8])
+			genetype_patt = re.search(r'gene_(?:bio)?type\s"(.*?)";',w[8])
 			if geneid_patt_1:
 				gene_id = geneid_patt_1.group(1)
 			elif geneid_patt_2:
@@ -87,7 +87,7 @@ def extract_Codon(gtf_file,skip_rows,codon_type):
 			transcript_patt_1 = re.search(r'transcript_id\s"(\w+)";',w[8])
 			transcript_patt_2 = re.search(r'transcript_id\s"(\w+\.\d+)";',w[8])#with version number
 			genename_patt = re.search(r'gene_name\s"(.*?)";',w[8])
-			genetype_patt = re.search(r'gene_type\s"(.*?)";',w[8])
+			genetype_patt = re.search(r'gene_(?:bio)?type\s"(.*?)";',w[8])
 			if geneid_patt_1:
 				gene_id = geneid_patt_1.group(1)
 			elif geneid_patt_2:
@@ -136,7 +136,7 @@ def extract_transcript(gtf_file,skip_rows):
 			transcript_patt_1 = re.search(r'transcript_id\s"(\w+)";',w[8])
 			transcript_patt_2 = re.search(r'transcript_id\s"(\w+\.\d+)";',w[8])#with version number
 			genename_patt = re.search(r'gene_name\s"(.*?)";',w[8])
-			genetype_patt = re.search(r'gene_type\s"(.*?)";',w[8])
+			genetype_patt = re.search(r'gene_(?:bio)?type\s"(.*?)";',w[8])
 			if geneid_patt_1:
 				gene_id = geneid_patt_1.group(1)
 			elif geneid_patt_2:
