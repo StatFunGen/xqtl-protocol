@@ -67,7 +67,7 @@ for (trait in names(legacy)) {
       wvec <- stats::setNames(as.numeric(wmat), vids)
       cv   <- perfToCv(perfL[[paste0(tok, "_performance")]])
       entries[[length(entries) + 1L]] <- TwasWeightsEntry(
-        variantIds = vids, weights = wvec, cvPerformance = cv,
+        variantIds = vids, weights = wvec, cvResult = cv,
         standardized = FALSE, dataType = context)
       rs <- c(rs, argv$study); rc <- c(rc, context)
       rt <- c(rt, trait);      rm <- c(rm, tok)
