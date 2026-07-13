@@ -121,11 +121,12 @@ traitList <- setNames(lapply(traits, function(t) {
 annot <- readSldscAnnot(argv$target_anno_dir)
 frq <- NULL
 if (argv$maf_cutoff > 0) {
-  if (!nzchar(argv$frqfile_dir))
+  # frq is only needed for MAF filtering; --maf-cutoff 0 opts out entirely (per
+  # the doc above), so it is NOT read at cutoff 0 even if --frqfile-dir is set
+  # (the notebook passes the empty default "." there).
+  if (!nzchar(argv$frqfile_dir) || argv$frqfile_dir == ".")
     stop("--maf-cutoff = ", argv$maf_cutoff,
          " requires --frqfile-dir (frq data needed for MAF filtering).")
-  frq <- readSldscFrq(argv$frqfile_dir, plinkName = argv$plink_name)
-} else if (nzchar(argv$frqfile_dir)) {
   frq <- readSldscFrq(argv$frqfile_dir, plinkName = argv$plink_name)
 }
 

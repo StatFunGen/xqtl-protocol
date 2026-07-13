@@ -43,8 +43,6 @@
 suppressPackageStartupMessages({
   library(argparser)
   library(pecotmr)
-  library(GenomicRanges)
-  library(IRanges)
   library(jsonlite)
 })
 
@@ -70,6 +68,12 @@ parser <- add_argument(parser, "--methods",
 parser <- add_argument(parser, "--fine-mapping-result",
                        help = "Optional pre-fit FineMappingResult RDS",
                        type = "character", default = "")
+parser <- add_argument(parser, "--joint-specification",
+                       help = "Comma-separated joint-analysis axis spec (twasWeightsPipeline jointSpecification), e.g. 'context' for cross-context joint weight learning; empty = per-(context, trait)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--twas-weights",
+                       help = "Optional existing TwasWeights RDS to resume from (twasWeightsPipeline twasWeights); already-computed (context, trait, method) weights are reused for checkpointing/resumption",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--method-args",
                        help = "JSON object {token: {kwarg: value, ...}, ...} for twasWeightsPipeline()",
                        type = "character", default = "")
@@ -80,12 +84,6 @@ parser <- add_argument(parser, "--mixture-prior",
                                      "Only consulted when 'mrmash' is in --methods and the prior is not ",
                                      "already set via --method-args."),
                        type = "character", default = "")
-parser <- add_argument(parser, "--min-twas-maf",
-                       help = "Minimum MAF for the variants used to learn TWAS weights (twasWeightsPipeline minTwasMaf), applied on top of the dataset's construct-time mafCutoff",
-                       type = "numeric", default = 0.01)
-parser <- add_argument(parser, "--min-twas-xvar",
-                       help = "Minimum per-variant genotype variance for TWAS weight learning (twasWeightsPipeline minTwasXvar)",
-                       type = "numeric", default = 0.01)
 parser <- add_argument(parser, "--max-cv-variants",
                        help = "Cap on the number of variants used in cross-validation (twasWeightsPipeline maxCvVariants); -1 = no cap",
                        type = "integer", default = 5000L)
@@ -126,20 +124,25 @@ parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
-# Opt-in overrides of a loaded QtlDataset's construct-time filter slots. Filters
-# apply lazily at extraction, so mutating the slot re-filters without rebuilding
-# the RDS. Mirrors fine_mapping.R.
-apply_qd_filter_overrides <- function(qd, argv) {
-  if (!is.na(argv$maf_cutoff))   qd@mafCutoff   <- argv$maf_cutoff
-  if (!is.na(argv$mac_cutoff))   qd@macCutoff   <- argv$mac_cutoff
-  if (!is.na(argv$xvar_cutoff))  qd@xvarCutoff  <- argv$xvar_cutoff
-  if (!is.na(argv$imiss_cutoff)) qd@imissCutoff <- argv$imiss_cutoff
-  if (isTRUE(argv$drop_indel))   qd@keepIndel   <- FALSE
-  read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
-    unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
-  ks <- read_ids(argv$keep_samples);  if (!is.null(ks)) qd@keepSamples  <- ks
-  kv <- read_ids(argv$keep_variants); if (!is.null(kv)) qd@keepVariants <- kv
-  qd
+# Read a whitespace-delimited ID file into a unique character vector; NULL when
+# the path is empty / "." / missing.
+read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
+  unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
+
+# Build the per-call genotype-filter overrides as pipeline ARGUMENTS (NULL =
+# leave the QtlDataset's construct-time slot untouched). The pipeline applies
+# these to a validated copy; the wrapper no longer mutates @slots directly.
+# Mirrors fine_mapping.R.
+qd_filter_overrides <- function(argv) {
+  ov <- list(
+    mafCutoff    = if (!is.na(argv$maf_cutoff))   argv$maf_cutoff   else NULL,
+    macCutoff    = if (!is.na(argv$mac_cutoff))   argv$mac_cutoff   else NULL,
+    xvarCutoff   = if (!is.na(argv$xvar_cutoff))  argv$xvar_cutoff  else NULL,
+    imissCutoff  = if (!is.na(argv$imiss_cutoff)) argv$imiss_cutoff else NULL,
+    keepIndel    = if (isTRUE(argv$drop_indel))   FALSE             else NULL,
+    keepSamples  = read_ids(argv$keep_samples),
+    keepVariants = read_ids(argv$keep_variants))
+  ov[!vapply(ov, is.null, logical(1))]
 }
 
 # Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
@@ -203,14 +206,14 @@ mash_prior <- if (nzchar(argv$mixture_prior) && argv$mixture_prior != "." &&
   MashPrior(fullFit = readRDS(argv$mixture_prior))
 } else NULL
 
-parse_region <- function(s) {
-  m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
-  if (length(m) != 4L)
-    stop("--region must be in chr:start-end format (got: ", s, ")")
-  GRanges(seqnames = m[[2L]],
-          ranges   = IRanges(start = as.integer(m[[3L]]),
-                             end   = as.integer(m[[4L]])))
-}
+# Joint-analysis axis (mirrors fine_mapping.R) and an existing TwasWeights to
+# resume from (checkpointing): already-computed (context, trait, method) weights
+# are reused so a re-run only fills in the missing methods.
+joint_spec <- if (nzchar(argv$joint_specification) && argv$joint_specification != ".")
+  trimws(strsplit(argv$joint_specification, ",", fixed = TRUE)[[1L]]) else NULL
+twas_weights_obj <- if (nzchar(argv$twas_weights) && argv$twas_weights != "." &&
+                        file.exists(argv$twas_weights)) readRDS(argv$twas_weights) else NULL
+
 
 has_gene   <- nzchar(argv$gene_id)
 has_region <- nzchar(argv$region)
@@ -220,7 +223,6 @@ if (!has_gene && !has_region)
   stop("Specify either --gene-id (with --cis-window) or --region.")
 
 qd <- readRDS(argv$qtl_dataset)
-qd <- apply_qd_filter_overrides(qd, argv)
 
 fmr_path <- argv$fine_mapping_result
 fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
@@ -229,22 +231,26 @@ fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
   NULL
 }
 
-# Shared args for both modes. minTwas* tighten the variant set used to learn
-# the weights (on top of the QtlDataset's construct-time cutoffs); the cv* knobs
-# control the cross-validated predictive-performance refits.
-tw_args <- list(methods           = methods_arg,
-                mashPrior         = mash_prior,
-                cisWindow         = argv$cis_window,
-                contexts          = contexts_arg,
-                minTwasMaf        = argv$min_twas_maf,
-                minTwasXvar       = argv$min_twas_xvar,
-                maxCvVariants     = argv$max_cv_variants,
-                cvFolds           = argv$cv_folds,
-                cvThreads         = argv$cv_threads,
-                fineMappingResult = fmr)
+# Shared args for both modes. Genotype-filter overrides ride on the same
+# --maf-cutoff/--xvar-cutoff/... args fine-mapping uses (variant QC is a data
+# property, applied identically); the cv* knobs control the cross-validated
+# predictive-performance refits.
+tw_args <- c(list(methods           = methods_arg,
+                  mashPrior         = mash_prior,
+                  cisWindow         = argv$cis_window,
+                  contexts          = contexts_arg,
+                  maxCvVariants     = argv$max_cv_variants,
+                  cvFolds           = argv$cv_folds,
+                  cvThreads         = argv$cv_threads,
+                  fineMappingResult = fmr),
+             qd_filter_overrides(argv))
+# Opt-in joint axis / resume-from-checkpoint, added only when supplied (keeps
+# the call compatible with a pecotmr that predates the argument).
+if (!is.null(joint_spec))       tw_args$jointSpecification <- joint_spec
+if (!is.null(twas_weights_obj)) tw_args$twasWeights        <- twas_weights_obj
 res <- if (has_region) {
   do.call(twasWeightsPipeline,
-          c(list(qd), tw_args, list(region = parse_region(argv$region))))
+          c(list(qd), tw_args, list(region = argv$region)))
 } else {
   do.call(twasWeightsPipeline,
           c(list(qd), tw_args, list(traitId = argv$gene_id)))

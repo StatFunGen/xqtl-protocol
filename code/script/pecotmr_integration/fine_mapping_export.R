@@ -26,51 +26,50 @@ parser <- add_argument(parser, "--input",
                        help = "One or more FineMappingResult RDS paths",
                        type = "character", nargs = Inf)
 parser <- add_argument(parser, "--view",
-                       help = "Which view to export: topLoci | cs | pip | marginals",
+                       help = "topLoci | cs | cs_summary | pip | marginals | credible_band | affected_regions",
                        type = "character", default = "topLoci")
 parser <- add_argument(parser, "--signal-cutoff",
                        help = "PIP cutoff for topLoci/pip exports",
                        type = "numeric", default = 0)
+parser <- add_argument(parser, "--min-purity",
+                       help = "Optional CS purity (min.abs.corr) cutoff for topLoci/cs (independent of coverage/pip); omit = no filter",
+                       type = "numeric", default = NA)
 parser <- add_argument(parser, "--output",
                        help = "Output TSV path", type = "character")
 argv <- parse_args(parser)
 
-view <- match.arg(argv$view, c("topLoci", "cs", "pip", "marginals"))
+view <- match.arg(argv$view, c("topLoci", "cs", "cs_summary", "pip", "marginals",
+                               "lbf", "credible_band", "affected_regions"))
 inputs <- as.character(argv$input)
 if (length(inputs) == 0L)
   stop("--input requires at least one RDS path.")
+minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
 
-# Pull the row's identifier columns regardless of QTL vs GWAS shape; the
-# union of slots produces a NA-padded data frame the downstream rbind can
-# concatenate across mixed inputs.
-.idCols <- function(fmr, i) {
-  list(
-    study     = as.character(fmr$study)[[i]],
-    context   = if ("context"   %in% names(fmr)) as.character(fmr$context)[[i]]   else NA_character_,
-    trait     = if ("trait"     %in% names(fmr)) as.character(fmr$trait)[[i]]     else NA_character_,
-    region_id = if ("region_id" %in% names(fmr)) as.character(fmr$region_id)[[i]] else NA_character_,
-    method    = as.character(fmr$method)[[i]],
-    source    = basename(attr(fmr, ".source", exact = TRUE) %||% ""))
-}
-`%||%` <- function(a, b) if (is.null(a)) b else a
-
-.extract <- function(entry, view, cutoff) {
-  if (view == "topLoci") {
-    df <- as.data.frame(getTopLoci(entry, signalCutoff = cutoff))
-  } else if (view == "cs") {
-    df <- as.data.frame(getCs(entry))
-  } else if (view == "pip") {
-    pip <- as.numeric(getPip(entry))
-    ids <- as.character(getVariantIds(entry))
-    df  <- data.frame(variant_id = ids, pip = pip,
-                       stringsAsFactors = FALSE)
-    if (cutoff > 0) df <- df[df$pip > cutoff, , drop = FALSE]
-  } else {  # marginals
-    df <- as.data.frame(getMarginalEffects(entry))
-  }
-  if (nrow(df) == 0L) return(NULL)
-  df
-}
+# Each view maps to a collection-level pecotmr accessor that already aggregates
+# every entry into one tidy table carrying the row identity columns (study /
+# context / trait / region_id / method) alongside the per-variant columns. The
+# wrapper only tags each row with its source RDS and concatenates across inputs.
+view_fn <- switch(view,
+  topLoci   = function(fmr)
+    as.data.frame(getTopLoci(fmr, signalCutoff = argv$signal_cutoff,
+                             minPurity = minPurity)),
+  cs        = function(fmr) as.data.frame(getCs(fmr, minPurity = minPurity)),
+  # cs_summary: one row per credible set (size / purity / V / logBF / lead).
+  cs_summary = function(fmr) as.data.frame(getCredibleSetSummary(fmr)),
+  # lbf: wide variant x effect log Bayes factor matrix (lbf_L1..lbf_LL).
+  lbf       = function(fmr) as.data.frame(getLbf(fmr)),
+  marginals = function(fmr) as.data.frame(getMarginalEffects(fmr)),
+  # fSuSiE functional views (require untrimmed fits; degrade to empty otherwise).
+  # credible_band = fitted effect curve + band; affected_regions = GRanges of
+  # the intervals where a CS's band excludes zero (coerced to a flat table).
+  credible_band    = function(fmr) as.data.frame(fsusieCredibleBand(fmr)),
+  affected_regions = function(fmr) as.data.frame(fsusieAffectedRegions(fmr)),
+  # pip view: the (identity + variant_id + pip) projection of topLoci.
+  pip       = function(fmr) {
+    tl <- as.data.frame(getTopLoci(fmr, signalCutoff = argv$signal_cutoff))
+    tl[, intersect(c("study", "context", "trait", "region_id", "method",
+                     "variant_id", "pip"), names(tl)), drop = FALSE]
+  })
 
 pieces <- list()
 for (path in inputs) {
@@ -79,21 +78,14 @@ for (path in inputs) {
     warning("Skipping non-FineMappingResult input: ", path)
     next
   }
-  attr(fmr, ".source") <- path
-  for (i in seq_len(nrow(fmr))) {
-    entry <- fmr$entry[[i]]
-    inner <- tryCatch(.extract(entry, view, argv$signal_cutoff),
-                      error = function(e) {
-                        message("Entry ", i, " of ", basename(path),
-                                ": ", conditionMessage(e))
-                        NULL
-                      })
-    if (is.null(inner)) next
-    ids <- .idCols(fmr, i)
-    ids$source <- basename(path)
-    for (k in names(ids)) inner[[k]] <- ids[[k]]
-    pieces[[length(pieces) + 1L]] <- inner
-  }
+  df <- tryCatch(view_fn(fmr),
+                 error = function(e) {
+                   message(basename(path), ": ", conditionMessage(e))
+                   NULL
+                 })
+  if (is.null(df) || nrow(df) == 0L) next
+  df$source <- basename(path)
+  pieces[[length(pieces) + 1L]] <- df
 }
 if (length(pieces) == 0L) {
   message("No rows produced; writing an empty TSV with the id-column ",

@@ -42,9 +42,6 @@
 suppressPackageStartupMessages({
   library(argparser)
   library(pecotmr)
-  library(SummarizedExperiment)
-  library(GenomicRanges)
-  library(S4Vectors)
 })
 
 parser <- arg_parser("Build a pecotmr QtlDataset for one study and save to RDS")
@@ -89,159 +86,56 @@ parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
-# ----- File readers ---------------------------------------------------------
-read_pheno_bed <- function(path) {
-  read.table(gzfile(path), header = TRUE, sep = "\t",
-             stringsAsFactors = FALSE, check.names = FALSE,
-             comment.char = "")
-}
-
-# Read a covariate TSV. Default expects samples-as-rows + PC columns.
-# With transpose = TRUE, expects QTLtools-format input (covariates as rows,
-# samples as columns) and transposes to samples-as-rows.
-read_pcs_tsv <- function(path, transpose = FALSE) {
-  raw <- read.table(path, header = TRUE, sep = "\t", row.names = 1,
-                    check.names = FALSE, comment.char = "")
-  m <- as.matrix(raw)
-  if (transpose) m <- t(m)
-  m
-}
-
-# ----- Manifest ingestion ---------------------------------------------------
-manifest <- read.table(argv$phenotype_manifest, header = TRUE, sep = "\t",
-                       stringsAsFactors = FALSE, check.names = FALSE,
-                       comment.char = "")
-required <- c("ID", "path", "cond")
-missingCols <- setdiff(required, names(manifest))
-if (length(missingCols) > 0L) {
-  stop("--phenotype-manifest missing required column(s): ",
-       paste(missingCols, collapse = ", "))
-}
-has_cov_col <- "cov_path" %in% names(manifest)
-
-# Resolve manifest-relative paths against the manifest's own directory.
-manifest_dir <- dirname(normalizePath(argv$phenotype_manifest))
-resolve_path <- function(p) {
-  if (is.na(p) || !nzchar(p)) return("")
-  if (startsWith(p, "/")) return(p)
-  file.path(manifest_dir, p)
-}
-
-# Collapse to one (phenotype, cov_path) pair per context. Multiple rows per
-# context (different traits) must agree on the file paths.
-contexts <- unique(manifest$cond)
-phenotype_files <- list()
-pheno_cov_files <- list()
-for (cx in contexts) {
-  sub <- manifest[manifest$cond == cx, , drop = FALSE]
-  paths_here <- unique(sub$path)
-  if (length(paths_here) > 1L) {
-    stop(sprintf(
-      "Context '%s' references multiple phenotype paths: %s.",
-      cx, paste(paths_here, collapse = ", ")))
-  }
-  phenotype_files[[cx]] <- paths_here[[1L]]
-  if (has_cov_col) {
-    covs_here <- unique(sub$cov_path[!is.na(sub$cov_path) &
-                                      nzchar(sub$cov_path)])
-    if (length(covs_here) > 1L) {
-      stop(sprintf(
-        "Context '%s' references multiple cov_path values: %s.",
-        cx, paste(covs_here, collapse = ", ")))
-    }
-    pheno_cov_files[[cx]] <- if (length(covs_here) == 1L) covs_here[[1L]]
-                              else ""
-  } else {
-    pheno_cov_files[[cx]] <- ""
-  }
-}
-
-# ----- Per-context SummarizedExperiment builder -----------------------------
-build_se <- function(bed_path, pcov_path, transpose_cov) {
-  bed <- read_pheno_bed(bed_path)
-  chr_col   <- intersect(c("#chr", "chrom", "chr"),    names(bed))[1L]
-  start_col <- intersect(c("start", "Start"),          names(bed))[1L]
-  end_col   <- intersect(c("end", "End"),              names(bed))[1L]
-  gene_col  <- intersect(c("gene_id", "ID",
-                           "phenotype_id"),            names(bed))[1L]
-  if (any(is.na(c(chr_col, start_col, end_col, gene_col))))
-    stop("Missing one of chrom/start/end/gene_id columns in: ", bed_path)
-
-  meta <- bed[, c(chr_col, start_col, end_col, gene_col)]
-  names(meta) <- c("chrom", "start", "end", "gene_id")
-  sample_cols <- setdiff(names(bed),
-    c("#chr", "chrom", "chr", "start", "Start", "end", "End",
-      "gene_id", "ID", "phenotype_id", "strand", "Strand"))
-
-  expr <- as.matrix(bed[, sample_cols, drop = FALSE])
-  storage.mode(expr) <- "double"
-  rownames(expr) <- meta$gene_id
-
-  rr <- GRanges(seqnames = meta$chrom,
-                ranges = IRanges(start = meta$start + 1L, end = meta$end))
-  names(rr) <- meta$gene_id
-
-  cd <- if (nzchar(pcov_path)) {
-    pcov <- read_pcs_tsv(pcov_path, transpose = transpose_cov)
-    common <- intersect(rownames(pcov), colnames(expr))
-    if (length(common) == 0L)
-      stop("No shared samples between phenotype and phenotype-covariate: ",
-           bed_path)
-    expr <- expr[, common, drop = FALSE]
-    DataFrame(pcov[common, , drop = FALSE], row.names = common)
-  } else {
-    DataFrame(row.names = colnames(expr))
-  }
-  SummarizedExperiment(assays   = list(expression = expr),
-                       rowRanges = rr,
-                       colData   = cd)
-}
-
-phenotypes <- setNames(
-  lapply(contexts, function(cx)
-    build_se(resolve_path(phenotype_files[[cx]]),
-             resolve_path(pheno_cov_files[[cx]]),
-             argv$transpose_covariates)),
-  contexts)
-
-# ----- Genotype handle (PLINK1) + uniform genotype covariates ---------------
-geno_handle <- GenotypeHandle(plink1Prefix = argv$genotype_prefix)
-
-geno_cov_path <- argv$genotype_covariates
-has_geno_cov <- nzchar(geno_cov_path) && geno_cov_path != "." &&
-                file.exists(geno_cov_path)
-genoCov <- if (has_geno_cov) {
-  read_pcs_tsv(geno_cov_path, transpose = argv$transpose_covariates)
-} else {
-  matrix(numeric(0), nrow = 0, ncol = 0)
-}
-
-# ----- Construct + save ------------------------------------------------------
+# Read a whitespace-delimited ID file into a unique character vector; empty
+# (or "." / missing) yields character(0), i.e. "keep all" in QtlDataset().
 read_id_file <- function(p) if (nzchar(p) && p != "." && file.exists(p))
   unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else character(0)
 keep_samples  <- read_id_file(argv$keep_samples)
 keep_variants <- read_id_file(argv$keep_variants)
 
-qd_args <- list(
-  study              = argv$study,
-  genotypes          = geno_handle,
-  phenotypes         = phenotypes,
-  genotypeCovariates = genoCov,
-  mafCutoff          = argv$maf_cutoff,
-  macCutoff          = argv$mac_cutoff,
-  xvarCutoff         = argv$xvar_cutoff,
-  imissCutoff        = argv$imiss_cutoff,
-  keepIndel          = !isTRUE(argv$drop_indel),
-  scaleResiduals     = !isTRUE(argv$no_scale_residuals))
-# keepSamples / keepVariants only when a file was given (else the constructor
-# default = keep all).
-if (length(keep_samples)  > 0L) qd_args$keepSamples  <- keep_samples
-if (length(keep_variants) > 0L) qd_args$keepVariants <- keep_variants
-qd <- do.call(QtlDataset, qd_args)
+# Absolutise a (possibly non-existent, e.g. a PLINK prefix) path against CWD.
+# normalizePath() alone won't absolutise a path with no file on disk, so
+# resolve the (existing) parent directory and re-attach the basename.
+abs_path <- function(p) file.path(normalizePath(dirname(p), mustWork = FALSE),
+                                  basename(p))
+
+# Genotype covariates: pass the path through to the loader (which reads and,
+# when --transpose-covariates is set, transposes it); NULL when unset.
+# Absolutise so the loader does not re-resolve it against the manifest's own
+# directory (the --genotype-* args are CWD-relative, not manifest-relative).
+geno_cov_path <- argv$genotype_covariates
+genotype_covariates <- if (nzchar(geno_cov_path) && geno_cov_path != "." &&
+                           file.exists(geno_cov_path))
+  abs_path(geno_cov_path) else NULL
+
+# Absolutise the genotype prefix for the same reason (the loader resolves a
+# character genotype spec against the manifest directory).
+genotype_prefix <- abs_path(argv$genotype_prefix)
+
+# All manifest ingestion, per-context phenotype/covariate assembly, genotype
+# handling, and QtlDataset construction now live in pecotmr's manifest loader.
+# The manifest's cond/path/cov_path columns are recognised via the loader's
+# snake_case aliases (cond -> context, path -> phenotypePath,
+# cov_path -> covariatePath).
+qd <- loadQtlDatasetFromManifest(
+  manifest            = argv$phenotype_manifest,
+  study               = argv$study,
+  genotypes           = genotype_prefix,
+  genotypeCovariates  = genotype_covariates,
+  scaleResiduals      = !isTRUE(argv$no_scale_residuals),
+  mafCutoff           = argv$maf_cutoff,
+  macCutoff           = argv$mac_cutoff,
+  xvarCutoff          = argv$xvar_cutoff,
+  imissCutoff         = argv$imiss_cutoff,
+  keepSamples         = keep_samples,
+  keepVariants        = keep_variants,
+  keepIndel           = !isTRUE(argv$drop_indel),
+  transposeCovariates = isTRUE(argv$transpose_covariates))
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(qd, argv$output)
+contexts <- getContexts(qd)
 cat(sprintf("Wrote QtlDataset for study '%s' (%d contexts: %s) to %s\n",
-            argv$study, length(phenotypes),
-            paste(names(phenotypes), collapse = ", "),
+            argv$study, length(contexts),
+            paste(contexts, collapse = ", "),
             argv$output))

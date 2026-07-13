@@ -108,6 +108,7 @@ contexts <- character(0)
 traits   <- character(0)
 methods  <- character(0)
 entries  <- list()
+regions  <- list()
 
 # Legacy keys: "<molecular_id>|<type>_<context>"; values are a list with
 # wgt (variants × 1 matrix), molecular_id, type, context, etc.
@@ -133,11 +134,28 @@ for (gene_key in names(legacy)) {
     # sqrt(variance)); skip the sqrt(variance) step downstream.
     standardized  = TRUE)
 
+  # Region provenance = the gene's home LD-block anchor (chrom + p0/p1 from the
+  # legacy entry, else the span of the weight variants). assembleCtwasInputs
+  # places each gene into its block from start(region) (cTWAS's p0 rule); without
+  # it, internal LD-block placement errors.
+  gchrom <- paste0("chr", sub("^chr", "", as.character(
+    entry_obj$chrom %||% sub(":.*$", "", vids[[1L]]))))
+  gp0 <- suppressWarnings(as.integer(entry_obj$p0))
+  gp1 <- suppressWarnings(as.integer(entry_obj$p1))
+  if (is.na(gp0) || is.na(gp1)) {
+    pos <- suppressWarnings(as.integer(sub("^[^:]+:([0-9]+):.*$", "\\1", vids)))
+    pos <- pos[!is.na(pos)]
+    gp0 <- if (length(pos)) min(pos) else 1L
+    gp1 <- if (length(pos)) max(pos) else gp0
+  }
+
   studies  <- c(studies,  argv$study)
   contexts <- c(contexts, ctx_label)
   traits   <- c(traits,   trait)
   methods  <- c(methods,  argv$method)
   entries  <- c(entries,  list(tw_entry))
+  regions  <- c(regions,  list(GenomicRanges::GRanges(
+    gchrom, IRanges::IRanges(gp0, gp1))))
 }
 
 if (length(entries) == 0L)
@@ -149,6 +167,7 @@ tw <- TwasWeights(
   trait    = traits,
   method   = methods,
   entry    = entries,
+  region   = do.call(c, regions),
   ldSketch = ld_handle)
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)

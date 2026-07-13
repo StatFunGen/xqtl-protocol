@@ -3,15 +3,14 @@
 #
 # Per-region MASH input builder. Reads one or more multi-context tensorqtl
 # summary-statistics files (one per condition / trait combination) for a
-# single LD-block region and writes a per-region RDS in the legacy "dat"
-# shape that mash.R consumes:
+# single region, inner-joins them on variant_id into a variants x conditions
+# z-matrix, and writes a per-region multi-context QtlSumStats RDS (each
+# context = one column) via pecotmr::qtlSumStatsFromZMatrix.
 #
-#   list(<region_id> = list(z = <n_variants x n_conditions matrix>))
-#
-# The downstream mash.R worker concatenates per-region RDSes, partitions
-# into strong / random / null subsets via pecotmr::mashRandNullSample,
-# wraps each partition as a QtlSumStats, runs summaryStatsQc, and calls
-# pecotmr::mashPipeline.
+# The downstream mash_preprocessing.R worker reads the per-region QtlSumStats
+# RDSes and calls pecotmr::mashInput, which selects the strong / random / null
+# partitions and assembles the mash_input.rds. (ldSketch stays NULL -- mash
+# operates across conditions per variant and needs no LD reference.)
 #
 # Inputs:
 #   --tensorqtl-paths file1 [file2 ...]   Per-condition tensorqtl
@@ -21,13 +20,16 @@
 #                                          either `z` or `tstat`.
 #   --conditions c1,c2,...                Condition labels, same order
 #                                          and length as --tensorqtl-paths.
-#   --region chr:start-end                Genomic interval label (used
-#                                          as the region_id key in the
-#                                          output RDS).
-#   --output <RDS>                        Output path.
+#   --region chr:start-end                Genomic interval label (recorded
+#                                          in the log; the QtlSumStats keys
+#                                          variants by their ids).
+#   --study                               Study label for the QtlSumStats.
+#                                          Default "mash".
+#   --output <RDS>                        Output QtlSumStats RDS path.
 
 suppressPackageStartupMessages({
   library(argparser)
+  library(pecotmr)
 })
 
 parser <- arg_parser("Build a per-region MASH input RDS from per-condition tensorqtl outputs")
@@ -38,10 +40,13 @@ parser <- add_argument(parser, "--conditions",
                        help = "Comma-separated condition labels (one per path)",
                        type = "character")
 parser <- add_argument(parser, "--region",
-                       help = "Genomic interval as chr:start-end (used as region_id)",
+                       help = "Genomic interval as chr:start-end (log label)",
                        type = "character")
+parser <- add_argument(parser, "--study",
+                       help = "Study label for the QtlSumStats", type = "character",
+                       default = "mash")
 parser <- add_argument(parser, "--output",
-                       help = "Output RDS path", type = "character")
+                       help = "Output QtlSumStats RDS path", type = "character")
 argv <- parse_args(parser)
 
 paths      <- as.character(argv$tensorqtl_paths)
@@ -92,10 +97,13 @@ if (nrow(zMat) == 0L)
   stop("No variants left after dropping rows with NA in any condition for region ",
        argv$region, ".")
 
-out <- list()
-out[[argv$region]] <- list(z = zMat, region = argv$region)
+# Wrap the region's z-matrix as a multi-context QtlSumStats (one column per
+# condition). qtlSumStatsFromZMatrix stamps a non-empty qcInfo, so mashInput()
+# accepts it directly; ldSketch stays NULL (mash needs no LD reference).
+qss <- qtlSumStatsFromZMatrix(zMat, study = argv$study, context = conditions,
+                              trait = "mash")
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-saveRDS(out, argv$output, compress = "xz")
-cat(sprintf("Wrote MASH input for region %s: %d variants x %d conditions to %s\n",
+saveRDS(qss, argv$output, compress = "xz")
+cat(sprintf("Wrote QtlSumStats for region %s: %d variants x %d conditions to %s\n",
             argv$region, nrow(zMat), ncol(zMat), argv$output))

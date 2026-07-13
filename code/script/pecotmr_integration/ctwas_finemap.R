@@ -25,8 +25,12 @@
 #   --merge-filter-cs      Flag: require a boundary gene to be in a credible
 #                          set to be selected for merging
 #   --max-snp              Per-merged-region SNP cap (default Inf)
+#   --keep-snps            Flag: retain the SNP background as a dedicated
+#                          study=context="SNP" row in the CtwasResult
 #   --ncore                Pass-through (default 1)
-#   --output               Output RDS path (ctwas_sumstats-shape result)
+#   --output               Output RDS path (a CtwasResult: one row per
+#                          (gwasStudy, study, context, method), carrying the
+#                          per-gene fine-mapping posteriors + susie alphas)
 
 suppressPackageStartupMessages({
   library(argparser)
@@ -61,6 +65,9 @@ parser <- add_argument(parser, "--merge-filter-cs",
 parser <- add_argument(parser, "--max-snp",
                        help = "Per-merged-region SNP cap",
                        type = "numeric", default = Inf)
+parser <- add_argument(parser, "--keep-snps",
+                       help = "Flag: retain the SNP background as a dedicated CtwasResult row",
+                       flag = TRUE)
 parser <- add_argument(parser, "--ncore",
                        help = "Number of cores",
                        type = "integer", default = 1L)
@@ -106,14 +113,19 @@ if (argv$merge_regions) {
   cat("Applied boundary-region merging (merge_regions).\n")
 }
 
+# Structure the granular result as a CtwasResult (one row per
+# (gwasStudy, study, context, method); GWAS study read from z_snp, method from
+# the gene ids). This is the per-method deliverable downstream consumes.
+result <- asCtwasResult(final, keepSnps = argv$keep_snps)
+
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-saveRDS(final, argv$output)
-cat(sprintf("Wrote finemapCtwasRegions result to %s\n", argv$output))
-fm <- final$finemap_res
+saveRDS(result, argv$output)
+cat(sprintf("Wrote CtwasResult (%d row(s)) to %s\n", nrow(result), argv$output))
+fm <- getFinemap(result)
 if (!is.null(fm) && nrow(fm) > 0L) {
   g <- fm[fm$type != "SNP", , drop = FALSE]
-  cat(sprintf("  finemap_res rows: %d (%d gene-level, %d SNP-level)\n",
+  cat(sprintf("  fine-mapped rows: %d (%d gene-level, %d SNP-level)\n",
               nrow(fm), nrow(g), nrow(fm) - nrow(g)))
 } else {
-  cat("  finemap_res: NULL (no regions surviving filter_L >= 1)\n")
+  cat("  no fine-mapped genes (no regions surviving filter_L >= 1)\n")
 }

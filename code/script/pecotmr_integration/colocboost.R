@@ -42,8 +42,6 @@
 suppressPackageStartupMessages({
   library(argparser)
   library(pecotmr)
-  library(GenomicRanges)
-  library(IRanges)
 })
 
 parser <- arg_parser("Per-gene or per-region colocboost over a pre-built QtlDataset")
@@ -92,15 +90,6 @@ parse_pip_cutoff <- function(s) {
 }
 pip_cutoff_to_skip <- parse_pip_cutoff(argv$pip_cutoff_to_skip)
 
-parse_region <- function(s) {
-  m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
-  if (length(m) != 4L)
-    stop("--region must be in chr:start-end format (got: ", s, ")")
-  GRanges(seqnames = m[[2L]],
-          ranges   = IRanges(start = as.integer(m[[3L]]),
-                             end   = as.integer(m[[4L]])))
-}
-
 # Mode validation
 has_gene   <- nzchar(argv$gene_id)
 has_region <- nzchar(argv$region)
@@ -128,7 +117,7 @@ res <- if (has_region) {
   colocboostPipeline(
     qd,
     gwasSumStats    = gss,
-    region          = parse_region(argv$region),
+    region          = asGranges(argv$region),
     cisWindow       = argv$cis_window,
     xqtlColoc       = xqtl_coloc,
     jointGwas       = joint_gwas,

@@ -57,11 +57,7 @@
 suppressPackageStartupMessages({
   library(argparser)
   library(pecotmr)
-  library(GenomicRanges)
-  library(IRanges)
-  library(S4Vectors)
   library(jsonlite)
-  library(yaml)
 })
 
 parser <- arg_parser("Build a per-region (multi-study) GwasSumStats RDS")
@@ -74,9 +70,17 @@ parser <- add_argument(parser, "--gwas-tsv",
 parser <- add_argument(parser, "--ld-block",
                        help = "Analysis region as chr:start-end",
                        type = "character")
+parser <- add_argument(parser, "--ld-sketch",
+                       help = paste("LD reference panel (ldSketch): a genome-wide genotype",
+                                    "prefix/path (.bed/.pgen/.vcf[.gz]/.bcf/.gds), OR a",
+                                    "per-chromosome mapping file with a chromosome column",
+                                    "and a 'path' column - one genotype payload per",
+                                    "chromosome (other columns, e.g. start/end, are",
+                                    "ignored). No sub-chromosomal block selection."),
+                       type = "character", default = "")
 parser <- add_argument(parser, "--ld-meta",
-                       help = "Path to LD-meta TSV",
-                       type = "character")
+                       help = "Deprecated alias for --ld-sketch (kept for backward compatibility).",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--genome",
                        help = "Genome build label",
                        type = "character", default = "GRCh38")
@@ -195,161 +199,89 @@ if (length(skip_region_vec) == 0L) skip_region_vec <- NULL
 
 qc_method <- match.arg(argv$qc_method, c("none", "slalom", "dentist"))
 
-parse_region <- function(s) {
-  m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
-  if (length(m) != 4L)
-    stop("--ld-block must be in chr:start-end format (got: ", s, ")")
-  list(chr = m[[2L]], start = as.integer(m[[3L]]), end = as.integer(m[[4L]]))
+# ----- Resolve the LD sketch spec (genome-wide OR per-chromosome) ------------
+# LD sketches are never region/block-sharded: they are either a single
+# genome-wide genotype file/prefix or one genotype file per chromosome. The raw
+# --ld-sketch spec is handed straight to the loader's `ldSketch`, which sniffs a
+# genotype path/prefix (-> genome-wide handle) versus a per-chromosome mapping
+# file (-> genoMeta handle). In the mapping file the chromosome and path columns
+# are matched by NAME (#chr/#chrom/chr/chrom + path/payload/prefix/genotype), so
+# extra columns (e.g. legacy start/end) are tolerated, and each chromosome must
+# map to exactly one payload (no sub-chromosomal blocks).
+# The same ld-meta table may ALSO be cTWAS's LD-block grid (one row per block,
+# many rows sharing a chromosome's single genotype panel). The sketch only cares
+# about the genotype reference, so collapse a block-sharded table to its unique
+# per-chromosome (chrom -> panel) mapping before handing it to the loader: the
+# loader stays strict (one payload per chromosome) and the notebook can pass the
+# block grid to both the block enumerator and the sketch with no separate
+# fixture. A genotype path/prefix, or a table that is already one row per
+# chromosome, is returned unchanged (the latter as an equivalent named vector).
+.collapseSketchMeta <- function(spec) {
+  if (!(is.character(spec) && length(spec) == 1L)) return(spec)
+  lower <- tolower(spec)
+  if (grepl("\\.(pgen|bed|vcf(\\.b?gz)?|bcf|gds)$", lower) ||
+      file.exists(paste0(spec, ".pgen")) || file.exists(paste0(spec, ".bed")))
+    return(spec)                                    # genotype file/prefix
+  if (!file.exists(spec) || dir.exists(spec)) return(spec)
+  meta <- tryCatch(
+    read.table(spec, header = TRUE, sep = "", comment.char = "",
+               stringsAsFactors = FALSE, check.names = FALSE),
+    error = function(e) NULL)
+  if (is.null(meta) || ncol(meta) < 2L) return(spec)
+  chromCol <- intersect(c("#chr", "#chrom", "chr", "chrom"), names(meta))[1L]
+  pathCol  <- intersect(c("path", "payload", "prefix", "genotype"), names(meta))[1L]
+  if (is.na(chromCol) || is.na(pathCol)) return(spec)   # not a chrom->path table
+  base  <- dirname(normalizePath(spec))
+  chrom <- as.character(meta[[chromCol]])
+  pth   <- as.character(meta[[pathCol]])
+  pth <- vapply(pth, function(p)
+    if (grepl("^(/|[A-Za-z]:)", p) || file.exists(p)) p else file.path(base, p),
+    character(1), USE.NAMES = FALSE)
+  keep  <- !duplicated(paste(chrom, pth, sep = "\t"))
+  chrom <- chrom[keep]; pth <- pth[keep]
+  if (anyDuplicated(chrom))
+    stop("--ld-sketch '", spec, "': chromosome(s) ",
+         paste(unique(chrom[duplicated(chrom)]), collapse = ", "),
+         " map to multiple genotype payloads; each chromosome must reference ",
+         "exactly one LD panel.")
+  # A single genotype panel (one chromosome / one shared payload) is returned as
+  # the bare prefix so the GenotypeHandle keeps a real on-disk @path -- cTWAS's
+  # .ctwasLdPanelKey resolves the LD file from it. Only a genuinely multi-panel
+  # per-chromosome reference needs the named chrom->path vector.
+  if (length(pth) == 1L) return(unname(pth))
+  stats::setNames(pth, chrom)
 }
+ld_sketch_spec <- if (nzchar(argv$ld_sketch)) argv$ld_sketch else argv$ld_meta
+if (!nzchar(ld_sketch_spec))
+  stop("--ld-sketch is required (the LD reference panel for the ldSketch).")
+ld_sketch_spec <- .collapseSketchMeta(ld_sketch_spec)
 
-block <- parse_region(argv$ld_block)
+# ----- Build the GwasSumStats via pecotmr's manifest loader -----------------
+# Assemble an in-memory one-row-per-study manifest and hand it to
+# loadGwasSumStatsFromManifest(), which reads each sumstats file, resolves the
+# columns (its built-in aliases match the hardcoded set this script used, plus
+# per-study columnMapping YAML), reconciles chr-prefix conventions, restricts
+# to `region`, and constructs the GwasSumStats. The raw LD-sketch spec is passed
+# through as `ldSketch` (a genotype path/prefix -> genome-wide handle, or a
+# per-chromosome mapping file -> genoMeta handle; resolved inside the loader).
+#
+# NOTE: region restriction of delimited-text sumstats now requires a
+# `<path>.tbi` tabix sidecar; a non-indexed TSV is read whole (with a warning).
+# The pipeline's GWAS sumstats are bgzipped + tabix-indexed.
+manifest_df <- data.frame(
+  study        = studies,
+  sumStatsPath = gwasTsvs,
+  stringsAsFactors = FALSE)
+if (any(nzchar(mappings)))
+  manifest_df$columnMapping <- ifelse(nzchar(mappings), mappings, NA_character_)
+if (!is.null(nCase))    manifest_df$nCase    <- nCase
+if (!is.null(nControl)) manifest_df$nControl <- nControl
 
-# ----- Build the LD-reference GenotypeHandle spanning the region ------------
-# Resolve every LD-meta row overlapping the region and de-duplicate the
-# genotype payloads. The one-file-per-chromosome layout (all overlapping
-# rows share a prefix) gives a single handle that already covers the region;
-# pecotmr's GenotypeHandle(ldMeta=…, region=…) round-trips the meta path as
-# the data path (an upstream bug) and rejects multi-row regions, so we read
-# the meta TSV ourselves and point a constructor at the resolved payload.
-buildLdHandle <- function(ld_meta, block) {
-  ld_meta_dir <- dirname(normalizePath(ld_meta))
-  ld_meta_df <- read.table(ld_meta, header = TRUE, sep = "\t",
-                           stringsAsFactors = FALSE, check.names = FALSE,
-                           comment.char = "")
-  ld_chr_col <- intersect(c("#chr", "#chrom", "chr", "chrom"),
-                          names(ld_meta_df))[1L]
-  if (is.na(ld_chr_col))
-    stop("Could not find a chromosome column in ", ld_meta,
-         " (expected one of '#chr' / '#chrom' / 'chr' / 'chrom'); got: ",
-         paste(names(ld_meta_df), collapse = ", "))
-  ld_chr_norm    <- sub("^chr", "", as.character(ld_meta_df[[ld_chr_col]]),
-                        ignore.case = TRUE)
-  block_chr_norm <- sub("^chr", "", block$chr, ignore.case = TRUE)
-  ld_start <- suppressWarnings(as.integer(ld_meta_df$start))
-  ld_end   <- suppressWarnings(as.integer(ld_meta_df$end))
-  # `start = 0, end = 0` is the meta convention for "whole chromosome".
-  whole_chrom <- !is.na(ld_start) & !is.na(ld_end) &
-                 ld_start == 0L & ld_end == 0L
-  # Strict overlap (no shared-endpoint match) so adjacent blocks that abut
-  # the region are not pulled in.
-  overlaps <- which(ld_chr_norm == block_chr_norm &
-                    (whole_chrom |
-                     (ld_start < block$end & ld_end > block$start)))
-  if (length(overlaps) == 0L)
-    stop("No LD-meta row overlaps ", argv$ld_block, " in ", ld_meta, ".")
-  ld_prefixes <- unique(ld_meta_df$path[overlaps])
-  if (length(ld_prefixes) > 1L)
-    stop("Region ", argv$ld_block, " overlaps LD-meta rows pointing at ",
-         length(ld_prefixes), " distinct genotype payloads (",
-         paste(ld_prefixes, collapse = ", "), "). Multi-file LD merge is ",
-         "not supported here; restrict the region to a single payload.")
-  ld_prefix <- ld_prefixes[[1L]]
-  if (!startsWith(ld_prefix, "/"))
-    ld_prefix <- file.path(ld_meta_dir, ld_prefix)
-
-  # Detect data format from companion file extensions.
-  if (file.exists(paste0(ld_prefix, ".pgen"))) {
-    GenotypeHandle(plink2Prefix = ld_prefix)
-  } else if (file.exists(paste0(ld_prefix, ".bed"))) {
-    GenotypeHandle(plink1Prefix = ld_prefix)
-  } else if (file.exists(paste0(ld_prefix, ".gds"))) {
-    GenotypeHandle(path = paste0(ld_prefix, ".gds"))
-  } else if (file.exists(paste0(ld_prefix, ".vcf.gz"))) {
-    GenotypeHandle(path = paste0(ld_prefix, ".vcf.gz"))
-  } else {
-    stop("Could not find a recognised genotype payload at LD-meta prefix: ",
-         ld_prefix, " (looked for .pgen / .bed / .gds / .vcf.gz)")
-  }
-}
-
-ld_handle <- buildLdHandle(argv$ld_meta, block)
-
-# ----- Build one GwasSumStats entry GRanges per study ----------------------
-buildEntryGr <- function(gwas_tsv, mapping_path, block) {
-  column_mapping <- if (nzchar(mapping_path) && mapping_path != ".") {
-    if (!file.exists(mapping_path))
-      stop("--column-mapping file not found: ", mapping_path)
-    yaml::read_yaml(mapping_path)
-  } else {
-    NULL
-  }
-
-  gwas <- read.table(if (grepl("\\.gz$", gwas_tsv)) gzfile(gwas_tsv)
-                     else gwas_tsv,
-                     header = TRUE, sep = "\t",
-                     stringsAsFactors = FALSE, check.names = FALSE,
-                     comment.char = "")
-
-  pick <- function(opts, where) intersect(opts, names(where))[1L]
-  resolve_col <- function(std, fallback) {
-    if (!is.null(column_mapping) && !is.null(column_mapping[[std]])) {
-      named <- column_mapping[[std]]
-      if (!(named %in% names(gwas)))
-        stop("--column-mapping['", std, "'] = '", named,
-             "' is not a column in ", gwas_tsv)
-      return(named)
-    }
-    pick(fallback, gwas)
-  }
-  chr_col <- resolve_col("chrom",      c("#chrom", "chrom", "chr"))
-  pos_col <- resolve_col("pos",        c("pos", "position", "BP"))
-  snp_col <- resolve_col("variant_id", c("variant_id", "SNP", "rsid"))
-  a1_col  <- resolve_col("A1",         c("A1", "a1"))
-  a2_col  <- resolve_col("A2",         c("A2", "a2"))
-  z_col   <- resolve_col("z",          c("z", "Z"))
-  n_col   <- resolve_col("n_sample",   c("n_sample", "N", "n"))
-
-  if (any(is.na(c(chr_col, pos_col, snp_col, a1_col, a2_col, z_col, n_col))))
-    stop("--gwas-tsv missing one of required columns ",
-         "(chrom/pos/variant_id/A1/A2/z/n_sample) in: ", gwas_tsv,
-         if (!is.null(column_mapping))
-           " — check that every required key is present in --column-mapping"
-         else "")
-
-  # Normalise chromosome label to match the region's.
-  chrom_vals <- as.character(gwas[[chr_col]])
-  if (!startsWith(chrom_vals[[1L]], "chr"))
-    chrom_vals <- paste0("chr", chrom_vals)
-  pos_vals <- as.integer(gwas[[pos_col]])
-  keep <- chrom_vals == block$chr & pos_vals >= block$start &
-          pos_vals <= block$end
-  sub <- gwas[keep, , drop = FALSE]
-  if (nrow(sub) == 0L)
-    stop("No GWAS variants from ", gwas_tsv, " fall in region ",
-         argv$ld_block, " (after chromosome normalisation).")
-
-  entry_gr <- GRanges(
-    seqnames = chrom_vals[keep],
-    ranges   = IRanges(start = pos_vals[keep], width = 1L))
-  mcols(entry_gr) <- DataFrame(
-    SNP = as.character(sub[[snp_col]]),
-    A1  = as.character(sub[[a1_col]]),
-    A2  = as.character(sub[[a2_col]]),
-    Z   = as.numeric(sub[[z_col]]),
-    N   = as.integer(sub[[n_col]]))
-  # Optional columns when present (hardcoded aliases).
-  for (slot in c("BETA", "SE", "P", "MAF", "INFO")) {
-    src <- intersect(c(slot, tolower(slot),
-                       if (slot == "MAF") c("effect_allele_frequency"),
-                       if (slot == "P")   c("pvalue", "p")),
-                     names(sub))[1L]
-    if (!is.na(src))
-      mcols(entry_gr)[[slot]] <- as.numeric(sub[[src]])
-  }
-  entry_gr
-}
-
-entries <- lapply(seq_along(studies), function(k)
-  buildEntryGr(gwasTsvs[[k]], mappings[[k]], block))
-
-# ----- Construct + QC + save ------------------------------------------------
-gss <- GwasSumStats(
-  study    = studies,
-  entry    = entries,
+gss <- loadGwasSumStatsFromManifest(
+  manifest = manifest_df,
   genome   = argv$genome,
-  ldSketch = ld_handle,
-  nCase    = nCase,
-  nControl = nControl)
+  ldSketch = ld_sketch_spec,
+  region   = argv$ld_block)
 gss_out <- if (argv$skip_qc) {
   message("--skip-qc set; serialising raw GwasSumStats without summaryStatsQc().")
   gss

@@ -24,6 +24,9 @@ parser <- add_argument(parser, "--output",
                        type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "manifest_common.R"))
+
 if (!file.exists(argv$ld_blocks))
   stop("--ld-blocks file not found: ", argv$ld_blocks)
 
@@ -63,8 +66,6 @@ if (length(rows) == 0L)
   stop("No data rows parsed from --ld-blocks ", argv$ld_blocks)
 
 out <- do.call(rbind, rows)
-dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-write.table(out, file = argv$output, sep = "\t", quote = FALSE,
-            row.names = FALSE, na = "")
+writeManifest(out, argv$output)
 cat(sprintf("Wrote LD-block manifest with %d row(s) to %s\n",
             nrow(out), argv$output))

@@ -53,18 +53,15 @@ parser <- add_argument(parser, "--output",
                        help = "Output manifest TSV path", type = "character")
 argv <- parse_args(parser)
 
-norm_chr <- function(x) {
-  x <- as.character(x)
-  ifelse(is.na(x) | !nzchar(x), x,
-         ifelse(startsWith(x, "chr"), x, paste0("chr", x)))
-}
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "manifest_common.R"))
+
 
 # ----- Gene coordinates from the phenotype manifest -------------------------
 if (is.null(argv$pheno_manifest) || !nzchar(argv$pheno_manifest) ||
     !file.exists(argv$pheno_manifest))
   stop("--pheno-manifest is required and must exist: ", argv$pheno_manifest)
-pm <- read.table(argv$pheno_manifest, header = TRUE, sep = "\t",
-                 stringsAsFactors = FALSE, check.names = FALSE, comment.char = "")
+pm <- readMeta(argv$pheno_manifest)
 id_col    <- intersect(c("ID", "gene_id", "phenotype_id"), names(pm))[1L]
 chr_col   <- intersect(c("#chr", "chrom", "chr"),          names(pm))[1L]
 start_col <- intersect(c("start", "Start"),                names(pm))[1L]
@@ -73,7 +70,7 @@ if (any(is.na(c(id_col, chr_col, start_col, end_col))))
   stop("--pheno-manifest needs ID, #chr/chrom, start, end columns (got: ",
        paste(names(pm), collapse = ", "), ").")
 genes  <- as.character(pm[[id_col]])
-gchr   <- norm_chr(pm[[chr_col]])
+gchr   <- chromAdd(pm[[chr_col]])
 gstart <- suppressWarnings(as.integer(pm[[start_col]]))
 gend   <- suppressWarnings(as.integer(pm[[end_col]]))
 uniqGenes <- unique(genes)
@@ -90,11 +87,10 @@ windowOrder <- character(0)
 if (nzchar(argv$customized_association_windows) &&
     argv$customized_association_windows != "." &&
     file.exists(argv$customized_association_windows)) {
-  caw <- read.table(argv$customized_association_windows, header = FALSE,
-                    sep = "", stringsAsFactors = FALSE, comment.char = "#")
+  caw <- readTableNoHeader(argv$customized_association_windows)
   for (i in seq_len(nrow(caw))) {
     rid <- as.character(caw[[4L]][[i]])
-    windows[[rid]] <- list(chr = norm_chr(caw[[1L]][[i]]),
+    windows[[rid]] <- list(chr = chromAdd(caw[[1L]][[i]]),
                            start = as.integer(caw[[2L]][[i]]),
                            end   = as.integer(caw[[3L]][[i]]))
     windowOrder <- c(windowOrder, rid)
@@ -154,8 +150,6 @@ if (length(rows) == 0L)
        "--customized-association-windows against the phenotype manifest.")
 out <- do.call(rbind, rows)
 
-dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-write.table(out, file = argv$output, sep = "\t", quote = FALSE,
-            row.names = FALSE, na = "")
+writeManifest(out, argv$output)
 cat(sprintf("Wrote region manifest with %d region(s) to %s\n",
             nrow(out), argv$output))

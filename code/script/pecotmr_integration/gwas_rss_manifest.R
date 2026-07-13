@@ -42,17 +42,20 @@ parser <- add_argument(parser, "--gwas-meta",
                        type = "character", default = "")
 parser <- add_argument(parser, "--gwas-tsv-list",
                        help = "Zero or more STUDY=PATH items",
-                       type = "character", nargs = Inf, default = character(0))
+                       type = "character", nargs = Inf, default = NA_character_)
 parser <- add_argument(parser, "--region-list",
                        help = "Optional BED-like region file",
                        type = "character", default = "")
 parser <- add_argument(parser, "--regions",
                        help = "Zero or more chr:start-end items",
-                       type = "character", nargs = Inf, default = character(0))
+                       type = "character", nargs = Inf, default = NA_character_)
 parser <- add_argument(parser, "--output",
                        help = "Output manifest TSV path",
                        type = "character")
 argv <- parse_args(parser)
+
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "manifest_common.R"))
 
 # ----- Resolve per-study sources ----------------------------------------
 studies <- data.frame(study_id = character(0),
@@ -64,9 +67,7 @@ seenStudies <- character(0)
 if (nzchar(argv$gwas_meta) && argv$gwas_meta != ".") {
   if (!file.exists(argv$gwas_meta))
     stop("--gwas-meta file not found: ", argv$gwas_meta)
-  meta <- read.table(argv$gwas_meta, header = TRUE, sep = "\t",
-                     stringsAsFactors = FALSE, check.names = FALSE,
-                     comment.char = "")
+  meta <- readMeta(argv$gwas_meta)
   required <- c("study_id", "path")
   missing <- setdiff(required, names(meta))
   if (length(missing) > 0L)
@@ -93,7 +94,7 @@ if (nzchar(argv$gwas_meta) && argv$gwas_meta != ".") {
 }
 
 tsvItems <- as.character(argv$gwas_tsv_list)
-tsvItems <- tsvItems[nzchar(tsvItems)]
+tsvItems <- tsvItems[!is.na(tsvItems) & nzchar(tsvItems)]
 for (item in tsvItems) {
   if (!grepl("=", item, fixed = TRUE))
     stop("--gwas-tsv-list expects STUDY=PATH items (got: ", item, ").")
@@ -116,7 +117,7 @@ if (nrow(studies) == 0L)
 regions <- data.frame(chr = character(0), start = integer(0),
                       end = integer(0), stringsAsFactors = FALSE)
 pushRegion <- function(chr, start, end) {
-  if (!startsWith(chr, "chr")) chr <- paste0("chr", chr)
+  chr <- chromAdd(chr)
   start <- as.integer(start); end <- as.integer(end)
   if (is.na(start) || is.na(end)) return(invisible(NULL))
   key <- paste(chr, start, end, sep = "|")
@@ -142,7 +143,7 @@ if (nzchar(argv$region_list) && argv$region_list != ".") {
 }
 
 regionItems <- as.character(argv$regions)
-regionItems <- regionItems[nzchar(regionItems)]
+regionItems <- regionItems[!is.na(regionItems) & nzchar(regionItems)]
 for (r in regionItems) {
   m <- regmatches(r, regexec("^([^:]+):([0-9]+)-([0-9]+)$", r))[[1L]]
   if (length(m) != 4L)
@@ -170,8 +171,6 @@ for (i in seq_len(nrow(studies))) {
   }
 }
 out <- do.call(rbind, manifest)
-dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-write.table(out, file = argv$output, sep = "\t", quote = FALSE,
-            row.names = FALSE, na = "")
+writeManifest(out, argv$output)
 cat(sprintf("Wrote manifest with %d row(s) (%d studies x %d regions) to %s\n",
             nrow(out), nrow(studies), nrow(regions), argv$output))

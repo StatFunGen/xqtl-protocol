@@ -41,6 +41,9 @@ parser <- add_argument(parser, "--output",
                        type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "manifest_common.R"))
+
 if (!file.exists(argv$region_file))
   stop("--region-file not found: ", argv$region_file)
 sumFiles <- as.character(argv$sum_files)
@@ -115,8 +118,6 @@ for (i in seq_len(nrow(regions))) {
     stringsAsFactors = FALSE)
 }
 out <- do.call(rbind, rows)
-dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-write.table(out, file = argv$output, sep = "\t", quote = FALSE,
-            row.names = FALSE, na = "")
+writeManifest(out, argv$output)
 cat(sprintf("Wrote MASH manifest with %d row(s) (%d regions x %d conditions) to %s\n",
             nrow(out), nrow(regions), length(conditions), argv$output))
