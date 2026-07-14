@@ -1,32 +1,18 @@
-"""Tier B: coloc.R -> per-pair coloc data.frame (PP.H0..H4) from the converted
-enloc QTL + GWAS S4 sides."""
+"""Tier B: coloc.R -> per-pair coloc data.frame (PP.H0..H4) from the committed
+enloc QTL + GWAS S4 FineMappingResult fixtures (the modern format the pipeline
+produces; the legacy-conversion step has been retired)."""
 from __future__ import annotations
 
-import pytest
-
-def _convert(run_r, repo_root, tmp_path):
-    fx = repo_root / "tests/fixtures/susie_enloc"
-    conv = repo_root / "code/script/pecotmr_integration/legacy_enloc_finemap_convert.R"
-    qtl = tmp_path / "qtl.rds"
-    assert run_r(conv, ["--mode", "qtl",
-        "--rds-files", fx / "protocol_example.enloc.MiGA_eQTL.ENSG00000142798.univariate_susie_twas_weights.rds",
-        "--finemapping-obj", "preset_variants_result susie_result_trimmed",
-        "--varname-obj", "preset_variants_result variant_names",
-        "--study", "protocol_example", "--output", qtl], timeout=300).returncode == 0
-    gwas = tmp_path / "gwas.rds"
-    assert run_r(conv, ["--mode", "gwas",
-        "--rds-files", fx / "protocol_example.enloc.RSS_QC_RAISS_imputed.chr1_20110062_22020160.univariate_susie_rss.rds",
-        "--finemapping-obj", "AD_Bellenguez_2022 RSS_QC_RAISS_imputed susie_result_trimmed",
-        "--varname-obj", "AD_Bellenguez_2022 RSS_QC_RAISS_imputed variant_names",
-        "--output", gwas], timeout=300).returncode == 0
-    return qtl, gwas
+FX = "tests/fixtures/susie_enloc"
+QTL = FX + "/protocol_example.enloc.MiGA_eQTL.ENSG00000142798.fine_mapping.rds"
+GWAS = FX + "/protocol_example.enloc.gwas.chr1_20110062_22020160.fine_mapping.rds"
 
 
 def test_coloc(run_r, read_rds, repo_root, tmp_path):
-    qtl, gwas = _convert(run_r, repo_root, tmp_path)
     out = tmp_path / "coloc.rds"
     p = run_r(repo_root / "code/script/pecotmr_integration/coloc.R",
-              ["--qtl-fine-mapping", qtl, "--gwas-input", gwas, "--output", out], timeout=300)
+              ["--qtl-fine-mapping", repo_root / QTL,
+               "--gwas-input", repo_root / GWAS, "--output", out], timeout=300)
     assert p.returncode == 0, p.stdout + p.stderr
     info = read_rds(out)
     assert info["class"] == "data.frame" and "PP.H4.abf" in info["names"]

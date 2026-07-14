@@ -57,7 +57,17 @@ def run_sos():
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """Session-end: report which pecotmr_integration wrappers went untested."""
+    """Session-end: report which pecotmr_integration wrappers went untested.
+
+    This is a SCRIPT-tier metric (wrappers driven via run_r). Notebook-tier tests
+    drive their scripts through `sos run` (bash), not run_r, so the inventory is
+    meaningless for a notebook-only run (it would read ~0/N and mislead). Only
+    emit it when the session actually collected script-tier tests.
+    """
+    ran_scripts = any(it.nodeid.startswith("scripts/")
+                      for it in getattr(session, "items", []))
+    if not ran_scripts:
+        return
     tr = session.config.pluginmanager.get_plugin("terminalreporter")
     report_untested(REPO_ROOT, _TOUCHED, tr)
 
@@ -135,11 +145,9 @@ def ctwas_chain(run_r, repo_root, tmp_path_factory):
         p = run_r(S / script, args, timeout=t)
         assert p.returncode == 0, f"{script} failed:\n{p.stdout}\n{p.stderr}"
 
-    s4 = d / "weights.s4.rds"
-    ok("legacy_ctwas_weights_to_s4.R",
-       ["--legacy", fx / "twas/protocol_example.ctwas_weights.chr22.rds",
-        "--study", "protocol_example", "--method", "susie",
-        "--ld-meta", ldmeta, "--ld-block", "chr22:10516173-17414263", "--output", s4])
+    # S4 TwasWeights (region-provenance stamped) — the committed modern fixture
+    # (the legacy_ctwas_weights_to_s4 conversion step has been retired).
+    s4 = fx / "twas/protocol_example.ctwas_weights.s4.chr22.rds"
     manifest = d / "manifest.tsv"
     ok("ctwas_manifest.R",
        ["--ld-meta", ldmeta, "--chrom", "chr22", "--gwas-sumstats-dir", d, "--output", manifest],
