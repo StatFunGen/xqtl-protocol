@@ -111,6 +111,27 @@ parser <- add_argument(parser, "--seed",
 parser <- add_argument(parser, "--pip-cutoff-to-skip",
                        help = "Single-effect (SER) pre-screen cutoff (fineMappingPipeline pipCutoffToSkip), QTL mode; 0 = off, <0 = adaptive 3/nVariants",
                        type = "numeric", default = 0)
+# --- GWAS-mode SuSiE-RSS knobs (fineMappingPipeline, GwasSumStats path). SER
+# fallback is ON by default (reproduces the single-panel notebook): fit a
+# finite-sample R + EB LD-mismatch SuSiE-RSS and drop to the single-effect (SER)
+# result for regions susieR flags as unreliable. These ride on gwas_args (GWAS
+# mode only); rFinite/rMismatchMethod/checkPrior forward only when set, so the
+# call also runs against a pecotmr that predates them.
+parser <- add_argument(parser, "--ser-fallback",
+                       help = "GWAS mode: TRUE/FALSE. Fall back to the single-effect (SER) result when susieR flags R unreliable (fineMappingPipeline serFallback). Default TRUE.",
+                       type = "character", default = "TRUE")
+parser <- add_argument(parser, "--r-finite",
+                       help = "GWAS mode: finite-sample R correction size (fineMappingPipeline rFinite). Empty = auto (LD-panel sample size).",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--r-mismatch",
+                       help = "GWAS mode: LD-mismatch correction (fineMappingPipeline rMismatch): 'eb' (default) or 'none'.",
+                       type = "character", default = "eb")
+parser <- add_argument(parser, "--r-mismatch-method",
+                       help = "GWAS mode: rMismatch estimator (fineMappingPipeline rMismatchMethod): 'mle' or 'map'. Empty = pecotmr default.",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--check-prior",
+                       help = "GWAS mode: TRUE/FALSE for susie_rss check_prior (fineMappingPipeline checkPrior). Empty = pecotmr default.",
+                       type = "character", default = "")
 # --- Multivariate / joint-fit knobs (QTL mode; mvsusie / fsusie). Each is
 # opt-in and omitted from the pipeline call when left at its default, so this
 # wrapper also runs against a pecotmr build that predates twasWeights / usePCA.
@@ -268,7 +289,23 @@ if (!is.null(median_abs_corr)) cs_args$medianAbsCorr <- median_abs_corr
 if (has_gwas) {
   # ----- GWAS mode -------------------------------------------------------
   gss <- readRDS(argv$gwas_sumstats)
-  res <- do.call(fineMappingPipeline, c(list(gss), cs_args))
+  ser_fallback <- as.logical(argv$ser_fallback)
+  if (is.na(ser_fallback))
+    stop("--ser-fallback must be TRUE or FALSE (got: ", argv$ser_fallback, ")")
+  # GWAS-only SuSiE-RSS knobs on top of the shared cs_args. rFinite /
+  # rMismatchMethod / checkPrior forward only when set (empty -> pecotmr default).
+  gwas_args <- c(cs_args,
+                 list(serFallback = ser_fallback,
+                      rMismatch   = argv$r_mismatch))
+  if (nzchar(argv$r_finite)) gwas_args$rFinite <- as.numeric(argv$r_finite)
+  if (nzchar(argv[["r_mismatch_method"]]))
+    gwas_args$rMismatchMethod <- argv[["r_mismatch_method"]]
+  if (nzchar(argv$check_prior)) {
+    cp <- as.logical(argv$check_prior)
+    if (is.na(cp)) stop("--check-prior must be TRUE or FALSE (got: ", argv$check_prior, ")")
+    gwas_args$checkPrior <- cp
+  }
+  res <- do.call(fineMappingPipeline, c(list(gss), gwas_args))
   label <- paste0("GwasSumStats '", basename(argv$gwas_sumstats), "'")
 } else {
   # ----- QTL mode --------------------------------------------------------
@@ -334,3 +371,29 @@ saveRDS(res, argv$output)
 n_rows <- if (is.null(res)) 0L else nrow(res)
 cat(sprintf("Wrote fineMapping result for %s (%d row(s)) to %s\n",
             label, n_rows, argv$output))
+
+# ----- GWAS fine-mapping diagnostics summary (to the step log) --------------
+# Per entry: credible-set count and, with SER fallback on, whether the region
+# fell back to the single-effect result. Fully guarded so it never breaks the
+# run or the written output.
+if (has_gwas && !is.null(res)) {
+  invisible(tryCatch({
+    for (i in seq_len(nrow(res))) {
+      study_i  <- as.character(res$study[i])
+      region_i <- as.character(res$region_id[i])
+      method_i <- as.character(res$method[i])
+      ent <- res$entry[[i]]
+      tl  <- tryCatch(getTopLoci(ent), error = function(e) NULL)
+      ncs <- if (!is.null(tl) && "cs_95" %in% names(tl))
+               length(setdiff(unique(tl$cs_95), 0)) else NA
+      fit <- tryCatch(getSusieFit(ent), error = function(e) NULL)
+      ser <- if (!is.null(fit) && !is.null(fit$serFallbackUsed))
+               isTRUE(fit$serFallbackUsed) else NA
+      cat(sprintf("[FM %s %s] method=%s CS(cs_95)=%s SER-fallback=%s\n",
+                  study_i, region_i, method_i,
+                  if (is.na(ncs)) "NA" else ncs,
+                  if (isTRUE(ser)) "YES" else if (identical(ser, FALSE)) "no" else "NA"))
+    }
+  }, error = function(e)
+     message("fine_mapping.R: GWAS summary skipped (", conditionMessage(e), ")")))
+}
