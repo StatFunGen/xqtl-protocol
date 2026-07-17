@@ -104,6 +104,9 @@ parser <- add_argument(parser, "--qc-method",
 parser <- add_argument(parser, "--impute",
                        help = "Enable RAISS sumstat imputation in summaryStatsQc()",
                        flag = TRUE)
+parser <- add_argument(parser, "--allele-flip-kriging",
+                       help = "Enable kriging allele-flip QC (summaryStatsQc alleleFlipKriging): sign-flip allele-switched z (logLR>2 & |z|>2) in place, retaining the variants. Off by default.",
+                       flag = TRUE)
 parser <- add_argument(parser, "--qc-args",
                        help = "JSON object of extra named kwargs for summaryStatsQc()",
                        type = "character", default = "")
@@ -178,12 +181,12 @@ qc_extra <- if (nzchar(argv$qc_args) && argv$qc_args != "." &&
 # passing the same key via --qc-args is an error so behavior is unambiguous.
 clash <- intersect(names(qc_extra),
                    c("zMismatchQc", "impute", "mafCutoff", "skipRegion",
-                     "pipCutoffToSkip"))
+                     "pipCutoffToSkip", "alleleFlipKriging"))
 if (length(clash) > 0L)
   stop("--qc-args sets ", paste(clash, collapse = ", "),
        " which is also controlled by a dedicated flag (--qc-method / ",
-       "--impute / --maf / --skip-region / --pip-cutoff-to-skip). Pass it via ",
-       "the dedicated flag.")
+       "--impute / --maf / --skip-region / --pip-cutoff-to-skip / ",
+       "--allele-flip-kriging). Pass it via the dedicated flag.")
 
 # --skip-region: comma-separated chr:start-end windows -> character vector
 # (NULL when unset so summaryStatsQc's skipRegion default applies).
@@ -356,6 +359,8 @@ gss_out <- if (argv$skip_qc) {
                           impute          = isTRUE(argv$impute),
                           pipCutoffToSkip = argv$pip_cutoff_to_skip,
                           mafCutoff       = argv$maf),
+                    if (isTRUE(argv$allele_flip_kriging))
+                      list(alleleFlipKriging = TRUE) else list(),
                     if (!is.null(skip_region_vec))
                       list(skipRegion = skip_region_vec) else list(),
                     qc_extra)
@@ -368,3 +373,27 @@ cat(sprintf("Wrote %sGwasSumStats (%d stud%s: %s) over %s to %s\n",
             if (argv$skip_qc) "(skip-QC) " else "QC'd ",
             length(studies), if (length(studies) == 1L) "y" else "ies",
             paste(studies, collapse = ","), argv$ld_block, argv$output))
+
+# ----- Per-entry QC diagnostics summary (to the step log) -------------------
+# Surface the qcInfo audit so the SoS log shows what QC did, not just the path.
+if (!argv$skip_qc) {
+  audit <- tryCatch(getQcInfo(gss_out)$entryAudit, error = function(e) NULL)
+  for (i in seq_along(audit)) {
+    a <- audit[[i]]
+    if (is.null(a)) next
+    study_i <- if (!is.null(names(audit))) names(audit)[i] else studies[[i]]
+    cf <- a$contentFilters
+    seg <- c(
+      if (!is.null(a$variantsIn) && !is.null(a$variantsOut))
+        sprintf("variants %s->%s", a$variantsIn, a$variantsOut),
+      if (!is.null(cf$mafDropped) && cf$mafDropped > 0L) paste0("maf-drop ", cf$mafDropped),
+      if (!is.null(cf$nDropped)   && cf$nDropped   > 0L) paste0("N-drop ", cf$nDropped),
+      if (!is.null(a$krigingFlipped)) paste0("kriging-flip ", a$krigingFlipped),
+      if (!is.null(a$ldMismatchOutliersDropped) && a$ldMismatchOutliersDropped > 0L)
+        paste0("mismatch-drop ", a$ldMismatchOutliersDropped),
+      if (!is.null(a$raissImputedVariants) && a$raissImputedVariants > 0L)
+        paste0("imputed ", a$raissImputedVariants),
+      if (isTRUE(a$pipScreenSkipped)) "PIP-screen SKIPPED")
+    cat(sprintf("[QC %s] %s\n", study_i, paste(seg, collapse = " | ")))
+  }
+}
