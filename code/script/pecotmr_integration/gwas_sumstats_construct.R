@@ -111,6 +111,9 @@ parser <- add_argument(parser, "--impute",
 parser <- add_argument(parser, "--allele-flip-kriging",
                        help = "Enable kriging allele-flip QC (summaryStatsQc alleleFlipKriging): sign-flip allele-switched z (logLR>2 & |z|>2) in place, retaining the variants. Off by default.",
                        flag = TRUE)
+parser <- add_argument(parser, "--effective-n",
+                       help = "TRUE/FALSE. For case/control GWAS (n_case + n_control columns), use the effective sample size 4/(1/n_case + 1/n_control) as N (summaryStatsQc effectiveN). Default TRUE; FALSE keeps the raw N column (or total when absent).",
+                       type = "character", default = "TRUE")
 parser <- add_argument(parser, "--qc-args",
                        help = "JSON object of extra named kwargs for summaryStatsQc()",
                        type = "character", default = "")
@@ -185,12 +188,12 @@ qc_extra <- if (nzchar(argv$qc_args) && argv$qc_args != "." &&
 # passing the same key via --qc-args is an error so behavior is unambiguous.
 clash <- intersect(names(qc_extra),
                    c("zMismatchQc", "impute", "mafCutoff", "skipRegion",
-                     "pipCutoffToSkip", "alleleFlipKriging"))
+                     "pipCutoffToSkip", "alleleFlipKriging", "effectiveN"))
 if (length(clash) > 0L)
   stop("--qc-args sets ", paste(clash, collapse = ", "),
        " which is also controlled by a dedicated flag (--qc-method / ",
        "--impute / --maf / --skip-region / --pip-cutoff-to-skip / ",
-       "--allele-flip-kriging). Pass it via the dedicated flag.")
+       "--allele-flip-kriging / --effective-n). Pass it via the dedicated flag.")
 
 # --skip-region: comma-separated chr:start-end windows -> character vector
 # (NULL when unset so summaryStatsQc's skipRegion default applies).
@@ -286,11 +289,15 @@ gss_out <- if (argv$skip_qc) {
   message("--skip-qc set; serialising raw GwasSumStats without summaryStatsQc().")
   gss
 } else {
+  effN <- as.logical(argv$effective_n)
+  if (is.na(effN))
+    stop("--effective-n must be TRUE or FALSE (got: ", argv$effective_n, ")")
   qc_call_args <- c(list(gss,
                           zMismatchQc     = qc_method,
                           impute          = isTRUE(argv$impute),
                           pipCutoffToSkip = argv$pip_cutoff_to_skip,
-                          mafCutoff       = argv$maf),
+                          mafCutoff       = argv$maf,
+                          effectiveN      = effN),
                     if (isTRUE(argv$allele_flip_kriging))
                       list(alleleFlipKriging = TRUE) else list(),
                     if (!is.null(skip_region_vec))
@@ -318,6 +325,7 @@ if (!argv$skip_qc) {
     seg <- c(
       if (!is.null(a$variantsIn) && !is.null(a$variantsOut))
         sprintf("variants %s->%s", a$variantsIn, a$variantsOut),
+      if (!is.null(a$nSource) && !is.na(a$nSource)) paste0("N=", a$nSource),
       if (!is.null(cf$mafDropped) && cf$mafDropped > 0L) paste0("maf-drop ", cf$mafDropped),
       if (!is.null(cf$nDropped)   && cf$nDropped   > 0L) paste0("N-drop ", cf$nDropped),
       if (!is.null(a$krigingFlipped)) paste0("kriging-flip ", a$krigingFlipped),
