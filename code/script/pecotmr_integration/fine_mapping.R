@@ -54,8 +54,6 @@
 suppressPackageStartupMessages({
   library(argparser)
   library(pecotmr)
-  library(GenomicRanges)
-  library(IRanges)
   library(jsonlite)
 })
 
@@ -108,6 +106,12 @@ parser <- add_argument(parser, "--method-args",
 parser <- add_argument(parser, "--seed",
                        help = "Integer RNG seed set before fitting (reproducibility); unset = no seeding",
                        type = "integer", default = NA)
+parser <- add_argument(parser, "--cv-folds",
+                       help = "Cross-validation folds for the mash-prior / predictive refits (fineMappingPipeline cvFolds); 0 = off",
+                       type = "integer", default = 0L)
+parser <- add_argument(parser, "--cv-threads",
+                       help = "Parallel workers for the cross-validation fold refits (fineMappingPipeline cvThreads); -1 = all cores",
+                       type = "integer", default = 1L)
 parser <- add_argument(parser, "--pip-cutoff-to-skip",
                        help = "Single-effect (SER) pre-screen cutoff (fineMappingPipeline pipCutoffToSkip), QTL mode; 0 = off, <0 = adaptive 3/nVariants",
                        type = "numeric", default = 0)
@@ -140,6 +144,9 @@ parser <- add_argument(parser, "--joint-specification",
                        type = "character", default = "")
 parser <- add_argument(parser, "--twas-weights",
                        help = "Optional TwasWeights RDS (preceding mr.mash run) supplying the mvSuSiE data-driven prior; omit for the canonical prior",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--fine-mapping-result",
+                       help = "Optional existing FineMappingResult RDS used as a resume cache (fineMappingPipeline fineMappingResult); (study, context, trait, method) tuples already present are not refit",
                        type = "character", default = "")
 parser <- add_argument(parser, "--data-driven-prior-weights-cutoff",
                        help = "Prior-component weight floor for the reweighted mvSuSiE prior (only used with --twas-weights)",
@@ -174,24 +181,38 @@ parser <- add_argument(parser, "--keep-samples",
 parser <- add_argument(parser, "--keep-variants",
                        help = "Path to a whitespace-delimited file of variant IDs to restrict to (overrides keepVariants)",
                        type = "character", default = "")
+parser <- add_argument(parser, "--full-fit",
+                       help = "Widen per-CS variant matrices (within_cs_pip_cs<k>, ...) onto topLoci; default emits only the within_cs_pip scalar",
+                       flag = TRUE)
+parser <- add_argument(parser, "--full-fit-all",
+                       help = "With --full-fit, widen ALL per-CS matrices (alpha + logbf + effect + effect-variance), not just alpha",
+                       flag = TRUE)
+parser <- add_argument(parser, "--include-all-cs",
+                       help = "With --full-fit, include effects that produced no passing (purity/coverage) credible set",
+                       flag = TRUE)
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
-# Opt-in overrides of a loaded QtlDataset's construct-time filter slots. Filters
-# apply lazily at extraction, so mutating the slot re-filters without rebuilding
-# the RDS. Shared by both QTL workers (see twas_weights.R).
-apply_qd_filter_overrides <- function(qd, argv) {
-  if (!is.na(argv$maf_cutoff))   qd@mafCutoff   <- argv$maf_cutoff
-  if (!is.na(argv$mac_cutoff))   qd@macCutoff   <- argv$mac_cutoff
-  if (!is.na(argv$xvar_cutoff))  qd@xvarCutoff  <- argv$xvar_cutoff
-  if (!is.na(argv$imiss_cutoff)) qd@imissCutoff <- argv$imiss_cutoff
-  if (isTRUE(argv$drop_indel))   qd@keepIndel   <- FALSE
-  read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
-    unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
-  ks <- read_ids(argv$keep_samples);  if (!is.null(ks)) qd@keepSamples  <- ks
-  kv <- read_ids(argv$keep_variants); if (!is.null(kv)) qd@keepVariants <- kv
-  qd
+# Read a whitespace-delimited ID file into a unique character vector; NULL when
+# the path is empty / "." / missing.
+read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
+  unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
+
+# Build the per-call genotype-filter overrides as pipeline ARGUMENTS (NULL =
+# leave the QtlDataset's construct-time slot untouched). The pipeline applies
+# these to a validated copy; the wrapper no longer mutates @slots directly.
+# Mirrored in twas_weights.R.
+qd_filter_overrides <- function(argv) {
+  ov <- list(
+    mafCutoff    = if (!is.na(argv$maf_cutoff))   argv$maf_cutoff   else NULL,
+    macCutoff    = if (!is.na(argv$mac_cutoff))   argv$mac_cutoff   else NULL,
+    xvarCutoff   = if (!is.na(argv$xvar_cutoff))  argv$xvar_cutoff  else NULL,
+    imissCutoff  = if (!is.na(argv$imiss_cutoff)) argv$imiss_cutoff else NULL,
+    keepIndel    = if (isTRUE(argv$drop_indel))   FALSE             else NULL,
+    keepSamples  = read_ids(argv$keep_samples),
+    keepVariants = read_ids(argv$keep_variants))
+  ov[!vapply(ov, is.null, logical(1))]
 }
 
 # Parse --method-args into a nested named list of per-method kwargs.
@@ -227,15 +248,6 @@ median_abs_corr <- if (length(argv$median_abs_corr) != 1L || is.na(argv$median_a
 # Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
 if (length(argv$seed) == 1L && !is.na(argv$seed)) set.seed(as.integer(argv$seed))
 
-parse_region <- function(s) {
-  m <- regmatches(s, regexec("^([^:]+):([0-9]+)-([0-9]+)$", s))[[1L]]
-  if (length(m) != 4L)
-    stop("--region must be in chr:start-end format (got: ", s, ")")
-  GRanges(seqnames = m[[2L]],
-          ranges   = IRanges(start = as.integer(m[[3L]]),
-                             end   = as.integer(m[[4L]])))
-}
-
 has_qtl  <- nzchar(argv$qtl_dataset)
 has_gwas <- nzchar(argv$gwas_sumstats)
 if (has_qtl && has_gwas)
@@ -255,6 +267,10 @@ joint_spec <- if (nzchar(argv$joint_specification) && argv$joint_specification !
 # Optional mr.mash data-driven prior (TwasWeights from a preceding mrmash run).
 twas_weights_obj <- if (nzchar(argv$twas_weights) && argv$twas_weights != "." &&
                         file.exists(argv$twas_weights)) readRDS(argv$twas_weights) else NULL
+# Optional existing FineMappingResult used as a resume cache (checkpointing):
+# tuples already present are not refit.
+fmr_obj <- if (nzchar(argv$fine_mapping_result) && argv$fine_mapping_result != "." &&
+               file.exists(argv$fine_mapping_result)) readRDS(argv$fine_mapping_result) else NULL
 
 # Build the `methods` argument: the bare tokens, or the named-list {token: kwargs}
 # form when --method-args is given. SuSiE L / L_greedy defaults + susie-family
@@ -283,8 +299,17 @@ cs_args <- list(methods           = methods_arg,
                 coverage          = argv$coverage,
                 secondaryCoverage = secondary_cov,
                 signalCutoff      = argv$pip_cutoff,
-                minAbsCorr        = argv$min_abs_corr)
+                minAbsCorr        = argv$min_abs_corr,
+                # Per-CS variant-level export: default emits within_cs_pip only;
+                # --full-fit widens per-CS matrices (alpha; +logbf/effect/effect-var
+                # with --full-fit-all; +filtered CS with --include-all-cs).
+                fullFit           = isTRUE(argv[["full_fit"]]),
+                fullFitAlphaOnly  = !isTRUE(argv[["full_fit_all"]]),
+                includeAllCs      = isTRUE(argv[["include_all_cs"]]))
 if (!is.null(median_abs_corr)) cs_args$medianAbsCorr <- median_abs_corr
+# Resume cache applies to both QTL and GWAS modes (both pipeline methods accept
+# fineMappingResult). Added only when supplied, for pecotmr-version tolerance.
+if (!is.null(fmr_obj)) cs_args$fineMappingResult <- fmr_obj
 
 if (has_gwas) {
   # ----- GWAS mode -------------------------------------------------------
@@ -316,15 +341,17 @@ if (has_gwas) {
   if (!has_gene && !has_region)
     stop("QTL mode requires --gene-id (with --cis-window) or --region.")
   qd <- readRDS(argv$qtl_dataset)
-  qd <- apply_qd_filter_overrides(qd, argv)
   # `contexts` and `pipCutoffToSkip` are QTL-mode only, so they ride on qtl_args
-  # rather than the mode-shared cs_args.
+  # rather than the mode-shared cs_args. Genotype-filter overrides are passed as
+  # pipeline arguments (applied to a validated copy inside the pipeline).
   # cisWindow is a gene-mode (traitId) knob — it expands each trait's own
   # coordinates. In region mode the literal variant window comes from --region,
   # and passing both is an error, so cisWindow rides on the traitId branch only.
-  qtl_args <- c(list(qd), cs_args,
+  qtl_args <- c(list(qd), cs_args, qd_filter_overrides(argv),
                 list(contexts        = contexts_arg,
-                     pipCutoffToSkip = argv$pip_cutoff_to_skip))
+                     pipCutoffToSkip = argv$pip_cutoff_to_skip,
+                     cvFolds         = argv$cv_folds,
+                     cvThreads       = argv$cv_threads))
   # Opt-in multivariate / joint knobs. Each is added only when the user set it,
   # so the call stays compatible with a pecotmr that predates the argument
   # (mirrors the medianAbsCorr handling above).
@@ -340,7 +367,7 @@ if (has_gwas) {
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
   run_fm <- function() if (has_region) {
-    do.call(fineMappingPipeline, c(qtl_args, list(region = parse_region(argv$region))))
+    do.call(fineMappingPipeline, c(qtl_args, list(region = argv$region)))
   } else {
     do.call(fineMappingPipeline, c(qtl_args,
                                    list(traitId = argv$gene_id,

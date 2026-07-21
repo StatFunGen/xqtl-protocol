@@ -33,11 +33,11 @@ suppressPackageStartupMessages({
 
 parser <- arg_parser("Colocalization via colocPipeline()")
 parser <- add_argument(parser, "--qtl-fine-mapping",
-                       help = "Path to S4 QtlFineMappingResult RDS",
-                       type = "character")
+                       help = "Path(s) to S4 QtlFineMappingResult RDS (combined if >1)",
+                       type = "character", nargs = Inf)
 parser <- add_argument(parser, "--gwas-input",
-                       help = "Path to S4 GwasFineMappingResult OR GwasSumStats RDS",
-                       type = "character")
+                       help = "Path(s) to S4 GwasFineMappingResult (combined if >1) OR one GwasSumStats RDS",
+                       type = "character", nargs = Inf)
 parser <- add_argument(parser, "--enrichment",
                        help = "Optional enrichment data.frame RDS (from qtl_enrichment.R)",
                        type = "character", default = "")
@@ -69,8 +69,22 @@ parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
-qtlFmr   <- readRDS(argv$qtl_fine_mapping)
-gwasIn   <- readRDS(argv$gwas_input)
+# Load one-or-more RDS(es) and combine FineMappingResults (the modern pipeline
+# supplies per-study/per-block FMRs directly, replacing the legacy converter's
+# multi --rds-files combine). A single non-FMR input (e.g. GwasSumStats) is used
+# as supplied.
+.loadCombine <- function(paths) {
+  objs <- lapply(as.character(paths), readRDS)
+  if (length(objs) == 1L) return(objs[[1L]])
+  if (all(vapply(objs, function(o) methods::is(o, "FineMappingResultBase"), logical(1)))) {
+    # Preserve the (shared) ldSketch; combineFineMappingResults defaults it NULL.
+    ld <- tryCatch(objs[[1L]]@ldSketch, error = function(e) NULL)
+    return(do.call(combineFineMappingResults, c(objs, list(ldSketch = ld))))
+  }
+  objs[[1L]]
+}
+qtlFmr   <- .loadCombine(argv$qtl_fine_mapping)
+gwasIn   <- .loadCombine(argv$gwas_input)
 enrich   <- if (nzchar(argv$enrichment) && argv$enrichment != "." &&
                 file.exists(argv$enrichment)) readRDS(argv$enrichment) else NULL
 

@@ -32,55 +32,39 @@ parser <- add_argument(parser, "--height",
                        type = "numeric", default = 3)
 argv <- parse_args(parser)
 
+write_empty <- function(msg) {
+  message(msg, "; writing an empty plot to ", argv$output)
+  dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
+  ggsave(argv$output, ggplot() + theme_void() + labs(title = msg),
+         width = argv$width, height = argv$height, dpi = 150)
+}
+
 fmr <- readRDS(argv$input)
 if (!methods::is(fmr, "GwasFineMappingResult"))
   stop("--input must be a GwasFineMappingResult (got '",
        class(fmr)[[1L]], "').")
 if (nrow(fmr) == 0L) {
-  message("Empty GwasFineMappingResult; writing an empty plot to ", argv$output)
-  png(argv$output, width = argv$width * 100, height = argv$height * 100)
-  plot.new(); title(main = "No fine-mapping rows in input")
-  dev.off()
+  write_empty("No fine-mapping rows in input")
   quit(save = "no")
 }
 
-# Build a tidy long table of (study, method, region_id, variant_id, pip)
-# straight from the S4 accessors; one panel per row of the FMR.
-panels <- lapply(seq_len(nrow(fmr)), function(i) {
-  entry  <- fmr$entry[[i]]
-  pip    <- as.numeric(getPip(entry))
-  ids    <- as.character(getVariantIds(entry))
-  if (length(pip) == 0L || length(ids) == 0L) return(NULL)
-  data.frame(
-    study      = as.character(fmr$study)[[i]],
-    method     = as.character(fmr$method)[[i]],
-    region_id  = as.character(fmr$region_id)[[i]],
-    variant_id = ids,
-    pip        = pip,
-    stringsAsFactors = FALSE)
-})
-panels <- panels[!vapply(panels, is.null, logical(1))]
-if (length(panels) == 0L) {
-  message("No usable PIP vectors on any entry; writing an empty plot to ",
-          argv$output)
-  png(argv$output, width = argv$width * 100, height = argv$height * 100)
-  plot.new(); title(main = "No PIP vectors in input")
-  dev.off()
+# One aggregated PIP table for the collection. getTopLoci(signalCutoff = 0)
+# returns every variant with its decoded `pos` and the row-identity columns
+# (study / method / region_id), so the panel label and position come straight
+# off the table -- one panel per (study, method, region_id).
+tl <- getTopLoci(fmr, signalCutoff = 0)
+if (is.null(tl) || nrow(tl) == 0L) {
+  write_empty("No PIP vectors in input")
   quit(save = "no")
 }
-df <- do.call(rbind, panels)
-
-# Extract a numeric pos when variant_id looks like "chrN:pos:..." or
-# "chrN_pos_..."; otherwise plot against the row index. This is a
-# best-effort cosmetic decode, not a hard requirement.
-pos <- suppressWarnings({
-  m <- regmatches(df$variant_id,
-                  regexec("^[^:_]+[:_]([0-9]+)", df$variant_id))
-  vapply(m, function(x) if (length(x) >= 2L) as.numeric(x[[2L]]) else NA_real_,
-         numeric(1L))
-})
-df$pos <- ifelse(is.na(pos), seq_len(nrow(df)), pos)
-df$panel <- paste(df$study, df$method, df$region_id, sep = " | ")
+pos <- suppressWarnings(as.numeric(tl$pos))
+pos[is.na(pos)] <- seq_len(nrow(tl))[is.na(pos)]
+df <- data.frame(
+  variant_id = as.character(tl$variant_id),
+  pip        = as.numeric(tl$pip),
+  pos        = pos,
+  panel      = paste(tl$study, tl$method, tl$region_id, sep = " | "),
+  stringsAsFactors = FALSE)
 
 g <- ggplot(df, aes(x = pos, y = pip)) +
   geom_point(alpha = 0.6, size = 0.8) +

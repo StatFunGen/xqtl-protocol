@@ -26,11 +26,11 @@ suppressPackageStartupMessages({
 
 parser <- arg_parser("xQTL-GWAS enrichment via qtlEnrichmentPipeline()")
 parser <- add_argument(parser, "--qtl-fine-mapping",
-                       help = "Path to S4 QtlFineMappingResult RDS",
-                       type = "character")
+                       help = "Path(s) to S4 QtlFineMappingResult RDS (combined if >1)",
+                       type = "character", nargs = Inf)
 parser <- add_argument(parser, "--gwas-fine-mapping",
-                       help = "Path to S4 GwasFineMappingResult RDS",
-                       type = "character")
+                       help = "Path(s) to S4 GwasFineMappingResult RDS (combined if >1)",
+                       type = "character", nargs = Inf)
 parser <- add_argument(parser, "--num-gwas",
                        help = "Number of GWAS variants (per study; pass-through)",
                        type = "numeric", default = NA)
@@ -50,8 +50,19 @@ parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
-qtlFmr  <- readRDS(argv$qtl_fine_mapping)
-gwasFmr <- readRDS(argv$gwas_fine_mapping)
+# Load one-or-more FineMappingResult RDS(es) and combine (the modern pipeline
+# supplies per-study/per-block FMRs directly, replacing the legacy converter's
+# multi --rds-files combine step).
+.loadCombine <- function(paths) {
+  fmrs <- lapply(as.character(paths), readRDS)
+  if (length(fmrs) == 1L) return(fmrs[[1L]])
+  # Preserve the (shared) ldSketch: combineFineMappingResults defaults it to
+  # NULL, but gwas enrichment/coloc require the RSS-derived ldSketch.
+  ld <- tryCatch(fmrs[[1L]]@ldSketch, error = function(e) NULL)
+  do.call(combineFineMappingResults, c(fmrs, list(ldSketch = ld)))
+}
+qtlFmr  <- .loadCombine(argv$qtl_fine_mapping)
+gwasFmr <- .loadCombine(argv$gwas_fine_mapping)
 
 res <- qtlEnrichmentPipeline(
   gwasFineMappingResult = gwasFmr,

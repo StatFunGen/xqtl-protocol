@@ -41,31 +41,14 @@ res <- readRDS(argv$postprocess_rds)
 subsetTraits <- readLines(argv$subset_traits_file)
 subsetTraits <- subsetTraits[nzchar(trimws(subsetTraits))]
 
+# When --target-categories is empty, sldscSubsetMeta falls back to
+# params$target_categories. The view-building, the per-category metaSldscRandom
+# grid, and the missing-trait check all live in pecotmr::sldscSubsetMeta.
 targetCats <- if (nzchar(argv$target_categories)) {
   trimws(strsplit(argv$target_categories, ",", fixed = TRUE)[[1L]])
-} else res$params$target_categories
+} else NULL
 
-missingTraits <- setdiff(subsetTraits, names(res$per_trait))
-if (length(missingTraits) > 0L)
-  stop("--subset-traits-file names traits absent from --postprocess-rds: ",
-       paste(missingTraits, collapse = ", "))
-
-subsetPerTrait <- res$per_trait[subsetTraits]
-
-# Map the wide per-trait columns (tauStarSingle/tauStarJoint, ...) to the bare
-# names metaSldscRandom() expects.
-viewSingle <- pecotmr:::.sldscViewForMeta(subsetPerTrait, "single")
-viewJoint  <- pecotmr:::.sldscViewForMeta(subsetPerTrait, "joint")
-
-out <- list(
-  tau_star_single = setNames(lapply(targetCats, function(cat)
-    metaSldscRandom(viewSingle, cat, "tauStar")), targetCats),
-  tau_star_joint  = setNames(lapply(targetCats, function(cat)
-    metaSldscRandom(viewJoint,  cat, "tauStar")), targetCats),
-  enrichment      = setNames(lapply(targetCats, function(cat)
-    metaSldscRandom(viewSingle, cat, "enrichment")), targetCats),
-  enrichstat      = setNames(lapply(targetCats, function(cat)
-    metaSldscRandom(viewSingle, cat, "enrichstat")), targetCats))
+out <- sldscSubsetMeta(res, subsetTraits, targetCategories = targetCats)
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(out, argv$output)

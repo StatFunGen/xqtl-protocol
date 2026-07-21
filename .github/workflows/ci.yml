@@ -1,0 +1,34 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    paths:
+      - 'code/script/**'
+      - 'code/SoS/**'
+      - 'tests/**'
+  workflow_dispatch:
+
+concurrency:
+  group: wrapper-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pixi environment
+        uses: prefix-dev/setup-pixi@v0.10.0
+
+      - name: Script tests
+        run: pixi run test_scripts
+
+      - name: Notebook tests
+        run: pixi run test_notebooks

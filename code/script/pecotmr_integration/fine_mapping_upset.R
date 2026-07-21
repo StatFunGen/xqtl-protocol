@@ -46,8 +46,10 @@ inputs <- as.character(argv$input)
 if (length(inputs) == 0L)
   stop("--input requires at least one RDS path.")
 
-# Walk every (FMR-row x CS) combination and build a named list of
-# {set-label -> variant_ids} that UpSetR consumes via fromList().
+# Build a named list of {set-label -> variant_ids} for UpSetR::fromList().
+# getCs(fmr) aggregates every entry's credible sets into one table already
+# tagged with the row identity (study/context/trait/region_id/method), so each
+# per-tuple set is a split() on the label -- no per-entry loop.
 sets <- list()
 for (path in inputs) {
   fmr <- readRDS(path)
@@ -55,27 +57,16 @@ for (path in inputs) {
     warning("Skipping non-FineMappingResult input: ", path)
     next
   }
-  isGwas <- methods::is(fmr, "GwasFineMappingResult")
-  for (i in seq_len(nrow(fmr))) {
-    entry <- fmr$entry[[i]]
-    cs_df <- tryCatch(as.data.frame(getCs(entry)),
-                      error = function(e) NULL)
-    if (is.null(cs_df) || nrow(cs_df) == 0L) next
-    if (!"variant_id" %in% names(cs_df)) next
-    label <- if (isGwas) {
-      sprintf("%s|%s|%s",
-              as.character(fmr$study)[[i]],
-              as.character(fmr$method)[[i]],
-              as.character(fmr$region_id)[[i]])
-    } else {
-      sprintf("%s|%s|%s|%s",
-              as.character(fmr$study)[[i]],
-              as.character(fmr$context)[[i]],
-              as.character(fmr$trait)[[i]],
-              as.character(fmr$method)[[i]])
-    }
-    sets[[label]] <- unique(as.character(cs_df$variant_id))
+  cs <- tryCatch(as.data.frame(getCs(fmr)), error = function(e) NULL)
+  if (is.null(cs) || nrow(cs) == 0L || !"variant_id" %in% names(cs)) next
+  label <- if (methods::is(fmr, "GwasFineMappingResult")) {
+    paste(cs$study, cs$method, cs$region_id, sep = "|")
+  } else {
+    paste(cs$study, cs$context, cs$trait, cs$method, sep = "|")
   }
+  perLabel <- split(as.character(cs$variant_id), label)
+  for (lab in names(perLabel))
+    sets[[lab]] <- unique(c(sets[[lab]], perLabel[[lab]]))
 }
 
 if (length(sets) == 0L) {

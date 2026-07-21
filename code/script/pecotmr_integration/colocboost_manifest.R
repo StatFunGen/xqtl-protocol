@@ -77,27 +77,21 @@ parser <- add_argument(parser, "--output",
                        help = "Output manifest TSV path", type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "manifest_common.R"))
+
 # ----- Small helpers --------------------------------------------------------
-norm_chr <- function(x) {
-  x <- as.character(x)
-  ifelse(is.na(x) | !nzchar(x), x,
-         ifelse(startsWith(x, "chr"), x, paste0("chr", x)))
-}
 resolve_against <- function(p, dir) {
   if (is.na(p) || !nzchar(p)) return("")
   if (startsWith(p, "/")) return(p)
   file.path(dir, p)
-}
-read_tsv <- function(path) {
-  read.table(path, header = TRUE, sep = "\t", stringsAsFactors = FALSE,
-             check.names = FALSE, comment.char = "")
 }
 
 # ----- Gene coordinates from the phenotype manifest -------------------------
 if (is.null(argv$pheno_manifest) || !nzchar(argv$pheno_manifest) ||
     !file.exists(argv$pheno_manifest))
   stop("--pheno-manifest is required and must exist: ", argv$pheno_manifest)
-pm <- read_tsv(argv$pheno_manifest)
+pm <- readMeta(argv$pheno_manifest)
 id_col    <- intersect(c("ID", "gene_id", "phenotype_id"), names(pm))[1L]
 chr_col   <- intersect(c("#chr", "chrom", "chr"),          names(pm))[1L]
 start_col <- intersect(c("start", "Start"),                names(pm))[1L]
@@ -107,7 +101,7 @@ if (any(is.na(c(id_col, chr_col, start_col, end_col))))
        paste(names(pm), collapse = ", "), ").")
 
 genes  <- as.character(pm[[id_col]])
-gchr   <- norm_chr(pm[[chr_col]])
+gchr   <- chromAdd(pm[[chr_col]])
 gstart <- suppressWarnings(as.integer(pm[[start_col]]))
 gend   <- suppressWarnings(as.integer(pm[[end_col]]))
 uniqGenes <- unique(genes)
@@ -124,12 +118,11 @@ custom <- list()
 if (nzchar(argv$customized_association_windows) &&
     argv$customized_association_windows != "." &&
     file.exists(argv$customized_association_windows)) {
-  caw <- read.table(argv$customized_association_windows, header = FALSE,
-                    sep = "", stringsAsFactors = FALSE, comment.char = "#")
+  caw <- readTableNoHeader(argv$customized_association_windows)
   # columns: chr start end ID
   for (i in seq_len(nrow(caw))) {
     g <- as.character(caw[[4L]][[i]])
-    custom[[g]] <- list(chr = norm_chr(caw[[1L]][[i]]),
+    custom[[g]] <- list(chr = chromAdd(caw[[1L]][[i]]),
                         start = as.integer(caw[[2L]][[i]]),
                         end   = as.integer(caw[[3L]][[i]]))
   }
@@ -175,7 +168,7 @@ gene_window <- function(g) {
 gwasRows <- list()
 if (nzchar(argv$gwas_meta) && argv$gwas_meta != "." &&
     file.exists(argv$gwas_meta)) {
-  gm <- read_tsv(argv$gwas_meta)
+  gm <- readMeta(argv$gwas_meta)
   req <- c("study_id", "chrom", "file_path")
   miss <- setdiff(req, names(gm))
   if (length(miss) > 0L)
@@ -202,7 +195,7 @@ if (nzchar(argv$gwas_meta) && argv$gwas_meta != "." &&
 default_ld <- if (nzchar(argv$ld_meta) && argv$ld_meta != ".") argv$ld_meta else ""
 
 studies_for_chr <- function(chr) {
-  Filter(function(r) r$chrom == "0" || norm_chr(r$chrom) == chr, gwasRows)
+  Filter(function(r) r$chrom == "0" || chromAdd(r$chrom) == chr, gwasRows)
 }
 
 # ----- Build the per-gene manifest ------------------------------------------
@@ -241,9 +234,7 @@ if (length(rows) == 0L)
        "phenotype manifest.")
 out <- do.call(rbind, rows)
 
-dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-write.table(out, file = argv$output, sep = "\t", quote = FALSE,
-            row.names = FALSE, na = "")
+writeManifest(out, argv$output)
 nWithGwas <- sum(nzchar(out$studies))
 cat(sprintf("Wrote colocboost manifest with %d gene(s) (%d with GWAS) to %s\n",
             nrow(out), nWithGwas, argv$output))
