@@ -690,6 +690,7 @@ parameter: maf = 0.0025         # MAF cutoff (summaryStatsQc mafCutoff); 0 disab
 parameter: skip_regions = []    # chr:start-end window(s) whose variants are dropped (skipRegion)
 parameter: skip_analysis_pip_cutoff = 0.025   # skip a region below this max PIP (pipCutoffToSkip); 0 disables
 parameter: allele_flip_kriging = False   # kriging allele-flip QC: sign-flip switched z (logLR&gt;2 &amp; |z|&gt;2); off by default
+parameter: effective_n = True   # case/control: use effective sample size 4/(1/n_case+1/n_control) as N (summaryStatsQc effectiveN); False -&gt; raw N
 # --- fine-mapping knobs (forwarded to fine_mapping.R) ---------------
 parameter: methods = &#39;susie&#39;
 parameter: coverage = 0.95
@@ -749,7 +750,7 @@ bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = 
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[generate_gwas_sumstats]
 # Fan out over the manifest&#39;s rows: one (study, region) GwasSumStats per
 # row. Manifest columns: study_id, gwas_tsv, column_mapping, chr, start,
-# end, region_id, gwas_tsv_basename.
+# n_case, n_control (optional), end, region_id, gwas_tsv_basename.
 import csv
 jobs = list(csv.DictReader(open(f&quot;{cwd}/{manifest_name}.manifest.tsv&quot;), delimiter=&#39;\t&#39;))
 input: for_each = &#39;jobs&#39;
@@ -770,6 +771,9 @@ bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = 
         ${&#39;--impute&#39; if impute else &#39;&#39;} \
         ${(&#39;--qc-args &#39; + repr(qc_args)) if qc_args else &#39;&#39;} \
         ${&#39;--allele-flip-kriging&#39; if allele_flip_kriging else &#39;&#39;} \
+        --effective-n ${&#39;TRUE&#39; if effective_n else &#39;FALSE&#39;} \
+        ${(&#39;--n-case &#39; + _jobs[&#39;n_case&#39;]) if _jobs.get(&#39;n_case&#39;,&#39;&#39;) not in (&#39;&#39;, &#39;NA&#39;) else &#39;&#39;} \
+        ${(&#39;--n-control &#39; + _jobs[&#39;n_control&#39;]) if _jobs.get(&#39;n_control&#39;,&#39;&#39;) not in (&#39;&#39;, &#39;NA&#39;) else &#39;&#39;} \
         --output ${_output}
 </pre></div>
 </div>
