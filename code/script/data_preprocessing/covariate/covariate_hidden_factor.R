@@ -70,6 +70,15 @@ strip_last_ext <- function(path) {
   sub("\\.[^.]+$", "", basename(path))
 }
 
+# Directory holding this script (so we can locate covariate_hidden_factor_peer.py)
+script_dir <- function() {
+  file_arg <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (length(file_arg) > 0) {
+    return(dirname(normalizePath(sub("^--file=", "", file_arg[1]))))
+  }
+  getwd()
+}
+
 hidden_factor_prefix <- function(pheno_file, cov_file) {
   paste0(sub("\\.bed\\.gz$", "", basename(pheno_file)), ".", strip_last_ext(cov_file))
 }
@@ -137,12 +146,6 @@ write_bgzip_bed <- function(df, out_file) {
   readr::write_delim(df, plain_file, delim = "\t")
   run_command("bgzip", c("-f", plain_file))
   run_command("tabix", c("-f", "-p", "bed", out_file))
-}
-
-write_python_script <- function(lines) {
-  script_file <- tempfile(pattern = "cov_hidden_factor_", fileext = ".py")
-  writeLines(lines, script_file)
-  script_file
 }
 
 mean_impute_old <- function(d) {
@@ -253,68 +256,68 @@ run_marchenko <- function(opt) {
               out_file, n_factors, ncol(mat)))
 }
 
-# ── Step: PEER ────────────────────────────────────────────────────────────────
-run_peer <- function(opt) {
-  # ── Dry-run ─────────────────────────────────────────────────────────────────
-  if (isTRUE(opt$`dry-run`)) {
-    script_path <- tryCatch(normalizePath(sys.frame(0)$filename), error = function(e) "covariate_hidden_factor.R")
-    cat("[DRY-RUN] covariate_hidden_factor.R PEER — would execute:\n")
-    cat(sprintf("  Rscript %s \\\n",    script_path))
-    cat(sprintf("    --step PEER \\\n"))
-    cat(sprintf("    --phenoFile %s \\\n",  opt$phenoFile))
-    cat(sprintf("    --covFile %s \\\n",    opt$covFile))
-    cat(sprintf("    --N %d \\\n",          opt$N))
-    cat(sprintf("    --iteration %d \\\n",  opt$iteration))
-    cat(sprintf("    --convergence-mode %s \\\n", opt$`convergence-mode`))
-    cat(sprintf("    --cwd %s\n",             opt$cwd))
-    cat("\n[DRY-RUN] Input file check:\n")
-    for (f in c(opt$phenoFile, opt$covFile)) {
-      if (is.null(f) || is.na(f)) next
-      status <- if (file.exists(f)) "\u2713" else "\u2717 NOT FOUND"
-      cat(sprintf("  %s  %s\n", status, f))
-    }
-    quit(status = 0)
-  }
-
-  res <- compute_residuals(opt)
-  cat("=== Sub-step 2: PEER factor analysis ===\n")
-
-  suppressPackageStartupMessages(library(peer))
-
-  mat <- res$residuals
-  n_samples  <- ncol(mat)
-  n_features <- nrow(mat)
-
-  n_factors <- if (opt$N == 0) {
-    min(n_samples, 25L)   # PEER default heuristic
-  } else {
-    opt$N
-  }
-  cat(sprintf("Running PEER with %d factors, %d iterations\n",
-              n_factors, opt$iteration))
-
-  model <- PEER()
-  PEER_setPhenoMean(model, t(mat))
-  PEER_setNk(model, n_factors)
-  PEER_setMaxIter(model, opt$iteration)
-  PEER_update(model)
-
-  # Save PEER model
-  bname      <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
-  saveRDS(model, file.path(opt$cwd, paste0(bname, ".PEER_MODEL.rds")))
-
-  cat("=== Sub-step 3: Extract PEER factors ===\n")
-  factors_mat <- t(PEER_getX(model))   # factors × samples
-  # Use Hidden_Factor_PC prefix to match the SoS notebook (mofapy2/MOFA2) naming
-  rownames(factors_mat) <- paste0("Hidden_Factor_PC", seq_len(nrow(factors_mat)))
-  colnames(factors_mat) <- colnames(mat)
-
-  factors_df <- cbind(ID = rownames(factors_mat), as.data.frame(factors_mat))
-  out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
-  write_tsv(factors_df, out_file)
-  cat(sprintf("Output: %s (%d factors × %d samples)\n",
-              out_file, nrow(factors_mat), ncol(mat)))
-}
+# # ── Step: PEER ────────────────────────────────────────────────────────────────
+# run_peer <- function(opt) {
+#   # ── Dry-run ─────────────────────────────────────────────────────────────────
+#   if (isTRUE(opt$`dry-run`)) {
+#     script_path <- tryCatch(normalizePath(sys.frame(0)$filename), error = function(e) "covariate_hidden_factor.R")
+#     cat("[DRY-RUN] covariate_hidden_factor.R PEER — would execute:\n")
+#     cat(sprintf("  Rscript %s \\\n",    script_path))
+#     cat(sprintf("    --step PEER \\\n"))
+#     cat(sprintf("    --phenoFile %s \\\n",  opt$phenoFile))
+#     cat(sprintf("    --covFile %s \\\n",    opt$covFile))
+#     cat(sprintf("    --N %d \\\n",          opt$N))
+#     cat(sprintf("    --iteration %d \\\n",  opt$iteration))
+#     cat(sprintf("    --convergence-mode %s \\\n", opt$`convergence-mode`))
+#     cat(sprintf("    --cwd %s\n",             opt$cwd))
+#     cat("\n[DRY-RUN] Input file check:\n")
+#     for (f in c(opt$phenoFile, opt$covFile)) {
+#       if (is.null(f) || is.na(f)) next
+#       status <- if (file.exists(f)) "\u2713" else "\u2717 NOT FOUND"
+#       cat(sprintf("  %s  %s\n", status, f))
+#     }
+#     quit(status = 0)
+#   }
+# 
+#   res <- compute_residuals(opt)
+#   cat("=== Sub-step 2: PEER factor analysis ===\n")
+# 
+#   suppressPackageStartupMessages(library(peer))
+# 
+#   mat <- res$residuals
+#   n_samples  <- ncol(mat)
+#   n_features <- nrow(mat)
+# 
+#   n_factors <- if (opt$N == 0) {
+#     min(n_samples, 25L)   # PEER default heuristic
+#   } else {
+#     opt$N
+#   }
+#   cat(sprintf("Running PEER with %d factors, %d iterations\n",
+#               n_factors, opt$iteration))
+# 
+#   model <- PEER()
+#   PEER_setPhenoMean(model, t(mat))
+#   PEER_setNk(model, n_factors)
+#   PEER_setMaxIter(model, opt$iteration)
+#   PEER_update(model)
+# 
+#   # Save PEER model
+#   bname      <- sub("\\.bed\\.gz$", "", basename(opt$phenoFile))
+#   saveRDS(model, file.path(opt$cwd, paste0(bname, ".PEER_MODEL.rds")))
+# 
+#   cat("=== Sub-step 3: Extract PEER factors ===\n")
+#   factors_mat <- t(PEER_getX(model))   # factors × samples
+#   # Use Hidden_Factor_PC prefix to match the SoS notebook (mofapy2/MOFA2) naming
+#   rownames(factors_mat) <- paste0("Hidden_Factor_PC", seq_len(nrow(factors_mat)))
+#   colnames(factors_mat) <- colnames(mat)
+# 
+#   factors_df <- cbind(ID = rownames(factors_mat), as.data.frame(factors_mat))
+#   out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
+#   write_tsv(factors_df, out_file)
+#   cat(sprintf("Output: %s (%d factors × %d samples)\n",
+#               out_file, nrow(factors_mat), ncol(mat)))
+# }
 
 # ── Sub-step helpers ──────────────────────────────────────────────────────────
 
@@ -415,101 +418,144 @@ run_marchenko_from_resid <- function(opt) {
 }
 
 # PEER_fit sub-step: takes residFile, matching notebook [PEER_2]
+# Delegates to the standalone covariate_hidden_factor_peer.py, which fits the
+# mofapy2 MOFA model, saves the HDF5 model, and writes the factor/weight/variance
+# TSV sidecars that PEER_extract reads (no MOFA2 Bioconductor package / reticulate).
 run_peer_fit <- function(opt) {
   if (is.null(opt$residFile)) stop("--residFile is required for PEER_fit")
-  cat("=== PEER_fit (from residual file) ===\n")
+  cat("=== PEER_fit (mofapy2) ===\n")
   bname <- sub("\\.bed\\.gz$", "", basename(opt$residFile))
-  model_file <- file.path(opt$cwd, paste0(bname, ".PEER_MODEL.hd5"))
-  py_script <- write_python_script(c(
-    "from mofapy2.run.entry_point import entry_point",
-    "import pandas as pd",
-    "import numpy as np",
-    "import h5py",
-    "import os",
-    "import sys",
-    "",
-    "resid_file = sys.argv[1]",
-    "model_file = sys.argv[2]",
-    "num_factor = int(sys.argv[3])",
-    "iteration = int(sys.argv[4])",
-    "convergence_mode = sys.argv[5]",
-    "num_threads = sys.argv[6]",
-    "tol = float(sys.argv[7])",
-    "r2_tol = sys.argv[8]",
-    "",
-    "os.environ['OMP_NUM_THREADS'] = num_threads",
-    "os.environ['OPENBLAS_NUM_THREADS'] = num_threads",
-    "os.environ['MKL_NUM_THREADS'] = num_threads",
-    "",
-    "data = pd.read_csv(resid_file, sep='\\t', index_col=3).drop(['#chr', 'start', 'end'], axis=1)",
-    "ent = entry_point()",
-    "if num_factor == 0:",
-    "    if len(data.columns) < 150:",
-    "        num_factor = 15",
-    "    elif len(data.columns) < 250:",
-    "        num_factor = 30",
-    "    elif len(data.columns) < 350:",
-    "        num_factor = 45",
-    "    else:",
-    "        num_factor = 60",
-    "ent.set_data_matrix([[data.transpose()]], samples_names=[data.columns.values.tolist()], features_names=[data.index.values.tolist()])",
-    "ent.set_model_options(factors=num_factor, spikeslab_weights=False, ard_weights=False)",
-    "train_options = dict(iter=iteration, convergence_mode=convergence_mode, startELBO=1, freqELBO=1, tolerance=tol, gpu_mode=False, verbose=True, seed=42)",
-    "if r2_tol.lower() not in ('false', 'f', '0', 'none', 'null', ''):",
-    "    if r2_tol.lower() in ('true', 't', 'yes', 'y'):",
-    "        train_options['dropR2'] = True",
-    "    else:",
-    "        train_options['dropR2'] = float(r2_tol)",
-    "ent.set_train_options(**train_options)",
-    "ent.build()",
-    "ent.run()",
-    "ent.save(model_file)",
-    "right_name = [x.encode('UTF-8') for x in ent.data_opts['features_names'][0]]",
-    "new_hd5 = h5py.File(model_file, 'r+')",
-    "del new_hd5['features/view0']",
-    "new_hd5['features'].create_dataset('view0', data=np.array(right_name))",
-    "new_hd5.close()"
-  ))
-  on.exit(unlink(py_script), add = TRUE)
+  model_file    <- file.path(opt$cwd, paste0(bname, ".PEER_MODEL.hd5"))
+  factors_file  <- file.path(opt$cwd, paste0(bname, ".PEER.factors.tsv"))
+  weights_file  <- file.path(opt$cwd, paste0(bname, ".PEER.weights.tsv"))
+  variance_file <- file.path(opt$cwd, paste0(bname, ".PEER.variance.tsv"))
+  py_script <- file.path(script_dir(), "covariate_hidden_factor_peer.py")
+  if (!file.exists(py_script)) stop(sprintf("PEER Python worker not found: %s", py_script))
   run_command(
     Sys.which("python"),
-    c(py_script, opt$residFile, model_file, as.character(opt$N),
-      as.character(opt$iteration), opt$`convergence-mode`,
-      as.character(opt$numThreads), as.character(opt$tol),
-      as.character(opt$`r2-tol`))
+    c(py_script,
+      "--resid-file",       opt$residFile,
+      "--model-file",       model_file,
+      "--factors-out",      factors_file,
+      "--weights-out",      weights_file,
+      "--variance-out",     variance_file,
+      "--num-factor",       as.character(opt$N),
+      "--iteration",        as.character(opt$iteration),
+      "--convergence-mode", opt$`convergence-mode`,
+      "--num-threads",      as.character(opt$numThreads),
+      "--tol",              as.character(opt$tol),
+      "--r2-tol",           as.character(opt$`r2-tol`))
   )
   cat(sprintf("PEER model saved: %s\n", model_file))
 }
 
-# PEER_extract sub-step: takes modelFile, matching notebook [PEER_3]
+# Diagnostic PDF from the PEER TSV sidecars (replaces the MOFA2 plot_* family).
+# factors_df: '#id' (Factor*) + sample columns; weights_df: 'feature' + Factor*;
+# variance_df: factor, r2 (per-factor rows + a 'Total' row).
+make_peer_diag_pdf <- function(factors_df, weights_df, variance_df, diag_file) {
+  suppressPackageStartupMessages({
+    library(ggplot2)
+    library(tidyr)
+  })
+  factor_names <- factors_df$`#id`
+  sample_cols <- setdiff(colnames(factors_df), "#id")
+  fac_mat <- as.matrix(factors_df[, sample_cols, drop = FALSE])   # K x N
+  rownames(fac_mat) <- factor_names
+  fac_lvls <- factor(factor_names, levels = factor_names)
+
+  pdf(diag_file, width = 7, height = 5)
+
+  # (1) Variance explained per factor
+  vperf <- variance_df[variance_df$factor != "Total", , drop = FALSE]
+  vperf$factor <- factor(vperf$factor, levels = vperf$factor)
+  total_r2 <- variance_df$r2[variance_df$factor == "Total"]
+  subtitle <- if (length(total_r2) == 1) sprintf("Total variance explained: %.2f%%", total_r2) else NULL
+  print(
+    ggplot(vperf, aes(x = factor, y = r2)) +
+      geom_col(fill = "steelblue") +
+      labs(title = "Variance explained per factor", subtitle = subtitle,
+           x = NULL, y = "Variance explained (%)") +
+      theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
+
+  # (2) Factor value distributions across samples
+  long <- pivot_longer(factors_df, all_of(sample_cols), names_to = "sample", values_to = "value")
+  long$`#id` <- factor(long$`#id`, levels = factor_names)
+  print(
+    ggplot(long, aes(x = `#id`, y = value)) +
+      geom_boxplot(outlier.size = 0.6, fill = "grey85") +
+      labs(title = "Factor value distributions", x = NULL, y = "Factor value") +
+      theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
+
+  # (3) Scatter of the first two factors + (4) factor correlation heatmap
+  if (length(factor_names) >= 2L) {
+    scat <- data.frame(sample = sample_cols, F1 = fac_mat[1, ], F2 = fac_mat[2, ])
+    print(
+      ggplot(scat, aes(x = F1, y = F2)) +
+        geom_point(color = "steelblue", alpha = 0.8) +
+        labs(title = "Samples in factor space",
+             x = factor_names[1], y = factor_names[2]) +
+        theme_bw()
+    )
+    cor_mat <- cor(t(fac_mat))
+    cor_long <- as.data.frame(as.table(cor_mat))
+    colnames(cor_long) <- c("Var1", "Var2", "cor")
+    cor_long$Var1 <- factor(cor_long$Var1, levels = factor_names)
+    cor_long$Var2 <- factor(cor_long$Var2, levels = rev(factor_names))
+    print(
+      ggplot(cor_long, aes(Var1, Var2, fill = cor)) +
+        geom_tile() +
+        scale_fill_gradient2(limits = c(-1, 1), low = "blue", mid = "white", high = "red") +
+        labs(title = "Factor correlation", x = NULL, y = NULL) +
+        theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    )
+  }
+
+  # (5) Top features by |weight| for Factor1
+  f1 <- factor_names[1]
+  top <- weights_df[order(-abs(weights_df[[f1]])), c("feature", f1)]
+  top <- head(top, 10)
+  top$feature <- factor(top$feature, levels = rev(top$feature))
+  print(
+    ggplot(top, aes(x = .data[[f1]], y = feature)) +
+      geom_col(fill = "darkorange") +
+      labs(title = sprintf("Top 10 features by weight (%s)", f1),
+           x = "Weight", y = NULL) +
+      theme_bw()
+  )
+
+  invisible(dev.off())
+}
+
+# PEER_extract sub-step: takes modelFile, matching notebook [PEER_3].
+# Reads the TSV sidecars written by PEER_fit (no MOFA2 package / reticulate).
 run_peer_extract <- function(opt) {
   if (is.null(opt$modelFile)) stop("--modelFile is required for PEER_extract")
   if (is.null(opt$covFile)) stop("--covFile is required for PEER_extract")
-  cat("=== PEER_extract (from model file) ===\n")
-  suppressPackageStartupMessages(library(MOFA2))
+  cat("=== PEER_extract (from PEER TSV sidecars) ===\n")
   bname <- peer_model_prefix(opt$modelFile)
-  model <- load_model(opt$modelFile)
-  factors <- get_factors(model)[[1]]
-  active_factors <- seq_len(ncol(factors))
-  factors_df <- as_tibble(t(factors), rownames = "#id")
+  base_dir <- dirname(opt$modelFile)
+  factors_file  <- file.path(base_dir, paste0(bname, ".PEER.factors.tsv"))
+  weights_file  <- file.path(base_dir, paste0(bname, ".PEER.weights.tsv"))
+  variance_file <- file.path(base_dir, paste0(bname, ".PEER.variance.tsv"))
+  for (f in c(factors_file, weights_file, variance_file)) {
+    if (!file.exists(f)) {
+      stop(sprintf("Expected PEER sidecar not found: %s (run PEER_fit first)", f))
+    }
+  }
+  factors_df  <- read_delim(factors_file,  delim = "\t", show_col_types = FALSE)
+  weights_df  <- read_delim(weights_file,  delim = "\t", show_col_types = FALSE)
+  variance_df <- read_delim(variance_file, delim = "\t", show_col_types = FALSE)
+
   cov_df <- read_delim(opt$covFile, delim = "\t", show_col_types = FALSE)
   common_samples <- intersect(colnames(cov_df), colnames(factors_df))
-  out_file   <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
+  out_file <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
   (rbind(cov_df[, common_samples, drop = FALSE], factors_df[, common_samples, drop = FALSE]) %>%
       write_delim(out_file, "\t"))
-  diag_file  <- file.path(opt$cwd, paste0(bname, ".PEER.diag.pdf"))
-  pdf(diag_file)
-  plot_variance_explained(model, factors = "all")
-  plot_variance_explained(model, factors = head(active_factors, min(3L, length(active_factors))))
-  plot_variance_explained(model, plot_total = TRUE)[[2]]
-  plot_factor(model, factor = active_factors[1])
-  if (length(active_factors) >= 2L) {
-    plot_factors(model, factor = head(active_factors, 2L))
-    plot_factor_cor(model)
-  }
-  plot_weights(model, view = 1, factor = active_factors[1], nfeatures = 10, scale = TRUE)
-  plot_top_weights(model, view = 1, factor = active_factors[1], nfeatures = 10, scale = TRUE)
-  invisible(dev.off())
+
+  diag_file <- file.path(opt$cwd, paste0(bname, ".PEER.diag.pdf"))
+  make_peer_diag_pdf(factors_df, weights_df, variance_df, diag_file)
   cat(sprintf("Output: %s (%d factors × %d samples)\n",
               out_file, nrow(factors_df), length(common_samples) - 1L))
 }
@@ -597,6 +643,16 @@ run_bicv_factor <- function(opt) {
     apex_args <- c(apex_args, "--cov", opt$covFile)
   }
   run_command("apex", apex_args)
+  # apex writes "<out_prefix>.cov.gz" (the inferred factors formatted as covariates);
+  # rename it to the declared BiCV output so the SoS output contract is satisfied.
+  apex_out <- paste0(out_prefix, ".cov.gz")
+  if (!identical(apex_out, out_file)) {
+    if (!file.exists(apex_out)) {
+      stop(sprintf("apex did not produce expected output: %s", apex_out))
+    }
+    if (file.exists(out_file)) unlink(out_file)
+    file.rename(apex_out, out_file)
+  }
   cat(sprintf("Output: %s\n", out_file))
 }
 
@@ -615,11 +671,13 @@ switch(opt$step,
     if (is.null(opt$covFile))   stop("--covFile is required")
     run_marchenko(opt)
   },
-  PEER = {
-    if (is.null(opt$phenoFile)) stop("--phenoFile is required")
-    if (is.null(opt$covFile))   stop("--covFile is required")
-    run_peer(opt)
-  },
+  # Legacy R-PEER combined step (library(peer)) — commented out: the notebook uses
+  # the mofapy2 PEER_fit/PEER_extract path, so this route (and r-peer) is unused.
+  # PEER = {
+  #   if (is.null(opt$phenoFile)) stop("--phenoFile is required")
+  #   if (is.null(opt$covFile))   stop("--covFile is required")
+  #   run_peer(opt)
+  # },
   stop(sprintf(
     "Unknown step '%s'. Available: compute_residual, Marchenko_PC, PEER_fit, PEER_extract, BiCV_2, BiCV_3",
     opt$step))
