@@ -23,13 +23,25 @@ opt_list <- list(
   make_option("--output",  type = "character", default = NULL,
               help = "Output file for related sample IDs"),
   make_option("--kinship", type = "double",    default = 0.0625,
-              help = "Kinship coefficient threshold for relatedness (default: 0.0625 = 3rd degree)")
+              help = "Kinship coefficient threshold for relatedness (default: 0.0625 = 3rd degree)"),
+  make_option("--fam",     type = "character", default = NULL,
+              help = "sample_overlap: PLINK .fam/.psam (FID IID ...)"),
+  make_option("--pheno",   type = "character", default = NULL,
+              help = "sample_overlap: phenotype matrix (sample IDs are header columns 5+)"),
+  make_option("--lookup",  type = "character", default = "",
+              help = "sample_overlap: optional sample-participant lookup TSV"),
+  make_option("--overlap-output",   type = "character", default = NULL,
+              help = "sample_overlap: output genotype_id/sample_id table"),
+  make_option("--genotypes-output", type = "character", default = NULL,
+              help = "sample_overlap: output FID/IID of overlapping genotypes")
 )
 
 opt <- parse_args(OptionParser(option_list = opt_list))
 if (is.null(opt$step))   stop("--step is required")
-if (is.null(opt$input))  stop("--input is required")
-if (is.null(opt$output)) stop("--output is required")
+if (opt$step == "king_2") {
+  if (is.null(opt$input))  stop("--input is required")
+  if (is.null(opt$output)) stop("--output is required")
+}
 
 # ── filter_relatedness ───────────────────────────────────────────────────────
 # By Rui Dong and Derek Lamb, Columbia Neurology
@@ -298,6 +310,45 @@ if (opt$step == "king_2") {
       opt$kinship, "\n")
   write.table(dat, opt$output, quote = FALSE, row.names = FALSE, col.names = FALSE)
 
+# ── Step: sample_overlap ─────────────────────────────────────────────────────
+# Genotype ∩ phenotype samples. Port of the inline python heredoc in
+# GWAS_QC.sh::_sample_overlap. The phenotype matrix carries sample IDs as header
+# columns 5+; an optional lookup maps genotype_id <-> participant/sample_id.
+} else if (opt$step == "sample_overlap") {
+  suppressMessages(library(vroom))
+
+  # fam: FID, IID (whitespace-delimited) — keep as character
+  fam <- read.table(opt$fam, header = FALSE, stringsAsFactors = FALSE, colClasses = "character")
+  geno_fid <- fam$V1; geno_iid <- fam$V2
+
+  # phenotype header: sample IDs are columns 5+
+  con <- if (grepl("\\.gz$", opt$pheno)) gzfile(opt$pheno) else file(opt$pheno)
+  header <- strsplit(readLines(con, n = 1), "\t", fixed = TRUE)[[1]]
+  close(con)
+  pheno_samples <- header[-(1:4)]
+
+  # (genotype_id, sample_id) pairs from the lookup, else identity on the IIDs
+  if (nzchar(opt$lookup) && file.exists(opt$lookup)) {
+    lk <- vroom(opt$lookup, delim = "\t", show_col_types = FALSE)
+    cols <- names(lk)
+    if (length(cols) < 2) stop("sample lookup needs at least two columns")
+    sample_id   <- if ("participant_id" %in% cols) lk[["participant_id"]] else lk[[cols[1]]]
+    genotype_id <- if ("genotype_id" %in% cols) lk[["genotype_id"]]
+                   else if ("participant_id" %in% cols) lk[["participant_id"]] else lk[[cols[2]]]
+    sample_id <- as.character(sample_id); genotype_id <- as.character(genotype_id)
+  } else {
+    genotype_id <- geno_iid; sample_id <- geno_iid
+  }
+
+  keep <- genotype_id %in% geno_iid & sample_id %in% pheno_samples
+  genotype_id <- genotype_id[keep]; sample_id <- sample_id[keep]
+
+  writeLines(c("genotype_id\tsample_id", sprintf("%s\t%s", genotype_id, sample_id)),
+             opt[["overlap-output"]])
+
+  sel <- geno_iid %in% unique(genotype_id)
+  writeLines(sprintf("%s\t%s", geno_fid[sel], geno_iid[sel]), opt[["genotypes-output"]])
+
 } else {
-  stop(paste0("Unknown step: '", opt$step, "'. Valid steps: king_2"))
+  stop(paste0("Unknown step: '", opt$step, "'. Valid steps: king_2, sample_overlap"))
 }

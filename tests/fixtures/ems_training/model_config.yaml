@@ -1,0 +1,35 @@
+# Toy model configuration for EMS training/prediction MWE
+system:
+  temp_directory: "/tmp/ems_dask"
+  random_seeds:
+    torch_seed: 0
+    numpy_seed: 0
+    random_seed: 0
+
+experiment:
+  sampling_parameters:
+    npr_train: 1
+    npr_test: 1
+  classification_thresholds:
+    train:
+      positive_class_threshold: 0.5
+      negative_class_threshold: 0.1
+    test:
+      positive_class_threshold: 0.5
+      negative_class_threshold: 0.1
+
+feature_weighting:
+  default_weight: 1.0
+  high_priority_patterns:
+    weight: 2.0
+    feature_patterns: ["ABC", "chrombpnet"]
+
+algorithm:
+  parameter_sets:
+    standard:
+      iterations: 50
+      depth: 4
+      learning_rate: 0.1
+      loss_function: "Logloss"
+      verbose: 0
+      random_seed: 0

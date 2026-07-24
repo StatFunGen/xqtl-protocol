@@ -183,7 +183,7 @@ _plink_to_vcf_1() {
         --recode vcf-iid \
         --out "$out_prefix" \
         --threads "$threads" \
-        "${memory_arg[@]}" \
+        ${memory_arg[@]+"${memory_arg[@]}"} \
         --output-chr chrMT
     bgzip -l 9 "$vcf_path"
     tabix -f -p vcf "$output"
@@ -237,7 +237,7 @@ _merge_plink() {
 
     local -a inputs=()
     if [[ -f "$file_list" ]]; then
-        mapfile -t inputs < "$file_list"
+        while IFS= read -r _il || [[ -n "$_il" ]]; do inputs+=("$_il"); done < "$file_list"
     else
         read -r -a inputs <<< "$file_list"
     fi
@@ -306,14 +306,14 @@ _merge_plink() {
                    --make-pgen \
                    --out "${outdir}/${name}" \
                    --threads "$threads" \
-                   "${memory_arg[@]}"
+                   ${memory_arg[@]+"${memory_arg[@]}"}
         else
             plink --keep-allele-order --bfile "$first_file_prefix" \
                   --merge-list "${tmp_merge}.rest" \
                   --make-bed \
                   --out "${outdir}/${name}" \
                   --threads "$threads" \
-                  "${memory_arg[@]}"
+                  ${memory_arg[@]+"${memory_arg[@]}"}
         fi
         rm -f "${tmp_merge}.rest"
     fi
@@ -331,7 +331,7 @@ _merge_vcf() {
 
     local -a inputs=()
     if [[ -f "$file_list" ]]; then
-        mapfile -t inputs < "$file_list"
+        while IFS= read -r _il || [[ -n "$_il" ]]; do inputs+=("$_il"); done < "$file_list"
     else
         read -r -a inputs <<< "$file_list"
     fi
@@ -403,7 +403,7 @@ _genotype_by_chrom() {
             --out "$out" \
             --threads "$threads" \
             --allow-no-sex \
-            "${memory_arg[@]}"
+            ${memory_arg[@]+"${memory_arg[@]}"}
         echo "${out}${output_ext}" >> "$manifest"
         if [[ "$output_format" == "plink2" ]]; then
             echo "  Written: ${out}.{pgen,pvar,psam}" >&2

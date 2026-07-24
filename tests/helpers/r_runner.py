@@ -28,6 +28,14 @@ def run_r(script, args=(), timeout: int = 600) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
+def run_sh(script, args=(), timeout: int = 600) -> subprocess.CompletedProcess:
+    """Run a bash wrapper (e.g. RNA_calling.sh <step> --args) as a subprocess,
+    exactly as the notebook cell does. External tools resolve from PATH (the pixi
+    env under ``pixi run pytest``). Never raises on rc!=0 — the test asserts."""
+    cmd = ["bash", str(script), *(str(a) for a in args)]
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+
+
 def read_rds(path, timeout: int = 120) -> dict:
     """Structural summary (class / nrow / accessors) of an RDS, via rds_probe.R."""
     p = subprocess.run(

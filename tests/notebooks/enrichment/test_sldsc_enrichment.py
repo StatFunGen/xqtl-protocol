@@ -1,16 +1,47 @@
-"""Notebook tier: sldsc_enrichment.ipynb S-LDSC post-processing on downsized fixtures.
+"""Notebook tier: sldsc_enrichment.ipynb.
 
-The upstream steps (make_annotation_files_ldscore / munge_sumstats_polyfun /
-get_heritability) run polyfun + ldsc over the ~350M S-LDSC reference panel and are
-OUT of CI scope: polyfun is not in the pixi env, and they are external-tool
-orchestration, not pecotmr wrappers. This tests the two pecotmr wrapper steps --
-`postprocess` and `meta_subset` -- which consume polyfun's small per-trait OUTPUTS
-(a ~2MB fixture: the .results/.log/.part_delete triples + the target .annot.gz).
-`--maf-cutoff 0` opts out of MAF filtering, so no .frq reference is needed.
+The R analysis blocks of make_annotation_files_ldscore are ported to
+code/script/enrichment/make_annotation.R (Step A: write .annot.gz; Step D: write
+.l2.M). Only the polyfun LD-score computation (Step C: ldsc.py / compute_ldscores.py)
+stays external. Those two worker steps are tested here at worker level against the
+MWE references. munge_sumstats_polyfun / get_heritability remain external-tool
+orchestration (polyfun over the ~350M panel), OUT of CI scope. `postprocess` /
+`meta_subset` (pecotmr wrappers) consume polyfun's small per-trait OUTPUTS.
 """
 from __future__ import annotations
 
+import gzip
+
 import pytest
+
+MK = "code/script/enrichment/make_annotation.R"
+FX = "tests/fixtures/sldsc_enrichment"
+
+
+def test_make_annotation_annot(run_r, repo_root, tmp_path):
+    """Step A: reference .annot + target variant list -> per-SNP ANNOT (binary), byte-exact."""
+    p = run_r(repo_root / MK,
+              ["--step", "annot", "--targets", repo_root / FX / "target.tsv",
+               "--reference-anno", repo_root / FX / "reference.2.annot.gz",
+               "--emit-single", "--annotation-name", "protocol_example",
+               "--cwd", tmp_path, "--chrom", 2])
+    assert p.returncode == 0, p.stdout + p.stderr
+    got = gzip.open(tmp_path / "protocol_example_single_1/protocol_example_single_1.2.annot.gz", "rt").read()
+    exp = gzip.open(repo_root / FX / "expected_single_1.2.annot.gz", "rt").read()
+    assert got == exp
+
+
+def test_make_annotation_mfiles(run_r, repo_root, tmp_path):
+    """Step D: .annot + polyfun ldscore parquet -> .l2.M (sum of ANNOT over ldscore SNPs)."""
+    d = tmp_path / "protocol_example_single_1"; d.mkdir()
+    (d / "protocol_example_single_1.2.annot.gz").write_bytes((repo_root / FX / "expected_single_1.2.annot.gz").read_bytes())
+    (d / "protocol_example_single_1.2.l2.ldscore.parquet").write_bytes((repo_root / FX / "single_1.2.l2.ldscore.parquet").read_bytes())
+    p = run_r(repo_root / MK,
+              ["--step", "mfiles", "--annotation-name", "protocol_example", "--cwd", tmp_path,
+               "--chrom", 2, "--emit-single", "--n-targets", 1, "--ldscore-ext", "l2.ldscore.parquet"])
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert (d / "protocol_example_single_1.2.l2.M").read_text() == \
+        (repo_root / FX / "expected_single_1.2.l2.M").read_text()
 
 
 def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):

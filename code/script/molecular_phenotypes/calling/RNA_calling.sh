@@ -6,6 +6,8 @@
 # Steps:
 #   bam_to_fastq
 #   fastqc
+#   fastp_trim_adaptor
+#   trimmomatic_trim_adaptor
 #   star_align_1
 #   filter_reads
 #   rnaseqc_call
@@ -14,10 +16,11 @@
 # ============================================================
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 STEP="${1:?Usage: $(basename "$0") <step> [args...]}"
 shift
 
-CONTAINER=""
 SAMPLE_LIST=""
 DATA_DIR=""
 INPUT_DIR=""
@@ -81,11 +84,27 @@ CHIM_OUT_TYPE="Junctions WithinBAM SoftClip"
 CHIM_MAIN_SEGMENT_MULT_NMAX=1
 UNIQUE=""
 WASP=""
+# adaptor trimming (fastp / trimmomatic)
+INPUT_FASTQ1=""
+INPUT_FASTQ2=""
+ADAPTER_FASTA="."
+WINDOW_SIZE=4
+REQUIRED_QUALITY=20
+LEADING=20
+TRAILING=20
+MIN_LEN=15
+SEED_MISMATCHES=2
+PALINDROME_CLIP_THRESHOLD=30
+SIMPLE_CLIP_THRESHOLD=10
+OUTPUT_PAIRED1=""
+OUTPUT_UNPAIRED1=""
+OUTPUT_PAIRED2=""
+OUTPUT_UNPAIRED2=""
+OUTPUT_SE=""
 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --container)            CONTAINER="$2"; shift 2 ;;
         --sample-list)          SAMPLE_LIST="$2"; shift 2 ;;
         --data-dir)             DATA_DIR="$2"; shift 2 ;;
         --input-dir)            INPUT_DIR="$2"; shift 2 ;;
@@ -149,6 +168,22 @@ while [[ $# -gt 0 ]]; do
         --chimMainSegmentMultNmax) CHIM_MAIN_SEGMENT_MULT_NMAX="$2"; shift 2 ;;
         --unique)               UNIQUE="$2"; shift 2 ;;
         --wasp)                 WASP="$2"; shift 2 ;;
+        --input-fastq1)         INPUT_FASTQ1="$2"; shift 2 ;;
+        --input-fastq2)         INPUT_FASTQ2="$2"; shift 2 ;;
+        --adapter-fasta)        ADAPTER_FASTA="$2"; shift 2 ;;
+        --window-size)          WINDOW_SIZE="$2"; shift 2 ;;
+        --required-quality)     REQUIRED_QUALITY="$2"; shift 2 ;;
+        --leading)              LEADING="$2"; shift 2 ;;
+        --trailing)             TRAILING="$2"; shift 2 ;;
+        --min-len)              MIN_LEN="$2"; shift 2 ;;
+        --seed-mismatches)      SEED_MISMATCHES="$2"; shift 2 ;;
+        --palindrome-clip-threshold) PALINDROME_CLIP_THRESHOLD="$2"; shift 2 ;;
+        --simple-clip-threshold) SIMPLE_CLIP_THRESHOLD="$2"; shift 2 ;;
+        --output-paired1)       OUTPUT_PAIRED1="$2"; shift 2 ;;
+        --output-unpaired1)     OUTPUT_UNPAIRED1="$2"; shift 2 ;;
+        --output-paired2)       OUTPUT_PAIRED2="$2"; shift 2 ;;
+        --output-unpaired2)     OUTPUT_UNPAIRED2="$2"; shift 2 ;;
+        --output-se)            OUTPUT_SE="$2"; shift 2 ;;
         --dry-run)              DRY_RUN=true; shift ;;
         *) echo "WARN: Unknown flag '$1' — ignored" >&2; shift ;;
     esac
@@ -578,47 +613,8 @@ _write_ribosomal_intervals() {
     local gtf_file="$2"
     local output_file="$3"
 
-    samtools view -H "$bam_file" > "$output_file"
-    python3 - "$gtf_file" "$output_file" <<'PY'
-import csv
-import gzip
-import sys
-from pathlib import Path
-
-gtf_path = sys.argv[1]
-output_path = sys.argv[2]
-
-def open_text(path):
-    return gzip.open(path, "rt") if path.endswith(".gz") else open(path, "r", encoding="utf-8")
-
-def parse_transcript_id(attributes):
-    for item in attributes.split(";"):
-        item = item.strip()
-        if not item:
-            continue
-        if item.startswith("transcript_id "):
-            return item.split(" ", 1)[1].strip().strip('"')
-    return None
-
-rows = []
-with open_text(gtf_path) as handle:
-    for raw in handle:
-        if raw.startswith("#"):
-            continue
-        parts = raw.rstrip("\n").split("\t")
-        if len(parts) < 9 or parts[2] != "transcript":
-            continue
-        if "rRNA" not in raw or "transcript_id" not in parts[8]:
-            continue
-        transcript_id = parse_transcript_id(parts[8])
-        if transcript_id is None:
-            continue
-        rows.append([parts[0], parts[3], parts[4], parts[6], transcript_id])
-
-with open(output_path, "a", encoding="utf-8", newline="") as handle:
-    writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
-    writer.writerows(rows)
-PY
+    Rscript "$SCRIPT_DIR/RNA_calling.R" --step ribosomal_intervals \
+        --bam "$bam_file" --gtf "$gtf_file" --output "$output_file"
 }
 
 _write_bam_summary() {
@@ -660,10 +656,13 @@ _picard_qc_star_align_2() {
 
     mkdir -p "$(dirname "$PICARD_METRICS")" "$(dirname "$MD_BAM")" "$(dirname "$BIGWIG")"
 
-    local java_args metrics_prefix ri_file
+    local metrics_prefix ri_file
+    local -a java_args=()
     metrics_prefix="${PICARD_METRICS%.*}"
     ri_file="${INPUT_BAM}.RI"
-    mapfile -t java_args < <(picard_java_args)
+    # portable mapfile: macOS ships bash 3.2 (no mapfile). picard_java_args emits
+    # 0 or 1 lines (-Xmx...), so read them into the array with a while loop.
+    while IFS= read -r _ja_line; do java_args+=("$_ja_line"); done < <(picard_java_args)
 
     echo "CollectMultipleMetrics started at: $(date)" >&2
     picard "${java_args[@]}" CollectMultipleMetrics \
@@ -779,91 +778,76 @@ if [[ "$DRY_RUN" == "true" ]]; then
     exit 0
 fi
 
+_fastp_trim_adaptor() {
+    [[ -z "$INPUT_FASTQ1" ]] && { echo "ERROR: --input-fastq1 is required" >&2; exit 1; }
+    [[ -z "$OUTPUT_FASTQ1" ]] && { echo "ERROR: --output-fastq1 is required" >&2; exit 1; }
+
+    local -a io_args adapter_args
+    if is_true "$PAIRED_END"; then
+        [[ -z "$INPUT_FASTQ2" ]] && { echo "ERROR: --input-fastq2 is required for paired-end" >&2; exit 1; }
+        [[ -z "$OUTPUT_FASTQ2" ]] && { echo "ERROR: --output-fastq2 is required for paired-end" >&2; exit 1; }
+        io_args=(-i "$INPUT_FASTQ1" -I "$INPUT_FASTQ2" -o "$OUTPUT_FASTQ1" -O "$OUTPUT_FASTQ2")
+    else
+        io_args=(-i "$INPUT_FASTQ1" -o "$OUTPUT_FASTQ1")
+    fi
+
+    # a real adapter fasta -> --adapter_fasta; otherwise fastp auto-detects (the
+    # default ADAPTER_FASTA="." is a directory, so is_file() is false, matching the notebook)
+    if [[ -f "$ADAPTER_FASTA" ]]; then
+        adapter_args=(--adapter_fasta "$ADAPTER_FASTA")
+    else
+        adapter_args=(--detect_adapter_for_pe)
+    fi
+
+    local base1="${OUTPUT_FASTQ1%.*}"          # strip .gz -> html/json siblings
+    mkdir -p "$(dirname "$OUTPUT_FASTQ1")"
+    fastp "${io_args[@]}" "${adapter_args[@]}" -V \
+        -h "${base1}.html" -j "${base1}.json" -w "$NUM_THREADS" \
+        --length_required "$MIN_LEN" -W "$WINDOW_SIZE" -M "$REQUIRED_QUALITY" \
+        -5 -3 --cut_front_mean_quality "$LEADING" --cut_tail_mean_quality "$LEADING"
+}
+
+_trimmomatic_trim_adaptor() {
+    [[ -z "$INPUT_FASTQ1" ]] && { echo "ERROR: --input-fastq1 is required" >&2; exit 1; }
+    [[ -z "$JAVA_MEM" ]] && { echo "ERROR: --java-mem is required" >&2; exit 1; }
+
+    local mode
+    local -a io_args
+    if is_true "$PAIRED_END"; then
+        mode="PE"
+        [[ -z "$INPUT_FASTQ2" ]] && { echo "ERROR: --input-fastq2 is required for paired-end" >&2; exit 1; }
+        io_args=("$INPUT_FASTQ1" "$INPUT_FASTQ2"
+                 "$OUTPUT_PAIRED1" "$OUTPUT_UNPAIRED1" "$OUTPUT_PAIRED2" "$OUTPUT_UNPAIRED2")
+        mkdir -p "$(dirname "$OUTPUT_PAIRED1")"
+    else
+        mode="SE"
+        io_args=("$INPUT_FASTQ1" "$OUTPUT_SE")
+        mkdir -p "$(dirname "$OUTPUT_SE")"
+    fi
+
+    trimmomatic "-Xmx${JAVA_MEM}" "$mode" -threads "$NUM_THREADS" \
+        "${io_args[@]}" \
+        "ILLUMINACLIP:${ADAPTER_FASTA}:${SEED_MISMATCHES}:${PALINDROME_CLIP_THRESHOLD}:${SIMPLE_CLIP_THRESHOLD}" \
+        "LEADING:${LEADING}" "TRAILING:${TRAILING}" \
+        "SLIDINGWINDOW:${WINDOW_SIZE}:${REQUIRED_QUALITY}" "MINLEN:${MIN_LEN}"
+}
+
 _dispatch() {
     case "$STEP" in
         bam_to_fastq) _bam_to_fastq ;;
         fastqc) _fastqc ;;
+        fastp_trim_adaptor) _fastp_trim_adaptor ;;
+        trimmomatic_trim_adaptor) _trimmomatic_trim_adaptor ;;
         star_align_1) _star_align_1 ;;
         filter_reads) _filter_reads ;;
         rnaseqc_call) _rnaseqc_call ;;
         picard_qc_star_align_2) _picard_qc_star_align_2 ;;
         multiqc_report) _multiqc_report ;;
         *)
-            echo "ERROR: Unknown step '$STEP'. Available: bam_to_fastq, fastqc, star_align_1, filter_reads, rnaseqc_call, picard_qc_star_align_2, multiqc_report" >&2
+            echo "ERROR: Unknown step '$STEP'. Available: bam_to_fastq, fastqc, fastp_trim_adaptor, trimmomatic_trim_adaptor, star_align_1, filter_reads, rnaseqc_call, picard_qc_star_align_2, multiqc_report" >&2
             exit 1
             ;;
     esac
 }
 
-if [[ -n "$CONTAINER" ]]; then
-    singularity exec "$CONTAINER" bash -s <<EOF
-$(declare -f is_true has_value strip_dot_ext picard_strand_spec picard_java_args _bam_to_fastq _link_fastqc_outputs _sample_read_rows _fastqc _star_align_1 _move_rnaseqc_output _rnaseqc_from_bam _rnaseqc_from_fastq _rnaseqc_call _filter_one_bam _filter_reads _write_ribosomal_intervals _write_bam_summary _picard_qc_star_align_2 _multiqc_report _dispatch)
-STEP="$STEP"
-SAMPLE_LIST="$SAMPLE_LIST"
-DATA_DIR="$DATA_DIR"
-INPUT_DIR="$INPUT_DIR"
-CWD="$CWD"
-GTF="$GTF"
-REF_FLAT="$REF_FLAT"
-REFERENCE_FASTA="$REFERENCE_FASTA"
-STAR_INDEX="$STAR_INDEX"
-JAVA_MEM="$JAVA_MEM"
-NUM_THREADS="$NUM_THREADS"
-PAIRED_END="$PAIRED_END"
-INPUT_BAM="$INPUT_BAM"
-INPUT_READS="$INPUT_READS"
-INPUT_CORD_BAM="$INPUT_CORD_BAM"
-INPUT_TRANS_BAM="$INPUT_TRANS_BAM"
-INPUT_FASTQ="$INPUT_FASTQ"
-SAMPLE_ID="$SAMPLE_ID"
-STRAND="$STRAND"
-DETECTION_THRESHOLD="$DETECTION_THRESHOLD"
-MAPPING_QUALITY="$MAPPING_QUALITY"
-OPTICAL_DISTANCE="$OPTICAL_DISTANCE"
-ZAP_RAW_BAM="$ZAP_RAW_BAM"
-VAR_VCF_FILE="$VAR_VCF_FILE"
-PICARD_METRICS="$PICARD_METRICS"
-PICARD_RNA_METRICS="$PICARD_RNA_METRICS"
-SORTED_BAM="$SORTED_BAM"
-OUTPUT_FASTQ1="$OUTPUT_FASTQ1"
-OUTPUT_FASTQ2="$OUTPUT_FASTQ2"
-OUTPUT_PREFIX="$OUTPUT_PREFIX"
-OUTPUT_CORD_BAM="$OUTPUT_CORD_BAM"
-OUTPUT_TRANS_BAM="$OUTPUT_TRANS_BAM"
-MD_BAM="$MD_BAM"
-MD_METRICS="$MD_METRICS"
-BIGWIG="$BIGWIG"
-OUTPUT_SUMMARY="$OUTPUT_SUMMARY"
-OUTPUT_REPORT="$OUTPUT_REPORT"
-MULTIQC_CONFIG="$MULTIQC_CONFIG"
-SJDB_OVERHANG="$SJDB_OVERHANG"
-READ_FILES_COMMAND="$READ_FILES_COMMAND"
-OUT_FILTER_MULTIMAP_NMAX="$OUT_FILTER_MULTIMAP_NMAX"
-ALIGN_SJ_OVERHANG_MIN="$ALIGN_SJ_OVERHANG_MIN"
-ALIGN_SJDB_OVERHANG_MIN="$ALIGN_SJDB_OVERHANG_MIN"
-OUT_FILTER_MISMATCH_NMAX="$OUT_FILTER_MISMATCH_NMAX"
-OUT_FILTER_MISMATCH_NOVER_LMAX="$OUT_FILTER_MISMATCH_NOVER_LMAX"
-ALIGN_INTRON_MIN="$ALIGN_INTRON_MIN"
-ALIGN_INTRON_MAX="$ALIGN_INTRON_MAX"
-ALIGN_MATES_GAP_MAX="$ALIGN_MATES_GAP_MAX"
-OUT_FILTER_TYPE="$OUT_FILTER_TYPE"
-OUT_FILTER_SCORE_MIN_OVER_LREAD="$OUT_FILTER_SCORE_MIN_OVER_LREAD"
-OUT_FILTER_MATCH_NMIN_OVER_LREAD="$OUT_FILTER_MATCH_NMIN_OVER_LREAD"
-LIMIT_SJDB_INSERT_NSJ="$LIMIT_SJDB_INSERT_NSJ"
-OUT_SAM_STRAND_FIELD="$OUT_SAM_STRAND_FIELD"
-OUT_FILTER_INTRON_MOTIFS="$OUT_FILTER_INTRON_MOTIFS"
-ALIGN_SOFT_CLIP_AT_REFERENCE_ENDS="$ALIGN_SOFT_CLIP_AT_REFERENCE_ENDS"
-QUANT_MODE="$QUANT_MODE"
-OUT_SAM_ATTR_RG_LINE="$OUT_SAM_ATTR_RG_LINE"
-OUT_SAM_ATTRIBUTES="$OUT_SAM_ATTRIBUTES"
-CHIM_SEGMENT_MIN="$CHIM_SEGMENT_MIN"
-CHIM_JUNCTION_OVERHANG_MIN="$CHIM_JUNCTION_OVERHANG_MIN"
-CHIM_OUT_TYPE="$CHIM_OUT_TYPE"
-CHIM_MAIN_SEGMENT_MULT_NMAX="$CHIM_MAIN_SEGMENT_MULT_NMAX"
-UNIQUE="$UNIQUE"
-WASP="$WASP"
 _dispatch
-EOF
-else
-    _dispatch
-fi
