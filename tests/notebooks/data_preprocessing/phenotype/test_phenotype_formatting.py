@@ -81,3 +81,17 @@ def test_bam_subsetting(run_sos, repo_root, tmp_path):
                 cwd=repo_root, timeout=300)
     assert p.returncode == 0, p.stdout + p.stderr
     assert (out / "protocol_example.chr22_16M_17M.subsetted.bam").exists()
+
+
+def test_phenotype_by_chrom_gct(run_sos, repo_root, tmp_path):
+    # GCT-style by-chrom extraction: pull one chromosome from the tabix BED and
+    # blank the 3 coordinate columns (legacy awk $1=$2=$3="").
+    out = tmp_path / "out"
+    p = run_sos(repo_root / NB, "phenotype_by_chrom_gct",
+                {**_base(repo_root, out),
+                 "phenoFile": repo_root / FX / PHENO,
+                 "name": "protocol_example", "chrom": "chr22"},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    gct = out / "protocol_example.chr22.gct"
+    assert gct.exists() and gct.stat().st_size > 0

@@ -63,3 +63,21 @@ def test_psichomics_bed(run_r, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     _assert_num_match(out.read_text(),
                       gzip.open(repo_root / FIX / "expected_bedded.txt.gz", "rt").read(), label_cols=4)
+
+
+def test_jointcall_samples(run_r, repo_root, tmp_path):
+    # Subset a sample lookup to the samples present in a junc-file list. Inputs are
+    # plain text (no external tool): a lookup with a sample_id column (one row has a
+    # trailing .final to exercise the strip; one row is absent from the junc list).
+    st = tmp_path / "sample_table.tsv"
+    st.write_text("sample_id\tparticipant_id\n"
+                  "SAMPLE_001.final\tP1\nSAMPLE_002\tP2\nSAMPLE_999\tP9\n")
+    jl = tmp_path / "junc_list.txt"
+    jl.write_text("/path/to/SAMPLE_001.junc\n/path/to/SAMPLE_002.junc\n")
+    out = tmp_path / "filtered.rnaseq"
+    p = run_r(repo_root / WORKER,
+              ["--step", "jointcall_samples", "--sample-table", st,
+               "--junc-list", jl, "--output", out])
+    assert p.returncode == 0, p.stdout + p.stderr
+    ids = [ln.split("\t")[0] for ln in out.read_text().splitlines()[1:] if ln.strip()]
+    assert set(ids) == {"SAMPLE_001", "SAMPLE_002"}          # .final stripped, SAMPLE_999 dropped

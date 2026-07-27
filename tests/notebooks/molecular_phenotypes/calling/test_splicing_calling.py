@@ -69,3 +69,24 @@ def test_junction_quant(run_r, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.read_text() == (repo_root / PSI_FIX / "expected_junctions.txt").read_text()
 
+
+
+def test_quantify_psi(run_r, repo_root, tmp_path):
+    """psichomics_2: quantifySplicing over a committed chr22 SUPPA annotation
+    (built once via suppa.py generateEvents -> suppa_annot) and a junction table
+    encoded in psichomics' junctionString format so events actually quantify.
+    (Real STAR junctions use intron-boundary coords that need the production
+    reference annotation; here we exercise the worker's read->quantify->write path.)"""
+    fix = repo_root / PSI_FIX
+    out = tmp_path / "psi_raw_data.tsv"
+    p = run_r(repo_root / PSI_WORKER,
+              ["--step", "quantify_psi",
+               "--junctions", fix / "quantify_psi_junctions.txt",
+               "--splicing-annotation", fix / "chr22_suppa_annotation.rds",
+               "--output", out])
+    assert p.returncode == 0, p.stdout + p.stderr
+    lines = out.read_text().splitlines()
+    assert lines[0].split("\t") == ["SAMPLE_001", "SAMPLE_002"]      # write.table: no rowname header
+    events = [ln.split("\t")[0] for ln in lines[1:] if ln.strip()]
+    assert events, "no PSI events quantified"
+    assert all(e.split("_")[0] in {"SE", "MXE", "ALE", "AFE", "A3SS", "A5SS"} for e in events)

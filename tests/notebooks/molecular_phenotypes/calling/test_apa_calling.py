@@ -61,3 +61,38 @@ def test_apa_main_pdui(run_r, repo_root, tmp_path):
     data_rows = out.read_text().splitlines()[1:]                    # drop path-dependent header
     expected = (repo_root / FIX / "expected_pdui_data.txt").read_text().splitlines()
     assert data_rows == expected
+
+
+def test_coverage(run_r, repo_root, tmp_path):
+    """[bam2tools]: BAM -> bedGraph .wig + total mapped-read .depth. Smoke test on
+    the committed indexed chr22 rnaseq BAM (a wig/depth are produced; values are
+    region-specific so not byte-compared to the SAMPLE_00x fixtures)."""
+    bam = repo_root / "tests/fixtures/phenotype_formatting/protocol_example.chr22_16M_17M.bam"
+    wig = tmp_path / "cov.wig"
+    depth = tmp_path / "cov.depth"
+    p = run_r(repo_root / WORKER,
+              ["--step", "coverage", "--bam", bam,
+               "--output-wig", wig, "--output-depth", depth])
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert wig.read_text().splitlines()[0] == "track type=bedGraph"
+    assert depth.read_text().strip().isdigit() and int(depth.read_text().strip()) > 0
+
+
+def test_apa_config(run_r, repo_root, tmp_path):
+    """[APAconfig]: wig-dir (paired .wig/.depth) -> DaPars2 config + sample-mapping."""
+    depths = dict(l.split("\t") for l in (repo_root / FIX / "depth.txt").read_text().splitlines() if l.strip())
+    for s in ("SAMPLE_001", "SAMPLE_002"):
+        _ungz(repo_root / FIX / f"{s}.wig.gz", tmp_path / f"{s}.wig")
+        (tmp_path / f"{s}.depth").write_text(depths[s] + "\n")     # per-sample depth beside each wig
+    cfg = tmp_path / "sample_configuration_file.txt"
+    mp = tmp_path / "sample_mapping_files.txt"
+    p = run_r(repo_root / WORKER,
+              ["--step", "apa_config", "--wig-dir", tmp_path,
+               "--annotation", repo_root / FIX / "chr22_3UTR.bed", "--apa-cwd", tmp_path,
+               "--coverage-threshold", 10, "--num-threads", 1,
+               "--config", cfg, "--output-mapping", mp])
+    assert p.returncode == 0, p.stdout + p.stderr
+    conf = cfg.read_text()
+    assert "Aligned_Wig_files=" in conf and "SAMPLE_001.wig" in conf and "SAMPLE_002.wig" in conf
+    assert "Coverage_threshold=10" in conf
+    assert len([l for l in mp.read_text().splitlines() if l.strip()]) == 2

@@ -77,9 +77,10 @@ quantify_psi <- function(argv) {
   suppressPackageStartupMessages({ library(psichomics); library(dplyr); library(tidyr); library(purrr) })
   data <- read.table(argv$junctions, sep = "\t", header = TRUE)
   names(data) <- sub("X", "", names(data))               # read.table prefixes numeric sample names with X
-  data <- data[-grep("chrM", data$Junction.ID), ]
-  data <- data[-grep("chrUn", data$Junction.ID), ]
-  data <- data[-grep("random", data$Junction.ID), ]
+  # drop mitochondrial / unplaced / random-contig junctions. Use grepl-negation:
+  # `data[-grep(...), ]` wipes ALL rows when a pattern has zero matches
+  # (`-integer(0)` indexes nothing), which breaks inputs lacking those contigs.
+  data <- data[!grepl("chrM|chrUn|random", data$Junction.ID), ]
   junctionQuant <- data[, -1]
   rownames(junctionQuant) <- data[, 1]
 

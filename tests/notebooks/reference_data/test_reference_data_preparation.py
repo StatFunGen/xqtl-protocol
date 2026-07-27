@@ -177,3 +177,60 @@ def test_psichomics_hg38_annotation(run_sos, repo_root, tmp_path):
     assert p.returncode == 0, blob
     rds = out / "psichomics_hg38_annotation.rds"
     assert rds.exists() and rds.stat().st_size > 50_000, "annotation RDS missing/too small"
+
+
+def test_suppa_annotation(run_sos, repo_root, tmp_path):
+    """SUPPA_annotation workflow: suppa.py generateEvents (SUPPA_annotation_1) ->
+    reference_data_preparation.R --step suppa_annot / psichomics (SUPPA_annotation_2).
+    Both external SUPPA + R psichomics are exercised on the committed chr22 GTF."""
+    out = tmp_path / "out"
+    out.mkdir(parents=True)
+    gtf = tmp_path / "chr22.gtf"
+    gtf.write_text(gzip.open(repo_root / CHR22_GTF, "rt").read())
+    p = run_sos(repo_root / NB, "SUPPA_annotation",
+                {**_common(repo_root, out), "hg_gtf": gtf}, cwd=repo_root, timeout=900)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert (out / "hg38.chr22_SE_strict.ioe").exists()             # SUPPA_annotation_1 output
+    assert (out / "chr22.SUPPA_annotation.rds").exists()           # SUPPA_annotation_2 output
+
+
+def test_rsem_index(run_sos, repo_root, tmp_path):
+    """RSEM_index: rsem-prepare-reference on a tiny self-consistent genome+GTF."""
+    out = tmp_path / "out"
+    out.mkdir(parents=True)
+    p = run_sos(repo_root / NB, "RSEM_index",
+                {**_common(repo_root, out),
+                 "hg_reference": repo_root / FIX / "rsem_mini.fa",
+                 "hg_gtf": repo_root / FIX / "rsem_mini.gtf", "numThreads": 1},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    idx = out / "RSEM_Index"
+    for f in ("rsem_reference.grp", "rsem_reference.ti", "rsem_reference.seq",
+              "rsem_reference.transcripts.fa", "rsem_reference.idx.fa"):
+        assert (idx / f).exists(), f"missing {f}"
+
+
+def test_picard_sequence_dictionary(repo_root, tmp_path):
+    """hg_reference_3 picard half: picard CreateSequenceDictionary -> .dict."""
+    import subprocess
+    fa = tmp_path / "test_contigs.fa"
+    fa.write_text((repo_root / FIX / "test_contigs.fa").read_text())
+    out = tmp_path / "test_contigs.dict"
+    p = subprocess.run(["pixi", "run", "--frozen", "picard", "CreateSequenceDictionary",
+                        f"R={fa}", f"O={out}"], cwd=repo_root, capture_output=True, text=True)
+    assert p.returncode == 0, p.stdout + p.stderr
+    lines = out.read_text().splitlines()
+    assert lines[0].startswith("@HD")
+    assert any(l.startswith("@SQ") and "SN:chr22" in l for l in lines)
+
+
+def test_refflat_generation(run_sos, repo_root, tmp_path):
+    """RefFlat_generation: gtfToGenePred (kent-tools) + awk reshape -> refFlat.
+    Byte-exact vs the committed ERCC reference."""
+    gtf = tmp_path / "ERCC92.gtf"
+    gtf.write_text((repo_root / FIX / "ERCC92.gtf").read_text())
+    p = run_sos(repo_root / NB, "RefFlat_generation",
+                {"hg_gtf": gtf, "cwd": tmp_path}, cwd=repo_root, timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = tmp_path / "ERCC92.ref.flat"
+    assert out.read_text() == (repo_root / FIX / "expected_ERCC92.ref.flat").read_text()
