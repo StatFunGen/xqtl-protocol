@@ -14,6 +14,7 @@ import shutil
 WORKER = "code/script/molecular_phenotypes/calling/leafcutter_cluster_regtools.R"
 PSI_WORKER = "code/script/molecular_phenotypes/calling/splicing_calling.R"
 RJ_WORKER = "code/script/molecular_phenotypes/calling/regtools_junctions.R"
+RJ_WRAPPER = "code/script/molecular_phenotypes/calling/regtools_junctions.sh"
 FIX = "tests/fixtures/splicing_calling/leafcutter"
 PSI_FIX = "tests/fixtures/splicing_calling/psichomics"
 BAM = "tests/fixtures/phenotype_formatting/protocol_example.chr22_16M_17M.bam"
@@ -51,6 +52,22 @@ def test_regtools_junctions(run_r, repo_root, tmp_path):
     p = run_r(repo_root / RJ_WORKER,
               ["--bam", bam, "--output", out, "--min-anchor", 8, "--min-intron", 50,
                "--max-intron", 500000, "--strandness", "XS"])
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert out.read_text() == (repo_root / "tests/fixtures/splicing_calling/regtools"
+                               / "expected_chr22_16M_17M.junc").read_text()
+
+
+def test_regtools_junctions_sh(run_sh, repo_root, tmp_path):
+    """The pipeline path (per collaborator decision): regtools_junctions.sh wraps
+    `samtools index` + `regtools junctions extract`. Must byte-match the same BED12
+    reference the R port reproduces. (Options precede the BAM; strand mode is the
+    XS/RF/FR string — regtools 1.0.0 rejects both `-o` after the BAM and integer -s.)"""
+    bam = tmp_path / "s.bam"
+    shutil.copy(repo_root / BAM, bam)                        # samtools index writes s.bam.bai here
+    out = tmp_path / "r.junc"
+    p = run_sh(repo_root / RJ_WRAPPER,
+               ["--bam", bam, "--output", out, "--min-anchor", "8", "--min-intron", "50",
+                "--max-intron", "500000", "--strandness", "XS"])
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.read_text() == (repo_root / "tests/fixtures/splicing_calling/regtools"
                                / "expected_chr22_16M_17M.junc").read_text()
