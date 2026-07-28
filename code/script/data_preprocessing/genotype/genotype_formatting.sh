@@ -79,7 +79,9 @@ if [[ -z "$NAME" ]]; then
 fi
 
 _mem_spec_to_mb() {
-    local spec="${1^^}"
+    # portable uppercase (bash 3.2 on macOS lacks ${var^^})
+    local spec
+    spec="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
     spec="${spec// /}"
     [[ -z "$spec" ]] && return 1
     if [[ "$spec" =~ ^([0-9]+)([KMGTP]?)B?$ ]]; then
