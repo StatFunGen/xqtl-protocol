@@ -28,7 +28,9 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.10.0
 
       - name: Script tests
-        run: pixi run test_scripts
+        run: |
+          pixi config set --local run-post-link-scripts insecure
+          pixi run test_scripts
 
       - name: Notebook tests
         run: pixi run test_notebooks
