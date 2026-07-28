@@ -10,7 +10,8 @@
 #
 # Inputs (zero or more of each input pair; at least one of each pair):
 #   --gwas-meta <TSV>           Optional. Columns: study_id, path,
-#                                n_case, n_control (optional; study-level fallback),
+#                                n_case, n_control, n_sample (all optional;
+#                                study-level sample-size fallbacks),
 #                                column_mapping (optional). Relative
 #                                paths resolve against the meta file's
 #                                own directory.
@@ -25,8 +26,8 @@
 #   --output <TSV>              Output manifest path.
 #
 # Output TSV columns:
-#   study_id, gwas_tsv, column_mapping, n_case, n_control, chr, start, end, region_id,
-#   gwas_tsv_basename
+#   study_id, gwas_tsv, column_mapping, n_case, n_control, n_sample, chr, start,
+#   end, region_id, gwas_tsv_basename
 #
 # `region_id` is the SoS-safe sanitised region label (`:` and `-` replaced
 # with `_`); the downstream notebook uses it as the per-task ID.
@@ -64,6 +65,7 @@ studies <- data.frame(study_id = character(0),
                       column_mapping = character(0),
                       n_case = numeric(0),
                       n_control = numeric(0),
+                      n_sample = numeric(0),
                       stringsAsFactors = FALSE)
 seenStudies <- character(0)
 
@@ -83,6 +85,9 @@ if (nzchar(argv$gwas_meta) && argv$gwas_meta != ".") {
   # sample size when the sumstats has no per-variant n_case/n_control columns.
   hasNca <- "n_case" %in% names(meta)
   hasNco <- "n_control" %in% names(meta)
+  # Optional study-level total N: the level-4 fallback used when a study has no
+  # per-variant n_case/n_control and no per-variant N column.
+  hasNsa <- "n_sample" %in% names(meta)
   for (i in seq_len(nrow(meta))) {
     sid <- as.character(meta$study_id[[i]])
     tsv <- as.character(meta$path[[i]])
@@ -92,13 +97,14 @@ if (nzchar(argv$gwas_meta) && argv$gwas_meta != ".") {
       cm <- file.path(metaDir, cm)
     nca <- if (hasNca) suppressWarnings(as.numeric(meta$n_case[[i]]))    else NA_real_
     nco <- if (hasNco) suppressWarnings(as.numeric(meta$n_control[[i]])) else NA_real_
+    nsa <- if (hasNsa) suppressWarnings(as.numeric(meta$n_sample[[i]]))  else NA_real_
     if (sid %in% seenStudies)
       stop("Duplicate study_id in --gwas-meta: ", sid)
     seenStudies <- c(seenStudies, sid)
     studies <- rbind(studies,
       data.frame(study_id = sid, gwas_tsv = tsv,
                  column_mapping = if (is.na(cm)) "" else cm,
-                 n_case = nca, n_control = nco,
+                 n_case = nca, n_control = nco, n_sample = nsa,
                  stringsAsFactors = FALSE))
   }
 }
@@ -119,7 +125,7 @@ for (item in tsvItems) {
   studies <- rbind(studies,
     data.frame(study_id = sid, gwas_tsv = tsv,
                column_mapping = "", n_case = NA_real_, n_control = NA_real_,
-               stringsAsFactors = FALSE))
+               n_sample = NA_real_, stringsAsFactors = FALSE))
 }
 if (nrow(studies) == 0L)
   stop("No GWAS inputs supplied (give --gwas-meta and/or --gwas-tsv-list).")
@@ -176,6 +182,7 @@ for (i in seq_len(nrow(studies))) {
       column_mapping    = studies$column_mapping[[i]],
       n_case            = studies$n_case[[i]],
       n_control         = studies$n_control[[i]],
+      n_sample          = studies$n_sample[[i]],
       chr               = chr, start = s, end = e,
       region_id         = region_id,
       gwas_tsv_basename = tools::file_path_sans_ext(
