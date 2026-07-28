@@ -32,6 +32,8 @@ jobs:
       - name: Script tests
         run: |
           pixi config set --local run-post-link-scripts insecure
+          # Must run this for now because preprocesscore in bioconda is broken in CI - do NOT use in production systems!
+          pixi run Rscript -e 'BiocManager::install("preprocessCore", configure.args=c(preprocessCore = "--disable-threading"))'
           pixi run test_scripts
 
       - name: Notebook tests
