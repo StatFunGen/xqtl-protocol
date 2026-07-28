@@ -18,6 +18,20 @@ suppressPackageStartupMessages({
   library(vroom)
 })
 
+# Cache only the sesameData resources openSesame/annoProbes actually need — the
+# per-platform manifests/masks + genome info + IDAT signature — instead of the bare
+# sesameDataCache() which downloads ALL ~95 ExperimentHub resources (incl. large TCGA
+# example datasets and every platform) and times out on a cold CI cache. Titles are
+# grep-selected from the installed sesameDataList() so it stays version-robust and
+# covers all human array platforms (HM450/EPIC/EPICv2/MSA).
+cache_sesame_data <- function() {
+  titles <- sesameData::sesameDataList()$Title
+  pat <- paste0("^(idatSignature|probeIDSignature|genomeInfo[.]hg|",
+                "(HM450|EPIC|EPICv2|MSA)[.](address|probeInfo|imputationDefault)|",
+                "KYCG[.](HM450|EPIC|EPICv2|MSA)[.]Mask)")
+  sesameData::sesameDataCache(grep(pat, titles, value = TRUE))
+}
+
 parser <- arg_parser("methylation_calling worker (see --step)")
 parser <- add_argument(parser, "--step", type = "character", help = "sesame | minfi | annotate")
 parser <- add_argument(parser, "--sample-sheet", type = "character", default = "",
@@ -62,7 +76,7 @@ sesame_step <- function(argv) {
   suppressPackageStartupMessages({ library(sesame); library(BiocParallel) })
   n_cores <- if (argv$n_cores == 0) BiocParallel::multicoreWorkers() else argv$n_cores
   bpp <- BiocParallel::MulticoreParam(n_cores)
-  sesameData::sesameDataCache()
+  cache_sesame_data()
   proc <- if (argv$keep_only_cpg_probes) "QCDGPB" else "QCDPB"
   B2M <- function(x) { x[x == 0] <- min(x[x != 0]); x[x == 1] <- max(x[x != 1]); log2(x) - log2(1 - x) }
 
@@ -132,7 +146,7 @@ minfi_step <- function(argv) {
 # ---------------------------------------------------------------------------
 annotate_step <- function(argv) {
   suppressPackageStartupMessages({ library(sesame); library(Rsamtools); library(dplyr) })
-  sesameData::sesameDataCache()
+  cache_sesame_data()
   betas <- vroom::vroom(argv$input_beta, delim = "\t", show_col_types = FALSE)
   Mv    <- vroom::vroom(argv$input_m, delim = "\t", show_col_types = FALSE)
   pa <- sesameData::sesameData_annoProbes(betas$ID, column = "gene_id")
