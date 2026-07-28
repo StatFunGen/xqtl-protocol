@@ -17,14 +17,22 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent          # tests/ -> repo root
 sys.path.insert(0, str(Path(__file__).resolve().parent))    # tests/ on sys.path
 
-# On restricted Linux CI runners, preprocessCore's threaded normalize.quantiles (used by
-# minfi's preprocessQuantile and bulk_expression_normalization's quantile step) fails with
-# "return code from pthread_create() is 22". Force preprocessCore serial for every test
-# subprocess there via R_THREADS=1 — bit-identical output, and it inherits into run_r /
-# run_sh / run_sos automatically. macOS CI, local dev, and production `sos run` are untouched
-# (they never import this conftest / don't set CI, so they thread natively).
+# On Linux CI, preprocessCore's threaded normalize.quantiles (minfi's preprocessQuantile,
+# sesame's normalize.quantiles.use.target) dies with "pthread_create() is 22" (EINVAL): it
+# always spawns a worker thread and sizes its stack from __pthread_get_minstack(), which is
+# invalid on the runner's glibc/static-TLS layout (R_THREADS can't disable it; the plain
+# run_r bulk-norm path with fewer libs loaded is fine). Giving the process a finite, generous
+# RLIMIT_STACK makes pthread's stack sizing valid; it inherits into all test subprocesses
+# (run_r / run_sh / run_sos -> Rscript). CI+Linux only — macOS + production untouched.
 if os.environ.get("CI") and sys.platform.startswith("linux"):
-    os.environ.setdefault("R_THREADS", "1")
+    import resource
+    _soft, _hard = resource.getrlimit(resource.RLIMIT_STACK)
+    _want = 64 * 1024 * 1024                                     # 64 MB: ample R stack, valid pthread size
+    _cap = _want if _hard == resource.RLIM_INFINITY else min(_want, _hard)
+    try:
+        resource.setrlimit(resource.RLIMIT_STACK, (_cap, _hard))
+    except (ValueError, OSError):
+        pass
 
 from helpers import r_runner                                 # noqa: E402
 from helpers import sos_runner                                # noqa: E402
