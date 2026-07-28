@@ -16,15 +16,54 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 _MAX_PER_FILE = 8000            # cap each .stderr file in the appended dump
 _MAX_TOTAL = 40000             # overall cap so a runaway log can't bloat the message
 
+# SoS binds its ZMQ controller to the host's routable IP (utils.get_localhost_ip),
+# which on a CI runner is intermittently unassignable -> the run aborts before any
+# step with a ZMQError. Pure infra flake, not a test failure, so it's safe to retry.
+_ZMQ_FLAKE_RE = re.compile(
+    r"ZMQError|Can't assign requested address|Address already in use|Cannot bind",
+    re.IGNORECASE,
+)
+
 
 def sos_bin() -> str:
     return os.environ.get("XQTL_SOS") or "sos"
+
+
+def _worker_env():
+    """Isolate the SoS runtime per pytest-xdist worker so the notebook tier is
+    safe to run in parallel.
+
+    SoS hardcodes its runtime tree under ``expanduser("~")`` — the per-workflow
+    ``exec_dir`` (``~/.sos/<md5(cwd)>``) plus the shared ``~/.sos/{signatures,
+    tasks,workflows}`` — with no SoS-specific env override, and the process
+    ``cwd`` is load-bearing here (tests set it to the repo root for relative
+    ``code/script`` resolution), so cwd can't be the isolation seam. HOME is the
+    only lever that fully separates two concurrent ``sos run`` processes.
+
+    We isolate PER WORKER, not per call: under ``--dist loadscope`` a test file
+    runs entirely on one worker and a worker runs its tests serially, so a
+    per-worker HOME removes all cross-worker collisions with no intra-worker
+    change, and any HOME-based R data cache (the sesame ghcr / AnnotationHub
+    caches) is still built just once on the worker that owns that file.
+
+    Returns an env dict, or ``None`` when not running under xdist so serial runs
+    inherit the ambient environment exactly as before (no behavior change).
+    """
+    worker = os.environ.get("PYTEST_XDIST_WORKER")     # e.g. "gw0"; unset when serial
+    if not worker:
+        return None
+    home = Path(tempfile.gettempdir()) / "xqtl_test_home" / worker
+    (home / ".sos").mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    env["HOME"] = str(home)
+    return env
 
 
 def _step_stderr_dump(proc_text, params) -> str:
@@ -71,12 +110,16 @@ def _step_stderr_dump(proc_text, params) -> str:
     return "".join(chunks)
 
 
-def run_sos(notebook, step, params=None, cwd=None, timeout: int = 900):
+def run_sos(notebook, step, params=None, cwd=None, timeout: int = 900, retries: int = 1):
     """Run one SoS step. `params` is a dict; a value of ``True`` is emitted as a
     bare flag, a list/tuple as space-separated values, anything else stringified.
     Returns the CompletedProcess (assert on ``.returncode`` in the test). The
     per-step ``.stderr`` files are appended to ``.stderr`` so the real error shows;
-    a timeout is returned as returncode 124 (not raised) with the partial logs."""
+    a timeout is returned as returncode 124 (not raised) with the partial logs.
+
+    A failed run whose output bears the SoS ZMQ controller-bind flake signature is
+    retried up to ``retries`` times (default 1) — that failure is host-network
+    infra, not the notebook under test. A timeout is never retried."""
     cmd = [sos_bin(), "run", str(notebook), step]
     for key, val in (params or {}).items():
         cmd.append(f"--{key}")
@@ -89,22 +132,33 @@ def run_sos(notebook, step, params=None, cwd=None, timeout: int = 900):
     cmd.append("-j1")
 
     run_cwd = str(cwd) if cwd else None
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True,
-                              timeout=timeout, cwd=run_cwd)
-    except subprocess.TimeoutExpired as e:
-        # On timeout, TimeoutExpired.stdout/.stderr come back as BYTES even with
-        # text=True (the decode only happens on normal completion) — decode them.
-        def _s(x):
-            if x is None:
-                return ""
-            return x.decode(errors="replace") if isinstance(x, bytes) else x
-        out, err = _s(e.stdout), _s(e.stderr)
-        dump = _step_stderr_dump(out + err, params)
-        err = f"{err}\n[run_sos] TIMEOUT after {timeout}s{dump}"
-        return subprocess.CompletedProcess(cmd, returncode=124, stdout=out, stderr=err)
+    env = _worker_env()                                # per-xdist-worker HOME, or None (serial)
+
+    attempt = 0
+    while True:
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True,
+                                  timeout=timeout, cwd=run_cwd, env=env)
+        except subprocess.TimeoutExpired as e:
+            # On timeout, TimeoutExpired.stdout/.stderr come back as BYTES even with
+            # text=True (the decode only happens on normal completion) — decode them.
+            def _s(x):
+                if x is None:
+                    return ""
+                return x.decode(errors="replace") if isinstance(x, bytes) else x
+            out, err = _s(e.stdout), _s(e.stderr)
+            dump = _step_stderr_dump(out + err, params)
+            err = f"{err}\n[run_sos] TIMEOUT after {timeout}s{dump}"
+            return subprocess.CompletedProcess(cmd, returncode=124, stdout=out, stderr=err)
+
+        if (proc.returncode != 0 and attempt < retries
+                and _ZMQ_FLAKE_RE.search(_ANSI.sub("", (proc.stdout or "") + (proc.stderr or "")))):
+            attempt += 1
+            continue                                   # transient controller-bind flake — rerun
+        break
 
     dump = _step_stderr_dump(proc.stdout + proc.stderr, params)
-    if dump:
-        proc.stderr = (proc.stderr or "") + dump
+    note = f"\n[run_sos] retried {attempt}x after a ZMQ controller-bind flake" if attempt else ""
+    if dump or note:
+        proc.stderr = (proc.stderr or "") + note + dump
     return proc

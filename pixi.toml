@@ -1,19 +1,23 @@
 [workspace]
 name = "xqtl-protocol"
 channels = ["dnachun", "conda-forge", "bioconda"]
-platforms = ["linux-64", "osx-arm64"]
+platforms = [
+    { platform = "linux-64", glibc = "2.17" },
+    "osx-arm64"
+]
 
 [system-requirements]
 libc = { family="glibc", version="2.17" }
 
 [tasks]
-test = "pytest tests"
-test_scripts = "pytest tests/scripts"
-test_notebooks = "pytest tests/notebooks"
+test_scripts = "pytest tests/scripts -n auto --dist loadscope"
+test_notebooks = "pytest tests/notebooks -n 2 --dist loadscope"
+test = { depends-on = ["test_scripts", "test_notebooks"] }
 
 [dependencies]
 "pytest" = "*"
 "pytest-cov" = "*"
+"pytest-xdist" = "*"
 "python" = "3.12.*"
 "sos" = "*"
 "setuptools" = "<81"
