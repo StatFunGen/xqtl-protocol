@@ -585,7 +585,7 @@
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
 <p>This notebook builds <strong>TAD boundaries (TADBs)</strong> and TADB-enhanced cis windows from tissue/brain TAD calls. It runs in two conceptual stages: (i) <em>manage TAD redundancy</em> by recursively merging overlapping specific TADs (those whose overlap exceeds a cutoff) into a smaller set of generalized TADs, and (ii) <em>generate TADB-enhanced cis windows and extended TADBs</em> by deriving boundaries from the generalized + specific TADs and joining them with gene coordinates to produce per-gene cis windows.</p>
-<p>During fine mapping we often use a cis window (up &amp; downstream 1Mb of the start of a gene) as the fine-mapping region. That choice lacks a biological justification, so here we instead extend regions using TAD structure, producing both extended TADBs and TADB-enhanced cis windows since each serves a different goal. Genes within each TADB are extended by their 1Mb cis windows and the outermost boundary is taken, yielding roughly 1,381 TADBs that can serve as functional units for epigenetic analysis.</p>
+<p>During fine mapping we often use a cis window (the gene body extended by 1Mb up- and downstream, i.e. gene start − 1Mb to gene end + 1Mb) as the fine-mapping region. That choice lacks a biological justification, so here we instead extend regions using TAD structure, producing both extended TADBs and TADB-enhanced cis windows since each serves a different goal. Genes within each TADB are extended by their 1Mb cis windows and the outermost boundary is taken, yielding roughly 1,381 TADBs that can serve as functional units for epigenetic analysis.</p>
 <blockquote>
 <div><p><strong>Synthetic-data note.</strong> This minimal working example runs on a small synthetic set of chr22 TAD blocks (<code class="docutils literal notranslate"><span class="pre">protocol_example.brain_TADs.txt</span></code>) and a chr22 gene table (<code class="docutils literal notranslate"><span class="pre">protocol_example.gene_start_end.tsv</span></code>, derived from the protocol gene-model GTF). It is for demonstration only and does not reproduce a full genome-wide TADB build.</p>
 </div></blockquote>
@@ -650,17 +650,17 @@
 </section>
 <section id="compare-tadb-and-cis-windows">
 <h4>Compare TADB and cis windows<a class="headerlink" href="#compare-tadb-and-cis-windows" title="Link to this heading">#</a></h4>
-<p>Each TADB covers many genes. For fine-mapping, each gene is assigned a 1Mb cis window (2Mb total), so the next step checks whether the TADBs fully cover the cis windows of the genes inside them. Verifying that every gene is covered by a TADB confirms the TADBs are correct, since they should span the whole genome. The only genes in the full gene list not covered by a TADB are on chromosome Y, MT, or are ERCC spike-ins; these are expected to be absent because the TAD data does not include them. A value of 0 marks a cis window not fully covered by the TADB its gene lies in: even after constructing the TADBs, many genes still have a 1Mb cis window (2Mb total) that extends beyond its TADB region.</p>
+<p>Each TADB covers many genes. For fine-mapping, each gene is assigned a cis window (the gene body ± 1Mb, i.e. gene start − 1Mb to gene end + 1Mb), so the next step checks whether the TADBs fully cover the cis windows of the genes inside them. Verifying that every gene is covered by a TADB confirms the TADBs are correct, since they should span the whole genome. The only genes in the full gene list not covered by a TADB are on chromosome Y, MT, or are ERCC spike-ins; these are expected to be absent because the TAD data does not include them. A value of 0 marks a cis window not fully covered by the TADB its gene lies in: even after constructing the TADBs, many genes still have a cis window (gene body ± 1Mb) that extends beyond its TADB region.</p>
 </section>
 <section id="construct-tadb-enhanced-cis-windows-and-extended-tadbs">
 <h4>Construct TADB-enhanced cis windows and extended TADBs<a class="headerlink" href="#construct-tadb-enhanced-cis-windows-and-extended-tadbs" title="Link to this heading">#</a></h4>
-<p>For each gene, its 1Mb upstream/downstream window (2Mb total) and the TADB it falls in are combined, extending the region outward to the smaller start and the larger end of the two. This yields one extended cis window per gene, most with a length close to or larger than the original 2Mb window, so that every gene maps to an extended cis window and none is left uncovered. Compared with the TADB-enhanced cis window, the extended TADB allows a single gene to belong to multiple extended regions.</p>
+<p>For each gene, its cis window (the gene body ± 1Mb, i.e. gene start − 1Mb to gene end + 1Mb) and the TADB it falls in are combined, extending the region outward to the smaller start and the larger end of the two. This yields one extended cis window per gene, most with a length close to or larger than the original cis window, so that every gene maps to an extended cis window and none is left uncovered. Compared with the TADB-enhanced cis window, the extended TADB allows a single gene to belong to multiple extended regions.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/generalized_TADB.ipynb default \
-    --tad-input input/tadb/protocol_example.brain_TADs.txt \
-    --gene-coords input/tadb/protocol_example.gene_start_end.tsv \
-    --cwd output/tadb
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">generalized_TADB</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">default</span> \
+    <span class="o">--</span><span class="n">tad</span><span class="o">-</span><span class="nb">input</span> <span class="nb">input</span><span class="o">/</span><span class="n">tadb</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">brain_TADs</span><span class="o">.</span><span class="n">txt</span> \
+    <span class="o">--</span><span class="n">gene</span><span class="o">-</span><span class="n">coords</span> <span class="nb">input</span><span class="o">/</span><span class="n">tadb</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">gene_start_end</span><span class="o">.</span><span class="n">tsv</span> \
+    <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span><span class="o">/</span><span class="n">tadb</span>
 </pre></div>
 </div>
 </div>
@@ -672,7 +672,7 @@
 <h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/generalized_TADB.ipynb -h
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">generalized_TADB</span><span class="o">.</span><span class="n">ipynb</span> <span class="o">-</span><span class="n">h</span>
 </pre></div>
 </div>
 </div>
@@ -718,261 +718,261 @@
 <p>The cells below define the SoS workflow steps invoked by the command above. They are not meant to be edited for routine analysis.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-# Brain/tissue TAD coordinates: a tab-separated file with columns chr, start, end (no header)
-parameter: tad_input = path
-# Gene coordinates table derived from the gene-model GTF (columns: index, #chr, start, end, gene_id, gene_name)
-parameter: gene_coords = path
-# Output directory
-parameter: cwd = path(&quot;output/tadb&quot;)
-# Minimum percent overlap for two specific TADs to be merged into one generalized TAD
-parameter: overlap_cutoff = 80
-# Container image (kept empty; we no longer use containers)
-parameter: container = &#39;&#39;
-# Resource options (kept for parity with the protocol)
-parameter: job_size = 1
-parameter: walltime = &quot;20h&quot;
-parameter: mem = &quot;40G&quot;
-parameter: numThreads = 1
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="k">global</span><span class="p">]</span>
+<span class="c1"># Brain/tissue TAD coordinates: a tab-separated file with columns chr, start, end (no header)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">tad_input</span> <span class="o">=</span> <span class="n">path</span>
+<span class="c1"># Gene coordinates table derived from the gene-model GTF (columns: index, #chr, start, end, gene_id, gene_name)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">gene_coords</span> <span class="o">=</span> <span class="n">path</span>
+<span class="c1"># Output directory</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">cwd</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s2">&quot;output/tadb&quot;</span><span class="p">)</span>
+<span class="c1"># Minimum percent overlap for two specific TADs to be merged into one generalized TAD</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">overlap_cutoff</span> <span class="o">=</span> <span class="mi">80</span>
+<span class="c1"># Container image (kept empty; we no longer use containers)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">container</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<span class="c1"># Resource options (kept for parity with the protocol)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">job_size</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">walltime</span> <span class="o">=</span> <span class="s2">&quot;20h&quot;</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">mem</span> <span class="o">=</span> <span class="s2">&quot;40G&quot;</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">numThreads</span> <span class="o">=</span> <span class="mi">1</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[default]
-input: tad = tad_input, gene = gene_coords
-output: gentad = f&#39;{cwd}/generalized_TAD.tsv&#39;,
-        gentadb = f&#39;{cwd}/generalized_TADB.tsv&#39;,
-        cis = f&#39;{cwd}/TADB_enhanced_cis.bed&#39;,
-        ext = f&#39;{cwd}/extended_TADB.bed&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[&quot;cis&quot;]:bn}&#39;
-R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[&quot;cis&quot;]:n}.stderr&#39;, stdout = f&#39;{_output[&quot;cis&quot;]:n}.stdout&#39;
-    library(tidyverse)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">default</span><span class="p">]</span>
+<span class="nb">input</span><span class="p">:</span> <span class="n">tad</span> <span class="o">=</span> <span class="n">tad_input</span><span class="p">,</span> <span class="n">gene</span> <span class="o">=</span> <span class="n">gene_coords</span>
+<span class="n">output</span><span class="p">:</span> <span class="n">gentad</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cwd</span><span class="si">}</span><span class="s1">/generalized_TAD.tsv&#39;</span><span class="p">,</span>
+        <span class="n">gentadb</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cwd</span><span class="si">}</span><span class="s1">/generalized_TADB.tsv&#39;</span><span class="p">,</span>
+        <span class="n">cis</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cwd</span><span class="si">}</span><span class="s1">/TADB_enhanced_cis.bed&#39;</span><span class="p">,</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cwd</span><span class="si">}</span><span class="s1">/extended_TADB.bed&#39;</span>
+<span class="n">task</span><span class="p">:</span> <span class="n">trunk_workers</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">trunk_size</span> <span class="o">=</span> <span class="n">job_size</span><span class="p">,</span> <span class="n">walltime</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">,</span> <span class="n">mem</span> <span class="o">=</span> <span class="n">mem</span><span class="p">,</span> <span class="n">cores</span> <span class="o">=</span> <span class="n">numThreads</span><span class="p">,</span> <span class="n">tags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;cis&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="n">R</span><span class="p">:</span> <span class="n">container</span><span class="o">=</span><span class="n">container</span><span class="p">,</span> <span class="n">expand</span> <span class="o">=</span> <span class="s2">&quot;${ }&quot;</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;cis&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">n</span><span class="si">}</span><span class="s1">.stderr&#39;</span><span class="p">,</span> <span class="n">stdout</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;cis&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">n</span><span class="si">}</span><span class="s1">.stdout&#39;</span>
+    <span class="n">library</span><span class="p">(</span><span class="n">tidyverse</span><span class="p">)</span>
     
-    find_TAD_overlap &lt;- function(x, inputDF){
-        rowChr &lt;- x[&#39;chr&#39;]
-        rowStart &lt;- as.numeric(x[&#39;start&#39;])
-        rowEnd &lt;- as.numeric(x[&#39;end&#39;])
-        rowTADIndex &lt;- x[&#39;TAD_index&#39;]
-        TADsubset &lt;- inputDF %&gt;% filter(chr == rowChr)
-        TADsubset$start &lt;- as.numeric(TADsubset$start)
-        TADsubset$end &lt;- as.numeric(TADsubset$end)
-        priorTADsubset &lt;- TADsubset %&gt;%
-            filter(start &lt;= rowStart &amp; rowStart &lt;= end &amp;
-                (start != rowStart | end != rowEnd)) %&gt;% arrange(start)
-        nextTADsubset &lt;- TADsubset %&gt;%
-            filter(start &lt;= rowEnd &amp; rowEnd &lt;= end &amp;
-                (start != rowStart | end != rowEnd)) %&gt;% arrange(-end)
-        completeOverlapSubset &lt;- TADsubset %&gt;%
-            filter(start &lt;= rowStart &amp; rowEnd &lt;= end &amp;
-                (start != rowStart | end != rowEnd))
-        priorOverlap &lt;- 0
-        prior_TAD_index &lt;- rowTADIndex
-        nextOverlap &lt;- 0
-        next_TAD_index &lt;- rowTADIndex
-        completeOverlap &lt;- FALSE
-        if (nrow(priorTADsubset)) {
-            priorOverlap &lt;- priorTADsubset %&gt;%
-                mutate(inner_TAD_Length = end - rowStart,
-                    outer_TAD_Length = end - start,
-                    overlap = (inner_TAD_Length / outer_TAD_Length) * 100) %&gt;%
-                arrange(-overlap)
-            prior_TAD_index &lt;- priorOverlap$TAD_index[1]
-            priorOverlap &lt;- priorOverlap$overlap[1]
-            if(is.na(prior_TAD_index)) stop(paste(&quot;The following TAD has an issue:&quot;, rowTADIndex))
-        }
-        if (nrow(nextTADsubset)) {
-            nextOverlap &lt;- nextTADsubset %&gt;%
-                mutate(inner_TAD_Length = rowEnd - start,
-                    outer_TAD_Length = end - start,
-                    overlap = (inner_TAD_Length / outer_TAD_Length) * 100) %&gt;%
-                arrange(-overlap)
-            next_TAD_index &lt;- nextOverlap$TAD_index[1]
-            nextOverlap &lt;- nextOverlap$overlap[1]
-            if(is.na(next_TAD_index)) stop(paste(&quot;The following TAD has an issue:&quot;, rowTADIndex))
-        }
-        if (nrow(completeOverlapSubset)) { completeOverlap &lt;- TRUE }
-        return(list(prior=as.character(priorOverlap), subsequent=as.character(nextOverlap), com=as.character(completeOverlap), prior_tad=as.character(prior_TAD_index), next_tad=as.character(next_TAD_index)))
-    }
+    <span class="n">find_TAD_overlap</span> <span class="o">&lt;-</span> <span class="n">function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">inputDF</span><span class="p">){</span>
+        <span class="n">rowChr</span> <span class="o">&lt;-</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;chr&#39;</span><span class="p">]</span>
+        <span class="n">rowStart</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;start&#39;</span><span class="p">])</span>
+        <span class="n">rowEnd</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">])</span>
+        <span class="n">rowTADIndex</span> <span class="o">&lt;-</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;TAD_index&#39;</span><span class="p">]</span>
+        <span class="n">TADsubset</span> <span class="o">&lt;-</span> <span class="n">inputDF</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">chr</span> <span class="o">==</span> <span class="n">rowChr</span><span class="p">)</span>
+        <span class="n">TADsubset</span><span class="err">$</span><span class="n">start</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">TADsubset</span><span class="err">$</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">TADsubset</span><span class="err">$</span><span class="n">end</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">TADsubset</span><span class="err">$</span><span class="n">end</span><span class="p">)</span>
+        <span class="n">priorTADsubset</span> <span class="o">&lt;-</span> <span class="n">TADsubset</span> <span class="o">%&gt;%</span>
+            <span class="nb">filter</span><span class="p">(</span><span class="n">start</span> <span class="o">&lt;=</span> <span class="n">rowStart</span> <span class="o">&amp;</span> <span class="n">rowStart</span> <span class="o">&lt;=</span> <span class="n">end</span> <span class="o">&amp;</span>
+                <span class="p">(</span><span class="n">start</span> <span class="o">!=</span> <span class="n">rowStart</span> <span class="o">|</span> <span class="n">end</span> <span class="o">!=</span> <span class="n">rowEnd</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">arrange</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">nextTADsubset</span> <span class="o">&lt;-</span> <span class="n">TADsubset</span> <span class="o">%&gt;%</span>
+            <span class="nb">filter</span><span class="p">(</span><span class="n">start</span> <span class="o">&lt;=</span> <span class="n">rowEnd</span> <span class="o">&amp;</span> <span class="n">rowEnd</span> <span class="o">&lt;=</span> <span class="n">end</span> <span class="o">&amp;</span>
+                <span class="p">(</span><span class="n">start</span> <span class="o">!=</span> <span class="n">rowStart</span> <span class="o">|</span> <span class="n">end</span> <span class="o">!=</span> <span class="n">rowEnd</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">arrange</span><span class="p">(</span><span class="o">-</span><span class="n">end</span><span class="p">)</span>
+        <span class="n">completeOverlapSubset</span> <span class="o">&lt;-</span> <span class="n">TADsubset</span> <span class="o">%&gt;%</span>
+            <span class="nb">filter</span><span class="p">(</span><span class="n">start</span> <span class="o">&lt;=</span> <span class="n">rowStart</span> <span class="o">&amp;</span> <span class="n">rowEnd</span> <span class="o">&lt;=</span> <span class="n">end</span> <span class="o">&amp;</span>
+                <span class="p">(</span><span class="n">start</span> <span class="o">!=</span> <span class="n">rowStart</span> <span class="o">|</span> <span class="n">end</span> <span class="o">!=</span> <span class="n">rowEnd</span><span class="p">))</span>
+        <span class="n">priorOverlap</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+        <span class="n">prior_TAD_index</span> <span class="o">&lt;-</span> <span class="n">rowTADIndex</span>
+        <span class="n">nextOverlap</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+        <span class="n">next_TAD_index</span> <span class="o">&lt;-</span> <span class="n">rowTADIndex</span>
+        <span class="n">completeOverlap</span> <span class="o">&lt;-</span> <span class="n">FALSE</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">nrow</span><span class="p">(</span><span class="n">priorTADsubset</span><span class="p">))</span> <span class="p">{</span>
+            <span class="n">priorOverlap</span> <span class="o">&lt;-</span> <span class="n">priorTADsubset</span> <span class="o">%&gt;%</span>
+                <span class="n">mutate</span><span class="p">(</span><span class="n">inner_TAD_Length</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">rowStart</span><span class="p">,</span>
+                    <span class="n">outer_TAD_Length</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span>
+                    <span class="n">overlap</span> <span class="o">=</span> <span class="p">(</span><span class="n">inner_TAD_Length</span> <span class="o">/</span> <span class="n">outer_TAD_Length</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span> <span class="o">%&gt;%</span>
+                <span class="n">arrange</span><span class="p">(</span><span class="o">-</span><span class="n">overlap</span><span class="p">)</span>
+            <span class="n">prior_TAD_index</span> <span class="o">&lt;-</span> <span class="n">priorOverlap</span><span class="err">$</span><span class="n">TAD_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">priorOverlap</span> <span class="o">&lt;-</span> <span class="n">priorOverlap</span><span class="err">$</span><span class="n">overlap</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span><span class="p">(</span><span class="ow">is</span><span class="o">.</span><span class="n">na</span><span class="p">(</span><span class="n">prior_TAD_index</span><span class="p">))</span> <span class="n">stop</span><span class="p">(</span><span class="n">paste</span><span class="p">(</span><span class="s2">&quot;The following TAD has an issue:&quot;</span><span class="p">,</span> <span class="n">rowTADIndex</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">nrow</span><span class="p">(</span><span class="n">nextTADsubset</span><span class="p">))</span> <span class="p">{</span>
+            <span class="n">nextOverlap</span> <span class="o">&lt;-</span> <span class="n">nextTADsubset</span> <span class="o">%&gt;%</span>
+                <span class="n">mutate</span><span class="p">(</span><span class="n">inner_TAD_Length</span> <span class="o">=</span> <span class="n">rowEnd</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span>
+                    <span class="n">outer_TAD_Length</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span>
+                    <span class="n">overlap</span> <span class="o">=</span> <span class="p">(</span><span class="n">inner_TAD_Length</span> <span class="o">/</span> <span class="n">outer_TAD_Length</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span> <span class="o">%&gt;%</span>
+                <span class="n">arrange</span><span class="p">(</span><span class="o">-</span><span class="n">overlap</span><span class="p">)</span>
+            <span class="n">next_TAD_index</span> <span class="o">&lt;-</span> <span class="n">nextOverlap</span><span class="err">$</span><span class="n">TAD_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">nextOverlap</span> <span class="o">&lt;-</span> <span class="n">nextOverlap</span><span class="err">$</span><span class="n">overlap</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span><span class="p">(</span><span class="ow">is</span><span class="o">.</span><span class="n">na</span><span class="p">(</span><span class="n">next_TAD_index</span><span class="p">))</span> <span class="n">stop</span><span class="p">(</span><span class="n">paste</span><span class="p">(</span><span class="s2">&quot;The following TAD has an issue:&quot;</span><span class="p">,</span> <span class="n">rowTADIndex</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">nrow</span><span class="p">(</span><span class="n">completeOverlapSubset</span><span class="p">))</span> <span class="p">{</span> <span class="n">completeOverlap</span> <span class="o">&lt;-</span> <span class="n">TRUE</span> <span class="p">}</span>
+        <span class="k">return</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">prior</span><span class="o">=</span><span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">priorOverlap</span><span class="p">),</span> <span class="n">subsequent</span><span class="o">=</span><span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">nextOverlap</span><span class="p">),</span> <span class="n">com</span><span class="o">=</span><span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">completeOverlap</span><span class="p">),</span> <span class="n">prior_tad</span><span class="o">=</span><span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">prior_TAD_index</span><span class="p">),</span> <span class="n">next_tad</span><span class="o">=</span><span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">next_TAD_index</span><span class="p">)))</span>
+    <span class="p">}</span>
     
-    merge_TADs &lt;- function(x, inputDF, cutoff = ${overlap_cutoff}){
-        rowChr &lt;- x[&quot;chr&quot;]
-        rowStart &lt;- as.numeric(x[&quot;start&quot;])
-        rowEnd &lt;- as.numeric(x[&quot;end&quot;])
-        rowTADIndex &lt;- as.character(x[&#39;TAD_index&#39;])
-        rowPriorOverlap &lt;- as.double(x[&quot;prior_overlap&quot;])
-        rowPriorTADIndex &lt;- as.character(x[&quot;prior_TAD_index&quot;])
-        rowNextOverlap &lt;- as.double(x[&quot;next_overlap&quot;])
-        rowNextTADIndex &lt;- as.character(x[&quot;next_TAD_index&quot;])
-        newStart &lt;- rowStart
-        newEnd &lt;- rowEnd
-        if (rowNextOverlap &gt;= cutoff &amp;&amp; rowNextTADIndex != rowTADIndex) {
-            newEnd &lt;- inputDF %&gt;% filter(TAD_index == rowNextTADIndex)
-            if(is.na(newEnd %&gt;% pull(end) %&gt;% length())) print(newEnd$end[1])
-            newEnd &lt;- newEnd$end[1]
-        }
-        if (rowPriorOverlap &gt;= cutoff &amp; rowPriorTADIndex != rowTADIndex) {
-            newStart &lt;- inputDF %&gt;% filter(TAD_index == rowPriorTADIndex)
-            newStart &lt;- newStart$start[1]
-        }
-        return(list(newstart=newStart, newend=newEnd))
-    }
+    <span class="n">merge_TADs</span> <span class="o">&lt;-</span> <span class="n">function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">inputDF</span><span class="p">,</span> <span class="n">cutoff</span> <span class="o">=</span> <span class="err">$</span><span class="p">{</span><span class="n">overlap_cutoff</span><span class="p">}){</span>
+        <span class="n">rowChr</span> <span class="o">&lt;-</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;chr&quot;</span><span class="p">]</span>
+        <span class="n">rowStart</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">])</span>
+        <span class="n">rowEnd</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">])</span>
+        <span class="n">rowTADIndex</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;TAD_index&#39;</span><span class="p">])</span>
+        <span class="n">rowPriorOverlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;prior_overlap&quot;</span><span class="p">])</span>
+        <span class="n">rowPriorTADIndex</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;prior_TAD_index&quot;</span><span class="p">])</span>
+        <span class="n">rowNextOverlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;next_overlap&quot;</span><span class="p">])</span>
+        <span class="n">rowNextTADIndex</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;next_TAD_index&quot;</span><span class="p">])</span>
+        <span class="n">newStart</span> <span class="o">&lt;-</span> <span class="n">rowStart</span>
+        <span class="n">newEnd</span> <span class="o">&lt;-</span> <span class="n">rowEnd</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">rowNextOverlap</span> <span class="o">&gt;=</span> <span class="n">cutoff</span> <span class="o">&amp;&amp;</span> <span class="n">rowNextTADIndex</span> <span class="o">!=</span> <span class="n">rowTADIndex</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">newEnd</span> <span class="o">&lt;-</span> <span class="n">inputDF</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="n">TAD_index</span> <span class="o">==</span> <span class="n">rowNextTADIndex</span><span class="p">)</span>
+            <span class="k">if</span><span class="p">(</span><span class="ow">is</span><span class="o">.</span><span class="n">na</span><span class="p">(</span><span class="n">newEnd</span> <span class="o">%&gt;%</span> <span class="n">pull</span><span class="p">(</span><span class="n">end</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">length</span><span class="p">()))</span> <span class="nb">print</span><span class="p">(</span><span class="n">newEnd</span><span class="err">$</span><span class="n">end</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">newEnd</span> <span class="o">&lt;-</span> <span class="n">newEnd</span><span class="err">$</span><span class="n">end</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">rowPriorOverlap</span> <span class="o">&gt;=</span> <span class="n">cutoff</span> <span class="o">&amp;</span> <span class="n">rowPriorTADIndex</span> <span class="o">!=</span> <span class="n">rowTADIndex</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">newStart</span> <span class="o">&lt;-</span> <span class="n">inputDF</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="n">TAD_index</span> <span class="o">==</span> <span class="n">rowPriorTADIndex</span><span class="p">)</span>
+            <span class="n">newStart</span> <span class="o">&lt;-</span> <span class="n">newStart</span><span class="err">$</span><span class="n">start</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="k">return</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">newstart</span><span class="o">=</span><span class="n">newStart</span><span class="p">,</span> <span class="n">newend</span><span class="o">=</span><span class="n">newEnd</span><span class="p">))</span>
+    <span class="p">}</span>
     
-    recursive_merge &lt;- function(tadDF){
-        tadDF$TAD_index &lt;- paste0(&#39;TAD_&#39;, seq(1, nrow(tadDF)))
-        overlap_results &lt;- apply(tadDF, 1, find_TAD_overlap, tadDF)
-        tadDF$prior_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;prior&#39;))
-        tadDF$prior_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;prior_tad&#39;))
-        tadDF$next_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;subsequent&#39;))
-        tadDF$next_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;next_tad&#39;))
-        tadDF$complete_overlap &lt;- as.logical(lapply(overlap_results, &quot;[[&quot;, &#39;com&#39;))
-        merge_results &lt;- apply(tadDF, 1, merge_TADs, tadDF, ${overlap_cutoff})
-        tadDF$end &lt;- as.numeric(lapply(merge_results, &quot;[[&quot;, &#39;newend&#39;))
-        tadDF$start &lt;- as.numeric(lapply(merge_results, &quot;[[&quot;, &#39;newstart&#39;))
-        candidateDF &lt;- tadDF %&gt;% distinct(chr, start, end, .keep_all=TRUE)
-        if (nrow(tadDF) == nrow(candidateDF)) {
-            return(candidateDF)
-        } else {
-            candidateDF$TAD_index &lt;- paste0(&#39;TAD_&#39;, seq(1, nrow(candidateDF)))
-            overlap_results &lt;- apply(candidateDF, 1, find_TAD_overlap, candidateDF)
-            candidateDF$prior_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;prior&#39;))
-            candidateDF$prior_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;prior_tad&#39;))
-            candidateDF$next_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;subsequent&#39;))
-            candidateDF$next_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;next_tad&#39;))
-            candidateDF$complete_overlap &lt;- as.logical(lapply(overlap_results, &quot;[[&quot;, &#39;com&#39;))
-            candidateDF &lt;- candidateDF %&gt;% filter(complete_overlap == FALSE)
-            candidateDF$TAD_index &lt;- paste0(&#39;TAD_&#39;, seq(1, nrow(candidateDF)))
-            overlap_results &lt;- apply(candidateDF, 1, find_TAD_overlap, candidateDF)
-            candidateDF$prior_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;prior&#39;))
-            candidateDF$prior_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;prior_tad&#39;))
-            candidateDF$next_overlap &lt;- as.double(lapply(overlap_results, &quot;[[&quot;, &#39;subsequent&#39;))
-            candidateDF$next_TAD_index &lt;- as.character(lapply(overlap_results, &quot;[[&quot;, &#39;next_tad&#39;))
-            candidateDF$complete_overlap &lt;- as.logical(lapply(overlap_results, &quot;[[&quot;, &#39;com&#39;))
-            return(recursive_merge(candidateDF))
-        }
-    }
+    <span class="n">recursive_merge</span> <span class="o">&lt;-</span> <span class="n">function</span><span class="p">(</span><span class="n">tadDF</span><span class="p">){</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">TAD_index</span> <span class="o">&lt;-</span> <span class="n">paste0</span><span class="p">(</span><span class="s1">&#39;TAD_&#39;</span><span class="p">,</span> <span class="n">seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nrow</span><span class="p">(</span><span class="n">tadDF</span><span class="p">)))</span>
+        <span class="n">overlap_results</span> <span class="o">&lt;-</span> <span class="n">apply</span><span class="p">(</span><span class="n">tadDF</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">find_TAD_overlap</span><span class="p">,</span> <span class="n">tadDF</span><span class="p">)</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">prior_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;prior&#39;</span><span class="p">))</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">prior_TAD_index</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;prior_tad&#39;</span><span class="p">))</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">next_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;subsequent&#39;</span><span class="p">))</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">next_TAD_index</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;next_tad&#39;</span><span class="p">))</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">complete_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">logical</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;com&#39;</span><span class="p">))</span>
+        <span class="n">merge_results</span> <span class="o">&lt;-</span> <span class="n">apply</span><span class="p">(</span><span class="n">tadDF</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">merge_TADs</span><span class="p">,</span> <span class="n">tadDF</span><span class="p">,</span> <span class="err">$</span><span class="p">{</span><span class="n">overlap_cutoff</span><span class="p">})</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">end</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">merge_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;newend&#39;</span><span class="p">))</span>
+        <span class="n">tadDF</span><span class="err">$</span><span class="n">start</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">merge_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;newstart&#39;</span><span class="p">))</span>
+        <span class="n">candidateDF</span> <span class="o">&lt;-</span> <span class="n">tadDF</span> <span class="o">%&gt;%</span> <span class="n">distinct</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="o">.</span><span class="n">keep_all</span><span class="o">=</span><span class="n">TRUE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">nrow</span><span class="p">(</span><span class="n">tadDF</span><span class="p">)</span> <span class="o">==</span> <span class="n">nrow</span><span class="p">(</span><span class="n">candidateDF</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">(</span><span class="n">candidateDF</span><span class="p">)</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">TAD_index</span> <span class="o">&lt;-</span> <span class="n">paste0</span><span class="p">(</span><span class="s1">&#39;TAD_&#39;</span><span class="p">,</span> <span class="n">seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nrow</span><span class="p">(</span><span class="n">candidateDF</span><span class="p">)))</span>
+            <span class="n">overlap_results</span> <span class="o">&lt;-</span> <span class="n">apply</span><span class="p">(</span><span class="n">candidateDF</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">find_TAD_overlap</span><span class="p">,</span> <span class="n">candidateDF</span><span class="p">)</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">prior_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;prior&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">prior_TAD_index</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;prior_tad&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">next_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;subsequent&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">next_TAD_index</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;next_tad&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">complete_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">logical</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;com&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span> <span class="o">&lt;-</span> <span class="n">candidateDF</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="n">complete_overlap</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">)</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">TAD_index</span> <span class="o">&lt;-</span> <span class="n">paste0</span><span class="p">(</span><span class="s1">&#39;TAD_&#39;</span><span class="p">,</span> <span class="n">seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nrow</span><span class="p">(</span><span class="n">candidateDF</span><span class="p">)))</span>
+            <span class="n">overlap_results</span> <span class="o">&lt;-</span> <span class="n">apply</span><span class="p">(</span><span class="n">candidateDF</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">find_TAD_overlap</span><span class="p">,</span> <span class="n">candidateDF</span><span class="p">)</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">prior_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;prior&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">prior_TAD_index</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;prior_tad&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">next_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">double</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;subsequent&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">next_TAD_index</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;next_tad&#39;</span><span class="p">))</span>
+            <span class="n">candidateDF</span><span class="err">$</span><span class="n">complete_overlap</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">logical</span><span class="p">(</span><span class="n">lapply</span><span class="p">(</span><span class="n">overlap_results</span><span class="p">,</span> <span class="s2">&quot;[[&quot;</span><span class="p">,</span> <span class="s1">&#39;com&#39;</span><span class="p">))</span>
+            <span class="k">return</span><span class="p">(</span><span class="n">recursive_merge</span><span class="p">(</span><span class="n">candidateDF</span><span class="p">))</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
     
-    # ---- Step i. Manage TAD redundancy ----
-    general_TAD_DF &lt;- read_tsv(${_input[&quot;tad&quot;]:r}, col_names=c(&#39;chr&#39;, &#39;start&#39;, &#39;end&#39;), show_col_types = FALSE)
-    general_TAD_DF &lt;- general_TAD_DF[with(general_TAD_DF, order(chr, start, -end)),]
-    final_brain_TAD_DF &lt;- recursive_merge(general_TAD_DF)
-    formatted_final_DF &lt;- final_brain_TAD_DF %&gt;% filter(chr %in% paste0(&#39;chr&#39;, seq(1,22))) %&gt;% subset(select=c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;))
-    formatted_final_DF$end &lt;- as.numeric(formatted_final_DF$end)
-    formatted_final_DF$start &lt;- as.numeric(formatted_final_DF$start)
-    formatted_final_DF &lt;- final_brain_TAD_DF %&gt;% subset(select=c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;))
-    formatted_final_DF$start &lt;- format(formatted_final_DF$start, scientific = FALSE)
-    formatted_final_DF$end &lt;- format(formatted_final_DF$end, scientific = FALSE)
-    write.table(formatted_final_DF, ${_output[&quot;gentad&quot;]:r}, sep=&quot;\t&quot;, append=FALSE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+    <span class="c1"># ---- Step i. Manage TAD redundancy ----</span>
+    <span class="n">general_TAD_DF</span> <span class="o">&lt;-</span> <span class="n">read_tsv</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="n">_input</span><span class="p">[</span><span class="s2">&quot;tad&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">},</span> <span class="n">col_names</span><span class="o">=</span><span class="n">c</span><span class="p">(</span><span class="s1">&#39;chr&#39;</span><span class="p">,</span> <span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">),</span> <span class="n">show_col_types</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">)</span>
+    <span class="n">general_TAD_DF</span> <span class="o">&lt;-</span> <span class="n">general_TAD_DF</span><span class="p">[</span><span class="k">with</span><span class="p">(</span><span class="n">general_TAD_DF</span><span class="p">,</span> <span class="n">order</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="o">-</span><span class="n">end</span><span class="p">)),]</span>
+    <span class="n">final_brain_TAD_DF</span> <span class="o">&lt;-</span> <span class="n">recursive_merge</span><span class="p">(</span><span class="n">general_TAD_DF</span><span class="p">)</span>
+    <span class="n">formatted_final_DF</span> <span class="o">&lt;-</span> <span class="n">final_brain_TAD_DF</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">chr</span> <span class="o">%</span><span class="k">in</span>% paste0(&#39;chr&#39;, seq(1,22))) %&gt;% subset(select=c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;))
+    <span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">end</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">end</span><span class="p">)</span>
+    <span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">start</span> <span class="o">&lt;-</span> <span class="k">as</span><span class="o">.</span><span class="n">numeric</span><span class="p">(</span><span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">start</span><span class="p">)</span>
+    <span class="n">formatted_final_DF</span> <span class="o">&lt;-</span> <span class="n">final_brain_TAD_DF</span> <span class="o">%&gt;%</span> <span class="n">subset</span><span class="p">(</span><span class="n">select</span><span class="o">=</span><span class="n">c</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">))</span>
+    <span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">start</span> <span class="o">&lt;-</span> <span class="nb">format</span><span class="p">(</span><span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">start</span><span class="p">,</span> <span class="n">scientific</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">)</span>
+    <span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">end</span> <span class="o">&lt;-</span> <span class="nb">format</span><span class="p">(</span><span class="n">formatted_final_DF</span><span class="err">$</span><span class="n">end</span><span class="p">,</span> <span class="n">scientific</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">)</span>
+    <span class="n">write</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">formatted_final_DF</span><span class="p">,</span> <span class="err">$</span><span class="p">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;gentad&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">},</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">names</span><span class="o">=</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">names</span><span class="o">=</span><span class="n">FALSE</span><span class="p">,</span> <span class="n">quote</span><span class="o">=</span><span class="n">FALSE</span><span class="p">)</span>
     
-    # ---- Step ii. Generate TADB-enhanced cis windows and extended TADBs ----
-    general &lt;- read_tsv(${_output[&quot;gentad&quot;]:r}, col_names = c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;)) %&gt;% mutate(row_index = row_number())
-    specific &lt;- read_tsv(${_input[&quot;tad&quot;]:r}, col_names = c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;)) %&gt;% mutate(row_index = row_number())
+    <span class="c1"># ---- Step ii. Generate TADB-enhanced cis windows and extended TADBs ----</span>
+    <span class="n">general</span> <span class="o">&lt;-</span> <span class="n">read_tsv</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;gentad&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">},</span> <span class="n">col_names</span> <span class="o">=</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">row_index</span> <span class="o">=</span> <span class="n">row_number</span><span class="p">())</span>
+    <span class="n">specific</span> <span class="o">&lt;-</span> <span class="n">read_tsv</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="n">_input</span><span class="p">[</span><span class="s2">&quot;tad&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">},</span> <span class="n">col_names</span> <span class="o">=</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">row_index</span> <span class="o">=</span> <span class="n">row_number</span><span class="p">())</span>
     
-    chromosomes &lt;- paste0(&#39;chr&#39;, seq(1:22))
-    chromosomes &lt;- c(chromosomes,&quot;chrX&quot;)
-    bplengths &lt;- c(248956422, 242193529, 198295559, 190214555, 181538259, 170805979, 159345973, 145138636,
-                   138394717, 133797422, 135086622,
-                   133275309, 114364328, 107043718, 101991189, 90338345, 83257441,
-                   80373285, 58617616, 64444167, 46709983, 50818468, 156040895)
-    chrDF &lt;- data.frame(chr = chromosomes, left = bplengths)
+    <span class="n">chromosomes</span> <span class="o">&lt;-</span> <span class="n">paste0</span><span class="p">(</span><span class="s1">&#39;chr&#39;</span><span class="p">,</span> <span class="n">seq</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">22</span><span class="p">))</span>
+    <span class="n">chromosomes</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="n">chromosomes</span><span class="p">,</span><span class="s2">&quot;chrX&quot;</span><span class="p">)</span>
+    <span class="n">bplengths</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="mi">248956422</span><span class="p">,</span> <span class="mi">242193529</span><span class="p">,</span> <span class="mi">198295559</span><span class="p">,</span> <span class="mi">190214555</span><span class="p">,</span> <span class="mi">181538259</span><span class="p">,</span> <span class="mi">170805979</span><span class="p">,</span> <span class="mi">159345973</span><span class="p">,</span> <span class="mi">145138636</span><span class="p">,</span>
+                   <span class="mi">138394717</span><span class="p">,</span> <span class="mi">133797422</span><span class="p">,</span> <span class="mi">135086622</span><span class="p">,</span>
+                   <span class="mi">133275309</span><span class="p">,</span> <span class="mi">114364328</span><span class="p">,</span> <span class="mi">107043718</span><span class="p">,</span> <span class="mi">101991189</span><span class="p">,</span> <span class="mi">90338345</span><span class="p">,</span> <span class="mi">83257441</span><span class="p">,</span>
+                   <span class="mi">80373285</span><span class="p">,</span> <span class="mi">58617616</span><span class="p">,</span> <span class="mi">64444167</span><span class="p">,</span> <span class="mi">46709983</span><span class="p">,</span> <span class="mi">50818468</span><span class="p">,</span> <span class="mi">156040895</span><span class="p">)</span>
+    <span class="n">chrDF</span> <span class="o">&lt;-</span> <span class="n">data</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="nb">chr</span> <span class="o">=</span> <span class="n">chromosomes</span><span class="p">,</span> <span class="n">left</span> <span class="o">=</span> <span class="n">bplengths</span><span class="p">)</span>
     
-    find_left_boundary = function(chrm, start_pos, end_pos){
-        within_TAD = specific %&gt;% filter(chr == chrm &amp; start &gt;= start_pos &amp; end &lt;= end_pos)
-        within_TAD_num = nrow(within_TAD)
-        if(within_TAD_num == 1){
-            left = within_TAD %&gt;% pull(start) %&gt;% as.integer()
-        }else{
-            TAD_start_list = within_TAD %&gt;% pull(start) %&gt;% sort()
-            left = TAD_start_list[2] %&gt;% as.integer()
-        }
-        return(left)
-    }
-    left_table = general %&gt;% mutate(left = pmap(list(chrm = chr, start_pos = start, end_pos = end), find_left_boundary)) %&gt;% select(chr, left) %&gt;% mutate(left = as.integer(left))
-    left_table_final = rbind(left_table, chrDF)
+    <span class="n">find_left_boundary</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="n">chrm</span><span class="p">,</span> <span class="n">start_pos</span><span class="p">,</span> <span class="n">end_pos</span><span class="p">){</span>
+        <span class="n">within_TAD</span> <span class="o">=</span> <span class="n">specific</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">chr</span> <span class="o">==</span> <span class="n">chrm</span> <span class="o">&amp;</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">start_pos</span> <span class="o">&amp;</span> <span class="n">end</span> <span class="o">&lt;=</span> <span class="n">end_pos</span><span class="p">)</span>
+        <span class="n">within_TAD_num</span> <span class="o">=</span> <span class="n">nrow</span><span class="p">(</span><span class="n">within_TAD</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">within_TAD_num</span> <span class="o">==</span> <span class="mi">1</span><span class="p">){</span>
+            <span class="n">left</span> <span class="o">=</span> <span class="n">within_TAD</span> <span class="o">%&gt;%</span> <span class="n">pull</span><span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">()</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+            <span class="n">TAD_start_list</span> <span class="o">=</span> <span class="n">within_TAD</span> <span class="o">%&gt;%</span> <span class="n">pull</span><span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">sort</span><span class="p">()</span>
+            <span class="n">left</span> <span class="o">=</span> <span class="n">TAD_start_list</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">%&gt;%</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">left_table</span> <span class="o">=</span> <span class="n">general</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span> <span class="n">pmap</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">chrm</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">,</span> <span class="n">start_pos</span> <span class="o">=</span> <span class="n">start</span><span class="p">,</span> <span class="n">end_pos</span> <span class="o">=</span> <span class="n">end</span><span class="p">),</span> <span class="n">find_left_boundary</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">select</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">left</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">(</span><span class="n">left</span><span class="p">))</span>
+    <span class="n">left_table_final</span> <span class="o">=</span> <span class="n">rbind</span><span class="p">(</span><span class="n">left_table</span><span class="p">,</span> <span class="n">chrDF</span><span class="p">)</span>
     
-    find_right_boundary = function(chrm, start_pos, end_pos){
-        within_TAD = specific %&gt;% filter(chr == chrm &amp; start &gt;= start_pos &amp; end &lt;= end_pos)
-        within_TAD_num = nrow(within_TAD)
-        if(within_TAD_num == 1){
-            right = within_TAD %&gt;% pull(end) %&gt;% as.integer()
-        }else{
-            TAD_end_list = within_TAD %&gt;% pull(end) %&gt;% sort(decreasing = T)
-            right = TAD_end_list[2] %&gt;% as.integer()
-        }
-        return(right)
-    }
-    right_table = general %&gt;% mutate(right = pmap(list(chrm = chr, start_pos = start, end_pos = end), find_right_boundary)) %&gt;% select(chr, right) %&gt;% mutate(right = as.integer(right))
-    chr_start = tibble(chr = chromosomes, right = 0)
-    right_table_final = rbind(right_table, chr_start)
+    <span class="n">find_right_boundary</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="n">chrm</span><span class="p">,</span> <span class="n">start_pos</span><span class="p">,</span> <span class="n">end_pos</span><span class="p">){</span>
+        <span class="n">within_TAD</span> <span class="o">=</span> <span class="n">specific</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">chr</span> <span class="o">==</span> <span class="n">chrm</span> <span class="o">&amp;</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">start_pos</span> <span class="o">&amp;</span> <span class="n">end</span> <span class="o">&lt;=</span> <span class="n">end_pos</span><span class="p">)</span>
+        <span class="n">within_TAD_num</span> <span class="o">=</span> <span class="n">nrow</span><span class="p">(</span><span class="n">within_TAD</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">within_TAD_num</span> <span class="o">==</span> <span class="mi">1</span><span class="p">){</span>
+            <span class="n">right</span> <span class="o">=</span> <span class="n">within_TAD</span> <span class="o">%&gt;%</span> <span class="n">pull</span><span class="p">(</span><span class="n">end</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">()</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+            <span class="n">TAD_end_list</span> <span class="o">=</span> <span class="n">within_TAD</span> <span class="o">%&gt;%</span> <span class="n">pull</span><span class="p">(</span><span class="n">end</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">sort</span><span class="p">(</span><span class="n">decreasing</span> <span class="o">=</span> <span class="n">T</span><span class="p">)</span>
+            <span class="n">right</span> <span class="o">=</span> <span class="n">TAD_end_list</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">%&gt;%</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">right</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">right_table</span> <span class="o">=</span> <span class="n">general</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">right</span> <span class="o">=</span> <span class="n">pmap</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">chrm</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">,</span> <span class="n">start_pos</span> <span class="o">=</span> <span class="n">start</span><span class="p">,</span> <span class="n">end_pos</span> <span class="o">=</span> <span class="n">end</span><span class="p">),</span> <span class="n">find_right_boundary</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">select</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">right</span> <span class="o">=</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">(</span><span class="n">right</span><span class="p">))</span>
+    <span class="n">chr_start</span> <span class="o">=</span> <span class="n">tibble</span><span class="p">(</span><span class="nb">chr</span> <span class="o">=</span> <span class="n">chromosomes</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">right_table_final</span> <span class="o">=</span> <span class="n">rbind</span><span class="p">(</span><span class="n">right_table</span><span class="p">,</span> <span class="n">chr_start</span><span class="p">)</span>
     
-    find_next_boundary = function(chrm, end_pos){
-        left_boundaries = left_table_final %&gt;% filter(chr == chrm, left &gt;= end_pos) %&gt;% pull(left) %&gt;% sort()
-        first_left = left_boundaries[1]
-        return(first_left)
-    }
-    find_previous_boundary = function(chrm, start_pos){
-        right_boundaries = right_table_final %&gt;% filter(chr == chrm, right &lt;= start_pos) %&gt;% pull(right) %&gt;% sort(decreasing = T)
-        first_right = right_boundaries[1]
-        return(first_right)
-    }
-    TADB = general %&gt;% mutate(previous_bound = pmap(list(chr, start), find_previous_boundary),
-        next_bound = pmap(list(chr, end), find_next_boundary)) %&gt;%
-        select(-start, -end) %&gt;% rename(start = previous_bound) %&gt;%
-        rename(end = next_bound) %&gt;% mutate(start = as.integer(start), end = as.integer(end)) %&gt;%
-        select(chr, start, end)
-    TADB = TADB %&gt;% distinct()
+    <span class="n">find_next_boundary</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="n">chrm</span><span class="p">,</span> <span class="n">end_pos</span><span class="p">){</span>
+        <span class="n">left_boundaries</span> <span class="o">=</span> <span class="n">left_table_final</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">chr</span> <span class="o">==</span> <span class="n">chrm</span><span class="p">,</span> <span class="n">left</span> <span class="o">&gt;=</span> <span class="n">end_pos</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">pull</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">sort</span><span class="p">()</span>
+        <span class="n">first_left</span> <span class="o">=</span> <span class="n">left_boundaries</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">first_left</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">find_previous_boundary</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="n">chrm</span><span class="p">,</span> <span class="n">start_pos</span><span class="p">){</span>
+        <span class="n">right_boundaries</span> <span class="o">=</span> <span class="n">right_table_final</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">chr</span> <span class="o">==</span> <span class="n">chrm</span><span class="p">,</span> <span class="n">right</span> <span class="o">&lt;=</span> <span class="n">start_pos</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">pull</span><span class="p">(</span><span class="n">right</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">sort</span><span class="p">(</span><span class="n">decreasing</span> <span class="o">=</span> <span class="n">T</span><span class="p">)</span>
+        <span class="n">first_right</span> <span class="o">=</span> <span class="n">right_boundaries</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">first_right</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">TADB</span> <span class="o">=</span> <span class="n">general</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">previous_bound</span> <span class="o">=</span> <span class="n">pmap</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">start</span><span class="p">),</span> <span class="n">find_previous_boundary</span><span class="p">),</span>
+        <span class="n">next_bound</span> <span class="o">=</span> <span class="n">pmap</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">end</span><span class="p">),</span> <span class="n">find_next_boundary</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">select</span><span class="p">(</span><span class="o">-</span><span class="n">start</span><span class="p">,</span> <span class="o">-</span><span class="n">end</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">rename</span><span class="p">(</span><span class="n">start</span> <span class="o">=</span> <span class="n">previous_bound</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="n">rename</span><span class="p">(</span><span class="n">end</span> <span class="o">=</span> <span class="n">next_bound</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">start</span> <span class="o">=</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="n">end</span> <span class="o">=</span> <span class="k">as</span><span class="o">.</span><span class="n">integer</span><span class="p">(</span><span class="n">end</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">select</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+    <span class="n">TADB</span> <span class="o">=</span> <span class="n">TADB</span> <span class="o">%&gt;%</span> <span class="n">distinct</span><span class="p">()</span>
     
-    if_fully_cover = function(chrm, start_pos, end_pos){
-        potential = TADB %&gt;% filter(chr == chrm, start &lt;= start_pos, end &gt;= end_pos)
-        if(nrow(potential) &lt;= 1){
-            return(0)
-        }else{
-            return(1)
-        }
-    }
-    TADB_final = TADB %&gt;% mutate(cover_status = pmap(list(chrm = chr, start_pos = start, end_pos = end), if_fully_cover)) %&gt;%
-        filter(cover_status != 1) %&gt;% mutate(index = paste0(&quot;TADB&quot;, row_number())) %&gt;% select(- cover_status) %&gt;%
-        rename(`#chr` = chr)
-    write_tsv(TADB_final, ${_output[&quot;gentadb&quot;]:r})
+    <span class="n">if_fully_cover</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="n">chrm</span><span class="p">,</span> <span class="n">start_pos</span><span class="p">,</span> <span class="n">end_pos</span><span class="p">){</span>
+        <span class="n">potential</span> <span class="o">=</span> <span class="n">TADB</span> <span class="o">%&gt;%</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">chr</span> <span class="o">==</span> <span class="n">chrm</span><span class="p">,</span> <span class="n">start</span> <span class="o">&lt;=</span> <span class="n">start_pos</span><span class="p">,</span> <span class="n">end</span> <span class="o">&gt;=</span> <span class="n">end_pos</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">nrow</span><span class="p">(</span><span class="n">potential</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">){</span>
+            <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+            <span class="k">return</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">TADB_final</span> <span class="o">=</span> <span class="n">TADB</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">cover_status</span> <span class="o">=</span> <span class="n">pmap</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">chrm</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">,</span> <span class="n">start_pos</span> <span class="o">=</span> <span class="n">start</span><span class="p">,</span> <span class="n">end_pos</span> <span class="o">=</span> <span class="n">end</span><span class="p">),</span> <span class="n">if_fully_cover</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="nb">filter</span><span class="p">(</span><span class="n">cover_status</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="n">paste0</span><span class="p">(</span><span class="s2">&quot;TADB&quot;</span><span class="p">,</span> <span class="n">row_number</span><span class="p">()))</span> <span class="o">%&gt;%</span> <span class="n">select</span><span class="p">(</span><span class="o">-</span> <span class="n">cover_status</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="n">rename</span><span class="p">(</span><span class="err">`</span><span class="c1">#chr` = chr)</span>
+    <span class="n">write_tsv</span><span class="p">(</span><span class="n">TADB_final</span><span class="p">,</span> <span class="err">$</span><span class="p">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;gentadb&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">})</span>
     
-    # ---- gene cis windows ----
-    all_gene &lt;- read_tsv(${_input[&quot;gene&quot;]:r})
-    all_gene = all_gene %&gt;% select(-`...1`, -gene_name) %&gt;% rename(chr = `#chr`, gene_start = start, gene_end = end)  %&gt;% distinct()
-    TADB_final = TADB_final %&gt;% rename(chr = &quot;#chr&quot;)
-    gene_TADB_tb = left_join(all_gene, TADB_final, by = &quot;chr&quot;, relationship = &quot;many-to-many&quot;) %&gt;%
-        filter(!(gene_start &gt; end) &amp;  !(gene_end &lt; start))
+    <span class="c1"># ---- gene cis windows ----</span>
+    <span class="n">all_gene</span> <span class="o">&lt;-</span> <span class="n">read_tsv</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="n">_input</span><span class="p">[</span><span class="s2">&quot;gene&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">})</span>
+    <span class="n">all_gene</span> <span class="o">=</span> <span class="n">all_gene</span> <span class="o">%&gt;%</span> <span class="n">select</span><span class="p">(</span><span class="o">-</span><span class="err">`</span><span class="o">..</span><span class="mf">.1</span><span class="err">`</span><span class="p">,</span> <span class="o">-</span><span class="n">gene_name</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">rename</span><span class="p">(</span><span class="nb">chr</span> <span class="o">=</span> <span class="err">`</span><span class="c1">#chr`, gene_start = start, gene_end = end)  %&gt;% distinct()</span>
+    <span class="n">TADB_final</span> <span class="o">=</span> <span class="n">TADB_final</span> <span class="o">%&gt;%</span> <span class="n">rename</span><span class="p">(</span><span class="nb">chr</span> <span class="o">=</span> <span class="s2">&quot;#chr&quot;</span><span class="p">)</span>
+    <span class="n">gene_TADB_tb</span> <span class="o">=</span> <span class="n">left_join</span><span class="p">(</span><span class="n">all_gene</span><span class="p">,</span> <span class="n">TADB_final</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="n">relationship</span> <span class="o">=</span> <span class="s2">&quot;many-to-many&quot;</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="nb">filter</span><span class="p">(</span><span class="o">!(</span>gene_start<span class="w"> </span>&gt;<span class="w"> </span>end<span class="o">)</span><span class="w"> </span><span class="p">&amp;</span><span class="w">  </span>!<span class="o">(</span>gene_end<span class="w"> </span>&lt;<span class="w"> </span>start<span class="o">))</span>
     
-    # extended TADB-enhanced cis windows
-    cis_TADB = left_join(gene_TADB_tb, chrDF, by = &quot;chr&quot;) %&gt;% rename(chr_end = left) %&gt;%
-        mutate(cis_start = pmax(0, gene_start - 1000000)) %&gt;%
-        mutate(cis_end = pmin(chr_end, gene_end + 1000000))
-    extended =  cis_TADB %&gt;%
-        mutate(true_start = pmin(start, cis_start),
-               true_end = pmax(end, cis_end)) %&gt;%
-        arrange(chr, true_start) %&gt;% ungroup() %&gt;%
-        select(chr, gene_id, true_start, true_end) %&gt;%
-        rename(start = true_start, end = true_end)
-    extended_final = extended %&gt;% group_by(chr, gene_id) %&gt;% summarize(start = min(start), end = max(end)) %&gt;% arrange(chr, start)
-    ordered_chr &lt;- c(paste0(&quot;chr&quot;, as.character(1:22)), &quot;chrX&quot;)
-    extend_cis_ordered &lt;- extended_final %&gt;% mutate(chr = factor(chr, levels = ordered_chr)) %&gt;%
-        arrange(chr) %&gt;% rename(`#chr` = chr) %&gt;% select(`#chr`, start, end, gene_id)
-    write_tsv(extend_cis_ordered, ${_output[&quot;cis&quot;]:r})
+    <span class="c1"># extended TADB-enhanced cis windows</span>
+    <span class="n">cis_TADB</span> <span class="o">=</span> <span class="n">left_join</span><span class="p">(</span><span class="n">gene_TADB_tb</span><span class="p">,</span> <span class="n">chrDF</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="s2">&quot;chr&quot;</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">rename</span><span class="p">(</span><span class="n">chr_end</span> <span class="o">=</span> <span class="n">left</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="n">mutate</span><span class="p">(</span><span class="n">cis_start</span> <span class="o">=</span> <span class="n">pmax</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">gene_start</span> <span class="o">-</span> <span class="mi">1000000</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">mutate</span><span class="p">(</span><span class="n">cis_end</span> <span class="o">=</span> <span class="n">pmin</span><span class="p">(</span><span class="n">chr_end</span><span class="p">,</span> <span class="n">gene_end</span> <span class="o">+</span> <span class="mi">1000000</span><span class="p">))</span>
+    <span class="n">extended</span> <span class="o">=</span>  <span class="n">cis_TADB</span> <span class="o">%&gt;%</span>
+        <span class="n">mutate</span><span class="p">(</span><span class="n">true_start</span> <span class="o">=</span> <span class="n">pmin</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">cis_start</span><span class="p">),</span>
+               <span class="n">true_end</span> <span class="o">=</span> <span class="n">pmax</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">cis_end</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">arrange</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">true_start</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">ungroup</span><span class="p">()</span> <span class="o">%&gt;%</span>
+        <span class="n">select</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">gene_id</span><span class="p">,</span> <span class="n">true_start</span><span class="p">,</span> <span class="n">true_end</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="n">rename</span><span class="p">(</span><span class="n">start</span> <span class="o">=</span> <span class="n">true_start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">true_end</span><span class="p">)</span>
+    <span class="n">extended_final</span> <span class="o">=</span> <span class="n">extended</span> <span class="o">%&gt;%</span> <span class="n">group_by</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">gene_id</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">summarize</span><span class="p">(</span><span class="n">start</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="n">end</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">end</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">arrange</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+    <span class="n">ordered_chr</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="n">paste0</span><span class="p">(</span><span class="s2">&quot;chr&quot;</span><span class="p">,</span> <span class="k">as</span><span class="o">.</span><span class="n">character</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">22</span><span class="p">)),</span> <span class="s2">&quot;chrX&quot;</span><span class="p">)</span>
+    <span class="n">extend_cis_ordered</span> <span class="o">&lt;-</span> <span class="n">extended_final</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="nb">chr</span> <span class="o">=</span> <span class="n">factor</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">levels</span> <span class="o">=</span> <span class="n">ordered_chr</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">arrange</span><span class="p">(</span><span class="nb">chr</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">rename</span><span class="p">(</span><span class="err">`</span><span class="c1">#chr` = chr) %&gt;% select(`#chr`, start, end, gene_id)</span>
+    <span class="n">write_tsv</span><span class="p">(</span><span class="n">extend_cis_ordered</span><span class="p">,</span> <span class="err">$</span><span class="p">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;cis&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">})</span>
     
-    # ---- extended TADB ----
-    cis_TADB = left_join(gene_TADB_tb, chrDF, by = &quot;chr&quot;) %&gt;% rename(chr_end = left) %&gt;%
-        mutate(cis_start = pmax(0, gene_start - 1000000)) %&gt;%
-        mutate(cis_end = pmin(chr_end, gene_end + 1000000))
-    cis_summary = cis_TADB %&gt;% group_by(index) %&gt;% summarize(min_start = min(cis_start), max_end = max(cis_end))
-    extend_TADB = left_join(cis_summary, TADB_final, by = &quot;index&quot;) %&gt;% mutate(new_start = pmin(start, min_start)) %&gt;%
-        mutate(new_end = pmax(end, max_end)) %&gt;% mutate(length = new_end - new_start) %&gt;%
-        mutate(old_length = end - start) %&gt;% mutate(length_diff = length - old_length) %&gt;% select(chr, new_start, new_end) %&gt;%
-        rename(start = new_start, end = new_end) %&gt;% mutate(index = paste0(&quot;TADB&quot;, row_number()))
-    extend_TADB &lt;- extend_TADB %&gt;% mutate(chr = factor(chr, levels = ordered_chr)) %&gt;%
-        arrange(chr, start) %&gt;% rename(`#chr` = chr) %&gt;% mutate(index = paste0(&quot;TADB_&quot;, row_number()))
-    write_tsv(extend_TADB, ${_output[&quot;ext&quot;]:r})
+    <span class="c1"># ---- extended TADB ----</span>
+    <span class="n">cis_TADB</span> <span class="o">=</span> <span class="n">left_join</span><span class="p">(</span><span class="n">gene_TADB_tb</span><span class="p">,</span> <span class="n">chrDF</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="s2">&quot;chr&quot;</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">rename</span><span class="p">(</span><span class="n">chr_end</span> <span class="o">=</span> <span class="n">left</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="n">mutate</span><span class="p">(</span><span class="n">cis_start</span> <span class="o">=</span> <span class="n">pmax</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">gene_start</span> <span class="o">-</span> <span class="mi">1000000</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">mutate</span><span class="p">(</span><span class="n">cis_end</span> <span class="o">=</span> <span class="n">pmin</span><span class="p">(</span><span class="n">chr_end</span><span class="p">,</span> <span class="n">gene_end</span> <span class="o">+</span> <span class="mi">1000000</span><span class="p">))</span>
+    <span class="n">cis_summary</span> <span class="o">=</span> <span class="n">cis_TADB</span> <span class="o">%&gt;%</span> <span class="n">group_by</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">summarize</span><span class="p">(</span><span class="n">min_start</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cis_start</span><span class="p">),</span> <span class="n">max_end</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cis_end</span><span class="p">))</span>
+    <span class="n">extend_TADB</span> <span class="o">=</span> <span class="n">left_join</span><span class="p">(</span><span class="n">cis_summary</span><span class="p">,</span> <span class="n">TADB_final</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">new_start</span> <span class="o">=</span> <span class="n">pmin</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">min_start</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">mutate</span><span class="p">(</span><span class="n">new_end</span> <span class="o">=</span> <span class="n">pmax</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">max_end</span><span class="p">))</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">length</span> <span class="o">=</span> <span class="n">new_end</span> <span class="o">-</span> <span class="n">new_start</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="n">mutate</span><span class="p">(</span><span class="n">old_length</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">length_diff</span> <span class="o">=</span> <span class="n">length</span> <span class="o">-</span> <span class="n">old_length</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">select</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">new_start</span><span class="p">,</span> <span class="n">new_end</span><span class="p">)</span> <span class="o">%&gt;%</span>
+        <span class="n">rename</span><span class="p">(</span><span class="n">start</span> <span class="o">=</span> <span class="n">new_start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">new_end</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="n">paste0</span><span class="p">(</span><span class="s2">&quot;TADB&quot;</span><span class="p">,</span> <span class="n">row_number</span><span class="p">()))</span>
+    <span class="n">extend_TADB</span> <span class="o">&lt;-</span> <span class="n">extend_TADB</span> <span class="o">%&gt;%</span> <span class="n">mutate</span><span class="p">(</span><span class="nb">chr</span> <span class="o">=</span> <span class="n">factor</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">levels</span> <span class="o">=</span> <span class="n">ordered_chr</span><span class="p">))</span> <span class="o">%&gt;%</span>
+        <span class="n">arrange</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="n">rename</span><span class="p">(</span><span class="err">`</span><span class="c1">#chr` = chr) %&gt;% mutate(index = paste0(&quot;TADB_&quot;, row_number()))</span>
+    <span class="n">write_tsv</span><span class="p">(</span><span class="n">extend_TADB</span><span class="p">,</span> <span class="err">$</span><span class="p">{</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;ext&quot;</span><span class="p">]:</span><span class="n">r</span><span class="p">})</span>
     
-    cat(&quot;DONE: generalized TADs =&quot;, nrow(formatted_final_DF), &quot;| TADB_final =&quot;, nrow(TADB_final), &quot;| cis windows =&quot;, nrow(extend_cis_ordered), &quot;| extended TADB =&quot;, nrow(extend_TADB), &quot;\n&quot;)
+    <span class="n">cat</span><span class="p">(</span><span class="s2">&quot;DONE: generalized TADs =&quot;</span><span class="p">,</span> <span class="n">nrow</span><span class="p">(</span><span class="n">formatted_final_DF</span><span class="p">),</span> <span class="s2">&quot;| TADB_final =&quot;</span><span class="p">,</span> <span class="n">nrow</span><span class="p">(</span><span class="n">TADB_final</span><span class="p">),</span> <span class="s2">&quot;| cis windows =&quot;</span><span class="p">,</span> <span class="n">nrow</span><span class="p">(</span><span class="n">extend_cis_ordered</span><span class="p">),</span> <span class="s2">&quot;| extended TADB =&quot;</span><span class="p">,</span> <span class="n">nrow</span><span class="p">(</span><span class="n">extend_TADB</span><span class="p">),</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -989,16 +989,16 @@ R: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[&quot
         },
         codeMirrorConfig: {
             theme: "abcdef",
-            mode: "sos"
+            mode: "python"
         },
         kernelOptions: {
-            name: "sos",
+            name: "python3",
             path: "./."
         },
         predefinedOutput: true
     }
     </script>
-    <script>kernelName = 'sos'</script>
+    <script>kernelName = 'python3'</script>
 
                 </article>
               
