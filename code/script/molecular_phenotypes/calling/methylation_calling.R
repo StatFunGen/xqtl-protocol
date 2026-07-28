@@ -18,18 +18,47 @@ suppressPackageStartupMessages({
   library(vroom)
 })
 
-# Cache only the sesameData resources openSesame/annoProbes actually need — the
-# per-platform manifests/masks + genome info + IDAT signature — instead of the bare
-# sesameDataCache() which downloads ALL ~95 ExperimentHub resources (incl. large TCGA
-# example datasets and every platform) and times out on a cold CI cache. Titles are
-# grep-selected from the installed sesameDataList() so it stays version-robust and
-# covers all human array platforms (HM450/EPIC/EPICv2/MSA).
+# Hydrate a COLD ExperimentHub cache from a public ghcr ORAS artifact — a ~20s CDN pull vs
+# ~13min from Bioconductor's slow ExperimentHub host. Pure-R (curl/httr2/jsonlite), no `oras`
+# binary needed anywhere. Best-effort + cold-only: if the cache already has an sqlite it is
+# left untouched, and ANY failure (offline, missing version tag, parse error) just falls
+# through to the live sesameDataCache() download below. Tag = the installed sesameData version
+# so a version bump without a matching artifact degrades gracefully to the live download.
+hydrate_sesame_cache_ghcr <- function() {
+  suppressPackageStartupMessages({ library(ExperimentHub); library(curl); library(httr2); library(jsonlite) })
+  cachedir <- ExperimentHub::getExperimentHubOption("CACHE")
+  if (file.exists(file.path(cachedir, "experimenthub.sqlite3"))) return(invisible(FALSE))  # not cold
+  repo <- "statfungen/xqtl-protocol/sesamedata-cache"
+  tag  <- as.character(utils::packageVersion("sesameData"))
+  base <- "https://ghcr.io"
+  tok  <- jsonlite::fromJSON(rawToChar(curl::curl_fetch_memory(
+            sprintf("%s/token?scope=repository:%s:pull", base, repo))$content))$token
+  req  <- httr2::req_headers(httr2::request(sprintf("%s/v2/%s/manifests/%s", base, repo, tag)),
+            Authorization = paste("Bearer", tok),
+            Accept = "application/vnd.oci.image.manifest.v1+json")
+  man  <- httr2::resp_body_json(httr2::req_perform(req))
+  dig  <- man$layers[[1]]$digest
+  dir.create(cachedir, recursive = TRUE, showWarnings = FALSE)
+  tgz  <- tempfile(fileext = ".tgz")
+  h    <- curl::new_handle(); curl::handle_setheaders(h, Authorization = paste("Bearer", tok))
+  curl::curl_download(sprintf("%s/v2/%s/blobs/%s", base, repo, dig), tgz, handle = h)
+  utils::untar(tgz, exdir = cachedir); unlink(tgz)
+  message("Hydrated sesameData cache from ghcr (", tag, ")")
+  invisible(TRUE)
+}
+
+# Cache only the sesameData resources openSesame/annoProbes actually need — the per-platform
+# manifests/masks + genome info + IDAT signature — instead of bare sesameDataCache() which
+# downloads ALL ~95 ExperimentHub resources (incl. large TCGA example datasets). Titles are
+# grep-selected from the installed sesameDataList() (version-robust; human arrays HM450/EPIC/
+# EPICv2, hg38). The ghcr artifact is a prebuilt copy of exactly this set.
 cache_sesame_data <- function() {
   titles <- sesameData::sesameDataList()$Title
-  pat <- paste0("^(idatSignature|probeIDSignature|genomeInfo[.]hg|",
-                "(HM450|EPIC|EPICv2|MSA)[.](address|probeInfo|imputationDefault)|",
-                "KYCG[.](HM450|EPIC|EPICv2|MSA)[.]Mask)")
-  sesameData::sesameDataCache(grep(pat, titles, value = TRUE))
+  pat <- paste0("^(idatSignature|probeIDSignature|genomeInfo[.]hg38|",
+                "(HM450|EPIC|EPICv2)[.](address|probeInfo|imputationDefault)|",
+                "KYCG[.](HM450|EPIC|EPICv2)[.]Mask)")
+  try(hydrate_sesame_cache_ghcr(), silent = TRUE)                 # fast path (best-effort)
+  sesameData::sesameDataCache(grep(pat, titles, value = TRUE))    # ensure/complete (live fallback)
 }
 
 parser <- arg_parser("methylation_calling worker (see --step)")

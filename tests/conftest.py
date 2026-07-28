@@ -8,6 +8,7 @@ probe.
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -15,6 +16,15 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent          # tests/ -> repo root
 sys.path.insert(0, str(Path(__file__).resolve().parent))    # tests/ on sys.path
+
+# On restricted Linux CI runners, preprocessCore's threaded normalize.quantiles (used by
+# minfi's preprocessQuantile and bulk_expression_normalization's quantile step) fails with
+# "return code from pthread_create() is 22". Force preprocessCore serial for every test
+# subprocess there via R_THREADS=1 — bit-identical output, and it inherits into run_r /
+# run_sh / run_sos automatically. macOS CI, local dev, and production `sos run` are untouched
+# (they never import this conftest / don't set CI, so they thread natively).
+if os.environ.get("CI") and sys.platform.startswith("linux"):
+    os.environ.setdefault("R_THREADS", "1")
 
 from helpers import r_runner                                 # noqa: E402
 from helpers import sos_runner                                # noqa: E402

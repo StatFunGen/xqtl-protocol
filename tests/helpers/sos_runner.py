@@ -93,7 +93,13 @@ def run_sos(notebook, step, params=None, cwd=None, timeout: int = 900):
         proc = subprocess.run(cmd, capture_output=True, text=True,
                               timeout=timeout, cwd=run_cwd)
     except subprocess.TimeoutExpired as e:
-        out, err = e.stdout or "", e.stderr or ""
+        # On timeout, TimeoutExpired.stdout/.stderr come back as BYTES even with
+        # text=True (the decode only happens on normal completion) — decode them.
+        def _s(x):
+            if x is None:
+                return ""
+            return x.decode(errors="replace") if isinstance(x, bytes) else x
+        out, err = _s(e.stdout), _s(e.stderr)
         dump = _step_stderr_dump(out + err, params)
         err = f"{err}\n[run_sos] TIMEOUT after {timeout}s{dump}"
         return subprocess.CompletedProcess(cmd, returncode=124, stdout=out, stderr=err)

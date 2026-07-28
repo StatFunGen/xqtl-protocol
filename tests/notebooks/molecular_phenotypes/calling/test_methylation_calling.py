@@ -42,10 +42,12 @@ def test_sesame(run_sos, repo_root, tmp_path):
     work = tmp_path / "data"; work.mkdir()
     _stage(repo_root, work, n=2)
     out = tmp_path / "out"
+    # generous timeout: the first run cold-downloads the sesameData platform cache
+    # from ExperimentHub, which is slow on some CI runners (ubuntu ~<1MB/s).
     p = run_sos(repo_root / NB, "sesame",
                 dict(cwd=out, modular_script_dir=repo_root / "code/script",
                      sample_sheet=work / "sample_sheet.csv", sample_sheet_header_rows=0),
-                cwd=repo_root, timeout=900)
+                cwd=repo_root, timeout=1800)
     assert p.returncode == 0, p.stdout + p.stderr
     assert (out / "sample_sheet.sesame.beta.tsv").exists()
     assert (out / "sample_sheet.sesame.beta.bed.gz").exists()
