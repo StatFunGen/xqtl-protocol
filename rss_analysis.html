@@ -705,12 +705,12 @@ parameter: method_args = &#39;&#39;     # nested per-method JSON object
 # fit finite-sample R + EB LD-mismatch SuSiE-RSS and fall back to the single-effect (SER) result for
 # regions susieR flags as unreliable. ser_fallback and r_mismatch are orthogonal: ser_fallback = False
 # only disables the SER fallback (EB LD-mismatch stays on); pass r_mismatch = &#39;none&#39; too for the
-# pre-change plain multi-effect fit.
+# pre-change plain multi-effect fit. Requires susieR &gt;= 0.16.6 (which moved R_mismatch_method /
+# check_prior into susie_rss_control(); pass those and other control settings via rss_control).
 parameter: ser_fallback = True    # fall back to single-effect (SER) when susieR flags R unreliable
 parameter: r_finite = &#39;&#39;          # finite-sample R size; empty -&gt; auto (LD-panel sample size)
-parameter: r_mismatch = &#39;eb&#39;      # LD-mismatch correction: &#39;eb&#39; (default) or &#39;none&#39;
-parameter: r_mismatch_method = &#39;&#39; # rMismatch estimator &#39;mle&#39;|&#39;map&#39;; empty -&gt; pecotmr default
-parameter: check_prior = &#39;&#39;       # susie_rss check_prior &#39;TRUE&#39;|&#39;FALSE&#39;; empty -&gt; pecotmr default
+parameter: r_mismatch = &#39;eb_mix&#39;  # LD-mismatch correction: &#39;none&#39; | &#39;eb&#39; | &#39;eb_mix&#39; (residual-mixture EB, default)
+parameter: rss_control = &#39;&#39;       # JSON object of susie_rss_control() settings, e.g. &#39;{&quot;check_prior&quot;:true,&quot;mismatch_estimator&quot;:&quot;map&quot;}&#39;; empty -&gt; defaults
 # --- plot opt-out ---------------------------------------------------
 parameter: no_plot = False
 # --- output prefix for the manifest file ----------------------------
@@ -803,8 +803,7 @@ bash: expand = &#39;${ }&#39;, stderr = f&quot;{_output}.stderr&quot;, stdout = 
         --ser-fallback ${&#39;TRUE&#39; if ser_fallback else &#39;FALSE&#39;} \
         --r-mismatch ${r_mismatch} \
         ${(&#39;--r-finite &#39; + str(r_finite)) if str(r_finite) != &#39;&#39; else &#39;&#39;} \
-        ${(&#39;--r-mismatch-method &#39; + r_mismatch_method) if r_mismatch_method else &#39;&#39;} \
-        ${(&#39;--check-prior &#39; + check_prior) if check_prior else &#39;&#39;} \
+        ${(&#39;--rss-control &#39; + repr(rss_control)) if rss_control else &#39;&#39;} \
         --output ${_output}
 </pre></div>
 </div>
