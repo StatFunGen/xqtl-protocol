@@ -119,8 +119,8 @@ parser <- add_argument(parser, "--pip-cutoff-to-skip",
 # fallback is ON by default (reproduces the single-panel notebook): fit a
 # finite-sample R + EB LD-mismatch SuSiE-RSS and drop to the single-effect (SER)
 # result for regions susieR flags as unreliable. These ride on gwas_args (GWAS
-# mode only); rFinite/rMismatchMethod/checkPrior forward only when set, so the
-# call also runs against a pecotmr that predates them.
+# mode only); rFinite forwards only when set. susie_rss_control() settings
+# (susieR >= 0.16.6) are passed as a JSON object via --rss-control.
 parser <- add_argument(parser, "--ser-fallback",
                        help = "GWAS mode: TRUE/FALSE. Fall back to the single-effect (SER) result when susieR flags R unreliable (fineMappingPipeline serFallback). Default TRUE.",
                        type = "character", default = "TRUE")
@@ -128,13 +128,10 @@ parser <- add_argument(parser, "--r-finite",
                        help = "GWAS mode: finite-sample R correction size (fineMappingPipeline rFinite). Empty = auto (LD-panel sample size).",
                        type = "character", default = "")
 parser <- add_argument(parser, "--r-mismatch",
-                       help = "GWAS mode: LD-mismatch correction (fineMappingPipeline rMismatch): 'eb' (default) or 'none'.",
-                       type = "character", default = "eb")
-parser <- add_argument(parser, "--r-mismatch-method",
-                       help = "GWAS mode: rMismatch estimator (fineMappingPipeline rMismatchMethod): 'mle' or 'map'. Empty = pecotmr default.",
-                       type = "character", default = "")
-parser <- add_argument(parser, "--check-prior",
-                       help = "GWAS mode: TRUE/FALSE for susie_rss check_prior (fineMappingPipeline checkPrior). Empty = pecotmr default.",
+                       help = "GWAS mode: LD-mismatch correction (fineMappingPipeline rMismatch): 'none', 'eb', or 'eb_mix' (residual-mixture EB, susieR >= 0.16.6). Default 'eb_mix'.",
+                       type = "character", default = "eb_mix")
+parser <- add_argument(parser, "--rss-control",
+                       help = "GWAS mode: JSON object of susieR::susie_rss_control() settings (e.g. '{\"check_prior\":true,\"mismatch_estimator\":\"map\"}'), forwarded as fineMappingPipeline rssControl. Empty = susie_rss_control() defaults.",
                        type = "character", default = "")
 # --- Multivariate / joint-fit knobs (QTL mode; mvsusie / fsusie). Each is
 # opt-in and omitted from the pipeline call when left at its default, so this
@@ -317,18 +314,23 @@ if (has_gwas) {
   ser_fallback <- as.logical(argv$ser_fallback)
   if (is.na(ser_fallback))
     stop("--ser-fallback must be TRUE or FALSE (got: ", argv$ser_fallback, ")")
-  # GWAS-only SuSiE-RSS knobs on top of the shared cs_args. rFinite /
-  # rMismatchMethod / checkPrior forward only when set (empty -> pecotmr default).
+  # GWAS-only SuSiE-RSS knobs on top of the shared cs_args. rFinite forwards
+  # only when set; --rss-control (JSON) becomes the rssControl named list of
+  # susie_rss_control() settings.
   gwas_args <- c(cs_args,
                  list(serFallback = ser_fallback,
                       rMismatch   = argv$r_mismatch))
   if (nzchar(argv$r_finite)) gwas_args$rFinite <- as.numeric(argv$r_finite)
-  if (nzchar(argv[["r_mismatch_method"]]))
-    gwas_args$rMismatchMethod <- argv[["r_mismatch_method"]]
-  if (nzchar(argv$check_prior)) {
-    cp <- as.logical(argv$check_prior)
-    if (is.na(cp)) stop("--check-prior must be TRUE or FALSE (got: ", argv$check_prior, ")")
-    gwas_args$checkPrior <- cp
+  if (nzchar(argv$rss_control) && argv$rss_control != "." &&
+      argv$rss_control != "{}") {
+    rc <- tryCatch(jsonlite::fromJSON(argv$rss_control, simplifyVector = TRUE),
+                   error = function(e) stop(
+                     "--rss-control must be a JSON object (got: ", argv$rss_control,
+                     "). Error: ", conditionMessage(e)))
+    if (!is.list(rc) || is.null(names(rc)) || any(!nzchar(names(rc))))
+      stop("--rss-control must be a JSON object with named fields, e.g. ",
+           '\'{"check_prior":true,"mismatch_estimator":"map"}\'.')
+    gwas_args$rssControl <- rc
   }
   res <- do.call(fineMappingPipeline, c(list(gss), gwas_args))
   label <- paste0("GwasSumStats '", basename(argv$gwas_sumstats), "'")
