@@ -28,6 +28,9 @@
 #                     --column-mapping is supplied):
 #                       #chrom|chrom|chr, pos, variant_id|SNP,
 #                       A1, A2, z|Z, n_sample|N
+#                     The per-variant N (n_sample|N) is optional when a
+#                     study-level scalar is supplied via --n-case/--n-control
+#                     or --n-sample; pecotmr then fills N from the scalar.
 #                     Optional: effect_allele_frequency, p, beta, se
 #   --column-mapping  Optional YAML file(s) mapping standard column names
 #                     to a study's actual column names. Comma-separated:
@@ -92,6 +95,9 @@ parser <- add_argument(parser, "--n-case",
                        type = "character", default = "")
 parser <- add_argument(parser, "--n-control",
                        help = "Optional per-study control counts, comma-separated (one per study; NA for quantitative).",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--n-sample",
+                       help = "Optional per-study total sample size, comma-separated (one per study; NA to omit). Study-level fallback for the per-variant N when a study has no per-variant N column and no case/control counts (GwasSumStats nSample).",
                        type = "character", default = "")
 parser <- add_argument(parser, "--pip-cutoff-to-skip",
                        help = "Skip a study whose single-trait max PIP is below this cutoff (summaryStatsQc pipCutoffToSkip); 0 disables, <0 uses 3/n_variants.",
@@ -169,6 +175,7 @@ parseCounts <- function(s, nm) {
 }
 nCase    <- parseCounts(argv$n_case, "n-case")
 nControl <- parseCounts(argv$n_control, "n-control")
+nSample  <- parseCounts(argv$n_sample, "n-sample")
 
 # ----- Parse --qc-args JSON -------------------------------------------------
 qc_extra <- if (nzchar(argv$qc_args) && argv$qc_args != "." &&
@@ -279,6 +286,7 @@ if (any(nzchar(mappings)))
   manifest_df$columnMapping <- ifelse(nzchar(mappings), mappings, NA_character_)
 if (!is.null(nCase))    manifest_df$nCase    <- nCase
 if (!is.null(nControl)) manifest_df$nControl <- nControl
+if (!is.null(nSample))  manifest_df$nSample  <- nSample
 
 gss <- loadGwasSumStatsFromManifest(
   manifest = manifest_df,
