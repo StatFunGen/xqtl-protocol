@@ -128,8 +128,8 @@ parser <- add_argument(parser, "--r-finite",
                        help = "GWAS mode: finite-sample R correction size (fineMappingPipeline rFinite). Empty = auto (LD-panel sample size).",
                        type = "character", default = "")
 parser <- add_argument(parser, "--r-mismatch",
-                       help = "GWAS mode: LD-mismatch correction (fineMappingPipeline rMismatch): 'none', 'eb' (default), or 'eb_mix' (residual-mixture EB, susieR >= 0.16.6).",
-                       type = "character", default = "eb")
+                       help = "GWAS mode: LD-mismatch correction (fineMappingPipeline rMismatch): 'none', 'eb', or 'eb_mix' (residual-mixture EB, susieR >= 0.16.6). Default 'eb_mix'.",
+                       type = "character", default = "eb_mix")
 parser <- add_argument(parser, "--rss-control",
                        help = "GWAS mode: JSON object of susieR::susie_rss_control() settings (e.g. '{\"check_prior\":true,\"mismatch_estimator\":\"map\"}'), forwarded as fineMappingPipeline rssControl. Empty = susie_rss_control() defaults.",
                        type = "character", default = "")
