@@ -11,7 +11,8 @@ def test_mash_preprocessing_susie_to_mash(run_sos, read_rds, repo_root, tmp_path
                     f"chr22:15528191-15529138\t{fx / 'protocol_example.QtlFineMappingResult.rds'}\n")
     p = run_sos(repo_root / "pipeline/mash_preprocessing.ipynb", "susie_to_mash",
                 dict(name="toy_mash", fine_mapping_meta=meta, cwd=cwd,
-                     sig_p_cutoff="0.1", n_random="15", n_null="15"),
+                     sig_p_cutoff="0.1", n_random="15", n_null="15",
+                     modular_script_dir=repo_root / "code/script"),
                 cwd=repo_root, timeout=600)
     assert p.returncode == 0, p.stdout + p.stderr
     out = cwd / "toy_mash.mash_input.rds"

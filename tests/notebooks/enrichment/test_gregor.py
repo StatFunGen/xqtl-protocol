@@ -2,7 +2,7 @@
 
 GREGOR is an external Perl tool (conda `gregor`); it is not ported. The `gregor`
 workflow chains three steps: `gregor_1` writes the `.conf`, `gregor_2` runs
-`GREGOR.pl` (on PATH) against a reference database, and `gregor_3` parses GREGOR's
+`GREGOR` (on PATH) against a reference database, and `gregor_3` parses GREGOR's
 per-annotation overlap output into a 2x2 table and runs Fisher's exact test.
 
 The real EUR reference is ~20 GB; a self-consistent chr22 slice is committed under
@@ -14,25 +14,14 @@ from a committed enrichment-results table alone (no GREGOR needed).
 """
 from __future__ import annotations
 
-import shutil
-
-import pytest
-
 NB = "pipeline/gregor.ipynb"
 FX = "tests/fixtures/gregor"
 
 
-def _have_gregor():
-    """Whether the GREGOR Perl entrypoint is on PATH (skip guard)."""
-    return shutil.which("GREGOR.pl") is not None
-
-
 def test_gregor_enrichment(run_sos, repo_root, tmp_path):
-    """Full `gregor` workflow: write conf -> run GREGOR.pl against the committed chr22
+    """Full `gregor` workflow: write conf -> run GREGOR against the committed chr22
     EUR reference slice -> parse overlaps + Fisher test. All 4 chr22 index SNPs annotate
     and the enrichment table carries the per-annotation odds ratio / Fisher p-value."""
-    if not _have_gregor():
-        pytest.skip("GREGOR not installed")
     fx = repo_root / FX
     cwd = tmp_path / "gregor"
     # bed-file index lists absolute paths to the annotation bed(s)

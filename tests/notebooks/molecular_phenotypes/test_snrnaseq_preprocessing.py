@@ -12,11 +12,9 @@ byte diff. Fixtures under tests/fixtures/snrnaseq_preprocessing/ are downsampled
 from the MWE (see make_fixtures.R): an 800-cell CellRanger subset, the EXACT
 id_mapping rows for those barcodes, and a per-label-downsampled reference SE.
 
-Heavy + many Bioconductor deps -> every test skips when a dep or fixture is absent.
+Heavy + many Bioconductor deps -> a missing dependency or fixture fails the test.
 """
 from __future__ import annotations
-
-import subprocess
 
 import pytest
 
@@ -24,28 +22,6 @@ R = "code/script/molecular_phenotypes/snRNAseq_preprocessing.R"
 NB = "pipeline/snRNAseq_preprocessing.ipynb"
 FX = "tests/fixtures/snrnaseq_preprocessing"
 MSD = "code/script"
-
-# runCellQC + SingleR default-method runtime deps
-_QC_DEPS = ("Seurat", "singleCellTK", "scds", "celda", "SingleCellExperiment", "scuttle")
-_ANNO_DEPS = ("Seurat", "singleCellTK", "SingleR", "org.Hs.eg.db", "scuttle")
-
-
-def _has_r_pkg(repo_root, pkg):
-    p = subprocess.run(
-        ["pixi", "run", "--frozen", "Rscript", "-e",
-         f'quit(status = !requireNamespace("{pkg}", quietly=TRUE))'],
-        cwd=repo_root, capture_output=True, text=True)
-    return p.returncode == 0
-
-
-def _require(repo_root, pkgs, *paths):
-    missing = [p for p in pkgs if not _has_r_pkg(repo_root, p)]
-    if missing:
-        pytest.skip("missing R packages: " + ", ".join(missing))
-    for path in paths:
-        if not path.exists():
-            pytest.skip(f"missing fixture: {path}")
-
 
 def _read_csv_col0(path):
     import csv
@@ -56,8 +32,6 @@ def _read_csv_col0(path):
 @pytest.fixture(scope="module")
 def sctk_out(run_r, repo_root, tmp_path_factory):
     """Run sctk_qc once for the module (QC is the expensive step)."""
-    _require(repo_root, _QC_DEPS,
-             repo_root / FX / "cellranger", repo_root / FX / "id_mapping.csv")
     out_dir = tmp_path_factory.mktemp("sctk")
     p = run_r(repo_root / R, [
         "--step", "sctk_qc",
@@ -99,7 +73,6 @@ def test_sctk_qc(sctk_out):
 
 
 def test_cell_annotation(sctk_out, run_r, repo_root, tmp_path):
-    _require(repo_root, _ANNO_DEPS, repo_root / FX / "seurat_ref_SE.rds")
     p = run_r(repo_root / R, [
         "--step", "cell_annotation",
         "--sctk-rds", sctk_out / "SCTK_results" / "filtered_seuratobj.rds",
@@ -113,8 +86,6 @@ def test_cell_annotation(sctk_out, run_r, repo_root, tmp_path):
 
 
 def test_sctk_qc_via_sos(run_sos, repo_root, tmp_path):
-    _require(repo_root, _QC_DEPS,
-             repo_root / FX / "cellranger", repo_root / FX / "id_mapping.csv")
     p = run_sos(repo_root / NB, "sctk_qc", {
         "input_dir": repo_root / FX / "cellranger",
         "output_dir": tmp_path,

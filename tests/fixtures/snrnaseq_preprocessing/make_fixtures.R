@@ -3,7 +3,7 @@
 # external MWE (~/Downloads/fungen_xqtl/xqtl-protocol/input/snrnaseq). Not run in
 # CI — run once by hand to (re)generate the small fixtures under this directory.
 #
-#   pixi run --frozen Rscript tests/fixtures/snrnaseq_preprocessing/make_fixtures.R
+#   Rscript tests/fixtures/snrnaseq_preprocessing/make_fixtures.R
 #
 # Produces (all small enough to commit):
 #   cellranger/<sample>-counts/outs/filtered_feature_bc_matrix/{barcodes,features,matrix}

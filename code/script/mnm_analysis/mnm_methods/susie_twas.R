@@ -92,13 +92,6 @@ normalize_path_safe <- function(path) {
   normalized[nzchar(normalized)]
 }
 
-safe_system_capture <- function(command, args = character()) {
-  tryCatch(
-    paste(system2(command, args = args, stdout = TRUE, stderr = FALSE), collapse = "\n"),
-    error = function(e) ""
-  )
-}
-
 safe_package_version <- function(pkg) {
   tryCatch(as.character(packageVersion(pkg)), error = function(e) NA_character_)
 }
@@ -156,7 +149,6 @@ format_provenance_lines <- function(provenance) {
     paste0("analysis_script: ", provenance$analysis_script),
     paste0("working_directory: ", provenance$working_directory),
     paste0("script_path: ", provenance$script_path),
-    paste0("git_commit: ", provenance$environment$git_commit),
     paste0("R_version: ", provenance$environment$r_version),
     paste0("pecotmr_version: ", provenance$environment$packages$pecotmr),
     paste0("optparse_version: ", provenance$environment$packages$optparse),
@@ -528,10 +520,8 @@ build_provenance <- function(output_kind, output_path) {
       ),
       env_vars = list(
         HOME = Sys.getenv("HOME", unset = ""),
-        PIXI_HOME = Sys.getenv("PIXI_HOME", unset = ""),
         TMPDIR = Sys.getenv("TMPDIR", unset = "")
-      ),
-      git_commit = safe_system_capture("git", c("rev-parse", "HEAD"))
+      )
     ),
     timing = list(
       started_at = format(script_started_at, "%Y-%m-%dT%H:%M:%S%z"),

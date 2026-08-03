@@ -573,9 +573,11 @@ _rnaseqc_call() {
 _filter_one_bam() {
     local input_file="$1"
     local output_file="$2"
-    local base_name derived_file
-    base_name="${input_file%.*}"
-    derived_file="${base_name%.*}.int.bam"
+    local derived_file
+    # Intermediate lives next to the OUTPUT (unique per call, in the caller's cwd),
+    # not next to the shared INPUT — so concurrent cord/trans filters and parallel
+    # test workers never collide on one scratch file in the input directory.
+    derived_file="${output_file%.*}.int.bam"
 
     if has_value "$UNIQUE"; then
         if has_value "$WASP"; then
@@ -741,17 +743,11 @@ MULTIQC_EOF
 
 _run_multiqc() {
     local multiqc_bin
-    local multiqc_python
 
     multiqc_bin="$(command -v multiqc || true)"
     [[ -n "$multiqc_bin" ]] || { echo "ERROR: multiqc was not found on PATH" >&2; exit 127; }
-    multiqc_python="$(dirname "$multiqc_bin")/python"
 
-    if [[ -x "$multiqc_python" ]]; then
-        "$multiqc_python" -m multiqc "$@"
-    else
-        "$multiqc_bin" "$@"
-    fi
+    "$multiqc_bin" "$@"
 }
 
 if [[ "$DRY_RUN" == "true" ]]; then

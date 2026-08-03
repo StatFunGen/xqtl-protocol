@@ -2,12 +2,9 @@
 committed chr22 fixtures (tests/fixtures/gene_annotation). Each step's worker is
 the ported R script code/script/data_preprocessing/phenotype/gene_annotation.R.
 
-annotate_coord_biomart is exercised end-to-end against Ensembl (needs network in CI);
-it self-skips if Ensembl is unreachable.
+annotate_coord_biomart is exercised end-to-end against Ensembl (needs network in CI).
 """
 from __future__ import annotations
-
-import pytest
 
 NB = "pipeline/gene_annotation.ipynb"
 FX = "tests/fixtures/gene_annotation"
@@ -95,19 +92,14 @@ def test_annotate_psichomics_isoforms(run_sos, repo_root, tmp_path):
 
 
 def test_annotate_coord_biomart(run_sos, repo_root, tmp_path):
-    """End-to-end against Ensembl biomaRt; skipped if Ensembl is unreachable."""
+    """End-to-end against Ensembl biomaRt (requires network)."""
     out = tmp_path / "out"
     p = run_sos(repo_root / NB, "annotate_coord_biomart",
                 {**_base(repo_root, out),
                  "phenoFile": repo_root / FX / "protocol_example.rnaseq.gene_ID.tsv",
                  "ensembl_version": 115},
                 cwd=repo_root, timeout=300)
-    if p.returncode != 0:
-        blob = (p.stdout + p.stderr).lower()
-        if any(k in blob for k in ("could not resolve", "timed out", "timeout", "curl",
-                                   "unresponsive", "connection", "ensembl site", "503", "502")):
-            pytest.skip("Ensembl biomaRt unreachable (network)")
-        assert False, p.stdout + p.stderr
+    assert p.returncode == 0, p.stdout + p.stderr
     bed = out / "protocol_example.rnaseq.gene_ID.bed.gz"
     assert bed.exists() and (out / "protocol_example.rnaseq.gene_ID.bed.gz.tbi").exists()
     assert (out / "protocol_example.rnaseq.gene_ID.region_list.txt").exists()

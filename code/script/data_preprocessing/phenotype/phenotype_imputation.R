@@ -87,16 +87,9 @@ write_bed <- function(dat, path) {
   plain_path <- sub("\\.gz$", "", path)
   cat(sprintf("Writing: %s\n", path))
   write.table(dat, plain_path, sep = "\t", quote = FALSE, row.names = FALSE)
-  checked_system2("bgzip", c("-f", plain_path))
-  checked_system2("tabix", c("-f", "-p", "bed", path))
-}
-
-checked_system2 <- function(command, args) {
-  status <- system2(command, args)
-  if (!identical(as.integer(status), 0L)) {
-    stop(sprintf("Command failed with exit status %s: %s %s",
-                 status, command, paste(args, collapse = " ")))
-  }
+  Rsamtools::bgzip(plain_path, dest = path, overwrite = TRUE)
+  unlink(plain_path)
+  Rsamtools::indexTabix(path, format = "bed")
 }
 
 write_bgzip_bed <- function(dat, path) {
@@ -107,8 +100,9 @@ write_bgzip_bed <- function(dat, path) {
   plain_path <- sub("\\.gz$", "", path)
   cat(sprintf("Writing: %s\n", plain_path))
   write.table(dat, plain_path, sep = "\t", quote = FALSE, row.names = FALSE)
-  checked_system2("bgzip", c("-f", plain_path))
-  checked_system2("tabix", c("-f", "-p", "bed", path))
+  Rsamtools::bgzip(plain_path, dest = path, overwrite = TRUE)
+  unlink(plain_path)
+  Rsamtools::indexTabix(path, format = "bed")
 }
 
 qc_filter <- function(mat, missing_rate = 0.4, zero_rate = 0.95) {

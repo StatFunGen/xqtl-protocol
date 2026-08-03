@@ -67,13 +67,18 @@ qc_suffix   <- if (isTRUE(argv$wasp)) "_qc"   else "_noqc"
 
 # ── Picard readers (unchanged) ───────────────────────────────────────────────
 
+# `find -L <dir> -name '*<suffix>'` -> recursive files whose basename ends in <suffix>.
+find_files <- function(dir, suffix) {
+  files <- list.files(dir, recursive = TRUE, full.names = TRUE)
+  files[endsWith(basename(files), suffix)]
+}
+
 readPicard.alignment_summary_metrics <- function(source_path) {
   stopifnot(length(source_path) == 1, file.exists(source_path))
   is_dir <- file.info(source_path)$isdir
 
   if (is_dir) {
-    files   <- system(paste("find -L", source_path,
-                            "-name '*.alignment_summary_metrics'"), intern = TRUE)
+    files   <- find_files(source_path, ".alignment_summary_metrics")
     stopifnot(length(files) > 0)
     samples <- gsub(".alignment_summary_metrics", "", basename(files), fixed = TRUE)
   } else {
@@ -105,7 +110,7 @@ readPicard.rna_metrics <- function(source_path) {
   is_dir <- file.info(source_path)$isdir
 
   if (is_dir) {
-    files   <- system(paste("find -L", source_path, "-name '*.rna_metrics'"), intern = TRUE)
+    files   <- find_files(source_path, ".rna_metrics")
     stopifnot(length(files) > 0)
     samples <- gsub(".rna_metrics", "", basename(files), fixed = TRUE)
   } else {
@@ -143,12 +148,11 @@ readPicard.rna_metrics <- function(source_path) {
 readPicard.duplicate_metrics <- function(source_path, wasp_sfx, qc_sfx) {
   stopifnot(length(source_path) == 1, file.exists(source_path))
 
-  pattern   <- paste0("*.Aligned.sortedByCoord.out", wasp_sfx, qc_sfx, ".md.metrics")
   substitute_str <- paste0(".Aligned.sortedByCoord.out", wasp_sfx, qc_sfx, ".md.metrics")
   is_dir    <- file.info(source_path)$isdir
 
   if (is_dir) {
-    files   <- system(paste("find -L", source_path, "-name", pattern), intern = TRUE)
+    files   <- find_files(source_path, substitute_str)
     stopifnot(length(files) > 0)
     samples <- gsub(substitute_str, "", basename(files), fixed = TRUE)
   } else {
@@ -197,10 +201,7 @@ readPicard <- function(source_path, wasp_sfx, qc_sfx) {
 }
 
 run_aggregate_picard_qc <- function() {
-  alignment_files <- system(
-    paste("find -L", shQuote(source_dir), "-name '*.alignment_summary_metrics'"),
-    intern = TRUE
-  )
+  alignment_files <- find_files(source_dir, ".alignment_summary_metrics")
   if (length(alignment_files) == 0) {
     write.table(data.frame(), file = argv$output,
                 col.names = TRUE, row.names = FALSE, quote = FALSE, sep = "\t")

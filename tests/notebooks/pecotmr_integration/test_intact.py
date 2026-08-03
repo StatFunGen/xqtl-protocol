@@ -28,20 +28,10 @@ from __future__ import annotations
 import csv
 import subprocess
 
-import pytest
-
 from helpers.r_runner import rscript_bin
 
 NB = "pipeline/intact.ipynb"
 FX = "tests/fixtures/intact"
-
-
-def _have_intact():
-    """Whether the Bioconductor INTACT package is loadable (skip guard)."""
-    p = subprocess.run(
-        [rscript_bin(), "-e", 'quit(status = !requireNamespace("INTACT", quietly = TRUE))'],
-        capture_output=True, text=True, timeout=120)
-    return p.returncode == 0
 
 
 def _read_table(rds):
@@ -56,7 +46,6 @@ def _read_table(rds):
     return list(csv.DictReader(lines, delimiter="\t"))
 
 
-@pytest.mark.skipif(not _have_intact(), reason="Bioconductor INTACT not installed")
 def test_intact(run_sos, read_rds, repo_root, tmp_path):
     fx = repo_root / FX
     cwd = tmp_path / "intact"
@@ -65,7 +54,8 @@ def test_intact(run_sos, read_rds, repo_root, tmp_path):
                  "fastenloc_file": fx / "protocol_example.fastenloc.gene.out",
                  "tissue": "DLPFC",
                  "alpha": 0.05,
-                 "cwd": cwd},
+                 "cwd": cwd,
+                 "modular_script_dir": repo_root / "code/script"},
                 cwd=repo_root, timeout=600)
     assert p.returncode == 0, p.stdout + p.stderr
 

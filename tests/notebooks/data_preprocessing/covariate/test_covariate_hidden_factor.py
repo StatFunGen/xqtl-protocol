@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import gzip
 import subprocess
+import sys
 
 import pytest
 
@@ -29,14 +30,6 @@ def _col1(path):
     op = gzip.open if str(path).endswith(".gz") else open
     with op(path, "rt") as fh:
         return [ln.split("\t", 1)[0] for ln in fh if ln.strip()]
-
-
-def _has_r_pkg(repo_root, pkg):
-    p = subprocess.run(
-        ["pixi", "run", "--frozen", "Rscript", "-e",
-         f'quit(status = !requireNamespace("{pkg}", quietly=TRUE))'],
-        cwd=repo_root, capture_output=True, text=True)
-    return p.returncode == 0
 
 
 def _residual(run_r, repo_root, tmp_path):
@@ -61,17 +54,8 @@ def test_compute_residual(run_r, repo_root, tmp_path):
     assert len(header) - 4 == 49                     # 49 samples shared with covariates
 
 
-# each choose-k method needs pca() (PCAtools/BiocSingular) plus one method-specific package
-_CHOOSE_K_DEPS = {
-    "Marchenko": ("PCAtools", "BiocSingular", "RMTstat"),      # chooseMarchenkoPastur -> RMTstat::qmp
-    "Buja_Eyuboglu": ("PCAtools", "BiocSingular", "jackstraw"),  # jackstraw::permutationPA
-}
-
-
 @pytest.mark.parametrize("method", ["Marchenko", "Buja_Eyuboglu"])
 def test_marchenko_pc(run_r, repo_root, tmp_path, method):
-    if not all(_has_r_pkg(repo_root, p) for p in _CHOOSE_K_DEPS[method]):
-        pytest.skip(f"{'/'.join(_CHOOSE_K_DEPS[method])} not installed")
     resid = _residual(run_r, repo_root, tmp_path)
     out = tmp_path / f"out.{method}_PC.gz"
     p = run_r(repo_root / R, ["--step", "Marchenko_PC", "--cwd", tmp_path, "--residFile", resid,
@@ -87,14 +71,21 @@ def test_marchenko_pc(run_r, repo_root, tmp_path, method):
 
 def test_peer_fit_extract(run_r, repo_root, tmp_path):
     resid = _residual(run_r, repo_root, tmp_path)
-    cwd = tmp_path / "peer"
-    # PEER_fit: mofapy2 python worker -> model .hd5 + TSV sidecars
-    p = run_r(repo_root / R, ["--step", "PEER_fit", "--cwd", cwd, "--residFile", resid,
-                              "--N", "5", "--iteration", "100", "--convergence-mode", "fast",
-                              "--tol", "0.001", "--r2-tol", "False", "--numThreads", "1"])
-    assert p.returncode == 0, p.stdout + p.stderr
+    cwd = tmp_path / "peer"; cwd.mkdir(parents=True, exist_ok=True)
     stem = "protocol_example.rnaseq.bed.covariates.residual"
     model = cwd / f"{stem}.PEER_MODEL.hd5"
+    # PEER_fit: the notebook drives the standalone mofapy2 worker directly (no R shell-out);
+    # exercise the same worker here via the interpreter running the tests (has mofapy2).
+    worker = repo_root / "code/script/data_preprocessing/covariate/covariate_hidden_factor_peer.py"
+    p = subprocess.run(
+        [sys.executable, str(worker), "--resid-file", str(resid), "--model-file", str(model),
+         "--factors-out", str(cwd / f"{stem}.PEER.factors.tsv"),
+         "--weights-out", str(cwd / f"{stem}.PEER.weights.tsv"),
+         "--variance-out", str(cwd / f"{stem}.PEER.variance.tsv"),
+         "--num-factor", "5", "--iteration", "100", "--convergence-mode", "fast",
+         "--num-threads", "1", "--tol", "0.001", "--r2-tol", "False"],
+        capture_output=True, text=True)
+    assert p.returncode == 0, p.stdout + p.stderr
     assert model.exists()                                            # HDF5 model still saved
     for ext in ("PEER.factors.tsv", "PEER.weights.tsv", "PEER.variance.tsv"):
         assert (cwd / f"{stem}.{ext}").exists()
@@ -127,17 +118,13 @@ def test_bicv(run_r, repo_root, tmp_path):
     with gzip.open(vcf, "rt") as fh:
         assert fh.readline().startswith("##fileformat=VCFv4.2")
 
-    # BiCV_3: apex factor -> .BiCV.gz (known covariates + apex factors)
-    out = cwd / "out.residual.BiCV.gz"
-    p = run_r(repo_root / R, ["--step", "BiCV_3", "--cwd", cwd, "--residFile", resid,
-                              "--vcfFile", vcf, "--covFile", repo_root / COV,
-                              "--N", "3", "--iteration", "5", "--output", out, "--numThreads", "1"])
+    # BiCV_nfactors: R prep computes the factor count the notebook feeds to apex
+    # (the apex CLI call itself now lives in the BiCV_3 notebook cell, not R).
+    nfac = cwd / "n_factors.txt"
+    p = run_r(repo_root / R, ["--step", "BiCV_nfactors", "--residFile", resid,
+                              "--N", "3", "--output", nfac])
     assert p.returncode == 0, p.stdout + p.stderr
-    assert out.exists()
-    rows = _col1(out)
-    assert rows[0] == "#id"
-    assert {"sex", "age", "PC1"}.issubset(set(rows))
-    assert any(r.startswith("factor_") for r in rows)                # apex-inferred factors
+    assert nfac.read_text().strip() == "3"
 
 
 def test_peer_workflow_via_sos(run_sos, repo_root, tmp_path):
@@ -154,18 +141,20 @@ def test_peer_workflow_via_sos(run_sos, repo_root, tmp_path):
 
 def test_bicv_workflow_via_sos(run_sos, repo_root, tmp_path):
     # SoS wiring: `sos run covariate_hidden_factor.ipynb BiCV` chains BiCV_1
-    # (compute_residual) -> BiCV_2 (fake VCF) -> BiCV_3 (apex factor).
+    # (compute_residual) -> BiCV_2 (fake VCF) -> BiCV_3 (R n_factors prep + apex factor).
     p = run_sos(repo_root / NB, "BiCV", {
         "phenoFile": repo_root / PHENO, "covFile": repo_root / COV, "cwd": tmp_path,
         "N": 3, "iteration": 5, "numThreads": 1,
         "modular_script_dir": repo_root / MSD})
     assert p.returncode == 0, p.stdout + p.stderr
-    assert len(list(tmp_path.glob("*.BiCV.gz"))) == 1
+    outs = list(tmp_path.glob("*.BiCV.gz"))
+    assert len(outs) == 1
+    rows = _col1(outs[0])
+    assert rows[0] == "#id"
+    assert any(r.startswith("factor_") for r in rows)                # apex-inferred factors
 
 
 def test_marchenko_workflow_via_sos(run_sos, repo_root, tmp_path):
-    if not all(_has_r_pkg(repo_root, p) for p in ("PCAtools", "BiocSingular", "RMTstat")):
-        pytest.skip("PCAtools/BiocSingular/RMTstat not installed")
     p = run_sos(repo_root / NB, "Marchenko_PC", {
         "phenoFile": repo_root / PHENO, "covFile": repo_root / COV, "cwd": tmp_path,
         "N": 0, "numThreads": 1, "modular_script_dir": repo_root / MSD})

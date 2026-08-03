@@ -8,7 +8,8 @@ def test_mash_fit(mash_model_chain, run_sos, read_rds, repo_root, tmp_path):
     p = run_sos(repo_root / "pipeline/mash_fit.ipynb", "mash",
                 dict(data=mash_model_chain["data"], vhat_data=mash_model_chain["vhat"],
                      prior_data=mash_model_chain["prior"], cwd=cwd,
-                     output_prefix="toy", effect_model="EE"),
+                     output_prefix="toy", effect_model="EE",
+                     modular_script_dir=repo_root / "code/script"),
                 cwd=repo_root, timeout=700)
     assert p.returncode == 0, p.stdout + p.stderr
     model = cwd / "toy.EE.mash_model.rds"

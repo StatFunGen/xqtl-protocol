@@ -90,7 +90,7 @@ def test_junction_quant(run_r, repo_root, tmp_path):
 
 def test_quantify_psi(run_r, repo_root, tmp_path):
     """psichomics_2: quantifySplicing over a committed chr22 SUPPA annotation
-    (built once via suppa.py generateEvents -> suppa_annot) and a junction table
+    (built once via suppa generateEvents -> suppa_annot) and a junction table
     encoded in psichomics' junctionString format so events actually quantify.
     (Real STAR junctions use intron-boundary coords that need the production
     reference annotation; here we exercise the worker's read->quantify->write path.)"""

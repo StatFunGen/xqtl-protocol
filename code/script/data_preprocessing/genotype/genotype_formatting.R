@@ -2,9 +2,9 @@
 # genotype_formatting.R — R port of genotype_formatting.py (the non-shell helpers).
 #
 # Steps:
-#   ld_by_region_plink_1  plink `--r square0 --make-just-bim` over a region, then
-#                         save the LD matrix + variant IDs as an RDS (was a numpy
-#                         .npz; switched to RDS since nothing in-repo reads the .npz).
+#   ld_by_region_plink_1  package plink's `.ld` matrix + `.bim` variant IDs (the plink
+#                         `--r square0 --make-just-bim` call runs in the notebook cell)
+#                         as an RDS (was a numpy .npz; nothing in-repo reads the .npz).
 #   write_data_list       Filter a "::"-joined file list to non-empty entries and
 #                         write a two-column (#id, #path) manifest.
 #   vcf_gz_summary        Print row/column/header/preview stats for VCF(.gz) files.
@@ -31,20 +31,13 @@ read_lines_any <- function(path) {
 }
 
 do_ld_by_region <- function(argv) {
-  stopifnot(nzchar(argv$genoFile), nzchar(argv$output))
-  for (n in c("region_chrom", "region_start", "region_end")) {
-    if (!nzchar(argv[[n]])) stop(sprintf("--%s is required", gsub("_", "-", n)))
-  }
+  stopifnot(nzchar(argv$output))
   out <- argv$output
   dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
   out_prefix <- sub("\\.[^.]*\\.[^.]*$", "", out)          # strip .floatN.rds -> prefix
-  geno_prefix <- sub("\\.[^.]*$", "", argv$genoFile)       # strip .bed
 
-  system2("plink", c("--bfile", geno_prefix, "--out", out_prefix,
-                     "--chr", argv$region_chrom, "--from-bp", argv$region_start,
-                     "--to-bp", argv$region_end, "--r", "square0",
-                     "--make-just-bim", "--threads", argv$numThreads))
-
+  # plink (`--r square0 --make-just-bim`) is run from the notebook cell; here we just
+  # package its .ld matrix + .bim variant IDs into the RDS output.
   ld <- as.matrix(vroom(paste0(out_prefix, ".ld"), col_names = FALSE,
                         delim = "\t", show_col_types = FALSE))
   dimnames(ld) <- NULL

@@ -5,27 +5,19 @@ code/script/enrichment/make_annotation.R (Step A: write .annot.gz; Step D: write
 .l2.M). `postprocess` / `meta_subset` (pecotmr wrappers) consume polyfun's small
 per-trait OUTPUTS.
 
-polyfun CLIs are the packaged **bin** entry points (`munge_polyfun_sumstats.py`,
-`compute_ldscores.py`, `ldsc.py`), invoked by bare name on PATH — the notebook no
+polyfun CLIs are the packaged **bin** entry points (`munge_polyfun_sumstats`,
+`compute_ldscores`, `ldsc`), invoked by bare name on PATH — the notebook no
 longer prefixes `python`/`polyfun_path` (those bin scripts are /bin/sh wrappers
 that `exec python3 <libexec>/...`, so feeding them to `python` breaks).
 `munge_sumstats_polyfun` and the full `make_annotation_files_ldscore` chain (Step A
-annot -> Step C polyfun `compute_ldscores.py` -> Step D .l2.M) both run here.
-`get_heritability` (`ldsc.py --h2`) runs too but needs the full multi-chromosome LD
+annot -> Step C polyfun `compute_ldscores` -> Step D .l2.M) both run here.
+`get_heritability` (`ldsc --h2`) runs too but needs the full multi-chromosome LD
 panel (baseline + weights + per-chrom target LD, tens of MB) — not committed, so
 left untested.
 """
 from __future__ import annotations
 
 import gzip
-import shutil
-
-import pytest
-
-
-def _have_polyfun():
-    """Whether polyfun's CLIs are on PATH (skip guard)."""
-    return shutil.which("munge_polyfun_sumstats.py") is not None
 
 MK = "code/script/enrichment/make_annotation.R"
 FX = "tests/fixtures/sldsc_enrichment"
@@ -104,10 +96,8 @@ def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):
 
 
 def test_munge_sumstats_polyfun(run_sos, repo_root, tmp_path):
-    """munge_sumstats_polyfun: polyfun munge_polyfun_sumstats.py on a small BOLT-LMM
+    """munge_sumstats_polyfun: polyfun munge_polyfun_sumstats on a small BOLT-LMM
     subset -> munged .parquet (SNP/CHR/BP/A1/A2/MAF/N/Z). BOLT input needs --n."""
-    if not _have_polyfun():
-        pytest.skip("polyfun not installed")
     sumstats = tmp_path / "boltlmm_small.sumstats.gz"
     sumstats.write_bytes((repo_root / FX / "boltlmm_small.sumstats.gz").read_bytes())
     p = run_sos(repo_root / "pipeline/sldsc_enrichment.ipynb", "munge_sumstats_polyfun",
@@ -124,11 +114,9 @@ def test_munge_sumstats_polyfun(run_sos, repo_root, tmp_path):
 
 def test_make_annotation_files_ldscore(run_sos, repo_root, tmp_path):
     """Full make_annotation_files_ldscore chain: Step A make_annotation.R annot ->
-    Step C polyfun compute_ldscores.py (via the bin wrapper) -> Step D .l2.M.
+    Step C polyfun compute_ldscores (via the bin wrapper) -> Step D .l2.M.
     The chr2 LD-score parquet must reproduce the committed reference (compute_ldscores
     is deterministic); the annot.gz + .l2.M must byte-match their references."""
-    if not _have_polyfun():
-        pytest.skip("polyfun not installed")
     out = tmp_path / "out"
     p = run_sos(repo_root / "pipeline/sldsc_enrichment.ipynb", "make_annotation_files_ldscore",
                 {"cwd": out, "annotation_name": "protocol_example",
@@ -157,13 +145,11 @@ def test_make_annotation_files_ldscore(run_sos, repo_root, tmp_path):
 
 
 def test_get_heritability(run_sos, repo_root, tmp_path):
-    """get_heritability: polyfun ldsc.py --h2 (via bin) for one trait against the
+    """get_heritability: polyfun ldsc --h2 (via bin) for one trait against the
     committed multi-chromosome LD panel (target LD + 97-annot baseline + weights),
     maf_cutoff=0 so no .frq. The .results table matches the committed reference —
     labels exact, numbers within tolerance (ldsc's last-digit float formatting
     differs across BLAS/libm, e.g. macOS 4.3326e-07 vs Linux 4.3325e-07)."""
-    if not _have_polyfun():
-        pytest.skip("polyfun not installed")
     gh = repo_root / FX / "get_heritability"
     panel = gh / "panel"
     out = tmp_path / "out"

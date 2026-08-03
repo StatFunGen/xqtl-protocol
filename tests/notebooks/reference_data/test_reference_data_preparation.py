@@ -159,9 +159,8 @@ def test_tad_annotate(run_sos, repo_root, tmp_path):
 def test_psichomics_hg38_annotation(run_sos, repo_root, tmp_path):
     """psi_hg38_annotation via SoS: reconcile the psichomics AH63657 splicing-annotation gene
     symbols to Ensembl IDs (GTF -> HGNC -> VAST -> SUPPA). Needs an AnnotationHub network download
-    (cached after first run, like the sesame test); skips gracefully when offline. HGNC db is a
+    (cached after first run, like the sesame test). HGNC db is a
     trimmed chr22 fixture, GTF is the chr22 collapsed gene model."""
-    import pytest
     out = tmp_path / "out"
     gtf = tmp_path / "collapsed.gtf"
     gtf.write_bytes(gzip.open(repo_root / COLLAPSED_REF, "rb").read())
@@ -170,17 +169,13 @@ def test_psichomics_hg38_annotation(run_sos, repo_root, tmp_path):
     p = run_sos(repo_root / NB, "psi_hg38_annotation",
                 dict(hg_gtf=gtf, hgrc_db=hgnc, **_common(repo_root, out)),
                 cwd=repo_root, timeout=1200)
-    blob = p.stdout + p.stderr
-    if p.returncode != 0 and any(k in blob for k in
-                                 ("AnnotationHub", "download", "Timeout", "curl", "cache", "URL")):
-        pytest.skip("psichomics AnnotationHub network unavailable")
-    assert p.returncode == 0, blob
+    assert p.returncode == 0, p.stdout + p.stderr
     rds = out / "psichomics_hg38_annotation.rds"
     assert rds.exists() and rds.stat().st_size > 50_000, "annotation RDS missing/too small"
 
 
 def test_suppa_annotation(run_sos, repo_root, tmp_path):
-    """SUPPA_annotation workflow: suppa.py generateEvents (SUPPA_annotation_1) ->
+    """SUPPA_annotation workflow: suppa generateEvents (SUPPA_annotation_1) ->
     reference_data_preparation.R --step suppa_annot / psichomics (SUPPA_annotation_2).
     Both external SUPPA + R psichomics are exercised on the committed chr22 GTF."""
     out = tmp_path / "out"
@@ -216,7 +211,7 @@ def test_picard_sequence_dictionary(repo_root, tmp_path):
     fa = tmp_path / "test_contigs.fa"
     fa.write_text((repo_root / FIX / "test_contigs.fa").read_text())
     out = tmp_path / "test_contigs.dict"
-    p = subprocess.run(["pixi", "run", "--frozen", "picard", "CreateSequenceDictionary",
+    p = subprocess.run(["picard", "CreateSequenceDictionary",
                         f"R={fa}", f"O={out}"], cwd=repo_root, capture_output=True, text=True)
     assert p.returncode == 0, p.stdout + p.stderr
     lines = out.read_text().splitlines()

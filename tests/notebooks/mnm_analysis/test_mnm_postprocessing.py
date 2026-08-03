@@ -22,7 +22,8 @@ def test_cis_results_export_and_top_loci(run_sos, read_rds, repo_root, tmp_path)
     region_file.write_text("chr22\t9939388\t11961338\tENSG00000283047\n")
     base = dict(cwd=cwd, study="protocol_example",
                 region_file=region_file, file_path=fx,
-                prefix="protocol_example", suffix="fine_mapping.rds")
+                prefix="protocol_example", suffix="fine_mapping.rds",
+                modular_script_dir=repo_root / "code/script")
 
     # cis_results_export: combine per-region FMR(s) -> cis_results_db + meta.
     p = run_sos(repo_root / NB, "cis_results_export", base, cwd=repo_root, timeout=600)

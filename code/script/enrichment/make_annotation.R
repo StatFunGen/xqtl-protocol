@@ -3,7 +3,7 @@
 # make_annotation.R
 # CLI worker for sldsc_enrichment.ipynb [make_annotation_files_ldscore] — the R
 # analysis blocks (Step A: write .annot files; Step D: write .l2.M files). The
-# polyfun LD-score computation (ldsc.py / compute_ldscores.py) stays external.
+# polyfun LD-score computation (ldsc / compute_ldscores) stays external.
 #
 # Faithful port of the notebook R (data.table -> vroom/dplyr; arrow kept for
 # parquet). .annot output written directly as .annot.gz.

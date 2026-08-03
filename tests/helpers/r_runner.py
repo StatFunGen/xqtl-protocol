@@ -17,7 +17,7 @@ RDS_PROBE = HELPERS_DIR / "rds_probe.R"
 
 
 def rscript_bin() -> str:
-    """Rscript to use: ``XQTL_RSCRIPT`` override, else the one on PATH (pixi)."""
+    """Rscript to use: ``XQTL_RSCRIPT`` override, else the one on PATH."""
     return os.environ.get("XQTL_RSCRIPT") or "Rscript"
 
 
@@ -30,8 +30,8 @@ def run_r(script, args=(), timeout: int = 600) -> subprocess.CompletedProcess:
 
 def run_sh(script, args=(), timeout: int = 600) -> subprocess.CompletedProcess:
     """Run a bash wrapper (e.g. RNA_calling.sh <step> --args) as a subprocess,
-    exactly as the notebook cell does. External tools resolve from PATH (the pixi
-    env under ``pixi run pytest``). Never raises on rc!=0 — the test asserts."""
+    exactly as the notebook cell does. External tools resolve from PATH.
+    Never raises on rc!=0 — the test asserts."""
     cmd = ["bash", str(script), *(str(a) for a in args)]
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 

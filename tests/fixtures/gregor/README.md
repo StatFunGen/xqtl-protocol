@@ -27,7 +27,7 @@ Full EUR reference: https://csg.sph.umich.edu/GREGOR/index.php/site/download
 
 Dev-only — the full reference is not available in CI. Download and reassemble the two
 EUR parts (`cat …part.00 …part.01 | tar xzf -` → an `EUR/` dir), then run the steps
-below against it. `sqlite3` comes from the pixi env (`pixi run --frozen sqlite3`).
+below against it. `sqlite3` must be available on your `PATH`.
 
 The slice stays self-consistent because:
 - Index SNPs are `chr:pos`, so `annotate.index.snp.pl` never opens `snp.db` (rsID-only path).
@@ -46,7 +46,7 @@ Steps (`SRC` = full `EUR/` dir, `OUT` = `tests/fixtures/gregor/EUR`):
 ```bash
 SRC=~/Downloads/gregor_ref/EUR
 OUT=tests/fixtures/gregor/EUR
-SQLITE="pixi run --frozen sqlite3"
+SQLITE="sqlite3"
 SCHEMA='CREATE TABLE CUBE (POS INT PRIMARY KEY NOT NULL,MAFID INT NOT NULL,DISTID INT NOT NULL,LDNUMID INT NOT NULL,MAF FLOAT NOT NULL,DIST INT NOT NULL,LDNUM INT NOT NULL,LDS TEXT NOT NULL);'
 INDEX_POS="19449483 41441787 39507863 29485708"   # 4 chr22 index SNPs (hg19),
                                                   # each first member of a >=4-member cube

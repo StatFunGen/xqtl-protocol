@@ -55,12 +55,17 @@ def test_write_data_list(run_r, repo_root, tmp_path):
 
 
 def test_ld_by_region(run_r, repo_root, tmp_path):
-    bed = repo_root / f"{BED}.bed"
     out = tmp_path / "region.float16.rds"
-    p = run_r(repo_root / WORKER, [
-        "--step", "ld_by_region_plink_1", "--genoFile", bed, "--region-chrom", "22",
-        "--region-start", "16050000", "--region-end", "16150000",
-        "--output", out, "--numThreads", "1"])
+    out_prefix = tmp_path / "region"          # the R step strips .float16.rds -> "region"
+    # plink now runs in the notebook cell; reproduce it here, then exercise the R step
+    # that packages plink's .ld/.bim into the RDS.
+    pl = subprocess.run(
+        ["plink", "--bfile", str(repo_root / BED), "--out", str(out_prefix),
+         "--chr", "22", "--from-bp", "16050000", "--to-bp", "16150000",
+         "--r", "square0", "--make-just-bim", "--threads", "1"],
+        capture_output=True, text=True)
+    assert pl.returncode == 0, pl.stdout + pl.stderr
+    p = run_r(repo_root / WORKER, ["--step", "ld_by_region_plink_1", "--output", out])
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.exists()
     # RDS holds a square LD matrix whose dimension matches the variant-ID vector,

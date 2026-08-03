@@ -11,6 +11,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from helpers.r_runner import rscript_bin
+
 NB = "pipeline/methylation_calling.ipynb"
 CROSS = "data/cross_reactive_probe_Hop2020.txt"
 SAMPLES = [("5723646052", "R02C02", "GroupA_3"), ("5723646052", "R04C01", "GroupA_2"),
@@ -20,7 +22,7 @@ SAMPLES = [("5723646052", "R02C02", "GroupA_3"), ("5723646052", "R04C01", "Group
 
 def _minfidata_extdata(repo_root) -> Path:
     out = subprocess.run(
-        ["pixi", "run", "Rscript", "-e", 'cat(system.file("extdata", package="minfiData"))'],
+        [rscript_bin(), "-e", 'cat(system.file("extdata", package="minfiData"))'],
         cwd=repo_root, capture_output=True, text=True)
     for tok in out.stdout.split():
         if "minfiData" in tok and "extdata" in tok:

@@ -111,13 +111,6 @@ phenotype_coord_cols <- function(df) {
   }
 }
 
-run_command <- function(command, args = character()) {
-  status <- system2(command, args = args)
-  if (!identical(status, 0L)) {
-    stop(sprintf("Command failed: %s %s", command, paste(args, collapse = " ")))
-  }
-}
-
 bed_sort_index <- function(df) {
   chrom <- as.character(df[[1]])
   start <- suppressWarnings(as.numeric(df[[2]]))
@@ -144,8 +137,9 @@ write_bgzip_bed <- function(df, out_file) {
   plain_file <- sub("\\.gz$", "", out_file)
   df <- df[bed_sort_index(df), , drop = FALSE]
   readr::write_delim(df, plain_file, delim = "\t")
-  run_command("bgzip", c("-f", plain_file))
-  run_command("tabix", c("-f", "-p", "bed", out_file))
+  Rsamtools::bgzip(plain_file, dest = out_file, overwrite = TRUE)
+  unlink(plain_file)
+  Rsamtools::indexTabix(out_file, format = "bed")
 }
 
 mean_impute_old <- function(d) {
@@ -417,38 +411,6 @@ run_marchenko_from_resid <- function(opt) {
               out_file, n_factors, length(common_samples)))
 }
 
-# PEER_fit sub-step: takes residFile, matching notebook [PEER_2]
-# Delegates to the standalone covariate_hidden_factor_peer.py, which fits the
-# mofapy2 MOFA model, saves the HDF5 model, and writes the factor/weight/variance
-# TSV sidecars that PEER_extract reads (no MOFA2 Bioconductor package / reticulate).
-run_peer_fit <- function(opt) {
-  if (is.null(opt$residFile)) stop("--residFile is required for PEER_fit")
-  cat("=== PEER_fit (mofapy2) ===\n")
-  bname <- sub("\\.bed\\.gz$", "", basename(opt$residFile))
-  model_file    <- file.path(opt$cwd, paste0(bname, ".PEER_MODEL.hd5"))
-  factors_file  <- file.path(opt$cwd, paste0(bname, ".PEER.factors.tsv"))
-  weights_file  <- file.path(opt$cwd, paste0(bname, ".PEER.weights.tsv"))
-  variance_file <- file.path(opt$cwd, paste0(bname, ".PEER.variance.tsv"))
-  py_script <- file.path(script_dir(), "covariate_hidden_factor_peer.py")
-  if (!file.exists(py_script)) stop(sprintf("PEER Python worker not found: %s", py_script))
-  run_command(
-    Sys.which("python"),
-    c(py_script,
-      "--resid-file",       opt$residFile,
-      "--model-file",       model_file,
-      "--factors-out",      factors_file,
-      "--weights-out",      weights_file,
-      "--variance-out",     variance_file,
-      "--num-factor",       as.character(opt$N),
-      "--iteration",        as.character(opt$iteration),
-      "--convergence-mode", opt$`convergence-mode`,
-      "--num-threads",      as.character(opt$numThreads),
-      "--tol",              as.character(opt$tol),
-      "--r2-tol",           as.character(opt$`r2-tol`))
-  )
-  cat(sprintf("PEER model saved: %s\n", model_file))
-}
-
 # Diagnostic PDF from the PEER TSV sidecars (replaces the MOFA2 plot_* family).
 # factors_df: '#id' (Factor*) + sample columns; weights_df: 'feature' + Factor*;
 # variance_df: factor, r2 (per-factor rows + a 'Total' row).
@@ -591,19 +553,19 @@ run_bicv_fake_vcf <- function(opt) {
     plain_file
   )
   write_delim(vcf_row, plain_file, delim = "\t", col_names = TRUE, append = TRUE)
-  run_command("bgzip", c("-f", plain_file))
-  run_command("tabix", c("-f", "-p", "vcf", out_file))
+  Rsamtools::bgzip(plain_file, dest = out_file, overwrite = TRUE)
+  unlink(plain_file)
+  Rsamtools::indexTabix(out_file, format = "vcf")
   cat(sprintf("Output: %s\n", out_file))
 }
 
-run_bicv_factor <- function(opt) {
+# BiCV_3 prep: compute the number of factors (GTeX default from residual sample
+# count when --N is 0) and write it to --output. The notebook's BiCV_3 step reads
+# this and runs `apex factor` directly (apex is invoked from the notebook, not R).
+run_bicv_nfactors <- function(opt) {
   if (is.null(opt$residFile) || !file.exists(opt$residFile)) {
-    stop("--residFile is required for BiCV_3")
+    stop("--residFile is required for BiCV_nfactors")
   }
-  if (is.null(opt$vcfFile) || !file.exists(opt$vcfFile)) {
-    stop("--vcfFile is required for BiCV_3")
-  }
-
   resid_df <- read_delim(opt$residFile, delim = "\t", show_col_types = FALSE)
   coord_cols <- phenotype_coord_cols(resid_df)
   sample_count <- ncol(resid_df) - length(coord_cols)
@@ -619,41 +581,9 @@ run_bicv_factor <- function(opt) {
       n_factors <- 60L
     }
   }
-
-  out_file <- opt$output
-  if (is.null(out_file) || !nzchar(out_file)) {
-    out_file <- file.path(opt$cwd, paste0(fake_vcf_prefix(opt$residFile), ".BiCV.gz"))
-  }
-  dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
-  out_prefix <- sub("\\.BiCV\\.gz$", "", out_file)
-  if (identical(out_prefix, out_file)) {
-    out_prefix <- sub("\\.gz$", "", out_file)
-  }
-
-  apex_args <- c(
-    "factor",
-    "--out", out_prefix,
-    "--iter", as.character(opt$iteration),
-    "--factors", as.character(n_factors),
-    "--bed", opt$residFile,
-    "--vcf", opt$vcfFile,
-    "--threads", as.character(opt$numThreads)
-  )
-  if (!is.null(opt$covFile) && nzchar(opt$covFile) && file.exists(opt$covFile)) {
-    apex_args <- c(apex_args, "--cov", opt$covFile)
-  }
-  run_command("apex", apex_args)
-  # apex writes "<out_prefix>.cov.gz" (the inferred factors formatted as covariates);
-  # rename it to the declared BiCV output so the SoS output contract is satisfied.
-  apex_out <- paste0(out_prefix, ".cov.gz")
-  if (!identical(apex_out, out_file)) {
-    if (!file.exists(apex_out)) {
-      stop(sprintf("apex did not produce expected output: %s", apex_out))
-    }
-    if (file.exists(out_file)) unlink(out_file)
-    file.rename(apex_out, out_file)
-  }
-  cat(sprintf("Output: %s\n", out_file))
+  dir.create(dirname(opt$output), recursive = TRUE, showWarnings = FALSE)
+  writeLines(as.character(n_factors), opt$output)
+  cat(sprintf("BiCV n_factors: %d -> %s\n", n_factors, opt$output))
 }
 
 # ── Dispatch ─────────────────────────────────────────────────────────────────
@@ -661,10 +591,9 @@ switch(opt$step,
   # Fine-grained sub-steps (matching notebook structure)
   compute_residual = run_compute_residual(opt),
   Marchenko_PC     = run_marchenko_from_resid(opt),
-  PEER_fit         = run_peer_fit(opt),
   PEER_extract     = run_peer_extract(opt),
   BiCV_2           = run_bicv_fake_vcf(opt),
-  BiCV_3           = run_bicv_factor(opt),
+  BiCV_nfactors    = run_bicv_nfactors(opt),
   # Legacy combined steps (backward compatibility)
   Marchenko_PC_full = {
     if (is.null(opt$phenoFile)) stop("--phenoFile is required")

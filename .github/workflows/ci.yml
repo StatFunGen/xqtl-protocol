@@ -26,14 +26,15 @@ jobs:
 
       - name: Set up pixi environment
         uses: prefix-dev/setup-pixi@v0.10.0
-        with:
-          run-install: false
+
+      - name: Run setup script
+        env:
+          INSTALL_TYPE: full
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/StatFunGen/misc/master/bash/pixi/pixi-setup.sh | bash
 
       - name: Script tests
-        run: |
-          pixi config set --local run-post-link-scripts insecure
-          pixi install
-          pixi run test_scripts
+        run: pytest tests/scripts -n logical --dist loadscope
 
       - name: Notebook tests
-        run: pixi run test_notebooks
+        run: pytest tests/notebooks -n logical --dist loadscope

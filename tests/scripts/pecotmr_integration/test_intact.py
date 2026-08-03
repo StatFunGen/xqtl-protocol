@@ -14,20 +14,10 @@ from __future__ import annotations
 import csv
 import subprocess
 
-import pytest
-
 from helpers.r_runner import rscript_bin
 
 FX = "tests/fixtures/intact"
 SCRIPT = "code/script/pecotmr_integration/intact.R"
-
-
-def _have_intact():
-    """Whether the Bioconductor INTACT package is loadable (skip guard)."""
-    p = subprocess.run(
-        [rscript_bin(), "-e", 'quit(status = !requireNamespace("INTACT", quietly = TRUE))'],
-        capture_output=True, text=True, timeout=120)
-    return p.returncode == 0
 
 
 def _rows(rds):
@@ -42,7 +32,6 @@ def _rows(rds):
                                delimiter="\t"))
 
 
-@pytest.mark.skipif(not _have_intact(), reason="Bioconductor INTACT not installed")
 def test_intact(run_r, read_rds, repo_root, tmp_path):
     out = tmp_path / "intact.rds"
     p = run_r(repo_root / SCRIPT,
