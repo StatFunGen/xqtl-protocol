@@ -19,13 +19,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, macos-latest]
+        runner: [ubuntu-latest, macos-latest, ubuntu-24.04-arm]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
       - name: Set up pixi environment
         uses: prefix-dev/setup-pixi@v0.10.0
+        with:
+          install: false
 
       - name: Run setup script
         env:
