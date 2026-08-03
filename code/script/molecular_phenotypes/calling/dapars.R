@@ -31,6 +31,7 @@ parser <- add_argument(parser, "--output", type = "character", default = "", hel
 parser <- add_argument(parser, "--emit-extracted", flag = TRUE, help = "[extract_anno] write pre-subtract 3'UTRs (validation)")
 parser <- add_argument(parser, "--config", type = "character", default = "", help = "[apa_main] DaPars2 config file")
 parser <- add_argument(parser, "--chr", type = "character", default = "", help = "[apa_main] chromosome to process")
+parser <- add_argument(parser, "--chr-prefix", type = "character", default = "TRUE", help = "[apa_main] whether wig chromosomes already carry the 'chr' prefix (TRUE, default); FALSE prepends 'chr' to the wig chroms to match the annotation")
 parser <- add_argument(parser, "--bam", type = "character", default = "", help = "[coverage] input BAM")
 parser <- add_argument(parser, "--output-wig", type = "character", default = "", help = "[coverage] output bedGraph .wig")
 parser <- add_argument(parser, "--output-depth", type = "character", default = "", help = "[coverage] output mapped-read depth")
@@ -176,11 +177,14 @@ extract_anno <- function(argv) {
 pyslice <- function(x, a, b) if (b <= a) x[integer(0)] else x[(a + 1L):b]      # python x[a:b], 0-based
 
 # bedGraph -> step function (positions, values); values is 1 longer (python appends a trailing 0)
-load_wig <- function(wig_file, chr) {
+load_wig <- function(wig_file, chr, add_chr = FALSE) {
   lines <- readLines(wig_file)
   lines <- lines[nzchar(lines) & !startsWith(lines, "#") & !startsWith(lines, "t")]
   m <- do.call(rbind, strsplit(lines, "\t", fixed = TRUE))
-  keep <- m[, 1] == chr
+  # reconcile bare wig chroms (e.g. "22") to the chr-prefixed annotation, matching
+  # DaPars2's `chrom_name = (no_chr_prefix == "T")*'chr' + fields[0]`
+  wig_chr <- if (add_chr) paste0("chr", m[, 1]) else m[, 1]
+  keep <- wig_chr == chr
   s <- as.integer(m[keep, 2]); e <- as.integer(m[keep, 3]); v <- as.integer(as.numeric(m[keep, 4]))
   n <- length(s)
   positions <- integer(2L * n + 2L); values <- integer(2L * n + 2L)
@@ -261,6 +265,7 @@ de_novo <- function(all_cov, ustart, uend, strand, weights, cov_thresh, least_pa
 
 apa_main <- function(argv) {
   cfg <- readLines(argv$config); chr <- argv$chr
+  add_chr <- !isTRUE(as.logical(argv$chr_prefix))   # chr_prefix=FALSE -> prepend 'chr' to bare wig chroms (DaPars2 no_chr_prefix='T')
   getv <- function(k) { l <- cfg[startsWith(cfg, paste0(k, "="))]; if (length(l)) sub(paste0("^", k, "="), "", l[1]) else "" }
   wig_files <- strsplit(getv("Aligned_Wig_files"), ",", fixed = TRUE)[[1]]
   cov_thresh <- suppressWarnings(as.integer(getv("Coverage_threshold"))); if (is.na(cov_thresh)) cov_thresh <- 1L
@@ -286,7 +291,7 @@ apa_main <- function(argv) {
 
   con <- file(out_file, "w")
   writeLines(paste(c("Gene", "fit_value", "Predicted_Proximal_APA", "Loci", paste0(sample_names, "_PDUI")), collapse = "\t"), con)
-  wigs <- lapply(wig_files, load_wig, chr = chr)
+  wigs <- lapply(wig_files, load_wig, chr = chr, add_chr = add_chr)
   for (id in ev_id) {
     e <- ev[[id]]; rs <- e[[2]]; re <- e[[3]]; strand <- e[[4]]
     bp_cov <- lapply(seq_len(ns), function(i) {
