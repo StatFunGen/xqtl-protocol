@@ -14,7 +14,8 @@ def test_mixture_prior_ed_bovy(run_sos, read_rds, repo_root, tmp_path):
     cwd = tmp_path / "mixprior"
     p = run_sos(repo_root / "pipeline/mixture_prior.ipynb", "ed_bovy",
                 dict(data=data, cwd=cwd, output_prefix="toy", effect_model="EE",
-                     vhat="simple", mixture_components=["canonical", "pca"]),
+                     vhat="simple", mixture_components=["canonical", "pca"],
+                     modular_script_dir=repo_root / "code/script"),
                 cwd=repo_root, timeout=900)
     assert p.returncode == 0, p.stdout + p.stderr
     out = cwd / "toy.EE.prior.rds"

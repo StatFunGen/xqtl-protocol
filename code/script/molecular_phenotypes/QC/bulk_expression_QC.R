@@ -11,6 +11,16 @@
 # Flags are kept identical to the SoS notebook parameter names.
 # ============================================================
 
+# gzip a file in place (<path> -> <path>.gz at max compression, source removed);
+# base-R replacement for `gzip -f --best`.
+gzip_file <- function(path) {
+  bytes <- readBin(path, "raw", n = file.info(path)$size)
+  con <- gzfile(paste0(path, ".gz"), "wb", compression = 9)
+  writeBin(bytes, con)
+  close(con)
+  unlink(path)
+}
+
 suppressPackageStartupMessages({
   library(optparse)
 })
@@ -110,7 +120,7 @@ run_qc_1 <- function(opt) {
   TPM_data %>%
     as_tibble(rownames = "gene_ID") %>%
     write_delim(sub("\\.gz$", "", out_file), delim = "\t", col_names = TRUE, append = TRUE)
-  system2("gzip", c("-f", "--best", shQuote(sub("\\.gz$", "", out_file))))
+  gzip_file(sub("\\.gz$", "", out_file))
 
   message(paste("Output:", out_file))
 }
@@ -200,7 +210,7 @@ run_qc_2 <- function(opt) {
     as.data.frame() %>%
     tibble::rownames_to_column("gene_ID") %>%
     write_delim(sub("\\.gz$", "", out_file), delim = "\t", col_names = TRUE, append = TRUE)
-  system2("gzip", c("-f", "--best", shQuote(sub("\\.gz$", "", out_file))))
+  gzip_file(sub("\\.gz$", "", out_file))
 
   message(paste("Output:", out_file))
 }
@@ -233,7 +243,7 @@ run_qc_3 <- function(opt) {
       file = out_tmp, append = FALSE)
   geneCount %>%
     write_delim(out_tmp, delim = "\t", col_names = TRUE, append = TRUE)
-  system2("gzip", c("-f", "--best", shQuote(out_tmp)))
+  gzip_file(out_tmp)
 
   message(paste("Output:", out_file))
 }

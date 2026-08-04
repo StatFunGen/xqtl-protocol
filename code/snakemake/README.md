@@ -231,7 +231,6 @@ bash -n code/snakemake/dryrun/run_mwe_snakemake.sh \
 python -m py_compile \
   code/snakemake/compat/python/sitecustomize.py \
   code/script/data_preprocessing/genotype/genotype_formatting.py \
-  code/script/data_preprocessing/phenotype/gene_annotation.py \
   code/script/molecular_phenotypes/QC/bulk_expression_normalization.py \
   code/script/molecular_phenotypes/calling/RNA_calling.py \
   code/script/association_scan/TensorQTL/TensorQTL.py

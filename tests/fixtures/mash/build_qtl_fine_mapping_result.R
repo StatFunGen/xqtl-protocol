@@ -5,7 +5,7 @@
 # per-condition TSVs in this directory. Run once (checked-in output); rerun if
 # the pecotmr FineMapping S4 layout changes.
 #
-#   pixi run Rscript tests/fixtures/mash/build_qtl_fine_mapping_result.R
+#   Rscript tests/fixtures/mash/build_qtl_fine_mapping_result.R
 #
 # Provenance: the TSVs (variant_id, z, pip, cs_95) were derived once from the
 # toy MWE fine-mapping fixtures (protocol_example.susie_fit.rds credible-set

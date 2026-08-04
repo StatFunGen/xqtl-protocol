@@ -20,7 +20,8 @@ def test_enrichment_and_coloc(run_sos, read_rds, repo_root, tmp_path):
         gwas_meta_data=fx / "protocol_example.enloc.gwas_meta.fmr.tsv",
         xqtl_meta_data=fx / "protocol_example.enloc.xqtl_meta.fmr.tsv",
         context_meta=fx / "protocol_example.enloc.context_meta.tsv",
-        qtl_path=fx, gwas_path=fx, cwd=cwd, name="protocol_example")
+        qtl_path=fx, gwas_path=fx, cwd=cwd, name="protocol_example",
+        modular_script_dir=repo_root / "code/script")
 
     # (1) enrichment: get_analysis_regions builds a 4-unit manifest (MiGA x3 +
     # Knight, each context-routed to its study's QTL file); xqtl_gwas_enrichment

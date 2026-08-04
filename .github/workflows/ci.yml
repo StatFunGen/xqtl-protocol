@@ -19,16 +19,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, macos-latest]
+        runner: [ubuntu-latest, macos-latest, ubuntu-24.04-arm]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
       - name: Set up pixi environment
         uses: prefix-dev/setup-pixi@v0.10.0
+        with:
+          run-install: false
+
+      - name: Run setup script
+        env:
+          INSTALL_TYPE: full
+        run: |
+          export PIXI_HOME=${HOME}/.pixi
+          curl -fsSL https://raw.githubusercontent.com/StatFunGen/pixi-setup/main/pixi-setup.sh | bash
 
       - name: Script tests
-        run: pixi run test_scripts
+        run: pytest tests/scripts -n logical --dist loadscope
 
       - name: Notebook tests
-        run: pixi run test_notebooks
+        run: pytest tests/notebooks -n logical --dist loadscope

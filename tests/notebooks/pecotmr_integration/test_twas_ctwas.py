@@ -35,6 +35,7 @@ def test_ctwas(run_sos, read_rds, repo_root, tmp_path):
             "ld_meta_data": fx / "ld_reference/ld_meta_file.ctwas.tsv",
             "region-name": "chr22_10000000_19000000",
             "twas_weights": s4,
+            "modular_script_dir": repo_root / "code/script",
         },
         cwd=repo_root, timeout=1200)
     assert p.returncode == 0, p.stdout + p.stderr

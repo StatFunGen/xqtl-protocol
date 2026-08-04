@@ -45,6 +45,15 @@ def run_r():
 
 
 @pytest.fixture(scope="session")
+def run_sh():
+    """Run a bash wrapper script (records it for the inventory report)."""
+    def _run(script, args=(), timeout: int = 600):
+        _TOUCHED.add(Path(script).name)
+        return r_runner.run_sh(script, args, timeout=timeout)
+    return _run
+
+
+@pytest.fixture(scope="session")
 def read_rds():
     """Structural summary (class / nrow / accessors) of an RDS output."""
     return r_runner.read_rds

@@ -1,16 +1,52 @@
-"""Notebook tier: sldsc_enrichment.ipynb S-LDSC post-processing on downsized fixtures.
+"""Notebook tier: sldsc_enrichment.ipynb.
 
-The upstream steps (make_annotation_files_ldscore / munge_sumstats_polyfun /
-get_heritability) run polyfun + ldsc over the ~350M S-LDSC reference panel and are
-OUT of CI scope: polyfun is not in the pixi env, and they are external-tool
-orchestration, not pecotmr wrappers. This tests the two pecotmr wrapper steps --
-`postprocess` and `meta_subset` -- which consume polyfun's small per-trait OUTPUTS
-(a ~2MB fixture: the .results/.log/.part_delete triples + the target .annot.gz).
-`--maf-cutoff 0` opts out of MAF filtering, so no .frq reference is needed.
+The R analysis blocks of make_annotation_files_ldscore are ported to
+code/script/enrichment/make_annotation.R (Step A: write .annot.gz; Step D: write
+.l2.M). `postprocess` / `meta_subset` (pecotmr wrappers) consume polyfun's small
+per-trait OUTPUTS.
+
+polyfun CLIs are the packaged **bin** entry points (`munge_polyfun_sumstats`,
+`compute_ldscores`, `ldsc`), invoked by bare name on PATH — the notebook no
+longer prefixes `python`/`polyfun_path` (those bin scripts are /bin/sh wrappers
+that `exec python3 <libexec>/...`, so feeding them to `python` breaks).
+`munge_sumstats_polyfun` and the full `make_annotation_files_ldscore` chain (Step A
+annot -> Step C polyfun `compute_ldscores` -> Step D .l2.M) both run here.
+`get_heritability` (`ldsc --h2`) runs too but needs the full multi-chromosome LD
+panel (baseline + weights + per-chrom target LD, tens of MB) — not committed, so
+left untested.
 """
 from __future__ import annotations
 
-import pytest
+import gzip
+
+MK = "code/script/enrichment/make_annotation.R"
+FX = "tests/fixtures/sldsc_enrichment"
+
+
+def test_make_annotation_annot(run_r, repo_root, tmp_path):
+    """Step A: reference .annot + target variant list -> per-SNP ANNOT (binary), byte-exact."""
+    p = run_r(repo_root / MK,
+              ["--step", "annot", "--targets", repo_root / FX / "target.tsv",
+               "--reference-anno", repo_root / FX / "reference.2.annot.gz",
+               "--emit-single", "--annotation-name", "protocol_example",
+               "--cwd", tmp_path, "--chrom", 2])
+    assert p.returncode == 0, p.stdout + p.stderr
+    got = gzip.open(tmp_path / "protocol_example_single_1/protocol_example_single_1.2.annot.gz", "rt").read()
+    exp = gzip.open(repo_root / FX / "expected_single_1.2.annot.gz", "rt").read()
+    assert got == exp
+
+
+def test_make_annotation_mfiles(run_r, repo_root, tmp_path):
+    """Step D: .annot + polyfun ldscore parquet -> .l2.M (sum of ANNOT over ldscore SNPs)."""
+    d = tmp_path / "protocol_example_single_1"; d.mkdir()
+    (d / "protocol_example_single_1.2.annot.gz").write_bytes((repo_root / FX / "expected_single_1.2.annot.gz").read_bytes())
+    (d / "protocol_example_single_1.2.l2.ldscore.parquet").write_bytes((repo_root / FX / "single_1.2.l2.ldscore.parquet").read_bytes())
+    p = run_r(repo_root / MK,
+              ["--step", "mfiles", "--annotation-name", "protocol_example", "--cwd", tmp_path,
+               "--chrom", 2, "--emit-single", "--n-targets", 1, "--ldscore-ext", "l2.ldscore.parquet"])
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert (d / "protocol_example_single_1.2.l2.M").read_text() == \
+        (repo_root / FX / "expected_single_1.2.l2.M").read_text()
 
 
 def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):
@@ -30,8 +66,6 @@ def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):
             "target_categories_label": "protocol_example_annotation",
             "target_anno_dir": fx / "target_anno",
             "maf_cutoff": 0,
-            "polyfun_path": ".",       # unused by postprocess; global param must be set
-            "python_exec": "python",
         },
         cwd=repo_root, timeout=600)
     assert p.returncode == 0, p.stdout + p.stderr
@@ -51,8 +85,6 @@ def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):
             "subset_traits_file": fx / "sumstats_test_category1.txt",
             "subset_name": "category1",
             "target_categories": "ANNOT_0",
-            "polyfun_path": ".",
-            "python_exec": "python",
         },
         cwd=repo_root, timeout=600)
     assert p.returncode == 0, p.stdout + p.stderr
@@ -61,3 +93,85 @@ def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):
     minfo = read_rds(meta)
     assert minfo["class"] == "list"
     assert "enrichment" in minfo["names"], minfo
+
+
+def test_munge_sumstats_polyfun(run_sos, repo_root, tmp_path):
+    """munge_sumstats_polyfun: polyfun munge_polyfun_sumstats on a small BOLT-LMM
+    subset -> munged .parquet (SNP/CHR/BP/A1/A2/MAF/N/Z). BOLT input needs --n."""
+    sumstats = tmp_path / "boltlmm_small.sumstats.gz"
+    sumstats.write_bytes((repo_root / FX / "boltlmm_small.sumstats.gz").read_bytes())
+    p = run_sos(repo_root / "pipeline/sldsc_enrichment.ipynb", "munge_sumstats_polyfun",
+                {"sumstats": sumstats, "n": 100000, "cwd": tmp_path, "annotation_name": "test"},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = tmp_path / "boltlmm_small.sumstats.munged.parquet"
+    assert out.exists()
+    import pandas as pd
+    d = pd.read_parquet(out)
+    assert d.shape[0] > 0
+    assert {"SNP", "CHR", "BP", "A1", "A2", "Z", "N"}.issubset(set(d.columns))
+
+
+def test_make_annotation_files_ldscore(run_sos, repo_root, tmp_path):
+    """Full make_annotation_files_ldscore chain: Step A make_annotation.R annot ->
+    Step C polyfun compute_ldscores (via the bin wrapper) -> Step D .l2.M.
+    The chr2 LD-score parquet must reproduce the committed reference (compute_ldscores
+    is deterministic); the annot.gz + .l2.M must byte-match their references."""
+    out = tmp_path / "out"
+    p = run_sos(repo_root / "pipeline/sldsc_enrichment.ipynb", "make_annotation_files_ldscore",
+                {"cwd": out, "annotation_name": "protocol_example",
+                 "annotation_file": repo_root / FX / "target.tsv",
+                 "reference_anno_file": repo_root / FX / "reference.2.annot.gz",
+                 "genome_ref_file": repo_root / FX / "reference.2.bed",
+                 "chromosome": 2, "ld_wind_cm": 1.0,
+                 "modular_script_dir": repo_root / "code/script"},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    d = out / "protocol_example_single_1"
+    stem = "protocol_example_single_1.2"
+    # Step C: polyfun LD scores reproduce the committed reference (machine precision)
+    import numpy as np
+    import pandas as pd
+    got = pd.read_parquet(d / f"{stem}.l2.ldscore.parquet")
+    exp = pd.read_parquet(repo_root / FX / "single_1.2.l2.ldscore.parquet")
+    assert list(got.columns) == list(exp.columns) and got.shape == exp.shape
+    num = [c for c in got.columns if got[c].dtype.kind in "fi"]
+    assert float(np.abs(got[num].values - exp[num].values).max()) < 1e-9
+    # Step A / Step D: annot + .l2.M byte-exact
+    assert gzip.open(d / f"{stem}.annot.gz", "rt").read() == \
+        gzip.open(repo_root / FX / "expected_single_1.2.annot.gz", "rt").read()
+    assert (d / f"{stem}.l2.M").read_text() == \
+        (repo_root / FX / "expected_single_1.2.l2.M").read_text()
+
+
+def test_get_heritability(run_sos, repo_root, tmp_path):
+    """get_heritability: polyfun ldsc --h2 (via bin) for one trait against the
+    committed multi-chromosome LD panel (target LD + 97-annot baseline + weights),
+    maf_cutoff=0 so no .frq. The .results table matches the committed reference —
+    labels exact, numbers within tolerance (ldsc's last-digit float formatting
+    differs across BLAS/libm, e.g. macOS 4.3326e-07 vs Linux 4.3325e-07)."""
+    gh = repo_root / FX / "get_heritability"
+    panel = gh / "panel"
+    out = tmp_path / "out"
+    p = run_sos(repo_root / "pipeline/sldsc_enrichment.ipynb", "get_heritability",
+                {"cwd": out, "annotation_name": "protocol_example",
+                 "all_traits_file": gh / "traits.txt", "sumstat_dir": panel,
+                 "target_anno_dirs": gh / "target" / "protocol_example_single_1",
+                 "baseline_ld_dir": panel, "baseline_name": "annotations.",
+                 "weights_dir": panel, "weight_name": "weights.",
+                 "maf_cutoff": 0, "n_blocks": 200},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    got = out / "protocol_example_single_1" / "sumstats2.parquet.results"
+    ref = (repo_root / FX / "sldsc_heritability" / "protocol_example_single_1"
+           / "sumstats2.parquet.results")
+    g_rows = [ln.split("\t") for ln in got.read_text().splitlines() if ln.strip()]
+    r_rows = [ln.split("\t") for ln in ref.read_text().splitlines() if ln.strip()]
+    assert len(g_rows) == len(r_rows) and g_rows[0] == r_rows[0]     # same shape + header
+    for gr, rr in zip(g_rows[1:], r_rows[1:]):
+        assert len(gr) == len(rr)
+        for gv, rv in zip(gr, rr):
+            try:
+                assert abs(float(gv) - float(rv)) <= 1e-4 * max(1.0, abs(float(rv)))
+            except ValueError:
+                assert gv == rv                                     # labels / "NA" exact

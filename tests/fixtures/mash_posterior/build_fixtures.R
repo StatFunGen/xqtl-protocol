@@ -6,7 +6,7 @@
 # synthesizing). Run once (checked-in output); rerun if the wrapper input
 # contract changes.
 #
-#   pixi run Rscript tests/fixtures/mash_posterior/build_fixtures.R
+#   Rscript tests/fixtures/mash_posterior/build_fixtures.R
 #   # override the MWE location with MWE_MASH=/path/to/input/mash
 #
 # Provenance: reads the MWE mashr_input.rds (strong/random/null Bhat+Shat over

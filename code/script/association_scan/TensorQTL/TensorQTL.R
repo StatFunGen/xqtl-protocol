@@ -83,8 +83,9 @@ cmd_regional_postprocess <- function(out_tsv, out_summary, regional_files) {
 
   out_tsv_raw <- sub("\\.gz$", "", out_tsv)
   fwrite(dt, out_tsv_raw, sep = "\t", quote = FALSE, na = "NA")
-  system2("bgzip", c("--compress-level", "9", "-f", out_tsv_raw))
-  system2("tabix", c("-S", "1", "-s", "1", "-b", "2", "-e", "2", out_tsv))
+  Rsamtools::bgzip(out_tsv_raw, dest = out_tsv, overwrite = TRUE)
+  unlink(out_tsv_raw)
+  Rsamtools::indexTabix(out_tsv, seq = 1L, start = 2L, end = 2L, skip = 1L)
 
   n_tested  <- nrow(dt)
   n_objects <- uniqueN(dt$molecular_trait_object_id)

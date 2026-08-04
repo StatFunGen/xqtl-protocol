@@ -8,13 +8,12 @@ is needed.
 
 ## Running
 
-From the repo root (uses the pixi env's `Rscript` + `pecotmr`):
+From the repo root (uses the `Rscript` + `pecotmr` on your `PATH`):
 
 ```bash
-pixi run pytest tests -m unit          # Tier A: fast CLI-contract (--help) tests
-pixi run pytest tests -m integration   # Tier B: end-to-end wrapper runs on fixtures
-pixi run pytest tests                  # everything
-pixi run test                          # alias for `pytest tests`
+pytest tests -m unit          # Tier A: fast CLI-contract (--help) tests
+pytest tests -m integration   # Tier B: end-to-end wrapper runs on fixtures
+pytest tests                  # everything
 ```
 
 Point at a specific R with `XQTL_RSCRIPT=/path/to/Rscript` (defaults to the one

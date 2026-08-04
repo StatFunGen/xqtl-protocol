@@ -25,6 +25,9 @@ OUTPUT_FORMAT=""
 MAKE_COMMAND=""
 OUT_PREFIX=""
 PRUNE_PREFIX=""
+OUT_UNRELATED=""
+OUT_RELATED=""
+RELATED_OUTPUT=""
 KEEP_SAMPLES=""
 KEEP_VARIANTS=""
 REMOVE_SAMPLES=""
@@ -61,6 +64,9 @@ while [[ $# -gt 0 ]]; do
         --output-format)             OUTPUT_FORMAT="$2"; shift 2 ;;
         --make-command)              MAKE_COMMAND="$2"; shift 2 ;;
         --out-prefix)                OUT_PREFIX="$2"; shift 2 ;;
+        --out-unrelated)             OUT_UNRELATED="$2"; shift 2 ;;
+        --out-related)               OUT_RELATED="$2"; shift 2 ;;
+        --related-output)            RELATED_OUTPUT="$2"; shift 2 ;;
         --prune-prefix)              PRUNE_PREFIX="$2"; shift 2 ;;
         --keep-samples)              KEEP_SAMPLES="$2"; shift 2 ;;
         --keep-variants)             KEEP_VARIANTS="$2"; shift 2 ;;
@@ -194,7 +200,7 @@ _qc_no_prune() {
     plink_command="$(resolve_plink_command)"
     local args=("$plink_command" "$BED_PREFIX" --allow-extra-chr)
     local make_args=()
-    mapfile -t make_args < <(resolve_make_args)
+    while IFS= read -r _ma_line; do make_args+=("$_ma_line"); done < <(resolve_make_args)
     is_nonzero "$MAF_FILTER" && args+=(--maf "$MAF_FILTER")
     is_nonzero "$MAF_MAX_FILTER" && args+=(--max-maf "$MAF_MAX_FILTER")
     is_nonzero "$MAC_FILTER" && args+=(--mac "$MAC_FILTER")
@@ -215,7 +221,7 @@ _qc_no_prune() {
     [[ "$META_ONLY" == "true" ]] && make_args=(--write-snplist --write-samples)
     [[ "$RM_DUPS" == "true" ]] && args+=(--rm-dup force-first list)
     local other_arg
-    for other_arg in "${OTHER_ARGS[@]}"; do
+    for other_arg in ${OTHER_ARGS[@]+"${OTHER_ARGS[@]}"}; do
         if [[ ! "$other_arg" =~ ^[A-Za-z0-9][A-Za-z0-9_.:-]*$ ]]; then
             echo "ERROR: unsafe --other-arg '$other_arg'; pass PLINK flag names without leading dashes or values" >&2
             exit 2
@@ -241,11 +247,11 @@ _qc() {
     local plink_command
     plink_command="$(resolve_plink_command)"
     local make_args=()
-    mapfile -t make_args < <(resolve_make_args)
+    while IFS= read -r _ma_line; do make_args+=("$_ma_line"); done < <(resolve_make_args)
     local prune_args=("$plink_command" "$BED_PREFIX" --allow-extra-chr --rm-dup force-first)
     [[ "$BAD_LD" == "true" ]] && prune_args+=(--bad-ld)
     local other_arg
-    for other_arg in "${OTHER_ARGS[@]}"; do
+    for other_arg in ${OTHER_ARGS[@]+"${OTHER_ARGS[@]}"}; do
         if [[ ! "$other_arg" =~ ^[A-Za-z0-9][A-Za-z0-9_.:-]*$ ]]; then
             echo "ERROR: unsafe --other-arg '$other_arg'; pass PLINK flag names without leading dashes or values" >&2
             exit 2
@@ -283,64 +289,14 @@ _sample_overlap() {
     [[ "$pheno_stem" == *.gz ]] && pheno_stem="${pheno_stem%.gz}"
     [[ "$pheno_stem" == *.tsv ]] && pheno_stem="${pheno_stem%.tsv}"
 
-    python3 - "$fam" "$PHENO_FILE" "$SAMPLE_PARTICIPANT_LOOKUP" \
-        "${CWD}/${pheno_stem}.sample_overlap.txt" \
-        "${CWD}/${pheno_stem}.sample_genotypes.txt" <<'PY'
-import csv
-import gzip
-import sys
-from pathlib import Path
-
-fam_path = Path(sys.argv[1])
-pheno_path = Path(sys.argv[2])
-lookup_path = Path(sys.argv[3]) if sys.argv[3] else None
-sample_overlap_path = Path(sys.argv[4])
-sample_genotypes_path = Path(sys.argv[5])
-
-geno_rows = []
-with fam_path.open() as fh:
-    for line in fh:
-        if not line.strip():
-            continue
-        parts = line.rstrip("\n").split()
-        geno_rows.append((parts[0], parts[1]))
-
-opener = gzip.open if pheno_path.suffix == ".gz" else open
-with opener(pheno_path, "rt") as fh:
-    header = fh.readline().rstrip("\n").split("\t")
-pheno_samples = header[4:]
-
-lookup_pairs = []
-if lookup_path and lookup_path.is_file():
-    with lookup_path.open() as fh:
-        reader = csv.DictReader(fh, delimiter="\t")
-        fieldnames = reader.fieldnames or []
-        if len(fieldnames) < 2:
-            raise SystemExit("sample lookup needs at least two columns")
-        first = fieldnames[0]
-        second = fieldnames[1]
-        for row in reader:
-            sample_id = row.get("participant_id") or row[first]
-            genotype_id = row.get("genotype_id") or row.get("participant_id") or row[second]
-            lookup_pairs.append((genotype_id, sample_id))
-else:
-    lookup_pairs = [(iid, iid) for _, iid in geno_rows]
-
-geno_ids = {iid for _, iid in geno_rows}
-pheno_ids = set(pheno_samples)
-lookup_pairs = [(gid, sid) for gid, sid in lookup_pairs if gid in geno_ids and sid in pheno_ids]
-
-with sample_overlap_path.open("w") as out:
-    out.write("genotype_id\tsample_id\n")
-    for gid, sid in lookup_pairs:
-        out.write(f"{gid}\t{sid}\n")
-
-lookup_geno_ids = {gid for gid, _ in lookup_pairs}
-with sample_genotypes_path.open("w") as out:
-    for fid, iid in geno_rows:
-        if iid in lookup_geno_ids:
-            out.write(f"{fid}\t{iid}\n")
-PY
+    local script_dir
+    script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+    Rscript "${script_dir}/GWAS_QC.R" --step sample_overlap \
+        --fam "$fam" \
+        --pheno "$PHENO_FILE" \
+        --lookup "$SAMPLE_PARTICIPANT_LOOKUP" \
+        --overlap-output "${CWD}/${pheno_stem}.sample_overlap.txt" \
+        --genotypes-output "${CWD}/${pheno_stem}.sample_genotypes.txt"
 }
 
 _king() {
@@ -355,11 +311,7 @@ _king() {
     local args=("$plink_command" "$BED_PREFIX" --make-king-table --king-table-filter "$KINSHIP")
     [[ -n "$KEEP_SAMPLES" && -f "$KEEP_SAMPLES" ]] && args+=(--keep "$KEEP_SAMPLES")
     [[ -n "$REMOVE_SAMPLES" && -f "$REMOVE_SAMPLES" ]] && args+=(--remove "$REMOVE_SAMPLES")
-    args+=(--min-af "$KIN_MAF" --max-af "$(python3 - <<PY
-kin_maf = float(${KIN_MAF})
-print(1 - kin_maf)
-PY
-)")
+    args+=(--min-af "$KIN_MAF" --max-af "$(awk -v k="$KIN_MAF" 'BEGIN { print 1 - k }')")
 
     plink2 \
         "${args[@]}" \
@@ -380,14 +332,39 @@ if [[ "$DRY_RUN" == "true" ]]; then
     exit 0
 fi
 
+# Split genotype into unrelated (related samples removed) and related (related samples
+# kept) subsets. The related-sample list is passed via --remove-samples; when it is
+# empty (no related individuals) an empty related output is written instead.
+_king_split() {
+    ensure_plink2
+    local plink_command make_args
+    plink_command="$(resolve_plink_command)"
+    make_args="$(resolve_make_args)"
+
+    local unrel_args=("$plink_command" "$BED_PREFIX" --remove "$REMOVE_SAMPLES")
+    [[ -n "$KEEP_SAMPLES" && -f "$KEEP_SAMPLES" ]] && unrel_args+=(--keep "$KEEP_SAMPLES")
+    plink2 "${unrel_args[@]}" $make_args \
+        --out "$OUT_UNRELATED" --threads "$NUM_THREADS" --memory 16000 \
+        --new-id-max-allele-len 1000 --set-all-var-ids 'chr@:#_$r_$a'
+
+    if [[ -s "$REMOVE_SAMPLES" ]]; then
+        plink2 "$plink_command" "$BED_PREFIX" --keep "$REMOVE_SAMPLES" $make_args \
+            --out "$OUT_RELATED" --threads "$NUM_THREADS" --memory 16000 \
+            --new-id-max-allele-len 1000 --set-all-var-ids 'chr@:#_$r_$a'
+    else
+        touch "$RELATED_OUTPUT"
+    fi
+}
+
 _dispatch() {
     case "$STEP" in
         qc_no_prune) _qc_no_prune ;;
         qc) _qc ;;
         genotype_phenotype_sample_overlap) _sample_overlap ;;
         king) _king ;;
+        king_split) _king_split ;;
         *)
-            echo "ERROR: Unknown step '$STEP'. Available: qc_no_prune, qc, genotype_phenotype_sample_overlap, king" >&2
+            echo "ERROR: Unknown step '$STEP'. Available: qc_no_prune, qc, genotype_phenotype_sample_overlap, king, king_split" >&2
             exit 1
             ;;
     esac
@@ -413,7 +390,7 @@ KEEP_SAMPLES="$KEEP_SAMPLES"
 KEEP_VARIANTS="$KEEP_VARIANTS"
 REMOVE_SAMPLES="$REMOVE_SAMPLES"
 EXCLUDE_VARIANTS="$EXCLUDE_VARIANTS"
-OTHER_ARGS=($(quote_array_for_bash "${OTHER_ARGS[@]}"))
+OTHER_ARGS=($(quote_array_for_bash ${OTHER_ARGS[@]+"${OTHER_ARGS[@]}"}))
 META_ONLY="$META_ONLY"
 RM_DUPS="$RM_DUPS"
 TREAT_DOSAGE_MISSING="$TREAT_DOSAGE_MISSING"
