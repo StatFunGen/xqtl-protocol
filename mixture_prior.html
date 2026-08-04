@@ -760,6 +760,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 parameter: cwd = path(&#39;./mashr_workflow_output&#39;)
+parameter: modular_script_dir = path(&#39;code/script&#39;)
 # Input summary statistics data
 parameter: data = path
 # Prefix of output files. If not specified, it will derive it from data.
@@ -802,7 +803,7 @@ input: data
 output: f&quot;{cwd}/{output_prefix}.flash.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_covariance.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component flash \
         --effect-model ${effect_model} \
@@ -818,7 +819,7 @@ input: data
 output: f&quot;{cwd}/{output_prefix}.flash_nonneg.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_covariance.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component flash_nonneg \
         --effect-model ${effect_model} \
@@ -837,7 +838,7 @@ input: data
 output: f&quot;{cwd}/{output_prefix}.pca.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_covariance.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component pca \
         --npc ${npc} \
@@ -854,7 +855,7 @@ input: data
 output: f&quot;{cwd}/{output_prefix}.canonical.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_covariance.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component canonical \
         --effect-model ${effect_model} \
@@ -874,7 +875,7 @@ input: data
 output: f&#39;{vhat_data:nn}.V_identity.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_vhat.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method identity \
         --effect-model ${effect_model} \
@@ -891,7 +892,7 @@ input: data
 output: f&#39;{vhat_data:nn}.V_simple.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_vhat.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method simple \
         --effect-model ${effect_model} \
@@ -912,7 +913,7 @@ input: data, prior_data
 output: f&#39;{vhat_data:nn}.V_mle.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_vhat.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input[0]} \
         --method mle \
         --prior-data ${_input[1]} \
@@ -932,7 +933,7 @@ input: data
 output: f&#39;{vhat_data:nn}.V_vhat_corshrink_xcondition.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_vhat.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method corshrink \
         --effect-model ${effect_model} \
@@ -949,7 +950,7 @@ input: data
 output: f&#39;{vhat_data:nn}.V_vhat_simple_specific.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_vhat.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method simple_specific \
         --effect-model ${effect_model} \
@@ -970,7 +971,7 @@ output: prior_data
 comp_files = &quot;,&quot;.join([f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components])
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_prior.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_prior.R \
         --data ${_input[0]} \
         --engine ud \
         --vhat-data ${_input[1]} \
@@ -990,7 +991,7 @@ output: prior_data
 comp_files = &quot;,&quot;.join([f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components])
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_prior.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_prior.R \
         --data ${_input[0]} \
         --engine ud_ted \
         --vhat-data ${_input[1]} \
@@ -1010,7 +1011,7 @@ output: prior_data
 comp_files = &quot;,&quot;.join([f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components])
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_prior.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_prior.R \
         --data ${_input[0]} \
         --engine cov_ed \
         --vhat-data ${_input[1]} \
@@ -1043,7 +1044,7 @@ parameter: name = &quot;&quot;
 input: data
 output: f&#39;{cwd:a}/{_input:bn}{(&quot;_&quot; + name.replace(&quot;$&quot;, &quot;_&quot;)) if name != &quot;&quot; else &quot;&quot;}.pdf&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_plot_prior.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_plot_prior.R \
         --data ${_input} \
         --max-comp ${max_comp} \
         --tol ${tol} \

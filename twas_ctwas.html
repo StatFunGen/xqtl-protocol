@@ -726,6 +726,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 parameter: cwd = path(&quot;output/&quot;)
+parameter: modular_script_dir = path(&#39;code/script&#39;)
 parameter: gwas_meta_data = path()
 parameter: xqtl_meta_data = path()
 parameter: ld_meta_data = path()
@@ -769,7 +770,7 @@ input: None
 twas_manifest_file = f&quot;{cwd:a}/get_analysis_regions/{name}.twas_manifest.tsv&quot;
 bash: expand = &quot;${ }&quot;, container = container
     mkdir -p ${cwd:a}/get_analysis_regions
-    Rscript code/script/pecotmr_integration/twas_manifest.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/twas_manifest.R \
         --gwas-meta ${gwas_meta_data} \
         --xqtl-meta ${xqtl_meta_data} \
         ${(&quot;--regions &quot; + str(regions)) if regions.is_file() else &quot;&quot;} \
@@ -839,7 +840,7 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stde
 
     # (1) One multi-study GwasSumStats over the whole region.
     gss=&quot;$outdir/${name}.$region_id.gwas_sumstats.rds&quot;
-    Rscript code/script/pecotmr_integration/gwas_sumstats_construct.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/gwas_sumstats_construct.R \
         --study &quot;$studies&quot; \
         --gwas-tsv &quot;$gwas_tsvs&quot; \
         --ld-block &quot;$ld_block&quot; \
@@ -860,7 +861,7 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:n}.stdout&quot;, stde
         gene=&quot;$1&quot;
         weight=&quot;$2&quot;
         shift 2
-        Rscript code/script/pecotmr_integration/twas.R \
+        Rscript ${modular_script_dir}/pecotmr_integration/twas.R \
             --twas-weights &quot;$weight&quot; \
             --gwas-sumstats &quot;$gss&quot; \
             --rsq-cutoff ${rsq_cutoff} \
@@ -926,7 +927,7 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
     manifest=&quot;$outdir/${name}.ctwas_manifest.${ctwas_chrom}.tsv&quot;
 
     # (1) enumerate the chromosome&#39;s LD-block grid (block enumeration only).
-    Rscript code/script/pecotmr_integration/ctwas_manifest.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/ctwas_manifest.R \
         --ld-meta &quot;${ld_meta_data}&quot; \
         --chrom &quot;${ctwas_chrom}&quot; \
         --gwas-sumstats-dir &quot;$outdir&quot; \
@@ -936,7 +937,7 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
     studies=&quot;${&quot;,&quot;.join(ctwas_studies)}&quot;
     gwas_tsvs=&quot;${ctwas_gwas_files}&quot;
     tail -n +2 &quot;$manifest&quot; | while IFS=$&#39;\t&#39; read -r region_id region gwas_rds; do
-        Rscript code/script/pecotmr_integration/gwas_sumstats_construct.R \
+        Rscript ${modular_script_dir}/pecotmr_integration/gwas_sumstats_construct.R \
             --study &quot;$studies&quot; \
             --gwas-tsv &quot;$gwas_tsvs&quot; \
             --ld-block &quot;$region&quot; \
@@ -945,7 +946,7 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
     done
 
     # (3) assemble cTWAS inputs (pecotmr places each gene into its home block).
-    Rscript code/script/pecotmr_integration/ctwas_assemble.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/ctwas_assemble.R \
         --manifest &quot;$manifest&quot; \
         --twas-weights &quot;${&quot;,&quot;.join([str(w) for w in ctwas_weights])}&quot; \
         --twas-weight-cutoff ${twas_weight_cutoff} \
@@ -979,7 +980,7 @@ output: f&quot;{cwd:a}/ctwas/{name}.ctwas_est.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
 bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     set -e
-    Rscript code/script/pecotmr_integration/ctwas_est.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/ctwas_est.R \
         --inputs ${_input} \
         --thin ${thin} \
         --niter ${niter} \
@@ -1027,7 +1028,7 @@ output: f&quot;{cwd:a}/ctwas/{name}.ctwas_finemap.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output:bn}&quot;
 bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
     set -e
-    Rscript code/script/pecotmr_integration/ctwas_finemap.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/ctwas_finemap.R \
         --est ${_input} \
         --L ${L} \
         --min-nonsnp-pip ${min_nonSNP_PIP} \

@@ -658,7 +658,7 @@
 # Work directory &amp; output directory
 parameter: cwd = path(&quot;output&quot;)
 # The filename name for output data
-parameter: container = &#39;&#39;
+parameter: modular_script_dir = path(&#39;code/script&#39;)
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -748,8 +748,8 @@ with open(_output, &#39;w&#39;) as f:
 [grm_2]
 output: f&#39;{_input:nn}.grm.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-   gcta64 \
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+   gcta \
    --mbfile $[_input] \
    --make-grm-gz \
    --out $[_output:nn]
@@ -766,29 +766,11 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 [grm_3]
 output: f&#39;{_input:nn}.apex.grm&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-
-    # Load necessary libraries
-    library(dplyr)
-    library(readr)
-    library(purrr)
-
-    # Read data
-    grm &lt;- read_delim(gzfile(&quot;$[_input]&quot;), &#39;\t&#39;, col_names = FALSE) %&gt;%
-      select(1, 2, 4) %&gt;%
-      set_names(c(&quot;#id1&quot;, &quot;id2&quot;, &quot;kinship&quot;))
-
-    id &lt;- read_delim(&quot;$[_input:n].id&quot;, &#39;\t&#39;, col_names = FALSE)[, 2] %&gt;%
-      unlist()
-
-    # Modify grm data
-    grm_updated &lt;- grm %&gt;%
-      mutate(`#id1` = map_chr(`#id1`, ~id[.x]),
-             `id2` = map_chr(`id2`, ~id[.x]))
-
-    # Write to output
-    grm_updated %&gt;%
-      write_delim(&quot;$[_output]&quot;, &#39;\t&#39;)
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+    Rscript $[modular_script_dir:a]/data_preprocessing/genotype/GRM.R --step format_apex \
+        --grm $[_input] \
+        --id $[_input:n].id \
+        --output $[_output]
 </pre></div>
 </div>
 </div>
@@ -807,26 +789,11 @@ R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#3
 [grm_4]
 input: group_by = &quot;all&quot;
 output: f&#39;{cwd}/{path(list(genotypes.values())[1]):bnn}.loco_grm_list.txt&#39;
-R: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-
-    # Load necessary libraries
-    library(dplyr)
-    library(readr)
-    library(purrr)
-
-    # Define chromosomal names
-    chromosomes &lt;- paste0(&quot;chr&quot;, c($[paths(genotypes.keys()):r,]), collapse = &quot;&quot;)
-
-    # Define input files and directory
-    input_files &lt;- c($[_input:r,])
-
-    # Create and sort the tibble
-    grm_tibble &lt;- tibble(`#chr` = chromosomes, dir = input_files) %&gt;%
-      arrange(`#chr`)
-
-    # Write to output
-    grm_tibble %&gt;%
-      write_delim(&quot;$[_output]&quot;, &quot;\t&quot;)
+bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+    Rscript $[modular_script_dir:a]/data_preprocessing/genotype/GRM.R --step apex_list \
+        --input $[_input:r,] \
+        --chroms $[&quot; &quot;.join(genotypes.keys())] \
+        --output $[_output]
 </pre></div>
 </div>
 </div>

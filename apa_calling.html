@@ -704,6 +704,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
 parameter: walltime = &#39;400h&#39;
 parameter: mem = &#39;200G&#39;
 parameter: ncore = 16
@@ -721,21 +722,18 @@ parameter: container = &#39;&#39;
 <h3><strong>Step 0.</strong> Generate 3’UTR regions based on GTF<a class="headerlink" href="#step-0-generate-3-utr-regions-based-on-gtf" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Generate the 3UTR region according to the gtf file
-[UTR_reference]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[UTR_reference]
 # gtf file
 parameter: hg_gtf = path
-# directory containing the DaPars2 helper scripts (gtf2bed12.py, DaPars_Extract_Anno.py, Dapars2_Multi_Sample.py)
-parameter: dapars_path = path(&#39;code/SoS/molecular_phenotypes/calling/apa&#39;)
 input: hg_gtf
-output: f&#39;{cwd}/{_input:bn}.bed&#39;, 
+output: f&#39;{cwd}/{_input:bn}.bed&#39;,
         f&#39;{cwd}/{_input:bn}.transcript_to_geneName.txt&#39;,
         f&#39;{cwd}/{_input:bn}_3UTR.bed&#39;
 bash: expand = &#39;${ }&#39;, container = container
-    python2 ${dapars_path}/gtf2bed12.py --gtf ${_input} --out ${cwd}
-    mv ${cwd}/gene_annotation.bed ${_output[0]}
-    mv ${cwd}/transcript_to_geneName.txt ${_output[1]}
-    python2 ${dapars_path}/DaPars_Extract_Anno.py -b ${_output[0]} -s ${_output[1]} -o ${_output[2]}
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/dapars.R \
+        --step gtf2bed12 --gtf ${_input} --out-bed ${_output[0]} --out-map ${_output[1]}
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/dapars.R \
+        --step extract_anno --bed ${_output[0]} --symbol ${_output[1]} --output ${_output[2]}
 </pre></div>
 </div>
 </div>
@@ -746,105 +744,16 @@ bash: expand = &#39;${ }&#39;, container = container
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[bam2tools]
-parameter: n = 9
-n  = [x for x in range(n)]
-input: for_each = &#39;n&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: expand = True, container = container
-    import glob
-    import os
-    import subprocess
-    path = &quot;/mnt/mfs/ctcn/datasets/rosmap/rnaseq/dlpfcTissue/batch{_n}/STAR_aligned&quot;
-    name = glob.glob(path + &quot;/**/*Aligned.sortedByCoord.out.bam&quot;, recursive = True)
-    wigpath = &quot;/home/ls3751/project/ls3751/wig/batch{_n}/&quot;
-    if not os.path.exists(wigpath):
-        os.makedirs(os.path.dirname(wigpath))
-    for i in name:
-        id = i.split(&quot;/&quot;)[-2]
-        filedir = path + &quot;/&quot; + id + &quot;/&quot; + id + &quot;.bam&quot;
-        out = wigpath + id + &quot;.wig&quot;
-        new_cmd = &quot;bedtools genomecov -ibam &quot; + filedir + &quot; -bga -split -trackline&quot; + &quot; &gt; &quot; + out
-        os.system(new_cmd)
-        out_2 = wigpath + id + &quot;.flagstat&quot;
-        new_cmd_2 = f&quot;samtools flagstat --thread {numThreads} &quot; + filedir + &quot; &gt; &quot; + out_2
-        os.system(new_cmd_2)
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[bam2toolsv1]
-parameter: sample = path
-parameter: tissue = path
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, concurrent = True
-python: expand = &quot;${ }&quot;, container = container
-    import os
-    import multiprocessing
-    import re
-    sample_list = [line.strip(&#39;\n&#39;) for line in open(&quot;${sample}&quot;)]
-
-    def call_wig_flagstat(subject):
-        id = re.findall(r&quot;\D(\d{8})\D&quot;,subject)[1]
-        prefix = &quot;/mnt/mfs/statgen/ls3751/aqtl_analysis/wig/&quot; + &quot;${tissue}&quot; + &quot;/&quot;
-        out = prefix + id + &quot;.wig&quot;
-        out_2 = prefix + id + &quot;.flagstat&quot;
-        new_cmd = &quot;bedtools genomecov -ibam &quot; + subject + &quot; -bga -split -trackline&quot; + &quot; &gt; &quot; + out
-        os.system(new_cmd)
-        new_cmd_2 = f&quot;samtools flagstat --thread {numThreads} &quot; + subject + &quot; &gt; &quot; + out_2
-        os.system(new_cmd_2)
-    
-    for sample in sample_list:
-        call_wig_flagstat(sample)
-    ### process = multiprocessing.Process(target = call_wig_flagstat, args =(sample_list[i]))
-    ### process.start()
-    ### for p in processes:
-    ###     p.join()
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[bam2toolsv2]
-parameter: sample = path
-parameter: tissue = path
+# Transcriptome/coordinate-sorted BAM files to compute per-base coverage for
+parameter: bam_list = paths
+# Retained for CLI back-compatibility (unused by the R port, which takes --bam-list)
+parameter: bam_dir = path(&#39;.&#39;)
+input: bam_list, group_by = 1
+output: f&#39;{cwd}/{_input:bn}.wig&#39;, f&#39;{cwd}/{_input:bn}.depth&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 bash: expand = &quot;${ }&quot;, container = container
-    input=&quot;${sample}&quot;
-    while IFS=&#39;,&#39; read -r col1 col2
-    do
-      bedtools genomecov -ibam $col1  -bga -split -trackline  &gt; /mnt/mfs/statgen/ls3751/aqtl_analysis/wig/${tissue}/$col2.wig &amp;
-      samtools flagstat --thread ${numThreads} $col1  &gt; /mnt/mfs/statgen/ls3751/aqtl_analysis/wig/${tissue}/$col2.flagstat &amp;
-    done &lt; &quot;$input&quot;
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[bam2toolstmp]
-parameter: sample = path
-parameter: tissue = path
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = ncore
-python: expand = &quot;${ }&quot;, container = container
-    import os
-    import re
-    sample_list = [line.strip(&#39;\n&#39;) for line in open(&quot;${sample}&quot;)]
-
-    def copy_wigfile(subject):
-        id = re.findall(r&quot;\D(\d{8})\D&quot;,subject)[0]
-        prefix = &quot;/mnt/mfs/statgen/ls3751/aqtl_analysis/wig/&quot; + &quot;${tissue}&quot; + &quot;/&quot;
-        file1 = os.path.splitext(subject)[0] + &quot;.flagstat&quot;
-        out = prefix + id + &quot;.wig&quot;
-        out_2 = prefix + id + &quot;.flagstat&quot;
-        new_cmd = &quot;cp &quot; + subject + &quot; &quot; + out
-        os.system(new_cmd)
-        new_cmd_2 = &quot;cp &quot; + file1 + &quot; &quot; + out_2
-        os.system(new_cmd_2)
-    
-    for sample in sample_list:
-        copy_wigfile(sample)
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/dapars.R \
+        --step coverage --bam ${_input} --output-wig ${_output[0]} --output-depth ${_output[1]}
 </pre></div>
 </div>
 </div>
@@ -854,60 +763,18 @@ python: expand = &quot;${ }&quot;, container = container
 <h3><strong>Step 2.</strong> Generate the DaPars2 configuration and sample mapping files<a class="headerlink" href="#step-2-generate-the-dapars2-configuration-and-sample-mapping-files" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Generate configuration file
-[APAconfig]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APAconfig]
 parameter: bfile = path
 parameter: annotation = path
-parameter: job_size = 1
-# Default parameters for Dapars2:
 parameter: least_pass_coverage_percentage = 0.3
 parameter: coverage_threshold = 10
-output: [f&#39;{cwd}/sample_mapping_files.txt&#39;,f&#39;{cwd}/sample_configuration_file.txt&#39;]
+output: [f&#39;{cwd}/sample_mapping_files.txt&#39;, f&#39;{cwd}/sample_configuration_file.txt&#39;]
 task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = ncore
-python3: expand = &quot;${ }&quot;, container = container
-    import re
-    import os
-    target_all_sample = os.listdir(&quot;${bfile}&quot;)
-    target_all_sample = list(filter(lambda v: re.match(&#39;.*wig$&#39;, v), target_all_sample))
-    target_all_sample = [&quot;${bfile}&quot; + &quot;/&quot; + w for w in target_all_sample]
-    
-
-    def extract_total_reads(input_flagstat_file):
-        num_line = 0
-        total_reads = &#39;-1&#39;
-        #print input_flagstat_file
-        for line in open(input_flagstat_file,&#39;r&#39;):
-            num_line += 1
-            if num_line == 5:
-                total_reads = line.strip().split(&#39; &#39;)[0]
-                break
-        return total_reads
-
-    #print(target_all_sample)
-    print(&quot;INFO: Total&quot;,len(target_all_sample),&quot;samples found in provided dirctory!&quot;)
-    # Total depth file:
-    mapping_file = open(&quot;${_output[0]}&quot;, &quot;w&quot;)
-    for current_sample in target_all_sample:
-        flag = current_sample.split(&quot;.&quot;)[0] + &quot;.flagstat&quot;
-        current_sample_total_depth = extract_total_reads(flag)
-        field_out = [current_sample, str(current_sample_total_depth)]
-        mapping_file.writelines(&#39;\t&#39;.join(field_out) + &#39;\n&#39;)
-
-        print(&quot;Coverage of sample &quot;, current_sample, &quot;: &quot;, current_sample_total_depth)
-    mapping_file.close()
-
-    # Configuration file:
-
-    config_file = open(${_output[1]:r},&quot;w&quot;)
-    config_file.writelines(f&quot;Annotated_3UTR=${annotation}\n&quot;)
-    config_file.writelines( &quot;Aligned_Wig_files=%s\n&quot; % &quot;,&quot;.join(target_all_sample))
-    config_file.writelines(f&quot;Output_directory=${cwd}/apa \n&quot;)
-    config_file.writelines(f&quot;Output_result_file=Dapars_result\n&quot;)
-    config_file.writelines(f&quot;Least_pass_coverage_percentage=${least_pass_coverage_percentage}\n&quot;)
-    config_file.writelines( &quot;Coverage_threshold=${coverage_threshold}\n&quot;)
-    config_file.writelines( &quot;Num_Threads=${numThreads}\n&quot;)
-    config_file.writelines(f&quot;sequencing_depth_file=${_output[0]}&quot;) 
-    config_file.close()    
+bash: expand = &quot;${ }&quot;, container = container
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/dapars.R \
+        --step apa_config --wig-dir ${bfile} --annotation ${annotation} \
+        --apa-cwd ${cwd} --coverage-threshold ${coverage_threshold} --num-threads ${numThreads} \
+        --config ${_output[1]} --output-mapping ${_output[0]}
 </pre></div>
 </div>
 </div>
@@ -922,17 +789,21 @@ python3: expand = &quot;${ }&quot;, container = container
 <p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Call Dapars2 multi_chromosome
-[APAmain]
-parameter: chr_prefix = False
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APAmain]
 parameter: chrlist = list
-# directory containing the DaPars2 helper scripts (gtf2bed12.py, DaPars_Extract_Anno.py, Dapars2_Multi_Sample.py)
+# Whether the input wig/BAM chromosomes already carry the &#39;chr&#39; prefix (True, default,
+# matching the chr-prefixed reference data). Set False for bare-named BAMs/wigs (e.g. &#39;22&#39;):
+# dapars.R then prepends &#39;chr&#39; to the wig chroms to match the annotation.
+parameter: chr_prefix = True
+# Retained for CLI back-compatibility (unused by the R port of DaPars2)
 parameter: dapars_path = path(&#39;code/SoS/molecular_phenotypes/calling/apa&#39;)
 input: for_each = &#39;chrlist&#39;
 output: [f&#39;{cwd}/apa_{x}/Dapars_result_result_temp.{x}.txt&#39; for x in chrlist], group_by = 1
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = ncore
-bash: expand = True, container = container
-    python2 {dapars_path}/Dapars2_Multi_Sample.py {cwd}/sample_configuration_file.txt {_chrlist} {&quot;F&quot; if chr_prefix else &quot;T&quot;}
+bash: expand = &quot;${ }&quot;, container = container
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/dapars.R \
+        --step apa_main --config ${cwd}/sample_configuration_file.txt --chr ${_chrlist} \
+        --chr-prefix ${chr_prefix}
 </pre></div>
 </div>
 </div>

@@ -662,17 +662,13 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
 parameter: cwd = path(&quot;output&quot;)
 parameter: job_size = 1
 parameter: walltime = &quot;5h&quot;
 parameter: mem = &quot;16G&quot;
 parameter: numThreads = 8
 parameter: container = &quot;&quot;
-
-import re
-from sos.utils import expand_size
-
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
 
 cwd = path(f&#39;{cwd:a}&#39;)
 </pre></div>
@@ -694,190 +690,25 @@ parameter: scrublet_threshold = 0.25
 parameter: ambient_method     = &#39;decontX&#39;   # options: &#39;decontX&#39;, &#39;none&#39;
 parameter: max_decontXsc      = 0.5
 
-import os
 input:  []
 output: f&#39;{output_dir}/SCTK_results/filtered_seuratobj.rds&#39;,
         f&#39;{output_dir}/QC_table/SCTK_QC_table.csv&#39;
 task: trunk_workers = 1, trunk_size = 1, walltime = &#39;36:00:00&#39;, mem = &#39;256G&#39;, cores = 16
-R: expand = &quot;${ }&quot;, stdout = f&#39;{_output[0]:n}.stdout&#39;, stderr = f&#39;{_output[0]:n}.stderr&#39;
-
-    options(future.globals.maxSize = 8 * 1024^3)
-    library(future)
-    plan(multicore, workers = 16)
-
-    library(Seurat)
-    library(singleCellTK)
-    library(tidyverse)
-    library(SummarizedExperiment)
-    library(scuttle)
-    library(dplyr)
-    library(SCOPfunctions)
-
-    input_dir      &lt;- &quot;${input_dir}&quot;
-    qc_table_out   &lt;- &quot;${_output[1]}&quot;
-    rds_out        &lt;- &quot;${_output[0]}&quot;
-    doublet_method &lt;- &quot;${doublet_method}&quot;
-    ambient_method &lt;- &quot;${ambient_method}&quot;
-
-    # Validate method choices
-    valid_doublet &lt;- c(&quot;scds&quot;, &quot;scrublet&quot;, &quot;doubletFinder&quot;, &quot;doubletCells&quot;, &quot;none&quot;)
-    valid_ambient &lt;- c(&quot;decontX&quot;, &quot;none&quot;)
-    if (!doublet_method %in% valid_doublet)
-      stop(&quot;Invalid doublet_method &#39;&quot;, doublet_method, &quot;&#39;. Choose from: &quot;, paste(valid_doublet, collapse = &quot;, &quot;))
-    if (!ambient_method %in% valid_ambient)
-      stop(&quot;Invalid ambient_method &#39;&quot;, ambient_method, &quot;&#39;. Choose from: &quot;, paste(valid_ambient, collapse = &quot;, &quot;))
-
-    message(&quot;Doublet detection method : &quot;, doublet_method)
-    message(&quot;Ambient RNA removal method: &quot;, ambient_method)
-
-    # ── Create output directories ─────────────────────────────────
-    dir.create(dirname(rds_out),      showWarnings = FALSE, recursive = TRUE)
-    dir.create(dirname(qc_table_out), showWarnings = FALSE, recursive = TRUE)
-
-    # ── QC summary table ──────────────────────────────────────────
-    qc_summary &lt;- data.frame(Step = character(),
-                              Cells = numeric(), Genes = numeric(),
-                              stringsAsFactors = FALSE)
-    update_summary &lt;- function(step, obj) {
-      qc_summary &lt;&lt;- rbind(qc_summary, data.frame(
-        Step  = step,
-        Cells = ncol(obj), Genes = nrow(obj)))
-    }
-
-    # ── Sample metadata ───────────────────────────────────────────
-    samplelist &lt;- read.csv(&quot;${sample_meta}&quot;)
-    samplelist$column_name &lt;- paste0(samplelist$libraryBatch, &quot;-counts_&quot;, samplelist$cellBarcode)
-    samplelist &lt;- samplelist[, c(&quot;individualID&quot;, &quot;column_name&quot;)]
-    colnames(samplelist) &lt;- c(&quot;sample&quot;, &quot;column_name&quot;)
-
-    # ── Helper: convert SCE to Seurat ─────────────────────────────
-    convert_to_seurat &lt;- function(sce) {
-      obj &lt;- CreateSeuratObject(counts = counts(sce),
-                                meta.data = as.data.frame(colData(sce)),
-                                min.cells = ncol(sce) * 0.005)
-      update_summary(&quot;Removing Genes expressed in &lt; 0.5% of cells&quot;, obj)
-      return(obj)
-    }
-
-    # ── Helper: assign sample IDs, convert back to SCE ────────────
-    process_sce &lt;- function(seurat_obj, samplelist) {
-      seurat_obj &lt;- seurat_obj[, colnames(seurat_obj) %in% samplelist$column_name]
-      update_summary(&quot;Removing Cells with no associated Patient ID&quot;, seurat_obj)
-      seurat_obj@meta.data$sample &lt;- NULL
-      seurat_obj@meta.data &lt;- seurat_obj@meta.data %&gt;%
-        inner_join(samplelist, by = &quot;column_name&quot;)
-      seurat_obj@meta.data &lt;- seurat_obj@meta.data[
-        !duplicated(seurat_obj@meta.data$column_name), ]
-      rownames(seurat_obj@meta.data) &lt;- seurat_obj@meta.data$column_name
-      return(as.SingleCellExperiment(seurat_obj))
-    }
-
-    # ── Helper: build QC algorithms list from chosen methods ──────
-    # Doublet detection methods (runCellQC YAML names):
-    #   &quot;scds&quot;          → cxds_bcds_hybrid  (cxds + bcds hybrid score)
-    #   &quot;scrublet&quot;      → scrublet
-    #   &quot;doubletFinder&quot; → doubletFinder
-    #   &quot;doubletCells&quot;  → doubletCells      (scran-based)
-    #   &quot;none&quot;          → skip doublet detection
-    # Ambient RNA methods:
-    #   &quot;decontX&quot;       → decontX
-    #   &quot;none&quot;          → skip ambient RNA removal
-    build_algorithms &lt;- function(doublet_method, ambient_method) {
-      algos &lt;- &quot;QCMetrics&quot;
-      if (doublet_method == &quot;scds&quot;)          algos &lt;- c(algos, &quot;cxds_bcds_hybrid&quot;)
-      if (doublet_method == &quot;scrublet&quot;)      algos &lt;- c(algos, &quot;scrublet&quot;)
-      if (doublet_method == &quot;doubletFinder&quot;) algos &lt;- c(algos, &quot;doubletFinder&quot;)
-      if (doublet_method == &quot;doubletCells&quot;)  algos &lt;- c(algos, &quot;doubletCells&quot;)
-      if (ambient_method == &quot;decontX&quot;)       algos &lt;- c(algos, &quot;decontX&quot;)
-      return(algos)
-    }
-
-    # ── Helper: build filter strings from chosen methods ──────────
-    build_filters &lt;- function(doublet_method, ambient_method) {
-      filters &lt;- c(
-        &quot;mito_percent &lt; ${max_mito_percent}&quot;,
-        &quot;total &gt; ${min_ncounts}&quot;,
-        &quot;detected &gt; ${min_ngenes}&quot;
-      )
-      if (doublet_method == &quot;scds&quot;) {
-        filters &lt;- c(filters, &quot;scds_hybrid_call==&#39;${scds_call}&#39;&quot;)
-      } else if (doublet_method == &quot;scrublet&quot;) {
-        filters &lt;- c(filters, &quot;scrublet_score &lt; ${scrublet_threshold}&quot;)
-      } else if (doublet_method == &quot;doubletFinder&quot;) {
-        filters &lt;- c(filters, &quot;doubletFinder_doublet_label == &#39;Singlet&#39;&quot;)
-      } else if (doublet_method == &quot;doubletCells&quot;) {
-        filters &lt;- c(filters, &quot;scDblFinder_class == &#39;singlet&#39;&quot;)
-      }
-      if (ambient_method == &quot;decontX&quot;) {
-        filters &lt;- c(filters, &quot;decontX_contamination &lt; ${max_decontXsc}&quot;)
-      }
-      return(filters)
-    }
-
-    # ── Helper: run SCTK-QC, filter, cluster ─────────────────────
-    process_sce_to_seurat &lt;- function(sce) {
-      algos &lt;- build_algorithms(doublet_method, ambient_method)
-      message(&quot;Running QC algorithms: &quot;, paste(algos, collapse = &quot;, &quot;))
-
-      sce &lt;- runCellQC(sce, sample = NULL,
-                       algorithms       = algos,
-                       mitoRef          = &quot;human&quot;,
-                       mitoIDType       = &quot;ensembl&quot;,
-                       mitoGeneLocation = &quot;rownames&quot;,
-                       seed             = 12345)
-
-      # ── Write per-sample QC table ─────────────────────────────
-      sce_temp &lt;- sampleSummaryStats(sce, sample = colData(sce)$sample, simple = FALSE)
-      sst      &lt;- getSampleSummaryStatsTable(sce_temp, statsName = &quot;qc_table&quot;)
-      write.csv(sst, qc_table_out)
-      rm(sce_temp)
-
-      # ── Apply filters ─────────────────────────────────────────
-      qc_filters &lt;- build_filters(doublet_method, ambient_method)
-      message(&quot;Applying filters:&quot;)
-      for (f in qc_filters) message(&quot;  &quot;, f)
-      sce &lt;- subsetSCECols(sce, colData = qc_filters)
-      update_summary(&quot;SCTK-QC Results&quot;, sce)
-
-      # ── Convert to Seurat and cluster ─────────────────────────
-      seurat_obj &lt;- CreateSeuratObject(counts = counts(sce),
-                                       meta.data = as.data.frame(colData(sce)),
-                                       min.cells = ncol(sce) * 0.005)
-      update_summary(&quot;Final Seurat Object&quot;, seurat_obj)
-
-      seurat_obj &lt;- NormalizeData(seurat_obj, normalization.method = &quot;LogNormalize&quot;, scale.factor = 10000)
-      seurat_obj &lt;- FindVariableFeatures(seurat_obj)
-      seurat_obj &lt;- ScaleData(seurat_obj)
-      seurat_obj &lt;- RunPCA(seurat_obj)
-      seurat_obj &lt;- RunUMAP(seurat_obj, dims = 1:10, seed.use = 1)
-      seurat_obj &lt;- FindNeighbors(seurat_obj)
-      seurat_obj &lt;- FindClusters(seurat_obj)
-      return(seurat_obj)
-    }
-
-    # ── 1. Import ─────────────────────────────────────────────────
-    sce &lt;- importCellRanger(cellRangerDirs = input_dir)
-    update_summary(&quot;Raw Data&quot;, sce)
-
-    # ── 2. Remove fake mapping genes ──────────────────────────────
-    fake_genes &lt;- grep(&quot;^(1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|X|Y)_&quot;,
-                       rownames(sce), value = TRUE)
-    sce &lt;- sce[setdiff(rownames(sce), fake_genes), ]
-    update_summary(&quot;Removing FMGs&quot;, sce)
-
-    # ── 3. Convert → filter → QC → cluster ───────────────────────
-    seurat_obj       &lt;- convert_to_seurat(sce);              rm(sce);        gc()
-    processed_sce    &lt;- process_sce(seurat_obj, samplelist); rm(seurat_obj); gc()
-    processed_seurat &lt;- process_sce_to_seurat(processed_sce)
-
-    # ── 4. Save RDS ───────────────────────────────────────────────
-    saveRDS(processed_seurat, rds_out)
-    message(&quot;Saved: &quot;, rds_out)
-    rm(processed_seurat); gc()
-
-    qc_csv &lt;- file.path(dirname(rds_out), &quot;QC_summary.csv&quot;)
-    write.csv(qc_summary, qc_csv, row.names = FALSE)
-    message(&quot;QC summary saved: &quot;, qc_csv)
+bash: expand = &quot;${ }&quot;, stdout = f&#39;{_output[0]:n}.stdout&#39;, stderr = f&#39;{_output[0]:n}.stderr&#39;
+    Rscript ${modular_script_dir}/molecular_phenotypes/snRNAseq_preprocessing.R \
+        --step sctk_qc \
+        --input-dir &quot;${input_dir}&quot; \
+        --output-dir &quot;${output_dir}&quot; \
+        --sample-meta &quot;${sample_meta}&quot; \
+        --max-mito-percent ${max_mito_percent} \
+        --min-ncounts ${min_ncounts} \
+        --min-ngenes ${min_ngenes} \
+        --doublet-method &quot;${doublet_method}&quot; \
+        --scds-call &quot;${scds_call}&quot; \
+        --scrublet-threshold ${scrublet_threshold} \
+        --ambient-method &quot;${ambient_method}&quot; \
+        --max-decontxsc ${max_decontXsc} \
+        --num-threads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -891,124 +722,18 @@ parameter: seurat_ref        = str
 parameter: downsample_n      = 1000
 parameter: cluster_threshold = 0.90
 
-import os
 input:  []
 output: f&#39;{output_dir}/celltyped_seuratobj.rds&#39;
 task: trunk_workers = 1, trunk_size = 1, walltime = &#39;36:00:00&#39;, mem = &#39;256G&#39;, cores = 16
-R: expand = &quot;${ }&quot;, stdout = f&#39;{_output:n}.stdout&#39;, stderr = f&#39;{_output:n}.stderr&#39;
-
-    options(future.globals.maxSize = 16 * 1024^3)
-    library(future)
-    plan(multicore, workers = 16)
-    library(Seurat)
-    library(singleCellTK)
-    library(tidyverse)
-    library(SummarizedExperiment)
-    library(scuttle)
-    library(SingleR)
-    library(org.Hs.eg.db)
-    library(dplyr)
-
-    sctk_file         &lt;- &quot;${sctk_rds}&quot;
-    output_dir        &lt;- &quot;${output_dir}&quot;
-    downsample_n      &lt;- ${downsample_n}
-    cluster_threshold &lt;- ${cluster_threshold}
-
-    anno_file &lt;- file.path(output_dir, &quot;annotated_seuratobj.rds&quot;)
-    out_file  &lt;- &quot;${_output}&quot;
-
-    # ── Create output directory ───────────────────────────────────
-    dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-
-    get_most_common_label &lt;- function(cell_types, threshold = cluster_threshold) {
-      label_table &lt;- table(cell_types)
-      most_common &lt;- max(label_table)
-      if ((most_common / sum(label_table)) &gt;= threshold) {
-        return(names(which.max(label_table)))
-      } else {
-        return(NA)
-      }
-    }
-
-    # 1. Load and downsample
-    seuratObj &lt;- readRDS(sctk_file)
-    seuratObj &lt;- subset(x = seuratObj, downsample = downsample_n)
-
-    # 2. Extract counts, strip Ensembl version suffixes
-    sce_count &lt;- GetAssayData(seuratObj[[&quot;RNA&quot;]], layer = &quot;counts&quot;)
-    rownames(sce_count) &lt;- gsub(&quot;\\..*$&quot;, &quot;&quot;, rownames(sce_count))
-    rm(seuratObj); gc()
-
-    # 3. Ensembl to HGNC symbol conversion
-    IDs &lt;- select(org.Hs.eg.db,
-                  keys    = rownames(sce_count),
-                  columns = c(&quot;ENSEMBL&quot;, &quot;SYMBOL&quot;),
-                  keytype = &quot;ENSEMBL&quot;)
-    colnames(IDs) &lt;- c(&quot;ensembl_gene_id&quot;, &quot;hgnc_symbol&quot;)
-    IDs &lt;- IDs[!is.na(IDs$hgnc_symbol) &amp; IDs$hgnc_symbol != &quot;&quot;, ]
-    IDs &lt;- IDs[!duplicated(IDs$hgnc_symbol), ]
-    IDs &lt;- IDs[!duplicated(IDs$ensembl_gene_id), ]
-    sce_count &lt;- sce_count[rownames(sce_count) %in% IDs$ensembl_gene_id, ]
-    rownames(IDs) &lt;- IDs$ensembl_gene_id
-    rownames(sce_count) &lt;- IDs[rownames(sce_count), &quot;hgnc_symbol&quot;]
-    rm(IDs); gc()
-
-    # 4. Load reference, intersect, free reference immediately after
-    seurat_ref_SE &lt;- readRDS(&quot;${seurat_ref}&quot;)
-    common_genes  &lt;- intersect(rownames(sce_count), rownames(seurat_ref_SE))
-    ref_subset    &lt;- seurat_ref_SE[common_genes, ]
-    rm(seurat_ref_SE); gc()
-
-    sce_count &lt;- sce_count[common_genes, ]
-    sce_SE    &lt;- SummarizedExperiment(assays = list(counts = sce_count))
-    sce_SE    &lt;- logNormCounts(sce_SE)
-    rm(sce_count); gc()
-
-    # 5. SingleR annotation
-    singleR_res &lt;- SingleR(test   = sce_SE,
-                           ref    = ref_subset,
-                           labels = ref_subset$ref_label)
-    rm(sce_SE, ref_subset); gc()
-
-    # 6. Add labels to downsampled object
-    seuratObj &lt;- readRDS(sctk_file)
-    seuratObj &lt;- subset(x = seuratObj, downsample = downsample_n)
-    anno_df   &lt;- data.frame(celltype    = singleR_res$labels,
-                            column_name = rownames(singleR_res),
-                            stringsAsFactors = FALSE)
-    seuratObj@meta.data &lt;- seuratObj@meta.data %&gt;%
-      inner_join(anno_df, by = &quot;column_name&quot;)
-    rownames(seuratObj@meta.data) &lt;- seuratObj@meta.data$column_name
-    saveRDS(seuratObj, anno_file)
-    message(&quot;Saved annotated (downsampled): &quot;, anno_file)
-
-    # 7. Transfer labels to full object
-    full_obj &lt;- readRDS(sctk_file)
-    full_obj@meta.data$cell &lt;- rownames(full_obj@meta.data)
-
-    singleR_data &lt;- data.frame(
-      celltype        = seuratObj@meta.data$celltype,
-      seurat_clusters = seuratObj@meta.data$seurat_clusters
-    )
-    rm(seuratObj); gc()
-
-    most_common_labels &lt;- singleR_data %&gt;%
-      group_by(seurat_clusters) %&gt;%
-      summarise(most_common_label = get_most_common_label(celltype), .groups = &quot;drop&quot;)
-
-    merged_meta  &lt;- merge(full_obj@meta.data, most_common_labels,
-                          by = &quot;seurat_clusters&quot;, all.x = TRUE)
-    ordered_meta &lt;- merged_meta[match(colnames(full_obj@assays$RNA), merged_meta$cell), ]
-
-    full_obj@meta.data           &lt;- ordered_meta
-    rownames(full_obj@meta.data) &lt;- full_obj@meta.data$cell
-    full_obj@meta.data$celltype  &lt;- full_obj@meta.data$most_common_label
-    Idents(full_obj)             &lt;- full_obj@meta.data$celltype
-
-    saveRDS(full_obj, out_file)
-    message(&quot;Saved celltyped: &quot;, out_file)
-    rm(full_obj, singleR_res, anno_df, singleR_data,
-       most_common_labels, merged_meta, ordered_meta); gc()
+bash: expand = &quot;${ }&quot;, stdout = f&#39;{_output:n}.stdout&#39;, stderr = f&#39;{_output:n}.stderr&#39;
+    Rscript ${modular_script_dir}/molecular_phenotypes/snRNAseq_preprocessing.R \
+        --step cell_annotation \
+        --sctk-rds &quot;${sctk_rds}&quot; \
+        --output-dir &quot;${output_dir}&quot; \
+        --seurat-ref &quot;${seurat_ref}&quot; \
+        --downsample-n ${downsample_n} \
+        --cluster-threshold ${cluster_threshold} \
+        --num-threads ${numThreads}
 </pre></div>
 </div>
 </div>

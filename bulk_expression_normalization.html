@@ -762,7 +762,7 @@ input: tpm_gct, counts_gct, annotation_gtf, sample_participant_lookup
 output: f&#39;{cwd:a}/{_input[0]:bnnn}.{normalization_method}.{&quot;no_qnorm.&quot; if not quantile_normalize else &quot;&quot;}expression.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:nn}.stderr&#39;, stdout = f&#39;{_output[0]:nn}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/molecular_phenotypes/QC/bulk_expression_normalization.py \
+    Rscript ${modular_script_dir}/molecular_phenotypes/QC/bulk_expression_normalization.R \
         --step normalize \
         --cwd &quot;${cwd}&quot; \
         --tpm-gct &quot;${_input[0]}&quot; \

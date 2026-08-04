@@ -964,7 +964,7 @@ input: phenoFile, coordinate_annotation
 output: f&#39;{cwd:a}/{_input[0]:bn}.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.region_list.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.py \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.R \
         --step annotate_coord \
         --phenoFile &quot;${_input[0]}&quot; \
         --coordinate-annotation &quot;${_input[1]}&quot; \
@@ -1014,17 +1014,19 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 ## Extract the code in case psichromatic needs to be processed the same way
 ## PheoFile in this step is the intron_count file
 parameter: intron_count = path
+# gtf annotation with exons (the full gene model), used to map intron splice sites to genes
+parameter: coordinate_annotation = path
 # Defines the mapping strategy options: &#39;site&#39; or &#39;region&#39;, with &#39;site&#39; as the default. 
 # The &#39;site&#39; strategy maps introns to the start and end of each exon. 
 # The &#39;region&#39; strategy, to be recommended in leafcutter2, maps each intron based on it overlapping more than overlap_ratio of a gene&#39;s region.
 parameter: map_stra = &quot;site&quot; 
 # Define the overlap ratio as the proportion of the cluster length that intersects with a gene, used to determine mapping to the gene.
 parameter: overlap_ratio = 0.8
-input: intron_count, annotation_gtf
+input: intron_count, coordinate_annotation
 output: f&#39;{cwd}/{_input[0]:b}.exon_list&#39;, f&#39;{cwd}/{_input[0]:b}.leafcutter.clusters_to_genes.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.py \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.R \
         --step map_leafcutter_cluster_to_gene \
         --intron-count &quot;${_input[0]}&quot; \
         --annotation-gtf &quot;${_input[1]}&quot; \
@@ -1040,11 +1042,13 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_leafcutter_isoforms]
 parameter: sample_participant_lookup = path()
-input: phenoFile, annotation_gtf,output_from(&quot;map_leafcutter_cluster_to_gene&quot;)
+# gtf annotation with exons (the full gene model)
+parameter: coordinate_annotation = path
+input: phenoFile, coordinate_annotation, output_from(&quot;map_leafcutter_cluster_to_gene&quot;)
 output: f&#39;{cwd:a}/{_input[0]:bn}.formated.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.phenotype_group.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.py \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.R \
         --step annotate_leafcutter_isoforms \
         --phenoFile &quot;${_input[0]}&quot; \
         --annotation-gtf &quot;${_input[1]}&quot; \
@@ -1068,11 +1072,13 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_psichomics_isoforms]
 parameter: sample_participant_lookup = path()
-input: phenoFile, annotation_gtf
+# gtf annotation with exons (the full gene model)
+parameter: coordinate_annotation = path
+input: phenoFile, coordinate_annotation
 output: f&#39;{cwd:a}/{_input[0]:bn}.formated.bed.gz&#39;, f&#39;{cwd:a}/{_input[0]:bn}.phenotype_group.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output[0]:bn}&#39;  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.py \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.R \
         --step annotate_psichomics_isoforms \
         --phenoFile &quot;${_input[0]}&quot; \
         --annotation-gtf &quot;${_input[1]}&quot; \

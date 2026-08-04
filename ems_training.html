@@ -715,10 +715,12 @@
 <p>Based on the manuscript (Figure 1, Table C), scEEMS uses 4,839 features across these categories:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load gene constraint data</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="n">gene_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="s1">&#39;data/41588_2024_1820_MOESM4_ESM.xlsx&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">gene_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Peek at the gene-constraint table used as an EMS feature source.</span>
+<span class="n">R</span><span class="p">:</span>
+    <span class="n">suppressPackageStartupMessages</span><span class="p">(</span><span class="n">library</span><span class="p">(</span><span class="n">readxl</span><span class="p">))</span>
+    <span class="n">gene_data</span> <span class="o">&lt;-</span> <span class="n">read_excel</span><span class="p">(</span><span class="s2">&quot;input/xqtl_modifier_score/protocol_example.gene_constraint.xlsx&quot;</span><span class="p">,</span>
+                            <span class="n">sheet</span> <span class="o">=</span> <span class="s2">&quot;Supplementary Table 1&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">utils</span><span class="p">::</span><span class="n">head</span><span class="p">(</span><span class="k">as</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="n">gene_data</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -779,9 +781,9 @@
 <section id="step-1-running-the-gems-pipeline">
 <h3>Step 1: Running the GEMS Pipeline<a class="headerlink" href="#step-1-running-the-gems-pipeline" title="Link to this heading">#</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/xqtl-protocol/code/SoS/xqtl_modifier_score/
-python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span class="w"> </span>Mic_mega_eQTL<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--model_config<span class="w"> </span>model_config.yaml
+Rscript<span class="w"> </span>gems_pipeline.R<span class="w"> </span>--step<span class="w"> </span>train<span class="w"> </span>--cohort<span class="w"> </span>Mic_mega_eQTL<span class="w"> </span>--chromosome<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model-config<span class="w"> </span>model_config.yaml
 </pre></div>
 </div>
 <p>The pipeline automatically loads training data, trains the feature-weighted CatBoost model, and generates predictions.</p>
@@ -801,19 +803,12 @@ python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Configuration file check</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-
-<span class="n">required_files</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s1">&#39;gems_pipeline.py&#39;</span><span class="p">,</span>  
-    <span class="s1">&#39;data_config.yaml&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;model_config.yaml&#39;</span>
-<span class="p">]</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Configuration File Check:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">required_files</span><span class="p">:</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;✅ Found&quot;</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;❌ Missing&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">R</span><span class="p">:</span>
+    <span class="n">files</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;code/script/xqtl_modifier_score/gems_pipeline.R&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;code/SoS/xqtl_modifier_score/data_config.yaml&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;code/SoS/xqtl_modifier_score/model_config.yaml&quot;</span><span class="p">)</span>
+    <span class="n">cat</span><span class="p">(</span><span class="s2">&quot;Configuration File Check:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span> <span class="n">cat</span><span class="p">(</span><span class="n">strrep</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span> <span class="n">cat</span><span class="p">(</span><span class="n">sprintf</span><span class="p">(</span><span class="s2">&quot;  </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="k">if</span> <span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="s2">&quot;Found&quot;</span> <span class="k">else</span> <span class="s2">&quot;Missing&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -864,7 +859,7 @@ python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span
 <h3>Generated Output Files<a class="headerlink" href="#generated-output-files" title="Link to this heading">#</a></h3>
 <p><strong>Model File</strong>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">model_feature_weighted_chr_chr2_NPR_10.joblib</span></code> - Trained CatBoost classifier</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model_feature_weighted_chr_chr2_NPR_10.cbm</span></code> - Trained CatBoost classifier</p></li>
 </ul>
 <p><strong>Analysis Results</strong>:</p>
 <ul class="simple">
@@ -886,7 +881,7 @@ python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span
 </section>
 <section id="workflow-implementation">
 <h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">train</span></code> step wraps the <code class="docutils literal notranslate"><span class="pre">gems_pipeline.py</span> <span class="pre">train</span></code> engine. The pipeline automatically loads the training data, trains the feature-weighted CatBoost model, and writes the trained model and metrics. New datasets / cell types are added by editing the YAML configs only — no Python code changes are required (e.g. swap <code class="docutils literal notranslate"><span class="pre">protocol_example</span></code> for <code class="docutils literal notranslate"><span class="pre">Ast_mega_eQTL</span></code> with the matching <code class="docutils literal notranslate"><span class="pre">data_config</span></code> to train on astrocytes).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">train</span></code> step wraps the <code class="docutils literal notranslate"><span class="pre">gems_pipeline.R</span> <span class="pre">train</span></code> engine. The pipeline automatically loads the training data, trains the feature-weighted CatBoost model, and writes the trained model and metrics. New datasets / cell types are added by editing the YAML configs only — no code changes are required (e.g. swap <code class="docutils literal notranslate"><span class="pre">protocol_example</span></code> for <code class="docutils literal notranslate"><span class="pre">Ast_mega_eQTL</span></code> with the matching <code class="docutils literal notranslate"><span class="pre">data_config</span></code> to train on astrocytes).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="k">global</span><span class="p">]</span>
@@ -901,8 +896,10 @@ python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span
 <span class="n">parameter</span><span class="p">:</span> <span class="n">data_config</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/SoS/xqtl_modifier_score/data_config.yaml&#39;</span><span class="p">)</span>
 <span class="c1"># Model configuration YAML (CatBoost hyperparameters, feature weighting)</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">model_config</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/SoS/xqtl_modifier_score/model_config.yaml&#39;</span><span class="p">)</span>
-<span class="c1"># Directory holding gems_pipeline.py</span>
+<span class="c1"># Directory whose relative config paths resolve against (holds the config YAMLs)</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">pipeline_dir</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/SoS/xqtl_modifier_score&#39;</span><span class="p">)</span>
+<span class="c1"># Directory holding the modular analysis scripts (code/script)</span>
+<span class="n">parameter</span><span class="p">:</span> <span class="n">modular_script_dir</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="s1">&#39;code/script&#39;</span><span class="p">)</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">job_size</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">mem</span> <span class="o">=</span> <span class="s1">&#39;60G&#39;</span>
 <span class="n">parameter</span><span class="p">:</span> <span class="n">walltime</span> <span class="o">=</span> <span class="s1">&#39;24h&#39;</span>
@@ -916,10 +913,13 @@ python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span
 <span class="n">output</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cwd</span><span class="si">:</span><span class="s1">a</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">cohort</span><span class="si">}</span><span class="s1">_chr</span><span class="si">{</span><span class="n">chromosome</span><span class="si">}</span><span class="s1">_scEEMS_model.done&#39;</span>
 <span class="n">task</span><span class="p">:</span> <span class="n">trunk_workers</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">trunk_size</span> <span class="o">=</span> <span class="n">job_size</span><span class="p">,</span> <span class="n">mem</span> <span class="o">=</span> <span class="n">mem</span><span class="p">,</span> <span class="n">walltime</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">,</span> <span class="n">tags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">cohort</span><span class="si">}</span><span class="s1">_chr</span><span class="si">{</span><span class="n">chromosome</span><span class="si">}</span><span class="s1">&#39;</span>
 <span class="n">bash</span><span class="p">:</span> <span class="n">expand</span> <span class="o">=</span> <span class="s2">&quot;$[ ]&quot;</span><span class="p">,</span> <span class="n">workdir</span> <span class="o">=</span> <span class="n">pipeline_dir</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">.stderr&#39;</span><span class="p">,</span> <span class="n">stdout</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">.stdout&#39;</span>
- <span class="nb">set</span> <span class="o">-</span><span class="n">e</span>
-    <span class="n">python</span> <span class="n">gems_pipeline</span><span class="o">.</span><span class="n">py</span> <span class="n">train</span> <span class="err">$</span><span class="p">[</span><span class="n">cohort</span><span class="p">]</span> <span class="err">$</span><span class="p">[</span><span class="n">chromosome</span><span class="p">]</span> \
-        <span class="o">--</span><span class="n">data_config</span> <span class="err">$</span><span class="p">[</span><span class="n">data_config</span><span class="p">:</span><span class="n">a</span><span class="p">]</span> \
-        <span class="o">--</span><span class="n">model_config</span> <span class="err">$</span><span class="p">[</span><span class="n">model_config</span><span class="p">:</span><span class="n">a</span><span class="p">]</span>
+    <span class="nb">set</span> <span class="o">-</span><span class="n">e</span>
+    <span class="n">Rscript</span> <span class="err">$</span><span class="p">[</span><span class="n">modular_script_dir</span><span class="p">:</span><span class="n">a</span><span class="p">]</span><span class="o">/</span><span class="n">xqtl_modifier_score</span><span class="o">/</span><span class="n">gems_pipeline</span><span class="o">.</span><span class="n">R</span> \
+        <span class="o">--</span><span class="n">step</span> <span class="n">train</span> \
+        <span class="o">--</span><span class="n">cohort</span> <span class="err">$</span><span class="p">[</span><span class="n">cohort</span><span class="p">]</span> \
+        <span class="o">--</span><span class="n">chromosome</span> <span class="err">$</span><span class="p">[</span><span class="n">chromosome</span><span class="p">]</span> \
+        <span class="o">--</span><span class="n">data</span><span class="o">-</span><span class="n">config</span> <span class="err">$</span><span class="p">[</span><span class="n">data_config</span><span class="p">:</span><span class="n">a</span><span class="p">]</span> \
+        <span class="o">--</span><span class="n">model</span><span class="o">-</span><span class="n">config</span> <span class="err">$</span><span class="p">[</span><span class="n">model_config</span><span class="p">:</span><span class="n">a</span><span class="p">]</span>
     <span class="n">touch</span> <span class="err">$</span><span class="p">[</span><span class="n">_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">a</span><span class="p">]</span>
 </pre></div>
 </div>
@@ -930,25 +930,25 @@ python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span
 <h2>GEMS Pipeline Modularity<a class="headerlink" href="#gems-pipeline-modularity" title="Link to this heading">#</a></h2>
 <section id="gems-generalized-expression-modifier-scores">
 <h3>GEMS: Generalized Expression Modifier Scores<a class="headerlink" href="#gems-generalized-expression-modifier-scores" title="Link to this heading">#</a></h3>
-<p>The pipeline uses <code class="docutils literal notranslate"><span class="pre">gems_pipeline.py</span></code> (<strong>G</strong>eneralized <strong>E</strong>xpression <strong>M</strong>odifier <strong>S</strong>cores), extending beyond single-cell data to work with any tissue or cell type.</p>
+<p>The pipeline uses <code class="docutils literal notranslate"><span class="pre">gems_pipeline.R</span></code> (<strong>G</strong>eneralized <strong>E</strong>xpression <strong>M</strong>odifier <strong>S</strong>cores), extending beyond single-cell data to work with any tissue or cell type.</p>
 <p><strong>Design Principles:</strong></p>
 <ul class="simple">
 <li><p>New datasets added by <strong>only modifying YAML configuration files</strong></p></li>
-<li><p>No Python code changes required for different cell types</p></li>
+<li><p>No code changes required for different cell types</p></li>
 <li><p>Subcommand architecture (train/predict) for extensible workflows</p></li>
 </ul>
 </section>
 <section id="command-structure">
 <h3>Command Structure<a class="headerlink" href="#command-structure" title="Link to this heading">#</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Training mode</span>
-python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span class="w"> </span>&lt;cohort&gt;<span class="w"> </span>&lt;chromosome&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--model_config<span class="w"> </span>model_config.yaml
+Rscript<span class="w"> </span>gems_pipeline.R<span class="w"> </span>--step<span class="w"> </span>train<span class="w"> </span>--cohort<span class="w"> </span>&lt;cohort&gt;<span class="w"> </span>--chromosome<span class="w"> </span>&lt;chromosome&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model-config<span class="w"> </span>model_config.yaml
 
 <span class="c1"># Prediction mode (coming soon)</span>
-python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>predict<span class="w"> </span>&lt;cohort&gt;<span class="w"> </span>&lt;chromosome&gt;<span class="w"> </span><span class="se">\</span>
+Rscript<span class="w"> </span>gems_pipeline.R<span class="w"> </span>--step<span class="w"> </span>predict<span class="w"> </span>--cohort<span class="w"> </span>&lt;cohort&gt;<span class="w"> </span>--chromosome<span class="w"> </span>&lt;chromosome&gt;<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--model_path<span class="w"> </span>results/model.cbm<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml
+<span class="w">  </span>--data-config<span class="w"> </span>data_config.yaml
 </pre></div>
 </div>
 </section>
@@ -960,14 +960,14 @@ python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>predict<sp
 <li><p>Modularity validation: Astrocytes (Ast_mega_eQTL)</p></li>
 </ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Train on Microglia</span>
-python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span class="w"> </span>Mic_mega_eQTL<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--model_config<span class="w"> </span>model_config.yaml
+Rscript<span class="w"> </span>gems_pipeline.R<span class="w"> </span>--step<span class="w"> </span>train<span class="w"> </span>--cohort<span class="w"> </span>Mic_mega_eQTL<span class="w"> </span>--chromosome<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model-config<span class="w"> </span>model_config.yaml
 
 <span class="c1"># Train on Astrocytes (same code, different YAML configuration)</span>
-python<span class="w"> </span>gems_pipeline.py<span class="w"> </span>train<span class="w"> </span>Ast_mega_eQTL<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--data_config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--model_config<span class="w"> </span>model_config.yaml
+Rscript<span class="w"> </span>gems_pipeline.R<span class="w"> </span>--step<span class="w"> </span>train<span class="w"> </span>--cohort<span class="w"> </span>Ast_mega_eQTL<span class="w"> </span>--chromosome<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-config<span class="w"> </span>data_config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model-config<span class="w"> </span>model_config.yaml
 </pre></div>
 </div>
 <p><strong>Validation Results:</strong>

@@ -675,6 +675,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # Path to the work directory of the analysis.
 parameter: cwd = path(&#39;output&#39;)
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
 
 parameter: genes_file = path()  # TSV file with columns: group, gene_id
 parameter: name = str
@@ -696,141 +697,12 @@ parameter: organism = &#39;hsa&#39;
 output: pathway_results = f&#39;{cwd:a}/{step_name}/{name}.combined_pathway_results.rds&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
-    library(org.Hs.eg.db)
-    library(AnnotationDbi)
-    library(clusterProfiler)
-    library(dplyr)
-
-    # Parameters
-    organism &lt;- &#39;${organism}&#39;
-    pvalue_cutoff &lt;- ${pvalue_cutoff}
-
-    # Read input data
-    gene_data &lt;- read.table(&#39;${genes_file}&#39;, header = TRUE, sep = &quot;\t&quot;, stringsAsFactors = FALSE)
-
-    # ID conversion function
-    convert_ids &lt;- function(gene_list) {
-        entrez_ids &lt;- mapIds(org.Hs.eg.db, 
-                        keys = gene_list, 
-                        column = &quot;ENTREZID&quot;, 
-                        keytype = &quot;ENSEMBL&quot;)
-        return(na.omit(unique(entrez_ids)))
-    }
-
-    # Standardize result columns
-    standardize_columns &lt;- function(result_df, analysis_type, ont_category, group_name) {
-        if(is.null(result_df) || nrow(result_df) == 0) {
-            return(data.frame())
-        }
-        
-        result_df$group &lt;- group_name
-        result_df$analysis_type &lt;- analysis_type
-        result_df$ont_category &lt;- ont_category
-        
-        # Add category and subcategory based on analysis type
-        if(analysis_type == &quot;KEGG&quot;) {
-            result_df$category &lt;- NA
-            result_df$subcategory &lt;- NA
-        } else {
-            result_df$category &lt;- &quot;Gene Ontology&quot;
-            result_df$subcategory &lt;- switch(ont_category,
-                &quot;BP&quot; = &quot;Biological Process&quot;,
-                &quot;CC&quot; = &quot;Cellular Component&quot;, 
-                &quot;MF&quot; = &quot;Molecular Function&quot;,
-                NA)
-        }
-        
-        return(result_df)
-    }
-
-    # KEGG enrichment
-    perform_kegg &lt;- function(group_genes, group_name) {
-        entrez_ids &lt;- convert_ids(group_genes)
-        if(length(entrez_ids) == 0) return(data.frame())
-        
-        enriched &lt;- tryCatch({
-            enrichKEGG(gene = entrez_ids, organism = organism, pvalueCutoff = pvalue_cutoff)
-        }, error = function(e) NULL)
-        
-        if(is.null(enriched)) return(data.frame())
-        
-        result_df &lt;- as.data.frame(enriched)
-        return(standardize_columns(result_df, &quot;KEGG&quot;, &quot;PATHWAY&quot;, group_name))
-    }
-
-    # GO enrichment
-    perform_go &lt;- function(group_genes, group_name, ont_type) {
-        entrez_ids &lt;- convert_ids(group_genes)
-        if(length(entrez_ids) == 0) return(data.frame())
-        
-        enriched &lt;- tryCatch({
-            enrichGO(gene = entrez_ids, OrgDb = org.Hs.eg.db, ont = ont_type, 
-                    pvalueCutoff = pvalue_cutoff, readable = TRUE)
-        }, error = function(e) NULL)
-        
-        if(is.null(enriched)) return(data.frame())
-        
-        result_df &lt;- as.data.frame(enriched)
-        return(standardize_columns(result_df, &quot;GO&quot;, ont_type, group_name))
-    }
-
-    # Main analysis
-    unique_groups &lt;- unique(gene_data$group)
-    all_results &lt;- list()
-
-    # Process all enrichments
-    for(group_name in unique_groups) {
-        group_genes &lt;- gene_data$gene_id[gene_data$group == group_name]
-        
-        # KEGG
-        kegg_result &lt;- perform_kegg(group_genes, group_name)
-        if(nrow(kegg_result) &gt; 0) {
-            all_results[[paste0(group_name, &quot;_KEGG&quot;)]] &lt;- kegg_result
-        }
-        
-        # GO analyses
-        for(ont_type in c(&quot;BP&quot;, &quot;CC&quot;, &quot;MF&quot;)) {
-            go_result &lt;- perform_go(group_genes, group_name, ont_type)
-            if(nrow(go_result) &gt; 0) {
-                all_results[[paste0(group_name, &quot;_GO_&quot;, ont_type)]] &lt;- go_result
-            }
-        }
-    }
-
-    # Combine results
-    if(length(all_results) &gt; 0) {
-        combined_results &lt;- do.call(rbind, all_results)
-        rownames(combined_results) &lt;- NULL
-    } else {
-        # Create empty standardized dataframe
-        combined_results &lt;- data.frame(
-            category = character(), subcategory = character(),
-            ID = character(), Description = character(),
-            GeneRatio = character(), BgRatio = character(),
-            RichFactor = numeric(), FoldEnrichment = numeric(),
-            zScore = numeric(), pvalue = numeric(),
-            p.adjust = numeric(), qvalue = numeric(),
-            geneID = character(), Count = integer(),
-            group = character(), analysis_type = character(),
-            ont_category = character(),
-            stringsAsFactors = FALSE
-        )
-    }
-
-    # Summary statistics
-    print(&quot;Summary by group:&quot;)
-    print(table(combined_results$group))
-
-    print(&quot;Cross-tabulation by analysis type and ontology:&quot;)
-    print(table(combined_results$analysis_type, combined_results$ont_category))
-
-    print(&quot;First few rows of combined results:&quot;)
-    print(head(combined_results, 3))
-
-    # Save results
-    saveRDS(combined_results, &#39;${_output[&#39;pathway_results&#39;]}&#39;, compress=&#39;xz&#39;)
-    print(paste(&quot;Results saved to:&quot;, &#39;${_output[&#39;pathway_results&#39;]}&#39;))
+bash: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+    Rscript ${modular_script_dir}/enrichment/gsea.R \
+        --genes-file ${genes_file} \
+        --organism ${organism} \
+        --pvalue-cutoff ${pvalue_cutoff} \
+        --output ${_output[&#39;pathway_results&#39;]}
 </pre></div>
 </div>
 </div>

@@ -721,7 +721,7 @@ input: phenoFile, for_each = &quot;chrom&quot;
 output: f&#39;{cwd}/{name}.{_chrom}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    bash ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_chrom_1 \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.R --step phenotype_by_chrom_1 \
         --cwd &quot;${cwd}&quot; \
         --phenoFile &quot;${_input}&quot; \
         --name &quot;${name}&quot; \
@@ -739,7 +739,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: group_by = &quot;all&quot;
 output: f&#39;{cwd}/{name}.{step_name[:-2]}_files.txt&#39;,f&#39;{cwd}/{name}.{step_name[:-2]}_files.region_list.txt&#39;
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    bash ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_chrom_2 \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.R --step phenotype_by_chrom_2 \
         --cwd &quot;${cwd}&quot; \
         --phenoFile &quot;${phenoFile}&quot; \
         --inputs ${_input} \
@@ -780,7 +780,7 @@ input: phenoFile, for_each = &quot;chrom&quot;
 output: f&#39;{cwd:a}/{name}.{_chrom}.gct&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    bash ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_chrom_gct_1 \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.R --step phenotype_by_chrom_gct_1 \
         --cwd &quot;${cwd}&quot; \
         --phenoFile &quot;${_input}&quot; \
         --name &quot;${name}&quot; \
@@ -797,16 +797,12 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 # An index text file with 4 columns specifying the chr, start, end and name of regions to analyze
 parameter: region_list = path
 regions = [x.strip().split() for x in open(region_list).readlines() if x.strip() and not x.strip().startswith(&#39;#&#39;)]
-# Get the unique chormosome that have regions to be analyzed.
-def extract_chrom(lst):
-    return list(set([item[0] for item in lst]))
-chrom = extract_chrom(regions)
 # Path to the input molecular phenotype data.
 input: phenoFile, for_each = &quot;regions&quot;
 output: f&#39;{cwd}/{region_list:bn}_phenotype_by_region/{name}.{_regions[3]}.bed.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    bash ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_region_1 \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.R --step phenotype_by_region_1 \
         --cwd &quot;${cwd}&quot; \
         --phenoFile &quot;${_input}&quot; \
         --name &quot;${name}&quot; \
@@ -823,7 +819,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 input: group_by = &quot;all&quot;
 output: f&#39;{cwd}/{name}.{step_name[:-2]}_files.txt&#39;
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    bash ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.sh phenotype_by_region_2 \
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.R --step phenotype_by_region_2 \
         --cwd &quot;${cwd}&quot; \
         --inputs ${_input} \
         --output &quot;${_output}&quot;
@@ -842,7 +838,10 @@ input: phenoFile , group_by = 1
 output: f&#39;{cwd}/{_input:bn}.subsetted.bam&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container, entrypoint=entrypoint
-    samtools view -b ${_input} ${region} &gt; ${_output}
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_formatting.R --step bam_subsetting \
+        --phenoFile &quot;${_input}&quot; \
+        --region ${&#39; &#39;.join(region)} \
+        --output &quot;${_output}&quot;
 </pre></div>
 </div>
 </div>

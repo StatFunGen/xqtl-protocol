@@ -637,7 +637,7 @@
 </section>
 <section id="minimal-working-example">
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
-<p>The data and singularity container <code class="docutils literal notranslate"><span class="pre">bioinfo.sif</span></code> can be downloaded from <a class="reference external" href="https://www.synapse.org/#!Synapse:syn69670658/files/">Synapse</a>.</p>
+<p>The data can be downloaded from <a class="reference external" href="https://www.synapse.org/#!Synapse:syn69670658/files/">Synapse</a>.</p>
 <section id="step-1-vcf-to-plink">
 <h3><strong>Step 1.</strong> VCF to PLINK<a class="headerlink" href="#step-1-vcf-to-plink" title="Link to this heading">#</a></h3>
 <p>Convert the 22 per-chromosome toy VCFs into per-chromosome PLINK bed/bim/fam bundles. Timing: &lt;1 min on the toy data.</p>
@@ -701,10 +701,7 @@
 parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
 # Work directory &amp; output directory
 parameter: cwd = path(&quot;output&quot;)
-# The filename name for containers
-parameter: container = &#39;&#39;
 import re
-parameter: entrypoint= &quot;&quot;
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
@@ -854,15 +851,15 @@ if isinstance(genoFile, dict):
 input: genoFile, group_by = 1
 output: f&#39;{cwd}/{_input:bn}.vcf.gz&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh plink_to_vcf_1 \
         --genoFile &quot;${_input}&quot; \
         --output &quot;${_output}&quot; \
         --mem &quot;${mem}&quot; \
         --numThreads ${numThreads}
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.py \
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step vcf_gz_summary \
         --data-files &quot;${_output}&quot;
 </pre></div>
@@ -894,7 +891,7 @@ input: genoFile, group_by = 1
 output: f&#39;{cwd}/{_input:bnn}.{&quot;pgen&quot; if keep_dosage else &quot;bed&quot;}&#39;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh vcf_to_plink \
         --cwd &quot;${cwd}&quot; \
         --genoFile &quot;${_input}&quot; \
@@ -917,7 +914,7 @@ regions = [x.strip().split() for x in open(region_list).readlines() if x.strip()
 input: genoFile, for_each = &#39;regions&#39;
 output: f&#39;{cwd}/{region_list:bn}_genotype_by_region/{_input:bn}.{_regions[3]}.bed&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh genotype_by_region_1 \
         --genoFile &quot;${_input}&quot; \
         --output &quot;${_output}&quot; \
@@ -927,8 +924,8 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
         --window ${window} \
         --numThreads ${numThreads}
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint=entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.py \
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step file_size_summary \
         --data-files &quot;${_output}&quot;
 </pre></div>
@@ -940,7 +937,7 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <h2>Compute LD matrices for given input region<a class="headerlink" href="#compute-ld-matrices-for-given-input-region" title="Link to this heading">#</a></h2>
 <section id="plink-based-implementation">
 <h3>PLINK based implementation<a class="headerlink" href="#plink-based-implementation" title="Link to this heading">#</a></h3>
-<p><strong>FIXME: Hao, I suggest including all contents for LD matrix storage type benchmarking into this repo, so we justify why we would like to save the data as square 0, float 16 and using npz format</strong>. Perhaps we should start a folder called “code/auxillary” to keep notebooks such as these? You can then remove what you have in the <code class="docutils literal notranslate"><span class="pre">brain-xqtl-analysis</span></code> repository after you migrate all the relevant contents here.</p>
+<p><strong>FIXME: Hao, I suggest including all contents for LD matrix storage type benchmarking into this repo, so we justify why we would like to save the data as square 0, float 16 and using the RDS format</strong>. Perhaps we should start a folder called “code/auxillary” to keep notebooks such as these? You can then remove what you have in the <code class="docutils literal notranslate"><span class="pre">brain-xqtl-analysis</span></code> repository after you migrate all the relevant contents here.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[ld_by_region_plink_1]
@@ -949,18 +946,15 @@ parameter: region_list = path
 parameter: float_type = 16
 regions = [x.strip().split() for x in open(region_list).readlines() if x.strip() and not x.strip().startswith(&#39;#&#39;)]
 input: genoFile, for_each = &#39;regions&#39;
-output: f&#39;{cwd}/{region_list:bn}_LD/{_input:bn}.{_regions[0]}_{_regions[1]}_{_regions[2]}.float{float_type}.npz&#39;
+output: f&#39;{cwd}/{region_list:bn}_LD/{_input:bn}.{_regions[0]}_{_regions[1]}_{_regions[2]}.float{float_type}.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.py \
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    plink --bfile &quot;${_input:n}&quot; --out &quot;${_output:nn}&quot; \
+        --chr &quot;${_regions[0]}&quot; --from-bp &quot;${_regions[1]}&quot; --to-bp &quot;${_regions[2]}&quot; \
+        --r square0 --make-just-bim --threads ${numThreads}
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step ld_by_region_plink_1 \
-        --genoFile &quot;${_input}&quot; \
-        --region-chrom &quot;${_regions[0]}&quot; \
-        --region-start &quot;${_regions[1]}&quot; \
-        --region-end &quot;${_regions[2]}&quot; \
-        --float-type ${float_type} \
-        --output &quot;${_output}&quot; \
-        --numThreads ${numThreads}
+        --output &quot;${_output}&quot;
 </pre></div>
 </div>
 </div>
@@ -1009,7 +1003,7 @@ make_command = get_make_command(output_format)
 output: f&#39;{cwd}/{_input:bn}.{_chrom}.{output_ext}&#39;
 # look up for genotype file
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh genotype_by_chrom \
         --cwd &quot;${cwd}&quot; \
         --genoFile &quot;${_input}&quot; \
@@ -1077,8 +1071,8 @@ parameter: data_files = paths
 input: data_files
 output: out
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.py \
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step write_data_list \
         --data-files &quot;${&quot;::&quot;.join([str(x) for x in _input])}&quot; \
         --ext &quot;${ext}&quot; \
@@ -1108,7 +1102,7 @@ parameter: mem = &#39;300G&#39;
 input: genoFile, group_by = &#39;all&#39;
 output: f&quot;{cwd}/{name}{_input[0]:x}&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh merge_plink \
         --cwd &quot;${cwd}&quot; \
         --genoFile &quot;${_input}&quot; \
@@ -1135,13 +1129,13 @@ parameter: name = str
 input: genoFile, group_by = &#39;all&#39;
 output:  f&quot;{cwd}/{name}.vcf.gz&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh merge_vcf \
         --genoFile &quot;${_input}&quot; \
         --output &quot;${_output}&quot;
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
-    python3 ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.py \
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+    Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step vcf_gz_summary \
         --data-files &quot;${_output}&quot;
 </pre></div>

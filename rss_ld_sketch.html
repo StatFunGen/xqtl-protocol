@@ -642,7 +642,7 @@ INFO: Workflow generate_W (ID=w68f63c60d8da4b5e) is executed successfully with 1
     --vcf-base input/rss_ld_sketch \
     --vcf-prefix protocol_example.genotype. \
     --output-dir output/rss_ld_sketch \
-    --W-matrix output/rss_ld_sketch/W_B50.npy \
+    --W-matrix output/rss_ld_sketch/W_B50.rds \
     --B 50 \
     --cohort-id protocol_example \
     --cwd output/rss_ld_sketch
@@ -750,6 +750,8 @@ INFO: Workflow merge_chrom (ID=w8e5a670551e06660) is executed successfully with 
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 parameter: cwd        = path(&quot;output&quot;)
+# Directory holding the modular analysis scripts (code/script)
+parameter: modular_script_dir = path(&#39;code/script&#39;)
 parameter: job_size   = 1
 parameter: walltime   = &quot;24:00:00&quot;
 parameter: mem        = &quot;32G&quot;
@@ -764,42 +766,22 @@ cwd = path(f&#39;{cwd:a}&#39;)
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[generate_W]
 # Generate projection matrix $W \sim N(0, 1/\sqrt{n})$, shape (n x B).
-# Run ONCE before processing any chromosome.
-#
-# W depends only on n (total sample size) and B -- not on any variant data.
-# n_samples is passed directly as a parameter; no VCF reading is needed.
-# All 22 chromosomes reuse the same W so that per-chromosome stochastic
-# genotype samples can be arithmetically merged for meta-analysis.
+# Run ONCE before processing any chromosome; W depends only on n and B, and all
+# chromosomes reuse the same W so per-chromosome sketches are mergeable.
 parameter: n_samples = int
 parameter: output_dir    = str
 parameter: B         = 10000
 parameter: seed      = 123
-
-import os
 input:  []
-output: f&#39;{output_dir}/W_B{B}.npy&#39;
+output: f&#39;{output_dir}/W_B{B}.rds&#39;
 task: trunk_workers = 1, trunk_size = 1, walltime = &#39;00:05:00&#39;, mem = &#39;4G&#39;, cores = 1
-python: expand = &quot;${ }&quot;, stdout = f&#39;{_output:n}.stdout&#39;, stderr = f&#39;{_output:n}.stderr&#39;
-
-    import numpy as np
-    import os
-
-    n      = ${n_samples}
-    B      = ${B}
-    seed   = ${seed}
-    W_out  = &quot;${_output}&quot;
-
-    # -- Generate $W \sim N(0, 1/\sqrt{n})$ -----------------------------
-    # Convention: W = np.random.normal(0, 1/np.sqrt(n), size=(n, B))
-    # W is shared across all chromosomes -- do not regenerate per chromosome.
-    print(f&quot;Generating W ~ N(0, 1/sqrt({n})),  shape ({n}, {B}),  seed={seed}&quot;)
-    np.random.seed(seed)
-    W = np.random.normal(0, 1.0 / np.sqrt(n), size=(n, B)).astype(np.float32)
-
-    os.makedirs(os.path.dirname(os.path.abspath(W_out)), exist_ok=True)
-    np.save(W_out, W)
-    print(f&quot;Saved: {W_out}&quot;)
-    print(f&quot;Shape: {W.shape},  size: {os.path.getsize(W_out)/1e9:.2f} GB&quot;)
+bash: expand = &quot;${ }&quot;, stdout = f&#39;{_output:n}.stdout&#39;, stderr = f&#39;{_output:n}.stderr&#39;
+    Rscript ${modular_script_dir}/reference_data/rss_ld_sketch.R \
+        --step generate_w \
+        --n-samples ${n_samples} \
+        --B ${B} \
+        --seed ${seed} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -820,261 +802,44 @@ parameter: mac_min       = 5
 parameter: msng_min      = 0.05
 parameter: sample_list   = &quot;&quot;
 
-import os
-
-def _read_blocks(bed, chrom_filter):
-    blocks = []
-    with open(bed) as fh:
-        for line in fh:
-            if line.startswith(&quot;#&quot;) or not line.strip():
-                continue
-            parts = line.split()
-            c = parts[0]
-            if not (c.startswith(&quot;chr&quot;) and c[3:].isdigit()):
-                continue
-            cnum = int(c[3:])
-            if not (1 &lt;= cnum &lt;= 22):
-                continue
-            if chrom_filter != 0 and cnum != chrom_filter:
-                continue
-            blocks.append({&quot;chr&quot;: c, &quot;start&quot;: int(parts[1]), &quot;end&quot;: int(parts[2])})
-    if not blocks:
-        raise ValueError(f&quot;No blocks found for chrom={chrom_filter} in {bed}&quot;)
-    return blocks
-
-blocks = _read_blocks(ld_block_file, chrom)
-print(f&quot;  {len(blocks)} LD blocks queued&quot;)
+# Build the LD-block list from the BED (chr1..chr22; optional single-chrom filter).
+blocks = []
+with open(ld_block_file) as _fh:
+    for _line in _fh:
+        if _line.startswith(&quot;#&quot;) or not _line.strip():
+            continue
+        _p = _line.split()
+        _c = _p[0]
+        if not (_c.startswith(&quot;chr&quot;) and _c[3:].isdigit()):
+            continue
+        _cnum = int(_c[3:])
+        if not (1 &lt;= _cnum &lt;= 22):
+            continue
+        if chrom != 0 and _cnum != chrom:
+            continue
+        blocks.append({&quot;chr&quot;: _c, &quot;start&quot;: int(_p[1]), &quot;end&quot;: int(_p[2])})
+del _fh
+stop_if(len(blocks) == 0, msg = f&quot;No blocks found for chrom={chrom} in {ld_block_file}&quot;)
 
 input: for_each = &quot;blocks&quot;
 output: f&#39;{output_dir}/{_blocks[&quot;chr&quot;]}/{_blocks[&quot;chr&quot;]}_{_blocks[&quot;start&quot;]}_{_blocks[&quot;end&quot;]}/{cohort_id}.{_blocks[&quot;chr&quot;]}_{_blocks[&quot;start&quot;]}_{_blocks[&quot;end&quot;]}.dosage.gz&#39;
 task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads
-python: expand = &quot;${ }&quot;
-
-    import numpy as np
-    import os
-    import gzip
-    import sys
-    import atexit
-    from math import nan
-    from cyvcf2 import VCF
-    from os import listdir
-
-    # Block coordinates from for_each loop
-    chrm_str    = &quot;${_blocks[&#39;chr&#39;]}&quot;
-    block_start = ${_blocks[&quot;start&quot;]}
-    block_end   = ${_blocks[&quot;end&quot;]}
-
-    vcf_base    = &quot;${vcf_base}&quot;
-    vcf_prefix  = &quot;${vcf_prefix}&quot;
-    W_path      = &quot;${W_matrix}&quot;
-    B           = ${B}
-    maf_min     = ${maf_min}
-    mac_min     = ${mac_min}
-    msng_min    = ${msng_min}
-    sample_list = &quot;${sample_list}&quot;
-    cohort_id   = &quot;${cohort_id}&quot;
-    base_dir    = &quot;${output_dir}&quot;
-
-    block_tag   = f&quot;{chrm_str}_{block_start}_{block_end}&quot;
-    output_dir  = os.path.join(base_dir, chrm_str, block_tag)
-    os.makedirs(output_dir, exist_ok=True)
-
-    log_path = os.path.join(output_dir, f&quot;{block_tag}.log&quot;)
-    log_fh   = open(log_path, &quot;w&quot;)
-    sys.stdout = log_fh
-    sys.stderr = log_fh
-    atexit.register(log_fh.close)
-
-    # -- Load sample subset (optional) -----------------------------
-    sample_subset = None
-    if sample_list:
-        if not os.path.exists(sample_list):
-            raise FileNotFoundError(f&quot;sample_list not found: {sample_list}&quot;)
-        with open(sample_list) as fh:
-            sample_subset = set(line.strip() for line in fh if line.strip())
-        print(f&quot;  Sample subset: {len(sample_subset):,} samples&quot;)
-
-    # -- Helpers ---------------------------------------------------
-    def get_vcf_files(chrm_str):
-        files = sorted([
-            os.path.join(vcf_base, x)
-            for x in listdir(vcf_base)
-            if x.endswith(&quot;.bgz&quot;) and (
-                x.startswith(vcf_prefix + chrm_str + &quot;:&quot;) or
-                x.startswith(vcf_prefix + chrm_str + &quot;.&quot;)
-            )
-        ])
-        if not files:
-            raise FileNotFoundError(f&quot;No VCF files for {chrm_str} in {vcf_base}&quot;)
-        return files
-
-    def open_vcf(vf, sample_subset):
-        &quot;&quot;&quot;Open a VCF file, applying sample subset if provided.&quot;&quot;&quot;
-        vcf = VCF(vf)
-        if sample_subset is not None:
-            vcf_samples = vcf.samples
-            keep = [s for s in vcf_samples if s in sample_subset]
-            if not keep:
-                raise ValueError(f&quot;No sample_list samples in {os.path.basename(vf)}&quot;)
-            vcf.set_samples(keep)
-        return vcf
-
-    def extract_dosage(var):
-        &quot;&quot;&quot;Extract diploid dosage from a cyvcf2 variant. Returns list of floats (nan for missing).&quot;&quot;&quot;
-        return [sum(x[0:2]) for x in [[nan if v == -1 else v for v in gt] for gt in var.genotypes]]
-
-    def fill_missing_col_means(G):
-        col_means = np.nanmean(G, axis=0)
-        return np.where(np.isnan(G), col_means, G)
-
-    # -- Single-pass: scan variants, filter, and collect dosages ---
-    # BED is 0-based half-open [start, end); VCF is 1-based.
-    print(f&quot;[1/3] Scanning {chrm_str} [{block_start:,}, {block_end:,}) ...&quot;)
-    vcf_files = get_vcf_files(chrm_str)
-    region    = f&quot;{chrm_str}:{block_start+1}-{block_end}&quot;
-    var_info  = []
-    dosage_matrix = []
-    n_samples = None
-    # Filter counters
-    n_total = 0
-    n_multiallelic = 0
-    n_monomorphic = 0
-    n_all_na = 0
-    n_low_maf = 0
-    n_low_mac = 0
-    n_high_msng = 0
-
-    for vf in vcf_files:
-        vcf = open_vcf(vf, sample_subset)
-        if n_samples is None:
-            n_samples = len(vcf.samples)
-        for var in vcf(region):
-            if not (block_start &lt;= var.POS - 1 &lt; block_end):
-                continue
-            n_total += 1
-            if len(var.ALT) != 1:
-                n_multiallelic += 1
-                continue
-            dosage = extract_dosage(var)
-            if np.nanvar(dosage) == 0:
-                n_monomorphic += 1
-                continue
-            nan_count = int(np.sum(np.isnan(dosage)))
-            n_non_na  = len(dosage) - nan_count
-            if n_non_na == 0:
-                n_all_na += 1
-                continue
-            alt_sum   = float(np.nansum(dosage))
-            mac       = min(2 * n_non_na - alt_sum, alt_sum)
-            maf       = mac / (2 * n_non_na)
-            af        = alt_sum / (2 * n_non_na)
-            msng_rate = nan_count / len(dosage)
-            if msng_rate &gt; msng_min:
-                n_high_msng += 1
-                continue
-            if maf &lt; maf_min:
-                n_low_maf += 1
-                continue
-            if mac &lt; mac_min:
-                n_low_mac += 1
-                continue
-            var_info.append({
-                &quot;chr&quot;: var.CHROM, &quot;pos&quot;: var.POS,
-                &quot;ref&quot;: var.REF,   &quot;alt&quot;: var.ALT[0],
-                &quot;af&quot;:  round(float(af), 6),
-                &quot;id&quot;:  f&quot;{var.CHROM}:{var.POS}:{var.REF}:{var.ALT[0]}&quot;,
-                &quot;obs_ct&quot;: 2 * n_non_na,
-            })
-            dosage_matrix.append(dosage)
-        vcf.close()
-
-    n_passed = len(var_info)
-    print(f&quot;  {n_total:,} total variants in region&quot;)
-    print(f&quot;  {n_passed:,} passed filters (n={n_samples:,})&quot;)
-    print(f&quot;  Filtered: {n_multiallelic:,} multiallelic, &quot;
-          f&quot;{n_monomorphic:,} monomorphic, {n_all_na:,} all-NA, &quot;
-          f&quot;{n_high_msng:,} high-missingness, &quot;
-          f&quot;{n_low_maf:,} low-MAF, {n_low_mac:,} low-MAC&quot;)
-
-    if not var_info:
-        raise ValueError(f&quot;No passing variants in {chrm_str} [{block_start:,}, {block_end:,})&quot;)
-
-    # -- Load W ----------------------------------------------------
-    print(f&quot;[2/3] Loading W ...&quot;)
-    W = np.load(W_path)
-    if W.shape != (n_samples, B):
-        raise ValueError(f&quot;W shape mismatch: {W.shape} vs ({n_samples},{B})&quot;)
-    W = W.astype(np.float32)
-    print(f&quot;  W: {W.shape}&quot;)
-
-    # -- Compute U = $W^T G$ and write output files --------------------
-    print(f&quot;[3/3] Computing U and writing output files ...&quot;)
-
-    dosage_path = os.path.join(output_dir, f&quot;{cohort_id}.{block_tag}.dosage.gz&quot;)
-    map_path    = os.path.join(output_dir, f&quot;{cohort_id}.{block_tag}.map&quot;)
-    afreq_path  = os.path.join(output_dir, f&quot;{cohort_id}.{block_tag}.afreq&quot;)
-    meta_path   = os.path.join(output_dir, f&quot;{cohort_id}.{block_tag}.meta&quot;)
-
-    # Write .map
-    with open(map_path, &quot;w&quot;) as fh:
-        for v in var_info:
-            fh.write(f&quot;{v[&#39;chr&#39;]}\t{v[&#39;id&#39;]}\t0\t{v[&#39;pos&#39;]}\n&quot;)
-
-    # Write .meta
-    with open(meta_path, &quot;w&quot;) as fh:
-        fh.write(f&quot;source_n_samples={n_samples}\nB={B}\n&quot;)
-        fh.write(f&quot;chrom={chrm_str}\nblock_start={block_start}\nblock_end={block_end}\n&quot;)
-        fh.write(f&quot;n_total={n_total}\nn_passed={n_passed}\n&quot;)
-        fh.write(f&quot;n_multiallelic={n_multiallelic}\nn_monomorphic={n_monomorphic}\n&quot;)
-        fh.write(f&quot;n_all_na={n_all_na}\nn_high_msng={n_high_msng}\n&quot;)
-        fh.write(f&quot;n_low_maf={n_low_maf}\nn_low_mac={n_low_mac}\n&quot;)
-
-
-    # Build G from collected dosages, compute U = $W^T G$, write dosage.gz
-    # Dosage format=1: ID ALT REF val_S1 ... val_SB
-    # Min-max scaling to [0, 2] makes the output plink2-compatible as dosage.
-    # This preserves correlation structure (cor is scale-invariant) which is
-    # what matters for LD computation downstream.
-    G = np.array(dosage_matrix, dtype=np.float32).T  # (n_samples, n_variants)
-    del dosage_matrix
-    G = fill_missing_col_means(G)
-
-    # variant-wise scaling
-    col_mean = G.mean(axis=0, keepdims=True)
-    col_std  = G.std(axis=0, keepdims=True)
-    # avoid division by zero
-    col_std[col_std == 0] = 1.0
-    G = (G - col_mean) / col_std
-
-    U = W.T @ G  # (B, n_variants)
-    del G
-
-    col_min = U.min(axis=0)
-    col_max = U.max(axis=0)
-    denom   = col_max - col_min
-    denom[denom == 0] = 1.0
-    U = 2.0 * (U - col_min) / denom
-    U = np.round(U, 4)
-
-    # Record the col min and max for U
-
-    with open(afreq_path, &quot;w&quot;) as fh:
-        # Add column headers
-        fh.write(&quot;#CHROM\tID\tREF\tALT\tALT_FREQS\tOBS_CT\tU_MIN\tU_MAX\n&quot;)
-        for j, v in enumerate(var_info):
-            fh.write(f&quot;{v[&#39;chr&#39;]}\t{v[&#39;id&#39;]}\t{v[&#39;ref&#39;]}\t{v[&#39;alt&#39;]}\t&quot;
-                     f&quot;{v[&#39;af&#39;]:.6f}\t{v[&#39;obs_ct&#39;]}\t&quot;
-                     f&quot;{col_min[j]:.6f}\t{col_max[j]:.6f}\n&quot;)
-
-    with gzip.open(dosage_path, &quot;wt&quot;, compresslevel=4) as gz:
-        for j, v in enumerate(var_info):
-            vals = &quot; &quot;.join(f&quot;{x:.4f}&quot; for x in U[:, j])
-            gz.write(f&quot;{v[&#39;id&#39;]} {v[&#39;alt&#39;]} {v[&#39;ref&#39;]} {vals}\n&quot;)
-
-    del U
-    print(f&quot;  Written: {len(var_info):,} variants -&gt; {os.path.basename(dosage_path)}&quot;)
-    print(f&quot;  Written: {os.path.basename(map_path)}, {os.path.basename(afreq_path)}&quot;)
-    print(f&quot;\nDone: {chrm_str} [{block_start:,}, {block_end:,})&quot;)
+bash: expand = &quot;${ }&quot;
+    Rscript ${modular_script_dir}/reference_data/rss_ld_sketch.R \
+        --step process_block \
+        --vcf-base ${vcf_base} \
+        --vcf-prefix ${vcf_prefix} \
+        --chrom ${_blocks[&quot;chr&quot;]} \
+        --block-start ${_blocks[&quot;start&quot;]} \
+        --block-end ${_blocks[&quot;end&quot;]} \
+        --w-matrix ${W_matrix} \
+        --cohort-id ${cohort_id} \
+        --output-dir ${output_dir} \
+        --B ${B} \
+        --maf-min ${maf_min} \
+        --mac-min ${mac_min} \
+        --msng-min ${msng_min} \
+        --sample-list &quot;${sample_list}&quot;
 </pre></div>
 </div>
 </div>
@@ -1089,16 +854,14 @@ parameter: plink2_bin = &quot;plink2&quot;
 
 import os, glob
 
-def chromsto_process(output_dir, chrom_filter):
-    if chrom_filter != 0:
-        return [f&quot;chr{chrom_filter}&quot;]
-    return sorted(set(
-        os.path.basename(d)
-        for d in glob.glob(os.path.join(output_dir, &quot;chr*&quot;))
-        if os.path.isdir(d)
+if chrom != 0:
+    chroms = [f&quot;chr{chrom}&quot;]
+else:
+    chroms = sorted(set(
+        os.path.basename(_d)
+        for _d in glob.glob(os.path.join(output_dir, &quot;chr*&quot;))
+        if os.path.isdir(_d)
     ))
-
-chroms = chromsto_process(output_dir, chrom)
 
 input: for_each = &quot;chroms&quot;
 output: f&quot;{output_dir}/{_chroms}/{cohort_id}.{_chroms}.pgen&quot;
@@ -1175,18 +938,17 @@ bash: expand = &quot;$[ ]&quot;
 
 R: expand = &quot;$[ ]&quot;
 
-    library(data.table)
     meta_files &lt;- list.files(&quot;$[output_dir]/$[_chroms]&quot;,
                              pattern = &quot;[.]meta$&quot;, recursive = TRUE,
                              full.names = TRUE)
     if (length(meta_files) &gt; 0) {
       fields &lt;- c(&quot;n_total&quot;, &quot;n_passed&quot;, &quot;n_multiallelic&quot;, &quot;n_monomorphic&quot;,
                   &quot;n_all_na&quot;, &quot;n_high_msng&quot;, &quot;n_low_maf&quot;, &quot;n_low_mac&quot;)
-      stats &lt;- rbindlist(lapply(meta_files, function(f) {
+      stats &lt;- do.call(rbind, lapply(meta_files, function(f) {
         lines &lt;- grep(&quot;^n_&quot;, readLines(f), value = TRUE)
         kv &lt;- strsplit(lines, &quot;=&quot;)
         vals &lt;- setNames(as.integer(sapply(kv, `[`, 2)), sapply(kv, `[`, 1))
-        as.data.table(as.list(vals[fields]))
+        as.data.frame(as.list(vals[fields]))
       }))
       totals &lt;- colSums(stats, na.rm = TRUE)
       summary &lt;- data.frame(t(totals))
@@ -1226,7 +988,7 @@ bash: expand = &quot;$[ ]&quot;
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">W</span> <span class="pre">shape</span> <span class="pre">mismatch</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">--n-samples</span></code> or <code class="docutils literal notranslate"><span class="pre">--B</span></code> differs from the W used</p></td>
-<td><p>Re-run <code class="docutils literal notranslate"><span class="pre">generate_W</span></code> with the same <code class="docutils literal notranslate"><span class="pre">--n-samples</span></code> and <code class="docutils literal notranslate"><span class="pre">--B</span></code>, and pass that <code class="docutils literal notranslate"><span class="pre">W_B{B}.npy</span></code> to <code class="docutils literal notranslate"><span class="pre">process_block</span></code>.</p></td>
+<td><p>Re-run <code class="docutils literal notranslate"><span class="pre">generate_W</span></code> with the same <code class="docutils literal notranslate"><span class="pre">--n-samples</span></code> and <code class="docutils literal notranslate"><span class="pre">--B</span></code>, and pass that <code class="docutils literal notranslate"><span class="pre">W_B{B}.rds</span></code> to <code class="docutils literal notranslate"><span class="pre">process_block</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">passing</span> <span class="pre">variants</span> <span class="pre">in</span> <span class="pre">chrXX</span></code></p></td>
 <td><p>Filters removed everything (small toy cohort)</p></td>

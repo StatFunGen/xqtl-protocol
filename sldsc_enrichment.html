@@ -615,7 +615,7 @@
 <h1>Stratified LD Score Regression (S-LDSC) Enrichment<a class="headerlink" href="#stratified-ld-score-regression-s-ldsc-enrichment" title="Link to this heading">#</a></h1>
 <p>Minimal working-example driver for the S-LDSC functional-enrichment pipeline. The <strong>Steps</strong> section below gives one ready-to-run <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span></code> command per workflow, using the toy inputs symlinked under <code class="docutils literal notranslate"><span class="pre">input/</span></code>.</p>
 <blockquote>
-<div><p><strong>Environment note.</strong> Steps 1–2 (<code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code>, <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code>) wrap the external <strong>polyfun</strong> toolkit (<code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code>, <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code>, <code class="docutils literal notranslate"><span class="pre">munge_polyfun_sumstats.py</span></code>) and require pre-computed reference-panel files (baseline-LD scores, LD weights, <code class="docutils literal notranslate"><span class="pre">.frq</span></code>, and PLINK <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>). polyfun is <strong>not installed in this environment</strong> and the reference panel is not shipped with the toy example, so those two steps cannot be executed here; their commands are provided for use on a system where polyfun and a matching panel are available. Steps 3–4 (<code class="docutils literal notranslate"><span class="pre">postprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">meta_subset</span></code>) use <code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline</span></code> (available here) and read the <code class="docutils literal notranslate"><span class="pre">.results</span></code>/<code class="docutils literal notranslate"><span class="pre">.log</span></code> files produced by Step 2.</p>
+<div><p><strong>Environment note.</strong> Steps 1–2 (<code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code>, <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code>) wrap the external <strong>polyfun</strong> toolkit (<code class="docutils literal notranslate"><span class="pre">compute_ldscores</span></code>, <code class="docutils literal notranslate"><span class="pre">ldsc</span></code>, <code class="docutils literal notranslate"><span class="pre">munge_polyfun_sumstats</span></code>) and require pre-computed reference-panel files (baseline-LD scores, LD weights, <code class="docutils literal notranslate"><span class="pre">.frq</span></code>, and PLINK <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>). polyfun is <strong>not installed in this environment</strong> and the reference panel is not shipped with the toy example, so those two steps cannot be executed here; their commands are provided for use on a system where polyfun and a matching panel are available. Steps 3–4 (<code class="docutils literal notranslate"><span class="pre">postprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">meta_subset</span></code>) use <code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline</span></code> (available here) and read the <code class="docutils literal notranslate"><span class="pre">.results</span></code>/<code class="docutils literal notranslate"><span class="pre">.log</span></code> files produced by Step 2.</p>
 </div></blockquote>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
@@ -627,7 +627,7 @@
 <section id="methods-workflow-overview">
 <h2>Methods - Workflow Overview<a class="headerlink" href="#methods-workflow-overview" title="Link to this heading">#</a></h2>
 <p>The pipeline runs in three stages: (1) annotation preparation and the S-LDSC regression (polyfun), (2) post-processing into standardized <span class="math notranslate nohighlight">\(\tau^*\)</span> and meta-analysis (the <code class="docutils literal notranslate"><span class="pre">pecotmr</span></code> package), and (3) optional re-meta on user-defined trait subsets. The concrete commands for stages 1-2 are in the <strong>Steps</strong> section below.</p>
-<p><strong>Stage 1 - polyfun.</strong> Three SoS workflows wrap polyfun: <code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code> converts target annotations into polyfun <code class="docutils literal notranslate"><span class="pre">.annot.gz</span></code> and runs <code class="docutils literal notranslate"><span class="pre">compute_ldscores.py</span></code> (toggles <code class="docutils literal notranslate"><span class="pre">compute_single</span></code> and <code class="docutils literal notranslate"><span class="pre">compute_joint</span></code>, both default <code class="docutils literal notranslate"><span class="pre">True</span></code>; the joint dir is only emitted when <span class="math notranslate nohighlight">\(N \geq 2\)</span>); <code class="docutils literal notranslate"><span class="pre">munge_sumstats_polyfun</span></code> preprocesses each GWAS into LDSC format; <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> runs polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code> once per <code class="docutils literal notranslate"><span class="pre">--target-anno-dir</span></code>, enforcing the MAF cutoff via <code class="docutils literal notranslate"><span class="pre">--frqfile-chr</span></code> (<code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> accepts only <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">0.05</span></code>).</p>
+<p><strong>Stage 1 - polyfun.</strong> Three SoS workflows wrap polyfun: <code class="docutils literal notranslate"><span class="pre">make_annotation_files_ldscore</span></code> converts target annotations into polyfun <code class="docutils literal notranslate"><span class="pre">.annot.gz</span></code> and runs <code class="docutils literal notranslate"><span class="pre">compute_ldscores</span></code> (toggles <code class="docutils literal notranslate"><span class="pre">compute_single</span></code> and <code class="docutils literal notranslate"><span class="pre">compute_joint</span></code>, both default <code class="docutils literal notranslate"><span class="pre">True</span></code>; the joint dir is only emitted when <span class="math notranslate nohighlight">\(N \geq 2\)</span>); <code class="docutils literal notranslate"><span class="pre">munge_sumstats_polyfun</span></code> preprocesses each GWAS into LDSC format; <code class="docutils literal notranslate"><span class="pre">get_heritability</span></code> runs polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc</span></code> once per <code class="docutils literal notranslate"><span class="pre">--target-anno-dir</span></code>, enforcing the MAF cutoff via <code class="docutils literal notranslate"><span class="pre">--frqfile-chr</span></code> (<code class="docutils literal notranslate"><span class="pre">maf_cutoff</span></code> accepts only <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">0.05</span></code>).</p>
 <p><strong>Stage 2 - pecotmr post-processing.</strong> A single <code class="docutils literal notranslate"><span class="pre">pecotmr::sldscPostprocessingPipeline</span></code> call consumes all polyfun outputs: it extracts <span class="math notranslate nohighlight">\(\tau\)</span>, <span class="math notranslate nohighlight">\(E\)</span>, <span class="math notranslate nohighlight">\(h^2_g\)</span>, EnrichStat p-value and per-block jackknife <span class="math notranslate nohighlight">\(\tau\)</span> values; computes <span class="math notranslate nohighlight">\(sd_C\)</span> and <span class="math notranslate nohighlight">\(M_{\mathrm{ref}}\)</span> over the regression’s MAF-cutoff SNP set; standardizes <span class="math notranslate nohighlight">\(\tau \to \tau^*\)</span> for single and joint modes; auto-detects binary vs continuous annotations; and runs a DerSimonian-Laird random-effects meta-analysis across traits, producing three meta tables (<span class="math notranslate nohighlight">\(\tau^*\)</span> cross-type comparable, <span class="math notranslate nohighlight">\(E\)</span> within-binary, EnrichStat within-binary). Output is an R list with <code class="docutils literal notranslate"><span class="pre">per_trait</span></code> and <code class="docutils literal notranslate"><span class="pre">meta</span></code> entries.</p>
 <p><strong>Stage 3 - subset meta-analysis.</strong> <code class="docutils literal notranslate"><span class="pre">pecotmr::metaSldscRandom</span></code> re-runs the meta on a trait subset without re-running the regression (lightweight, interactive):</p>
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;sldsc_results.rds&quot;</span><span class="p">)</span>
@@ -698,7 +698,7 @@
 </section>
 <section id="quantities-from-the-regression-layer-polyfun">
 <h4>Quantities from the regression layer (polyfun)<a class="headerlink" href="#quantities-from-the-regression-layer-polyfun" title="Link to this heading">#</a></h4>
-<p>Solving Equation (2) jointly across annotations, with 200-block genomic jackknife for inference, is performed by polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc.py</span></code>. From each polyfun run we obtain, per annotation:</p>
+<p>Solving Equation (2) jointly across annotations, with 200-block genomic jackknife for inference, is performed by polyfun’s <code class="docutils literal notranslate"><span class="pre">ldsc</span></code>. From each polyfun run we obtain, per annotation:</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(\tau_C\)</span> and its standard error — <strong>(polyfun)</strong>.</p></li>
 <li><p><span class="math notranslate nohighlight">\(\pi^{h^2}_C\)</span> and <span class="math notranslate nohighlight">\(\pi^{M}_C\)</span> — <strong>(polyfun)</strong>.</p></li>
@@ -859,8 +859,7 @@ with \)</span>B = 200$, used as the per-trait input to cross-trait meta-analysis
   --genome_ref_file input/enrichment/sldsc/genome_reference_bfile.txt \
   --annotation_name protocol_example \
   --plink_name reference. --baseline_name annotations. --weight_name weights. \
-  --python_exec python \
-  --polyfun_path polyfun \
+  \
   --cwd output/sldsc_ldscore -j 4
 </pre></div>
 </div>
@@ -910,7 +909,6 @@ INFO: Workflow make_annotation_files_ldscore (ID=weae0ca3fdf468fd8) is executed 
 #     --min-info 0.6 \
 #     --min-maf 0.001 \
 #     --chi2-cutoff 30 \
-#     --polyfun_path data/github/polyfun \
 #     --cwd data/polyfun_new/example_data
 </pre></div>
 </div>
@@ -947,8 +945,7 @@ INFO: Workflow make_annotation_files_ldscore (ID=weae0ca3fdf468fd8) is executed 
   --baseline_ld_dir input/enrichment/sldsc \
   --weights_dir input/enrichment/sldsc \
   --plink_name reference. --baseline_name annotations. --weight_name weights. \
-  --annotation_name protocol_example --python_exec python \
-  --polyfun_path ../polyfun \
+  --annotation_name protocol_example \
   --maf_cutoff 0 --cwd output/sldsc_heritability -j 4
 
 </pre></div>
@@ -1001,8 +998,7 @@ meta across all traits.</p>
   --heritability_cwd output/sldsc_heritability \
   --target_categories ANNOT_0 --target_categories_label protocol_example_annotation \
   --target_anno_dir output/sldsc_ldscore/protocol_example_single_1 \
-  --annotation_name protocol_example --python_exec python \
-  --polyfun_path ../polyfun \
+  --annotation_name protocol_example \
   --maf_cutoff 0 --cwd output/sldsc_postprocess -j 4
 
 </pre></div>
@@ -1039,8 +1035,7 @@ INFO: Workflow postprocess (ID=wb64dc2b84958960c) is executed successfully with 
   --postprocess_rds output/sldsc_postprocess/protocol_example.sldsc_postprocess.rds \
   --subset_traits_file input/enrichment/sldsc/sumstats_test_category1.txt \
   --subset_name category1 --target_categories ANNOT_0 \
-  --annotation_name protocol_example --python_exec python \
-  --polyfun_path ../polyfun \
+  --annotation_name protocol_example \
   --maf_cutoff 0 --cwd output/sldsc_postprocess -j 4
 </pre></div>
 </div>
@@ -1135,8 +1130,6 @@ INFO: Workflow meta_subset (ID=w09a2a0530119f1d2) is executed successfully with 
 parameter: cwd = path(&#39;output&#39;)
 # Prefix for the analysis output
 parameter: annotation_name = str
-parameter: python_exec = &quot;python&quot; # e.g. &quot;/home/you/.conda/envs/polyfun/bin/python&quot;
-parameter: polyfun_path   = path # e.g. &quot;/home/you/tools/polyfun&quot;
 # Directory holding the modular R wrapper scripts (code/script).
 parameter: modular_script_dir = path(&#39;code/script&#39;)
 
@@ -1214,15 +1207,15 @@ parameter: mem = &#39;16G&#39;
 #
 # --- snplist (--snp_list) vs no-snplist: which polyfun script, output format,
 #     column name, and the CM requirement ---
-#   --snp_list given  -&gt; ldsc.py --l2 --print-snps   -&gt; output .l2.ldscore.gz
-#   --snp_list absent -&gt; compute_ldscores.py         -&gt; output .l2.ldscore.parquet
+#   --snp_list given  -&gt; ldsc --l2 --print-snps   -&gt; output .l2.ldscore.gz
+#   --snp_list absent -&gt; compute_ldscores         -&gt; output .l2.ldscore.parquet
 #
 #   LD-score column name (this is what becomes the .results &quot;Category&quot; in
 #   [get_heritability], with a &quot;_&lt;ref-ld-index&gt;&quot; suffix appended there):
-#     * compute_ldscores.py  ALWAYS keeps the annot column name(s):
+#     * compute_ldscores  ALWAYS keeps the annot column name(s):
 #         single annot column &quot;ANNOT&quot;          -&gt; ldscore column &quot;ANNOT&quot;
 #         joint  annot columns &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...  -&gt; &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...
-#     * ldsc.py --l2 has a quirk: with EXACTLY ONE annotation (n_annot == 1) it
+#     * ldsc --l2 has a quirk: with EXACTLY ONE annotation (n_annot == 1) it
 #       HARD-CODES the ldscore column name to &quot;L2&quot; and DROPS the annot&#39;s original
 #       column name. With &gt;=2 annotations it uses &quot;&lt;annot_name&gt;L2&quot;
 #       (&quot;ANNOT_1L2&quot;,&quot;ANNOT_2L2&quot;,...).
@@ -1230,7 +1223,7 @@ parameter: mem = &#39;16G&#39;
 #        single-target no-snplist run reports &quot;ANNOT_0&quot;.  [postprocess] auto-
 #        detects either; only matters if you pass --target-categories explicitly.
 #
-#   CM column requirement for snplist:  ldsc.py --l2 --print-snps requires the
+#   CM column requirement for snplist:  ldsc --l2 --print-snps requires the
 #   target annot to (a) carry a &quot;CM&quot; (centimorgan) column and (b) line up with
 #   the plink .bim (same SNP set, same row order). This step handles both
 #   internally (normalize_for_ldsc: takes CM from the .bim 4th column, re-expands
@@ -1243,7 +1236,7 @@ parameter: compute_joint = True
 parameter: score_column = 3
 parameter: is_range = False
 
-import pandas as pd
+import csv
 import os
 
 if not (compute_single or compute_joint):
@@ -1264,56 +1257,50 @@ def adapt_file_path(file_path, reference_file):
         return file_prefixed
     raise FileNotFoundError(f&quot;No valid path found for file: {file_path}&quot;)
 
+def _read_tsv(p):
+    with open(p) as _f:
+        return list(csv.DictReader(_f, delimiter=&quot;\t&quot;))
 
-# ---- Parse inputs and determine N ----
+# ---- Parse inputs and determine N (stdlib; no pandas so it runs in the base env) ----
 if (str(annotation_file).endswith((&#39;rds&#39;, &#39;tsv&#39;, &#39;txt&#39;, &#39;tsv.gz&#39;, &#39;txt.gz&#39;)) and
     str(reference_anno_file).endswith(&#39;annot.gz&#39;)):
     # Case 1: direct file paths (single-chromosome run). Multiple target files separated by &#39;,&#39;.
     target_files_direct = str(annotation_file).split(&#39;,&#39;)
     N_targets = len(target_files_direct)
-    target_names = [f&quot;target_{i+1}&quot; for i in range(N_targets)]
     input_files = [[*target_files_direct, str(reference_anno_file), str(genome_ref_file)]]
-    if len(chromosome) &gt; 0:
-        input_chroms = [int(x) for x in chromosome]
-    else:
-        input_chroms = [0]
+    input_chroms = [int(x) for x in chromosome] if len(chromosome) &gt; 0 else [0]
 else:
     # Case 2: txt list with #id and one or more &#39;path&#39; columns
-    target_files_df = pd.read_csv(annotation_file, sep=&quot;\t&quot;)
-    reference_files = pd.read_csv(reference_anno_file, sep=&quot;\t&quot;)
-    genome_ref_files = pd.read_csv(genome_ref_file, sep=&quot;\t&quot;)
-
-    target_files_df[&quot;#id&quot;] = [x.replace(&quot;chr&quot;, &quot;&quot;) for x in target_files_df[&quot;#id&quot;].astype(str)]
-    reference_files[&quot;#id&quot;]  = [x.replace(&quot;chr&quot;, &quot;&quot;) for x in reference_files[&quot;#id&quot;].astype(str)]
-    genome_ref_files[&quot;#id&quot;] = [x.replace(&quot;chr&quot;, &quot;&quot;) for x in genome_ref_files[&quot;#id&quot;].astype(str)]
-
-    path_columns = [c for c in target_files_df.columns if c.startswith(&#39;path&#39;)]
+    _tgt = _read_tsv(annotation_file); _ref = _read_tsv(reference_anno_file); _gen = _read_tsv(genome_ref_file)
+    for _rows in (_tgt, _ref, _gen):
+        for _r in _rows:
+            _r[&quot;#id&quot;] = str(_r[&quot;#id&quot;]).replace(&quot;chr&quot;, &quot;&quot;)
+    path_columns = [k for k in _tgt[0].keys() if k.startswith(&quot;path&quot;)]
     N_targets = len(path_columns)
-    target_names = path_columns[:]   # &#39;path&#39;, &#39;path1&#39;, &#39;path2&#39;, ...
-
-    for col in path_columns:
-        target_files_df[col] = target_files_df[col].apply(lambda x: adapt_file_path(x, str(annotation_file)))
-    reference_files[&quot;path&quot;] = reference_files[&quot;path&quot;].apply(lambda x: adapt_file_path(x, str(reference_anno_file)))
-    genome_ref_files[&quot;path&quot;] = genome_ref_files[&quot;path&quot;].apply(lambda x: adapt_file_path(x, str(genome_ref_file)))
-
-    merged = target_files_df.merge(reference_files, on=&quot;#id&quot;).merge(genome_ref_files, on=&quot;#id&quot;)
-    if len(chromosome) &gt; 0:
-        merged = merged[merged[&quot;#id&quot;].isin([str(c) for c in chromosome])]
-
-    rows = merged.values.tolist()
-    input_chroms = [r[0] for r in rows]
-    input_files = [[*r[1:N_targets+1], r[-2], r[-1]] for r in rows]
+    for _r in _tgt:
+        for _c in path_columns:
+            _r[_c] = adapt_file_path(_r[_c], str(annotation_file))
+    _ref_by = {_r[&quot;#id&quot;]: adapt_file_path(_r[&quot;path&quot;], str(reference_anno_file)) for _r in _ref}
+    _gen_by = {_r[&quot;#id&quot;]: adapt_file_path(_r[&quot;path&quot;], str(genome_ref_file)) for _r in _gen}
+    _keep = set(str(c) for c in chromosome) if len(chromosome) &gt; 0 else None
+    input_chroms = []; input_files = []
+    for _r in _tgt:                                    # inner-join on #id, preserving target order
+        _id = _r[&quot;#id&quot;]
+        if _id not in _ref_by or _id not in _gen_by:
+            continue
+        if _keep is not None and _id not in _keep:
+            continue
+        input_chroms.append(_id)
+        input_files.append([_r[_c] for _c in path_columns] + [_ref_by[_id], _gen_by[_id]])
 
 # ---- Determine output format ----
 use_print_snps = snp_list.is_file()
 ldscore_ext = &quot;l2.ldscore.gz&quot; if use_print_snps else &quot;l2.ldscore.parquet&quot;
 
 if ld_wind_kb &gt; 0:
-    use_kb_window = True
     ld_window_param = ld_wind_kb
     ld_window_flag = &quot;--ld-wind-kb&quot;
 else:
-    use_kb_window = False
     ld_window_param = ld_wind_cm
     ld_window_flag = &quot;--ld-wind-cm&quot;
 
@@ -1340,149 +1327,20 @@ output: chrom_outputs(input_chroms[_index])
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
 
-# ----------------------------------------------------------------------------
-# Step A: write the requested .annot files for this chromosome.
-# ----------------------------------------------------------------------------
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
-    library(data.table)
+# ---- Step A: write the .annot.gz files for this chromosome (R worker) ----
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+    Rscript ${modular_script_dir}/enrichment/make_annotation.R --step annot \
+        --targets ${&quot;,&quot;.join(str(p.absolute()) for p in _input[:-2])} \
+        --reference-anno ${_input[-2]:a} \
+        --bfile-prefix ${_input[-1]:na} \
+        --score-column ${score_column} \
+        ${(&#39;--is-range&#39; if is_range else &#39;&#39;)} \
+        ${(&#39;--use-print-snps&#39; if use_print_snps else &#39;&#39;)} \
+        ${(&#39;--emit-single&#39; if emit_single else &#39;&#39;)} \
+        ${(&#39;--emit-joint&#39; if emit_joint else &#39;&#39;)} \
+        --annotation-name ${annotation_name} --cwd ${cwd:a} --chrom ${input_chroms[_index]}
 
-    clean_chr &lt;- function(x) as.numeric(gsub(&quot;^chr&quot;, &quot;&quot;, x))
-
-    process_range_data &lt;- function(data, chr_value) {
-        data$chr &lt;- clean_chr(data$chr)
-        data &lt;- data[data$chr == chr_value,]
-        if (nrow(data) == 0) return(NULL)
-        expanded &lt;- lapply(seq_len(nrow(data)), function(j) {
-            row &lt;- data[j,]
-            pos_seq &lt;- seq(row$start, row$end - 1)
-            result &lt;- data.frame(chr = rep(row$chr, length(pos_seq)), pos = pos_seq)
-            if (ncol(data) &gt; 3) {
-                for (col in 4:ncol(data))
-                    result[[names(data)[col]]] &lt;- rep(row[[col]], length(pos_seq))
-            }
-            result
-        })
-        unique(rbindlist(expanded))
-    }
-
-    process_annotation &lt;- function(target_anno, ref_anno, score_column_value) {
-        target_anno &lt;- as.data.frame(target_anno)
-        ref_anno    &lt;- as.data.frame(ref_anno)
-        target_anno$chr &lt;- clean_chr(target_anno$chr)
-        ref_anno$CHR    &lt;- clean_chr(ref_anno$CHR)
-        chr_value &lt;- unique(ref_anno$CHR)
-        anno_scores &lt;- rep(0, nrow(ref_anno))
-        match_pos &lt;- match(target_anno$pos, ref_anno$BP)
-        valid_pos &lt;- as.numeric(na.omit(match_pos))
-        if (score_column_value &lt;= ncol(target_anno)) {
-            anno_scores[valid_pos] &lt;- target_anno[[score_column_value]][!is.na(match_pos)]
-        } else {
-            anno_scores[valid_pos] &lt;- 1
-            print(&quot;Warning: score column does not exist; setting scores to 1&quot;)
-        }
-        anno_scores
-    }
-
-    read_target_anno &lt;- function(file_path, ref_anno) {
-        if (endsWith(file_path, &quot;rds&quot;)) {
-            target_anno &lt;- readRDS(file_path)
-            return(process_annotation(target_anno, ref_anno, ${score_column}))
-        }
-        target_anno &lt;- fread(file_path)
-        if (${&quot;TRUE&quot; if is_range else &quot;FALSE&quot;}) {
-            names(target_anno)[1:3] &lt;- c(&quot;chr&quot;, &quot;start&quot;, &quot;end&quot;)
-            target_anno &lt;- process_range_data(target_anno, unique(ref_anno$CHR))
-            if (is.null(target_anno)) return(rep(0, nrow(ref_anno)))
-        } else {
-            names(target_anno)[1:2] &lt;- c(&quot;chr&quot;, &quot;pos&quot;)
-        }
-        process_annotation(target_anno, ref_anno, ${score_column})
-    }
-
-    # ---- Read reference annotation ----
-    ref_anno &lt;- as.data.frame(fread(${_input[-2]:ar}))
-    if (&quot;ANNOT&quot; %in% colnames(ref_anno)) ref_anno &lt;- ref_anno[, -which(colnames(ref_anno) == &quot;ANNOT&quot;)]
-
-    # ---- Compute per-target annotation scores ----
-    target_files &lt;- c(${&quot;,&quot;.join(&#39;&quot;%s&quot;&#39; % str(p.absolute()) for p in _input[:-2])})
-    N_local &lt;- length(target_files)
-    score_list &lt;- lapply(target_files, read_target_anno, ref_anno = ref_anno)
-
-    emit_single_local &lt;- ${&quot;TRUE&quot; if emit_single else &quot;FALSE&quot;}
-    emit_joint_local  &lt;- ${&quot;TRUE&quot; if emit_joint  else &quot;FALSE&quot;}
-    use_print_snps_local &lt;- ${&quot;TRUE&quot; if use_print_snps else &quot;FALSE&quot;}
-    bfile_prefix         &lt;- &quot;${_input[-1]:na}&quot;
-
-    # Reshape annot to match .bim panel for ldsc.py --l2 --print-snps
-    # (drop A1/A2/MAF, expand to .bim rows filling 0, take CM from .bim).
-    normalize_for_ldsc &lt;- function(df) {
-        if (!use_print_snps_local) return(df)
-        df &lt;- df[, !names(df) %in% c(&quot;A1&quot;, &quot;A2&quot;, &quot;MAF&quot;, &quot;CM&quot;), drop = FALSE]
-        annot_cols &lt;- setdiff(names(df), c(&quot;CHR&quot;, &quot;BP&quot;, &quot;SNP&quot;))
-        bim &lt;- as.data.frame(fread(paste0(bfile_prefix, &quot;.bim&quot;), header = FALSE,
-                                   col.names = c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;CM&quot;, &quot;BP&quot;, &quot;A1&quot;, &quot;A2&quot;)))
-        bim$CHR &lt;- as.character(bim$CHR); df$CHR &lt;- as.character(df$CHR)
-        idx &lt;- match(bim$SNP, df$SNP)
-        out &lt;- data.frame(CHR = bim$CHR, BP = bim$BP, SNP = bim$SNP, CM = bim$CM,
-                          stringsAsFactors = FALSE)
-        for (col in annot_cols) {
-            v &lt;- rep(0, nrow(bim))
-            non_na &lt;- !is.na(idx)
-            v[non_na] &lt;- df[[col]][idx[non_na]]
-            out[[col]] &lt;- v
-        }
-        out
-    }
-
-    # ---- Write N single-target .annot files (when requested) ----
-    if (emit_single_local) {
-        for (i in seq_len(N_local)) {
-            out_anno &lt;- ref_anno
-            out_anno$ANNOT &lt;- score_list[[i]]
-            out_anno &lt;- normalize_for_ldsc(out_anno)
-            name &lt;- paste0(&quot;${annotation_name}&quot;, &quot;_single_&quot;, i)
-            out_path_gz  &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.${input_chroms[_index]}.annot.gz&quot;))
-            out_path_tsv &lt;- sub(&quot;\\.gz$&quot;, &quot;&quot;, out_path_gz)
-            dir.create(dirname(out_path_gz), showWarnings = FALSE, recursive = TRUE)
-            fwrite(out_anno, out_path_tsv, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = &quot;\t&quot;)
-        }
-    }
-
-    # ---- Optionally write joint .annot ----
-    if (emit_joint_local) {
-        joint_anno &lt;- ref_anno
-        for (i in seq_len(N_local)) {
-            joint_anno[[paste0(&quot;ANNOT_&quot;, i)]] &lt;- score_list[[i]]
-        }
-        joint_anno &lt;- normalize_for_ldsc(joint_anno)
-        joint_name   &lt;- paste0(&quot;${annotation_name}&quot;, &quot;_joint&quot;)
-        joint_out_gz &lt;- file.path(&quot;${cwd:a}&quot;, joint_name, paste0(joint_name, &quot;.${input_chroms[_index]}.annot.gz&quot;))
-        joint_out_tsv &lt;- sub(&quot;\\.gz$&quot;, &quot;&quot;, joint_out_gz)
-        dir.create(dirname(joint_out_gz), showWarnings = FALSE, recursive = TRUE)
-        fwrite(joint_anno, joint_out_tsv, quote = FALSE, col.names = TRUE, row.names = FALSE, sep = &quot;\t&quot;)
-    }
-
-# ----------------------------------------------------------------------------
-# Step B: gzip all annot files. Uses expand=&quot;$[ ]&quot; so bash ${var} survives.
-# ----------------------------------------------------------------------------
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
-    set -e
-    annots=()
-    if [ &quot;$[str(emit_single)]&quot; = &quot;True&quot; ]; then
-        for i in $(seq 1 $[N_targets]); do
-            annots+=(&quot;$[cwd:a]/$[annotation_name]_single_$i/$[annotation_name]_single_$i.$[input_chroms[_index]].annot&quot;)
-        done
-    fi
-    if [ &quot;$[str(emit_joint)]&quot; = &quot;True&quot; ]; then
-        annots+=(&quot;$[cwd:a]/$[annotation_name]_joint/$[annotation_name]_joint.$[input_chroms[_index]].annot&quot;)
-    fi
-    for a in &quot;${annots[@]}&quot;; do
-        gzip -f &quot;$a&quot;
-    done
-
-# ----------------------------------------------------------------------------
-# Step C: run polyfun&#39;s LD-score computation for each emitted annotation file.
-# ----------------------------------------------------------------------------
+# ---- Step C: run polyfun&#39;s LD-score computation for each emitted annotation file (external). ----
 bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout = f&#39;{_output[1]}.stdout&#39;
     set -e
     chrom=&quot;$[input_chroms[_index]]&quot;
@@ -1491,7 +1349,7 @@ bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout
         local annot=&quot;$1&quot;
         local out_prefix=&quot;$2&quot;
         if [ &quot;$[str(use_print_snps)]&quot; = &quot;True&quot; ]; then
-            $[python_exec] $[polyfun_path]/ldsc.py \
+            ldsc \
                 --print-snps $[snp_list] \
                 $[ld_window_flag] $[ld_window_param] \
                 --out &quot;$out_prefix&quot; \
@@ -1500,7 +1358,7 @@ bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout
                 --annot &quot;$annot&quot; \
                 --l2
         else
-            $[python_exec] $[polyfun_path]/compute_ldscores.py \
+            compute_ldscores \
                 --annot &quot;$annot&quot; \
                 --bfile $[_input[-1]:nar] \
                 $[ld_window_flag] $[ld_window_param] \
@@ -1524,56 +1382,14 @@ bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout
         run_polyfun &quot;$annot&quot; &quot;$prefix&quot;
     fi
 
-# ----------------------------------------------------------------------------
-# Step D: write .l2.M and .l2.M_5_50 files for each emitted annotation directory.
-# ----------------------------------------------------------------------------
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[2]}.stderr&#39;, stdout = f&#39;{_output[2]}.stdout&#39;
-    suppressPackageStartupMessages({ library(data.table); library(dplyr) })
-    use_print_snps &lt;- ${str(use_print_snps).upper()}
-
-    chrom &lt;- &quot;${input_chroms[_index]}&quot;
-    # Look up .frq file under frqfile_dir, using plink_name + chrom (matches cell 25).
-    frq_file &lt;- file.path(&quot;${frqfile_dir}&quot;, paste0(&quot;${plink_name}&quot;, chrom, &quot;.frq&quot;))
-    has_frq  &lt;- file.exists(frq_file)
-    frq_dt &lt;- if (has_frq) fread(frq_file)[, .(SNP, MAF)] else NULL
-
-    write_M_files &lt;- function(annot_path, ldscore_path, m_path) {
-        if (use_print_snps &amp;&amp; file.exists(m_path) &amp;&amp; file.exists(paste0(m_path, &quot;_5_50&quot;))) {
-            cat(&quot;M files already exist for&quot;, m_path, &quot;\n&quot;); return(invisible())
-        }
-        ldscore_dt &lt;- if (endsWith(ldscore_path, &quot;.parquet&quot;)) {
-            suppressPackageStartupMessages(library(arrow)); arrow::read_parquet(ldscore_path)
-        } else fread(ldscore_path)
-        annot_dt &lt;- fread(annot_path)
-        annot_filtered &lt;- annot_dt[annot_dt$SNP %in% ldscore_dt$SNP, ]
-        merged &lt;- if (has_frq) merge(annot_filtered, frq_dt, by = &quot;SNP&quot;, all.x = TRUE) else annot_filtered
-        std_cols &lt;- c(&quot;CHR&quot;, &quot;SNP&quot;, &quot;BP&quot;, &quot;CM&quot;, &quot;A1&quot;, &quot;A2&quot;, if (has_frq) &quot;MAF&quot;)
-        annot_cols &lt;- setdiff(names(merged), std_cols)
-        if (length(annot_cols) == 0L) { merged[, ANNOT := 1L]; annot_cols &lt;- &quot;ANNOT&quot; }
-        M &lt;- merged[, lapply(.SD, sum, na.rm = TRUE), .SDcols = annot_cols]
-        writeLines(paste(as.numeric(M), collapse = &quot; &quot;), m_path)
-        if (has_frq) {
-            common &lt;- merged[!is.na(MAF) &amp; MAF &gt; 0.05, ]
-            M5 &lt;- common[, lapply(.SD, sum, na.rm = TRUE), .SDcols = annot_cols]
-            writeLines(paste(as.numeric(M5), collapse = &quot; &quot;), paste0(m_path, &quot;_5_50&quot;))
-        }
-    }
-
-    targets &lt;- c()
-    if (${&quot;TRUE&quot; if emit_single else &quot;FALSE&quot;}) {
-        for (i in seq_len(${N_targets})) {
-            targets &lt;- c(targets, paste0(&quot;${annotation_name}&quot;, &quot;_single_&quot;, i))
-        }
-    }
-    if (${&quot;TRUE&quot; if emit_joint else &quot;FALSE&quot;}) {
-        targets &lt;- c(targets, paste0(&quot;${annotation_name}&quot;, &quot;_joint&quot;))
-    }
-    for (name in targets) {
-        annot_path   &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.&quot;, chrom, &quot;.annot.gz&quot;))
-        ldscore_path &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.&quot;, chrom, &quot;.${ldscore_ext}&quot;))
-        m_path       &lt;- file.path(&quot;${cwd:a}&quot;, name, paste0(name, &quot;.&quot;, chrom, &quot;.l2.M&quot;))
-        write_M_files(annot_path, ldscore_path, m_path)
-    }
+# ---- Step D: write .l2.M (+ .l2.M_5_50 when .frq present) files (R worker) ----
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[2]}.stderr&#39;, stdout = f&#39;{_output[2]}.stdout&#39;
+    Rscript ${modular_script_dir}/enrichment/make_annotation.R --step mfiles \
+        --annotation-name ${annotation_name} --cwd ${cwd:a} --chrom ${input_chroms[_index]} \
+        ${(&#39;--emit-single&#39; if emit_single else &#39;&#39;)} ${(&#39;--emit-joint&#39; if emit_joint else &#39;&#39;)} \
+        --n-targets ${N_targets} --ldscore-ext ${ldscore_ext} \
+        ${(&#39;--use-print-snps&#39; if use_print_snps else &#39;&#39;)} \
+        --frq-file ${frqfile_dir}/${plink_name}${input_chroms[_index]}.frq
 </pre></div>
 </div>
 </div>
@@ -1593,20 +1409,20 @@ R: expand = &quot;${ }&quot;, stderr = f&#39;{_output[2]}.stderr&#39;, stdout = 
 
 #
 # --- about the &quot;.results&quot; Category column and the &quot;_0 / _1&quot; suffix ---
-# Each (trait, target_dir) pair is ONE polyfun call; its `ldsc.py --ref-ld-chr`
+# Each (trait, target_dir) pair is ONE polyfun call; its `ldsc --ref-ld-chr`
 # always gets exactly two LD-score sources, in this order:
 #     &quot;&lt;target_dir&gt;/&lt;target&gt;.&quot;   (index 0)  ,  &quot;&lt;baseline_dir&gt;/&lt;baseline&gt;&quot;   (index 1)
 # With --overlap-annot, every annotation column in the .results &quot;Category&quot; is
 # named  &lt;ldscore_column_name&gt;_&lt;ref-ld-index&gt;:
-#     index 0 = the target file   -&gt; &quot;ANNOT_0&quot;  (no-snplist; compute_ldscores.py keeps the annot col name)
-#                                  -&gt; &quot;L2_0&quot;    (snplist + single annot; ldsc.py hard-codes &quot;L2&quot;, see below)
+#     index 0 = the target file   -&gt; &quot;ANNOT_0&quot;  (no-snplist; compute_ldscores keeps the annot col name)
+#                                  -&gt; &quot;L2_0&quot;    (snplist + single annot; ldsc hard-codes &quot;L2&quot;, see below)
 #                                  -&gt; &quot;ANNOT_1_0&quot;,&quot;ANNOT_2_0&quot;      (no-snplist joint dir, N&gt;=2 annot cols)
 #                                  -&gt; &quot;ANNOT_1L2_0&quot;,&quot;ANNOT_2L2_0&quot;  (snplist joint dir, N&gt;=2 -&gt; &quot;&lt;name&gt;L2&quot;)
 #     index 1 = the baseline file -&gt; &quot;base_1&quot;,&quot;Coding_UCSC_1&quot;, ...  (the 97 baseline annots)
 # So in this pipeline the suffix is only ever 0 (target) or 1 (baseline); it would
-# continue 0,1,2,... only if you handed `ldsc.py --ref-ld-chr` more than two sources.
-# (Why ANNOT_0 vs L2_0: see the [make_annotation_files_ldscore] header — ldsc.py&#39;s
-#  &quot;n_annot == 1 -&gt; column name &#39;L2&#39;&quot; quirk vs compute_ldscores.py keeping the annot
+# continue 0,1,2,... only if you handed `ldsc --ref-ld-chr` more than two sources.
+# (Why ANNOT_0 vs L2_0: see the [make_annotation_files_ldscore] header — ldsc&#39;s
+#  &quot;n_annot == 1 -&gt; column name &#39;L2&#39;&quot; quirk vs compute_ldscores keeping the annot
 #  column name.)  [postprocess] auto-detects the target Category; if you instead pass
 # --target-categories, the names must match this column exactly.
 #
@@ -1665,7 +1481,7 @@ bash: expand = &quot;${ }&quot;
 
     run_ldsc() {
         local extra_args=&quot;$1&quot;
-        ${python_exec} ${polyfun_path}/ldsc.py \
+        ldsc \
             --h2 ${sumstat_dir}/$trait \
             --ref-ld-chr &quot;$target_dir/$target_name.&quot;,&quot;${baseline_ld_dir}/${baseline_name}&quot; \
             --out &quot;$output_dir/$trait&quot; \
@@ -1711,7 +1527,7 @@ parameter: chi2_cut = 30
 input: sumstats
 output: f&quot;{_input:n}.munged.parquet&quot;
 bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:nn}.stdout&#39;
-    {python_exec} {polyfun_path}/munge_polyfun_sumstats.py \
+    munge_polyfun_sumstats \
         --sumstats {_input} \
         --out {_output} \
         {&#39;--n {}&#39;.format(n) if n&gt;0 else &#39;&#39;} \

@@ -652,6 +652,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 parameter: cwd = path(&#39;./mashr_workflow_output&#39;)
+parameter: modular_script_dir = path(&#39;code/script&#39;)
 # Input summary statistics data
 parameter: data = path
 parameter: prior_data = path
@@ -699,7 +700,7 @@ output: mash_model
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_fit.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_fit.R \
         --data ${_input[0]} \
         --vhat-data ${_input[1]} \
         --prior-data ${_input[2]} \
@@ -734,7 +735,7 @@ output: f&quot;{cwd:a}/{output_prefix}.{effect_model}.posterior.rds&quot;
 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
-    Rscript code/script/pecotmr_integration/mash_posterior.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_posterior.R \
         --data ${_input[0]} \
         --vhat-data ${_input[1]} \
         --mash-model ${_input[2]} \

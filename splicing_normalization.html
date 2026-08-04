@@ -761,6 +761,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
 # The output directory for generated files. 
 parameter: cwd = path(&quot;output&quot;)
 # intron usage ratio file wiht samples after QC
@@ -807,16 +808,12 @@ parameter: junc_list = path
 parameter: leafcutter_version = &quot;leafcutter2&quot;
 input: sample_table, junc_list
 output: f&#39;{cwd}/{leafcutter_version}/{sample_table:b}.rnaseq&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stderr&#39; 
-    library(data.table)
-    library(tidyverse)
-    sample_lookup_hao = read_delim(${_input[0]:r}, &quot;\t&quot; ,col_names = T)
-    sample_lookup_hao$sample_id&lt;-sample_lookup_hao$sample_id%&gt;%gsub(&quot;.final&quot;,&quot;&quot;,.)
-    sample_ids&lt;-list.files(paste0(&quot;${cwd}&quot;,&quot;/&quot;,&quot;${leafcutter_version}&quot;,&quot;/&quot;),&quot;junc$&quot;)%&gt;%stringr::str_split(.,&quot;[.]&quot;,simplify=T)%&gt;%.[,1]
-    junc_list&lt;-read.table(${_input[1]:r})
-    sample_ids&lt;-junc_list$V1%&gt;%basename%&gt;%stringr::str_split(.,&quot;[.]&quot;,simplify=T)%&gt;%.[,1]
-    sample_lookup_hao&lt;-sample_lookup_hao[sample_lookup_hao$sample_id%in%sample_ids,]
-    write.table(sample_lookup_hao,${_output:r},quote = F,row.names = F,sep=&#39;\t&#39;)
+bash: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stderr&#39;
+    Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
+        --step jointcall_samples \
+        --sample-table ${_input[0]} \
+        --junc-list ${_input[1]} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -832,169 +829,12 @@ if os.path.isfile(f&#39;{ratios:dd}/black_list.txt&#39;):
 input: ratios, group_by = &#39;all&#39;
 output: f&#39;{ratios}_phenotype_file_list.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    # code in [leafcutter_norm_1] and [leafcutter_norm_3] is modified from 
-    # https://github.com/davidaknowles/leafcutter/blob/master/scripts/prepare_phenotype_table.py
-    import sys
-    import gzip
-    import os
-    import numpy as np
-    import pandas as pd
-    import scipy as sc
-    import pickle
-
-    from sklearn import linear_model
-
-    def stream_table(f, ss = &#39;&#39;):
-        fc = &#39;#&#39;
-        while fc[0] == &quot;#&quot;:
-            fc = f.readline().strip()
-            head = fc.split(ss)
-
-        for ln in f:
-            ln = ln.strip().split(ss)
-            attr = {}
-
-            for i in range(len(head)):
-                try: attr[head[i]] = ln[i]
-                except: break
-            yield attr
-
-    def get_chromosomes(ratio_file):
-        &quot;&quot;&quot;Get chromosomes from table. Returns set of chromosome names&quot;&quot;&quot;
-        try: open(ratio_file)
-        except:
-            sys.stderr.write(&quot;Can&#39;t find %s..exiting\n&quot;%(ratio_file))
-            return
-        sys.stderr.write(&quot;Parsing chromosome names...\n&quot;)
-        chromosomes = set()
-        with gzip.open(ratio_file, &#39;rt&#39;) as f:
-                f.readline()
-                for line in f:
-                    chromosomes.add(line.split(&quot;:&quot;)[0])
-        return(chromosomes)
-
-    def get_blacklist_chromosomes(chromosome_blacklist_file):
-        &quot;&quot;&quot;
-        Get list of chromosomes to ignore from a file with one blacklisted
-        chromosome per line. Returns list. eg. [&#39;X&#39;, &#39;Y&#39;, &#39;MT&#39;]
-        &quot;&quot;&quot;
-
-        if os.path.isfile(chromosome_blacklist_file):
-            with open(chromosome_blacklist_file, &#39;r&#39;) as f:
-                return(f.read().splitlines())
-        else:
-            return([])
-
-    def create_phenotype_table(ratio_file, chroms, blacklist_chroms):
-        dic_pop, fout = {}, {}
-        try: open(ratio_file)
-        except:
-            sys.stderr.write(&quot;Can&#39;t find %s..exiting\n&quot;%(ratio_file))
-            return
-
-        sys.stderr.write(&quot;Starting...\n&quot;)
-        for i in chroms:
-            fout[i] = open(ratio_file+&quot;.phen_&quot;+i, &#39;w&#39;)
-            fout_ave = open(ratio_file+&quot;.ave&quot;, &#39;w&#39;)
-        valRows, valRowsnn, geneRows = [], [], []
-        finished = False
-        header = gzip.open(ratio_file, &#39;rt&#39;).readline().split()[1:]
-
-        for i in fout:
-            fout[i].write(&quot;\t&quot;.join([&quot;#chr&quot;,&quot;start&quot;, &quot;end&quot;, &quot;ID&quot;]+header)+&#39;\n&#39;)
-
-        for dic in stream_table(gzip.open(ratio_file, &#39;rt&#39;),&#39; &#39;):
-
-            chrom = dic[&#39;chrom&#39;]
-            chr_ = chrom.split(&quot;:&quot;)[0]
-            if chr_ in blacklist_chroms: continue
-            NA_indices, aveReads = [], []
-            tmpvalRow = []
-
-            i = 0
-            for sample in header:
-
-                try: count = dic[sample]
-                except: print([chrom, len(dic)])
-                num, denom = count.split(&#39;/&#39;)
-                if float(denom) &lt; 1:
-                    count = &quot;NA&quot;
-                    tmpvalRow.append(&quot;NA&quot;)
-                    NA_indices.append(i)
-                else:
-                    # add a 0.5 pseudocount
-                    if ${pseudo_ratio}:
-                        pseudocount = 0.01 * float(denom)
-                    else:
-                        pseudocount = 0.5
-                    count = (float(num)+pseudocount)/((float(denom))+pseudocount)
-                    tmpvalRow.append(count)
-                    aveReads.append(count)
-
-            parts = chrom.split(&quot;:&quot;)
-
-            # Check the number of parts to determine how to unpack
-            if len(parts) == 5:
-                chr_, s, e, clu, category = parts #leafcutter2 would have 5 columns, the last column is function category
-            elif len(parts) == 4:
-                chr_, s, e, clu = parts #leafcutter would have 4 columns
-                category = None  # or some default value, if necessary
-            else:
-                raise ValueError(&quot;Unexpected format of &#39;chrom&#39; string&quot;)
-
-            if len(tmpvalRow) &gt; 0:
-                fout[chr_].write(&quot;\t&quot;.join([chr_,s,e,chrom]+[str(x) for x in tmpvalRow])+&#39;\n&#39;)
-                fout_ave.write(&quot; &quot;.join([&quot;%s&quot;%chrom]+[str(min(aveReads)), str(max(aveReads)), str(np.mean(aveReads))])+&#39;\n&#39;)
-
-                valRows.append(tmpvalRow)
-                geneRows.append(&quot;\t&quot;.join([chr_,s,e,chrom]))
-                if len(geneRows) % 1000 == 0:
-                    sys.stderr.write(&quot;Parsed %s introns...\n&quot;%len(geneRows))
-
-        for i in fout:
-            fout[i].close()
-
-        matrix = np.array(valRows)
-
-        # write the corrected tables
-
-        sample_names = []
-
-        for name in header:
-            sample_names.append(name.replace(&#39;.Aligned.sortedByCoord.out.md&#39;, &#39;&#39;))
-
-        fout = {}
-        for i in chroms:
-            fn=&quot;%s.qqnorm_%s&quot;%(ratio_file,i)
-            print(&quot;Outputting: &quot; + fn)
-            fout[i] = open(fn, &#39;w&#39;)
-            fout[i].write(&quot;\t&quot;.join([&#39;#Chr&#39;,&#39;start&#39;,&#39;end&#39;,&#39;ID&#39;] + sample_names)+&#39;\n&#39;)
-        lst = []
-        for i in range(len(matrix)):
-            chrom, s = geneRows[i].split()[:2]
-
-            lst.append((chrom, int(s), &quot;\t&quot;.join([geneRows[i]] + [str(x) for x in  matrix[i]])+&#39;\n&#39;))
-
-        lst.sort()
-        for ln in lst:
-            fout[ln[0]].write(ln[2])
-
-        fout_run = open(&quot;%s_phenotype_file_list.txt&quot;%ratio_file, &#39;w&#39;)
-
-        fout_run.write(&quot;#chr\t#dir\n&quot;)
-
-        for i in fout:
-            fout[i].close()
-            fout_run.write(&quot;%s\t&quot;%(i))
-            fout_run.write(&quot;%s.qqnorm_%s\n&quot;%(ratio_file, i))
-        fout_run.close()
-
-    ratio_file = f&#39;${_input}&#39;
-    chroms = get_chromosomes(f&#39;${_input}&#39;)
-    blacklist_chroms = get_blacklist_chromosomes(f&#39;${chr_blacklist}&#39;)
-
-    create_phenotype_table(ratio_file, chroms, blacklist_chroms)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
+        --step prepare_phenotype \
+        --input ${ratios} \
+        --chr-blacklist ${chr_blacklist} \
+        ${(&#39;--pseudo-ratio&#39; if pseudo_ratio else &#39;&#39;)}
 </pre></div>
 </div>
 </div>
@@ -1003,17 +843,15 @@ python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, std
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[leafcutter_norm_2]
 parameter: autosomes = True
-import pandas as pd
-molecular_pheno_chr_inv = pd.read_csv(f&#39;{_input[0]}&#39;,sep = &quot;\t&quot;)
-# filter the autosomes or not
+# Build the per-chromosome file list for concatenation (no pandas; runs in the base env).
+_lines = open(f&#39;{_input[0]}&#39;).read().splitlines()
+_hdr = _lines[0].split(&#39;\t&#39;)
+_rows = [dict(zip(_hdr, _ln.split(&#39;\t&#39;))) for _ln in _lines[1:] if _ln.strip()]
 if autosomes:
     print(&quot;Analyzing autosomes 1 to 22...&quot;)
-    mask = molecular_pheno_chr_inv[&#39;#chr&#39;].str.match(r&#39;chr(\d+)$&#39;)
-    chr_numbers = molecular_pheno_chr_inv[&#39;#chr&#39;].str.extract(r&#39;chr(\d+)&#39;, expand=False).dropna().astype(int)
-    molecular_pheno_chr_inv = molecular_pheno_chr_inv[mask &amp; chr_numbers.between(1, 22)]
-    
-molecular_pheno_chr_inv = molecular_pheno_chr_inv.values.tolist()
-file_inv = [x[1] for x in molecular_pheno_chr_inv]
+    _rows = [_r for _r in _rows if _r[&#39;#chr&#39;].startswith(&#39;chr&#39;) and _r[&#39;#chr&#39;][3:].isdigit() and 1 &lt;= int(_r[&#39;#chr&#39;][3:]) &lt;= 22]
+file_inv = [_r[&#39;#dir&#39;] for _r in _rows]
+del _lines, _hdr, _rows
 input: file_inv # This design is necessary to avoid using for_each, as sos can not take chr number as an input.
 output: f&#39;{_input[0]:n}_raw_data.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
@@ -1030,13 +868,10 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 parameter: no_norm = False
 stop_if(no_norm)
 parameter: mean_impute = False
-# minimal NA rate with in sample values for a possible alternative splicing event to be kept (default 0.4, chosen according to leafcutter default na rate)
+# minimal NA rate within sample values for an event to be kept (default 0.4, leafcutter default)
 parameter: na_rate = 0.4
-# minimal variance across samples for a possible alternative splicing event to be kept (default 0.001, chosen according to psichomics suggested minimal variance)
+# minimal variance across samples for an event to be kept (default 0.001, psichomics suggested)
 parameter: min_variance = 0.001
-# qced_data refers to data that has undergone leafcutter_norm1/2 normalization or has already been imputed. 
-# When this data is provided, mean imputation is automatically enabled (mean imputation set to true). Thus, the default imputation method is mean imputation. 
-# However, if the data provided is already imputed (i.e., contains no NA values), no further imputation will be applied.
 parameter: qced_data = path(&quot;.&quot;)
 parameter: bgzip=False
 import os
@@ -1045,78 +880,22 @@ if qced_data.is_dir():
     input_file = paths([os.path.join(qced_data, x) for x in os.listdir(qced_data) if x.endswith(&#39;_raw_data.txt&#39;)])
     bgzip=True
 else:
-    print(&#39;Loading QCed data as inputed file&#39;)
+    print(&#39;Loading QCed data as input file; enabling mean imputation for any remaining NAs.&#39;)
     input_file = paths(qced_data)
-    print(&#39;Setting mean_imput to True. If the input has already been imputed (i.e., no NA values are present), nothing will change. Otherwise, mean imputation will be applied to NA values.&#39;)
     mean_impute = True
 input: input_file
 output: f&#39;{_input:n}.qqnorm.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    import numpy as np
-    import pandas as pd
-    from sklearn import preprocessing
-
-    from scipy.stats import norm
-    from scipy.stats import rankdata
-
-    def qqnorm(x):
-        n=len(x)
-        a=3.0/8.0 if n&lt;=10 else 0.5
-        return(norm.ppf( (rankdata(x,nan_policy=&quot;omit&quot;)-a)/(n+1.0-2.0*a) ))
-        #return(norm.ppf( (rankdata(x)-a)/(n+1.0-2.0*a) ))
-
-    raw_df = pd.read_csv(f&#39;${_input}&#39;,sep = &quot;\t&quot;)
-    valRows = raw_df.iloc[:,4:]
-    headers = list(raw_df)
-
-    drop_list = []
-    na_limit = len(valRows.columns)*${na_rate}
-
-    for index, row in valRows.iterrows():
-
-        # If ratio is missing for over 40% of the samples, drop
-        if (row.isna().sum()) &gt; na_limit:
-            drop_list.append(index)
-        # Set missing values as the mean of existed values in a row
-        if ${mean_impute}:
-            valRows.iloc[index] = row.fillna(row.mean())
-        # else: 
-        #     row.fillna(row.mean())
-        # drop introns with variance smaller than some minimal value
-        if np.nanstd(row) &lt; ${min_variance}:
-            drop_list.append(index)
-
-    # save the intron information and sample values for remaining introns/rows
-    newtable = raw_df.drop(drop_list).iloc[:,0:4]
-    valRows = valRows.drop(drop_list)
-
-    # scale normalize on each row
-    valRows_matrix = []
-    for c in (valRows.values.tolist()):
-        c = preprocessing.scale(c)
-        valRows_matrix.append(c)
-    
-    # qqnorms on the columns
-    matrix = np.array(valRows_matrix)
-    for i in range(len(matrix[0,:])):
-        matrix[:,i] = qqnorm(matrix[:,i])
-    normalized_table = pd.DataFrame(matrix)
-
-    # reset row index for the saved intron infomation so the index will match sample values
-    newtable = newtable.reset_index(drop=True)
-    # merge the two parts of table
-    output = pd.concat([newtable, normalized_table], axis=1)
-    output.columns = headers
-
-    # write normalized table
-    output.to_csv(f&#39;${_input:n}.qqnorm.txt&#39;, sep=&quot;\t&quot;, index=None)
-
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
+        --step qqnorm \
+        --input ${_input} \
+        --output ${_output} \
+        --na-rate ${na_rate} \
+        --min-variance ${min_variance} \
+        ${(&#39;--mean-impute&#39; if mean_impute else &#39;&#39;)}
     if ${&#39;true&#39; if bgzip else &#39;false&#39;}; then
-        # Compress the sorted BED file
         bgzip -c &quot;${_output}&quot; &gt; &quot;${_output:n}.bed.gz&quot;
-        # Index the compressed BED file
         tabix -p bed &quot;${_output:n}.bed.gz&quot;
     fi
 </pre></div>
@@ -1130,26 +909,11 @@ parameter: ratios = path
 input: ratios, group_by = &#39;all&#39;
 output: f&#39;{cwd}/psichomics_raw_data_bedded.txt&#39; 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
-    library(psichomics)
-    library(data.table)
-
-    psi_data &lt;- as.matrix(fread(&quot;${_input}&quot;),rownames=1)
-    psi_data = as.data.frame(psi_data)
-  
-    # Process PSI df into bed file for tensorQTL. (This part of code is modified from Ryan Yordanoff&#39;s work)
-    parsed_events &lt;- parseSplicingEvent(row.names(psi_data))
-    
-    # Create bedfile df and fill values with parsed values
-    bed_file &lt;- data.frame(&quot;chr&quot;=parsed_events$chrom,&quot;start&quot;=parsed_events$start,&quot;end&quot;=parsed_events$end,&quot;ID&quot;=row.names(parsed_events),psi_data,check.names = FALSE)
-    names(bed_file)[1] &lt;- &quot;#Chr&quot;
-    bed_file$&#39;#Chr&#39; &lt;- sub(&quot;^&quot;, &quot;chr&quot;, bed_file$&#39;#Chr&#39;)
-    row.names(bed_file) &lt;- NULL   
-
-    bed_file &lt;- bed_file[order(bed_file$&#39;#Chr&#39;,bed_file$start,bed_file$end),]
-  
-    # Create BED file output
-    write.table(x=bed_file, file = &quot;${cwd}/psichomics_raw_data_bedded.txt&quot;, quote = FALSE, row.names = FALSE, sep = &quot;\t&quot;)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
+    Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
+        --step psichomics_bed \
+        --input ${_input} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -1157,66 +921,19 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[psichomics_norm_2]
-# minimal NA rate with in sample values for a possible alternative splicing event to be kept (default 0.4, chosen according to leafcutter default na rate)
+# minimal NA rate within sample values for an event to be kept (default 0.4, leafcutter default)
 parameter: na_rate = 0.4
-# minimal variance across samples for a possible alternative splicing event to be kept (default 0.001, chosen according to psichomics suggested minimal variance)
+# minimal variance across samples for an event to be kept (default 0.001, psichomics suggested)
 parameter: min_variance = 0.001
 output: f&#39;{_input:n}.qqnorm.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-python: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    import numpy as np
-    import pandas as pd
-    from sklearn import preprocessing
-
-    from scipy.stats import norm
-    from scipy.stats import rankdata
-
-    def qqnorm(x):
-        n=len(x)
-        a=3.0/8.0 if n&lt;=10 else 0.5
-        return(norm.ppf( (rankdata(x,nan_policy=&quot;omit&quot;)-a)/(n+1.0-2.0*a) ))
-        #return(norm.ppf( (rankdata(x)-a)/(n+1.0-2.0*a) ))
-
-    raw_df = pd.read_csv(f&#39;${_input}&#39;,sep = &quot;\t&quot;)
-    valRows = raw_df.iloc[:,4:]
-    headers = list(raw_df)
-
-    drop_list = []
-    na_limit = len(valRows.columns)*${na_rate}
-
-    for index, row in valRows.iterrows():
-
-        # If ratio is missing for over 40% of the samples, drop
-        if (row.isna().sum()) &gt; na_limit:
-            drop_list.append(index)
-            # drop introns with variance smaller than some minimal value
-        elif np.std(row) &lt; ${min_variance}:
-            drop_list.append(index)
-
-    # save the intron information and sample values for remaining introns/rows
-    newtable = raw_df.drop(drop_list).iloc[:,0:4]
-    valRows = valRows.drop(drop_list)
-
-    # scale normalize on each row
-    valRows_matrix = []
-    for c in (valRows.values.tolist()):
-        c = preprocessing.scale(c)
-        valRows_matrix.append(c)
-
-    # qqnorms on the columns
-    matrix = np.array(valRows_matrix)
-    for i in range(len(matrix[0,:])):
-        matrix[:,i] = qqnorm(matrix[:,i])
-    normalized_table = pd.DataFrame(matrix)
-
-    # reset row index for the saved intron infomation so the index will match sample values
-    newtable = newtable.reset_index(drop=True)
-    # merge the two parts of table
-    output = pd.concat([newtable, normalized_table], axis=1)
-    output.columns = headers
-
-    # write normalized table, avoid scientific notation
-    output.to_csv(f&#39;${_input:n}.qqnorm.txt&#39;, sep=&quot;\t&quot;, index=None, float_format=&#39;%.16f&#39;)
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
+        --step qqnorm \
+        --input ${_input} \
+        --output ${_output} \
+        --na-rate ${na_rate} \
+        --min-variance ${min_variance}
 </pre></div>
 </div>
 </div>

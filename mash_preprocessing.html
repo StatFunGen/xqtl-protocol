@@ -828,6 +828,7 @@ sos run pipeline/mash_preprocessing.ipynb random_null_tensorqtl \
 parameter: name = str
 # Path to work directory where output locates
 parameter: cwd = path(&quot;./output&quot;)
+parameter: modular_script_dir = path(&#39;code/script&#39;)
 parameter: seed = 999
 # Random / null background rows sampled per region
 parameter: n_random = 10
@@ -882,7 +883,7 @@ input: _fmr_paths
 output: f&quot;{cwd}/{name}.mash_input.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_preprocessing.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_preprocessing.R \
         --objects ${_input} \
         --region-ids ${_region_ids} \
         --coverage ${coverage} \
@@ -931,7 +932,7 @@ input: for_each = &#39;meta&#39;
 output: f&#39;{cwd:a}/{name}_cache/{name}.{_meta[&quot;gene_id&quot;]}.qss.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_sumstats_construct.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_sumstats_construct.R \
         --tensorqtl-paths ${_meta[&#39;paths&#39;].replace(&#39;,&#39;, &#39; &#39;)} \
         --conditions ${&#39;,&#39;.join([str(t) for t in traits])} \
         --region ${_meta[&#39;region&#39;]} \
@@ -948,7 +949,7 @@ input: group_by = &#39;all&#39;
 output: f&quot;{cwd}/{name}.mash_input.rds&quot;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
-    Rscript code/script/pecotmr_integration/mash_preprocessing.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/mash_preprocessing.R \
         --objects ${_input} \
         --n-random ${n_random} \
         --n-null ${n_null} \

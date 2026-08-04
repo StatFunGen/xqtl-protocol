@@ -692,13 +692,16 @@
 <h3>BiCV factor analysis with APEX<a class="headerlink" href="#bicv-factor-analysis-with-apex" title="Link to this heading">#</a></h3>
 <p>BiCV chooses the number of hidden factors by bi-cross-validation using the APEX software (Owen et al. 2016). The pipeline computes residuals on the merged covariates, builds the inputs APEX expects (an indexed VCF placeholder and a phenotype matrix), then calls <code class="docutils literal notranslate"><span class="pre">apex</span> <span class="pre">factor</span></code>. The number of factors follows GTEx recommendations or can be fixed with <code class="docutils literal notranslate"><span class="pre">--N</span></code>.</p>
 <p>Timing: ~30 s.</p>
-<!-- BiCV requires the APEX tool (apex: command not found in this environment); skipped during automated testing -->
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb BiCV \
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb BiCV \
     --cwd output/covariate \
     --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
     --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
     --N 3
 </pre></div>
+</div>
+</div>
 </div>
 </section>
 </section>
@@ -884,16 +887,18 @@ parameter: convergence_mode = &quot;fast&quot;
 output: f&#39;{cwd:a}/{_input:bnn}.PEER_MODEL.hd5&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
-        --step PEER_fit \
-        --cwd &quot;${cwd}&quot; \
-        --residFile &quot;${_input}&quot; \
-        --N ${N} \
+    python ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor_peer.py \
+        --resid-file &quot;${_input}&quot; \
+        --model-file &quot;${_output}&quot; \
+        --factors-out &quot;${cwd:a}/${_input:bnn}.PEER.factors.tsv&quot; \
+        --weights-out &quot;${cwd:a}/${_input:bnn}.PEER.weights.tsv&quot; \
+        --variance-out &quot;${cwd:a}/${_input:bnn}.PEER.variance.tsv&quot; \
+        --num-factor ${N} \
         --iteration ${iteration} \
         --convergence-mode &quot;${convergence_mode}&quot; \
+        --num-threads ${numThreads} \
         --tol ${tol} \
-        --r2-tol ${r2_tol} \
-        --numThreads ${numThreads}
+        --r2-tol ${r2_tol}
 </pre></div>
 </div>
 </div>
@@ -930,23 +935,14 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[BiCV_2]
-# For cluster jobs, number commands to run per job
-import time
 output: f&#39;{cwd:a}/{_input:bn}.fake.vcf.gz&#39;
-#task: trunk_workers = 1,trunk_size = job_size , walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, entrypoint = entrypoint
-    library(&quot;dplyr&quot;)
-    library(&quot;readr&quot;)
-    ## Add fake header
-    cat(paste(&quot;##fileformat=VCFv4.2\n##fileDate=$[time.strftime(&quot;%Y%m%d&quot;,time.localtime())]\n##source=FAKE\n&quot;), file=$[_output:nr], append=FALSE)
-    ## Add colnames based on bed
-    pheno = read_delim(&quot;$[_input]&quot;, delim = &quot;\t&quot;,n_max = 1)
-    colnames(pheno)[1:3] = c(&quot;#CHROM&quot;,&quot;POS&quot;,&quot;ID&quot;) 
-    pheno = cbind(pheno[1:3]%&gt;%mutate(REF = &quot;A&quot;, ALT = &quot;C&quot;, QUAL = &quot;.&quot;,FILTER = &quot;.&quot;, INFO = &quot;PR&quot;, FORMAT = &quot;GT&quot;),pheno[,5:ncol(pheno)])
-    pheno%&gt;%write_delim($[_output:nr],delim = &quot;\t&quot;,col_names = T, append = T)
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, entrypoint = entrypoint
-    bgzip -f $[_output:n]
-    tabix -p vcf $[_output]
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
+        --step BiCV_2 \
+        --cwd &quot;${cwd}&quot; \
+        --residFile &quot;${_input}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -958,29 +954,27 @@ bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}
 parameter: N = 0
 # The number of iteration
 parameter: iteration = 10
-
-import pandas as pd
-data = pd.read_csv(phenoFile, sep=&quot;	&quot;, index_col = 3).drop([&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;],axis = 1)
-if N == 0:
-    if len(data.columns) &lt; 150:
-        N = 15
-    elif len(data.columns) &lt; 250:
-        N = 30
-    elif len(data.columns) &lt; 350:
-        N = 45
-    else:
-        N = 60
 input: output_from(1), output_from(2)
 output: f&#39;{cwd:a}/{_input[0]:bnn}.BiCV.gz&#39;
 task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: container=container, expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+    n_factors_file=&quot;${_output[0]:nn}.n_factors.txt&quot;
+    Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
+        --step BiCV_nfactors \
+        --residFile &quot;${_input[0]}&quot; \
+        --N ${N} \
+        --output &quot;$n_factors_file&quot;
+    n_factors=$(cat &quot;$n_factors_file&quot;)
+    out_prefix=&quot;${_output[0]:nn}&quot;
     apex factor \
-        --out $[_output[0]:nn] \
-        --iter $[iteration] \
-        --factors $[N] \
-        --bed $[_input[0]] \
-        --vcf $[_input[1]] \
-        --threads $[numThreads]  $[ f&#39;--cov {covFile}&#39; if covFile.is_file() else &#39;&#39;]
+        --out &quot;$out_prefix&quot; \
+        --iter ${iteration} \
+        --factors &quot;$n_factors&quot; \
+        --bed &quot;${_input[0]}&quot; \
+        --vcf &quot;${_input[1]}&quot; \
+        --threads ${numThreads} \
+        --cov &quot;${covFile}&quot;
+    mv -f &quot;$out_prefix.cov.gz&quot; &quot;${_output[0]}&quot;
 </pre></div>
 </div>
 </div>

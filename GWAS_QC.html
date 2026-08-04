@@ -672,7 +672,7 @@
 </section>
 <section id="minimal-working-example">
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
-<p>Minimal working example data-set as well as the singularity container <code class="docutils literal notranslate"><span class="pre">bioinfo.sif</span></code> can be downloaded from <a class="reference external" href="https://www.synapse.org/#!Synapse:syn69670658/files/">Synapse</a>.</p>
+<p>Minimal working example data-set can be downloaded from <a class="reference external" href="https://www.synapse.org/#!Synapse:syn69670658/files/">Synapse</a>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">chr1_chr6</span></code> data-set was merged from <code class="docutils literal notranslate"><span class="pre">chr1</span></code> and <code class="docutils literal notranslate"><span class="pre">chr6</span></code> data, using <code class="docutils literal notranslate"><span class="pre">merge_plink</span></code> command from <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/genotype_formatting.html">genotype formatting</a> pipeline.</p>
 <section id="step-1-basic-qc-rare-and-common-variants">
 <h3><strong>Step 1.</strong> Basic QC (rare and common variants)<a class="headerlink" href="#step-1-basic-qc-rare-and-common-variants" title="Link to this heading">#</a></h3>
@@ -809,9 +809,6 @@ parameter: walltime = &quot;5h&quot;
 parameter: mem = &quot;16G&quot;
 # Number of threads
 parameter: numThreads = 20
-# Software container option
-parameter: container = &quot;&quot;
-parameter: entrypoint= &quot;&quot;
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
 cwd = path(f&quot;{cwd:a}&quot;)
@@ -920,7 +917,7 @@ input: genoFile
 output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.kin0&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
 plink_command = get_plink_command_prefix(genoFile)
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh king \
         --cwd &quot;${cwd}&quot; \
         --genoFile &quot;${genoFile}&quot; \
@@ -946,7 +943,7 @@ with open(_output, &#39;a&#39;):
     pass
 done_if(len(related_id) == 0, msg = f&quot;No related individuals detected from {_input}.&quot;)
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
     Rscript ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.R \
         --step king_2 \
         --input &quot;${_input}&quot; \
@@ -962,34 +959,21 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 [king_3]
 depends: sos_variable(&quot;related_id&quot;)
 input: output_from(2), genoFile
-plink_command = get_plink_command_prefix(_input[1])
 output_format = determine_plink_format(_input[1])
-make_command = get_make_command(output_format)
 output_ext = get_output_extension(output_format)
 output: unrelated_bed = f&#39;{cwd}/{_input[0]:bn}.unrelated{output_ext}&#39;,
         related_bed = f&#39;{cwd}/{_input[0]:bn}.related{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint=entrypoint
-    plink2 \
-      ${plink_command} ${_input[1]:n} \
-      --remove ${_input[0]} \
-      ${(&#39;--keep %s&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-      ${make_command} \
-      --out ${_output[0]:n} \
-      --threads ${numThreads} \
-      --memory ${int(expand_size(mem) * 0.9)/1e6} --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
-
-    if [ ${len(related_id)} -ne 0 ] ; then
-    plink2 \
-      ${plink_command} ${_input[1]:n} \
-      --keep ${_input[0]} \
-      ${make_command} \
-      --out ${_output[1]:n} \
-      --threads ${numThreads} \
-      --memory ${int(expand_size(mem) * 0.9)/1e6} --new-id-max-allele-len 1000 --set-all-var-ids chr@:#_\$r_\$a 
-    else
-       touch ${_output[1]}
-    fi
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+    bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh king_split \
+        --cwd &quot;${cwd}&quot; \
+        --genoFile &quot;${_input[1]}&quot; \
+        --remove-samples &quot;${_input[0]}&quot; \
+        ${(&#39;--keep-samples &quot;%s&quot;&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
+        --out-unrelated &quot;${_output[0]:n}&quot; \
+        --out-related &quot;${_output[1]:n}&quot; \
+        --related-output &quot;${_output[1]}&quot; \
+        --numThreads ${numThreads}
 </pre></div>
 </div>
 </div>
@@ -1039,7 +1023,7 @@ output_ext = get_output_extension(output_format) if not meta_only else &quot;.sn
 other_args_flags = get_other_args_flags(other_args)
 output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot; + name) if name else &quot;&quot;}.plink_qc{&quot;.extracted&quot; if keep_variants.is_file() else &quot;&quot;}{output_ext}&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh qc_no_prune \
         --cwd &quot;${cwd}&quot; \
         --genoFile &quot;${_input}&quot; \
@@ -1090,7 +1074,7 @@ output_ext = get_output_extension(output_format, is_prune=True)
 other_args_flags = get_other_args_flags(other_args)
 output: bed=f&#39;{cwd}/{_input:bn}{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh qc \
         --cwd &quot;${cwd}&quot; \
         --genoFile &quot;${_input}&quot; \
@@ -1133,7 +1117,7 @@ depends: executable(&#39;tabix&#39;), executable(&#39;bgzip&#39;)
 input: genoFile, phenoFile
 output: f&#39;{cwd:a}/{path(_input[1]):bn}.sample_overlap.txt&#39;, f&#39;{cwd:a}/{path(_input[1]):bn}.sample_genotypes.txt&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh genotype_phenotype_sample_overlap \
         --cwd &quot;${cwd}&quot; \
         --genoFile &quot;${genoFile}&quot; \

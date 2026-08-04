@@ -795,6 +795,7 @@ sos run pipeline/reference_data_preparation.ipynb download_dbsnp --cwd output/re
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
 # The output directory for generated files.
 parameter: cwd = path(&quot;output&quot;)
 # For cluster jobs, number commands to run per job
@@ -862,7 +863,9 @@ input: gff3_file
 output: f&#39;{cwd}/{_input:bn}.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-        gffread ${_input} -T -o ${_output}
+        Rscript ${modular_script_dir}/reference_data/gff3_to_gtf.R \
+            --input ${_input} \
+            --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -875,18 +878,11 @@ parameter: hg_reference = path
 input: hg_reference
 output:  f&#39;{cwd}/{_input:bn}.noALT_noHLA_noDecoy.fasta&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-    with open(&#39;${_input}&#39;, &#39;r&#39;) as fasta:
-        contigs = fasta.read()
-        contigs = contigs.split(&#39;&gt;&#39;)
-        contig_ids = [i.split(&#39; &#39;, 1)[0] for i in contigs]
-
-        # exclude ALT, HLA and decoy contigs
-        filtered_fasta = &#39;&gt;&#39;.join([c for i,c in zip(contig_ids, contigs)
-        if not (i[-4:]==&#39;_alt&#39; or i[:3]==&#39;HLA&#39; or i[-6:]==&#39;_decoy&#39;)])
-    
-    with open(&#39;${_output}&#39;, &#39;w&#39;) as fasta:
-        fasta.write(filtered_fasta)
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
+    Rscript ${modular_script_dir}/reference_data/reference_data_preparation.R \
+        --step hg_reference_1 \
+        --input ${_input} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -910,7 +906,9 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout
 output: f&#39;{cwd}/{_input:bn}.dict&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-    samtools faidx ${_input}
+    Rscript ${modular_script_dir}/reference_data/reference_data_preparation.R \
+        --step faidx \
+        --input ${_input}
     picard CreateSequenceDictionary \
         R=${_input} \
         O=${_output}
@@ -926,24 +924,12 @@ parameter: hg_gtf = path
 input: hg_reference, hg_gtf
 output: f&#39;{cwd}/{_input[1]:bn}.reformatted.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-    library(&quot;readr&quot;)
-    library(&quot;stringr&quot;)
-    library(&quot;dplyr&quot;)
-    options(scipen = 999)
-    con &lt;- file(&quot;${_input[0]}&quot;,&quot;r&quot;)
-    fasta &lt;- readLines(con,n=1)
-    close(con)
-    gtf = read_delim(&quot;${_input[1]}&quot;, &quot;\t&quot;,  col_names  = F, comment = &quot;#&quot;, col_types=&quot;ccccccccc&quot;)
-    if(!str_detect(fasta,&quot;&gt;chr&quot;)) {
-        gtf_mod = gtf%&gt;%mutate(X1 = str_remove_all(X1,&quot;chr&quot;))
-    } else if (!any(str_detect(gtf$X1[1],&quot;chr&quot;))) {
-        gtf_mod = gtf%&gt;%mutate(X1 = paste0(&quot;chr&quot;,X1))
-    } else (gtf_mod = gtf)
-    if(any(str_detect(gtf_mod$X9, &quot;transcript_biotype&quot;))) {
-      gtf_mod = gtf_mod%&gt;%mutate(X9 = str_replace_all(X9,&quot;transcript_biotype&quot;,&quot;transcript_type&quot;))
-    }
-    gtf_mod%&gt;%write.table(&quot;${_output}&quot;,sep = &quot;\t&quot;,quote = FALSE,col.names = F,row.names = F)
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
+    Rscript ${modular_script_dir}/reference_data/reference_data_preparation.R \
+        --step hg_gtf_1 \
+        --hg-reference ${_input[0]} \
+        --hg-gtf ${_input[1]} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -955,7 +941,10 @@ parameter: stranded = bool
 output: f&#39;{_input:n}{&quot;.collapse_only&quot; if stranded else &quot;&quot;}.gene.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-    collapse_annotation.py ${&quot;--collapse_only&quot; if stranded else &quot;&quot;} ${_input} ${_output}
+    Rscript ${modular_script_dir}/reference_data/collapse_annotation.R \
+        ${&quot;--collapse-only&quot; if stranded else &quot;&quot;} \
+        --input ${_input} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -967,36 +956,11 @@ parameter: ercc_gtf = path
 input: ercc_gtf
 output: f&#39;{cwd}/{_input:bn}.genes.patched.gtf&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-python: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
-    with open(&#39;${_input}&#39;) as exon_gtf, open(&#39;${_output}&#39;, &#39;w&#39;) as gene_gtf:
-        for line in exon_gtf:
-            f = line.strip().split(&#39;\t&#39;)
-            f[0] = f[0].replace(&#39;-&#39;,&#39;_&#39;)  # required for RNA-SeQC/GATK (no &#39;-&#39; in contig name)
-        
-            attr = f[8]
-            if attr[-1]==&#39;;&#39;:
-                attr = attr[:-1]
-            attr = dict([i.split(&#39; &#39;) for i in attr.replace(&#39;&quot;&#39;,&#39;&#39;).split(&#39;; &#39;)])
-            # add gene_name, gene_type
-            attr[&#39;gene_name&#39;] = attr[&#39;gene_id&#39;]
-            attr[&#39;gene_type&#39;] = &#39;ercc_control&#39;
-            attr[&#39;gene_status&#39;] = &#39;KNOWN&#39;
-            attr[&#39;level&#39;] = 2
-            for k in [&#39;id&#39;, &#39;type&#39;, &#39;name&#39;, &#39;status&#39;]:
-                attr[&#39;transcript_&#39;+k] = attr[&#39;gene_&#39;+k]
-        
-            attr_str = []
-            for k in [&#39;gene_id&#39;, &#39;transcript_id&#39;, &#39;gene_type&#39;, &#39;gene_status&#39;, &#39;gene_name&#39;,
-                &#39;transcript_type&#39;, &#39;transcript_status&#39;, &#39;transcript_name&#39;]:
-                attr_str.append(&#39;{0:s} &quot;{1:s}&quot;;&#39;.format(k, attr[k]))
-            attr_str.append(&#39;{0:s} {1:d};&#39;.format(&#39;level&#39;, attr[&#39;level&#39;]))
-            f[8] = &#39; &#39;.join(attr_str)
-        
-            # write gene, transcript, exon
-            gene_gtf.write(&#39;\t&#39;.join(f[:2]+[&#39;gene&#39;]+f[3:])+&#39;\n&#39;)
-            gene_gtf.write(&#39;\t&#39;.join(f[:2]+[&#39;transcript&#39;]+f[3:])+&#39;\n&#39;)
-            f[8] = &#39; &#39;.join(attr_str[:2])
-            gene_gtf.write(&#39;\t&#39;.join(f[:2]+[&#39;exon&#39;]+f[3:])+&#39;\n&#39;)
+bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container
+    Rscript ${modular_script_dir}/reference_data/reference_data_preparation.R \
+        --step ercc_gtf \
+        --input ${_input} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -1085,7 +1049,7 @@ input: hg_gtf
 output: f&#39;{cwd}/hg38.{_input:bn}_SE_strict.ioe&#39; # The stderr file must not shared the same start with the output file
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
 bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{cwd}/{_input:bn}.stderr&#39;, stdout = f&#39;{cwd}/{_input:bn}.stdout&#39;
-    suppa.py generateEvents -i ${_input} -o ${cwd}/hg38.${_input:bn} -f ioe -e SE SS MX RI FL
+    suppa generateEvents -i ${_input} -o ${cwd}/hg38.${_input:bn} -f ioe -e SE SS MX RI FL
 </pre></div>
 </div>
 </div>
@@ -1096,11 +1060,12 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{cwd}/{_inpu
 parameter: hg_gtf = path
 output: f&#39;{cwd}/{hg_gtf:bn}.SUPPA_annotation.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
-    library(&quot;psichomics&quot;)
-    suppa &lt;- parseSuppaAnnotation(&quot;${_input:d}&quot;, genome=&quot;hg38&quot;) 
-    annot &lt;- prepareAnnotationFromEvents(suppa)
-    saveRDS(annot, file=${_output:r})
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+    Rscript ${modular_script_dir}/reference_data/reference_data_preparation.R \
+        --step suppa_annot \
+        --ioe-dir ${_input:d} \
+        --genome hg38 \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -1114,138 +1079,11 @@ parameter: hgrc_db = path
 input: hg_gtf, hgrc_db
 output: f&#39;{cwd}/psichomics_hg38_annotation.rds&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
-    library(&quot;psichomics&quot;)
-    library(&quot;purrr&quot;)
-    library(&quot;dplyr&quot;)
-    library(&quot;tidyr&quot;)
-    library(&quot;data.table&quot;)
-  
-    # load psicomics default annotation, option of hg38 from listSplicingAnnotations()
-    annotation &lt;- loadAnnotation(&quot;AH63657&quot;)
-
-    
-    # reduce the demension of annotation file
-    annotation &lt;- 
-      map(annotation, ~.x%&gt;%
-                       tidyr::unnest(cols = `Gene`))
-  
-    # Create empty colomns for each event for easier mapping
-    annotation[[&quot;Tandem UTR&quot;]][[&quot;SUPPA.Event.ID&quot;]] &lt;- NA
-    annotation[[&quot;Tandem UTR&quot;]][[&quot;VAST-TOOLS.Event.ID&quot;]] &lt;- NA
-    annotation[[&quot;Alternative first exon&quot;]][[&quot;VAST-TOOLS.Event.ID&quot;]] &lt;- NA
-    annotation[[&quot;Alternative last exon&quot;]][[&quot;VAST-TOOLS.Event.ID&quot;]] &lt;- NA
-    annotation[[&quot;Mutually exclusive exon&quot;]][[&quot;VAST-TOOLS.Event.ID&quot;]] &lt;- NA
-  
-    # extract Ensembl ID substring from original SUPPA.ID and VASTTOOL.ID
-    annotation &lt;- 
-      map(annotation, ~.x%&gt;%
-                       mutate(ENSG.SUPPA = substr(`SUPPA.Event.ID`, 1, 15))%&gt;%
-                       mutate(ENSG.VAST = substr(`VAST-TOOLS.Event.ID`, 1, 15)))
-  
-    # Load gtf file
-    gtf_sample &lt;- read.table(&#39;${_input[0]}&#39;,header = FALSE, sep = &#39;\t&#39;)
-  
-    # from the gtf file, seperate gene names and corresponding Ensembl ID
-    gtf_sample &lt;- separate(gtf_sample, V9, sep = &quot;;&quot;,into = c(&quot;gene_id&quot;, &quot;transcript_id&quot;, &quot;exon_number&quot;, &quot;gene_name&quot;))
-    gtf_sample &lt;- separate(gtf_sample, gene_id, sep = &quot; &quot;,into = c(&quot;gene_id&quot;, &quot;gene_id_val&quot;))
-    gtf_sample &lt;- separate(gtf_sample, gene_name, sep = &quot;e &quot;,into = c(&quot;gene_name&quot;, &quot;gene_name_val&quot;))
-  
-    gtf_name_id_match &lt;- gtf_sample[,c(&quot;gene_id_val&quot;,&quot;gene_name_val&quot;)]
-    gtf_name_id_match &lt;- gtf_name_id_match[!duplicated(gtf_name_id_match), ]
-  
-    # For any matched approved id in the psi hg38 annotation and gtf file, record the corresponding Ensembl ID
-    annotation &lt;-
-      map(annotation, ~.x%&gt;%
-                       mutate(`ENSG.GTF` = gtf_name_id_match$gene_id_val[match(`Gene`, gtf_name_id_match$gene_name_val)]))
-  
-    # load hgnc database
-    hgnc_db &lt;- fread(&#39;${_input[1]}&#39;, fill = TRUE, header = TRUE, sep = &#39;\t&#39;, quote=&quot;&quot;)
-  
-    # Combine the `Ensembl.ID.supplied.by.Ensembl.` and `Ensembl.gene.ID` column, if there are any conflict use the former
-    # For conflict ones (15 total) both the former and latter records are poiting to the same gene name in Ensembl website so the order should not matter
-    hgnc_db &lt;- hgnc_db %&gt;%
-    mutate(ENSG.ID = ifelse(`Ensembl ID(supplied by Ensembl)` == &quot;&quot;, `Ensembl gene ID`, `Ensembl ID(supplied by Ensembl)`))
-  
-    # Create a one to one reference list for approved names, previous names and aliases
-    # There is no duplicate symbol and Ensembl id info for approved symbol so no need for chromosome verification
-    hgnc_name_id_match &lt;- hgnc_db[,c(&quot;Approved symbol&quot;,&quot;ENSG.ID&quot;)]
-    hgnc_name_prev_check &lt;- hgnc_db[,c(&quot;Previous symbols&quot;,&quot;Chromosome&quot;,&quot;ENSG.ID&quot;)]
-    hgnc_name_alias_check &lt;- hgnc_db[,c(&quot;Alias symbols&quot;,&quot;Chromosome&quot;,&quot;ENSG.ID&quot;)]
-  
-    # Remove NAs
-    hgnc_name_prev_check &lt;- hgnc_name_prev_check[hgnc_name_prev_check$ENSG.ID != &quot;&quot;,]
-    hgnc_name_alias_check &lt;- hgnc_name_alias_check[hgnc_name_alias_check$ENSG.ID != &quot;&quot;,]
-
-    hgnc_name_prev_check &lt;- hgnc_name_prev_check[hgnc_name_prev_check$&quot;Previous symbols&quot; != &quot;&quot;,] 
-    hgnc_name_alias_check &lt;- hgnc_name_alias_check[hgnc_name_alias_check$&quot;Alias symbols&quot; != &quot;&quot;,]
-
-    # Seperate symbol column values from list of sybols to individual rows with one each
-    hgnc_name_prev_check &lt;- separate_rows(hgnc_name_prev_check, &quot;Previous symbols&quot;, convert = FALSE)
-    hgnc_name_alias_check &lt;- separate_rows(hgnc_name_alias_check, &quot;Alias symbols&quot;, convert = FALSE)
-  
-    # Convert chomosome info in hgnc database to number for matching with other database
-    hgnc_name_prev_check &lt;- separate(hgnc_name_prev_check, &quot;Chromosome&quot;, sep = &#39;p&#39;, into = &quot;Chrp&quot;, remove = FALSE)
-    hgnc_name_prev_check &lt;- separate(hgnc_name_prev_check, &quot;Chromosome&quot;, sep = &#39;q&#39;, into = &quot;Chrq&quot;, remove = FALSE)
-    hgnc_name_prev_check &lt;- hgnc_name_prev_check%&gt;%
-                                mutate(Chr = ifelse(nchar(hgnc_name_prev_check$Chrp) &lt;= 2, Chrp, Chrq))
-    
-    hgnc_name_alias_check &lt;- separate(hgnc_name_alias_check, &quot;Chromosome&quot;, sep = &#39;p&#39;, into = &quot;Chrp&quot;, remove = FALSE)
-    hgnc_name_alias_check &lt;- separate(hgnc_name_alias_check, &quot;Chromosome&quot;, sep = &#39;q&#39;, into = &quot;Chrq&quot;, remove = FALSE)
-    hgnc_name_alias_check &lt;- hgnc_name_alias_check%&gt;%
-                                mutate(Chr = ifelse(nchar(hgnc_name_alias_check$Chrp) &lt;= 2, Chrp, Chrq))
-  
-    # For any matched approved id in the psi hg38 annotation and hgnc database, record the corresponding Ensembl ID
-    annotation &lt;-
-      map(annotation, ~.x%&gt;%
-                       mutate(`ENSG.HGNC` = hgnc_name_id_match$`ENSG.ID`[match(`Gene`, hgnc_name_id_match$&quot;Approved symbol&quot;)]))
-  
-    # Drop hypothetical genes
-    annotation&lt;-
-      map(annotation, ~.x%&gt;%
-            subset(`Gene` != &#39;Hypothetical&#39;))
-  
-    # IN remaining NAs, for any matched alias/previous names and chromosome in the psi hg38 annotation and hgnc database, record the corresponding Ensembl ID
-    annotation &lt;-
-      map(annotation, ~.x%&gt;%
-                      mutate(ENSG.HGNC = ifelse(is.na(`ENSG.HGNC`) | `ENSG.HGNC` == &quot;&quot;,
-                                                hgnc_name_alias_check$`ENSG.ID`[match(`Gene`, hgnc_name_alias_check$&quot;Alias symbols&quot;) &amp; match(`Chromosome`, hgnc_name_alias_check$Chr)],
-                                                `ENSG.HGNC`))%&gt;%
-                      mutate(ENSG.HGNC = ifelse(is.na(`ENSG.HGNC`) | `ENSG.HGNC` == &quot;&quot;,
-                                                hgnc_name_prev_check$`ENSG.ID`[match(`Gene`, hgnc_name_prev_check$&quot;Previous symbols&quot;) &amp; match(`Chromosome`, hgnc_name_prev_check$Chr)],
-                                                `ENSG.HGNC`)))
-  
-    # Build the final Ensembl id column base on the gtf file first, then for remaining NAs check the HGNC database record, SUPPA and VASTTOOL record,
-    # Drop special cases that Ensembl ID is not recorded in VASTTOOLs and SUPPA
-    # finnally in the remaining NA Ensmbl ID if the gene name in original annotation is NCBI IDs just use it
-    annotation &lt;-
-      map(annotation, ~.x%&gt;%
-                       mutate(`ENSG.ID` = `ENSG.GTF`)%&gt;%
-                       mutate(`ENSG.ID` = ifelse(is.na(`ENSG.ID`),
-                                               `ENSG.HGNC`,
-                                                `ENSG.ID`))%&gt;%
-                       mutate(`ENSG.ID` = ifelse(is.na(`ENSG.ID`),
-                                               `ENSG.VAST`,
-                                                `ENSG.ID`))%&gt;%
-                       mutate(`ENSG.ID` = ifelse(is.na(`ENSG.ID`),
-                                               `ENSG.SUPPA`,
-                                                `ENSG.ID`))%&gt;%
-                       mutate(`ENSG.ID` = ifelse(substr(`ENSG.ID`, 1, 4) == &#39;ENSG&#39;,
-                                                 `ENSG.ID`,
-                                                 NA))%&gt;%
-                       mutate(`ENSG.ID` = ifelse(is.na(`ENSG.ID`) &amp; substr(`Gene`, 1, 3) == &#39;LOC&#39;,
-                                               `Gene`,
-                                                `ENSG.ID`)))
-
-    # Use the Ensembl IDs to replace gene names, drop remaining NAs
-    annotation &lt;-
-    map(annotation, ~.x%&gt;%
-                       mutate(`Gene` = `ENSG.ID`)%&gt;%
-            drop_na(`Gene`)
-          )
-
-    # save modified annotation
-    saveRDS(annotation, file = &quot;${_output}&quot;)
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+    Rscript ${modular_script_dir}/reference_data/psichomics_hg38_annotation.R \
+        --hg-gtf ${_input[0]} \
+        --hgnc-db ${_input[1]} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>
@@ -1253,27 +1091,20 @@ R: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stder
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[Tad_annotateion]
-## The tad file downloads from 
+## The tad file downloads from
 parameter: TAD_list = path
 parameter: region_list = path
 parameter: TAD_genotype = path
 input: TAD_list, region_list
-output:f&#39;{cwd:a}/{region_list:bn}.annotation&#39; 
+output:f&#39;{cwd:a}/{region_list:bn}.annotation&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-python: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
-    import pandas as pd
-    import numpy as np
-    #tad = pd.read_csv(&quot;${_input[0]}&quot;,&quot;\t&quot;,header = None)
-    #tad.columns = [&quot;#chr&quot;,&quot;start&quot;,&quot;end&quot;]
-    #tad[&quot;tad_index&quot;] = [f&#39;tad{x}&#39; for x in np.arange(1,len(tad)+1)]
-    tad = pd.read_csv(&quot;${_input[0]}&quot;,&quot;\t&quot;)
-    region_list =  pd.read_csv(&quot;${_input[1]}&quot;,&quot;\t&quot;)
-    tad = tad.merge(region_list, on = &quot;#chr&quot;).query(&quot;start_y &gt; start_x &amp;  end_y &lt; end_x&quot;).drop([&quot;start_y&quot;,&quot;end_y&quot;] , axis = 1).rename({&quot;start_x&quot;:&quot;start&quot;,&quot;end_x&quot;:&quot;end&quot;})
-    tad.to_csv(&quot;${_output}&quot;,&quot;\t&quot;) 
-    tad_geno_list = pd.read_csv(&quot;${TAD_genotype}&quot;,&quot;\t&quot;)
-    tad_gene_id = tad.merge(tad_geno_list,left_on = &quot;tad_index&quot;,right_on = &quot;#id&quot;).iloc[:,[4,6]]
-    tad_gene_id.columns = [&quot;ID&quot;,&quot;dir&quot;]
-    tad_gene_id.to_csv(&quot;${_output}.genotype_files_list.tsv&quot;,&quot;\t&quot;) 
+bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+    Rscript ${modular_script_dir}/reference_data/reference_data_preparation.R \
+        --step tad_annotate \
+        --tad-list ${_input[0]} \
+        --region-list ${_input[1]} \
+        --tad-genotype ${TAD_genotype} \
+        --output ${_output}
 </pre></div>
 </div>
 </div>

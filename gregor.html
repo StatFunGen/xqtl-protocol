@@ -593,7 +593,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">--bed_file_index</span></code>: a bed-file index listing the annotation <code class="docutils literal notranslate"><span class="pre">bed</span></code> files.</p></li>
 </ul>
 <blockquote>
-<div><p><strong>Note.</strong> <code class="docutils literal notranslate"><span class="pre">gregor_conf</span></code> (Step 1) only <em>writes</em> a configuration file from the supplied paths, so it runs end-to-end without the external GREGOR software - it is verified here against synthetic toy inputs under <code class="docutils literal notranslate"><span class="pre">input/protocol_example.*</span></code>. Step 2 (<code class="docutils literal notranslate"><span class="pre">gregor</span></code>), which invokes the GREGOR <code class="docutils literal notranslate"><span class="pre">perl</span></code> tool and parses its output, requires the external GREGOR software distributed under the University of Michigan license plus its reference database; that software is not bundled here and is not installed on this system, so Step 2 cannot be executed here. The <code class="docutils literal notranslate"><span class="pre">gregor_fisher_plot</span></code> workflow (Step 3) is self-contained R and only needs two enrichment-result tables.</p>
+<div><p><strong>Note.</strong> <code class="docutils literal notranslate"><span class="pre">gregor_conf</span></code> (Step 1) only <em>writes</em> a configuration file from the supplied paths. Step 2 (<code class="docutils literal notranslate"><span class="pre">gregor</span></code>) invokes the GREGOR <code class="docutils literal notranslate"><span class="pre">perl</span></code> tool (<code class="docutils literal notranslate"><span class="pre">GREGOR</span></code>, on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>) and parses its output; it needs a GREGOR reference database. The full reference (per-chromosome LD databases, ~20 GB) is distributed under the University of Michigan license and is not bundled here, but a downsized chr22 EUR slice is committed under <code class="docutils literal notranslate"><span class="pre">tests/fixtures/gregor/</span></code> so the pipeline is smoke-tested end-to-end. Index SNPs must be <code class="docutils literal notranslate"><span class="pre">chr:pos</span></code> (hg19), and <code class="docutils literal notranslate"><span class="pre">LDWINDOWSIZE</span></code> must match the window the reference was built with (1 Mb for the standard r²≥0.7 databases). The <code class="docutils literal notranslate"><span class="pre">gregor_fisher_plot</span></code> workflow (Step 3) is self-contained R and only needs two enrichment-result tables.</p>
 </div></blockquote>
 </section>
 <section id="output">
@@ -729,8 +729,8 @@ bash: expand = True, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_outp
 <p>With our docker image:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">GREGOR_folder</span>
 <span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">v</span> <span class="s2">&quot;$PWD:/usr/src/myapp&quot;</span> <span class="o">-</span><span class="n">it</span> <span class="n">custom</span><span class="o">-</span><span class="n">perl</span>
-<span class="n">perl</span> <span class="n">script</span><span class="o">/</span><span class="n">GREGOR</span><span class="o">.</span><span class="n">pl</span> <span class="o">--</span><span class="n">conf</span> <span class="n">example</span><span class="o">/</span><span class="n">mvsusie_annotation</span><span class="o">.</span><span class="n">conf</span>
-<span class="n">perl</span> <span class="n">script</span><span class="o">/</span><span class="n">GREGOR</span><span class="o">.</span><span class="n">pl</span> <span class="o">--</span><span class="n">conf</span> <span class="n">example</span><span class="o">/</span><span class="n">susie_annotation</span><span class="o">.</span><span class="n">conf</span>
+<span class="n">perl</span> <span class="n">script</span><span class="o">/</span><span class="n">GREGOR</span> <span class="o">--</span><span class="n">conf</span> <span class="n">example</span><span class="o">/</span><span class="n">mvsusie_annotation</span><span class="o">.</span><span class="n">conf</span>
+<span class="n">perl</span> <span class="n">script</span><span class="o">/</span><span class="n">GREGOR</span> <span class="o">--</span><span class="n">conf</span> <span class="n">example</span><span class="o">/</span><span class="n">susie_annotation</span><span class="o">.</span><span class="n">conf</span>
 </pre></div>
 </div>
 <div class="cell docutils container">
@@ -739,7 +739,7 @@ bash: expand = True, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_outp
 [gregor_2]
 output: f&#39;{_input:nn}_gregor_output/StatisticSummaryFile.txt&#39;
 bash: expand = True, container = container, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
-    perl /opt/GREGOR/GREGOR/script/GREGOR.pl --conf {_input} &amp;&amp; touch {_output}
+    GREGOR --conf {_input} &amp;&amp; touch {_output}
 </pre></div>
 </div>
 </div>

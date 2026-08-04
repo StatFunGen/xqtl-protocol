@@ -1514,7 +1514,7 @@ input: [f for grp in _qtl_data for f in grp], group_by = lambda x: _qtl_data, gr
 output: f&quot;{cwd}/gwas_qtl/cache/{name}_gwas_batch_meta_{_meta_info[3]}.tsv&quot;
 task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
 bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    Rscript code/script/pecotmr_integration/fine_mapping_overlap.R \
+    Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_overlap.R \
         --qtl ${&quot; &quot;.join([str(x) for x in _input])} \
         --gwas ${&quot; &quot;.join(_meta_info[4])} \
         --signal-cutoff ${signal_cutoff} \

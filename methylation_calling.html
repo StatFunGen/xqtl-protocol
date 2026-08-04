@@ -707,7 +707,7 @@ Sections
       --probe-pval-cutoff 0.01 (as float)
                         threshold to filter out probes based on detection P
                         value
-      --cross-reactive-probes /opt/cross_reactive_probe_Hop2020.txt (as path)
+      --cross-reactive-probes data/cross_reactive_probe_Hop2020.txt (as path)
                         FIXME: document here where this list is obtained from.
                         Also the documentation below doesn&#39;t sound right. Please
                         fix. Use the default list in our docker, if want to skip
@@ -741,6 +741,7 @@ parameter: cwd = path(&quot;output&quot;)
 parameter: sample_sheet = path
 # Raw data folder
 parameter: idat_folder = path(f&quot;{sample_sheet:d}&quot;)
+parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
 # Remove probes that are SNPs
 parameter: keep_only_cpg_probes = False
 # For cluster jobs, number commands to run per job
@@ -834,108 +835,28 @@ The way we handle beta == 0 or beta == 1 is by replacing them with the next min/
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[sesame_1]
-processing_option = &quot;QCDGPB&quot; if keep_only_cpg_probes else &quot;QCDPB&quot;
 # threshold to filter out samples based on frac_dt (Percentage of probe Detection Success)  percentage
 parameter: samples_frac_dt_cutoff = 0.8
-# The header rows in the sample sheet csv. Use 0 for no headers. Typically it should be 7. 
+# The header rows in the sample sheet csv. Use 0 for no headers. Typically it should be 7.
 parameter: sample_sheet_header_rows = float
-
-# The number of cores to use. if set to 0 (default), the effective number of cores to used is automatically determined by BiocParallel::multicoreWorkers() function (i.e. n_available_cores-2)
+# The number of cores to use. If 0, determined by BiocParallel::multicoreWorkers().
 parameter: n_cores = 1
 
 input: sample_sheet
 output: f&#39;{cwd}/{_input:bn}.sesame.rds&#39;,f&#39;{cwd}/{_input:bn}.sesame.beta.tsv&#39;,f&#39;{cwd}/{_input:bn}.sesame.M.tsv&#39;,f&#39;{cwd}/{_input:bn}.sample_qcs.sesame.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    library(sesame)
-    library(data.table)
-    setDTthreads(threads = 0)
-    require(parallel)
-    require(BiocParallel)
-    
-    n_cores=${n_cores}
-    if(n_cores==0)n_cores=BiocParallel::multicoreWorkers() 
-    # Cache the sesameData, it will not actually download anything if the data is here alerady
-    sesameData::sesameDataCache()
-    # Define function 
-    B2M&lt;-function (x)
-    {
-    x[x == 0] &lt;- min(x[x != 0])
-    x[x == 1] &lt;- max(x[x != 1])
-    log2(x) - log2(1 - x)
-    }
-    # Load the sample sheet to get the sample names
-    sample_sheet = fread(&quot;${_input}&quot; , skip = ${sample_sheet_header_rows} )
-    if(&quot;Sentrix_Row_Column&quot; %in% colnames(sample_sheet)){
-    sample_sheet[,well_name:=paste(Sentrix_ID,Sentrix_Row_Column,sep=&#39;_&#39;)]
-      } else { sample_sheet[,well_name:=paste(Sentrix_ID,Sentrix_Position,sep=&#39;_&#39;)]
-      }
-    sample_sheet[,Sample_Name:=.SD,.SDcols=colnames(sample_sheet)[1]]
-    sample_sheet$Sample_Name = as.character(sample_sheet$Sample_Name)
-
-    # scan and load the data
-    sdfs &lt;- openSesame(${idat_folder:r}, prep = &quot;&quot;, func = NULL,BPPARAM = BiocParallel::MulticoreParam(n_cores))
-    # Keep only the samples in the sample_sheet to save memory
-    sdfs &lt;- sdfs[which(names(sdfs)%in%sample_sheet$well_name)]
-
-    message(&quot;IDAT files loaded.&quot;)
-    # Get Sample level QC:
-    qcs &lt;- openSesame(sdfs, prep=&quot;&quot;, func=sesameQC_calcStats,BPPARAM = BiocParallel::MulticoreParam(n_cores))
-    message(&quot;Sample-level QC completed.&quot;)
-    # Get poor samples base on percentage of probe fail
-    qcs_dt&lt;-data.table(do.call(rbind, lapply(qcs, as.data.frame)),keep.rownames=&#39;id&#39;)
-
-    poor_samples&lt;-qcs_dt[frac_dt&lt;${samples_frac_dt_cutoff}]$id #all samples with &lt; 80% probes detection are deened as poor
-
-    ## This handles the case where poor_sample is empty
-    sdfs &lt;- sdfs[which(!(names(sdfs)%in%poor_samples))]
-    message(paste0(ifelse(length(poor_samples) &gt; 0, poor_samples , &quot;No sample&quot; ) , &quot; removed due to low quality based on frac_dt &lt; ${samples_frac_dt_cutoff} &quot;))
-    
-    # Preprocess the data via QCDPB procedure
-    ## The masking procedure of sesame is not removing the probes, but instead introduce NA in the masked probes. Therefore it makesense to na.rm it.
-    beta &lt;- openSesame(sdfs,prep = &quot;${processing_option}&quot;,BPPARAM = BiocParallel::MulticoreParam(n_cores))
-    message(&quot;Beta calculated!&quot;)
-    beta &lt;- beta[rowSums(is.na(beta)) != ncol(beta), ] # Use this instead of na.omit because if not the full rows are NA, then the probe is not masked.
-    
-    #replace well_name by sample name in the matrix column names
-    colnames(beta)&lt;-sample_sheet[colnames(beta),on=&#39;well_name&#39;]$Sample_Name
-    
-    #calculate the M value
-    M &lt;- B2M(beta)
-    message(&quot;M values calculated.&quot;)
-    
-    #Save the outputs
-    fwrite(data.table(beta,keep.rownames = &#39;ID&#39;),&quot;${_output[1]}&quot;,sep=&quot;\t&quot;)
-    fwrite(data.table(M,keep.rownames = &#39;ID&#39;),&quot;${_output[2]}&quot;,sep=&quot;\t&quot;)
-    fwrite(qcs_dt,&quot;${_output[3]}&quot;,sep=&quot;\t&quot;)
-    saveRDS(list(&quot;sdfs&quot; = sdfs,&quot;qcs&quot; = qcs),&quot;${_output[0]}&quot;)
-
-    message(&quot;sesame analysis completed!&quot;)
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;This is the file containing the intermediate QC table of sesame&quot;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
-        for i in $[_output[2]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
-    
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/methylation_calling.R --step sesame \
+        --sample-sheet &quot;${_input}&quot; \
+        --idat-folder &quot;${idat_folder}&quot; \
+        --sample-sheet-header-rows ${sample_sheet_header_rows} \
+        --samples-frac-dt-cutoff ${samples_frac_dt_cutoff} \
+        --n-cores ${n_cores} \
+        ${&#39;--keep-only-cpg-probes&#39; if keep_only_cpg_probes else &#39;&#39;} \
+        --output-rds &quot;${_output[0]}&quot; \
+        --output-beta &quot;${_output[1]}&quot; \
+        --output-m &quot;${_output[2]}&quot; \
+        --output-qcs &quot;${_output[3]}&quot;
 </pre></div>
 </div>
 </div>
@@ -961,77 +882,24 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 parameter: samples_pval_cutoff = 0.05
 # threshold to filter out probes based on detection P value
 parameter: probe_pval_cutoff = 0.01
-# FIXME: document here where this list is obtained from. Also the documentation below doesn&#39;t sound right. Please fix.
-## Use the default list in our docker, if want to skip methylation, specify it as &quot;.&quot;
-parameter: cross_reactive_probes = path(&quot;/opt/cross_reactive_probe_Hop2020.txt&quot;)
+# Cross-reactive probe list (data/cross_reactive_probe_Hop2020.txt); &quot;.&quot; to skip
+parameter: cross_reactive_probes = path(&quot;data/cross_reactive_probe_Hop2020.txt&quot;)
 # 38 (hg38) or 19 (hg19) for epic data, by default 38. Noted for 450K data only GRCh37 is availble
-parameter: hg_build = 38 
+parameter: hg_build = 38
 input: sample_sheet
 output: f&#39;{cwd}/{_input:bn}.minfi.rds&#39;,f&#39;{cwd}/{_input:bn}.minfi.beta.tsv&#39;,f&#39;{cwd}/{_input:bn}.minfi.M.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    ## load libraries
-    library(dplyr)
-    library(readr)
-    library(tibble)
-    library(minfi)
-    sessionInfo()
-    cross_reactive = readr::read_delim(&quot;${cross_reactive_probes}&quot;,&quot;\t&quot;)$probe
-    ## 1. read idat files
-    targets &lt;- read.metharray.sheet(${_input:adr})
-    colnames(targets)[1] = &quot;Sample_Name&quot;
-    ## Only read samples with data
-    Missing_sample = targets%&gt;%filter(!stringr::str_detect(targets$Basename ,&quot;/&quot;) )%&gt;%pull(Sample_Name)
-    if (length(Missing_sample)) message(paste0(&quot;Samples &quot;,paste0(Missing_sample,collapse = &quot;, &quot;), &quot; do not have IDAT data&quot; ))
-
-    targets = targets%&gt;%filter(stringr::str_detect(targets$Basename ,&quot;/&quot;) )     
-    rgSet &lt;- read.metharray.exp(targets = targets)
-    if(${hg_build} == 38 &amp;&amp; rgSet@annotation[&quot;array&quot;] == &#39;IlluminaHumanMethylationEPIC&#39; ){rgSet@annotation[&#39;annotation&#39;] = &quot;ilm10b5.hg38&quot;}
-    message(&quot;RGSet object created.&quot;)
-    
-    # Quality Control and Normalization
-
-    ## 2. QC based on p-value, remove samples with average p value less than 0.05
-    
-    detP &lt;- detectionP(rgSet)
-    keep &lt;- colMeans(detP) &lt; ${samples_pval_cutoff}
-    rgSet &lt;- rgSet[,keep]
-    targets &lt;- targets[keep,]
-    message(&quot;Samples with average detection p-value &lt; ${samples_pval_cutoff} removed.&quot;)
-
-    ## 3. Normalize the data - Quantile
-    mSetSq &lt;- preprocessQuantile(rgSet)
-    message(&quot;RGSet data quantile normalized&quot;)
-    
-    ## 4. Remove cross-reactive probes
-    no_cross_reactive &lt;- !(featureNames(mSetSq) %in% cross_reactive)
-    mSetSq &lt;- mSetSq[no_cross_reactive, ]
-    message(&quot;Cross-reactive probes removed&quot;)
-    
-    ## 5. Drop probes that are also SNPs
-    if (${&quot;T&quot; if keep_only_cpg_probes else &quot;F&quot;} ){
-        mSetSq &lt;- dropLociWithSnps(mSetSq)
-        message(&quot;probes overlapping with SNPs removed&quot;)
-    }
-  
-    ## 6. Remove probes with &lt; ${probe_pval_cutoff} detection p-values
-    detP &lt;- detP[match(featureNames(mSetSq),rownames(detP)),]
-    keep &lt;- rowSums(detP &lt; ${probe_pval_cutoff}) == ncol(mSetSq)
-    mSetSq &lt;- mSetSq[keep,]
-  
-    ## 7. get Beta and M values
-    mSetSqbval &lt;- getBeta(mSetSq)%&gt;%as_tibble(rownames = &quot;ID&quot;)
-    mSetSqMval &lt;- getM(mSetSq)%&gt;%as_tibble(rownames = &quot;ID&quot;)
-
-    message(&quot;Beta-value and M value obtained&quot;)
-    
-    ## 8. output data
-    mSetSqbval = mSetSqbval%&gt;%rename_at(vars(rgSet@colData%&gt;%rownames()), function(x) rgSet@colData[x,]%&gt;%as_tibble%&gt;%pull(Sample_Name) )
-    mSetSqMval = mSetSqMval%&gt;%rename_at(vars(rgSet@colData%&gt;%rownames()), function(x) rgSet@colData[x,]%&gt;%as_tibble%&gt;%pull(Sample_Name) )
-    mSetSqbval%&gt;%readr::write_delim(&quot;${_output[1]}&quot;,&quot;\t&quot;)
-    mSetSqMval%&gt;%readr::write_delim(&quot;${_output[2]}&quot;,&quot;\t&quot;)
-    output = list(&quot;rgSet&quot; = rgSet,mSetSq = &quot;mSetSq&quot;, mSetSqbval = &quot;mSetSqbval&quot;)
-    output%&gt;%saveRDS(${_output[0]:r})
+bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/methylation_calling.R --step minfi \
+        --sample-sheet &quot;${_input}&quot; \
+        --samples-pval-cutoff ${samples_pval_cutoff} \
+        --probe-pval-cutoff ${probe_pval_cutoff} \
+        --cross-reactive-probes &quot;${cross_reactive_probes}&quot; \
+        --hg-build ${hg_build} \
+        ${&#39;--keep-only-cpg-probes&#39; if keep_only_cpg_probes else &#39;&#39;} \
+        --output-rds &quot;${_output[0]}&quot; \
+        --output-beta &quot;${_output[1]}&quot; \
+        --output-m &quot;${_output[2]}&quot;
 </pre></div>
 </div>
 </div>
@@ -1045,59 +913,13 @@ R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout =
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[*_2]
 output: f&#39;{_input[1]:n}.bed.gz&#39;, f&#39;{_input[2]:n}.bed.gz&#39;, f&#39;{_input[0]:n}.gene_id.annot.tsv&#39;
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-R: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    library(sesame)
-    library(tibble)
-    library(dplyr)
-    library(readr) 
-    sesameData::sesameDataCache()
-    betas = read_delim(&quot;${_input[1]}&quot;,&quot;\t&quot;)
-        M = read_delim(&quot;${_input[2]}&quot;,&quot;\t&quot;)
-    probe_annot = sesameData::sesameData_annoProbes(betas$ID,column = &quot;gene_id&quot;)
-    probe_annot = cbind(&quot;ID&quot; = probe_annot%&gt;%names,probe_annot%&gt;%as_tibble)%&gt;%as_tibble
-  
-    betas = inner_join(probe_annot%&gt;%dplyr::select(&quot;#chr&quot; = seqnames, start , end , ID ),betas , by = &quot;ID&quot; )%&gt;%
-          mutate(end = start +1 ,chr_num = stringr::str_remove(`#chr`,&quot;chr&quot;)%&gt;%as.numeric)%&gt;%arrange(chr_num,`#chr`,start)%&gt;%select(-chr_num) 
-    M = inner_join(probe_annot%&gt;%dplyr::select(&quot;#chr&quot; = seqnames, start , end , ID ), M , by = &quot;ID&quot; )%&gt;%
-          mutate(end = start +1 , chr_num = stringr::str_remove(`#chr`,&quot;chr&quot;)%&gt;%as.numeric)%&gt;%arrange(chr_num,`#chr`,start)%&gt;%select(-chr_num) 
-  
-    betas%&gt;%readr::write_delim(&quot;${_output[0]:n}&quot;,&quot;\t&quot;)
-    M%&gt;%readr::write_delim(&quot;${_output[1]:n}&quot;,&quot;\t&quot;)
-    probe_annot%&gt;%write_delim(&quot;${_output[2]}&quot;,&quot;\t&quot;)
-  
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
-    bgzip -f ${_output[0]:n} 
-    tabix ${_output[0]}
-    bgzip -f ${_output[1]:n} 
-    tabix ${_output[1]}
-    rm -f ${_output[0]:n} ${_output[1]:n}
-
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
-        stdout=$[_output[0]:n].stdout
-        for i in $[_output[0]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
-        for i in $[_output[1]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `zcat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `zcat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `zcat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        zcat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
-        for i in $[_output[2]] ; do 
-        echo &quot;output_info: $i &quot; &gt;&gt; $stdout;
-        echo &quot;output_size:&quot; `ls -lh $i | cut -f 5  -d  &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_rows:&quot; `cat $i | wc -l  | cut -f 1 -d &quot; &quot;`   &gt;&gt; $stdout;
-        echo &quot;output_headerow:&quot; `cat $i | grep &quot;##&quot; | wc -l `   &gt;&gt; $stdout;
-        echo &quot;output_column:&quot; `cat $i | grep -V &quot;##&quot; | head -1 | wc -w `   &gt;&gt; $stdout;
-        echo &quot;output_preview:&quot;   &gt;&gt; $stdout;
-        cat $i  | grep -v &quot;##&quot; | head  | cut -f 1,2,3,4,5,6,7,8,9,10   &gt;&gt; $stdout ; done
+    Rscript ${modular_script_dir}/molecular_phenotypes/calling/methylation_calling.R --step annotate \
+        --input-beta &quot;${_input[1]}&quot; \
+        --input-m &quot;${_input[2]}&quot; \
+        --output-beta-bed &quot;${_output[0]}&quot; \
+        --output-m-bed &quot;${_output[1]}&quot; \
+        --output-annot &quot;${_output[2]}&quot;
 </pre></div>
 </div>
 </div>
