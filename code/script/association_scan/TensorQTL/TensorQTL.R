@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
-# TensorQTL.R — R helper for TensorQTL.py
+# TensorQTL.R — statistical post-processing for the TensorQTL scan
+# (Storey q-values, BH-FDR, and bgzip+tabix of the annotated tables). Invoked as
+# separate steps by TensorQTL.ipynb after the Python scan writes raw p-value tables.
 #
 # Usage:
 #   Rscript TensorQTL.R nominal_qvalues <tsv> [<interaction>]
@@ -15,6 +17,18 @@ safe_qvalue <- function(p) {
     suppressWarnings(qvalue::qvalue(p, fdr.level = 0.05)$qvalues),
     error = function(e) p.adjust(p, method = "BH")
   )
+}
+
+# Write a data.table to a bgzip+tabix'd .tsv.gz (chrom=col1, pos=col2, 1 header line).
+# `path` may be given with or without the trailing .gz. Returns the .gz path.
+finalize_bgzip <- function(dt, path) {
+  gz    <- if (grepl("\\.gz$", path)) path else paste0(path, ".gz")
+  plain <- sub("\\.gz$", "", gz)
+  fwrite(dt, plain, sep = "\t", quote = FALSE, na = "NA")
+  Rsamtools::bgzip(plain, dest = gz, overwrite = TRUE)
+  unlink(plain)
+  Rsamtools::indexTabix(gz, seq = 1L, start = 2L, end = 2L, skip = 1L)
+  gz
 }
 
 # Resolve interaction variable name from either a file path or a bare name
@@ -42,8 +56,7 @@ cmd_nominal_qvalues <- function(tsv_path, interaction_arg = "") {
     }
   }
 
-  fwrite(dt, tsv_path, sep = "\t", quote = FALSE, na = "NA")
-  message("nominal_qvalues done: ", tsv_path)
+  message("nominal_qvalues done: ", finalize_bgzip(dt, tsv_path))
 }
 
 # trans_qvalues: add global qvalue across all trans pairs
@@ -54,8 +67,7 @@ cmd_trans_qvalues <- function(tsv_path) {
   } else {
     dt[, qvalue := numeric(0L)]
   }
-  fwrite(dt, tsv_path, sep = "\t", quote = FALSE, na = "NA")
-  message("trans_qvalues done: ", tsv_path)
+  message("trans_qvalues done: ", finalize_bgzip(dt, tsv_path))
 }
 
 # regional_postprocess: merge per-chromosome regional files, add FDR/q-value columns
