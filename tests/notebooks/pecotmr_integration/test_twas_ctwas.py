@@ -2,7 +2,7 @@
 
 Runs the full assemble -> estimate-priors -> fine-map chain over the 20-block
 chr22 LD grid with the blessed ctwas weights, reproducing the documented
-gene-Z 5.462 / susie_pip 1.0. Exercises: the shared-var get_analysis_regions
+gene-Z 3.168 / susie_pip 1.0. Exercises: the shared-var get_analysis_regions
 provider, the block-grid-vs-sketch collapse in gwas_sumstats_construct.R, the
 region provenance carried on the committed S4 TwasWeights fixture, and
 assembleCtwasInputs / estCtwasParam / finemapCtwasRegions via the ctwas_* wrappers.
@@ -41,10 +41,12 @@ def test_ctwas(run_sos, read_rds, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
 
     # (3) CtwasResult with the blessed numeric parity (gene susie_pip 1.0,
-    # gene-Z 5.462). keep_snps defaults True, so the SNP background is retained.
+    # gene-Z 3.168 = ctwas 0.6.0's LD-adjusted burden Z; the pre-0.6.0 5.462
+    # under-adjusted the LD). keep_snps defaults True, so the SNP background
+    # is retained.
     fm = cwd / "ctwas/protocol_example.ctwas_finemap.rds"
     assert fm.exists(), p.stdout
     info = read_rds(fm)
     assert info["class"] == "CtwasResult"
     assert info["geneMaxPip"] == pytest.approx(1.0, abs=1e-3), info
-    assert info["geneTopZ"] == pytest.approx(5.462, abs=0.01), info
+    assert info["geneTopZ"] == pytest.approx(3.168, abs=0.01), info
