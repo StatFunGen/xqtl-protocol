@@ -64,7 +64,7 @@
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="RNA-seq calling and QC" href="bulk_expression_commands.html" />
+    <link rel="next" title="Which pipelines do I need?" href="xqtl_protocol_landing_page.html" />
     <link rel="prev" title="FunGen-xQTL Computational Protocol" href="README.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -222,6 +222,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
 <ul class="nav bd-sidenav">
@@ -550,11 +551,14 @@
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#before-you-start">Before You Start</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-sos-in-a-conda-environment">Step 1. Install SoS in a Conda Environment</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-install-the-xqtl-software-stack-with-pixi">Step 2. Install the xQTL Software Stack with pixi</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-clone-the-protocol">Step 3. Clone the Protocol</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-download-the-demo-data">Step 4. Download the Demo Data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-run-your-first-workflow">Step 5. Run Your First Workflow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-the-xqtl-software-stack-with-pixi">Step 1. Install the xQTL Software Stack with pixi</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-clone-the-protocol">Step 2. Clone the Protocol</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-the-example-data">Step 3. The Example Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-run-your-first-pipeline">Step 4. Run Your First Pipeline</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#two-shapes-of-pipeline">Two shapes of pipeline</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#finding-the-parameters-for-any-pipeline">Finding the parameters for any pipeline</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-data">1. Reference Data</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#molecular-phenotype-quantification">2. Molecular Phenotype Quantification</a></li>
@@ -586,81 +590,40 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
-<p><strong>The FunGen-xQTL protocol is a reproducible, end-to-end pipeline for molecular quantitative trait loci (QTL) analysis</strong> — from raw genotypes and phenotypes through discovery, fine-mapping, and integration with GWAS.</p>
-<p>This page is a guided on-ramp. A minimal toy dataset of <strong>49 de-identified samples</strong> is used throughout the examples so you can try every pipeline end-to-end before running on real data. In about an hour you’ll install the environment, clone the repo, download the demo dataset, and run your first cis-QTL scan.</p>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><strong>New to the consortium?</strong> Start with <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/README.html#how-to-use-the-resource">How to use the resource</a> on the homepage for the big-picture background, then come back here to set up.</p>
-</div>
-<hr class="docutils" />
-<section id="before-you-start">
-<h2>Before You Start<a class="headerlink" href="#before-you-start" title="Link to this heading">#</a></h2>
-<p>You’ll need a Linux or macOS shell. Windows users: install <a class="reference external" href="https://learn.microsoft.com/windows/wsl/install">WSL2</a> first, then follow the Linux path.</p>
+<p><img alt="Three steps: install the environment, get the repo, run a pipeline" src="_images/xqtl_getting_started.gif" /></p>
+<p>Three steps take you from an empty machine to your first pipeline run:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Requirement</p></th>
-<th class="head"><p>Minimum</p></th>
-<th class="head"><p>Recommended</p></th>
+<tr class="row-odd"><th class="head"><p>Step</p></th>
+<th class="head"><p>What it does</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Disk space</p></td>
-<td><p>10 GB (minimal install)</p></td>
-<td><p>40 GB (full bioinformatics stack)</p></td>
+<tr class="row-even"><td><p><strong>1. Install the environment</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pixi-setup</span></code> — R, Python, plink, samtools, tensorqtl, sos</p></td>
 </tr>
-<tr class="row-odd"><td><p>Memory</p></td>
-<td><p>16 GB</p></td>
-<td><p>50 GB+ on HPC for the installer</p></td>
+<tr class="row-odd"><td><p><strong>2. Get the repo</strong></p></td>
+<td><p>the example data comes with it — no separate download</p></td>
 </tr>
-<tr class="row-even"><td><p>Network</p></td>
-<td><p>GitHub, conda-forge, <a class="reference external" href="http://synapse.org">synapse.org</a></p></td>
-<td><p>Same</p></td>
-</tr>
-<tr class="row-odd"><td><p>Git</p></td>
-<td><p>Any recent version</p></td>
-<td><p>2.30+</p></td>
+<tr class="row-even"><td><p><strong>3. Run a pipeline</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span> <span class="pre">pipeline/&lt;name&gt;.ipynb</span> <span class="pre">…</span></code> against that example data</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p><strong>On HPC</strong> — make sure you have access to a compute node with at least 50 GB of memory for the pixi installation step (Step 2). Login nodes often kill large installs. See Step 2 for details.</p>
-</div>
+<blockquote>
+<div><p><strong>Not sure which pipelines you need?</strong> Use the <a class="reference download internal" download="" href="_downloads/a6870bf9d4dce7a26e35382287daed98/xqtl_protocol_landing_page.html"><span class="xref download myst">pipeline selector</span></a>. Answer a few questions about your data — molecular phenotype, whether you are fine-mapping from individual-level data or summary statistics, whether you are integrating with GWAS — and it lists the pipelines that apply, with their inputs, outputs and the commands to run them. This page covers <em>how</em> to run a pipeline; the selector tells you <em>which</em>.</p>
+</div></blockquote>
+<section id="before-you-start">
+<h2>Before You Start<a class="headerlink" href="#before-you-start" title="Link to this heading">#</a></h2>
+<p>The protocol’s pipelines are written as <a class="reference external" href="https://vatlab.github.io/sos-docs/">SoS (Script of Scripts)</a> workflows. You do not need to install SoS separately — it comes with the environment in Step 1, along with a registered <code class="docutils literal notranslate"><span class="pre">sos</span></code> Jupyter kernel if you would rather work interactively.</p>
+<p>Native support is provided for Linux and macOS (Intel and Apple Silicon). Windows users need <a class="reference external" href="https://learn.microsoft.com/en-us/windows/wsl/install">WSL</a>.</p>
 </section>
 <hr class="docutils" />
-<section id="step-1-install-sos-in-a-conda-environment">
-<h2>Step 1. Install SoS in a Conda Environment<a class="headerlink" href="#step-1-install-sos-in-a-conda-environment" title="Link to this heading">#</a></h2>
-<p>The protocol’s pipelines are written as <a class="reference external" href="https://vatlab.github.io/sos-docs/">SoS (Script of Scripts)</a> workflows. First, create a dedicated conda environment and install SoS along with its language modules. Full installation reference: <a class="reference external" href="https://vatlab.github.io/sos-docs/running.html#Conda-installation">SoS Conda installation guide</a>.</p>
-<p>If you don’t have conda yet, install <a class="reference external" href="https://github.com/conda-forge/miniforge">Miniforge</a> (recommended) or <a class="reference external" href="https://www.anaconda.com/download">Anaconda</a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create and activate a new environment</span>
-conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>sos<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12<span class="w"> </span>-y
-conda<span class="w"> </span>activate<span class="w"> </span>sos
-
-<span class="c1"># Install the full SoS suite</span>
-conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>sos<span class="w"> </span>sos-pbs<span class="w"> </span>sos-notebook<span class="w"> </span>jupyterlab-sos<span class="w"> </span>sos-papermill<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>sos-bash<span class="w"> </span>sos-python<span class="w"> </span>sos-r
-
-<span class="c1"># Register the SoS kernel with Jupyter</span>
-python<span class="w"> </span>-m<span class="w"> </span>sos_notebook.install
-</pre></div>
-</div>
-<p><strong>Verify:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>--version
-jupyter<span class="w"> </span>kernelspec<span class="w"> </span>list<span class="w">    </span><span class="c1"># should include &#39;sos&#39;</span>
-</pre></div>
-</div>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>Make sure you always <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">sos</span></code> before running any pipeline commands.</p>
-</div>
-</section>
-<hr class="docutils" />
-<section id="step-2-install-the-xqtl-software-stack-with-pixi">
-<h2>Step 2. Install the xQTL Software Stack with pixi<a class="headerlink" href="#step-2-install-the-xqtl-software-stack-with-pixi" title="Link to this heading">#</a></h2>
-<p>Next, install the bioinformatics and data-science packages the protocol depends on using <a class="reference external" href="https://pixi.sh/">pixi</a> via the <a class="reference external" href="https://github.com/StatFunGen/pixi-setup">StatFunGen/pixi-setup</a> installer.</p>
-<p><strong>On HPC systems</strong>, your home directory likely has a storage quota that won’t fit the full install. Temporarily point <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> to a path with enough space, and add pixi to your <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>:</p>
+<section id="step-1-install-the-xqtl-software-stack-with-pixi">
+<h2>Step 1. Install the xQTL Software Stack with pixi<a class="headerlink" href="#step-1-install-the-xqtl-software-stack-with-pixi" title="Link to this heading">#</a></h2>
+<p>Install the bioinformatics and data-science packages the protocol depends on using <a class="reference external" href="https://pixi.sh/">pixi</a> via the <a class="reference external" href="https://github.com/StatFunGen/pixi-setup">StatFunGen/pixi-setup</a> installer. Full reference: <a class="reference external" href="https://wanggroup.org/hpc/docs/software-setup-conda/">Advanced Software Setup with Pixi</a>.</p>
+<p><strong>On HPC systems</strong>, your home directory likely has a storage quota that will not fit the full install. Point <code class="docutils literal notranslate"><span class="pre">HOME</span></code> at a path with enough space, and add pixi to your <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Point HOME to a location with enough disk space</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">HOME</span><span class="o">=</span><span class="s2">&quot;/your_pixi_install_path&quot;</span>
 
@@ -668,11 +631,12 @@ jupyter<span class="w"> </span>kernelspec<span class="w"> </span>list<span class
 <span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;/your_pixi_install_path/.pixi/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
 </pre></div>
 </div>
-<p>Then run the installer:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/StatFunGen/pixi-setup/refs/heads/main/pixi-setup.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+<p>Then download the installer and run it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/StatFunGen/pixi-setup/refs/heads/main/pixi-setup.sh<span class="w"> </span>-o<span class="w"> </span>pixi-setup.sh
+bash<span class="w"> </span>pixi-setup.sh
 </pre></div>
 </div>
-<p><strong>On a laptop or workstation</strong> you can skip the <code class="docutils literal notranslate"><span class="pre">HOME</span></code>/<code class="docutils literal notranslate"><span class="pre">PATH</span></code> exports and just run the <code class="docutils literal notranslate"><span class="pre">curl</span></code> command — the installer will prompt you to choose an install path and type interactively.</p>
+<p><strong>On a laptop or workstation</strong> you can skip the <code class="docutils literal notranslate"><span class="pre">HOME</span></code>/<code class="docutils literal notranslate"><span class="pre">PATH</span></code> exports and just run the two commands above — the installer will prompt you to choose an install path.</p>
 <p>The installer will prompt you for two things:</p>
 <p><strong>1. Installation path</strong> — where pixi stores environments and packages.</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -709,111 +673,87 @@ jupyter<span class="w"> </span>kernelspec<span class="w"> </span>list<span class
 <tr class="row-odd"><td><p><strong>2. full</strong></p></td>
 <td><p>~35 GB</p></td>
 <td><p>~350k</p></td>
-<td><p>Everything above, <strong>plus</strong> samtools, bcftools, plink2, GATK4, STAR, Seurat, tensorQTL, Bioconductor</p></td>
+<td><p>Everything above, <strong>plus</strong> the bioinformatics suite — plink, samtools, bcftools, bedtools, STAR, GATK4, tensorqtl, Seurat, Bioconductor packages</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>Choose <strong>minimal</strong> for xQTL runs with pre-processed inputs; choose <strong>full</strong> if you’ll also do upstream QC, alignment, or single-cell work.</p>
-<p><strong>Activate and verify:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>~/.bashrc<span class="w">          </span><span class="c1"># or ~/.zshrc on macOS</span>
-pixi<span class="w"> </span>--version
+<p>Choose <strong><code class="docutils literal notranslate"><span class="pre">full</span></code></strong> for this protocol; <code class="docutils literal notranslate"><span class="pre">minimal</span></code> does not include the bioinformatics tools the pipelines call.</p>
+<p>Then restart your shell, or:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>~/.bashrc
 </pre></div>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p><strong>On HPC</strong>, run the installer from a compute node with at least 50 GB of memory, not the login node. The install process can be memory-intensive and may be killed on login nodes:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--mem<span class="o">=</span>50G<span class="w"> </span>--pty<span class="w"> </span>bash<span class="w">          </span><span class="c1"># SLURM</span>
-bsub<span class="w"> </span>-Is<span class="w"> </span>-M<span class="w"> </span><span class="m">50000</span><span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>bash<span class="w">        </span><span class="c1"># LSF</span>
+<p><strong>Verify:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>which<span class="w"> </span>sos<span class="w"> </span>Rscript<span class="w">        </span><span class="c1"># both should resolve inside your pixi install</span>
+sos<span class="w"> </span>--version
+jupyter<span class="w"> </span>kernelspec<span class="w"> </span>list<span class="w">  </span><span class="c1"># should include &#39;sos&#39;</span>
 </pre></div>
-</div>
 </div>
 </section>
 <hr class="docutils" />
-<section id="step-3-clone-the-protocol">
-<h2>Step 3. Clone the Protocol<a class="headerlink" href="#step-3-clone-the-protocol" title="Link to this heading">#</a></h2>
+<section id="step-2-clone-the-protocol">
+<h2>Step 2. Clone the Protocol<a class="headerlink" href="#step-2-clone-the-protocol" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/StatFunGen/xqtl-protocol.git
 <span class="nb">cd</span><span class="w"> </span>xqtl-protocol
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><strong>What’s in the repo</strong></p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Folder</p></th>
-<th class="head"><p>Contents</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pipeline/</span></code></p></td>
-<td><p>The SoS workflows you’ll run</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">code/</span></code></p></td>
-<td><p>Notebook-based documentation (this page lives here)</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">data/</span></code></p></td>
-<td><p>Small example inputs and configuration templates</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">website/</span></code></p></td>
-<td><p>JupyterBook sources for <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/">statfungen.github.io/xqtl-protocol</a></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
+<p>Run everything from the root of the repository. All pipelines are symbolic links in the <code class="docutils literal notranslate"><span class="pre">pipeline</span></code> folder, so you execute them directly as <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span> <span class="pre">pipeline/&lt;pipeline_file&gt;.ipynb</span></code>.</p>
 </section>
 <hr class="docutils" />
-<section id="step-4-download-the-demo-data">
-<h2>Step 4. Download the Demo Data<a class="headerlink" href="#step-4-download-the-demo-data" title="Link to this heading">#</a></h2>
-<p>Preparation of the demo dataset is documented <a class="reference external" href="https://github.com/cumc/fungen-xqtl-analysis/tree/main/analysis/Wang_Columbia/ROSMAP/MWE">on this page</a> (a private repository accessible to FunGen-xQTL working group members). The data itself lives on <a class="reference external" href="https://www.synapse.org/#!Synapse:syn69670658">Synapse</a>.</p>
-<ol class="arabic">
-<li><p>Create a free account on <a class="reference external" href="https://www.synapse.org/">synapse.org</a> — username and password are required to download.</p></li>
-<li><p>Install the Synapse API client into pixi’s python environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>--environment<span class="w"> </span>python<span class="w"> </span>synapseclient
+<section id="step-3-the-example-data">
+<h2>Step 3. The Example Data<a class="headerlink" href="#step-3-the-example-data" title="Link to this heading">#</a></h2>
+<p><strong>You do not need to download anything.</strong> Example data is included in this repository under <code class="docutils literal notranslate"><span class="pre">tests/fixtures/</span></code> — about 89 MB covering 33 pipelines:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>tests/fixtures/
 </pre></div>
 </div>
-<p>Alternatively, <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">synapseclient</span></code>. See <a class="reference external" href="https://help.synapse.org/docs/Installing-Synapse-API-Clients.1985249668.html">the Synapse install docs</a> for details.</p>
-</li>
-<li><p>Every folder at each level of the Synapse project has its own unique ID, so you can download just the subset you need.</p></li>
-</ol>
-<p><strong>Bulk RNA-seq molecular phenotype quantification</strong> — test data:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">synapseclient</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">synapseutils</span>
-<span class="n">syn</span> <span class="o">=</span> <span class="n">synapseclient</span><span class="o">.</span><span class="n">Synapse</span><span class="p">()</span>
-<span class="n">syn</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">&quot;your username on synapse.org&quot;</span><span class="p">,</span> <span class="s2">&quot;your password on synapse.org&quot;</span><span class="p">)</span>
-<span class="n">files</span> <span class="o">=</span> <span class="n">synapseutils</span><span class="o">.</span><span class="n">syncFromSynapse</span><span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="s1">&#39;syn69670658&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apa_calling</span>   <span class="n">gwas_qc</span>   <span class="n">intact</span>   <span class="n">mash</span>   <span class="n">pca</span>   <span class="n">rna_calling</span>   <span class="n">twas</span>   <span class="n">vcf_qc</span>
+<span class="n">qtl_mini</span>      <span class="n">sldsc_enrichment</span>    <span class="n">splicing_calling</span>   <span class="n">susie_enloc</span>   <span class="o">...</span>
 </pre></div>
 </div>
-<p><strong>xQTL association analysis</strong> — test data:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">synapseclient</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">synapseutils</span>
-<span class="n">syn</span> <span class="o">=</span> <span class="n">synapseclient</span><span class="o">.</span><span class="n">Synapse</span><span class="p">()</span>
-<span class="n">syn</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s2">&quot;your username on synapse.org&quot;</span><span class="p">,</span> <span class="s2">&quot;your password on synapse.org&quot;</span><span class="p">)</span>
-<span class="n">files</span> <span class="o">=</span> <span class="n">synapseutils</span><span class="o">.</span><span class="n">syncFromSynapse</span><span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="s1">&#39;syn69670658&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">)</span>
+<p>Each directory holds the inputs for one pipeline, sized down to chromosome 22 so a pipeline runs in minutes. Some directories also carry reference data — genome annotation, LD panels — under their upstream filenames so you can see where they came from.</p>
+<p>To run a pipeline on your own data, pass your own file paths to the same parameters in place of the <code class="docutils literal notranslate"><span class="pre">tests/fixtures/…</span></code> ones.</p>
+</section>
+<hr class="docutils" />
+<section id="step-4-run-your-first-pipeline">
+<h2>Step 4. Run Your First Pipeline<a class="headerlink" href="#step-4-run-your-first-pipeline" title="Link to this heading">#</a></h2>
+<p>Add <code class="docutils literal notranslate"><span class="pre">-n</span></code> to preview first: SoS parses the notebook, binds your parameters, prints the command it <em>would</em> run, and touches no data. It takes seconds, so it is a good habit before a long job.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/intact.ipynb<span class="w"> </span>intact<span class="w"> </span><span class="se">\\</span>
+<span class="w">    </span>--fastenloc-file<span class="w"> </span>tests/fixtures/intact/protocol_example.fastenloc.gene.out<span class="w"> </span><span class="se">\\</span>
+<span class="w">    </span>--ptwas-file<span class="w">     </span>tests/fixtures/intact/protocol_example.ptwas.output<span class="w"> </span><span class="se">\\</span>
+<span class="w">    </span>--tissue<span class="w"> </span>DLPFC<span class="w"> </span>--cwd<span class="w"> </span>/tmp/intact_demo<span class="w"> </span>-n
+</pre></div>
+</div>
+<p>Then drop the <code class="docutils literal notranslate"><span class="pre">-n</span></code> to run it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INFO</span><span class="p">:</span> <span class="n">intact</span> <span class="n">output</span><span class="p">:</span>  <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">intact_demo</span><span class="o">/</span><span class="n">DLPFC</span><span class="o">.</span><span class="n">INTACT</span><span class="o">.</span><span class="n">rds</span>
+</pre></div>
+</div>
+<section id="two-shapes-of-pipeline">
+<h3>Two shapes of pipeline<a class="headerlink" href="#two-shapes-of-pipeline" title="Link to this heading">#</a></h3>
+<p><strong>Inputs passed directly</strong> — as above, point straight at files in <code class="docutils literal notranslate"><span class="pre">tests/fixtures/</span></code>.</p>
+<p><strong>Inputs staged into a working directory</strong> — some pipelines look for <code class="docutils literal notranslate"><span class="pre">*.gz</span></code> inside their <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> rather than taking file arguments, so copy the example data in first:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">W</span><span class="o">=</span>/tmp/qtlpp<span class="p">;</span><span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$W</span>/tensorqtl_cis<span class="w"> </span><span class="nv">$W</span>/out
+cp<span class="w"> </span>tests/fixtures/qtl_association_postprocessing/*.gz<span class="w"> </span><span class="nv">$W</span>/tensorqtl_cis/
+
+sos<span class="w"> </span>run<span class="w"> </span>pipeline/qtl_association_postprocessing.ipynb<span class="w"> </span>default<span class="w"> </span><span class="se">\\</span>
+<span class="w">    </span>--cwd<span class="w"> </span><span class="nv">$W</span>/tensorqtl_cis<span class="w"> </span>--modular-script-dir<span class="w"> </span>code/script<span class="w"> </span>--output-dir<span class="w"> </span><span class="nv">$W</span>/out<span class="w"> </span><span class="se">\\</span>
+<span class="w">    </span>--maf-cutoff<span class="w"> </span><span class="m">0</span>.01<span class="w"> </span>--cis-window<span class="w"> </span><span class="m">1000000</span><span class="w"> </span>--pvalue-cutoff<span class="w"> </span><span class="m">0</span>.05<span class="w"> </span><span class="se">\\</span>
+<span class="w">    </span>--study<span class="w"> </span>protocol_example<span class="w"> </span>--context<span class="w"> </span>bulk_rnaseq<span class="w"> </span>--genome<span class="w"> </span>hg38
 </pre></div>
 </div>
 </section>
-<hr class="docutils" />
-<section id="step-5-run-your-first-workflow">
-<h2>Step 5. Run Your First Workflow<a class="headerlink" href="#step-5-run-your-first-workflow" title="Link to this heading">#</a></h2>
-<p>Confirm SoS can see the pipelines:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/1_xqtl_association.ipynb<span class="w"> </span>-h
+<section id="finding-the-parameters-for-any-pipeline">
+<h3>Finding the parameters for any pipeline<a class="headerlink" href="#finding-the-parameters-for-any-pipeline" title="Link to this heading">#</a></h3>
+<p>Each pipeline’s tests carry parameter sets that are known to work, which is the quickest way to get a runnable command for one you have not used before:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># which test drives the notebook you want</span>
+grep<span class="w"> </span>-rl<span class="w"> </span><span class="s1">&#39;run_sos&#39;</span><span class="w"> </span>tests/notebooks<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.py&#39;</span>
+
+<span class="c1"># the notebook, step and parameters</span>
+grep<span class="w"> </span>-n<span class="w"> </span>-A16<span class="w"> </span><span class="s1">&#39;run_sos(&#39;</span><span class="w"> </span>tests/notebooks/&lt;path&gt;/test_&lt;name&gt;.py
 </pre></div>
 </div>
-<p>You should see a list of workflow options. Now run a minimal cis-QTL scan using the demo data you just downloaded:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/TensorQTL.ipynb<span class="w"> </span>cis<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--genotype-file<span class="w">   </span>data/example/genotype.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--phenotype-file<span class="w">  </span>data/example/phenotype.bed.gz<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--covariate-file<span class="w">  </span>data/example/covariates.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--cwd<span class="w"> </span>output/demo_tensorqtl
-</pre></div>
-</div>
-<p>Results land in <code class="docutils literal notranslate"><span class="pre">output/demo_tensorqtl/</span></code>. You now have a working environment and a known-good reference run to compare against when you bring in your own data.</p>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>Every pipeline supports <code class="docutils literal notranslate"><span class="pre">-h</span></code> and <code class="docutils literal notranslate"><span class="pre">--help</span></code>, and SoS prints the exact shell commands it runs under the hood — a great way to learn what’s happening and to debug failures.</p>
-</div>
+<p>Translating what you find into command-line flags: <code class="docutils literal notranslate"><span class="pre">output_prefix=&quot;toy&quot;</span></code> becomes <code class="docutils literal notranslate"><span class="pre">--output-prefix</span> <span class="pre">toy</span></code>, <code class="docutils literal notranslate"><span class="pre">fx</span> <span class="pre">/</span> <span class="pre">&quot;twas/protocol_example.x.tsv&quot;</span></code> becomes <code class="docutils literal notranslate"><span class="pre">tests/fixtures/twas/protocol_example.x.tsv</span></code>, and <code class="docutils literal notranslate"><span class="pre">repo_root</span> <span class="pre">/</span> <span class="pre">&quot;code/script&quot;</span></code> becomes <code class="docutils literal notranslate"><span class="pre">--modular-script-dir</span> <span class="pre">code/script</span></code>.</p>
+<p>Next, the <strong>Analysis</strong> section below indexes every pipeline in the protocol, roughly upstream to downstream.</p>
+</section>
 </section>
 <section id="analysis">
 <h2>Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h2>
@@ -1045,11 +985,11 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
       </div>
     </a>
     <a class="right-next"
-       href="bulk_expression_commands.html"
+       href="xqtl_protocol_landing_page.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">RNA-seq calling and QC</p>
+        <p class="prev-next-title">Which pipelines do I need?</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1072,11 +1012,14 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#before-you-start">Before You Start</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-sos-in-a-conda-environment">Step 1. Install SoS in a Conda Environment</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-install-the-xqtl-software-stack-with-pixi">Step 2. Install the xQTL Software Stack with pixi</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-clone-the-protocol">Step 3. Clone the Protocol</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-download-the-demo-data">Step 4. Download the Demo Data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-run-your-first-workflow">Step 5. Run Your First Workflow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-the-xqtl-software-stack-with-pixi">Step 1. Install the xQTL Software Stack with pixi</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-clone-the-protocol">Step 2. Clone the Protocol</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-the-example-data">Step 3. The Example Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-run-your-first-pipeline">Step 4. Run Your First Pipeline</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#two-shapes-of-pipeline">Two shapes of pipeline</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#finding-the-parameters-for-any-pipeline">Finding the parameters for any pipeline</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-data">1. Reference Data</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#molecular-phenotype-quantification">2. Molecular Phenotype Quantification</a></li>

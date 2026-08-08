@@ -65,7 +65,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Univariate xQTL Discovery" href="eQTL_analysis_commands.html" />
-    <link rel="prev" title="Getting Started" href="xqtl_protocol_demo.html" />
+    <link rel="prev" title="Which pipelines do I need?" href="xqtl_protocol_landing_page.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -222,6 +222,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
 <ul class="current nav bd-sidenav">
@@ -687,7 +688,7 @@ parameter:  cwd = path(&quot;output&quot;)
 ## dir to store the reference data
 parameter: refd = path(f&#39;{cwd}/reference_data/&#39;)
 ## Diretory to the excutable
-parameter: exe_dir = path(&quot;~/GIT/xqtl-protocol/pipeline/&quot;)
+parameter: exe_dir = path(&quot;pipeline/&quot;)
 parameter: container_rnaquant = &#39;/mnt/mfs/statgen/containers/rna_quantification.sif&#39;
 ## Cloud computing options:
 parameter: yml = path(&quot;./csg.yml&quot;)
@@ -790,13 +791,13 @@ cat example_script | grep -v HINT
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>sos run /home/hs3163/GIT/xqtl-protocol/pipeline/pipeline/reference_data.ipynb download_hg_reference --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/pipeline/reference_data.ipynb download_gene_annotation --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/pipeline/reference_data.ipynb download_ercc_reference --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data.ipynb download_hg_reference --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data
+sos run pipeline/reference_data.ipynb download_gene_annotation --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data
+sos run pipeline/reference_data.ipynb download_ercc_reference --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/reference_data.ipynb hg_reference \
+sos run pipeline/reference_data.ipynb hg_reference \
     --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/GRCh38_full_analysis_set_plus_decoy_hla /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/Homo_sapiens.GRCh38.103.chr /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/ERCC92 /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data \
     --ercc-reference /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/ERCC92.fa \
     --hg-reference /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
@@ -804,7 +805,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/reference_data.ipynb hg_referenc
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/reference_data.ipynb gene_annotation \
+sos run pipeline/reference_data.ipynb gene_annotation \
         --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data \
         --ercc-gtf /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/ERCC92.gtf \
         --hg-gtf /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
@@ -814,7 +815,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/reference_data.ipynb gene_annota
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/reference_data.ipynb STAR_index RSEM_index \
+sos run pipeline/reference_data.ipynb STAR_index RSEM_index \
     --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data \
     --hg-reference /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/GRCh38_full_analysis_set_plus_decoy_hla /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/Homo_sapiens.GRCh38.103.chr /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/ERCC92 /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/ERCC92.noALT_noHLA_noDecoy_ERCC.fasta \
     --hg-gtf /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted..collapse_only.gene.ERCC.gtf \
@@ -823,7 +824,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/reference_data.ipynb STAR_index 
 
 
 
-sos run  /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
+sos run  pipeline/RNA_calling.ipynb rnaseqc_call \
     --cwd ./ \
     --samples  AC_sample_fastq.list \
     --data-dir /mnt/mfs/statgen/xqtl_workflow_testing/rna_quant/rna_expression/ \
@@ -835,7 +836,7 @@ sos run  /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call 
 
 
 
-sos run  /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
+sos run  pipeline/RNA_calling.ipynb rnaseqc_call \
     --cwd ./ \
     --samples  DLPFC_sample_fastq.list \
     --data-dir /mnt/mfs/statgen/xqtl_workflow_testing/rna_quant/rna_expression/ \
@@ -847,7 +848,7 @@ sos run  /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call 
 
 
 
-sos run  /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
+sos run  pipeline/RNA_calling.ipynb rnaseqc_call \
     --cwd ./ \
     --samples  PCC_sample_fastq \
     --data-dir /mnt/mfs/statgen/xqtl_workflow_testing/rna_quant/rna_expression/ \
@@ -859,7 +860,7 @@ sos run  /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call 
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
+sos run pipeline/RNA_calling.ipynb rnaseqc_call \
     --cwd ./ \
     --samples  AC_sample_fastq.list \
     --data-dir /mnt/mfs/statgen/xqtl_workflow_testing/rna_quant/rna_expression/ \
@@ -872,7 +873,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
+sos run pipeline/RNA_calling.ipynb rnaseqc_call \
     --cwd ./ \
     --samples  DLPFC_sample_fastq.list \
     --data-dir /mnt/mfs/statgen/xqtl_workflow_testing/rna_quant/rna_expression/ \
@@ -885,7 +886,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
+sos run pipeline/RNA_calling.ipynb rnaseqc_call \
     --cwd ./ \
     --samples  PCC_sample_fastq \
     --data-dir /mnt/mfs/statgen/xqtl_workflow_testing/rna_quant/rna_expression/ \
@@ -898,7 +899,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/RNA_calling.ipynb rnaseqc_call \
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_QC.ipynb qc \
+sos run pipeline/bulk_expression_QC.ipynb qc \
     --cwd . \
     --tpm-gct AC.rnaseqc.gene_tpm.gct.gz \
     --counts-gct  AC.rnaseqc.gene_readsCount.gct.gz \
@@ -914,7 +915,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_QC.ipynb qc \
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_QC.ipynb qc \
+sos run pipeline/bulk_expression_QC.ipynb qc \
     --cwd . \
     --tpm-gct DLPFC.rnaseqc.gene_tpm.gct.gz \
     --counts-gct  DLPFC.rnaseqc.gene_readsCount.gct.gz \
@@ -930,7 +931,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_QC.ipynb qc \
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_QC.ipynb qc \
+sos run pipeline/bulk_expression_QC.ipynb qc \
     --cwd . \
     --tpm-gct PCC.rnaseqc.gene_tpm.gct.gz \
     --counts-gct  PCC.rnaseqc.gene_readsCount.gct.gz \
@@ -946,7 +947,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_QC.ipynb qc \
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_normalization.ipynb normalize \
+sos run pipeline/bulk_expression_normalization.ipynb normalize \
     --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control \
     --tpm-gct AC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz \
     --counts-gct AC.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct.gz \
@@ -960,7 +961,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_normalization.ip
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_normalization.ipynb normalize \
+sos run pipeline/bulk_expression_normalization.ipynb normalize \
     --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control \
     --tpm-gct DLPFC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz \
     --counts-gct DLPFC.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct.gz \
@@ -974,7 +975,7 @@ sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_normalization.ip
 
 
 
-sos run /home/hs3163/GIT/xqtl-protocol/pipeline/bulk_expression_normalization.ipynb normalize \
+sos run pipeline/bulk_expression_normalization.ipynb normalize \
     --cwd /mnt/mfs/statgen/xqtl_workflow_testing/phenotype_master_control \
     --tpm-gct PCC.rnaseqc.low_expression_filtered.outlier_removed.tpm.gct.gz \
     --counts-gct PCC.rnaseqc.low_expression_filtered.outlier_removed.geneCount.gct.gz \
@@ -1277,12 +1278,12 @@ report:  expand = &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="xqtl_protocol_demo.html"
+       href="xqtl_protocol_landing_page.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Getting Started</p>
+        <p class="prev-next-title">Which pipelines do I need?</p>
       </div>
     </a>
     <a class="right-next"
