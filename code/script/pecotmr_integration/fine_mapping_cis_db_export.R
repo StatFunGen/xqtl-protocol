@@ -111,8 +111,13 @@ cat(sprintf("Wrote cis_results_db (%d FMR input(s) -> %d rows) + meta (region_id
 # ---- 4. pip_sum (optional) -------------------------------------------------
 if (!is.na(argv$pip_sum_output)) {
   rows <- lapply(seq_len(nrow(db)), function(i) {
-    sel <- list(study = as.character(db$study[i]), context = as.character(db$context[i]),
-                trait = as.character(db$trait[i]), method = as.character(db$method[i]))
+    # NULL-safe per-row identity read: a GwasFineMappingResult has no context /
+    # trait column, so db$context is NULL and as.character(db$context[i]) would be
+    # character(0) -- length 0 -- which makes the data.frame() below error on any
+    # region with signal. Substitute a length-1 NA when the column is absent.
+    .col1 <- function(nm) { v <- db[[nm]]; if (is.null(v)) NA_character_ else as.character(v[i]) }
+    sel <- list(study = .col1("study"), context = .col1("context"),
+                trait = .col1("trait"), method = .col1("method"))
     pip <- tryCatch(do.call(getPip, c(list(db), sel)), error = function(e) NULL)
     if (is.null(pip)) return(NULL)
     data.frame(pip_sum = sum(pip[pip > 0], na.rm = TRUE), condition = sel$context,
