@@ -1390,7 +1390,10 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n
 # `export_suffix` deliberately differs from step 1&#39;s `--suffix` (input rds) to avoid CLI collision.
 parameter: export_path = cwd
 parameter: export_prefix = &#39;&#39;  # falls back to step-1 `name` if empty
-parameter: export_suffix = &#39;cis_results_db.rds&#39;
+parameter: export_suffix = &#39;&#39;  # empty =&gt; derived from `gwas` below
+# Re-declared so the suffix can default by mode: step 1 writes
+# block_results_db.rds under --gwas True, else cis_results_db.rds.
+parameter: gwas = False
 parameter: fsusie_prefix = &#39;&#39;
 parameter: preset_top_loci = False
 # PIP cutoff for getTopLoci; optional independent CS purity (min.abs.corr) cutoff (&lt;0 =&gt; none).
@@ -1401,8 +1404,9 @@ parameter: lfsr_thres = 0.01
 
 _pfx = export_prefix if export_prefix else name
 import glob as _glob
-_rds_files = sorted(_glob.glob(f&quot;{export_path}/{_pfx}.{fsusie_prefix}*.{export_suffix}&quot;))
-stop_if(len(_rds_files) == 0, f&quot;No RDS files matched: {export_path}/{_pfx}.{fsusie_prefix}*.{export_suffix}&quot;)
+_suffix = export_suffix if export_suffix else (&#39;block_results_db.rds&#39; if gwas else &#39;cis_results_db.rds&#39;)
+_rds_files = sorted(_glob.glob(f&quot;{export_path}/{_pfx}.{fsusie_prefix}*.{_suffix}&quot;))
+stop_if(len(_rds_files) == 0, f&quot;No RDS files matched: {export_path}/{_pfx}.{fsusie_prefix}*.{_suffix}&quot;)
 _purity_arg = f&quot;--min-purity {min_purity}&quot; if float(min_purity) &gt;= 0 else &quot;&quot;
 
 input: _rds_files, group_by = 1
@@ -1446,14 +1450,14 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:
         # header from first non-empty file
         for f in ${_input}; do
             if [ &quot;$(zcat -f &quot;$f&quot; 2&gt;/dev/null | wc -l)&quot; -ge 2 ]; then
-                zcat &quot;$f&quot; | head -1
+                zcat -f &quot;$f&quot; | head -1
                 break
             fi
         done
         # data rows from every non-empty file
         for f in ${_input}; do
             if [ &quot;$(zcat -f &quot;$f&quot; 2&gt;/dev/null | wc -l)&quot; -ge 2 ]; then
-                zcat &quot;$f&quot; | tail -n +2
+                zcat -f &quot;$f&quot; | tail -n +2
             fi
         done
     } | $GZ &gt; ${_output}
