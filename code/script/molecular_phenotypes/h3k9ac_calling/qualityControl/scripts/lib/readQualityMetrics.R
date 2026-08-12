@@ -4,7 +4,7 @@ readPicard.alignment_summary_metrics <- function (source) {
   stopifnot(file.exists(source))
   isDir <- file.info(source)$isdir
   if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*.alignment_summary_metrics\""), intern=TRUE)
+    files <- list.files(source, pattern = "\\.alignment_summary_metrics$", recursive = TRUE, full.names = TRUE)
     stopifnot(length(files) > 0)
     samples <- gsub(".alignment_summary_metrics", "", basename(files), fixed=TRUE)
   } else {
@@ -36,52 +36,13 @@ readPicard.alignment_summary_metrics <- function (source) {
 }
 
 
-readPicard.rna_metrics <- function(source) {
-  
-  stopifnot(length(source) == 1)
-  stopifnot(file.exists(source))
-  isDir <- file.info(source)$isdir
-  if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*.rna_metrics\""), intern=TRUE)
-    stopifnot(length(files) > 0)
-    samples <- gsub(".rna_metrics", "", basename(files), fixed=TRUE)
-  } else {
-    files <- source
-    samples <- gsub(".rna_metrics", "", basename(files), fixed=TRUE)
-  }
-  
-  metrics <- list()
-  for (i in 1:length(files)) {
-    m <- read.table(files[i], header=TRUE, sep="\t", comment.char="#", stringsAsFactors=FALSE, nrows=1)
-    metrics[[i]] <- data.frame(Sample=samples[i],
-                               File=files[i],
-                               PCT_RIBOSOMAL_BASES=m$PCT_RIBOSOMAL_BASES,
-                               PCT_CODING_BASES=m$PCT_CODING_BASES,
-                               PCT_UTR_BASES=m$PCT_UTR_BASES,
-                               PCT_INTRONIC_BASES=m$PCT_INTRONIC_BASES,
-                               PCT_INTERGENIC_BASES=m$PCT_INTERGENIC_BASES,
-                               PCT_MRNA_BASES=m$PCT_MRNA_BASES,
-                               PCT_USABLE_BASES=m$PCT_USABLE_BASES,
-                               MEDIAN_CV_COVERAGE=m$MEDIAN_CV_COVERAGE,
-                               MEDIAN_5PRIME_BIAS=m$MEDIAN_5PRIME_BIAS,
-                               MEDIAN_3PRIME_BIAS=m$MEDIAN_3PRIME_BIAS,
-                               MEDIAN_5PRIME_TO_3PRIME_BIAS=m$MEDIAN_5PRIME_TO_3PRIME_BIAS,
-                               stringsAsFactors=FALSE)
-  }
-  metrics <- do.call(rbind, metrics)
-  row.names(metrics) <- metrics$Sample
-  
-  return(metrics)
-}
-
-
 readPicard.duplicate_metrics <- function(source) {
   
   stopifnot(length(source) == 1)
   stopifnot(file.exists(source))
   isDir <- file.info(source)$isdir
   if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*.duplicate_metrics\""), intern=TRUE)
+    files <- list.files(source, pattern = "\\.duplicate_metrics$", recursive = TRUE, full.names = TRUE)
     stopifnot(length(files) > 0)
     samples <- gsub(".duplicate_metrics", "", basename(files), fixed=TRUE)
   } else {
@@ -105,45 +66,13 @@ readPicard.duplicate_metrics <- function(source) {
 }
 
 
-readPicard.wgs_metrics <- function (source) {
-  
-  stopifnot(length(source) == 1)
-  stopifnot(file.exists(source))
-  isDir <- file.info(source)$isdir
-  if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*.wgs_metrics\""), intern=TRUE)
-    stopifnot(length(files) > 0)
-    samples <- gsub(".wgs_metrics", "", basename(files), fixed=TRUE)
-  } else {
-    files <- source
-    samples <- gsub(".wgs_metrics", "", basename(files), fixed=TRUE)
-  }
-  
-  metrics <- list()
-  for (i in 1:length(files)) {
-    m <- read.table(files[i], header=TRUE, sep="\t", comment.char="#", stringsAsFactors=FALSE, nrows=1)
-    metrics[[i]] <- data.frame(Sample=samples[i],
-                               File=files[i],
-                               MEDIAN_COVERAGE=m$MEDIAN_COVERAGE,
-                               MAD_COVERAGE=m$MAD_COVERAGE,
-                               PCT_EXC_DUPE=m$PCT_EXC_DUPE,
-                               PCT_EXC_TOTAL=m$PCT_EXC_TOTAL,
-                               stringsAsFactors=FALSE)
-  }
-  metrics <- do.call(rbind, metrics)
-  row.names(metrics) <- metrics$Sample
-  
-  return(metrics)
-}
-
-
 readPicard.insert_size_metrics <- function (source) {
   
   stopifnot(length(source) == 1)
   stopifnot(file.exists(source))
   isDir <- file.info(source)$isdir
   if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*.insert_size_metrics\""), intern=TRUE)
+    files <- list.files(source, pattern = "\\.insert_size_metrics$", recursive = TRUE, full.names = TRUE)
     stopifnot(length(files) > 0)
     samples <- gsub(".insert_size_metrics", "", basename(files), fixed=TRUE)
   } else {
@@ -174,7 +103,7 @@ readPicard.gc_bias.summary_metrics <- function (source) {
   stopifnot(file.exists(source))
   isDir <- file.info(source)$isdir
   if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*.gc_bias.summary_metrics\""), intern=TRUE)
+    files <- list.files(source, pattern = "\\.gc_bias\\.summary_metrics$", recursive = TRUE, full.names = TRUE)
     stopifnot(length(files) > 0)
     samples <- gsub(".gc_bias.summary_metrics", "", basename(files), fixed=TRUE)
   } else {
@@ -198,79 +127,13 @@ readPicard.gc_bias.summary_metrics <- function (source) {
 }
 
 
-readPicard <- function(source) {
-  metrics.aln <- readPicard.alignment_summary_metrics(source)
-  metrics.rna <- readPicard.rna_metrics(source)
-  metrics.dup <- readPicard.duplicate_metrics(source)
-
-  stopifnot(all(row.names(metrics.aln) %in% row.names(metrics.rna)) &
-            all(row.names(metrics.rna) %in% row.names(metrics.dup)) &
-            all(row.names(metrics.dup) %in% row.names(metrics.aln)))
-  
-  metrics.aln$File <- NULL
-  metrics.rna$File <- NULL
-  metrics.dup$File <- NULL
-  metrics.rna$Sample <- NULL
-  metrics.dup$Sample <- NULL
-  
-  metrics <- cbind(metrics.aln, metrics.rna[row.names(metrics.aln), ])
-  metrics <- cbind(metrics, metrics.dup[row.names(metrics.aln), ])
-  
-  return(metrics)
-}
-
-
-readRSEM.cnt <- function (source) {
-  
-  # RSEM .cnt files gives statistics about the (transcriptome) alignment passed to RSEM:
-  # Row 1: N0 (# unalignable reads);
-  #        N1 (# alignable reads);
-  #        N2 (# filtered reads due to too many alignments);
-  #        N_tot (N0+N1+N2)
-  # Row 2: nUnique (# reads aligned uniquely to a gene);
-  #        nMulti (# reads aligned to multiple genes);
-  #        nUncertain (# reads aligned to multiple locations in the given reference sequences, which include isoform-level multi-mapping reads)
-  # Row 3: nHits (# total alignments);
-  #        read_type (0: single-end read, no quality; 1: single-end read, with quality score; 2: paired-end read, no quality score; 3: paired-end read, with quality score)
-  # Source: https://groups.google.com/forum/#!topic/rsem-users/usmPKgsC5LU
-  # Note: N1 = nUnique + nMulti
-  
-  stopifnot(length(source) == 1)
-  stopifnot(file.exists(source))
-  isDir <- file.info(source)$isdir
-  if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*_rsem.cnt\""), intern=TRUE)
-    stopifnot(length(files) > 0)
-    samples <- gsub("_rsem.cnt", "", basename(files), fixed=TRUE)
-  } else {
-    files <- source
-    samples <- gsub("_rsem.cnt", "", basename(files), fixed=TRUE)
-  }
-  
-  metrics <- list()
-  for (i in 1:length(files)) {
-    m <- read.table(files[i], header=FALSE, sep=" ", comment.char="#", stringsAsFactors=FALSE, nrows=3, fill=TRUE)
-    metrics[[i]] <- data.frame(Sample=samples[i],
-                               File=files[i],
-                               TotalReads=m[1, 4],
-                               AlignedReads=m[1, 2],
-                               UniquelyAlignedReads=m[2, 1],
-                               stringsAsFactors=FALSE)
-  }
-  metrics <- do.call(rbind, metrics)
-  row.names(metrics) <- metrics$Sample
-  
-  return(metrics)
-}
-
-
 readMACS2 <- function (source) {
   
   stopifnot(length(source) == 1)
   stopifnot(file.exists(source))
   isDir <- file.info(source)$isdir
   if (isDir) {
-    files <- system(paste("find -L", source, "-name \"*_peaks.xls\""), intern=TRUE)
+    files <- list.files(source, pattern = "_peaks\\.xls$", recursive = TRUE, full.names = TRUE)
     stopifnot(length(files) > 0)
     samples <- gsub("_peaks.xls", "", basename(files), fixed=TRUE)
   } else {
@@ -307,7 +170,7 @@ readEncodeMetrics <- function (source, paired=FALSE) {
   stopifnot(file.info(source)$isdir)
   
   # Read in metrics first
-  files <- system(paste("find -L", source, "-name \"*_metrics.csv\""), intern=TRUE)
+  files <- list.files(source, pattern = "_metrics\\.csv$", recursive = TRUE, full.names = TRUE)
   stopifnot(length(files) > 0)
   samples <- gsub("_metrics.csv", "", basename(files), fixed=TRUE)
   
@@ -321,7 +184,7 @@ readEncodeMetrics <- function (source, paired=FALSE) {
 
   # Read cross-correlation (if single end data)
   if (paired == FALSE) {
-    files <- system(paste("find -L", source, "-name \"*_crossCor.csv\""), intern=TRUE)
+    files <- list.files(source, pattern = "_crossCor\\.csv$", recursive = TRUE, full.names = TRUE)
     stopifnot(length(files) > 0)
     samples <- gsub("_crossCor.csv", "", basename(files), fixed=TRUE)
   
@@ -347,22 +210,6 @@ readEncodeMetrics <- function (source, paired=FALSE) {
     cc$Sample <- NULL
     metrics <- cbind(metrics, cc)
   }
-  
-  return(metrics)
-}
-
-
-readRNAseqQC <- function(sourcePicard, sourceRSEM) {
-  metrics.picard <- readPicard(sourcePicard)
-  metrics.rsem <- readRSEM.cnt(sourceRSEM)
-  
-  stopifnot(all(row.names(metrics.picard) %in% row.names(metrics.rsem)) &
-              all(row.names(metrics.rsem) %in% row.names(metrics.picard)))
-  
-  metrics.rsem$File <- NULL
-  metrics.rsem$Sample <- NULL
-  
-  metrics <- cbind(metrics.picard, metrics.rsem[row.names(metrics.picard), ])
   
   return(metrics)
 }
@@ -434,7 +281,7 @@ readChIPseqQC <- function(sourcePicard, sourceMacs2, paired=FALSE) {
 #' @author Hans
 aggregateChromatinStateFrequencies <- function(peaksDir) {
   
-  files <- system(paste("find", peaksDir, "-name \"*_chromStates.csv\""), intern=TRUE)
+  files <- list.files(peaksDir, pattern = "_chromStates\\.csv$", recursive = TRUE, full.names = TRUE)
   if (length(files) > 0) {
     chromatinMetrics <- list()
     for (i in 1:length(files)) {

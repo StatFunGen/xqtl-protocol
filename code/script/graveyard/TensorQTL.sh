@@ -3,9 +3,9 @@
 # TensorQTL.sh
 # Mirrors: code/SoS/association_scan/TensorQTL/TensorQTL.ipynb
 #
-# Steps:
-#   cis  — cis-QTL nominal scan + permutation across all chromosomes
-#   cis_postprocess — combine regional cis-QTL outputs and compute q-values
+# Steps (raw p-value scan only — q-values/FDR and regional significance are added by
+# the separate R post-processing steps in TensorQTL.R, exactly as the notebook does):
+#   cis   — cis-QTL nominal scan + permutation across all chromosomes
 #   trans — trans-QTL scan
 #
 # Usage:
@@ -57,7 +57,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
 fi
 
 case "$STEP" in
-    cis|cis_postprocess|trans)
+    cis|trans)
         if [[ -n "$CONTAINER" ]]; then
             singularity exec "$CONTAINER" "${_cmd[@]}"
         else
@@ -65,6 +65,6 @@ case "$STEP" in
         fi
         ;;
     *)
-        echo "ERROR: Unknown step '$STEP'. Available: cis, cis_postprocess, trans" >&2
+        echo "ERROR: Unknown step '$STEP'. Available: cis, trans" >&2
         exit 1 ;;
 esac

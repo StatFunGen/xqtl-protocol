@@ -1,21 +1,18 @@
 #!/bin/bash
 
-#$-l h_vmem=24G,h_rt=24:00:00
-#$-t 1-728
-#$-tc 64
+#$-l h_vmem=64G,h_rt=24:00:00
+#$-t 1-1
+#$-tc 1
 #$-wd /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed
 #$-o /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/logs/'$JOB_NAME'.o'$JOB_ID'.'$TASK_ID'
 #$-e /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/logs/'$JOB_NAME'.e'$JOB_ID'.'$TASK_ID'
 #$-N bamToBed_n728
 
-wigToBigWig=/mnt/mfs/ctcn/tools/ucscTools/wigToBigWig
-bamToBed=/mnt/mfs/cluster/bin/bin/bamToBed
-module load Bedtools/2.30
-module load SAMTOOLS/1.14
-module load R/4.0
+wigToBigWig=wigToBigWig
+bamToBed=bamToBed
 
 readarray bamfiles < /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bowtie2Aligned/scripts/alignedBamFiles_n728.txt
-bam=${bamfiles[((${SGE_TASK_ID} - 1))]}
+bam=/mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bowtie2Aligned/positivePool/positivePool.bam
 sample=$(basename -- ${bam})
 sample=${sample%.*}
 
@@ -43,8 +40,6 @@ rm /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/${sample}/${sampl
 rm /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/${sample}/${sample}.bg
 rm /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/${sample}/genome.txt
 
-echo "/mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/${sample}/${sample}.bed" >> /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/scripts/bedFiles_n728.txt
-echo "/mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/${sample}/${sample}.bw" >> /mnt/mfs/ctcn/datasets/rosmap/h3k9ac/dlpfcTissue/batch1/bed/scripts/coverageTracks_n728.txt
 
 mv logs/bamToBed_n728.e${JOB_ID}.${SGE_TASK_ID} logs/bamToBed_n728.e.${sample}
 mv logs/bamToBed_n728.o${JOB_ID}.${SGE_TASK_ID} logs/bamToBed_n728.o.${sample}
