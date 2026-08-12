@@ -93,5 +93,7 @@ def test_sctk_qc_via_sos(run_sos, repo_root, tmp_path):
         "numThreads": 2,
         "modular_script_dir": repo_root / MSD})
     assert p.returncode == 0, p.stdout + p.stderr
-    assert (tmp_path / "SCTK_results" / "filtered_seuratobj.rds").exists()
-    assert (tmp_path / "QC_table" / "SCTK_QC_table.csv").exists()
+    # SoS runs with the default global --name = protocol_example.snrnaseq, so
+    # the worker prefixes its outputs with that dataset tag.
+    assert (tmp_path / "SCTK_results" / "protocol_example.snrnaseq.filtered_seuratobj.rds").exists()
+    assert (tmp_path / "QC_table" / "protocol_example.snrnaseq.SCTK_QC_table.csv").exists()
