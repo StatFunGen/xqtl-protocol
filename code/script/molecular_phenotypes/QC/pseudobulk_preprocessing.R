@@ -27,6 +27,8 @@ parser <- add_argument(parser, "--step", type = "character",
                        help = "pseudobulk_counts | sampleid_mapping | pseudobulk_qc | phenotype_formatting")
 parser <- add_argument(parser, "--output-dir", type = "character", default = "output",
                        help = "output directory")
+parser <- add_argument(parser, "--name", type = "character", default = "protocol_example",
+                      help = "prefix for output filenames")
 # pseudobulk_counts
 parser <- add_argument(parser, "--seurat-files", type = "character", nargs = Inf, default = character(0),
                        help = "[pseudobulk_counts] Seurat .rds objects")
@@ -83,7 +85,7 @@ run_pseudobulk_counts <- function(argv) {
   min_cells  <- argv$min_cells
   outdir     <- file.path(argv$output_dir, "0_pseudobulk_counts")
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
-  out_file   <- file.path(outdir, sprintf("pseudobulk_counts_%s.csv.gz", celltype))
+  out_file   <- file.path(outdir, sprintf("%s.pseudobulk_counts_%s.csv.gz", argv$name, celltype))
 
   message("Loading and subsetting Seurat objects for: ", celltype)
   subsets <- list()
@@ -132,7 +134,7 @@ run_pseudobulk_counts <- function(argv) {
 # ===========================================================================
 run_sampleid_mapping <- function(argv) {
   suppressPackageStartupMessages(library(dplyr))
-  outdir <- file.path(argv$output_dir, "1_files_with_sampleid")
+  outdir <- argv$output_dir
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
   map_df <- vroom::vroom(argv$map_file, delim = ",", show_col_types = FALSE, progress = FALSE)
@@ -253,7 +255,7 @@ run_pseudobulk_qc <- function(argv) {
     meta_file <- meta_files[i]; counts_file <- count_files[i]
     ct <- sub("\\.csv$", "", sub("^.*metadata_", "", basename(meta_file)))
     message("\nProcessing: ", ct)
-    outdir <- file.path(argv$output_dir, "2_residuals", ct)
+    outdir <- argv$output_dir
     dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
     counts_raw <- as.data.frame(vroom::vroom(counts_file, delim = ",",
@@ -310,7 +312,7 @@ run_pseudobulk_qc <- function(argv) {
     dge <- dge[keep, , keep.lib.sizes = FALSE]
     message(feat_label, " after filter: ", nrow(dge))
 
-    write.table(dge$counts, file.path(outdir, paste0(ct, "_filtered_raw_counts.txt")),
+    write.table(dge$counts, file.path(outdir, paste0(argv$name, ".", ct, ".filtered_raw_counts.txt")),
                 sep = "\t", quote = FALSE, col.names = NA)
 
     dge <- calcNormFactors(dge, method = "TMM")
@@ -360,7 +362,7 @@ run_pseudobulk_qc <- function(argv) {
     res <- residuals(fit, v$E)
     final <- off + res
 
-    out_file <- file.path(outdir, paste0(ct, "_residuals.txt"))
+    out_file <- file.path(outdir, paste0(argv$name, ".", ct, ".residuals.txt"))
     write.table(final, out_file, sep = "\t", quote = FALSE, col.names = NA)
     message("Saved: ", out_file)
 
@@ -373,13 +375,13 @@ run_pseudobulk_qc <- function(argv) {
     if (quant_norm) {
       final_qn <- t(apply(final, 1, rank, ties.method = "average"))
       final_qn <- stats::qnorm(final_qn / (ncol(final_qn) + 1))
-      write.table(final_qn, file.path(outdir, paste0(ct, "_residuals_qn.txt")),
+      write.table(final_qn, file.path(outdir, paste0(argv$name, ".", ct, ".residuals_qn.txt")),
                   sep = "\t", quote = FALSE, col.names = NA)
       saveRDS(c(common_rds, list(final_data_qn = final_qn, quant_norm = TRUE)),
-              file.path(outdir, paste0(ct, "_results_qn.rds")))
+              file.path(outdir, paste0(argv$name, ".", ct, ".results_qn.rds")))
     } else {
       saveRDS(c(common_rds, list(quant_norm = FALSE)),
-              file.path(outdir, paste0(ct, "_results.rds")))
+              file.path(outdir, paste0(argv$name, ".", ct, ".results.rds")))
     }
     message("Completed: ", ct, " -> ", outdir)
   }
@@ -390,7 +392,7 @@ run_pseudobulk_qc <- function(argv) {
 # ===========================================================================
 run_phenotype_formatting <- function(argv) {
   suppressPackageStartupMessages({ library(dplyr); library(rtracklayer) })
-  out_dir <- file.path(argv$output_dir, "3_pheno_reformat")
+  out_dir <- argv$output_dir
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
   gene_positions <- NULL
@@ -416,7 +418,11 @@ run_phenotype_formatting <- function(argv) {
   fmt <- function(x) sprintf("%.15f", x)
 
   for (res_path in argv$residual_files) {
-    ct <- basename(dirname(res_path))
+    ct <- basename(res_path)
+    prefix <- paste0(argv$name, ".")
+    if (startsWith(ct, prefix)) ct <- substring(ct, nchar(prefix) + 1)
+    ct <- sub(".residuals_qn.txt", "", ct, fixed = TRUE)
+    ct <- sub(".residuals.txt", "", ct, fixed = TRUE)
     message("\nPhenotype Formatting: ", ct)
     if (!file.exists(res_path)) { message("WARNING: ", res_path, " not found, skipping."); next }
     r <- read_residuals(res_path)
@@ -445,7 +451,7 @@ run_phenotype_formatting <- function(argv) {
 
     val_cols <- setdiff(colnames(bed), c("#chr", "start", "end", "ID"))
     bed[val_cols] <- lapply(bed[val_cols], fmt)
-    out_bed <- file.path(out_dir, paste0(ct, "_phenotype.bed"))
+    out_bed <- file.path(out_dir, paste0(argv$name, ".", ct, ".phenotype.bed"))
     vroom::vroom_write(bed, out_bed, delim = "\t", quote = "none", escape = "none")
     Rsamtools::bgzip(out_bed, dest = paste0(out_bed, ".gz"), overwrite = TRUE)
     file.remove(out_bed)
