@@ -226,12 +226,6 @@
 <li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Command Generator</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="bulk_expression_commands.html">RNA-seq calling and QC</a></li>
-<li class="toctree-l1"><a class="reference internal" href="eQTL_analysis_commands.html">Univariate xQTL Discovery</a></li>
-<li class="toctree-l1"><a class="reference internal" href="apaQTL_analysis.html">APA QTL analysis</a></li>
-</ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -1266,8 +1260,11 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn
         ${&quot;--keep-sample &quot; + str(keep_sample) if keep_sample.is_file() else &quot;&quot;} \
         ${&quot;--customized-cis-windows &quot; + str(customized_cis_windows) if customized_cis_windows.is_file() else &quot;&quot;} \
         ${&quot;--phenotype-group &quot; + str(phenotype_group) if phenotype_group.is_file() else &quot;&quot;} \
-        --skip-postprocess \
         --numThreads ${numThreads}
+
+    # Add per-gene Storey q-values to the raw nominal table (in place; re-bgzip+tabix)
+    Rscript ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.R \
+        nominal_qvalues &quot;${_output[&#39;nominal&#39;]}&quot; &quot;${interaction}&quot;
 </pre></div>
 </div>
 </div>
@@ -1283,13 +1280,8 @@ output: f&#39;{cwd}/{output_file_prefix}.cis_qtl_regional_significance.tsv.gz&#3
 input_files = [str(x) for x in _input[&quot;regional&quot;]]
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
 bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
-    python3 ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.py \
-        --step cis_postprocess \
-        --cwd &quot;${cwd}&quot; \
-        --output-tsv &quot;${_output[0]}&quot; \
-        --output-summary &quot;${_output[1]}&quot; \
-        --regional-files ${&quot; &quot;.join(input_files)} \
-        --numThreads ${numThreads}
+    Rscript ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.R \
+        regional_postprocess &quot;${_output[0]}&quot; &quot;${_output[1]}&quot; ${&quot; &quot;.join(input_files)}
 </pre></div>
 </div>
 </div>
@@ -1331,6 +1323,10 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout 
         ${&quot;--keep-sample &quot; + str(keep_sample) if keep_sample.is_file() else &quot;&quot;} \
         ${&quot;--customized-cis-windows &quot; + str(customized_cis_windows) if customized_cis_windows.is_file() else &quot;&quot;} \
         --numThreads ${numThreads}
+
+    # Add global Storey q-values to the raw trans table (in place; re-bgzip+tabix)
+    Rscript ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.R \
+        trans_qvalues &quot;${_output[&#39;nominal&#39;]}&quot;
 </pre></div>
 </div>
 </div>
