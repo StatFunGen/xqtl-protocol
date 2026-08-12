@@ -6,6 +6,12 @@ do with it. Companion to the pecotmr refactor (see
 absorption happens inside pecotmr constructors and pipelines after that
 refactor lands.
 
+> **Some notebooks in this inventory have since been moved to
+> `code/SoS/graveyard/` and are no longer replacement targets.** They have been
+> removed from the category tables and totals below; see the
+> [Graveyarded since this inventory](#graveyarded-since-this-inventory) section
+> for the full list and the LOC removed.
+
 ## Out of scope
 
 The following Python is **not** considered for replacement and is excluded
@@ -61,39 +67,39 @@ per-context path resolution) is absorbed into pecotmr constructors. The
 remaining step-body Python — per-job argument shaping, output-filename
 templating, control flow — is what we want to replace with bash + R.
 
-**82 SoS notebooks have some step-body Python.** The 16 heavy hitters
-(≥100 LOC) are where the bulk of the work lives:
+**~75 SoS notebooks have some step-body Python** (seven — the pseudobulk QC
+trio, `METAL_pipeline.ipynb`, and the commands_generator trio — have since been
+graveyarded and are excluded here; see the Graveyarded section below). The 13
+heavy hitters (≥100 LOC) are where the bulk of the work lives:
 
 | Notebook | Step-body LOC |
 |---|---|
 | `code/SoS/pecotmr_integration/twas_ctwas.ipynb` | 673 |
 | `code/SoS/mnm_analysis/mnm_methods/colocboost.ipynb` | 589 |
 | `code/SoS/mnm_analysis/mnm_methods/mnm_regression.ipynb` | 389 |
-| `code/SoS/commands_generator/eQTL_analysis_commands.ipynb` | 267 |
 | `code/SoS/mnm_analysis/mnm_postprocessing.ipynb` | 247 |
 | `code/SoS/association_scan/quantile_models/qr_and_twas.ipynb` | 243 |
-| `code/SoS/molecular_phenotypes/QC/pseudobulk_expression_aggregation_QC_norm.ipynb` | 243 *(mixed-kernel — see Category 3)* |
 | `code/SoS/pecotmr_integration/SuSiE_enloc.ipynb` | 239 |
 | `code/SoS/enrichment/sldsc_enrichment.ipynb` | 211 |
 | `code/SoS/molecular_phenotypes/calling/RNA_calling.ipynb` | 182 |
 | `code/SoS/data_preprocessing/genotype/genotype_formatting.ipynb` | 151 |
 | `code/SoS/data_preprocessing/genotype/GWAS_QC.ipynb` | 137 |
-| `code/SoS/molecular_phenotypes/QC/pseudobulk_mega_expression_QC_and_normalization.ipynb` | 130 *(mixed-kernel — see Category 3)* |
 | `code/SoS/mnm_analysis/mnm_methods/rss_analysis.ipynb` | 129 |
 | `code/SoS/association_scan/TensorQTL/TensorQTL.ipynb` | 112 |
 | `code/SoS/data_preprocessing/genotype/PCA.ipynb` | 104 |
 
-**32 more notebooks have 20–99 LOC of step-body Python** (medium size; mostly
+**~30 more notebooks have 20–99 LOC of step-body Python** (medium size; mostly
 smaller workflows and graveyard files). **34 more have <20 LOC** (incidental
 and cleanable in passing).
 
-Aggregate Python in SoS code cells across all SoS notebooks:
+Aggregate Python in SoS code cells across the in-scope SoS notebooks (the
+graveyarded notebooks' ≈640 LOC of step-body Python is excluded):
 
-- **5,655 LOC** of step-body Python (outside action blocks)
+- **~5,015 LOC** of step-body Python (outside action blocks)
 - **1,011 LOC** of `python:` action block bodies
 - **106 LOC** of helper `def`/`class` definitions
 
-Total Category 2 LOC: **~6,772**.
+Total Category 2 LOC: **~6,132**.
 
 ### Category 3 — Notebooks with Python kernels (REPLACE)
 
@@ -103,10 +109,6 @@ plotting, and ML-driver notebooks.
 
 | Notebook | Code LOC | Notes |
 |---|---|---|
-| `code/SoS/cv2f/notebooks/analyze_selection_criteria.ipynb` | 738 | Analysis of cross-validation selection in fine-mapping |
-| `code/SoS/reference_data/rss_ld_sketch.ipynb` | 419 | **Mixed-kernel.** Notebook-level kernel is Python, but most cells are R-implicit (R code in cells with no per-cell kernel). True Python content is small. |
-| `code/SoS/molecular_phenotypes/QC/pseudobulk_expression_aggregation_QC_norm.ipynb` | 282 | **Mixed-kernel.** Also appears in Category 2 with 243 LOC of SoS step-body Python. |
-| `code/SoS/molecular_phenotypes/QC/pseudobulk_mega_expression_QC_and_normalization.ipynb` | 149 | **Mixed-kernel.** Also appears in Category 2 with 130 LOC of SoS step-body Python. |
 | `code/SoS/reference_data/ld_reference_generation.ipynb` | 146 | LD reference data prep |
 | `code/SoS/xqtl_modifier_score/ems_prediction.ipynb` | 117 | Driver for `gems_pipeline.py predict` (Category 1). Mostly shell-out invocations. |
 | `code/SoS/xqtl_modifier_score/ems_training.ipynb` | 76 | Driver for `gems_pipeline.py train`. Mostly shell-out invocations. |
@@ -116,7 +118,7 @@ plotting, and ML-driver notebooks.
 | `code/SoS/mnm_analysis/univariate_fine_mapping_fsusie_vignette.ipynb` | 11 | Vignette |
 | `code/SoS/mnm_analysis/summary_stats_finemapping_vignette.ipynb` | 9 | Vignette |
 | `code/SoS/pecotmr_integration/twas_vignette.ipynb` | 0 | Markdown-only |
-| **Total** | **~2,051** | |
+| **Total** | **~463** | |
 
 Two additional notes:
 
@@ -124,12 +126,15 @@ Two additional notes:
   Python-kernel notebook used for the protocol website's doc generation.
   Listed for completeness but is not analysis code; treat separately if /
   when website automation gets touched.
-- The three **mixed-kernel notebooks** (`rss_ld_sketch.ipynb`,
-  `pseudobulk_expression_aggregation_QC_norm.ipynb`,
-  `pseudobulk_mega_expression_QC_and_normalization.ipynb`) appear in both
-  Category 2 (their SoS-cell step-body Python) and Category 3 (their
-  notebook-level Python kernel). When tackling these, the work spans
-  both flavors.
+- `ld_reference_generation.ipynb` is the one genuine **mixed-kernel notebook**
+  left — its notebook-level kernel is Python, but it also carries R, SoS, and
+  Bash cells, so it spans both Category 2 (SoS-cell step-body Python) and
+  Category 3 (notebook-level Python). `rss_ld_sketch.ipynb` was previously
+  listed here as mixed-kernel but has since been migrated to a plain SoS
+  notebook backed by the R worker `code/script/reference_data/rss_ld_sketch.R`
+  (kernelspec is now `sos`, zero Python cells), so it is no longer a Category 3
+  notebook. The two pseudobulk mixed-kernel notebooks have been graveyarded
+  (see below).
 
 ### Category 4 — Standalone Python scripts to replace (REPLACE)
 
@@ -152,22 +157,44 @@ ports cleanly to R or bash.
 Category 1 — we are explicitly not replacing it. Excluding it, the
 replacement target in Category 4 is ~1,733 LOC.)
 
+## Graveyarded since this inventory
+
+The notebooks below were moved to `code/SoS/graveyard/` after this inventory
+was taken and are **no longer replacement targets**. They have been removed
+from the category tables and totals (both above and in the Summary).
+
+| Notebook (now under `code/SoS/graveyard/`) | Former location | Former category | LOC removed |
+|---|---|---|---|
+| `analyze_selection_criteria.ipynb` | `code/SoS/cv2f/notebooks/` | Cat 3 | 738 |
+| `pseudobulk_expression_aggregation_QC_norm.ipynb` | `code/SoS/molecular_phenotypes/QC/` | Cat 2 + Cat 3 | 243 + 282 |
+| `pseudobulk_mega_expression_QC_and_normalization.ipynb` | `code/SoS/molecular_phenotypes/QC/` | Cat 2 + Cat 3 | 130 + 149 |
+| `pseudobulk_expression_QC_and_normalization.ipynb` | `code/SoS/molecular_phenotypes/QC/` | Cat 2 (aggregate only) | small |
+| `METAL_pipeline.ipynb` | `code/SoS/multivariate_genome/` | Cat 2 (aggregate only) | small |
+| `eQTL_analysis_commands.ipynb` | `code/SoS/commands_generator/` | Cat 2 | 267 |
+| `bulk_expression_commands.ipynb` | `code/SoS/commands_generator/` | Cat 2 (aggregate only) | small |
+| `apaQTL_analysis.ipynb` | `code/SoS/commands_generator/` | Cat 2 (aggregate only) | small |
+
+Net counted scope removed: **≈1,809 LOC** (738 Cat 3 + 804 combined pseudobulk
+Cat 2/3 + 267 eQTL_analysis_commands Cat 2), plus small uncounted contributions
+from the four aggregate-only notebooks.
+
 ## Summary
 
 | Category | Disposition | Approx. LOC | File / notebook count |
 |---|---|---|---|
 | 1. Vendored Python / external tools | Keep | 2,180 | 5 files |
-| 2. SoS notebooks with step-body Python | Replace | 6,772 | 82 notebooks (16 heavy hitters) |
-| 3. Notebooks with Python kernels | Replace | 2,051 | 13 notebooks (3 mixed-kernel) |
+| 2. SoS notebooks with step-body Python | Replace | ~6,132 | ~75 notebooks (13 heavy hitters) |
+| 3. Notebooks with Python kernels | Replace | 463 | 9 notebooks (1 mixed-kernel) |
 | 4. Standalone Python scripts (excl. TensorQTL) | Replace | 1,733 | 5 files |
-| **Replacement target** | | **10,556** | |
+| **Replacement target** | | **~8,328** | |
+| *Graveyarded since inventory (removed from target)* | Dropped | *~1,809* | *8 notebooks* |
 | **Out of scope** (SoS scaffolding) | Implicit keep | ~3,065 | — |
 | **Out of scope** (Snakemake) | Excluded | ~125+ | `code/snakemake/` tree |
 
 After the pecotmr refactor absorbs the data-construction slice of Category 2
 (rough estimate: 2,000–3,000 LOC of region parsing / manifest assembly /
 GWAS-meta TSV reading), the remaining replacement target is approximately
-**7,500–8,500 LOC** of step-body orchestration Python, Python-kernel analysis
+**6,000–7,000 LOC** of step-body orchestration Python, Python-kernel analysis
 notebooks, and standalone scripts. Roughly 80% of this is straightforwardly
 portable to R or bash; the other 20% is per-step orchestration that needs to
 be rewritten in the SoS notebooks (as inline bash + R, replacing the

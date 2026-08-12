@@ -447,34 +447,11 @@ def str2bool(value) -> bool:
     raise argparse.ArgumentTypeError(f"expected a boolean value, got {value}")
 
 
-def tensorqtl_r_script() -> str:
-    script_path = str(Path(__file__).with_suffix(".R"))
-    if not os.path.isfile(script_path):
-        sys.exit(f"ERROR: TensorQTL R helper missing: {script_path}")
-    return script_path
-
-
 def write_bgzip_table(df: pd.DataFrame, out_gz: str) -> None:
     out_tsv = strip_suffix(out_gz, ".gz")
     df.to_csv(out_tsv, sep="\t", index=False)
     run_command(["bgzip", "--compress-level", "9", "-f", out_tsv])
     run_command(["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", out_gz])
-
-
-def apply_nominal_qvalues(tsv_path: str, interaction: str = "") -> None:
-    cmd = ["Rscript", tensorqtl_r_script(), "nominal_qvalues", tsv_path]
-    if interaction:
-        cmd.append(interaction)
-    run_command(cmd)
-
-
-def apply_trans_qvalues(tsv_path: str) -> None:
-    run_command(["Rscript", tensorqtl_r_script(), "trans_qvalues", tsv_path])
-
-
-def run_regional_postprocess(regional_files: list[str], out_tsv: str, out_summary: str) -> None:
-    run_command(["Rscript", tensorqtl_r_script(), "regional_postprocess",
-                 out_tsv, out_summary, *regional_files])
 
 
 def apply_mac_filter(genotype_df: pd.DataFrame, variant_df: pd.DataFrame,
@@ -653,9 +630,10 @@ def run_cis(args) -> None:
             pairs_df = pairs_df.sort_values(by=["chrom", "pos"])
         nominal_tsv = strip_suffix(expected["nominal"], ".gz")
         pairs_df.to_csv(nominal_tsv, sep="\t", index=False)
-        apply_nominal_qvalues(nominal_tsv, args.interaction or interaction_name)
         run_command(["bgzip", "--compress-level", "9", "-f", nominal_tsv])
         run_command(["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", expected["nominal"]])
+        # Raw p-values only; per-gene q-values are added in place by the separate R step
+        # (TensorQTL.R nominal_qvalues), invoked from the notebook's cis_1 cell.
 
         test_regional_association = args.permutation and interaction_t is None
         if not test_regional_association:
@@ -707,38 +685,9 @@ def run_cis(args) -> None:
     if not regional_outputs:
         print("No regional results produced.", flush=True)
         return
-    if args.skip_postprocess:
-        print("\nCIS QTL complete. Regional postprocess skipped.", flush=True)
-        return
-
-    output_prefix = strip_suffix(os.path.basename(regional_outputs[0]), ".cis_qtl.regional.tsv.gz")
-    out_tsv = os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.tsv.gz")
-    out_summary = os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.summary.txt")
-    run_regional_postprocess(regional_outputs, out_tsv, out_summary)
-    print(f"Regional significance table: {out_tsv}", flush=True)
-    print(f"Regional significance summary: {out_summary}", flush=True)
-
-    print(f"\nCIS QTL complete. Results in: {args.cwd}", flush=True)
-
-
-def run_cis_postprocess(args) -> None:
-    regional_files = args.regional_files or sorted(glob.glob(os.path.join(args.cwd, "*.cis_qtl.regional.tsv.gz")))
-    if not regional_files:
-        sys.exit(f"ERROR: No regional cis-QTL files found in {args.cwd}")
-
-    prefix_candidates = [
-        strip_suffix(os.path.basename(path), ".cis_qtl.regional.tsv.gz")
-        for path in regional_files
-    ]
-    output_prefix = prefix_candidates[0]
-
-    out_tsv = args.output_tsv or os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.tsv.gz")
-    out_summary = args.output_summary or os.path.join(args.cwd, f"{output_prefix}.cis_qtl_regional_significance.summary.txt")
-    os.makedirs(os.path.dirname(os.path.abspath(out_tsv)), exist_ok=True)
-    os.makedirs(os.path.dirname(os.path.abspath(out_summary)), exist_ok=True)
-    run_regional_postprocess(regional_files, out_tsv, out_summary)
-    print(f"Regional significance table: {out_tsv}", flush=True)
-    print(f"Regional significance summary: {out_summary}", flush=True)
+    # Regional significance (merge across chromosomes + FDR/q-values) is the separate
+    # `regional_postprocess` step in TensorQTL.R, driven by the notebook's cis_2 cell.
+    print(f"\nCIS scan complete. Raw results in: {args.cwd}", flush=True)
 
 
 def run_trans(args) -> None:
@@ -921,10 +870,11 @@ def run_trans(args) -> None:
         ])
 
     combined_results.to_csv(output_tsv, sep="\t", index=False)
-    apply_trans_qvalues(output_tsv)
     run_command(["bgzip", "--compress-level", "9", "-f", output_tsv])
     run_command(["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", output_gz])
-    print(f"\nTRANS QTL complete. Results: {output_gz}", flush=True)
+    # Raw p-values only; q-values are added in place by the separate R step
+    # (TensorQTL.R trans_qvalues), invoked from the notebook's trans cell.
+    print(f"\nTRANS scan complete. Raw results: {output_gz}", flush=True)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -932,7 +882,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="TensorQTL wrapper (mirrors TensorQTL.ipynb)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--step", required=True, choices=["cis", "cis_postprocess", "trans"],
+    p.add_argument("--step", required=True, choices=["cis", "trans"],
                    help="Which step to run")
     p.add_argument("--genotype-file", metavar="PATH",
                    help="Path to a genotype manifest or a direct PLINK .bed/.pgen file")
@@ -982,14 +932,6 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Reuse an existing nominal parquet file if present")
     p.add_argument("--permutation", type=str2bool, default=True,
                    help="Whether to run cis permutation/regional association")
-    p.add_argument("--skip-postprocess", action="store_true", default=False,
-                   help="For --step cis, produce per-chromosome outputs only; run --step cis_postprocess separately.")
-    p.add_argument("--output-tsv", default="", metavar="PATH",
-                   help="Output table for --step cis_postprocess")
-    p.add_argument("--output-summary", default="", metavar="PATH",
-                   help="Summary table for --step cis_postprocess")
-    p.add_argument("--regional-files", nargs="*", default=[],
-                   help="Regional cis-QTL files for --step cis_postprocess")
     p.add_argument("--numThreads", type=int, default=8)
     p.add_argument("--dry-run", action="store_true", default=False,
                    help="Print the full command and validate inputs; do not run TensorQTL.")
@@ -1011,8 +953,6 @@ def main():
             parser.error(f"missing required arguments for {args.step}: {' '.join(missing)}")
     if args.step == "cis":
         run_cis(args)
-    elif args.step == "cis_postprocess":
-        run_cis_postprocess(args)
     elif args.step == "trans":
         run_trans(args)
 

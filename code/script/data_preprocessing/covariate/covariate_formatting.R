@@ -106,9 +106,14 @@ merge_genotype_pc <- function(opt) {
   }
 
   filter_mtx <- function(X, missing_rate_thresh) {
-    rm_col <- which(apply(X, 2, compute_missing) > missing_rate_thresh)
-    if (length(rm_col)) {
-      X <- X[, -rm_col, drop = FALSE]
+    # A negative threshold is the "do nothing" sentinel (tol_cov = -1): keep every
+    # sample. Guard the removal — a 0 missing-rate is > -1, so without this every
+    # column was dropped, producing a covariate matrix with no samples.
+    if (missing_rate_thresh >= 0) {
+      rm_col <- which(apply(X, 2, compute_missing) > missing_rate_thresh)
+      if (length(rm_col)) {
+        X <- X[, -rm_col, drop = FALSE]
+      }
     }
     if (isTRUE(opt$`mean-impute`)) {
       return(mean_impute_mtx(X))
