@@ -83,7 +83,7 @@ run_pseudobulk_counts <- function(argv) {
   seurat_files <- argv$seurat_files
   celltype   <- argv$celltype
   min_cells  <- argv$min_cells
-  outdir     <- file.path(argv$output_dir, "0_pseudobulk_counts")
+  outdir     <- argv$output_dir
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
   out_file   <- file.path(outdir, sprintf("%s.pseudobulk_counts_%s.csv.gz", argv$name, celltype))
 
