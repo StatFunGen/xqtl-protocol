@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Mixture Multivariate Distribution Estimate &#8212; FunGen-xQTL Consortium</title>
+    <title>Learning multivariate effect patterns for MASH &#8212; FunGen-xQTL Consortium</title>
   
   
   
@@ -60,14 +60,12 @@
     <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'multivariate_mixture_vignette';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Extract genome-wide data for multivariate analysis" href="mash_preprocessing.html" />
-    <link rel="prev" title="Hierarchical Multiple Testing" href="qtl_association_postprocessing.html" />
+    <link rel="prev" title="Multivariate adaptive shrinkage (MASH) mini-protocol" href="MASH.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -228,7 +226,7 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference Data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference data preparation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
@@ -242,11 +240,14 @@
 <li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="single_cell.html">Single-cell and single-nucleus molecular phenotype preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">Methylation Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">DNA methylation preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
 </ul>
 </details></li>
@@ -263,7 +264,7 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
 <li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
@@ -271,13 +272,13 @@
 <li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate Data Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
 </ul>
@@ -285,7 +286,7 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL Association Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL association testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
 </ul>
@@ -294,7 +295,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Mixture Multivariate Distribution Estimate</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="MASH.html">Multivariate adaptive shrinkage (MASH) mini-protocol</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Learning multivariate effect patterns for MASH</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
@@ -304,50 +306,37 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Integrative Analysis with High-Dimensional Regression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Steps</a></li>
-
-<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Multivariate Fine-Mapping for multiple genes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Univariate Fine-Mapping of Functional (Epigenomic) Data with fSuSiE</a></li>
-<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate Fine-Mapping with mvSuSiE and mr.mash</a></li>
-<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Regression with Summary Statistics (RSS) Fine-Mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Fine-mapping and TWAS analysis</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Univariate fine-mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Cross-gene fine-mapping with mvSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Functional fine-mapping with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate fine-mapping with mvSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Fine-mapping GWAS summary statistics with SuSiE RSS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
-<li class="toctree-l1"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="gwas_integration.html">GWAS and xQTL integration mini-protocol</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intact.html">TWAS and COLOC integration (INTACT)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="enrichment_validation.html">Enrichment and functional validation mini-protocol</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
 <ul class="nav bd-sidenav">
@@ -536,7 +525,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Mixture Multivariate Distribution Estimate</h1>
+    <h1>Learning multivariate effect patterns for MASH</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -546,14 +535,21 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-goals">Learning goals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#background-and-method">Background and method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worked-example">Worked example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-estimate-the-mixture-prior">Step 1. Estimate the mixture prior</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-fit-mash">Step 2. Fit MASH</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-visualize-the-learned-covariance-components">Step 3. Visualize the learned covariance components</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-reference">Command reference</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#results-and-interpretation">Results and interpretation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mixture-prior-result">Mixture-prior result</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations-and-common-pitfalls">Limitations and common pitfalls</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next steps</a></li>
 </ul>
             </nav>
         </div>
@@ -565,123 +561,100 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="mixture-multivariate-distribution-estimate">
-<h1>Mixture Multivariate Distribution Estimate<a class="headerlink" href="#mixture-multivariate-distribution-estimate" title="Link to this heading">#</a></h1>
-<p>This miniprotocol estimates a <strong>mixture multivariate prior</strong>, fits the <strong>Multivariate Adaptive Shrinkage (MASH)</strong> model, and visualizes the estimated covariance components. It is a thin driver that chains two reusable workflow notebooks:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">mixture_prior.ipynb</span></code> — computes a prior independent of the specific analysis method chosen for the data. This foundational step enables the application of various techniques such as UDR, ED, TED, and initialization with FLASHier, among others. The goal is to establish a mixture model to extract meaningful signals from the data. An earlier version of the approach is outlined in Urbut et al 2019; this workflow implements a few improvements including additional EBMF methods as well as the new <code class="docutils literal notranslate"><span class="pre">udr</span></code> (Ultimate Deconvolution in R) package to fit the mixture model.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">mash_fit.ipynb</span></code> — once priors are calculated, the MASH model is fit and posteriors are calculated for variables of interest, with the objective of conducting a multivariate analysis under the MASH model. MASH has improved upon the Urbut et al 2019 paper.</p></li>
-</ul>
-<blockquote>
-<div><p><strong>Synthetic data note.</strong> This user-friendly copy is wired to small <code class="docutils literal notranslate"><span class="pre">protocol_example.*</span></code> toy inputs under <code class="docutils literal notranslate"><span class="pre">input/</span></code> (a 34-context <code class="docutils literal notranslate"><span class="pre">mashr</span></code> input RDS and the matching MASH input/prior/V files) so the whole chain runs end-to-end without access-controlled data. Swap in your own RDS files to run on real data.</p>
-</div></blockquote>
-<section id="description">
-<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>This vignette describes the conceptual background and statistical theory behind the mixture prior estimation used in multivariate analysis. Unlike the executable mini-protocol notebooks, this vignette is primarily a reference document — it explains <em>why</em> the mixture prior is structured this way and how it relates to MASH covariance estimation.</p>
-<p>For the runnable MWE, see <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code> and <code class="docutils literal notranslate"><span class="pre">mash_posterior</span></code>. For the mixture prior step itself, see <code class="docutils literal notranslate"><span class="pre">mixture_prior</span></code>.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="learning-multivariate-effect-patterns-for-mash">
+<h1>Learning multivariate effect patterns for MASH<a class="headerlink" href="#learning-multivariate-effect-patterns-for-mash" title="Link to this heading">#</a></h1>
+<p>This vignette explains how to estimate a mixture-of-covariances prior, fit MASH and interpret the learned sharing patterns.</p>
+<section id="learning-goals">
+<h2>Learning goals<a class="headerlink" href="#learning-goals" title="Link to this heading">#</a></h2>
+<p>After completing this vignette, you will be able to explain what the mixture prior represents, distinguish prior estimation from posterior fitting, run the three-step example, and interpret covariance components without treating them as discrete biological clusters.</p>
 </section>
-<section id="input">
-<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
-<p>The mixture-prior step takes a single <strong><code class="docutils literal notranslate"><span class="pre">mashr</span></code> input RDS</strong> (the <code class="docutils literal notranslate"><span class="pre">--data</span></code> argument). For the toy example this is <code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.mashr_input.rds</span></code>, a list with effect-size (<code class="docutils literal notranslate"><span class="pre">*.b</span></code>), z-score (<code class="docutils literal notranslate"><span class="pre">*.z</span></code>), standard-error (<code class="docutils literal notranslate"><span class="pre">*.s</span></code>) matrices for <code class="docutils literal notranslate"><span class="pre">random</span></code>, <code class="docutils literal notranslate"><span class="pre">strong</span></code>, and <code class="docutils literal notranslate"><span class="pre">null</span></code> SNP sets, plus the <code class="docutils literal notranslate"><span class="pre">XtX</span></code> matrix — each with rows = SNPs and columns = the conditions/contexts (e.g. cell types).</p>
-<p>The MASH-fit step additionally consumes the prior produced by the first step together with the matching MASH input and <code class="docutils literal notranslate"><span class="pre">V</span></code> matrices.</p>
+<section id="background-and-method">
+<h2>Background and method<a class="headerlink" href="#background-and-method" title="Link to this heading">#</a></h2>
+<p>MASH models effects across many related conditions using a mixture of multivariate normal distributions. Each covariance component represents a possible pattern of effect sharing: condition-specific, broadly shared, correlated among a subset of conditions or learned from the data. Mixture weights describe how strongly the observed effects support these patterns.</p>
+<p>Prior estimation and posterior inference are separate operations. <code class="docutils literal notranslate"><span class="pre">mixture_prior.ipynb</span></code> learns data-driven covariance components from strong signals and combines them with canonical components. <code class="docutils literal notranslate"><span class="pre">mash_fit.ipynb</span></code> fits the mixture to the full analysis set and computes posterior effect estimates, uncertainties and measures of sharing. Reusing a prior is appropriate only when its conditions and effect architecture are compatible with the target analysis.</p>
+<p>The example uses small synthetic 34-context inputs. It demonstrates object flow and interpretation, not a biological reference prior.</p>
+</section>
+<section id="worked-example">
+<h2>Worked example<a class="headerlink" href="#worked-example" title="Link to this heading">#</a></h2>
+<p>The analysis has three sequential steps: estimate the prior, fit MASH, then visualize the covariance components. The paths below define the intended protocol-example bundle, but the complete bundle is not currently shipped: only the prior-estimation fixture is available. The commands show the required interface until the missing MASH input and residual-correlation files are added.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>File</p></th>
-<th class="head"><p>Description</p></th>
+<tr class="row-odd"><th class="head"><p>Role</p></th>
+<th class="head"><p>Example path</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.mashr_input.rds</span></code></p></td>
-<td><p>Mixture-prior input: list of effect/z/se matrices (<code class="docutils literal notranslate"><span class="pre">random</span></code>, <code class="docutils literal notranslate"><span class="pre">strong</span></code>, <code class="docutils literal notranslate"><span class="pre">null</span></code>) + <code class="docutils literal notranslate"><span class="pre">XtX</span></code>, used by <code class="docutils literal notranslate"><span class="pre">mixture_prior</span></code></p></td>
+<tr class="row-even"><td><p>Prior-estimation input</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.mashr_input.rds</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.EE.mash.rds</span></code></p></td>
-<td><p>MASH input data (EE effect model) consumed by <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code></p></td>
+<tr class="row-odd"><td><p>MASH input</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.EE.mash.rds</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.EE.V_simple.rds</span></code></p></td>
-<td><p>Estimated residual correlation matrix <code class="docutils literal notranslate"><span class="pre">V</span></code> for <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.EE.prior.rds</span></code></p></td>
-<td><p>Mixture prior RDS (also produced by step 1) consumed by <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code></p></td>
+<tr class="row-even"><td><p>Residual correlation matrix</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.EE.V_simple.rds</span></code></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><strong>Workflow options carried by the underlying notebooks:</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--vhat</span></code>: one of <code class="docutils literal notranslate"><span class="pre">identity</span></code>, <code class="docutils literal notranslate"><span class="pre">simple</span></code>, <code class="docutils literal notranslate"><span class="pre">mle</span></code>, <code class="docutils literal notranslate"><span class="pre">vhat_corshrink_xcondition</span></code>, or <code class="docutils literal notranslate"><span class="pre">vhat_simple_specific</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--cwd</span></code>: output path.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--vhat-data</span></code>: for <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code>, the <code class="docutils literal notranslate"><span class="pre">vhat</span></code> data RDS produced in the <code class="docutils literal notranslate"><span class="pre">mixture_prior</span></code> step.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--prior-data</span></code>: for <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code>, the prior data RDS produced in the <code class="docutils literal notranslate"><span class="pre">mixture_prior</span></code> step.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--compute-posterior</span></code>: for <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code>, whether posterior probabilities should be calculated.</p></li>
-</ul>
-</section>
-<section id="output">
-<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
-<p>The mixture-prior step writes the estimated data-driven covariance components and the assembled mixture prior; the MASH-fit step writes the fitted MASH model and (optionally) per-unit posteriors; the plotting step writes a PDF visualizing the prior covariance matrices.</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>File</p></th>
-<th class="head"><p>Description</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/mixture_prior/protocol_example.EE.prior.rds</span></code></p></td>
-<td><p>Assembled mixture prior (data-driven + canonical covariance components) from <code class="docutils literal notranslate"><span class="pre">ed_bovy</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output/mash_fit/protocol_example_mash.*.rds</span></code></p></td>
-<td><p>Fitted MASH model and posterior summaries (loglik, fitted_g, posterior means/SDs)</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output/mixture_prior/protocol_example_plots.EE.prior.pdf</span></code></p></td>
-<td><p>Heatmap visualization of the estimated prior covariance matrices</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="steps">
-<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
-<p>The miniprotocol runs in three steps. Each step calls a reusable workflow notebook through the <code class="docutils literal notranslate"><span class="pre">pipeline/</span></code> symlinks. Outputs of step 1 feed into steps 2 and 3.</p>
-<p><strong>Step 1.</strong> Compute the MASH mixture prior with the <code class="docutils literal notranslate"><span class="pre">ed_bovy</span></code> workflow of <code class="docutils literal notranslate"><span class="pre">mixture_prior</span></code> (estimates data-driven covariance components and assembles the prior).</p>
-<p><strong>Step 2.</strong> Fit the MASH model with the <code class="docutils literal notranslate"><span class="pre">mash</span></code> workflow of <code class="docutils literal notranslate"><span class="pre">mash_fit</span></code>, supplying the prior and <code class="docutils literal notranslate"><span class="pre">vhat</span></code>/MASH input from step 1, and compute posteriors.</p>
-<p><strong>Step 3.</strong> Visualize the estimated prior covariance matrices with the <code class="docutils literal notranslate"><span class="pre">plot_U</span></code> workflow of <code class="docutils literal notranslate"><span class="pre">mixture_prior</span></code>.</p>
+<p>The matrices must use the same condition order and compatible units. The prior-estimation object contains random, strong and null subsets plus <code class="docutils literal notranslate"><span class="pre">XtX</span></code>; the MASH input contains the effects and standard errors to which the learned prior is applied.</p>
+<section id="step-1-estimate-the-mixture-prior">
+<h3>Step 1. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/mixture_prior.html">Estimate the mixture prior</a><a class="headerlink" href="#step-1-estimate-the-mixture-prior" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ed_bovy</span></code> estimates data-driven covariance components and assembles them with canonical components.</p>
+<p><strong>Timing</strong>: TBD</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mixture_prior.ipynb ed_bovy \
-    --output-prefix protocol_example \
-    --data input/mash/protocol_example.mashr_input.rds \
-    --cwd output/mixture_prior
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_fit.ipynb mash \
-    --output-prefix protocol_example_mash \
-    --data input/mash/protocol_example.EE.mash.rds \
-    --vhat-data input/mash/protocol_example.EE.V_simple.rds \
-    --prior-data input/mash/protocol_example.EE.prior.rds \
-    --effect-model EE \
-    --compute-posterior \
-    --cwd output/mash_fit
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mixture_prior.ipynb plot_U \
-    --output-prefix protocol_example_plots \
-    --data output/mixture_prior/protocol_example.EE.prior.rds \
-    --cwd output/mixture_prior
+  --output-prefix protocol_example \
+  --data input/mash/protocol_example.mashr_input.rds \
+  --cwd output/mixture_prior
 </pre></div>
 </div>
 </div>
 </div>
 </section>
-<section id="command-interface">
-<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
-<p>Each step is driven by one of two reusable workflow notebooks. List their full option sets with <code class="docutils literal notranslate"><span class="pre">-h</span></code>:</p>
+<section id="step-2-fit-mash">
+<h3>Step 2. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/mash_fit.html">Fit MASH</a><a class="headerlink" href="#step-2-fit-mash" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mash</span></code> combines the input effects, residual correlation and estimated prior to compute posterior summaries.</p>
+<p><strong>Timing</strong>: TBD</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_fit.ipynb mash \
+  --output-prefix protocol_example_mash \
+  --data input/mash/protocol_example.EE.mash.rds \
+  --vhat-data input/mash/protocol_example.EE.V_simple.rds \
+  --prior-data output/mixture_prior/protocol_example.EE.prior.rds \
+  --effect-model EE \
+  --compute-posterior \
+  --cwd output/mash_fit
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-3-visualize-the-learned-covariance-components">
+<h3>Step 3. Visualize the learned covariance components<a class="headerlink" href="#step-3-visualize-the-learned-covariance-components" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">plot_U</span></code> draws heatmaps of the covariance matrices in the fitted prior.</p>
+<p><strong>Timing</strong>: TBD</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mixture_prior.ipynb plot_U \
+  --output-prefix protocol_example_plots \
+  --data output/mixture_prior/protocol_example.EE.prior.rds \
+  --cwd output/mixture_prior
+</pre></div>
+</div>
+</div>
+</div>
+<p>The chain produces:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">output/mixture_prior/protocol_example.EE.prior.rds</span></code> — data-driven and canonical covariance components with their mixture structure.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output/mash_fit/protocol_example_mash.*.rds</span></code> — fitted MASH model and, when requested, posterior summaries.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output/mixture_prior/protocol_example_plots.EE.prior.pdf</span></code> — covariance-component heatmaps.</p></li>
+</ul>
+<p>Run the steps in order. Step 2 uses the prior from Step 1; Step 3 visualizes that same prior.</p>
+</section>
+<section id="command-reference">
+<h3>Command reference<a class="headerlink" href="#command-reference" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mixture_prior.ipynb -h
@@ -691,51 +664,69 @@ sos run pipeline/mash_fit.ipynb -h
 </div>
 </div>
 </section>
-<section id="workflow-implementation">
-<h2>Workflow implementation<a class="headerlink" href="#workflow-implementation" title="Link to this heading">#</a></h2>
-<p>This notebook is a <strong>driver/miniprotocol</strong>: it does not define its own SoS sections but orchestrates two reusable workflow notebooks via the <code class="docutils literal notranslate"><span class="pre">pipeline/</span></code> symlinks:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">pipeline/mixture_prior.ipynb</span></code> — provides the <code class="docutils literal notranslate"><span class="pre">ed_bovy</span></code> (mixture-prior estimation) and <code class="docutils literal notranslate"><span class="pre">plot_U</span></code> (prior visualization) workflows, among other covariance-estimation methods (<code class="docutils literal notranslate"><span class="pre">flash</span></code>, <code class="docutils literal notranslate"><span class="pre">pca</span></code>, <code class="docutils literal notranslate"><span class="pre">canonical</span></code>, <code class="docutils literal notranslate"><span class="pre">ud</span></code>, <code class="docutils literal notranslate"><span class="pre">vhat_*</span></code>, …).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pipeline/mash_fit.ipynb</span></code> — provides the <code class="docutils literal notranslate"><span class="pre">mash</span></code> workflow (MASH model fit + posterior computation).</p></li>
-</ul>
-<p>Refer to those notebooks for the underlying R implementation of each step.</p>
 </section>
-<section id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<section id="results-and-interpretation">
+<h2>Results and interpretation<a class="headerlink" href="#results-and-interpretation" title="Link to this heading">#</a></h2>
+<section id="mixture-prior-result">
+<h3>Mixture-prior result<a class="headerlink" href="#mixture-prior-result" title="Link to this heading">#</a></h3>
+<p>The prior contains covariance matrices and mixture information. Inspect dimensions, names and weights rather than printing every matrix.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Issue</p></th>
-<th class="head"><p>Cause</p></th>
-<th class="head"><p>Solution</p></th>
+<tr class="row-odd"><th class="head"><p>Result</p></th>
+<th class="head"><p>Interpretation</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cannot</span> <span class="pre">open</span> <span class="pre">compressed</span> <span class="pre">file</span> <span class="pre">...</span> <span class="pre">No</span> <span class="pre">such</span> <span class="pre">file</span> <span class="pre">or</span> <span class="pre">directory</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">--data</span></code> RDS path is wrong or the toy input is not staged</p></td>
-<td><p>Confirm <code class="docutils literal notranslate"><span class="pre">input/mash/protocol_example.mashr_input.rds</span></code> exists (it is a symlink into <code class="docutils literal notranslate"><span class="pre">data/</span></code>)</p></td>
+<tr class="row-even"><td><p>Covariance component</p></td>
+<td><p>Candidate pattern of effect sharing across conditions</p></td>
 </tr>
-<tr class="row-odd"><td><p>Step 2 fails on <code class="docutils literal notranslate"><span class="pre">--prior-data</span></code> / <code class="docutils literal notranslate"><span class="pre">--vhat-data</span></code></p></td>
-<td><p>Step 1 has not been run yet, so the prior/vhat RDS do not exist</p></td>
-<td><p>Run Step 1 first; it writes the prior into <code class="docutils literal notranslate"><span class="pre">output/mixture_prior/</span></code></p></td>
+<tr class="row-odd"><td><p>Diagonal values</p></td>
+<td><p>Relative effect variance within conditions</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Incorrect</span> <span class="pre">workflow</span> <span class="pre">name</span></code></p></td>
-<td><p>The workflow name was omitted from <code class="docutils literal notranslate"><span class="pre">sos</span> <span class="pre">run</span></code></p></td>
-<td><p>Always pass the explicit workflow (<code class="docutils literal notranslate"><span class="pre">ed_bovy</span></code>, <code class="docutils literal notranslate"><span class="pre">mash</span></code>, or <code class="docutils literal notranslate"><span class="pre">plot_U</span></code>) before the <code class="docutils literal notranslate"><span class="pre">--</span></code> parameters</p></td>
+<tr class="row-even"><td><p>Off-diagonal values</p></td>
+<td><p>Direction and strength of shared effects</p></td>
 </tr>
-<tr class="row-odd"><td><p>Empty or tiny plot PDF</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">plot_U</span></code> was pointed at a prior RDS that has no data-driven components</p></td>
-<td><p>Use the <code class="docutils literal notranslate"><span class="pre">*.EE.prior.rds</span></code> produced by Step 1 as <code class="docutils literal notranslate"><span class="pre">--data</span></code></p></td>
+<tr class="row-odd"><td><p>Mixture weight</p></td>
+<td><p>Support for a component in the fitted effect distribution</p></td>
+</tr>
+<tr class="row-even"><td><p>Posterior summaries</p></td>
+<td><p>Shrunk effects and uncertainty after combining data with the mixture</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-</section>
-<section id="anticipated-results">
-<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
-<p>The pipeline produces output files in the <code class="docutils literal notranslate"><span class="pre">output/</span></code> subdirectory named after the workflow step. Verify success by checking that output files exist and are non-empty. See the <strong>Output</strong> section above for the expected file names and formats.</p>
-</section>
-<div class="toctree-wrapper compound">
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>prior &lt;- readRDS(&quot;output/mixture_prior/protocol_example.EE.prior.rds&quot;)
+cat(&quot;Class:&quot;, class(prior), &quot;\n&quot;)
+cat(&quot;Top-level fields:&quot;, paste(names(prior), collapse = &quot;, &quot;), &quot;\n&quot;)
+
+fit_files &lt;- list.files(&quot;output/mash_fit&quot;, pattern = &quot;^protocol_example_mash.*\\.rds$&quot;, full.names = TRUE)
+fit &lt;- readRDS(fit_files[[1]])
+cat(&quot;MASH result fields:&quot;, paste(names(fit), collapse = &quot;, &quot;), &quot;\n&quot;)
+</pre></div>
 </div>
+</div>
+</div>
+<p>A covariance heatmap is a pattern used by the mixture model, not a cluster assignment for samples or conditions. Strong positive off-diagonal structure supports effects with similar direction across conditions; near-diagonal structure supports condition-specific effects. Interpret a pattern together with its estimated weight and posterior results. Components can overlap, and several components may approximate the same broad biological pattern.</p>
+</section>
+</section>
+<section id="limitations-and-common-pitfalls">
+<h2>Limitations and common pitfalls<a class="headerlink" href="#limitations-and-common-pitfalls" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Condition names and ordering must match across all matrices.</p></li>
+<li><p>Strong-effect subsets used to learn covariances can bias the prior if they are unrepresentative.</p></li>
+<li><p>A prior learned in one study should not be transferred automatically to another tissue set or measurement scale.</p></li>
+<li><p>Residual correlation <code class="docutils literal notranslate"><span class="pre">V</span></code> and biological effect covariance are different quantities.</p></li>
+<li><p>Similar covariance components can be non-identifiable; interpret broad patterns rather than every component literally.</p></li>
+<li><p>The complete protocol-example input bundle is currently missing, so the three-step worked example cannot yet run end to end.</p></li>
+<li><p>Synthetic inputs demonstrate mechanics, not expected biological sharing.</p></li>
+</ul>
+</section>
+<section id="next-steps">
+<h2>Next steps<a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h2>
+<p>Use the fitted posterior summaries to identify effects that are shared or condition-specific, then compare those conclusions with sensitivity analyses using alternative covariance sets or residual-correlation estimates. Record the condition order and prior provenance with every downstream result.</p>
+</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -769,12 +760,12 @@ sos run pipeline/mash_fit.ipynb -h
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="qtl_association_postprocessing.html"
+       href="MASH.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Hierarchical Multiple Testing</p>
+        <p class="prev-next-title">Multivariate adaptive shrinkage (MASH) mini-protocol</p>
       </div>
     </a>
     <a class="right-next"
@@ -804,14 +795,21 @@ sos run pipeline/mash_fit.ipynb -h
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-implementation">Workflow implementation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-goals">Learning goals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#background-and-method">Background and method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worked-example">Worked example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-estimate-the-mixture-prior">Step 1. Estimate the mixture prior</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-fit-mash">Step 2. Fit MASH</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-visualize-the-learned-covariance-components">Step 3. Visualize the learned covariance components</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-reference">Command reference</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#results-and-interpretation">Results and interpretation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mixture-prior-result">Mixture-prior result</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations-and-common-pitfalls">Limitations and common pitfalls</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next steps</a></li>
 </ul>
   </nav></div>
 

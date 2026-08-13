@@ -1,0 +1,881 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Single-cell and single-nucleus molecular phenotype preprocessing &#8212; FunGen-xQTL Consortium</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'single_cell';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="snRNA-seq Preprocessing" href="snRNAseq_preprocessing.html" />
+    <link rel="prev" title="Bulk RNA-seq counts normalization" href="bulk_expression_normalization.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="README.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/xqtl_wf.png" class="logo__image only-light" alt="FunGen-xQTL Consortium - Home"/>
+    <img src="_static/xqtl_wf.png" class="logo__image only-dark pst-js-only" alt="FunGen-xQTL Consortium - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="README.html">
+                    FunGen-xQTL Computational Protocol
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference_data.html">Reference data preparation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_data_preparation.html">Reference Data Standardization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_TADB.html">Generation of Topologically Associated Domains and their Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ld_prune_reference.html">Independent list of variants using LD clumping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_ld_sketch.html">RSS LD Sketch Pipeline</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Molecular Phenotypes</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="bulk_expression.html">RNA-seq expression</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="RNA_calling.html">Quantifying expression from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_QC.html">Sample-level RNA-seq quality control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bulk_expression_normalization.html">Bulk RNA-seq counts normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Single-cell and single-nucleus molecular phenotype preprocessing</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="snRNAseq_preprocessing.html">snRNA-seq Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pseudobulk_preprocessing.html">Single-nuclei Pseudobulk Preprocessing (RNA-seq and ATAC-seq)</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="methylation.html">DNA methylation preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="methylation_calling.html">Quantification of methylation data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="splicing.html">Alternative splicing from RNA-seq data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="splicing_calling.html">Quantifying alternative splicing from RNA-seq data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splicing_normalization.html">Splicing QC and Normalization</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="apa.html">Alternative polyadenylation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="apa_calling.html">APA Calling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apa_impute.html">Post-APA calling: Imputation and QC</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gene_annotation.html">Gene Coordinate Annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_imputation.html">Phenotype data imputation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phenotype_formatting.html">Phenotype Data Formatting</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="covariate_preprocessing.html">Covariate data preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="covariate_formatting.html">Covariate Data Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariate_hidden_factor.html">Hidden Factor Analysis</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">QTL Association Testing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="qtl_association_testing.html">QTL association testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="TensorQTL.html">QTL Association Testing (TensorQTL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qr_and_twas.html">Quantile regression for QTL association testing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="MASH.html">Multivariate adaptive shrinkage (MASH) mini-protocol</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_mixture_vignette.html">Learning multivariate effect patterns for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_preprocessing.html">Extract genome-wide data for multivariate analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_prior.html">Mixture prior estimation for MASH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_fit.html">MASH analysis pipeline with data-driven prior matrices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mash_posterior.html">MASH analysis pipeline with posterior computation</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multiomics Regression Models</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mnm_miniprotocol.html">Fine-mapping and TWAS analysis</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_twas_vignette.html">Univariate fine-mapping and TWAS with SuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_multigene_fine_mapping_vignette.html">Cross-gene fine-mapping with mvSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="univariate_fine_mapping_fsusie_vignette.html">Functional fine-mapping with fSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multivariate_fine_mapping_vignette.html">Multivariate fine-mapping with mvSuSiE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="summary_stats_finemapping_vignette.html">Fine-mapping GWAS summary statistics with SuSiE RSS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mnm_regression.html">Advanced regression models for association analysis with individual-level data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss_analysis.html">RSS Fine-mapping with GWAS Summary Statistics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mnm_postprocessing.html">Fine-mapping result post-processing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">GWAS Integration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="gwas_integration.html">GWAS and xQTL integration mini-protocol</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="SuSiE_enloc.html">xQTL-GWAS pairwise enrichment and colocalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="twas_ctwas.html">TWAS, cTWAS and MR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intact.html">TWAS and COLOC integration (INTACT)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="colocboost.html">Multi-trait colocalization using ColocBoost</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Enrichment and Validation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="enrichment_validation.html">Enrichment and functional validation mini-protocol</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="eoo_enrichment.html">Chromosome-Specific Enrichment Analysis of Annotations Using Block Jackknife</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gsea.html">Pathway Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gregor.html">GREGOR enrichment analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sldsc_enrichment.html">Stratified LD Score Regression (S-LDSC) Enrichment</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">xQTL Modifier Score</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/edit/gh-pages/single_cell.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/statfungen/xqtl-protocol/issues/new?title=Issue%20on%20page%20%2Fsingle_cell.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/single_cell.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Single-cell and single-nucleus molecular phenotype preprocessing</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#miniprotocol-timing">Miniprotocol Timing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cell-level-quality-control">1. <span class="xref myst">Cell-level quality control</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cell-type-annotation">2. <span class="xref myst">Cell-type annotation</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudobulk-count-aggregation">3. <span class="xref myst">Pseudobulk count aggregation</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-id-harmonization">4. <span class="xref myst">Sample-ID harmonization</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudobulk-quality-control-and-residualization">5. <span class="xref myst">Pseudobulk quality control and residualization</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qtl-phenotype-formatting">6. <span class="xref myst">QTL phenotype formatting</span></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="single-cell-and-single-nucleus-molecular-phenotype-preprocessing">
+<h1>Single-cell and single-nucleus molecular phenotype preprocessing<a class="headerlink" href="#single-cell-and-single-nucleus-molecular-phenotype-preprocessing" title="Link to this heading">#</a></h1>
+<p>This mini-protocol performs cell-level snRNA-seq quality control and annotation, then prepares cell-type pseudobulk molecular phenotypes for QTL analysis.</p>
+<section id="miniprotocol-timing">
+<h2>Miniprotocol Timing<a class="headerlink" href="#miniprotocol-timing" title="Link to this heading">#</a></h2>
+<p>This is the total duration for one selected route; module-specific timings appear on their respective pages.</p>
+<p>Timing: TBD</p>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>Single-cell and single-nucleus data require two distinct levels of processing. Cell-level processing filters low-quality cells, removes ambient RNA and doublets, and transfers cell-type labels. Pseudobulk processing then aggregates cells within each donor and cell type, harmonizes donor identifiers, adjusts technical covariates, and formats residualized traits for QTL analysis.</p>
+<p>The first two steps use <a class="reference internal" href="snRNAseq_preprocessing.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">snRNAseq_preprocessing.ipynb</span></code></span></a>. The remaining steps use <a class="reference internal" href="pseudobulk_preprocessing.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">pseudobulk_preprocessing.ipynb</span></code></span></a>. Choose a route from the table rather than running every command automatically.</p>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Analysis goal</p></th>
+<th class="head text-right"><p>Commands to run, in order</p></th>
+<th class="head"><p>Inputs</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Cell-level QC and reference-based annotation</p></td>
+<td class="text-right"><p>1 → 2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.cellranger/</span></code><br><code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.id_mapping.csv</span></code><br><code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.seurat_ref_SE.rds</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Generate pseudobulk counts for a selected cell type from the annotated object</p></td>
+<td class="text-right"><p>1 → 2 → 3</p></td>
+<td><p>Inputs above</p></td>
+</tr>
+<tr class="row-even"><td><p>Prepare existing RNA pseudobulk counts for QTL analysis</p></td>
+<td class="text-right"><p>4 → 5 → 6</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.id_map.csv</span></code><br><code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.metadata_MIC.csv</span></code><br><code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.pseudobulk_counts_MIC.csv.gz</span></code><br><code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.tech_vars_MIC.csv</span></code><br><code class="docutils literal notranslate"><span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Format existing cell-type residuals for QTL analysis</p></td>
+<td class="text-right"><p>6 only</p></td>
+<td><p>A residual matrix under a cell-type directory and the gene-annotation GTF</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The commands use <code class="docutils literal notranslate"><span class="pre">MIC</span></code> as the concrete example cell type. For another cell type, replace <code class="docutils literal notranslate"><span class="pre">MIC</span></code> consistently in the option value and associated input and output filenames.</p>
+<p>Step 3 produces pseudobulk counts but not the metadata and technical-variable files required by steps 4 and 5. Continue with 4 → 5 → 6 only after those companion files are available.</p>
+<section id="cell-level-quality-control">
+<h3>1. <a class="reference internal" href="snRNAseq_preprocessing.html"><span class="std std-doc">Cell-level quality control</span></a><a class="headerlink" href="#cell-level-quality-control" title="Link to this heading">#</a></h3>
+<p><strong>What it does:</strong> Filters cells, removes ambient RNA and doublets, and saves the filtered Seurat object plus a QC table.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">snRNAseq_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">sctk_qc</span>  <span class="o">--</span><span class="nb">input</span><span class="o">-</span><span class="nb">dir</span> <span class="nb">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">cellranger</span>  <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>  <span class="o">--</span><span class="n">sample</span><span class="o">-</span><span class="n">meta</span> <span class="nb">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">id_mapping</span><span class="o">.</span><span class="n">csv</span>  <span class="o">--</span><span class="n">name</span> <span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="cell-type-annotation">
+<h3>2. <a class="reference internal" href="snRNAseq_preprocessing.html"><span class="std std-doc">Cell-type annotation</span></a><a class="headerlink" href="#cell-type-annotation" title="Link to this heading">#</a></h3>
+<p><strong>What it does:</strong> Transfers labels from the reference Seurat object to the filtered cells and writes a cell-typed Seurat object.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">snRNAseq_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">cell_annotation</span>  <span class="o">--</span><span class="n">sctk</span><span class="o">-</span><span class="n">rds</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span><span class="o">/</span><span class="n">SCTK_results</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">filtered_seuratobj</span><span class="o">.</span><span class="n">rds</span>  <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>  <span class="o">--</span><span class="n">seurat</span><span class="o">-</span><span class="n">ref</span> <span class="nb">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">seurat_ref_SE</span><span class="o">.</span><span class="n">rds</span>  <span class="o">--</span><span class="n">name</span> <span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="pseudobulk-count-aggregation">
+<h3>3. <a class="reference internal" href="pseudobulk_preprocessing.html"><span class="std std-doc">Pseudobulk count aggregation</span></a><a class="headerlink" href="#pseudobulk-count-aggregation" title="Link to this heading">#</a></h3>
+<p><strong>What it does:</strong> Aggregates counts across cells of the selected type within each donor from the annotated Seurat object.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">pseudobulk_counts</span>  <span class="o">--</span><span class="n">seurat</span><span class="o">-</span><span class="n">files</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">celltyped_seuratobj</span><span class="o">.</span><span class="n">rds</span>  <span class="o">--</span><span class="n">celltype</span> <span class="n">MIC</span>  <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>  <span class="o">--</span><span class="n">name</span> <span class="n">protocol_example</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="sample-id-harmonization">
+<h3>4. <a class="reference internal" href="pseudobulk_preprocessing.html"><span class="std std-doc">Sample-ID harmonization</span></a><a class="headerlink" href="#sample-id-harmonization" title="Link to this heading">#</a></h3>
+<p><strong>What it does:</strong> Applies the donor-ID map to existing cell-type metadata and count matrices so their sample identifiers agree.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">sampleid_mapping</span>  <span class="o">--</span><span class="nb">map</span><span class="o">-</span><span class="n">file</span> <span class="nb">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">id_map</span><span class="o">.</span><span class="n">csv</span>  <span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">files</span> <span class="nb">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">metadata_MIC</span><span class="o">.</span><span class="n">csv</span>  <span class="o">--</span><span class="n">count</span><span class="o">-</span><span class="n">files</span> <span class="nb">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">pseudobulk_counts_MIC</span><span class="o">.</span><span class="n">csv</span><span class="o">.</span><span class="n">gz</span>  <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>  <span class="o">--</span><span class="n">name</span> <span class="n">protocol_example</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="pseudobulk-quality-control-and-residualization">
+<h3>5. <a class="reference internal" href="pseudobulk_preprocessing.html"><span class="std std-doc">Pseudobulk quality control and residualization</span></a><a class="headerlink" href="#pseudobulk-quality-control-and-residualization" title="Link to this heading">#</a></h3>
+<p><strong>What it does:</strong> Filters low-information features and samples, adjusts the specified technical variables, and writes cell-type residuals.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">pseudobulk_qc</span>  <span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">files</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">metadata_MIC</span><span class="o">.</span><span class="n">csv</span>  <span class="o">--</span><span class="n">count</span><span class="o">-</span><span class="n">files</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">pseudobulk_counts_MIC</span><span class="o">.</span><span class="n">csv</span><span class="o">.</span><span class="n">gz</span>  <span class="o">--</span><span class="n">tech</span><span class="o">-</span><span class="nb">vars</span><span class="o">-</span><span class="n">file</span> <span class="nb">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">snrnaseq</span><span class="o">.</span><span class="n">tech_vars_MIC</span><span class="o">.</span><span class="n">csv</span>  <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>  <span class="o">--</span><span class="n">name</span> <span class="n">protocol_example</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="qtl-phenotype-formatting">
+<h3>6. <a class="reference internal" href="pseudobulk_preprocessing.html"><span class="std std-doc">QTL phenotype formatting</span></a><a class="headerlink" href="#qtl-phenotype-formatting" title="Link to this heading">#</a></h3>
+<p><strong>What it does:</strong> Adds genomic coordinates to the residualized cell-type traits and writes a bgzipped phenotype BED for association testing.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="n">phenotype_formatting</span>  <span class="o">--</span><span class="n">residual</span><span class="o">-</span><span class="n">files</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">MIC</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">txt</span>  <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>  <span class="o">--</span><span class="n">gtf</span><span class="o">-</span><span class="n">file</span> <span class="nb">input</span><span class="o">/</span><span class="n">reference_data</span><span class="o">/</span><span class="n">Homo_sapiens</span><span class="o">.</span><span class="n">GRCh38</span><span class="mf">.103</span><span class="o">.</span><span class="n">chr</span><span class="o">.</span><span class="n">reformatted</span><span class="o">.</span><span class="n">collapse_only</span><span class="o">.</span><span class="n">gene</span><span class="o">.</span><span class="n">ERCC</span><span class="o">.</span><span class="n">gtf</span>  <span class="o">--</span><span class="n">name</span> <span class="n">protocol_example</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="output-files">
+<h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head text-right"><p>Step</p></th>
+<th class="head"><p>Relative path</p></th>
+<th class="head"><p>Contents</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-right"><p>1</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/SCTK_results/protocol_example.snrnaseq.filtered_seuratobj.rds</span></code></p></td>
+<td><p>Filtered and corrected Seurat object</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>1</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/QC_table/protocol_example.snrnaseq.SCTK_QC_table.csv</span></code></p></td>
+<td><p>Per-cell QC measurements and calls</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/protocol_example.snrnaseq.celltyped_seuratobj.rds</span></code></p></td>
+<td><p>Seurat object with transferred cell-type labels</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>3</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/protocol_example.pseudobulk_counts_MIC.csv.gz</span></code></p></td>
+<td><p>Donor-by-feature cell-type pseudobulk counts</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/protocol_example.snrnaseq.metadata_MIC.csv</span></code></p></td>
+<td><p>Metadata with harmonized donor IDs</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/protocol_example.snrnaseq.pseudobulk_counts_MIC.csv.gz</span></code></p></td>
+<td><p>Counts with harmonized donor IDs</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>5</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/protocol_example.MIC.residuals.txt</span></code></p></td>
+<td><p>QC-filtered and residualized cell-type traits</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>6</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/snrna_seq/protocol_example.MIC.phenotype.bed.gz</span></code></p></td>
+<td><p>Genomically positioned cell-type molecular phenotypes for QTL testing</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="anticipated-results">
+<h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
+<p>The cell-level route produces a filtered, cell-typed Seurat object suitable for downstream aggregation. The pseudobulk route produces one donor-level molecular phenotype matrix per cell type and, after residualization and coordinate formatting, a bgzipped BED suitable for the phenotype-preprocessing and QTL-association workflows.</p>
+<p>Review cell counts, donor representation, QC exclusions, and residual distributions before association testing; pseudobulk estimates can be unstable when a donor contributes too few cells to a cell type.</p>
+</section>
+<section id="command-interface">
+<h2>Command interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
+<p>Inspect all workflows, options, and defaults for the two modules:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">snRNAseq_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="o">-</span><span class="n">h</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span> <span class="n">run</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">.</span><span class="n">ipynb</span> <span class="o">-</span><span class="n">h</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="bulk_expression_normalization.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Bulk RNA-seq counts normalization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="snRNAseq_preprocessing.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">snRNA-seq Preprocessing</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#miniprotocol-timing">Miniprotocol Timing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#steps">Steps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cell-level-quality-control">1. <span class="xref myst">Cell-level quality control</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cell-type-annotation">2. <span class="xref myst">Cell-type annotation</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudobulk-count-aggregation">3. <span class="xref myst">Pseudobulk count aggregation</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-id-harmonization">4. <span class="xref myst">Sample-ID harmonization</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudobulk-quality-control-and-residualization">5. <span class="xref myst">Pseudobulk quality control and residualization</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qtl-phenotype-formatting">6. <span class="xref myst">QTL phenotype formatting</span></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output Files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#anticipated-results">Anticipated Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command interface</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021+, FunGen xQTL Analysis Working Group.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
