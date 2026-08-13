@@ -50,7 +50,7 @@ def test_pseudobulk_counts(run_r, repo_root, tmp_path):
               ["--step", "pseudobulk_counts", "--seurat-files", fix / "seurat_MIC.rds",
                "--celltype", "MIC", "--output-dir", tmp_path])
     assert p.returncode == 0, p.stdout + p.stderr
-    got = gzip.open(tmp_path / "0_pseudobulk_counts/pseudobulk_counts_MIC.csv.gz", "rt").read()
+    got = gzip.open(tmp_path / "protocol_example.pseudobulk_counts_MIC.csv.gz", "rt").read()
     exp = gzip.open(fix / "expected_pseudobulk_counts_MIC.csv.gz", "rt").read()
     assert got == exp
 
@@ -61,7 +61,7 @@ def test_sampleid_mapping(run_r, repo_root, tmp_path):
               ["--step", "sampleid_mapping", "--map-file", fix / "id_map.csv",
                "--meta-files", fix / "metadata_MIC.csv", "--output-dir", tmp_path])
     assert p.returncode == 0, p.stdout + p.stderr
-    got = (tmp_path / "1_files_with_sampleid/metadata_MIC.csv").read_text()
+    got = (tmp_path / "metadata_MIC.csv").read_text()
     exp = (fix / "expected_metadata_MIC.csv").read_text()
     assert got == exp
 
@@ -73,27 +73,26 @@ def test_pseudobulk_qc(run_r, repo_root, tmp_path):
                "--count-files", fix / "counts_MIC.csv.gz",
                "--tech-vars-file", fix / "tech_vars_MIC.csv", "--output-dir", tmp_path])
     assert p.returncode == 0, p.stdout + p.stderr
-    d = tmp_path / "2_residuals/MIC"
+    d = tmp_path
     # filtered_raw_counts: version-independent -> byte exact
-    assert (d / "MIC_filtered_raw_counts.txt").read_text() == \
+    assert (d / "protocol_example.MIC.filtered_raw_counts.txt").read_text() == \
         (fix / "expected_MIC_filtered_raw_counts.txt").read_text()
     # residuals: voom-derived -> tight numeric (labels/header exact)
-    _assert_num_match((d / "MIC_residuals.txt").read_text(),
+    _assert_num_match((d / "protocol_example.MIC.residuals.txt").read_text(),
                       (fix / "expected_MIC_residuals.txt").read_text(), label_cols=1)
 
 
 def test_phenotype_formatting(run_r, repo_root, tmp_path):
     fix = repo_root / FIX
-    # ct = basename(dirname(residual_file)) -> place the ATAC residuals under MIC/
-    ct_dir = tmp_path / "MIC"
-    ct_dir.mkdir()
-    (ct_dir / "atac_MIC_residuals.txt").write_text((fix / "atac_MIC_residuals.txt").read_text())
+    # worker derives ct from the residual filename: {name}.{ct}.residuals.txt
+    res = tmp_path / "protocol_example.MIC.residuals.txt"
+    res.write_text((fix / "atac_MIC_residuals.txt").read_text())
     p = run_r(repo_root / WORKER,
               ["--step", "phenotype_formatting",
-               "--residual-files", ct_dir / "atac_MIC_residuals.txt", "--output-dir", tmp_path])
+               "--residual-files", res, "--output-dir", tmp_path])
     assert p.returncode == 0, p.stdout + p.stderr
-    out = tmp_path / "3_pheno_reformat/MIC_phenotype.bed.gz"
-    assert (tmp_path / "3_pheno_reformat/MIC_phenotype.bed.gz.tbi").exists()
+    out = tmp_path / "protocol_example.MIC.phenotype.bed.gz"
+    assert (tmp_path / "protocol_example.MIC.phenotype.bed.gz.tbi").exists()
     got = gzip.open(out, "rt").read()
     exp = gzip.open(fix / "expected_MIC_phenotype.bed.gz", "rt").read()
     assert got == exp

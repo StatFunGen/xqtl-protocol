@@ -27,6 +27,8 @@ parser <- add_argument(parser, "--step", type = "character",
                        help = "sctk_qc | cell_annotation")
 parser <- add_argument(parser, "--output-dir", type = "character", default = "output",
                        help = "output directory")
+parser <- add_argument(parser, "--name", type = "character", default = "",
+                       help = "output filename prefix, e.g. protocol_example.snrnaseq; empty = no prefix")
 parser <- add_argument(parser, "--num-threads", type = "numeric", default = 8,
                        help = "future multicore workers")
 # sctk_qc
@@ -62,6 +64,10 @@ parser <- add_argument(parser, "--cluster-threshold", type = "numeric", default 
 
 argv <- parse_args(parser)
 
+# Prefix an output filename with the dataset tag (--name) when provided;
+# an empty --name leaves filenames unprefixed (the direct-worker default).
+prefixed <- function(base) if (nzchar(argv$name)) paste0(argv$name, ".", base) else base
+
 
 # ============================================================
 # Step: sctk_qc
@@ -80,8 +86,8 @@ run_sctk_qc <- function(argv) {
 
   input_dir      <- argv$input_dir
   output_dir     <- argv$output_dir
-  rds_out        <- file.path(output_dir, "SCTK_results", "filtered_seuratobj.rds")
-  qc_table_out   <- file.path(output_dir, "QC_table", "SCTK_QC_table.csv")
+  rds_out        <- file.path(output_dir, "SCTK_results", prefixed("filtered_seuratobj.rds"))
+  qc_table_out   <- file.path(output_dir, "QC_table", prefixed("SCTK_QC_table.csv"))
   doublet_method <- argv$doublet_method
   ambient_method <- argv$ambient_method
 
@@ -241,7 +247,7 @@ run_sctk_qc <- function(argv) {
   message("Saved: ", rds_out)
   rm(processed_seurat); gc()
 
-  qc_csv <- file.path(dirname(rds_out), "QC_summary.csv")
+  qc_csv <- file.path(dirname(rds_out), prefixed("QC_summary.csv"))
   write.csv(qc_summary, qc_csv, row.names = FALSE)
   message("QC summary saved: ", qc_csv)
 }
@@ -269,8 +275,8 @@ run_cell_annotation <- function(argv) {
   downsample_n      <- argv$downsample_n
   cluster_threshold <- argv$cluster_threshold
 
-  anno_file <- file.path(output_dir, "annotated_seuratobj.rds")
-  out_file  <- file.path(output_dir, "celltyped_seuratobj.rds")
+  anno_file <- file.path(output_dir, prefixed("annotated_seuratobj.rds"))
+  out_file  <- file.path(output_dir, prefixed("celltyped_seuratobj.rds"))
 
   # ── Create output directory ───────────────────────────────────
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
