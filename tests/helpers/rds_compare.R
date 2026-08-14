@@ -57,6 +57,19 @@ canon <- function(x) {
   if (inherits(x, c("difftime", "POSIXct", "POSIXt", "Date"))) {
     return(rep("<time-stripped>", length(x)))
   }
+  # Closures (e.g. ctwas LD_loader_fun / snpinfo_loader_fun) capture machine-specific
+  # data in their environment — notably LD-panel file paths used as list NAMES — that
+  # all.equal compares raw, escaping normPaths (canon otherwise never descends into a
+  # function). Canonicalize the closure's OWN frame so normPaths / time-stripping reach
+  # it, and drop the identical library-code body. Library / primitive / namespaced
+  # functions (named or NULL environment) collapse to a constant (same both sides).
+  if (is.function(x)) {
+    e <- environment(x)
+    if (is.null(e) || environmentName(e) != "" || isNamespace(e)) {
+      return("<function>")
+    }
+    return(list(.closure = canon(as.list(e, all.names = TRUE))))
+  }
   out <- if (isS4(x)) {
     sl <- methods::slotNames(x)
     stats::setNames(lapply(sl, function(s) canon(methods::slot(x, s))), sl)

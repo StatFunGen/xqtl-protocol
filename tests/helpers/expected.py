@@ -154,8 +154,14 @@ def _compare_table(produced, expected, rtol, atol, delimiter, normalize_paths=Fa
         for j, (pc, ec) in enumerate(zip(pr, er), start=1):
             if pc == ec:
                 continue
-            if normalize_paths and _is_abs_path(pc) and _is_abs_path(ec):
-                if os.path.basename(pc) == os.path.basename(ec):
+            if normalize_paths:
+                # Basename EACH side independently (mirrors rds_compare.R's norm_paths):
+                # an absolute path must match its own basename, since committed fixtures
+                # are neutralized to basenames while the fresh output is an absolute
+                # machine path. (Both-absolute is the same case — both reduce to basename.)
+                npc = os.path.basename(pc) if _is_abs_path(pc) else pc
+                nec = os.path.basename(ec) if _is_abs_path(ec) else ec
+                if npc == nec:
                     continue
             pf, ef = _as_float(pc), _as_float(ec)
             if pf is not None and ef is not None:
