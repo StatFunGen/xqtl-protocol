@@ -164,9 +164,198 @@ do_process_block <- function(argv) {
   cat(sprintf("Wrote %d variants -> %s\n", n_passed, basename(paste0(pfx, ".dosage.gz"))))
 }
 
+
+# ---- merge_chrom -----------------------------------------------------------
+do_merge_chrom <- function(argv) {
+  chrom_dir <- argv$chrom_dir
+  final_prefix <- argv$final_prefix
+  block_dirs <- list.dirs(chrom_dir, recursive = FALSE, full.names = TRUE)
+  afreq_files <- unlist(lapply(block_dirs, function(d) {
+    list.files(d, pattern = "[.]afreq$", full.names = TRUE)
+  }), use.names = FALSE)
+  if (!length(afreq_files)) stop("No block .afreq files found under ", chrom_dir)
+
+  read_tab <- function(f) read.delim(f, check.names = FALSE, comment.char = "",
+                                     stringsAsFactors = FALSE)
+  pvar <- read_tab(paste0(final_prefix, ".pvar"))
+  afreq <- do.call(rbind, lapply(afreq_files, read_tab))
+  if (!"ID" %in% names(pvar) || !"ID" %in% names(afreq))
+    stop("Both .pvar and .afreq must contain an ID column")
+  if (anyNA(pvar$ID) || anyNA(afreq$ID)) stop("Missing variant ID detected")
+  if (anyDuplicated(pvar$ID)) stop("Duplicate IDs in final .pvar")
+  if (anyDuplicated(afreq$ID)) stop("Duplicate IDs across block .afreq files")
+
+  missing_ids <- setdiff(pvar$ID, afreq$ID)
+  extra_ids <- setdiff(afreq$ID, pvar$ID)
+  message("AFREQ_RECONCILE pvar=", nrow(pvar), " block_afreq=", nrow(afreq),
+          " missing=", length(missing_ids), " extra=", length(extra_ids))
+  if (length(missing_ids)) {
+    writeLines(missing_ids, paste0(final_prefix, ".afreq.missing_ids.txt"))
+    stop("Final .afreq is incomplete; see .afreq.missing_ids.txt")
+  }
+  if (length(extra_ids))
+    writeLines(extra_ids, paste0(final_prefix, ".afreq.extra_ids.txt"))
+
+  afreq <- afreq[match(pvar$ID, afreq$ID), , drop = FALSE]
+  stopifnot(identical(as.character(afreq$ID), as.character(pvar$ID)))
+  afreq_tmp <- paste0(final_prefix, ".afreq.tmp")
+  write.table(afreq, afreq_tmp, sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = TRUE)
+  if (!file.rename(afreq_tmp, paste0(final_prefix, ".afreq")))
+    stop("Could not atomically install reconciled .afreq")
+
+  # Create a directional minimal-event identifier without changing VCF alleles.
+  canonical_event <- function(chrom, pos, id, ref, alt) {
+    ref <- toupper(ref); alt <- toupper(alt); pos <- as.integer(pos)
+    chrom <- if (grepl("^chr", id)) sub(":.*$", "", id) else paste0("chr", sub("^chr", "", chrom))
+    # Only length-changing alleles receive an internal event ID.
+    if (nchar(ref) == nchar(alt))
+      return(c(event_id = id, event_type = "UNCHANGED", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    if (grepl("[<>*]|\\[|\\]", ref) || grepl("[<>*]|\\[|\\]", alt) ||
+        grepl(",", alt, fixed = TRUE))
+      return(c(event_id = paste(chrom, pos, ref, alt, sep = ":"),
+               event_type = "SYMBOLIC", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    r <- strsplit(ref, "", fixed = TRUE)[[1]]
+    a <- strsplit(alt, "", fixed = TRUE)[[1]]
+    prefix <- 0L
+    while (length(r) && length(a) && r[1] == a[1]) {
+      r <- r[-1]; a <- a[-1]; prefix <- prefix + 1L
+    }
+    while (length(r) && length(a) && tail(r, 1) == tail(a, 1)) {
+      r <- head(r, -1); a <- head(a, -1)
+    }
+    rr <- paste(r, collapse = ""); aa <- paste(a, collapse = "")
+    event_pos <- pos + prefix
+    if (!nzchar(rr) && nzchar(aa)) {
+      event_pos <- event_pos - 1L; type <- "INS"
+      id <- paste(chrom, event_pos, type, aa, sep = ":")
+    } else if (nzchar(rr) && !nzchar(aa)) {
+      type <- "DEL"; id <- paste(chrom, event_pos, type, rr, sep = ":")
+    } else {
+      type <- "SUB"; id <- paste(chrom, event_pos, type, rr, aa, sep = ":")
+    }
+    c(event_id = id, event_type = type, event_pos = event_pos,
+      event_ref = rr, event_alt = aa)
+  }
+  chrom_col <- if ("#CHROM" %in% names(pvar)) "#CHROM" else "CHROM"
+  event <- t(mapply(canonical_event, pvar[[chrom_col]], pvar$POS, pvar$ID,
+                    pvar$REF, pvar$ALT, SIMPLIFY = TRUE))
+  event_map <- data.frame(ID = pvar$ID, CHROM = pvar[[chrom_col]],
+                          POS = pvar$POS, REF = pvar$REF, ALT = pvar$ALT,
+                          event, check.names = FALSE, stringsAsFactors = FALSE)
+  duplicated_event <- duplicated(event_map$event_id) |
+                      duplicated(event_map$event_id, fromLast = TRUE)
+  if (any(duplicated_event)) {
+    write.table(event_map[duplicated_event, ],
+                paste0(final_prefix, ".event_id.collisions.tsv"),
+                sep = "\t", quote = FALSE, row.names = FALSE)
+    stop("Canonical event-ID collision detected; see .event_id.collisions.tsv")
+  }
+  event_tmp <- paste0(final_prefix, ".event_id.tsv.tmp")
+  write.table(event_map, event_tmp, sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = TRUE)
+  if (!file.rename(event_tmp, paste0(final_prefix, ".event_id.tsv")))
+    stop("Could not atomically install event-ID mapping")
+
+  # Summarize block-level filtering before removing intermediates.
+  meta_files <- list.files(chrom_dir, pattern = "[.]meta$", recursive = TRUE,
+                           full.names = TRUE)
+  if (length(meta_files)) {
+    fields <- c("n_total", "n_passed", "n_multiallelic", "n_monomorphic",
+                "n_all_na", "n_high_msng", "n_low_maf", "n_low_mac")
+    stats <- do.call(rbind, lapply(meta_files, function(f) {
+      lines <- grep("^n_", readLines(f), value = TRUE)
+      kv <- strsplit(lines, "=", fixed = TRUE)
+      vals <- setNames(as.integer(vapply(kv, function(x) x[[2]], character(1))),
+                       vapply(kv, function(x) x[[1]], character(1)))
+      as.data.frame(as.list(vals[fields]))
+    }))
+    totals <- colSums(stats, na.rm = TRUE)
+    summary <- data.frame(t(totals))
+    summary$pct_dropped <- round(100 * (1 - summary$n_passed / summary$n_total), 1)
+    cat("
+=== Filter Summary for ", basename(chrom_dir), " ===
+", sep = "")
+    print(data.frame(value = unlist(summary), row.names = names(summary)))
+  }
+
+  # Cleanup happens only after all final outputs and summaries are complete.
+  unlink(c(paste0(final_prefix, "_pmerge_list.txt"),
+           paste0(final_prefix, "-merge.pgen"),
+           paste0(final_prefix, "-merge.pvar"),
+           paste0(final_prefix, "-merge.psam")))
+  unlink(block_dirs, recursive = TRUE)
+}
+
+# ---- event_id --------------------------------------------------------------
+do_event_id <- function(argv) {
+  if (!nzchar(argv$final_prefix)) stop("--final-prefix is required for event_id")
+  final_prefix <- argv$final_prefix
+  read_tab <- function(f) read.delim(f, check.names = FALSE, comment.char = "",
+                                     stringsAsFactors = FALSE)
+  pvar <- read_tab(paste0(final_prefix, ".pvar"))
+  # Create a directional minimal-event identifier without changing VCF alleles.
+  canonical_event <- function(chrom, pos, id, ref, alt) {
+    ref <- toupper(ref); alt <- toupper(alt); pos <- as.integer(pos)
+    chrom <- if (grepl("^chr", id)) sub(":.*$", "", id) else paste0("chr", sub("^chr", "", chrom))
+    # Only length-changing alleles receive an internal event ID.
+    if (nchar(ref) == nchar(alt))
+      return(c(event_id = id, event_type = "UNCHANGED", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    if (grepl("[<>*]|\\[|\\]", ref) || grepl("[<>*]|\\[|\\]", alt) ||
+        grepl(",", alt, fixed = TRUE))
+      return(c(event_id = paste(chrom, pos, ref, alt, sep = ":"),
+               event_type = "SYMBOLIC", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    r <- strsplit(ref, "", fixed = TRUE)[[1]]
+    a <- strsplit(alt, "", fixed = TRUE)[[1]]
+    prefix <- 0L
+    while (length(r) && length(a) && r[1] == a[1]) {
+      r <- r[-1]; a <- a[-1]; prefix <- prefix + 1L
+    }
+    while (length(r) && length(a) && tail(r, 1) == tail(a, 1)) {
+      r <- head(r, -1); a <- head(a, -1)
+    }
+    rr <- paste(r, collapse = ""); aa <- paste(a, collapse = "")
+    event_pos <- pos + prefix
+    if (!nzchar(rr) && nzchar(aa)) {
+      event_pos <- event_pos - 1L; type <- "INS"
+      id <- paste(chrom, event_pos, type, aa, sep = ":")
+    } else if (nzchar(rr) && !nzchar(aa)) {
+      type <- "DEL"; id <- paste(chrom, event_pos, type, rr, sep = ":")
+    } else {
+      type <- "SUB"; id <- paste(chrom, event_pos, type, rr, aa, sep = ":")
+    }
+    c(event_id = id, event_type = type, event_pos = event_pos,
+      event_ref = rr, event_alt = aa)
+  }
+  chrom_col <- if ("#CHROM" %in% names(pvar)) "#CHROM" else "CHROM"
+  event <- t(mapply(canonical_event, pvar[[chrom_col]], pvar$POS, pvar$ID,
+                    pvar$REF, pvar$ALT, SIMPLIFY = TRUE))
+  event_map <- data.frame(ID = pvar$ID, CHROM = pvar[[chrom_col]],
+                          POS = pvar$POS, REF = pvar$REF, ALT = pvar$ALT,
+                          event, check.names = FALSE, stringsAsFactors = FALSE)
+  duplicated_event <- duplicated(event_map$event_id) |
+                      duplicated(event_map$event_id, fromLast = TRUE)
+  if (any(duplicated_event)) {
+    write.table(event_map[duplicated_event, ],
+                paste0(final_prefix, ".event_id.collisions.tsv"),
+                sep = "\t", quote = FALSE, row.names = FALSE)
+    stop("Canonical event-ID collision detected; see .event_id.collisions.tsv")
+  }
+  event_tmp <- paste0(final_prefix, ".event_id.tsv.tmp")
+  write.table(event_map, event_tmp, sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = TRUE)
+  if (!file.rename(event_tmp, paste0(final_prefix, ".event_id.tsv")))
+    stop("Could not atomically install event-ID mapping")
+}
+
+
 # ---- CLI -------------------------------------------------------------------
-p <- arg_parser("RSS LD random-projection sketch (generate_w / process_block)")
-p <- add_argument(p, "--step", help = "generate_w | process_block")
+p <- arg_parser("RSS LD random-projection sketch (generate_w / process_block / merge_chrom / event_id)")
+p <- add_argument(p, "--step", help = "generate_w | process_block | merge_chrom | event_id")
 p <- add_argument(p, "--n-samples", help = "generate_w: total sample size n")
 p <- add_argument(p, "--B", help = "sketch dimension B", default = "10000")
 p <- add_argument(p, "--seed", help = "generate_w: RNG seed", default = "123")
@@ -184,12 +373,18 @@ p <- add_argument(p, "--mac-min", help = "process_block: min MAC", default = "5"
 p <- add_argument(p, "--msng-min", help = "process_block: max missingness", default = "0.05")
 p <- add_argument(p, "--sample-list", help = "process_block: optional sample subset file", default = "")
 p <- add_argument(p, "--output", help = "generate_w: output W .rds")
+p <- add_argument(p, "--chrom-dir", help = "merge_chrom: chromosome output directory", default = "")
+p <- add_argument(p, "--final-prefix", help = "merge_chrom: final pgen/pvar/afreq prefix", default = "")
 argv <- parse_args(p)
 
 if (identical(argv$step, "generate_w")) {
   do_generate_w(argv)
 } else if (identical(argv$step, "process_block")) {
   do_process_block(argv)
+} else if (identical(argv$step, "merge_chrom")) {
+  do_merge_chrom(argv)
+} else if (identical(argv$step, "event_id")) {
+  do_event_id(argv)
 } else {
-  stop("--step must be 'generate_w' or 'process_block'")
+  stop("--step must be 'generate_w', 'process_block', 'merge_chrom', or 'event_id'")
 }
