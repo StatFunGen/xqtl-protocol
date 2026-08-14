@@ -18,9 +18,12 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
 R = "code/script/molecular_phenotypes/snRNAseq_preprocessing.R"
 NB = "pipeline/snRNAseq_preprocessing.ipynb"
 FX = "tests/fixtures/snrnaseq_preprocessing"
+EXP = "tests/fixtures/snrnaseq_preprocessing/expected"
 MSD = "code/script"
 
 def _read_csv_col0(path):
@@ -43,11 +46,34 @@ def sctk_out(run_r, repo_root, tmp_path_factory):
     return out_dir
 
 
-def test_sctk_qc(sctk_out):
+def test_sctk_qc(sctk_out, repo_root):
     rds = sctk_out / "SCTK_results" / "filtered_seuratobj.rds"
     qc_table = sctk_out / "QC_table" / "SCTK_QC_table.csv"
     qc_summary = sctk_out / "SCTK_results" / "QC_summary.csv"
     assert rds.exists() and qc_table.exists() and qc_summary.exists()
+
+    # regression: runCellQC is seeded (seed=12345) so the two CSV summaries reproduce
+    # byte-for-byte across runs (verified run-to-run) -> exact snapshot compare.
+    assert_matches_expected(qc_summary, repo_root / EXP / "expected.sctk_qc.QC_summary.csv", mode="exact")
+    assert_matches_expected(qc_table, repo_root / EXP / "expected.sctk_qc.SCTK_QC_table.csv", mode="exact")
+
+    # The 15 MB filtered_seuratobj.rds is not compared whole (its serialization carries
+    # non-deterministic timestamps/env state and is too deeply nested to walk). Instead a
+    # COMPACT PROJECTION of the reproducible object data — every meta.data column
+    # (QC metrics + cluster labels), the PCA/UMAP embeddings, and a counts invariant — is
+    # extracted by seurat_project.R and value-compared. All of these are reproducible
+    # run-to-run under the seed (verified). (Cross-arch note: the embeddings and the
+    # graph-derived cluster labels are the pieces most likely to need tolerance
+    # calibration on the x86 CI runner; the QC-metric columns + counts invariant are robust.)
+    import subprocess
+    from helpers.r_runner import rscript_bin
+    proj = sctk_out / "projection"
+    r = subprocess.run([rscript_bin(), str(repo_root / "tests/helpers/seurat_project.R"),
+                        str(rds), str(proj)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    for f in ("meta_data.tsv", "pca_embeddings.tsv", "umap_embeddings.tsv", "counts_summary.tsv"):
+        assert_matches_expected(proj / f, repo_root / EXP / f"expected.sctk_qc.{f}",
+                                mode="tolerant", rtol=1e-6, atol=1e-8)
 
     steps = _read_csv_col0(qc_summary)
     # the fixed QC ladder, in order

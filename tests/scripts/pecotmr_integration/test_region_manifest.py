@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/region_manifest/expected/region_manifest.tsv"
+
 
 def test_region_manifest(run_r, repo_root, qtl_mini, tmp_path):
     out = tmp_path / "regions.tsv"
@@ -16,3 +20,4 @@ def test_region_manifest(run_r, repo_root, qtl_mini, tmp_path):
     cols = lines[0].split("\t")
     assert {"region_id", "chr", "start", "end"} <= set(cols)
     assert any("ENSG00000283047" in ln for ln in lines[1:])
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)

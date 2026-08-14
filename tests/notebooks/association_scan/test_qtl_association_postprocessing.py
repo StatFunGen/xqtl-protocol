@@ -2,6 +2,14 @@
 the committed fixture as the work dir (the notebook globs the regional / pairs /
 n_variants files by pattern) and runs the sos step end-to-end, asserting the
 consolidated enriched-QtlSumStats RDS is produced.
+
+No expected-output regression snapshot here: this notebook drives the same
+qtl_association_postprocessing.R wrapper on the same tests/fixtures/
+qtl_association_postprocessing inputs with identical params (maf 0.01, window
+1e6, pvalue 0.05) as the SCRIPT-tier test_qtl_association_postprocessing.py, which
+already value-compares qap.rds / cis_regional.fdr.tsv.gz / summary against
+tests/fixtures/qtl_association_postprocessing/expected. The data is byte-identical,
+so re-comparing at the notebook tier would only duplicate that fixture.
 """
 from __future__ import annotations
 

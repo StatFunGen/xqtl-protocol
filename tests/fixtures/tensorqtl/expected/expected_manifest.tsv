@@ -1,0 +1,5 @@
+# expected-output regression manifest — TensorQTL (notebook tier, cis scan worker)
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+cis_qtl.pairs.tsv.gz	tolerant	1e-6	1e-8	TensorQTL.py cis scan (nominal pass) over qtl_mini chr22 (16 genes). Raw per-(gene,variant) p-value table; pure regression, deterministic. Bit-identical across two scans; .gz decompressed before compare; no embedded absolute paths. This is the raw scan output BEFORE TensorQTL.R adds Storey q-values.
+cis_qtl.regional.tsv.gz	tolerant	1e-6	1e-8	TensorQTL.py cis scan (permutation / regional-association pass). Permutations are seeded (seed=999 hardcoded in the worker), so the beta-approx p_perm/p_beta are reproducible; bit-identical across two scans, no embedded absolute paths.
+cis_qtl_pairs.22.parquet	tolerant	1e-6	1e-8	TensorQTL.py cis scan per-chromosome nominal parquet (the tensorqtl-native output; the .tsv.gz above is the reformatted copy). Deterministic; compared via pyarrow (present in the env).

@@ -13,9 +13,12 @@ from __future__ import annotations
 import os
 import subprocess
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/data_preprocessing/genotype/PCA.R"
 NB = "pipeline/PCA.ipynb"
 FIX = "tests/fixtures/pca"
+EXP = f"{FIX}/expected"
 BASE = "protocol_example.unrelated.prune"
 
 
@@ -42,6 +45,9 @@ def test_pca_flashpca(run_r, repo_root, tmp_path):
         'stopifnot(is.list(r), "flashpca" %in% class(r$pca_model), '
         'is.data.frame(r$pc_scores)); cat(nrow(r$pc_scores))')
     assert int(n) == 59
+    # regression: the flashpca model + PC scores reproduce the committed fixture
+    # (flashpcaR is deterministic on this bed) within tolerance (deep all.equal).
+    assert_matches_expected(out, repo_root / EXP / "flashpca.pca.rds", mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_pca_project_samples(run_r, repo_root, tmp_path):
@@ -54,6 +60,8 @@ def test_pca_project_samples(run_r, repo_root, tmp_path):
         "--pop-col", "", "--label-col", "", "--pops", "", "--pca-model", fix / f"{BASE}.pca.rds"])
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.exists()
+    # regression: the projected PC scores reproduce the committed fixture (deterministic).
+    assert_matches_expected(out, repo_root / EXP / "project_samples.rds", mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_pca_detect_outliers(run_r, repo_root, tmp_path):
@@ -67,6 +75,10 @@ def test_pca_detect_outliers(run_r, repo_root, tmp_path):
         "--distance-output", maha, "--identified-outliers-output", outliers])
     assert p.returncode == 0, p.stdout + p.stderr
     assert maha.exists() and outliers.exists()
+    # regression: the Mahalanobis distances (tolerant) and the identified-outlier
+    # sample list (exact) reproduce the committed fixtures (deterministic).
+    assert_matches_expected(maha, repo_root / EXP / "detect_outliers.maha.rds", mode="tolerant", rtol=1e-6, atol=1e-8)
+    assert_matches_expected(outliers, repo_root / EXP / "detect_outliers.outliers.txt", mode="exact")
 
 
 def test_pca_plot(run_r, repo_root, tmp_path):
@@ -88,3 +100,6 @@ def test_pca_plink(run_sos, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     eigenvec = tmp_path / f"{BASE}.pca.eigenvec"
     assert eigenvec.exists() and sum(1 for _ in open(eigenvec)) == 60   # 59 samples + header
+    # regression: the plink2 --pca eigenvectors (FID/IID + PC1..PC20) reproduce the
+    # committed fixture; PC loadings are floats -> tolerant across plink2 builds.
+    assert_matches_expected(eigenvec, repo_root / EXP / "pca_plink.eigenvec", mode="tolerant", rtol=1e-6, atol=1e-8)

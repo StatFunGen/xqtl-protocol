@@ -8,8 +8,11 @@ pecotmr_integration wrappers, so these cells are thin bash calls.
 from __future__ import annotations
 
 import glob
+from pathlib import Path
 
 import pytest
+
+from helpers.expected import assert_matches_expected
 
 NB = "code/SoS/mnm_analysis/mnm_postprocessing.ipynb"
 FMR = "protocol_example.ENSG00000283047.fine_mapping.rds"
@@ -61,11 +64,11 @@ def test_plot_wrappers(run_sos, repo_root, tmp_path, wf, pattern):
     assert hits, (wf, p.stdout)
 
 
-@pytest.mark.parametrize("wf,pattern", [
-    ("fsusie_extract_effect", "*.estimated_effect.tsv"),
-    ("fsusie_affected_region", "*.affected_region.tsv"),
+@pytest.mark.parametrize("wf,pattern,expected", [
+    ("fsusie_extract_effect", "*.estimated_effect.tsv", "estimated_effect.tsv"),
+    ("fsusie_affected_region", "*.affected_region.tsv", "affected_region.tsv"),
 ])
-def test_fsusie_wrappers(run_sos, repo_root, tmp_path, wf, pattern):
+def test_fsusie_wrappers(run_sos, repo_root, tmp_path, wf, pattern, expected):
     fx = repo_root / "tests" / "fixtures" / "mnm_postprocessing"
     cwd = tmp_path / "out"
     base = dict(cwd=cwd, study="protocol_example",
@@ -74,6 +77,11 @@ def test_fsusie_wrappers(run_sos, repo_root, tmp_path, wf, pattern):
     assert p.returncode == 0, p.stdout + p.stderr
     hits = glob.glob(str(cwd / "**" / pattern), recursive=True)
     assert hits, (wf, p.stdout)
+    # regression: the fSuSiE credible-band / affected-regions view (fine_mapping_export.R,
+    # deterministic reshaping of the committed FMR) reproduces the committed expected TSV.
+    # `source` is the FMR basename only, so no path normalization is needed.
+    assert_matches_expected(hits[0], fx / "expected" / expected,
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_overlap_qtl_gwas(run_sos, repo_root, tmp_path):
@@ -106,5 +114,11 @@ def test_mv_susie_vcf(run_sos, repo_root, tmp_path):
                 rds_path=fx / "protocol_example.mvsusie.fine_mapping.rds")
     p = run_sos(repo_root / NB, "mv_susie", base, cwd=repo_root, timeout=600)
     assert p.returncode == 0, p.stdout + p.stderr
-    vcfs = glob.glob(str(cwd / "**" / "*.vcf.bgz"), recursive=True)
+    vcfs = sorted(glob.glob(str(cwd / "**" / "*.vcf.bgz"), recursive=True))
     assert vcfs, p.stdout
+    # regression: fine_mapping_vcf.R over the committed FMR is deterministic (records +
+    # schema formatted from stored slots), so each per-context VCF reproduces its
+    # committed fixture; only the daily ##fileDate header line is masked.
+    for v in vcfs:
+        assert_matches_expected(v, fx / "expected" / Path(v).name, mode="tolerant",
+                                rtol=1e-6, atol=1e-8, ignore_lines=[r"^##fileDate"])

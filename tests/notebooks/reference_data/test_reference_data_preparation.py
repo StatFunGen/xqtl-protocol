@@ -22,8 +22,11 @@ from pathlib import Path
 
 import gzip
 
+from helpers.expected import assert_matches_expected
+
 NB = "pipeline/reference_data_preparation.ipynb"
 FIX = "tests/fixtures/reference_data_preparation"
+EXPECTED = "tests/fixtures/reference_data_preparation/expected"
 GENEFIX = "tests/fixtures/gene_annotation"
 WORKER = "code/script/reference_data/reference_data_preparation.R"
 COLLAPSE = "code/script/reference_data/collapse_annotation.R"
@@ -80,6 +83,12 @@ def test_gff3_to_gtf(run_sos, repo_root, tmp_path):
     assert '\ttranscript\t' in txt and '\texon\t' in txt
     assert 'gene_id "ENSGTEST1"' in txt and 'transcript_id "ENSTTEST1"' in txt
     assert 'gene_type "protein_coding"' in txt
+    # regression: the full GTF reproduces the committed fixture, masking the two
+    # volatile rtracklayer::export header lines (`##source-version rtracklayer <ver>`
+    # and daily `##date <YYYY-MM-DD>`); all feature rows are byte-deterministic.
+    assert_matches_expected(out / "mini.gtf", repo_root / EXPECTED / "mini.gtf",
+                            mode="tolerant", rtol=1e-6, atol=1e-8,
+                            ignore_lines=[r"^##source-version\b", r"^##date\b"])
 
 
 def test_hg_reference_1(run_r, repo_root, tmp_path):
@@ -89,6 +98,10 @@ def test_hg_reference_1(run_r, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     heads = [l.split()[0][1:] for l in out.read_text().splitlines() if l.startswith(">")]
     assert heads == ["chr22", "chr1_KI270706v1_random"], heads   # dropped _alt / HLA* / _decoy
+    # regression: the filtered FASTA (headers + sequence) reproduces the committed reference;
+    # deterministic contig filter, no embedded paths.
+    assert_matches_expected(out, repo_root / EXPECTED / "hg_reference_1.filtered.fasta",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_faidx(run_r, repo_root, tmp_path):
@@ -99,6 +112,10 @@ def test_faidx(run_r, repo_root, tmp_path):
     fai = fa.with_suffix(".fa.fai")
     assert fai.exists()
     assert fai.read_text().split("\n")[0].split("\t")[0] == "chr22"
+    # regression: the .fai index table (name/length/offset/linebases/linewidth) reproduces the
+    # committed reference; deterministic Rsamtools index, no embedded paths.
+    assert_matches_expected(fai, repo_root / EXPECTED / "faidx.test_contigs.fa.fai",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_hg_gtf_1(run_r, repo_root, tmp_path):
@@ -111,6 +128,10 @@ def test_hg_gtf_1(run_r, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     lines = [l for l in out.read_text().splitlines() if l.strip()]
     assert lines and all(l.split("\t")[0] == "22" for l in lines[:50]), "chr prefix not stripped"
+    # regression: the reformatted (chr-stripped) GTF reproduces the committed reference;
+    # deterministic Ensembl-GTF passthrough (no rtracklayer date header), no embedded paths.
+    assert_matches_expected(out, repo_root / EXPECTED / "hg_gtf_1.reformatted.gtf",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_collapse_annotation(run_r, repo_root, tmp_path):
@@ -174,6 +195,19 @@ def test_psichomics_hg38_annotation(run_sos, repo_root, tmp_path):
     assert rds.exists() and rds.stat().st_size > 50_000, "annotation RDS missing/too small"
 
 
+def _ioe_sorted(path):
+    """SUPPA generateEvents lists a *set* of transcript IDs per event, so the order
+    within its comma-separated columns (alternative_transcripts / total_transcripts)
+    varies run-to-run while the content does not. Sort the tokens within each cell and
+    sort the data rows -> a stable projection of the .ioe content."""
+    lines = Path(path).read_text().splitlines()
+    body = []
+    for ln in lines[1:]:
+        cells = [",".join(sorted(c.split(","))) if "," in c else c for c in ln.split("\t")]
+        body.append("\t".join(cells))
+    return (lines[0], tuple(sorted(body)))
+
+
 def test_suppa_annotation(run_sos, repo_root, tmp_path):
     """SUPPA_annotation workflow: suppa generateEvents (SUPPA_annotation_1) ->
     reference_data_preparation.R --step suppa_annot / psichomics (SUPPA_annotation_2).
@@ -185,8 +219,19 @@ def test_suppa_annotation(run_sos, repo_root, tmp_path):
     p = run_sos(repo_root / NB, "SUPPA_annotation",
                 {**_common(repo_root, out), "hg_gtf": gtf}, cwd=repo_root, timeout=900)
     assert p.returncode == 0, p.stdout + p.stderr
-    assert (out / "hg38.chr22_SE_strict.ioe").exists()             # SUPPA_annotation_1 output
-    assert (out / "chr22.SUPPA_annotation.rds").exists()           # SUPPA_annotation_2 output
+    ioe = out / "hg38.chr22_SE_strict.ioe"                          # SUPPA_annotation_1 output
+    rds = out / "chr22.SUPPA_annotation.rds"                        # SUPPA_annotation_2 output
+    assert ioe.exists() and rds.exists()
+    # regression: SUPPA generateEvents is deterministic in content but not in the token
+    # order of its comma-separated transcript columns -> compare a token-sorted projection
+    # against the committed (canonically-sorted) fixture.
+    assert_matches_expected(ioe, repo_root / EXPECTED / "hg38.chr22_SE_strict.ioe",
+                            mode="projection", project=_ioe_sorted)
+    # the psichomics annotation object (a list of 7 per-event-type data.frames) has the
+    # same event SET each run but inherits the .ioe's non-deterministic ROW order, so it's
+    # compared with sort_rows (each data.frame canonically row-sorted); values then match.
+    assert_matches_expected(rds, repo_root / EXPECTED / "chr22.SUPPA_annotation.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8, sort_rows=True)
 
 
 def test_rsem_index(run_sos, repo_root, tmp_path):

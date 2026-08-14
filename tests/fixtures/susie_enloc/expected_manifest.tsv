@@ -1,0 +1,7 @@
+# expected-output regression manifest — susie_enloc
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+coloc.rds	tolerant	1e-6	1e-8	colocPipeline result data.frame (120 rows, PP.H0..H4) from coloc.R on the committed QTL+GWAS FineMappingResult fixtures; deterministic (no RNG, no embedded paths).
+colocboost.rds	tolerant	1e-6	1e-8	colocboost result list (class colocboost, xqtl_coloc over 2 contexts, --seed 1) from colocboost.R on the qtl_mini QtlDataset; reproducible run-to-run under the seed. colocboost.R zeroes the wall-clock computing_time difftime leaves ONLY when --seed is set, so the run is bit-identical; no embedded paths.
+colocboost_manifest.tsv	tolerant	1e-6	1e-8	colocboost_manifest.R per-gene unit TSV (1 gene, ENSG00000283047, gene-body+/-cis-window ld_block; xQTL-only, no --gwas-meta so GWAS columns empty); deterministic, no embedded paths.
+enloc_manifest.enrichment.tsv	tolerant	1e-6	1e-8	enloc_manifest.R --mode enrichment unit TSV (header + 4 units, one per condition); qtl_files/gwas_files embed the --qtl-path/--gwas-path prefix, so compared with normalize_paths=True.
+enloc_manifest.coloc.tsv	tolerant	1e-6	1e-8	enloc_manifest.R --mode coloc unit TSV (header + 4 units, one per condition@region_id); qtl_files/gwas_files embed the --qtl-path/--gwas-path prefix, so compared with normalize_paths=True.

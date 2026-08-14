@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/susie_enloc/expected/enloc_manifest.{mode}.tsv"
+
 
 @pytest.mark.parametrize("mode,sep", [("enrichment", None), ("coloc", "@")])
 def test_enloc_manifest(run_r, repo_root, tmp_path, mode, sep):
@@ -20,3 +24,5 @@ def test_enloc_manifest(run_r, repo_root, tmp_path, mode, sep):
     assert len(rows) == 5           # header + 4 units
     if sep:
         assert all(sep in r[0] for r in rows[1:])
+    assert_matches_expected(out, repo_root / EXPECTED.format(mode=mode),
+                            mode="tolerant", rtol=1e-6, atol=1e-8, normalize_paths=True)

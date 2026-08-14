@@ -19,6 +19,8 @@ import gzip
 import subprocess
 import sys
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/association_scan/TensorQTL/TensorQTL.py"
 RSCRIPT = "code/script/association_scan/TensorQTL/TensorQTL.R"
 NB = "pipeline/TensorQTL.ipynb"
@@ -61,6 +63,18 @@ def test_cis_scan_worker(repo_root, tmp_path):
     header = _header(nominal)
     assert {"molecular_trait_id", "variant_id", "pvalue"}.issubset(header)
     assert "qvalue" not in header                       # q-values are NOT added by the scan
+
+    # regression: the raw cis nominal table (pure regression, deterministic), the
+    # regional/permutation table (permutations seeded at 999 in the worker), and the
+    # tensorqtl-native parquet reproduce the committed expected outputs. No embedded
+    # absolute paths; .gz decompressed before compare; parquet via pyarrow.
+    exp = repo_root / "tests/fixtures/tensorqtl/expected"
+    assert_matches_expected(nominal, exp / "cis_qtl.pairs.tsv.gz",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
+    assert_matches_expected(tmp_path / REGIONAL, exp / "cis_qtl.regional.tsv.gz",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
+    assert_matches_expected(tmp_path / PARQUET, exp / "cis_qtl_pairs.22.parquet",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_nominal_qvalues_r(run_r, repo_root, tmp_path):

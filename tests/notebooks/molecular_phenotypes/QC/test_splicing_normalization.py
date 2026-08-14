@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import gzip
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/molecular_phenotypes/QC/splicing_normalization.R"
 FIX = "tests/fixtures/splicing_normalization"
+EXP = "tests/fixtures/splicing_normalization/expected"
 
 
 def _rows(text, sep="\t"):
@@ -41,7 +44,16 @@ def test_prepare_phenotype(run_r, repo_root, tmp_path):
                      ("leafcutter_perind.counts.gz.qqnorm_chr22", "expected.qqnorm_chr22.gz")]:
         _assert_num_match((tmp_path / out).read_text(),
                           gzip.open(repo_root / FIX / exp, "rt").read(), label_cols=4)
-    assert (tmp_path / "leafcutter_perind.counts.gz_phenotype_file_list.txt").exists()
+    flist = tmp_path / "leafcutter_perind.counts.gz_phenotype_file_list.txt"
+    assert flist.exists()
+    # regression on the two intermediate structural outputs (leafcutter ratio math is
+    # deterministic). The .ave (per-intron min/max/mean) is numeric-compared; the
+    # phenotype_file_list embeds the tmp input path, so its #dir column is
+    # basename-normalized (normalize_paths).
+    assert_matches_expected(tmp_path / "leafcutter_perind.counts.gz.ave",
+                            repo_root / EXP / "expected.prepare_phenotype.ave", mode="tolerant")
+    assert_matches_expected(flist, repo_root / EXP / "expected.prepare_phenotype.phenotype_file_list.txt",
+                            mode="tolerant", normalize_paths=True)
 
 
 def test_qqnorm(run_r, repo_root, tmp_path):

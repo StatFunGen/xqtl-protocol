@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import gzip
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/molecular_phenotypes/QC/bulk_expression_QC.R"
 NB = "pipeline/bulk_expression_QC.ipynb"
 FIX = "tests/fixtures/bulk_expression_normalization"
+EXP = "tests/fixtures/bulk_expression_normalization/expected"
 MSD = "code/script"
 
 
@@ -52,6 +55,10 @@ def test_qc_1_low_expression_filter(run_r, repo_root, tmp_path):
     with gzip.open(out, "rt") as fh:
         dims = [ln for ln in fh if ln.startswith("#") and ln[1:2] == " "][0].split()
     assert int(dims[1]) == n_genes and int(dims[2]) == 60
+    # regression: the low-expression filter is deterministic (rowMeans threshold, no RNG)
+    # -> the decompressed GCT reproduces the committed snapshot byte-for-byte.
+    assert_matches_expected(
+        out, repo_root / EXP / "expected.qc_1.low_expression_filtered.tpm.gct.gz", mode="exact")
 
 
 def test_qc_2_outlier_removal(run_r, repo_root, tmp_path):
@@ -67,6 +74,10 @@ def test_qc_2_outlier_removal(run_r, repo_root, tmp_path):
     n_samples = len(header) - 1
     assert 0 < n_samples <= 60                        # only samples are dropped here
     assert g2 == g1                                   # qc_2 leaves the gene set intact
+    # regression: the outlier-removal step is deterministic (RLE IQR + hclust +
+    # prcomp + robust Mahalanobis, no RNG) -> the GCT reproduces the snapshot.
+    assert_matches_expected(
+        out, repo_root / EXP / "expected.qc_2.outlier_removed.tpm.gct.gz", mode="exact")
 
 
 def test_qc_3_subset_counts(run_r, repo_root, tmp_path):
@@ -88,6 +99,10 @@ def test_qc_3_subset_counts(run_r, repo_root, tmp_path):
     # raw counts subset to exactly the QC'd TPM genes and samples
     assert cnt_genes == tpm_genes
     assert cnt_header == tpm_header
+    # regression: the count subset (filter genes to QC'd TPM, select QC'd samples)
+    # is deterministic -> the GCT reproduces the snapshot byte-for-byte.
+    assert_matches_expected(
+        out, repo_root / EXP / "expected.qc_3.outlier_removed.geneCount.gct.gz", mode="exact")
 
 
 def test_qc_workflow_via_sos(run_sos, repo_root, tmp_path):

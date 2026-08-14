@@ -1,0 +1,6 @@
+# expected-output regression manifest — ctwas
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+ctwas_manifest.tsv	tolerant	1e-6	1e-8	Per-LD-block cTWAS grid from ctwas_manifest.R (21 rows: header + 20 chr22 blocks); gwas_sumstats_rds is an absolute tmp path -> normalize_paths (basename compare).
+ctwas_assemble.rds	tolerant	1e-6	1e-8	Assembled cTWAS inputs list (z_snp/z_gene/weights/region_info/snp_map/LD_map/...) from ctwas_assemble.R over the blessed 20-block fixture; LD/snp maps embed absolute reference paths -> normalize_paths.
+ctwas_est.rds	tolerant	1e-6	1e-8	estCtwasParam result list (assemble inputs + region_data/boundary_genes/param) from ctwas_est.R with --fallback-to-prefit --niter 50 (deterministic prefit path); embeds absolute reference paths -> normalize_paths.
+ctwas_finemap.rds	tolerant	1e-6	1e-8	CtwasResult S4 (1 gene-level + 108 SNP-level rows; geneMaxPip=1, geneTopZ=3.168) from ctwas_finemap.R --L 5 --min-nonsnp-pip 0.5; deterministic single-region susie fine-map, no embedded paths.

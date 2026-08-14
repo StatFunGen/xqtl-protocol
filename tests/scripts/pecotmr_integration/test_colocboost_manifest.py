@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/susie_enloc/expected/colocboost_manifest.tsv"
+
 
 def test_colocboost_manifest(run_r, repo_root, tmp_path):
     fx = repo_root / "tests/fixtures/qtl_mini"
@@ -17,3 +21,4 @@ def test_colocboost_manifest(run_r, repo_root, tmp_path):
     rows = [l.split("\t") for l in out.read_text().splitlines()]
     assert len(rows) >= 2
     assert any("ENSG00000283047" in "\t".join(r) for r in rows[1:])
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)

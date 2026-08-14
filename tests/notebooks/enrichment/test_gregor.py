@@ -14,6 +14,8 @@ from a committed enrichment-results table alone (no GREGOR needed).
 """
 from __future__ import annotations
 
+from helpers.expected import assert_matches_expected
+
 NB = "pipeline/gregor.ipynb"
 FX = "tests/fixtures/gregor"
 
@@ -59,6 +61,11 @@ def test_gregor_enrichment(run_sos, repo_root, tmp_path):
     for r in data:
         assert float(r[oi]) >= 0
         assert 0 <= float(r[pi]) <= 1
+    # regression: the whole parsed table (counts + Fisher odds/CI/p) is deterministic
+    # against the fixed chr22 reference, so it reproduces the committed snapshot within
+    # tol (whitespace-delimited; Bed_File is a basename, no abs paths).
+    assert_matches_expected(res, repo_root / FX / "expected" / "enrichment_results.txt",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_gregor_fisher_plot(run_sos, repo_root, tmp_path):

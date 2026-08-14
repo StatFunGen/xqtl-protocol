@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/gwas_rss_manifest/expected/gwas_rss_manifest.tsv"
+
 
 def test_gwas_rss_manifest(run_r, repo_root, tmp_path):
     out = tmp_path / "manifest.tsv"
@@ -13,3 +17,5 @@ def test_gwas_rss_manifest(run_r, repo_root, tmp_path):
     rows = [l.split("\t") for l in out.read_text().splitlines()]
     assert "study_id" in rows[0] and "region_id" in rows[0]
     assert len(rows) >= 2           # header + >=1 study x region row
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant",
+                            rtol=1e-6, atol=1e-8, normalize_paths=True)

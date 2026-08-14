@@ -1,0 +1,5 @@
+# expected-output regression manifest — covariate_hidden_factor
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+residual.bed.gz	tolerant	1e-6	1e-8	covariate_hidden_factor.R compute_residual output: phenotype BED with covariates (.lm.fit) regressed out over the 49 shared samples, 200 genes; deterministic, BED-sorted, no embedded paths.
+Marchenko_PC.gz	tolerant	1e-6	1e-8	covariate_hidden_factor.R Marchenko_PC (--choose-k-method Marchenko) output: known covariates (sex/age/PC1..PC3) stacked above the ExactParam PCA hidden factors chosen by chooseMarchenkoPastur (2 factors) over the residual file; deterministic, no embedded paths.
+# BLOCKED: Marchenko_PC --choose-k-method Buja_Eyuboglu uses jackstraw::permutationPA(B=100) and covariate_hidden_factor.R has NO --seed, so the chosen factor count (and hence the output) varies run-to-run. Not snapshot-comparable until the wrapper exposes a --seed.

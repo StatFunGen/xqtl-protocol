@@ -1,0 +1,10 @@
+# expected-output regression manifest — phenotype_imputation
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+protocol_example.protein.missing.EBMF.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R EBMF (flashier, --num-factor 5); deterministic (flashier self-seeds 666). Decompressed cell-wise numeric compare; header/IDs exact.
+protocol_example.protein.missing.gEBMF.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R gEBMF (flashier grouped, --num-factor 5); deterministic (flashier self-seeds 666).
+protocol_example.protein.missing.knn.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R knn (impute.knn); deterministic (impute.knn self-seeds).
+protocol_example.protein.missing.mean.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R mean (per-row mean fill); closed-form deterministic.
+protocol_example.protein.missing.lod.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R lod (half-min-per-row, no QC so 250 features); closed-form deterministic.
+# BLOCKED (no value fixture): missforest / soft / bed_filter_na draw fresh randomness each run
+# and phenotype_imputation.R exposes no --seed, so imputed cells differ run-to-run
+# (observed cells stay stable). Would need a wrapper --seed to snapshot. Tests still assert "no NA remains".

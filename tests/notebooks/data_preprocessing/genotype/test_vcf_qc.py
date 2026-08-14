@@ -15,9 +15,12 @@ import gzip
 import shutil
 import subprocess
 
+from helpers.expected import assert_matches_expected
+
 NB = "pipeline/VCF_QC.ipynb"
 SH = "code/script/data_preprocessing/genotype/VCF_QC.sh"
 FIX = "tests/fixtures/vcf_qc"
+EXP = f"{FIX}/expected"
 REF = f"{FIX}/reference/chr22.win48.fa.gz"
 SUB = f"{FIX}/genotype.chr22_48M.vcf.gz"          # variants in the reference's real window
 DBSNP = f"{FIX}/genotype.chr22_48M.variants.gz"
@@ -27,6 +30,17 @@ def _vcf_records(path):
     out = subprocess.run(["bcftools", "view", "-H", str(path)],
                          capture_output=True, text=True, check=True)
     return sum(1 for ln in out.stdout.splitlines() if ln)
+
+
+def _variant_table(vcf, out_tsv):
+    """Project a VCF to a stable (CHROM,POS,ID,REF,ALT) TSV -- the substantive
+    variant content -- so a committed expected fixture can value-compare it
+    without the VCF header's embedded input paths / ``##fileDate`` (which vary
+    run-to-run) defeating the comparison. Returns the written path."""
+    q = subprocess.run(["bcftools", "query", "-f", "%CHROM\t%POS\t%ID\t%REF\t%ALT\n", str(vcf)],
+                       capture_output=True, text=True, check=True)
+    out_tsv.write_text(q.stdout)
+    return out_tsv
 
 
 def _run_qc1(run_sh, repo_root, tmp_path):
@@ -76,6 +90,10 @@ def test_rename_chrs(run_sos, repo_root, tmp_path):
     chroms = subprocess.run(["bcftools", "query", "-f", "%CHROM\n", str(out)],
                             capture_output=True, text=True, check=True).stdout.split()
     assert chroms and all(c == "chr22" for c in chroms)
+    # regression: the renamed variant table (chr-prefixed CHROM + POS/ID/REF/ALT)
+    # reproduces the committed projection exactly (deterministic bcftools annotate).
+    proj = _variant_table(out, tmp_path / "rename_chrs.variants.tsv")
+    assert_matches_expected(proj, repo_root / EXP / "rename_chrs.variants.tsv", mode="exact")
 
 
 def test_qc_normalize(run_sh, repo_root, tmp_path):
@@ -86,6 +104,10 @@ def test_qc_normalize(run_sh, repo_root, tmp_path):
     n_in = _vcf_records(repo_root / SUB)
     n_out = _vcf_records(out)
     assert 0 < n_out <= n_in and n_out > n_in - 20
+    # regression: the normalized variant table reproduces the committed projection
+    # exactly (multiallelic split + left-normalization is deterministic).
+    proj = _variant_table(out, tmp_path / "qc_normalize.variants.tsv")
+    assert_matches_expected(proj, repo_root / EXP / "qc_normalize.variants.tsv", mode="exact")
 
 
 def test_qc_2(run_sh, repo_root, tmp_path):
@@ -98,6 +120,10 @@ def test_qc_2(run_sh, repo_root, tmp_path):
                                 "--hwe-filter", "0", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.exists() and _vcf_records(out) >= 0            # valid VCF (GT-only toy data may filter all)
+    # regression: the GT-only variant-QC filters remove every record on this toy
+    # data -> an empty variant table; the committed projection pins that outcome.
+    proj = _variant_table(out, tmp_path / "qc_2.variants.tsv")
+    assert_matches_expected(proj, repo_root / EXP / "qc_2.variants.tsv", mode="exact")
 
 
 def test_qc_3(run_sh, repo_root, tmp_path):
@@ -113,3 +139,10 @@ def test_qc_3(run_sh, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     for f in outs.values():
         assert f.exists()
+    # regression: SnpSift Ts/Tv is empty on this GT-only toy data (no novel/known
+    # transitions/transversions emitted); the committed empties pin that outcome.
+    # (The .sumstats are NOT value-compared: bcftools-stats embeds an htslib version
+    # string + the tmp input path in its header, which the frozen comparator can't
+    # normalize.)
+    assert_matches_expected(outs["novel.tstv"], repo_root / EXP / "qc_3.novel.tstv", mode="exact")
+    assert_matches_expected(outs["known.tstv"], repo_root / EXP / "qc_3.known.tstv", mode="exact")

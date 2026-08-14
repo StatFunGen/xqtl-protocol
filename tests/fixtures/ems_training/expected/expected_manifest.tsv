@@ -1,0 +1,5 @@
+# expected-output regression manifest — ems_training (GEMS / EMS train)
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+features_importance_model5_chr_chr2_NPR_1.csv	tolerant	1e-4	-	Python-reference feature importances; already numeric-compared inline in test_ems.py (_importances, abs<1e-4) against the MWE reference. Kept here for provenance; the inline check is the source of truth.
+model_5_summary_chr_chr2_NPR_1.json	tolerant	1e-6	1e-8	gems_pipeline.R train model_5 summary (AP/AUC + params + 5-fold CV metrics). Deterministic under the worker's set.seed: bit-identical across two R reruns. No paths/timestamps; pretty-printed JSON so the tolerant cell-wise numeric comparator applies. (R-vs-R reproducible; the CV differs only vs the Python sklearn reference, not run-to-run in R.)
+predictions_weighted_model_chr2.tsv	tolerant	1e-6	1e-8	gems_pipeline.R weighted test-set predictions (200 chr-test rows): features + pred_prob/pred_label/actual_label. Deterministic (catboost seeded), bit-identical across reruns, no embedded absolute paths.

@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/twas_manifest/expected/twas_manifest.tsv"
+
 
 def test_twas_manifest(run_r, repo_root, tmp_path):
     fx = repo_root / "tests/fixtures/twas"
@@ -17,3 +21,5 @@ def test_twas_manifest(run_r, repo_root, tmp_path):
                        "gwas_studies", "gwas_files", "gwas_mappings"]
     assert len(rows) == 2
     assert rows[1][0] == "chr22_10000000_19000000" and "ENSG00000130538" in rows[1][4]
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant",
+                            rtol=1e-6, atol=1e-8, normalize_paths=True)

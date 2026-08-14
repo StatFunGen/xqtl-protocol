@@ -1,0 +1,15 @@
+# expected-output regression manifest — phenotype_formatting
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+# phenotype_formatting.R is deterministic (tabix extraction + dplyr, no RNG); notebook-tier (sos run).
+# file/region manifests carry dir/path columns = <cwd>/<shard>, compared with normalize_paths=True (basename).
+protocol_example.chr22.bed.gz	tolerant	1e-6	1e-8	phenotype_by_chrom: chr22 slice of the tabix BED; deterministic.
+protocol_example.phenotype_by_chrom_files.txt	tolerant	1e-6	1e-8	phenotype_by_chrom_2: per-chrom (#id, #dir) manifest; dir column -> normalize_paths=True.
+protocol_example.phenotype_by_chrom_files.region_list.txt	tolerant	1e-6	1e-8	phenotype_by_chrom_2: region-list; trailing path column -> normalize_paths=True.
+regions_phenotype_by_region/protocol_example.region1.bed.gz	tolerant	1e-6	1e-8	phenotype_by_region: region1 slice; deterministic.
+regions_phenotype_by_region/protocol_example.region2.bed.gz	tolerant	1e-6	1e-8	phenotype_by_region: region2 slice; deterministic.
+protocol_example.phenotype_by_region_files.txt	tolerant	1e-6	1e-8	phenotype_by_region_2: per-region (#id, dir) manifest; dir column -> normalize_paths=True.
+protocol_example.tpm.sample_matched.gct.gz	tolerant	1e-6	1e-8	gct_extract_samples: GCT filtered to keep_samples.txt; deterministic, no embedded paths.
+protocol_example.rnaseq.bed.bed.gz.tad_list.txt.2_pheno_per_region.region_list	tolerant	1e-6	1e-8	phenotype_annotate_by_tad: phenotype-per-TAD region list; trailing path column (phenoFile) -> normalize_paths=True.
+protocol_example.chr22.gct	tolerant	1e-6	1e-8	phenotype_by_chrom_gct: chr22 GCT with 3 coord cols blanked (legacy awk); deterministic, no embedded paths.
+# SKIPPED (existence-only, not value-compared): bam_subsetting -> opaque BGZF BAM whose @PG/@SQ header
+# embeds tool version + absolute-path provenance; raw bytes are not a portable regression target.

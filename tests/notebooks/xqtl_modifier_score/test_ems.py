@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import json
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/xqtl_modifier_score/gems_pipeline.R"
 FIX = "tests/fixtures/ems_training"
 REF_AP, REF_AUC = 0.49887491976172904, 0.5061220393416299   # from the MWE summary pickle
@@ -86,10 +88,21 @@ def test_ems_train(run_r, repo_root, tmp_path):
 
     # native model + predictions written
     assert (res / "model_standard_subset_weighted_chr_chr2_NPR_1.cbm").exists()
-    pred = (res / "predictions_parquet_catboost" / "predictions_weighted_model_chr2.tsv").read_text().splitlines()
+    pred_path = res / "predictions_parquet_catboost" / "predictions_weighted_model_chr2.tsv"
+    pred = pred_path.read_text().splitlines()
     assert pred[0].split("\t")[-3:] == [
         "standard_subset_weighted_pred_prob", "standard_subset_weighted_pred_label", "actual_label"]
     assert len(pred) - 1 == 200                                   # chr1 test rows
+
+    # regression: the model_5 summary (AP/AUC + params + 5-fold CV) and the weighted
+    # test-set predictions are deterministic under the worker's set.seed (bit-identical
+    # across R reruns) and match the committed expected fixtures. No embedded paths.
+    exp = fix / "expected"
+    assert_matches_expected(res / "model_5_summary_chr_chr2_NPR_1.json",
+                            exp / "model_5_summary_chr_chr2_NPR_1.json",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
+    assert_matches_expected(pred_path, exp / "predictions_weighted_model_chr2.tsv",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_ems_train_via_sos(run_sos, repo_root, tmp_path):

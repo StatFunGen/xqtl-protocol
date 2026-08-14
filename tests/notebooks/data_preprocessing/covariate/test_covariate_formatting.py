@@ -20,11 +20,14 @@ from __future__ import annotations
 
 import gzip
 
+from helpers.expected import assert_matches_expected
+
 R = "code/script/data_preprocessing/covariate/covariate_formatting.R"
 NB = "pipeline/covariate_formatting.ipynb"
 PCA = "tests/fixtures/pca/protocol_example.unrelated.prune.pca.rds"
 COV = "tests/fixtures/covariate_formatting/covariates.base.tsv"
 MSD = "code/script"
+EXPECTED_MERGED = "tests/fixtures/covariate_formatting/expected/merged.gz"
 
 
 def _read_matrix(path):
@@ -49,6 +52,10 @@ def test_merge_genotype_pc(run_r, repo_root, tmp_path):
     assert len(header) - 1 == 59                       # cov(60) ∩ pca(59) samples
     assert {"sex", "age"}.issubset(set(ids))           # fixed covariates on top
     assert [i for i in ids if i.startswith("PC")] == [f"PC{i}" for i in range(1, 11)]
+    # regression: the merged covariate matrix (deterministic, no RNG/paths) reproduces
+    # the committed fixture cell-for-cell within numeric tolerance.
+    assert_matches_expected(out, repo_root / EXPECTED_MERGED, mode="tolerant",
+                            rtol=1e-6, atol=1e-8)
 
 
 def test_merge_via_sos(run_sos, repo_root, tmp_path):

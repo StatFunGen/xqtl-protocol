@@ -9,7 +9,10 @@ from __future__ import annotations
 import csv
 import gzip
 
+from helpers.expected import assert_matches_expected
+
 FX = "tests/fixtures/qtl_association_postprocessing"
+EXP = "tests/fixtures/qtl_association_postprocessing/expected"
 
 
 def test_qtl_association_postprocessing(run_r, read_rds, repo_root, tmp_path):
@@ -44,6 +47,17 @@ def test_qtl_association_postprocessing(run_r, read_rds, repo_root, tmp_path):
     assert abs(float(row["p_bonferroni_min_original"]) - 0.18795830866889446) < 1e-9
 
     assert (exports / "qap.summary.tsv").exists()
+
+    # Expected-output regression: the enriched QtlSumStats S4, the per-gene FDR
+    # regional export, and the per-method summary are all deterministic (no RNG,
+    # no embedded paths).
+    assert_matches_expected(out, repo_root / EXP / "qap.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
+    assert_matches_expected(reg, repo_root / EXP / "qap.cis_regional.fdr.tsv.gz",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
+    assert_matches_expected(exports / "qap.summary.tsv",
+                            repo_root / EXP / "qap.summary.tsv",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def _wrapper(run_r, repo_root, out, exports, fdr):

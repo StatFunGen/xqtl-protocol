@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/sldsc_enrichment/expected/sldsc_meta_subset.rds"
+
 
 def test_sldsc_meta_subset(run_r, read_rds, repo_root, tmp_path):
     fx = repo_root / "tests/fixtures/sldsc_enrichment"
@@ -22,3 +26,4 @@ def test_sldsc_meta_subset(run_r, read_rds, repo_root, tmp_path):
                "--target-categories", "ANNOT_0", "--output", out], timeout=120)
     assert p.returncode == 0, p.stdout + p.stderr
     assert "enrichment" in read_rds(out)["names"]
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)
