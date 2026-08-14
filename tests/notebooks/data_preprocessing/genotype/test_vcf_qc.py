@@ -139,10 +139,13 @@ def test_qc_3(run_sh, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     for f in outs.values():
         assert f.exists()
-    # regression: SnpSift Ts/Tv is empty on this GT-only toy data (no novel/known
-    # transitions/transversions emitted); the committed empties pin that outcome.
+    # regression: SnpSift tstv output is deterministic (integer transition/transversion,
+    # hom/het, variant-type and allele counts per sample — no floats or RNG), so it is
+    # exact-comparable and cross-platform stable. There are 0 NOVEL variants on this toy
+    # data, so novel.tstv is SnpSift's fixed "No results available (empty input?)" message;
+    # known.tstv is the full per-sample count table. (The earlier committed fixtures were
+    # EMPTY only because they had been generated with a broken SnpSift install — regenerated.)
     # (The .sumstats are NOT value-compared: bcftools-stats embeds an htslib version
-    # string + the tmp input path in its header, which the frozen comparator can't
-    # normalize.)
+    # string + the tmp input path in its header, which the frozen comparator can't normalize.)
     assert_matches_expected(outs["novel.tstv"], repo_root / EXP / "qc_3.novel.tstv", mode="exact")
     assert_matches_expected(outs["known.tstv"], repo_root / EXP / "qc_3.known.tstv", mode="exact")

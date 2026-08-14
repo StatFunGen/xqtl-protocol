@@ -43,6 +43,13 @@ METHODS = {
     "bed_filter_na": (".filtered.imputed.bed.gz",  ["--tol-missing", "0.5"]),
 }
 
+# missForest (random-forest imputation) is NOT cross-platform reproducible: the RF split
+# points hinge on floating-point comparisons that diverge across macOS/Linux BLAS, giving
+# materially different (even sign-flipped) imputed values. So it is checked structure-only
+# (existence + no-NA via _assert_imputed), not value-compared. (Method is a candidate for
+# removal — pending collaborator decision.)
+NON_REPRODUCIBLE = {"missforest"}
+
 
 def _read(path):
     with gzip.open(path, "rt") as fh:
@@ -70,10 +77,11 @@ def test_impute_method(run_r, repo_root, tmp_path, method):
     out = tmp_path / f"{STEM}{suffix}"
     assert out.exists() and (tmp_path / (out.name + ".tbi")).exists()
     assert 0 < _assert_imputed(out) <= 250
-    # regression: every method (seeded) reproduces the committed imputed matrix within
-    # tolerance (decompressed cell-wise numeric compare; header/IDs exact).
-    assert_matches_expected(out, repo_root / EXPECTED / out.name,
-                            mode="tolerant", rtol=1e-6, atol=1e-8)
+    # regression: value-compare the imputed matrix within tolerance (decompressed cell-wise;
+    # header/IDs exact), except for methods that are not cross-platform reproducible.
+    if method not in NON_REPRODUCIBLE:
+        assert_matches_expected(out, repo_root / EXPECTED / out.name,
+                                mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_impute_via_sos(run_sos, repo_root, tmp_path):

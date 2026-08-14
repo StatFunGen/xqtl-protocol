@@ -68,13 +68,15 @@ def test_cis_scan_worker(repo_root, tmp_path):
     # regional/permutation table (permutations seeded at 999 in the worker), and the
     # tensorqtl-native parquet reproduce the committed expected outputs. No embedded
     # absolute paths; .gz decompressed before compare; parquet via pyarrow.
+    # rtol=1e-5: TensorQTL's regression runs through platform BLAS, so p-values/slopes
+    # carry last-digit float drift across macOS/Linux (~1.6e-6 observed) — genuine, benign.
     exp = repo_root / "tests/fixtures/tensorqtl/expected"
     assert_matches_expected(nominal, exp / "cis_qtl.pairs.tsv.gz",
-                            mode="tolerant", rtol=1e-6, atol=1e-8)
+                            mode="tolerant", rtol=1e-5, atol=1e-8)
     assert_matches_expected(tmp_path / REGIONAL, exp / "cis_qtl.regional.tsv.gz",
-                            mode="tolerant", rtol=1e-6, atol=1e-8)
+                            mode="tolerant", rtol=1e-5, atol=1e-8)
     assert_matches_expected(tmp_path / PARQUET, exp / "cis_qtl_pairs.22.parquet",
-                            mode="tolerant", rtol=1e-6, atol=1e-8)
+                            mode="tolerant", rtol=1e-5, atol=1e-8)
 
 
 def test_nominal_qvalues_r(run_r, repo_root, tmp_path):

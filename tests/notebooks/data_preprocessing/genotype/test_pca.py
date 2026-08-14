@@ -1,9 +1,9 @@
 """Notebook tier (integration): PCA.ipynb flashpca step over PCA.R (flashpcaR).
 
-Runs flashPCA end-to-end on the LD-pruned unrelated bed and checks the RDS holds a
-flashpca model + one PC-score row per sample. flashpcaR's numeric PCs aren't pinned
-to a committed reference here (the MWE reference predates this PCA.R output shape), so
-this is a structural integration check that the worker + package run.
+Runs flashPCA end-to-end on the LD-pruned unrelated bed and regression-compares the
+EIGENVALUES + structure — NOT the eigenvectors. On this data flashpcaR's eigenvectors
+are numerically ill-determined (see test_pca_flashpca), so only the eigenvalues are a
+cross-platform-stable invariant worth pinning.
 
 Fixture: tests/fixtures/pca/protocol_example.unrelated.prune.{bed,bim,fam} — the MWE
 59-sample LD-pruned unrelated genotype.
@@ -39,15 +39,31 @@ def test_pca_flashpca(run_r, repo_root, tmp_path):
         "--homogeneous", "True", "--pop-col", "", "--label-col", "", "--pops", "",
         "--k", "20", "--maha-k", "5", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
-    # RDS: a flashpca model + one PC-score row per sample (the bed has 59)
+    # structure: a flashpca model + one PC-score row per sample (the bed has 59), with 20
+    # eigenvalues and the eigenvector matrices present at the expected shapes (loadings
+    # n_variants x 20, vectors n_samples x 20) — so a regression that drops or reshapes
+    # them is still caught even though their VALUES are not compared (see below).
     n = _rscript(
-        f'r <- readRDS("{out}"); '
-        'stopifnot(is.list(r), "flashpca" %in% class(r$pca_model), '
-        'is.data.frame(r$pc_scores)); cat(nrow(r$pc_scores))')
+        f'r <- readRDS("{out}"); pm <- r$pca_model; '
+        'stopifnot(is.list(r), "flashpca" %in% class(pm), is.data.frame(r$pc_scores), '
+        'length(pm$values) == 20L, ncol(as.matrix(pm$loadings)) == 20L, '
+        'ncol(as.matrix(pm$vectors)) == 20L); cat(nrow(r$pc_scores))')
     assert int(n) == 59
-    # regression: the flashpca model + PC scores reproduce the committed fixture
-    # (flashpcaR is deterministic on this bed) within tolerance (deep all.equal).
-    assert_matches_expected(out, repo_root / EXP / "flashpca.pca.rds", mode="tolerant", rtol=1e-6, atol=1e-8)
+
+    # regression: value-compare only the EIGENVALUES (+ pve), NOT the eigenvectors.
+    # flashpcaR's eigenVECTORS (vectors / loadings / projection / PC scores) are
+    # numerically ILL-DETERMINED on this data: the eigenVALUES are near-degenerate (all in
+    # [1.13, 1.58], ~2% gaps), so a tiny cross-platform BLAS rounding difference rotates and
+    # sign-flips them. Verified against CI: macOS vs Linux differ ~30% on the eigenvectors
+    # with full sign flips on PC9/11/14, WHILE the eigenvalues match to < 1e-6. The
+    # eigenvalues/pve are therefore the well-determined, cross-platform-stable invariant.
+    eig = tmp_path / "eigenvalues.tsv"
+    _rscript(
+        f'r <- readRDS("{out}"); pm <- r$pca_model; '
+        f'writeLines(c("component\\tvalue\\tpve", '
+        f'paste(seq_along(pm$values), pm$values, pm$pve, sep="\\t")), "{eig}")')
+    assert_matches_expected(eig, repo_root / EXP / "flashpca.eigenvalues.tsv",
+                            mode="tolerant", rtol=1e-5, atol=1e-8)
 
 
 def test_pca_project_samples(run_r, repo_root, tmp_path):
