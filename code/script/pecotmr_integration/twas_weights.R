@@ -146,7 +146,13 @@ qd_filter_overrides <- function(argv) {
 }
 
 # Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
-if (length(argv$seed) == 1L && !is.na(argv$seed)) set.seed(as.integer(argv$seed))
+# NULL when --seed is unset. The value is ALSO forwarded to the pipeline as
+# seed= (below): set.seed() only touches this process's RNG, so it cannot reach
+# the BiocParallel workers that fit the per-method weights and the CV folds --
+# only the forwarded seed makes a --cv-threads > 1 run reproducible.
+seed_val <- if (length(argv$seed) == 1L && !is.na(argv$seed))
+              as.integer(argv$seed) else NULL
+if (!is.null(seed_val)) set.seed(seed_val)
 
 # Parse --method-args into a nested named list of per-method kwargs.
 parsed_method_args <- if (nzchar(argv$method_args) && argv$method_args != "." &&
@@ -248,6 +254,7 @@ tw_args <- c(list(methods           = methods_arg,
 # the call compatible with a pecotmr that predates the argument).
 if (!is.null(joint_spec))       tw_args$jointSpecification <- joint_spec
 if (!is.null(twas_weights_obj)) tw_args$twasWeights        <- twas_weights_obj
+if (!is.null(seed_val))         tw_args$seed               <- seed_val
 res <- if (has_region) {
   do.call(twasWeightsPipeline,
           c(list(qd), tw_args, list(region = argv$region)))

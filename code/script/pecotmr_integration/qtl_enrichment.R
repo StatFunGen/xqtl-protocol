@@ -4,7 +4,7 @@
 # xQTL-GWAS enrichment worker. Loads an S4 `QtlFineMappingResult` and
 # an S4 `GwasFineMappingResult`, calls
 # `pecotmr::qtlEnrichmentPipeline()`, and saves the resulting
-# per-(gwasStudy, qtlContext) enrichment data.frame. The output feeds
+# per-(gwasStudy, qtlContext) enrichment tibble. The output feeds
 # downstream into `coloc.R` (via colocPipeline's `enrichment` arg) as
 # the prior-adjustment factor for colocalization.
 #
@@ -17,7 +17,9 @@
 #   --lambda               Pass-through (default 1)
 #   --imp-n                Pass-through (default 25)
 #   --ncore                Number of threads (default 1)
-#   --output               Output RDS path (per-pair enrichment data.frame)
+#   --seed                 Integer RNG seed for the multiple-imputation sampler
+#                          (reproducibility); unset = nondeterministic
+#   --output               Output RDS path (per-pair enrichment tibble)
 
 suppressPackageStartupMessages({
   library(argparser)
@@ -46,6 +48,10 @@ parser <- add_argument(parser, "--imp-n",
 parser <- add_argument(parser, "--ncore",
                        help = "Pass-through ncore",
                        type = "integer", default = 1L)
+parser <- add_argument(parser, "--seed",
+                       help = paste("Integer RNG seed for the multiple-imputation sampler",
+                                    "(reproducibility); unset = nondeterministic"),
+                       type = "integer", default = NA)
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
@@ -64,7 +70,15 @@ argv <- parse_args(parser)
 qtlFmr  <- .loadCombine(argv$qtl_fine_mapping)
 gwasFmr <- .loadCombine(argv$gwas_fine_mapping)
 
-res <- qtlEnrichmentPipeline(
+# The impN imputation rounds are drawn in C++ (qtl_enrichment.h), so a
+# main-process set.seed() cannot reach them -- the base seed has to be forwarded,
+# and each round derives its own seed from it so the result is independent of
+# which OpenMP thread runs which round. Unset --seed keeps the historical
+# nondeterministic std::random_device behaviour. Added only when supplied, for
+# compatibility with a pecotmr that predates the argument.
+seed_val <- if (length(argv$seed) == 1L && !is.na(argv$seed))
+              as.integer(argv$seed) else NULL
+enr_args <- list(
   gwasFineMappingResult = gwasFmr,
   qtlFineMappingResult  = qtlFmr,
   numGwas               = if (is.na(argv$num_gwas)) NULL else argv$num_gwas,
@@ -72,6 +86,8 @@ res <- qtlEnrichmentPipeline(
   lambda                = argv$lambda,
   impN                  = argv$imp_n,
   numThreads            = argv$ncore)
+if (!is.null(seed_val)) enr_args$seed <- seed_val
+res <- do.call(qtlEnrichmentPipeline, enr_args)
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(res, argv$output)

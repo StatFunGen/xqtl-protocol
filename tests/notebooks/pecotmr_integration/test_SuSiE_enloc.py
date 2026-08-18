@@ -32,7 +32,7 @@ def test_enrichment_and_coloc(run_sos, read_rds, repo_root, tmp_path):
     for cond in ("MiGA_GTS_eQTL", "MiGA_SVZ_eQTL", "MiGA_THA_eQTL", "Knight_eQTL_brain"):
         assert (cwd / f"protocol_example.{cond}.enrichment.rds").exists(), p.stdout
     info = read_rds(cwd / "protocol_example.MiGA_GTS_eQTL.enrichment.rds")
-    assert info["class"] == "data.frame"
+    assert info["class"] == "tbl_df"
     assert "enrichment" in info["names"], info
 
     # (2) coloc: get_overlapped_analysis_regions builds a 4-unit manifest
