@@ -19,6 +19,8 @@ import gzip
 import subprocess
 import sys
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/association_scan/TensorQTL/TensorQTL.py"
 RSCRIPT = "code/script/association_scan/TensorQTL/TensorQTL.R"
 NB = "pipeline/TensorQTL.ipynb"
@@ -62,13 +64,22 @@ def test_cis_scan_worker(repo_root, tmp_path):
     assert {"molecular_trait_id", "variant_id", "pvalue"}.issubset(header)
     assert "qvalue" not in header                       # q-values are NOT added by the scan
 
-    # NON-REPRODUCIBLE cross-platform — value-compare DISABLED pending a collaborator
-    # decision on how to handle it. TensorQTL's cis regression runs through platform BLAS,
-    # so the nominal p-value/slope table drifts across macOS vs Linux beyond a useful
-    # tolerance (~1.35e-5 seen on CI, past rtol=1e-5), and the regional/parquet outputs
-    # share that regression. So this asserts only existence + schema (above), NOT the values.
-    # See memory: cross-platform-numeric-divergence. Committed fixtures kept for when we
-    # settle on a comparison (looser tolerance / projection / drop).
+    # regression: the raw cis nominal table, the regional table, and the tensorqtl-native
+    # parquet reproduce the committed expected outputs. rtol=1e-4 (raised from 1e-5):
+    # TensorQTL's cis regression runs through platform BLAS, so p-values/slopes drift
+    # ~1.35e-5 across macOS vs Linux — 1e-4 gives ~7x margin over the observed drift while
+    # still catching any real regression (>0.01% relative). Unlike the structural carve-outs
+    # (missForest sign flips, sctk_qc count flips, flashpca eigenvector rotations), this
+    # drift is bounded last-bit rounding, so tolerance is the right tool. If a future CI run
+    # exceeds it, raise atol for near-zero cells or revert to structure-only.
+    # See memory: cross-platform-numeric-divergence.
+    exp = repo_root / "tests/fixtures/tensorqtl/expected"
+    assert_matches_expected(nominal, exp / "cis_qtl.pairs.tsv.gz",
+                            mode="tolerant", rtol=1e-4, atol=1e-8)
+    assert_matches_expected(tmp_path / REGIONAL, exp / "cis_qtl.regional.tsv.gz",
+                            mode="tolerant", rtol=1e-4, atol=1e-8)
+    assert_matches_expected(tmp_path / PARQUET, exp / "cis_qtl_pairs.22.parquet",
+                            mode="tolerant", rtol=1e-4, atol=1e-8)
 
 
 def test_nominal_qvalues_r(run_r, repo_root, tmp_path):
