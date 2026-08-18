@@ -28,7 +28,7 @@ def _contrast(run_r, repo_root, tmp_path):
 def test_mash_posterior_contrast(run_r, read_rds, repo_root, tmp_path):
     out = _contrast(run_r, repo_root, tmp_path)
     probe = read_rds(out)
-    assert probe["class"] == "data.frame"
+    assert probe["class"] == "tbl_df"
     names = probe["names"]
     # deviation + pairwise contrasts across mean / se / p
     assert any(n.startswith("mean_contrast_") for n in names)

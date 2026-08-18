@@ -243,7 +243,14 @@ median_abs_corr <- if (length(argv$median_abs_corr) != 1L || is.na(argv$median_a
                      NULL else argv$median_abs_corr
 
 # Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
-if (length(argv$seed) == 1L && !is.na(argv$seed)) set.seed(as.integer(argv$seed))
+# NULL when --seed is unset. In QTL mode the value is ALSO forwarded to the
+# pipeline as seed= (below): set.seed() only touches this process's RNG, so it
+# cannot reach the BiocParallel workers that fit the cross-validation folds --
+# only the forwarded seed makes a --cv-threads > 1 run reproducible. The
+# GwasSumStats method takes no seed= argument, so GWAS mode relies on set.seed().
+seed_val <- if (length(argv$seed) == 1L && !is.na(argv$seed))
+              as.integer(argv$seed) else NULL
+if (!is.null(seed_val)) set.seed(seed_val)
 
 has_qtl  <- nzchar(argv$qtl_dataset)
 has_gwas <- nzchar(argv$gwas_sumstats)
@@ -366,6 +373,7 @@ if (has_gwas) {
     qtl_args$usePCA <- TRUE
     qtl_args$nPCs   <- argv$n_pcs
   }
+  if (!is.null(seed_val)) qtl_args$seed <- seed_val
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
   run_fm <- function() if (has_region) {

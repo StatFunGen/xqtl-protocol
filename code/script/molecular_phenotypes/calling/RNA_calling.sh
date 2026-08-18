@@ -661,7 +661,11 @@ _picard_qc_star_align_2() {
     local metrics_prefix ri_file
     local -a java_args=()
     metrics_prefix="${PICARD_METRICS%.*}"
-    ri_file="${INPUT_BAM}.RI"
+    # Derived intermediate (ribosomal interval list), consumed only by
+    # CollectRnaSeqMetrics below. It MUST live beside the picard OUTPUTS, not beside
+    # $INPUT_BAM -- writing next to the input mutates a read-only input tree (and, in
+    # the test suite, dirtied the committed BAM fixture directory on every run).
+    ri_file="${metrics_prefix}.RI"
     # portable mapfile: macOS ships bash 3.2 (no mapfile). picard_java_args emits
     # 0 or 1 lines (-Xmx...), so read them into the array with a while loop.
     while IFS= read -r _ja_line; do java_args+=("$_ja_line"); done < <(picard_java_args)
