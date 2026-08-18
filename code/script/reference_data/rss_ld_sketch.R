@@ -246,19 +246,53 @@ do_merge_chrom <- function(argv) {
                           POS = pvar$POS, REF = pvar$REF, ALT = pvar$ALT,
                           event, check.names = FALSE, stringsAsFactors = FALSE)
   event_map <- event_map[event_map$event_type %in% c("INS", "DEL"), , drop = FALSE]
-  duplicated_event <- duplicated(event_map$event_id) |
-                      duplicated(event_map$event_id, fromLast = TRUE)
-  if (any(duplicated_event)) {
-    write.table(event_map[duplicated_event, ],
-                paste0(final_prefix, ".event_id.collisions.tsv"),
-                sep = "\t", quote = FALSE, row.names = FALSE)
-    stop("Canonical event-ID collision detected; see .event_id.collisions.tsv")
+
+  # MIRROR-ONLY: keep only indels whose exact ref/alt swap exists at the same
+  # position (the sign-flip cases). Non-mirror indels stay standard.
+  nk <- paste(event_map$CHROM, event_map$POS, event_map$REF, event_map$ALT, sep = ":")
+  sk <- paste(event_map$CHROM, event_map$POS, event_map$ALT, event_map$REF, sep = ":")
+  event_map <- event_map[sk %in% nk, , drop = FALSE]
+
+  # Only when there ARE mirror pairs do we emit a mapping and relabel IDs.
+  # Panels with no ambiguous indels (e.g. R4) stay fully standard.
+  if (nrow(event_map) > 0) {
+    duplicated_event <- duplicated(event_map$event_id) |
+                        duplicated(event_map$event_id, fromLast = TRUE)
+    if (any(duplicated_event)) {
+      write.table(event_map[duplicated_event, ],
+                  paste0(final_prefix, ".event_id.collisions.tsv"),
+                  sep = "\t", quote = FALSE, row.names = FALSE)
+      stop("Canonical event-ID collision detected; see .event_id.collisions.tsv")
+    }
+    event_tmp <- paste0(final_prefix, ".event_id.tsv.tmp")
+    write.table(event_map, event_tmp, sep = "\t", quote = FALSE,
+                row.names = FALSE, col.names = TRUE)
+    if (!file.rename(event_tmp, paste0(final_prefix, ".event_id.tsv")))
+      stop("Could not atomically install event-ID mapping")
+
+    id2event <- setNames(event_map$event_id, event_map$ID)
+    pv <- read_tab(paste0(final_prefix, ".pvar"))
+    hit <- pv$ID %in% names(id2event)
+    pv$ID[hit] <- id2event[pv$ID[hit]]
+    if (anyDuplicated(pv$ID)) stop("Event-ID substitution produced duplicate IDs in .pvar")
+    pv_tmp <- paste0(final_prefix, ".pvar.tmp")
+    write.table(pv, pv_tmp, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+    if (!file.rename(pv_tmp, paste0(final_prefix, ".pvar")))
+      stop("Could not atomically install event-ID .pvar")
+
+    af <- read_tab(paste0(final_prefix, ".afreq"))
+    hitf <- af$ID %in% names(id2event)
+    af$ID[hitf] <- id2event[af$ID[hitf]]
+    if (anyDuplicated(af$ID)) stop("Event-ID substitution produced duplicate IDs in .afreq")
+    af_tmp <- paste0(final_prefix, ".afreq.tmp")
+    write.table(af, af_tmp, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+    if (!file.rename(af_tmp, paste0(final_prefix, ".afreq")))
+      stop("Could not atomically install event-ID .afreq")
+
+    message("EVENT_ID_SUBSTITUTION mirror_variants=", nrow(event_map))
+  } else {
+    message("EVENT_ID_SUBSTITUTION mirror_variants=0 (no ambiguous indels; panel left standard)")
   }
-  event_tmp <- paste0(final_prefix, ".event_id.tsv.tmp")
-  write.table(event_map, event_tmp, sep = "\t", quote = FALSE,
-              row.names = FALSE, col.names = TRUE)
-  if (!file.rename(event_tmp, paste0(final_prefix, ".event_id.tsv")))
-    stop("Could not atomically install event-ID mapping")
 
   # Summarize block-level filtering before removing intermediates.
   meta_files <- list.files(chrom_dir, pattern = "[.]meta$", recursive = TRUE,
