@@ -14,10 +14,12 @@ from __future__ import annotations
 import csv
 import subprocess
 
+from helpers.expected import assert_matches_expected
 from helpers.r_runner import rscript_bin
 
 FX = "tests/fixtures/intact"
 SCRIPT = "code/script/pecotmr_integration/intact.R"
+EXPECTED = "tests/fixtures/intact/expected/intact.rds"
 
 
 def _rows(rds):
@@ -56,3 +58,5 @@ def test_intact(run_r, read_rds, repo_root, tmp_path):
     assert {r["fdr_sig"] for r in rows} == {"TRUE", "FALSE"}, rows
     assert {r["gene"] for r in rows if r["fdr_sig"] == "TRUE"} == \
         {"ENSG00000128272", "ENSG00000100060"}, rows
+
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)

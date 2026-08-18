@@ -1,0 +1,7 @@
+# expected-output regression manifest — pca
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+flashpca.pca.rds	tolerant	1e-6	1e-8	PCA.R flashpca output (flashpca model + pc_scores) over the 59-sample LD-pruned unrelated bed; flashpcaR is deterministic on this input (equals the committed .pca.rds within tolerance). Iterative SVD floats -> tolerant for x86/ARM CI.
+project_samples.rds	tolerant	1e-6	1e-8	PCA.R project_samples output (samples projected onto the committed flashpca model); deterministic.
+detect_outliers.maha.rds	tolerant	1e-6	1e-8	PCA.R detect_outliers Mahalanobis distances on the committed flashpca model (prob 0.975, pval 0.05, k 20); deterministic.
+detect_outliers.outliers.txt	exact	-	-	PCA.R detect_outliers identified-outlier sample list (2 samples: SAMPLE_040, SAMPLE_051); deterministic.
+pca_plink.eigenvec	tolerant	1e-6	1e-8	PCA.ipynb pca_plink eigenvectors (plink2 --pca; FID/IID + PC1..PC20, 59 samples); PC loadings are floats -> tolerant across plink2 builds.

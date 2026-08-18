@@ -1,0 +1,9 @@
+# expected-output regression manifest — covariate_hidden_factor
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+residual.bed.gz	tolerant	1e-6	1e-8	covariate_hidden_factor.R compute_residual output: phenotype BED with covariates (.lm.fit) regressed out over the 49 shared samples, 200 genes; deterministic, BED-sorted, no embedded paths.
+Marchenko_PC.gz	tolerant	1e-6	1e-8	covariate_hidden_factor.R Marchenko_PC (--choose-k-method Marchenko) output: known covariates (sex/age/PC1..PC3) stacked above the ExactParam PCA hidden factors chosen by chooseMarchenkoPastur (2 factors) over the residual file; deterministic, no embedded paths.
+Buja_Eyuboglu_PC.gz	tolerant	1e-6	1e-8	covariate_hidden_factor.R Marchenko_PC (--choose-k-method Buja_Eyuboglu) output: known covariates stacked above the PCA hidden factors chosen by jackstraw::permutationPA(B=100); reproducible under the wrapper's --seed (test uses --seed 1).
+PEER.factors.tsv	tolerant	1e-6	1e-8	covariate_hidden_factor_peer.py sidecar: mofapy2 factor matrix (5 factors x 49 samples) from the residual BED, --num-factor 5 --iteration 100 --seed 1; byte-identical run-to-run under the seed and independent of --num-threads.
+PEER.weights.tsv	tolerant	1e-6	1e-8	covariate_hidden_factor_peer.py sidecar: mofapy2 feature weights (200 genes x 5 factors), same fit as PEER.factors.tsv.
+PEER.variance.tsv	tolerant	1e-6	1e-8	covariate_hidden_factor_peer.py sidecar: percent variance explained per factor plus the model Total, same fit as PEER.factors.tsv.
+PEER.gz	tolerant	1e-6	1e-8	covariate_hidden_factor.R PEER_extract deliverable: known covariates stacked above the mofapy2 Factor* rows over the shared samples. The sibling .PEER.diag.pdf (binary, embeds a creation date) is existence-checked only, and the .PEER_MODEL.hd5 is an HDF5 intermediate, not snapshotted.

@@ -13,12 +13,25 @@ from __future__ import annotations
 import os
 import subprocess
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/data_preprocessing/genotype/genotype_formatting.R"
 SH = "code/script/data_preprocessing/genotype/genotype_formatting.sh"
+EXP = "tests/fixtures/genotype_formatting/expected"
 BED = "tests/fixtures/ld_prune_reference/genotype/protocol_example.ld_genotype.chr22"
 VCF = "tests/fixtures/vcf_qc/protocol_example.genotype.chr22.vcf.gz"
-CHR21 = "tests/fixtures/grm/geno/chr21"
-CHR22 = "tests/fixtures/grm/geno/chr22"
+CHR21 = "tests/fixtures/genotype_formatting/geno/chr21"
+CHR22 = "tests/fixtures/genotype_formatting/geno/chr22"
+
+
+def _variant_table(vcf, out_tsv):
+    """Project a VCF to a (CHROM,POS,ID,REF,ALT) TSV so a committed fixture can
+    value-compare the variant content without the VCF header's ``##fileDate`` /
+    embedded input paths defeating the comparison. Returns the written path."""
+    q = subprocess.run(["bcftools", "query", "-f", "%CHROM\t%POS\t%ID\t%REF\t%ALT\n", str(vcf)],
+                       capture_output=True, text=True, check=True)
+    out_tsv.write_text(q.stdout)
+    return out_tsv
 
 
 def _lines(path):
@@ -77,6 +90,10 @@ def test_ld_by_region(run_r, repo_root, tmp_path):
         'cat(nrow(r$ld), r$variant_ids[1])')
     n, first_id = probe.split()
     assert int(n) > 0 and first_id.startswith("chr22:")
+    # regression: the LD matrix + variant-ID vector reproduce the committed fixture
+    # (plink --r square0 is deterministic) within tolerance.
+    assert_matches_expected(out, repo_root / EXP / "ld_by_region.float16.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 # ── the .sh format-conversion / merge steps ──────────────────────────────────
@@ -87,6 +104,11 @@ def test_gf_plink_to_vcf(run_sh, repo_root, tmp_path):
                                 "--output", out, "--mem", "4G", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
     assert _vcf_records(out) == _lines(repo_root / f"{BED}.bim")     # every variant kept
+    # regression: the emitted variant table reproduces the committed projection
+    # exactly (deterministic plink2 --export vcf). Body-only avoids the VCF header
+    # ##fileDate / plink command line.
+    proj = _variant_table(out, tmp_path / "plink_to_vcf.variants.tsv")
+    assert_matches_expected(proj, repo_root / EXP / "plink_to_vcf.variants.tsv", mode="exact")
 
 
 def test_gf_vcf_to_plink(run_sh, repo_root, tmp_path):
@@ -95,6 +117,9 @@ def test_gf_vcf_to_plink(run_sh, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     beds = list(tmp_path.glob("*.bed"))
     assert len(beds) == 1 and beds[0].with_suffix(".fam").exists()
+    # regression: the converted variants (.bim) reproduce the committed fixture
+    # (deterministic plink2 VCF import).
+    assert_matches_expected(beds[0].with_suffix(".bim"), repo_root / EXP / "vcf_to_plink.bim", mode="exact")
 
 
 def test_gf_genotype_by_region(run_sh, repo_root, tmp_path):
@@ -105,6 +130,8 @@ def test_gf_genotype_by_region(run_sh, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     n_sub, n_all = _lines(tmp_path / "region.bim"), _lines(repo_root / f"{BED}.bim")
     assert 0 < n_sub < n_all                                        # region subset
+    # regression: the exact region-subset variants (.bim); deterministic plink2 range extract.
+    assert_matches_expected(tmp_path / "region.bim", repo_root / EXP / "genotype_by_region.bim", mode="exact")
 
 
 def test_gf_genotype_by_chrom(run_sh, repo_root, tmp_path):
@@ -114,6 +141,8 @@ def test_gf_genotype_by_chrom(run_sh, repo_root, tmp_path):
                                 "--output", out, "--chrom", "22", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.exists() and out.with_suffix(".bim").exists()
+    # regression: the per-chromosome variants (.bim); deterministic plink2 --chr extract.
+    assert_matches_expected(out.with_suffix(".bim"), repo_root / EXP / "genotype_by_chrom.bim", mode="exact")
 
 
 def test_gf_merge_plink(run_sh, repo_root, tmp_path):

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
 FX = "tests/fixtures/mash/mashr_input.rds"
+EXPECTED_DIR = "tests/fixtures/mash/expected"
 
 
 @pytest.mark.parametrize("method", ["identity", "simple", "corshrink", "simple_specific"])
@@ -18,3 +21,5 @@ def test_mash_vhat(method, run_r, read_rds, repo_root, tmp_path):
     # conditions x conditions correlation matrix (8 conditions in the fixture)
     assert probe["class"] == "matrix"
     assert probe["nrow"] == 8
+    assert_matches_expected(out, repo_root / f"{EXPECTED_DIR}/vhat.{method}.EE.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)

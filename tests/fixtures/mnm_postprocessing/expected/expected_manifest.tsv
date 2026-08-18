@@ -1,0 +1,17 @@
+# expected-output regression manifest — mnm_postprocessing (notebook tier)
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+estimated_effect.tsv	tolerant	1e-6	1e-8	fsusie_extract_effect cell -> fine_mapping_export.R --view credible_band on the committed fSuSiE FMR (protocol_example.fsusie.fine_mapping.rds). fsusieCredibleBand wavelet effect curve + band; deterministic (no RNG, reproducible run-to-run), `source` is the FMR basename only, no embedded absolute paths. NOT covered by the script-tier fine_mapping_export test (which exercises pip/topLoci/marginals/cs views).
+affected_region.tsv	tolerant	1e-6	1e-8	fsusie_affected_region cell -> fine_mapping_export.R --view affected_regions on the committed fSuSiE FMR. fsusieAffectedRegions GRanges (band excludes 0, with direction); deterministic, `source` basename only, no embedded absolute paths.
+# SKIPPED (already value-compared at script tier via the same wrapper+fixture in tests/scripts/pecotmr_integration/):
+#   cis_results_export cis_results_db.rds / meta  -> fine_mapping_cis_db_export.R  (test_fine_mapping_cis_db_export.py)
+#   export_top_loci top_loci.bed.gz               -> fine_mapping_top_loci_bed.R   (test_fine_mapping_top_loci_bed.py)
+#   overlap_qtl_gwas overlapped.gwas.tsv          -> fine_mapping_overlap.R        (test_fine_mapping_overlap.py)
+# mv_susie .vcf.bgz (script tier: tests/scripts/pecotmr_integration/test_fine_mapping_vcf.py):
+fm.context1.vcf.bgz	tolerant	1e-6	1e-8	fine_mapping_vcf.R writeSumstatsVcf --split-by-context (context1) over the mvSuSiE FMR; 200 records. Value-compared with ignore_lines masking the daily '##fileDate=YYYYMMDD' line; FORMAT floats are stored FMR slots (ES/PIP/LBF) so byte-deterministic across arch. No embedded paths.
+fm.context2.vcf.bgz	tolerant	1e-6	1e-8	fine_mapping_vcf.R writeSumstatsVcf --split-by-context (context2) over the mvSuSiE FMR; 200 records. Same masking/rationale as context1.
+# mv_susie .vcf.bgz (NOTEBOOK tier: test_mnm_postprocessing.py::test_mv_susie_vcf) — same fine_mapping_vcf.R
+# over the same FMR, but the notebook derives a richer VCF sample name (study|context|region|method), so these
+# are distinct fixtures from the script-tier fm.context{1,2} above (identical records, different #CHROM sample col):
+protocol_example.mvsusie.fine_mapping.context1.vcf.bgz	tolerant	1e-6	1e-8	mv_susie_2 cell -> fine_mapping_vcf.R per-context VCF (context1); ignore_lines masks the daily ##fileDate. Deterministic given the committed FMR.
+protocol_example.mvsusie.fine_mapping.context2.vcf.bgz	tolerant	1e-6	1e-8	mv_susie_2 cell -> fine_mapping_vcf.R per-context VCF (context2); same masking/rationale as context1.
+# SKIPPED (plots): susie_pip_landscape_plot / susie_upsetR_plot (pdf).

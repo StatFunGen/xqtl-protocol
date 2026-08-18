@@ -1,0 +1,17 @@
+# expected-output regression manifest — gene_annotation
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+# gene_annotation.R is deterministic (rtracklayer/GenomicRanges/dplyr, no RNG); notebook-tier (sos run).
+# region_list outputs carry a trailing `path` column = <cwd>/<output_bed>, compared with normalize_paths=True (basename).
+protocol_example.rnaseq.bed.bed.gz	tolerant	1e-6	1e-8	annotate_coord gene: coordinate-annotated rnaseq BED; deterministic.
+protocol_example.rnaseq.bed.gene_list.tsv	tolerant	1e-6	1e-8	annotate_coord gene: per-gene coordinate template TSV; deterministic, no embedded paths.
+protocol_example.rnaseq.bed.region_list.txt	tolerant	1e-6	1e-8	annotate_coord gene: region-list; trailing path column -> normalize_paths=True.
+protocol_example.protein.no_coord.bed.gz	tolerant	1e-6	1e-8	annotate_coord protein: coordinate-annotated protein BED (gene_id|uniprot split); deterministic.
+protocol_example.protein.no_coord.gene_list.tsv	tolerant	1e-6	1e-8	annotate_coord protein: gene-list TSV; deterministic, no embedded paths.
+protocol_example.protein.no_coord.region_list.txt	tolerant	1e-6	1e-8	annotate_coord protein: region-list; trailing path column -> normalize_paths=True.
+protocol_example.atac.bed.gz	tolerant	1e-6	1e-8	annotate_coord atac: coordinate-indexed ATAC BED; deterministic.
+protocol_example.atac.region_list.txt	tolerant	1e-6	1e-8	annotate_coord atac: region-list; trailing path column -> normalize_paths=True.
+protocol_example.leafcutter.intron_count.tsv.leafcutter.clusters_to_genes.txt	tolerant	1e-6	1e-8	map_leafcutter_cluster_to_gene (site): cluster->gene map; deterministic, no embedded paths.
+protocol_example.leafcutter.phenotype.bed.formated.bed.gz	tolerant	1e-6	1e-8	annotate_leafcutter_isoforms: TSS-annotated leafcutter isoform BED; deterministic.
+protocol_example.leafcutter.phenotype.bed.phenotype_group.txt	tolerant	1e-6	1e-8	annotate_leafcutter_isoforms: isoform->gene phenotype-group; deterministic, no embedded paths.
+protocol_example.psichomics.phenotype.formated.bed.gz	tolerant	1e-6	1e-8	annotate_psichomics_isoforms: TSS-annotated psichomics event BED; deterministic.
+protocol_example.psichomics.phenotype.phenotype_group.txt	tolerant	1e-6	1e-8	annotate_psichomics_isoforms: event->type phenotype-group (col_names=FALSE); deterministic, no embedded paths.

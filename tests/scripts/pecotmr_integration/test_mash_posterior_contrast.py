@@ -8,8 +8,11 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
 FX = "tests/fixtures/mash_posterior"
 CELLS = "ALL,Ast,End,Exc,Inh,Mic,OPC,Oli"   # the MWE mashr_input conditions
+EXPECTED = "tests/fixtures/mash/expected/posterior_contrast.rds"
 
 
 def _contrast(run_r, repo_root, tmp_path):
@@ -32,6 +35,8 @@ def test_mash_posterior_contrast(run_r, read_rds, repo_root, tmp_path):
     assert any(n.startswith("se_contrast_") for n in names)
     assert any(n.startswith("p_contrast_") for n in names)
     assert any("deviation" in n for n in names) and any("_vs_" in n for n in names)
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant",
+                            rtol=1e-6, atol=1e-8)
 
 
 def test_mash_posterior_contrast_summary_and_plot(run_r, repo_root, tmp_path):

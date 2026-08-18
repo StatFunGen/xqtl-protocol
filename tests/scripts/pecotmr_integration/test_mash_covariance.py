@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
 FX = "tests/fixtures/mash/mashr_input.rds"
+EXPECTED_DIR = "tests/fixtures/mash/expected"
 
 
 def _run(run_r, repo_root, out, component, extra=()):
@@ -20,6 +23,8 @@ def test_mash_covariance_runs(component, run_r, read_rds, repo_root, tmp_path):
     p = _run(run_r, repo_root, out, component, extra)
     assert p.returncode == 0, p.stdout + p.stderr
     assert read_rds(out)["class"] == "list"   # a list of covariance matrices
+    assert_matches_expected(out, repo_root / f"{EXPECTED_DIR}/cov.{component}.EE.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_mash_covariance_canonical_components(run_r, read_rds, repo_root, tmp_path):

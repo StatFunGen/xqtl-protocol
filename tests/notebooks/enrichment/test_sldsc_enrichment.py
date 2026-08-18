@@ -19,8 +19,11 @@ from __future__ import annotations
 
 import gzip
 
+from helpers.expected import assert_matches_expected
+
 MK = "code/script/enrichment/make_annotation.R"
 FX = "tests/fixtures/sldsc_enrichment"
+EXP = "tests/fixtures/sldsc_enrichment/expected"
 
 
 def test_make_annotation_annot(run_r, repo_root, tmp_path):
@@ -74,6 +77,11 @@ def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):
     info = read_rds(pp)
     assert info["class"] == "list"
     assert {"per_trait", "meta", "params"}.issubset(set(info["names"])), info
+    # regression: postprocess is deterministic and carries no embedded paths; the
+    # notebook output is byte-identical to the script-tier fixture (same worker/params),
+    # so it reuses that committed expected RDS.
+    assert_matches_expected(pp, repo_root / EXP / "sldsc_postprocess.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
     # (2) meta_subset: re-meta a trait subset off the postprocess RDS (no rerun).
     p = run_sos(
@@ -93,6 +101,12 @@ def test_postprocess_and_meta_subset(run_sos, read_rds, repo_root, tmp_path):
     minfo = read_rds(meta)
     assert minfo["class"] == "list"
     assert "enrichment" in minfo["names"], minfo
+    # regression: this notebook meta_subset re-metas ANNOT_0 after postprocess renamed
+    # that category (--target-categories-label), so it matches nothing -> an all-NA
+    # nTraits=0 list. Deterministic; DISTINCT from the script-tier sldsc_meta_subset.rds
+    # (which had no label rename), hence its own committed notebook-tier fixture.
+    assert_matches_expected(meta, repo_root / EXP / "sldsc_meta_subset.notebook.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_munge_sumstats_polyfun(run_sos, repo_root, tmp_path):

@@ -1,0 +1,17 @@
+# expected-output regression manifest — pca (PCA.R / flashpcaR)
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+#
+# CROSS-PLATFORM NOTE: flashPCA's eigenVECTORS are NOT cross-platform reproducible on this
+# data and are deliberately NOT value-compared. The 20 eigenvalues are near-degenerate
+# (all in [1.13, 1.58], ~2% consecutive gaps), so the eigenvectors are numerically
+# ill-determined — a tiny macOS-vs-Linux OpenBLAS rounding difference rotates and
+# sign-flips them (verified on CI: ~30% mean-rel-diff on vectors/loadings/projection with
+# full sign flips on PC9/11/14, WHILE the eigenvalues matched to < 1e-6). So test_pca_flashpca
+# pins the eigenVALUES (the well-determined invariant) + asserts eigenvector SHAPES only.
+flashpca.eigenvalues.tsv	tolerant	1e-5	1e-8	flashpca step: 20 eigenvalues + pve (values only, not vectors — see note above). rtol=1e-5 absorbs cross-arch float drift.
+# The steps below consume a FIXED committed pca model/result as input (they do not recompute
+# the eigendecomposition), so they are deterministic and cross-platform stable:
+project_samples.rds	tolerant	1e-6	1e-8	project_samples: projects the bed onto the committed flashpca model.
+detect_outliers.maha.rds	tolerant	1e-6	1e-8	detect_outliers: Mahalanobis distances over the committed pca-result input.
+detect_outliers.outliers.txt	exact	-	-	detect_outliers: outlier sample list.
+pca_plink.eigenvec	tolerant	1e-6	1e-8	plink2 --pca eigenvectors (plink2, deterministic).

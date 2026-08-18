@@ -1,0 +1,7 @@
+# expected-output regression manifest — genotype_formatting
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+ld_by_region.float16.rds	tolerant	1e-6	1e-8	genotype_formatting.R ld_by_region_plink_1 output (LD matrix + variant_ids) over chr22:16.05-16.15M of the 60-sample bed; plink --r square0 is deterministic. 75 variants. Correlation floats -> tolerant.
+plink_to_vcf.variants.tsv	exact	-	-	genotype_formatting.sh plink_to_vcf_1 variant table (CHROM/POS/ID/REF/ALT projection); deterministic plink2 --export vcf, 18489 variants. Body-only avoids VCF header ##fileDate.
+vcf_to_plink.bim	exact	-	-	genotype_formatting.sh vcf_to_plink converted variants (.bim) from the chr22 VCF; deterministic, 18489 variants.
+genotype_by_region.bim	exact	-	-	genotype_formatting.sh genotype_by_region_1 region subset (.bim) for chr22:16-17M; deterministic, 540 variants.
+genotype_by_chrom.bim	exact	-	-	genotype_formatting.sh genotype_by_chrom chr22 subset (.bim); deterministic, 18489 variants.

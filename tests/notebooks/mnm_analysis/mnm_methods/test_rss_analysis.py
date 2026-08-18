@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
 STUB = "AD_Bellenguez_2022.chr22_49355984_50799822"
 
 
@@ -33,3 +35,13 @@ def test_gwas_finemapping(run_sos, read_rds, repo_root, tmp_path):
     info = read_rds(fm)
     assert info["class"] == "GwasFineMappingResult"
     assert info["MethodNames"] == ["susie"]
+
+    # regression: the GwasSumStats (deterministic QC/reshaping) and the susie_rss
+    # GwasFineMappingResult (deterministic for this fixed input+init) reproduce the
+    # committed expected RDS. normalize_paths basename-normalizes the embedded
+    # ld_reference LD-panel path (resolved from --ld-meta at the checkout location).
+    exp = repo_root / "tests/fixtures/rss_analysis/expected"
+    assert_matches_expected(ss, exp / "gwas_sumstats.rds", mode="tolerant",
+                            rtol=1e-6, atol=1e-8, normalize_paths=True)
+    assert_matches_expected(fm, exp / "gwas_finemap.rds", mode="tolerant",
+                            rtol=1e-6, atol=1e-8, normalize_paths=True)

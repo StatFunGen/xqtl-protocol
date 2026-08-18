@@ -1,13 +1,18 @@
 """Notebook tier: colocboost.ipynb (xQTL colocalization) on qtl_mini.
 
 xQTL-only coloc (--no-separate-gwas --xqtl-coloc) needs no GWAS, so it reuses the
-committed qtl_mini fixtures.
+committed qtl_mini fixtures. The colocboost_3 cell forwards the notebook's ``seed``
+parameter (default 999, the repo-wide seed convention) to ``colocboost.R --seed``, so
+the stochastic colocboost fit is reproducible run-to-run. The output list still carries
+a live ``computing_time`` (wall-clock difftimes), but the regression comparator strips
+time-like leaves (tests/helpers/rds_compare.R), so a tolerant RDS compare is stable.
 """
 from __future__ import annotations
 
-import pytest
+from helpers.expected import assert_matches_expected
 
 GENE = "ENSG00000283047"
+EXPECTED = "tests/fixtures/colocboost/expected"
 
 
 def test_colocboost_xqtl(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
@@ -34,3 +39,7 @@ def test_colocboost_xqtl(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     info = read_rds(out)
     assert info["class"] == "list"
     assert "xqtl_coloc" in info["names"]
+    # regression: the seeded (seed=999) colocboost result reproduces the committed
+    # snapshot within tolerance; the comparator strips computing_time difftimes.
+    assert_matches_expected(out, repo_root / EXPECTED / f"test_coloc.{GENE}.colocboost.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)

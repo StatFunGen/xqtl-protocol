@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/mash/expected/mash_sumstats.region1.rds"
+
 
 def test_mash_sumstats_construct(run_r, read_rds, repo_root, tmp_path):
     fx = repo_root / "tests/fixtures/mash"
@@ -18,3 +22,4 @@ def test_mash_sumstats_construct(run_r, read_rds, repo_root, tmp_path):
     probe = read_rds(out)
     assert probe["class"] == "QtlSumStats"
     assert set(probe["Contexts"]) == {"Mic_De_Jager_eQTL", "Ast_De_Jager_eQTL"}
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)

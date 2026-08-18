@@ -19,6 +19,8 @@ import gzip
 import subprocess
 import sys
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/association_scan/TensorQTL/TensorQTL.py"
 RSCRIPT = "code/script/association_scan/TensorQTL/TensorQTL.R"
 NB = "pipeline/TensorQTL.ipynb"
@@ -61,6 +63,25 @@ def test_cis_scan_worker(repo_root, tmp_path):
     header = _header(nominal)
     assert {"molecular_trait_id", "variant_id", "pvalue"}.issubset(header)
     assert "qvalue" not in header                       # q-values are NOT added by the scan
+
+    # regression: the raw cis nominal table, the regional table, and the tensorqtl-native
+    # parquet reproduce the committed expected outputs. Tolerance rtol=1e-4, atol=1e-5:
+    # TensorQTL's cis regression runs through platform BLAS, so values drift by a tiny
+    # ABSOLUTE amount (~1e-6-1e-5) across macOS vs Linux. rtol=1e-4 guards the large-magnitude
+    # columns (pvalue/af), but the effect-size columns (bhat/sebhat, O(1e-3)) turn that same
+    # tiny absolute wobble into a large RELATIVE diff (a 2.3e-6 abs drift in bhat=0.0068 is
+    # 3.3e-4 relative, past rtol=1e-4 on CI), so atol=1e-5 supplies the absolute floor those
+    # columns need while staying tight enough to catch a real bhat regression. Unlike the
+    # structural carve-outs (missForest sign flips, sctk_qc count flips, flashpca eigenvector
+    # rotations), this drift is bounded last-bit rounding, so tolerance is the right tool.
+    # See memory: cross-platform-numeric-divergence.
+    exp = repo_root / "tests/fixtures/tensorqtl/expected"
+    assert_matches_expected(nominal, exp / "cis_qtl.pairs.tsv.gz",
+                            mode="tolerant", rtol=1e-4, atol=1e-5)
+    assert_matches_expected(tmp_path / REGIONAL, exp / "cis_qtl.regional.tsv.gz",
+                            mode="tolerant", rtol=1e-4, atol=1e-5)
+    assert_matches_expected(tmp_path / PARQUET, exp / "cis_qtl_pairs.22.parquet",
+                            mode="tolerant", rtol=1e-4, atol=1e-5)
 
 
 def test_nominal_qvalues_r(run_r, repo_root, tmp_path):

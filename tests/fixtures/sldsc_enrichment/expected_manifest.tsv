@@ -1,0 +1,8 @@
+# expected-output regression manifest — sldsc_enrichment
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+sldsc_postprocess.rds	tolerant	1e-6	1e-8	sldsc_postprocess.R list (per_trait/meta/params) from polyfun per-trait sLDSC outputs; deterministic, no embedded paths.
+sldsc_meta_subset.rds	tolerant	1e-6	1e-8	sldsc_meta_subset.R re-meta list (enrichment) over a trait subset; deterministic.
+# --- notebook tier (sos run sldsc_enrichment.ipynb) ---
+# make_annotation .annot.gz/.l2.M/.l2.ldscore.parquet are already byte/numeric-compared inline in test_sldsc_enrichment.py -> not registered here.
+sldsc_postprocess.rds	tolerant	1e-6	1e-8	[postprocess] step output protocol_example.sldsc_postprocess.rds; byte-identical to the script-tier fixture above (same sldsc_postprocess.R, same params, maf_cutoff=0) so the notebook test reuses it; deterministic, no embedded paths.
+sldsc_meta_subset.notebook.rds	tolerant	1e-6	1e-8	[meta_subset] step output protocol_example.category1.meta.rds; DISTINCT from sldsc_meta_subset.rds because [postprocess] ran with --target-categories-label (ANNOT_0 renamed), so meta_subset --target-categories ANNOT_0 matches nothing -> all-NA/nTraits=0 list; deterministic, no embedded paths.

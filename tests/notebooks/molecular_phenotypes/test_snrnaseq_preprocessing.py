@@ -43,12 +43,22 @@ def sctk_out(run_r, repo_root, tmp_path_factory):
     return out_dir
 
 
-def test_sctk_qc(sctk_out):
+def test_sctk_qc(sctk_out, repo_root):
     rds = sctk_out / "SCTK_results" / "filtered_seuratobj.rds"
     qc_table = sctk_out / "QC_table" / "SCTK_QC_table.csv"
     qc_summary = sctk_out / "SCTK_results" / "QC_summary.csv"
     assert rds.exists() and qc_table.exists() and qc_summary.exists()
 
+    # STRUCTURE-ONLY (deliberately NOT value-compared): the SCTK-QC output is not
+    # cross-platform reproducible. runCellQC applies float thresholds (scds / decontX
+    # scores) so a borderline cell can flip pass/fail across macOS vs Linux OpenBLAS,
+    # yielding a different NUMBER of cells kept. The QC_summary Cells/Genes columns are
+    # integers (verified), so such a mismatch is a genuinely different filtered cell set —
+    # not float rounding — and it cascades to the whole object (meta.data rows, PCA/UMAP
+    # embeddings). So we assert the QC-ladder STRUCTURE (fixed steps, monotone counts,
+    # per-sample table shape) below, and do NOT snapshot the filtered_seuratobj.rds or the
+    # QC summary/table values. (seed=12345 still makes it byte-reproducible run-to-run on a
+    # single platform; it is the cross-platform divergence that makes value-compare unsafe.)
     steps = _read_csv_col0(qc_summary)
     # the fixed QC ladder, in order
     assert steps[0] == "Step"

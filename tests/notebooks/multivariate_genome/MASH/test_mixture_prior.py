@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/mash/expected/mixture_prior.EE.prior.rds"
+
 
 def test_mixture_prior_ed_bovy(run_sos, read_rds, repo_root, tmp_path):
     data = repo_root / "tests/fixtures/mash/mashr_input.rds"
@@ -22,3 +26,6 @@ def test_mixture_prior_ed_bovy(run_sos, read_rds, repo_root, tmp_path):
     assert out.exists(), p.stdout
     names = set(read_rds(out)["names"])
     assert "U" in names and "w" in names
+    # regression: the prior (cov_ed + canonical/pca, deterministic) reproduces the
+    # committed expected list within tolerance (deep all.equal via rds_compare.R).
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)

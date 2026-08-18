@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/ctwas/expected/ctwas_manifest.tsv"
+
 
 def test_ctwas_manifest(run_r, repo_root, tmp_path):
     out = tmp_path / "ctwas_manifest.tsv"
@@ -14,3 +18,7 @@ def test_ctwas_manifest(run_r, repo_root, tmp_path):
     assert rows[0] == ["region_id", "region", "gwas_sumstats_rds"]
     assert len(rows) == 21          # header + 20 chr22 blocks
     assert all(r[1].startswith("chr22:") for r in rows[1:])
+
+    # gwas_sumstats_rds is an absolute tmp path -> normalize_paths (basename compare).
+    assert_matches_expected(out, repo_root / EXPECTED,
+                            mode="tolerant", rtol=1e-6, atol=1e-8, normalize_paths=True)

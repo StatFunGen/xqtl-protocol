@@ -1,0 +1,11 @@
+# expected-output regression manifest — gwas_qc
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+king.kin0	tolerant	1e-6	1e-8	GWAS_QC.sh king kinship table (plink2 --make-king-table) over the 60-sample chr22 bed; FID/IID pairs + NSNP/HETHET/IBS0/KINSHIP. Estimate columns are floats -> tolerant so plink2 build differences across CI don't false-fail.
+king_2.related_id	exact	-	-	GWAS_QC.R king_2 related FID/IID pairs to remove (greedy relatedness prune over the committed protocol_example.kin0, kinship 0.0625); deterministic.
+king_split.unrelated.fam	exact	-	-	GWAS_QC.sh king_split unrelated .fam (60 - first-5 related removed = 55); deterministic plink2 --remove.
+king_split.related.fam	exact	-	-	GWAS_QC.sh king_split related .fam (the 5 related kept); deterministic plink2 --keep.
+qc_no_prune.bim	exact	-	-	GWAS_QC.sh qc_no_prune surviving-variant .bim after MAC 5 / MAF 0.01 / geno 0.1 filters; deterministic.
+qc_ld_prune.prune.in	exact	-	-	GWAS_QC.sh qc LD-pruned variant list (plink2 --indep-pairwise 50 10 0.1, MAC 5); deterministic.
+qc_ld_prune.bim	exact	-	-	GWAS_QC.sh qc pruned .bim (the --extract'd prune.in variants); deterministic.
+sample_overlap.txt	exact	-	-	GWAS_QC.sh genotype_phenotype_sample_overlap table (genotype_id<TAB>sample_id, 60 samples); deterministic set intersection.
+king_workflow.unrelated.fam	exact	-	-	GWAS_QC.ipynb king SoS chain (king_1 kinship -> king_2 GWAS_QC.R relatedness -> king_3 split) unrelated .fam (52 samples; 8 related removed by actual KING detection); reproducible.

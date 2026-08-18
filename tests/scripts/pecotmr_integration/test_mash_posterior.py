@@ -3,6 +3,10 @@
 the MWE input."""
 from __future__ import annotations
 
+from helpers.expected import assert_matches_expected
+
+EXPECTED = "tests/fixtures/mash/expected/posterior.EE.rds"
+
 
 def _posterior(mash_model_chain, run_r, repo_root, out, extra=()):
     return run_r(repo_root / "code/script/pecotmr_integration/mash_posterior.R",
@@ -20,6 +24,8 @@ def test_mash_posterior(mash_model_chain, run_r, read_rds, repo_root, tmp_path):
     probe = read_rds(out)
     assert probe["class"] == "list"
     assert {"PosteriorMean", "PosteriorCov"}.issubset(probe["names"])
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant",
+                            rtol=1e-6, atol=1e-8)
 
 
 def test_mash_posterior_exclude_condition(mash_model_chain, run_r, read_rds,

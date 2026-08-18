@@ -1,0 +1,20 @@
+# expected-output regression manifest — mash
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+mixture_prior.EE.prior.rds	tolerant	1e-6	1e-8	MASH prior list (U/w/loglik) from mixture_prior.ipynb ed_bovy (cov_ed + canonical/pca, EE, vhat=simple); deterministic, notebook-tier (sos run). x86/ARM CI may need a looser rtol.
+vhat.identity.EE.rds	tolerant	1e-6	1e-8	mash_vhat.R residual-correlation matrix (identity, EE); deterministic.
+vhat.simple.EE.rds	tolerant	1e-6	1e-8	mash_vhat.R residual-correlation matrix (simple, EE); deterministic.
+vhat.corshrink.EE.rds	tolerant	1e-6	1e-8	mash_vhat.R residual-correlation matrix (corshrink, EE); deterministic.
+vhat.simple_specific.EE.rds	tolerant	1e-6	1e-8	mash_vhat.R residual-correlation matrix (simple_specific, EE); deterministic.
+prior.cov_ed.EE.rds	tolerant	1e-6	1e-8	mash_prior.R prior list (cov_ed engine, canonical+pca, npc 3, EE); deterministic.
+cov.canonical.EE.rds	tolerant	1e-6	1e-8	mash_covariance.R canonical component list (13 matrices, EE); deterministic.
+cov.pca.EE.rds	tolerant	1e-6	1e-8	mash_covariance.R pca component list (4 matrices, npc 3, EE); deterministic.
+cov.flash.EE.rds	tolerant	1e-6	1e-8	mash_covariance.R flash component list (EE); flashier self-seeds — empty on the weak toy input (0 factors), a valid regression baseline.
+cov.flash_nonneg.EE.rds	tolerant	1e-6	1e-8	mash_covariance.R flash_nonneg component list (EE); empty on weak toy input (0 factors).
+mash_sumstats.region1.rds	tolerant	1e-6	1e-8	QtlSumStats S4 (40 variants x 2 conditions) from mash_sumstats_construct.R over tensorqtl z-score TSVs; deterministic, no embedded paths.
+mash_model.EE.rds	tolerant	1e-6	1e-8	mash_fit.R fitted model list(mash_model, vhat_file, prior_file) over the mash_model_chain (vhat=simple -> prior cov_ed canonical+pca npc 3 -> fit), EE; reproducible. vhat_file/prior_file embed the chain tmp paths -> compared with normalize_paths=True (rds_compare normPaths basenames the character leaves).
+posterior.EE.rds	tolerant	1e-6	1e-8	mash_posterior.R posterior list (PosteriorMean/SD/lfdr/NegativeProb/lfsr/PosteriorCov; 17 variants x 8 conditions) on strong.b/strong.s given the fitted model, EE; deterministic, no embedded paths.
+posterior_contrast.rds	tolerant	1e-6	1e-8	mash_posterior_contrast.R contrast data.frame (17 variants x 108 contrasts) from the mash_posterior fixture, cells ALL..Oli; deterministic. row.names are stable variant ids (mash::mash::varN), no embedded paths.
+mash_input.qss.rds	tolerant	1e-6	1e-8	mash_preprocessing.R mash_input from a QtlSumStats region (mash_sumstats_construct.R over Mic/Ast tensorqtl TSVs), n-random/n-null 15, sig-p-cutoff 0.1, seed 1; seeded-reproducible, no embedded paths.
+mash_input.fmr.rds	tolerant	1e-6	1e-8	mash_preprocessing.R mash_input from the committed QtlFineMappingResult, n-random/n-null 15, coverage 0.95, sig-p-cutoff 0.1, seed 1; seeded-reproducible.
+mash_input.indep.rds	tolerant	1e-6	1e-8	mash_preprocessing.R mash_input from the QtlFineMappingResult with --independent-variant-list, n-random/n-null 10, coverage 0.95, sig-p-cutoff 0.1, seed 1; seeded-reproducible.
+feature_score_merge.nsig.csv	tolerant	1e-6	1e-8	mash_feature_score_merge.R merged CSV of an nsig feature-score chunk (GENE1 x 8 conditions, nsig_ratio) over the mash_posterior contrast; deterministic. write.csv(row.names=FALSE) so no path-derived row names. (The per-method mash_feature_score.R RDS is NOT value-compared: its row.names embed the tmp contrast path, unfixable by the frozen rds_compare canon.)

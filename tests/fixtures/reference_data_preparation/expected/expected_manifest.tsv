@@ -1,0 +1,11 @@
+# expected-output regression manifest — reference_data_preparation
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+# Value-compared here are the numbered-step worker outputs whose existing tests were
+# structure-only (ercc_gtf / collapse / RefFlat / tad are byte-compared inline in the
+# test and intentionally have no manifest row).
+hg_reference_1.filtered.fasta	tolerant	1e-6	1e-8	reference_data_preparation.R --step hg_reference_1: ALT/HLA/decoy contig filter over test_contigs.fa (keeps chr22 + chr1_KI270706v1_random); deterministic, no embedded paths.
+hg_gtf_1.reformatted.gtf	tolerant	1e-6	1e-8	reference_data_preparation.R --step hg_gtf_1: chr-prefix-stripped reformat of the 109-gene chr22 exon GTF against a no-chr FASTA (5765 lines); deterministic (Ensembl-GTF passthrough, no rtracklayer date header), no embedded paths.
+faidx.test_contigs.fa.fai	tolerant	1e-6	1e-8	reference_data_preparation.R --step faidx: Rsamtools .fai index (name/length/offset/linebases/linewidth) of test_contigs.fa (5 contigs); deterministic, no embedded paths.
+mini.gtf	tolerant	1e-6	1e-8	gff3_to_gtf.R rtracklayer GTF export of mini.gff3 (4 feature rows); value-compared with ignore_lines masking the two volatile header lines ('##source-version rtracklayer <ver>' + daily '##date YYYY-MM-DD'). Feature rows are byte-deterministic; no embedded paths.
+hg38.chr22_SE_strict.ioe	projection	-	-	SUPPA_annotation_1: `suppa generateEvents` SE .ioe (104 events) over the chr22 GTF. Content is deterministic but the transcript-ID tokens in the comma-separated columns come out in a non-deterministic (set) order; test compares a token-sorted + row-sorted projection (_ioe_sorted). Committed fixture is the canonical (sorted) form.
+chr22.SUPPA_annotation.rds	tolerant	1e-6	1e-8	SUPPA_annotation_2: reference_data_preparation.R --step suppa_annot -> psichomics prepareAnnotationFromEvents (list of 7 per-event-type data.frames). Same event SET each run but inherits the .ioe's non-deterministic ROW order, so compared with sort_rows=True (each data.frame canonically row-sorted); values then match at 1e-6.

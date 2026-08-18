@@ -13,11 +13,17 @@ variant on this fixture).
 """
 from __future__ import annotations
 
+from helpers.expected import assert_matches_expected
+
 MASH_KEYS = {
     "strong.b", "strong.s", "strong.z",
     "random.b", "random.s", "random.z",
     "null.b", "null.s", "null.z", "XtX",
 }
+
+EXPECTED_QSS = "tests/fixtures/mash/expected/mash_input.qss.rds"
+EXPECTED_FMR = "tests/fixtures/mash/expected/mash_input.fmr.rds"
+EXPECTED_INDEP = "tests/fixtures/mash/expected/mash_input.indep.rds"
 
 
 def test_mash_preprocessing_qtlsumstats_path(run_r, read_rds, repo_root, tmp_path):
@@ -39,6 +45,8 @@ def test_mash_preprocessing_qtlsumstats_path(run_r, read_rds, repo_root, tmp_pat
     probe = read_rds(out)
     assert probe["class"] == "list"
     assert MASH_KEYS.issubset(set(probe["names"]))
+    assert_matches_expected(out, repo_root / EXPECTED_QSS, mode="tolerant",
+                            rtol=1e-6, atol=1e-8)
 
 
 def test_mash_preprocessing_finemapping_path(run_r, read_rds, repo_root, tmp_path):
@@ -52,6 +60,8 @@ def test_mash_preprocessing_finemapping_path(run_r, read_rds, repo_root, tmp_pat
     probe = read_rds(out)
     assert probe["class"] == "list"
     assert MASH_KEYS.issubset(set(probe["names"]))
+    assert_matches_expected(out, repo_root / EXPECTED_FMR, mode="tolerant",
+                            rtol=1e-6, atol=1e-8)
 
 
 def test_mash_preprocessing_independent_variant_list(run_r, read_rds, repo_root, tmp_path):
@@ -70,3 +80,5 @@ def test_mash_preprocessing_independent_variant_list(run_r, read_rds, repo_root,
     probe = read_rds(out)
     assert probe["class"] == "list"
     assert MASH_KEYS.issubset(set(probe["names"]))
+    assert_matches_expected(out, repo_root / EXPECTED_INDEP, mode="tolerant",
+                            rtol=1e-6, atol=1e-8)

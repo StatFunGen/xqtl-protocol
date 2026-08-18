@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
 GENE = "ENSG00000283047"
 
 
@@ -26,6 +28,7 @@ def test_susie_twas(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
             "customized-association-windows": qtl_mini / "association_windows.bed",
             "region-name": GENE,
             "transpose-covariates": True,          # QTLtools-format covariates
+            "seed": 1,                              # reproducible susie/twas fit
             "modular_script_dir": repo_root / "code/script",
         },
         cwd=repo_root, timeout=900)
@@ -37,3 +40,15 @@ def test_susie_twas(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     assert tw.exists(), f"missing twas-weights output:\n{p.stdout}"
     assert read_rds(fmr)["class"] == "QtlFineMappingResult"
     assert read_rds(tw)["class"] == "TwasWeights"
+
+    # regression: the FMR (univariate SuSiE fine-mapping) is cross-platform-stable and is
+    # value-compared. The TwasWeights (univariate_twas_weights.rds) is NON-REPRODUCIBLE
+    # cross-platform — value-compare DISABLED pending a collaborator decision. Its
+    # cross-validation susie/mr.mash refits diverge across macOS vs Linux BLAS (3-19% on CI;
+    # the underlying fits are under-converged at default). We confirmed the convergence IS
+    # tunable from the wrapper (twas_method_args -> --method-args), but whether tightening
+    # closes the gap is unresolved. Checked for existence + class (above) only.
+    # See memory: cross-platform-numeric-divergence.
+    exp = repo_root / "tests/fixtures/mnm_regression/expected"
+    assert_matches_expected(fmr, exp / "univariate_bvsr.rds", mode="tolerant",
+                            rtol=1e-6, atol=1e-8)

@@ -1,0 +1,18 @@
+# expected-output regression manifest — phenotype_imputation
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+protocol_example.protein.missing.EBMF.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R EBMF (flashier, --num-factor 5); deterministic (flashier self-seeds 666). Decompressed cell-wise numeric compare; header/IDs exact.
+protocol_example.protein.missing.knn.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R knn (impute.knn); deterministic (impute.knn self-seeds).
+protocol_example.protein.missing.mean.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R mean (per-row mean fill); closed-form deterministic.
+protocol_example.protein.missing.lod.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R lod (half-min-per-row, no QC so 250 features); closed-form deterministic.
+protocol_example.protein.missing.soft.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R soft (softImpute); randomized, reproducible under the wrapper's --seed (test uses --seed 1).
+protocol_example.protein.missing.filtered.imputed.bed.gz	tolerant	1e-6	1e-8	phenotype_imputation.R bed_filter_na (--tol-missing 0.5, softImpute path); reproducible under --seed 1.
+# STRUCTURE-ONLY (fixture committed but NOT value-compared — the test asserts existence + no-NA only).
+# All three ARE reproducible run-to-run on one machine under --seed 1; what blocks the compare is
+# expected CROSS-PLATFORM divergence, pending the collaborator decision tracked for missForest:
+#   protocol_example.protein.missing.missForest.imputed.bed.gz   RF split points hinge on float
+#     comparisons that diverge across macOS/Linux BLAS -> materially different imputed values.
+#   protocol_example.protein.missing.missXGBoost.imputed.bed.gz  same tree-method risk; xgb_imp.R
+#     pins nthread=1 and seeds xgboost + the %dorng% loop, so --seed 1 is byte-identical locally.
+#   protocol_example.protein.missing.gEBMF.imputed.bed.gz        flashier fit is under-converged at
+#     its default tolerance, so macOS vs Linux stop at different points in a flat region (~0.6% on CI).
+# Flip any of these to a tolerant row once that decision lands; the fixtures are already in place.

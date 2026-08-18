@@ -72,6 +72,9 @@ parser <- add_argument(parser, "--separate-gwas",
 parser <- add_argument(parser, "--pip-cutoff-to-skip",
                        help = "Per-context single-effect skip cutoff: a scalar or comma-separated context=value pairs (negative = data-driven default; empty = 0)",
                        type = "character", default = "")
+parser <- add_argument(parser, "--seed",
+                       help = "Integer RNG seed set before the colocboost fit (reproducibility); unset = no seeding",
+                       type = "integer", default = NA)
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
@@ -113,6 +116,10 @@ if ((joint_gwas || separate_gwas) && !has_gwas)
 qd  <- readRDS(argv$qtl_dataset)
 gss <- if (has_gwas) readRDS(gwas_path) else NULL
 
+# Seed up front for reproducible colocboost fits (colocboost is stochastic:
+# gradient boosting). Mirrors fine_mapping.R.
+if (length(argv$seed) == 1L && !is.na(argv$seed)) set.seed(as.integer(argv$seed))
+
 res <- if (has_region) {
   colocboostPipeline(
     qd,
@@ -136,6 +143,11 @@ res <- if (has_region) {
     pipCutoffToSkip = pip_cutoff_to_skip)
 }
 
+# Production output is emitted verbatim — including colocboostPipeline()'s wall-clock
+# res$computing_time (difftime leaves). Those timings vary run-to-run but are metadata,
+# not analysis output, so the regression comparator strips time-like leaves rather than
+# the worker mutating its output (see tests/helpers/rds_compare.R). --seed above governs
+# the actual stochastic fit, which is what makes the result reproducible.
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(res, argv$output)
 

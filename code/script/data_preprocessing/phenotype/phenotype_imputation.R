@@ -7,8 +7,8 @@
 #   EBMF        — Empirical Bayes Matrix Factorization (flashier)
 #   gEBMF       — Grouped EBMF
 #   missforest  — Random forest imputation
+#   missxgboost — XGBoost-based iterative imputation (worker: xgb_imp.R)
 #   knn         — K-nearest neighbors imputation
-#   missxgboost — XGBoost-based imputation
 #   soft        — Soft Impute
 #   mean        — Mean imputation
 #   lod         — Limit of Detection imputation
@@ -57,7 +57,9 @@ opt_list <- list(
   make_option("--impute-method",     type = "character", default = "soft",
               help = "Imputation method for bed_filter_na: soft or mean"),
   make_option("--tol-missing",       type = "double",    default = 0.05,
-              help = "Missing rate tolerance for bed_filter_na")
+              help = "Missing rate tolerance for bed_filter_na"),
+  make_option("--seed",              type = "integer",   default = NA,
+              help = "Integer RNG seed set before imputation (governs missForest/missXGBoost/softImpute, incl. the soft path of bed_filter_na; deterministic methods unaffected); unset = no seeding")
 )
 
 opt <- parse_args(OptionParser(option_list = opt_list))
@@ -65,6 +67,12 @@ if (is.null(opt$step))     stop("--step is required")
 if (is.null(opt$phenoFile)) stop("--phenoFile is required")
 
 dir.create(opt$cwd, showWarnings = FALSE, recursive = TRUE)
+
+# Seed the global RNG for the stochastic methods (missForest random forests;
+# softImpute's random SVD init — also the soft path of bed_filter_na). Deterministic
+# methods (mean/lod/knn; EBMF/gEBMF self-seed) are unaffected. Only one --step runs
+# per process, so this top-level seed is equivalent to seeding inside that step.
+if (!is.null(opt$seed) && !is.na(opt$seed)) set.seed(as.integer(opt$seed))
 
 # ---------------------------------------------------------------------------
 # Shared utilities
@@ -86,19 +94,6 @@ write_bed <- function(dat, path) {
   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
   plain_path <- sub("\\.gz$", "", path)
   cat(sprintf("Writing: %s\n", path))
-  write.table(dat, plain_path, sep = "\t", quote = FALSE, row.names = FALSE)
-  Rsamtools::bgzip(plain_path, dest = path, overwrite = TRUE)
-  unlink(plain_path)
-  Rsamtools::indexTabix(path, format = "bed")
-}
-
-write_bgzip_bed <- function(dat, path) {
-  if (!grepl("\\.gz$", path)) {
-    stop("BGZF BED output path must end with .gz: ", path)
-  }
-  dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
-  plain_path <- sub("\\.gz$", "", path)
-  cat(sprintf("Writing: %s\n", plain_path))
   write.table(dat, plain_path, sep = "\t", quote = FALSE, row.names = FALSE)
   Rsamtools::bgzip(plain_path, dest = path, overwrite = TRUE)
   unlink(plain_path)
@@ -137,12 +132,10 @@ get_aux_outpath <- function(opt, suffix) {
 }
 
 get_script_dir <- function() {
+  # Locate this script's own directory so sibling workers (xgb_imp.R) can be sourced.
   args <- commandArgs(trailingOnly = FALSE)
-  file_arg <- "--file="
-  script_path <- sub(file_arg, "", args[grep(file_arg, args)])
-  if (length(script_path) == 0) {
-    return(getwd())
-  }
+  script_path <- sub("--file=", "", args[grep("--file=", args)])
+  if (length(script_path) == 0) return(getwd())
   dirname(normalizePath(script_path[1]))
 }
 
@@ -199,6 +192,21 @@ run_missforest <- function(opt) {
   write_bed(out, get_outpath(opt, ".missForest.imputed.bed.gz"))
 }
 
+run_missxgboost <- function(opt) {
+  # missForest-style iterative imputation with XGBoost regressors (worker: xgb_imp.R).
+  # Reproducible under --seed: xgb_imp.R pins nthread = 1 and seeds xgboost + the
+  # parallel RNG. QC/IO mirror the other steps (read_bed -> qc_filter -> write_bed).
+  source(file.path(get_script_dir(), "xgb_imp.R"))
+  xgboost_imputation <- load_xgboost_imputation()
+  dat <- read_bed(opt$phenoFile)
+  coord <- dat[, 1:4]; mat <- as.matrix(dat[, -(1:4)])
+  if (isTRUE(opt$`qc-prior-to-impute`))
+    mat <- qc_filter(mat, opt$`qc-missing-rate`, opt$`qc-zero-rate`)
+  imputed <- xgboost_imputation(mat, seed = opt$seed)
+  out <- cbind(coord[rownames(mat), ], as.data.frame(imputed))
+  write_bed(out, get_outpath(opt, ".missXGBoost.imputed.bed.gz"))
+}
+
 run_knn <- function(opt) {
   suppressPackageStartupMessages(library(impute))
   dat <- read_bed(opt$phenoFile)
@@ -208,41 +216,6 @@ run_knn <- function(opt) {
   res <- impute.knn(mat)
   out <- cbind(coord[rownames(mat), ], as.data.frame(res$data))
   write_bed(out, get_outpath(opt, ".knn.imputed.bed.gz"))
-}
-
-run_missxgboost <- function(opt) {
-  suppressPackageStartupMessages({
-    library(tibble)
-    library(readr)
-    library(dplyr)
-  })
-  source(file.path(get_script_dir(), "xgb_imp.R"))
-  xgboost_imputation <- load_xgboost_imputation()
-
-  dat <- read_bed(opt$phenoFile)
-  coord <- dat[, 1:4]
-  mat <- as.matrix(dat[, -(1:4)])
-
-  miss.ind <- which(rowSums(is.na(mat)) / ncol(mat) > opt$`qc-missing-rate`)
-  value0.ind <- which(rowSums((mat == 0 | is.na(mat))) / ncol(mat) > opt$`qc-zero-rate`)
-  miss.ind <- unique(c(miss.ind, value0.ind))
-
-  if (isTRUE(opt$`qc-prior-to-impute`)) {
-    if (length(miss.ind) > 0) {
-      coord_qc <- coord[-miss.ind, , drop = FALSE]
-      mat_qc <- mat[-miss.ind, , drop = FALSE]
-    } else {
-      coord_qc <- coord
-      mat_qc <- mat
-    }
-  } else {
-    coord_qc <- coord
-    mat_qc <- mat
-  }
-
-  pheno_imp <- xgboost_imputation(as.matrix(mat_qc))
-  out <- cbind(coord_qc, as.data.frame(pheno_imp))
-  write_bgzip_bed(out, get_outpath(opt, ".imputed.bed.gz"))
 }
 
 run_soft <- function(opt) {
@@ -323,12 +296,12 @@ switch(opt$step,
   EBMF         = run_EBMF(opt),
   gEBMF        = run_gEBMF(opt),
   missforest   = run_missforest(opt),
-  knn          = run_knn(opt),
   missxgboost  = run_missxgboost(opt),
+  knn          = run_knn(opt),
   soft         = run_soft(opt),
   mean         = run_mean(opt),
   lod          = run_lod(opt),
   bed_filter_na = run_bed_filter_na(opt),
-  stop(sprintf("Unknown step '%s'. Available: EBMF, gEBMF, missforest, knn, missxgboost, soft, mean, lod, bed_filter_na",
+  stop(sprintf("Unknown step '%s'. Available: EBMF, gEBMF, missforest, missxgboost, knn, soft, mean, lod, bed_filter_na",
                opt$step))
 )

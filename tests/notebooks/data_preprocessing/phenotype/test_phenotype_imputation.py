@@ -1,14 +1,13 @@
 """Notebook tier: phenotype_imputation.ipynb — molecular-phenotype NA imputation.
 
-Worker: code/script/data_preprocessing/phenotype/phenotype_imputation.R (9 methods),
-plus phenotype_imputation.sh (a thin bash dispatcher; the notebook uses it for the
-missxgboost step). Each method fills the NAs of a molecular-phenotype BED and writes a
-bgzip+tabix'd ``<stem><suffix>.imputed.bed.gz``.
+Worker: code/script/data_preprocessing/phenotype/phenotype_imputation.R (8 methods).
+Each method fills the NAs of a molecular-phenotype BED and writes a bgzip+tabix'd
+``<stem><suffix>.imputed.bed.gz``.
 
 Fixture: a 250-feature x 60-sample subset of the MWE proteomics matrix
 (protocol_example.protein.missing.bed.gz, ~10% NA). Every method must leave no NA in
 the value columns. Backing packages: flashier/ebnm (EBMF/gEBMF), missForest, impute
-(knn), softImpute (soft / bed_filter_na), xgboost via xgb_imp.R (missxgboost).
+(knn), softImpute (soft / bed_filter_na).
 """
 from __future__ import annotations
 
@@ -16,24 +15,48 @@ import gzip
 
 import pytest
 
+from helpers.expected import assert_matches_expected
+
 R = "code/script/data_preprocessing/phenotype/phenotype_imputation.R"
-SH = "code/script/data_preprocessing/phenotype/phenotype_imputation.sh"
 NB = "pipeline/phenotype_imputation.ipynb"
 FIX = "tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz"
 MSD = "code/script"
 STEM = "protocol_example.protein.missing"   # get_outpath strips .bed.gz from the phenoFile
+EXPECTED = "tests/fixtures/phenotype_imputation/expected"
+
+# Every method is reproducible under a fixed RNG seed, so all eight are value-compared
+# against a committed snapshot of the .imputed.bed.gz (the comparator decompresses it):
+# mean/lod are closed form; EBMF/gEBMF (flashier self-seeds 666) and knn (impute.knn
+# self-seeds) are deterministic regardless of --seed; missForest and softImpute (the
+# `soft` step, and the soft path of `bed_filter_na`) draw fresh randomness that
+# phenotype_imputation.R's --seed now governs. All runs below pass --seed 1.
 
 # step -> (get_outpath suffix when --output is omitted, extra CLI args)
 METHODS = {
     "EBMF":          (".EBMF.imputed.bed.gz",      ["--num-factor", "5"]),
     "gEBMF":         (".gEBMF.imputed.bed.gz",     ["--num-factor", "5"]),
     "missforest":    (".missForest.imputed.bed.gz", []),
+    "missxgboost":   (".missXGBoost.imputed.bed.gz", []),
     "knn":           (".knn.imputed.bed.gz",       []),
     "soft":          (".soft.imputed.bed.gz",      []),
     "mean":          (".mean.imputed.bed.gz",      []),
     "lod":           (".lod.imputed.bed.gz",       []),
     "bed_filter_na": (".filtered.imputed.bed.gz",  ["--tol-missing", "0.5"]),
 }
+
+# Methods NOT cross-platform reproducible -> checked structure-only (existence + no-NA via
+# _assert_imputed), NOT value-compared. Value-compare disabled pending a collaborator
+# decision on how to handle these:
+#   - missforest: RF split points hinge on float comparisons that diverge across
+#     macOS/Linux BLAS, giving materially different (even sign-flipped) imputed values.
+#   - gEBMF: the flashier EBMF fit is under-converged at its default tolerance, so it stops
+#     in a flat region of the objective and macOS vs Linux land at different points (~0.6%
+#     on CI). See memory: cross-platform-numeric-divergence.
+#   - missxgboost: reproducible run-to-run (xgb_imp.R pins nthread=1 + seeds xgboost/RNG, so
+#     --seed 1 is byte-identical), but xgboost is a tree method like missForest, so its float
+#     split thresholds are expected to diverge across macOS vs Linux BLAS. Structure-only
+#     until the same collaborator decision as missForest; fixture committed and ready to flip.
+NON_REPRODUCIBLE = {"missforest", "gEBMF", "missxgboost"}
 
 
 def _read(path):
@@ -57,22 +80,16 @@ def test_impute_method(run_r, repo_root, tmp_path, method):
     suffix, extra = METHODS[method]
     p = run_r(repo_root / R,
               ["--step", method, "--cwd", tmp_path, "--phenoFile", repo_root / FIX,
-               "--numThreads", "1", *extra])
+               "--numThreads", "1", "--seed", "1", *extra])
     assert p.returncode == 0, p.stdout + p.stderr
     out = tmp_path / f"{STEM}{suffix}"
     assert out.exists() and (tmp_path / (out.name + ".tbi")).exists()
     assert 0 < _assert_imputed(out) <= 250
-
-
-def test_missxgboost_via_sh(run_sh, repo_root, tmp_path):
-    # the notebook drives missxgboost through the .sh dispatcher -> phenotype_imputation.R
-    out = tmp_path / "xgb.imputed.bed.gz"
-    p = run_sh(repo_root / SH,
-               ["missxgboost", "--cwd", tmp_path, "--phenoFile", repo_root / FIX,
-                "--output", out, "--qc-prior-to-impute", "TRUE", "--numThreads", "1"])
-    assert p.returncode == 0, p.stdout + p.stderr
-    assert out.exists() and (tmp_path / (out.name + ".tbi")).exists()
-    _assert_imputed(out)
+    # regression: value-compare the imputed matrix within tolerance (decompressed cell-wise;
+    # header/IDs exact), except for methods that are not cross-platform reproducible.
+    if method not in NON_REPRODUCIBLE:
+        assert_matches_expected(out, repo_root / EXPECTED / out.name,
+                                mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_impute_via_sos(run_sos, repo_root, tmp_path):

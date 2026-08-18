@@ -10,7 +10,14 @@ load_xgboost_imputation <- function() {
   registerDoParallel(max(numCores - 1, 1))
 
   xgboost_imputation <- function(data, maxiter = 10, verbose = TRUE, max.depth = 2,
-                                 nrounds = 50, decreasing = FALSE, parallelize = "variables") {
+                                 nrounds = 50, decreasing = FALSE, parallelize = "variables",
+                                 seed = NULL, nthread = 1) {
+    # Reproducibility: xgboost is non-deterministic under multi-threaded gradient
+    # reduction, so pin nthread = 1 (single-threaded boosting is bit-stable run-to-run).
+    # A seed also fixes the %dorng% streams below and xgboost's internal RNG. The caller
+    # (phenotype_imputation.R) forwards its --seed; NA/NULL leaves production unseeded.
+    have_seed <- !is.null(seed) && !is.na(seed)
+    if (have_seed) set.seed(as.integer(seed))
     xmis <- data
     n <- nrow(xmis)
     p <- ncol(xmis)
@@ -81,7 +88,9 @@ load_xgboost_imputation <- function() {
 
           xgb_obsX <- xgb.DMatrix(data = as.matrix(obsX), label = as.matrix(obsY))
           xgb_misX <- xgb.DMatrix(data = as.matrix(misX), label = as.matrix(misY))
-          xgb <- xgb.train(data = xgb_obsX, params = list(max_depth = max.depth), nrounds = nrounds, verbose = 0)
+          xgb_params <- list(max_depth = max.depth, nthread = nthread)
+          if (have_seed) xgb_params$seed <- as.integer(seed)
+          xgb <- xgb.train(data = xgb_obsX, params = xgb_params, nrounds = nrounds, verbose = 0)
           misY <- predict(xgb, xgb_misX)
           list(varInd = varInd, misY = misY)
         }

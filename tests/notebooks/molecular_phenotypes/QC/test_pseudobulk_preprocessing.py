@@ -22,8 +22,11 @@ from __future__ import annotations
 
 import gzip
 
+from helpers.expected import assert_matches_expected
+
 WORKER = "code/script/molecular_phenotypes/QC/pseudobulk_preprocessing.R"
 FIX = "tests/fixtures/pseudobulk_preprocessing"
+EXP = "tests/fixtures/pseudobulk_preprocessing/expected"
 
 
 def _rows(text, sep="\t"):
@@ -57,20 +60,28 @@ def test_pseudobulk_counts(run_r, repo_root, tmp_path):
 
 def test_sampleid_mapping(run_r, repo_root, tmp_path):
     fix = repo_root / FIX
+    # also drive the count-file header remap (a distinct output the base assert omits)
     p = run_r(repo_root / WORKER,
               ["--step", "sampleid_mapping", "--map-file", fix / "id_map.csv",
-               "--meta-files", fix / "metadata_MIC.csv", "--output-dir", tmp_path])
+               "--meta-files", fix / "metadata_MIC.csv",
+               "--count-files", fix / "counts_MIC.csv.gz", "--output-dir", tmp_path])
     assert p.returncode == 0, p.stdout + p.stderr
     got = (tmp_path / "metadata_MIC.csv").read_text()
     exp = (fix / "expected_metadata_MIC.csv").read_text()
     assert got == exp
+    # regression: the count-file remap (rewrite sample header via id_map, body verbatim
+    # with CRLF->LF) is deterministic -> the decompressed counts reproduce the snapshot.
+    assert_matches_expected(tmp_path / "counts_MIC.csv.gz",
+                            repo_root / EXP / "expected_counts_MIC.remapped.csv.gz", mode="exact")
 
 
 def test_pseudobulk_qc(run_r, repo_root, tmp_path):
     fix = repo_root / FIX
+    # --quant-norm TRUE additionally emits the rank->qnorm residuals_qn.txt; the
+    # unconditional filtered_raw_counts / residuals outputs are unchanged by it.
     p = run_r(repo_root / WORKER,
               ["--step", "pseudobulk_qc", "--meta-files", fix / "metadata_MIC.csv",
-               "--count-files", fix / "counts_MIC.csv.gz",
+               "--count-files", fix / "counts_MIC.csv.gz", "--quant-norm", "TRUE",
                "--tech-vars-file", fix / "tech_vars_MIC.csv", "--output-dir", tmp_path])
     assert p.returncode == 0, p.stdout + p.stderr
     d = tmp_path
@@ -80,6 +91,10 @@ def test_pseudobulk_qc(run_r, repo_root, tmp_path):
     # residuals: voom-derived -> tight numeric (labels/header exact)
     _assert_num_match((d / "protocol_example.MIC.residuals.txt").read_text(),
                       (fix / "expected_MIC_residuals.txt").read_text(), label_cols=1)
+    # regression: residuals_qn (per-feature rank -> qnorm of the residuals) is
+    # deterministic -> tight numeric compare (labels/header exact) vs the snapshot.
+    assert_matches_expected(d / "protocol_example.MIC.residuals_qn.txt",
+                            repo_root / EXP / "expected_MIC_residuals_qn.txt", mode="tolerant")
 
 
 def test_phenotype_formatting(run_r, repo_root, tmp_path):

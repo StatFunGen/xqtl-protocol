@@ -1,0 +1,15 @@
+# expected-output regression manifest — snrnaseq_preprocessing
+# columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
+#
+# STRUCTURE-ONLY: sctk_qc has NO committed value snapshots. singleCellTK's runCellQC applies
+# float thresholds (scds / decontX scores) whose borderline pass/fail flips across macOS vs
+# Linux OpenBLAS, so a DIFFERENT NUMBER of cells is kept cross-platform. The QC_summary
+# Cells/Genes columns are integers, so that mismatch is a genuinely different filtered cell
+# set (not float rounding), and it cascades to everything downstream (meta.data rows,
+# PCA/UMAP embeddings, cluster labels). test_snrnaseq_preprocessing.py::test_sctk_qc therefore
+# asserts only the QC-ladder STRUCTURE (fixed step names, monotone cell/gene counts, the
+# per-sample "All Samples" column); cell_annotation is existence/label-only.
+#
+# (History: a compact projection of meta.data + PCA/UMAP embeddings + a counts invariant was
+# briefly snapshotted, but those pieces diverge cross-platform for the same reason and were
+# removed along with tests/helpers/seurat_project.R.)

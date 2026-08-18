@@ -9,11 +9,14 @@ Fixtures: the committed 60-sample chr22 PLINK bed under tests/fixtures/ld_prune_
 """
 from __future__ import annotations
 
+from helpers.expected import assert_matches_expected
+
 SH = "code/script/data_preprocessing/genotype/GWAS_QC.sh"
 GR = "code/script/data_preprocessing/genotype/GWAS_QC.R"
 NB = "pipeline/GWAS_QC.ipynb"
 BED = "tests/fixtures/ld_prune_reference/genotype/protocol_example.ld_genotype.chr22"
 GFIX = "tests/fixtures/gwas_qc"
+EXP = f"{GFIX}/expected"
 
 
 def _fam_count(path):
@@ -38,6 +41,9 @@ def test_king_split(run_sh, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     assert _fam_count(tmp_path / "g.unrelated.fam") == 55       # 60 - 5 related removed
     assert _fam_count(tmp_path / "g.related.fam") == 5          # the 5 related kept
+    # regression: the exact unrelated/related sample partitions (deterministic plink2 --remove/--keep).
+    assert_matches_expected(tmp_path / "g.unrelated.fam", repo_root / EXP / "king_split.unrelated.fam", mode="exact")
+    assert_matches_expected(tmp_path / "g.related.fam", repo_root / EXP / "king_split.related.fam", mode="exact")
 
 
 def test_king_split_no_related(run_sh, repo_root, tmp_path):
@@ -48,6 +54,9 @@ def test_king_split_no_related(run_sh, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     assert _fam_count(tmp_path / "g.unrelated.fam") == 60       # everyone kept
     assert (tmp_path / "g.related.bed").exists()               # empty placeholder touched
+    # regression: with no related samples the unrelated set is the full 60-sample
+    # cohort unchanged (deterministic pass-through).
+    assert_matches_expected(tmp_path / "g.unrelated.fam", repo_root / f"{BED}.fam", mode="exact")
 
 
 def test_king_kinship(run_sh, repo_root, tmp_path):
@@ -61,6 +70,10 @@ def test_king_kinship(run_sh, repo_root, tmp_path):
     assert kin0.exists()
     header = kin0.read_text().splitlines()[0].split("\t")
     assert header[:4] == ["#FID1", "IID1", "FID2", "IID2"] and "KINSHIP" in header
+    # regression: the kinship table (FID/IID pairs + NSNP/HETHET/IBS0/KINSHIP)
+    # reproduces the committed fixture; the estimate columns are floats, compared
+    # within tolerance so plink2 build differences across CI don't false-fail.
+    assert_matches_expected(kin0, repo_root / EXP / "king.kin0", mode="tolerant", rtol=1e-6, atol=1e-8)
 
 
 def test_qc_no_prune(run_sh, repo_root, tmp_path):
@@ -75,6 +88,8 @@ def test_qc_no_prune(run_sh, repo_root, tmp_path):
     n_out = sum(1 for _ in open(out_bim))
     n_in = sum(1 for _ in open(repo_root / f"{BED}.bim"))
     assert 0 < n_out < n_in                                    # filters removed variants
+    # regression: the exact surviving-variant .bim (deterministic MAC/MAF/geno filters).
+    assert_matches_expected(out_bim, repo_root / EXP / "qc_no_prune.bim", mode="exact")
 
 
 def test_king_2_filter_relatedness(run_r, repo_root, tmp_path):
@@ -85,6 +100,9 @@ def test_king_2_filter_relatedness(run_r, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     lines = [l for l in out.read_text().splitlines() if l.strip()]
     assert lines and all(len(l.split()) == 2 for l in lines)   # FID IID per related sample
+    # regression: the exact set of related FID/IID pairs flagged for removal
+    # (deterministic greedy prune over the committed kinship table).
+    assert_matches_expected(out, repo_root / EXP / "king_2.related_id", mode="exact")
 
 
 def test_qc_ld_prune(run_sh, repo_root, tmp_path):
@@ -97,6 +115,10 @@ def test_qc_ld_prune(run_sh, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     assert (tmp_path / "qc.bed").exists()
     assert _fam_count(tmp_path / "qc.prune.in") > 0
+    # regression: the exact LD-pruned variant set (.prune.in) and the pruned .bim
+    # (deterministic plink2 --indep-pairwise + --extract).
+    assert_matches_expected(tmp_path / "qc.prune.in", repo_root / EXP / "qc_ld_prune.prune.in", mode="exact")
+    assert_matches_expected(tmp_path / "qc.bim", repo_root / EXP / "qc_ld_prune.bim", mode="exact")
 
 
 def test_sample_overlap(run_sh, repo_root, tmp_path):
@@ -111,6 +133,8 @@ def test_sample_overlap(run_sh, repo_root, tmp_path):
     lines = ov.read_text().splitlines()
     assert lines[0] == "genotype_id\tsample_id"
     assert len(lines) - 1 == 60                                # all 60 geno samples present in pheno
+    # regression: the exact genotype<->phenotype sample-ID overlap table (deterministic set intersection).
+    assert_matches_expected(ov, repo_root / EXP / "sample_overlap.txt", mode="exact")
 
 
 def test_king_workflow_via_sos(run_sos, repo_root, tmp_path):
@@ -120,4 +144,9 @@ def test_king_workflow_via_sos(run_sos, repo_root, tmp_path):
         "genoFile": repo_root / f"{BED}.bed", "cwd": tmp_path, "name": "t",
         "modular_script_dir": repo_root / "code/script"})
     assert p.returncode == 0, p.stdout + p.stderr
-    assert len(list(tmp_path.glob("*.unrelated.bed"))) == 1
+    unrel = list(tmp_path.glob("*.unrelated.bed"))
+    assert len(unrel) == 1
+    # regression: the full king chain (king_1 kinship -> king_2 relatedness -> king_3
+    # split) yields the same unrelated cohort; compare the .fam sample partition.
+    assert_matches_expected(unrel[0].with_suffix(".fam"),
+                            repo_root / EXP / "king_workflow.unrelated.fam", mode="exact")
