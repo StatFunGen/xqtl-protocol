@@ -245,6 +245,7 @@ do_merge_chrom <- function(argv) {
   event_map <- data.frame(ID = pvar$ID, CHROM = pvar[[chrom_col]],
                           POS = pvar$POS, REF = pvar$REF, ALT = pvar$ALT,
                           event, check.names = FALSE, stringsAsFactors = FALSE)
+  event_map <- event_map[event_map$event_type %in% c("INS", "DEL"), , drop = FALSE]
   duplicated_event <- duplicated(event_map$event_id) |
                       duplicated(event_map$event_id, fromLast = TRUE)
   if (any(duplicated_event)) {
@@ -289,73 +290,9 @@ do_merge_chrom <- function(argv) {
   unlink(block_dirs, recursive = TRUE)
 }
 
-# ---- event_id --------------------------------------------------------------
-do_event_id <- function(argv) {
-  if (!nzchar(argv$final_prefix)) stop("--final-prefix is required for event_id")
-  final_prefix <- argv$final_prefix
-  read_tab <- function(f) read.delim(f, check.names = FALSE, comment.char = "",
-                                     stringsAsFactors = FALSE)
-  pvar <- read_tab(paste0(final_prefix, ".pvar"))
-  # Create a directional minimal-event identifier without changing VCF alleles.
-  canonical_event <- function(chrom, pos, id, ref, alt) {
-    ref <- toupper(ref); alt <- toupper(alt); pos <- as.integer(pos)
-    chrom <- if (grepl("^chr", id)) sub(":.*$", "", id) else paste0("chr", sub("^chr", "", chrom))
-    # Only length-changing alleles receive an internal event ID.
-    if (nchar(ref) == nchar(alt))
-      return(c(event_id = id, event_type = "UNCHANGED", event_pos = pos,
-               event_ref = ref, event_alt = alt))
-    if (grepl("[<>*]|\\[|\\]", ref) || grepl("[<>*]|\\[|\\]", alt) ||
-        grepl(",", alt, fixed = TRUE))
-      return(c(event_id = paste(chrom, pos, ref, alt, sep = ":"),
-               event_type = "SYMBOLIC", event_pos = pos,
-               event_ref = ref, event_alt = alt))
-    r <- strsplit(ref, "", fixed = TRUE)[[1]]
-    a <- strsplit(alt, "", fixed = TRUE)[[1]]
-    prefix <- 0L
-    while (length(r) && length(a) && r[1] == a[1]) {
-      r <- r[-1]; a <- a[-1]; prefix <- prefix + 1L
-    }
-    while (length(r) && length(a) && tail(r, 1) == tail(a, 1)) {
-      r <- head(r, -1); a <- head(a, -1)
-    }
-    rr <- paste(r, collapse = ""); aa <- paste(a, collapse = "")
-    event_pos <- pos + prefix
-    if (!nzchar(rr) && nzchar(aa)) {
-      event_pos <- event_pos - 1L; type <- "INS"
-      id <- paste(chrom, event_pos, type, aa, sep = ":")
-    } else if (nzchar(rr) && !nzchar(aa)) {
-      type <- "DEL"; id <- paste(chrom, event_pos, type, rr, sep = ":")
-    } else {
-      type <- "SUB"; id <- paste(chrom, event_pos, type, rr, aa, sep = ":")
-    }
-    c(event_id = id, event_type = type, event_pos = event_pos,
-      event_ref = rr, event_alt = aa)
-  }
-  chrom_col <- if ("#CHROM" %in% names(pvar)) "#CHROM" else "CHROM"
-  event <- t(mapply(canonical_event, pvar[[chrom_col]], pvar$POS, pvar$ID,
-                    pvar$REF, pvar$ALT, SIMPLIFY = TRUE))
-  event_map <- data.frame(ID = pvar$ID, CHROM = pvar[[chrom_col]],
-                          POS = pvar$POS, REF = pvar$REF, ALT = pvar$ALT,
-                          event, check.names = FALSE, stringsAsFactors = FALSE)
-  duplicated_event <- duplicated(event_map$event_id) |
-                      duplicated(event_map$event_id, fromLast = TRUE)
-  if (any(duplicated_event)) {
-    write.table(event_map[duplicated_event, ],
-                paste0(final_prefix, ".event_id.collisions.tsv"),
-                sep = "\t", quote = FALSE, row.names = FALSE)
-    stop("Canonical event-ID collision detected; see .event_id.collisions.tsv")
-  }
-  event_tmp <- paste0(final_prefix, ".event_id.tsv.tmp")
-  write.table(event_map, event_tmp, sep = "\t", quote = FALSE,
-              row.names = FALSE, col.names = TRUE)
-  if (!file.rename(event_tmp, paste0(final_prefix, ".event_id.tsv")))
-    stop("Could not atomically install event-ID mapping")
-}
-
-
 # ---- CLI -------------------------------------------------------------------
-p <- arg_parser("RSS LD random-projection sketch (generate_w / process_block / merge_chrom / event_id)")
-p <- add_argument(p, "--step", help = "generate_w | process_block | merge_chrom | event_id")
+p <- arg_parser("RSS LD random-projection sketch (generate_w / process_block / merge_chrom)")
+p <- add_argument(p, "--step", help = "generate_w | process_block | merge_chrom")
 p <- add_argument(p, "--n-samples", help = "generate_w: total sample size n")
 p <- add_argument(p, "--B", help = "sketch dimension B", default = "10000")
 p <- add_argument(p, "--seed", help = "generate_w: RNG seed", default = "123")
@@ -383,8 +320,6 @@ if (identical(argv$step, "generate_w")) {
   do_process_block(argv)
 } else if (identical(argv$step, "merge_chrom")) {
   do_merge_chrom(argv)
-} else if (identical(argv$step, "event_id")) {
-  do_event_id(argv)
 } else {
-  stop("--step must be 'generate_w', 'process_block', 'merge_chrom', or 'event_id'")
+  stop("--step must be 'generate_w', 'process_block', or 'merge_chrom'")
 }
