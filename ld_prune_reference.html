@@ -626,7 +626,7 @@
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -659,12 +659,12 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # Directory holding the modular analysis scripts (code/script)
-parameter: modular_script_dir = path(&#39;code/script&#39;)
+parameter: modular_script_dir = path('code/script')
 parameter: job_size = 1
-parameter: walltime = &quot;1h&quot;
-parameter: mem = &quot;80G&quot;
+parameter: walltime = "1h"
+parameter: mem = "80G"
 parameter: numThreads = 10
 </pre></div>
 </div>
@@ -682,21 +682,21 @@ import csv
 # genotype_list: header row + one row per block (block_id, bfile...); pandas read
 # used header=0, so the first row is treated as a header here too.
 with open(genotype_list) as _fh:
-    _rows = [r for r in csv.reader(_fh, delimiter=&quot;\t&quot;) if r]
+    _rows = [r for r in csv.reader(_fh, delimiter="\t") if r]
 _rows = _rows[1:]
 input_blocks = [r[0] for r in _rows]
 input_files = [r[1:] for r in _rows]
 del _rows, _fh
 
-input: input_files, group_by = 1, group_with = &quot;input_blocks&quot;
-output: prune = f&#39;{cwd}/{step_name[:-2]}/{_input_blocks}.prune.in&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+input: input_files, group_by = 1, group_with = "input_blocks"
+output: prune = f'{cwd}/{step_name[:-2]}/{_input_blocks}.prune.in'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     plink2 \
         --bfile  ${_input:anr} \
         --indep-pairwise  ${window} ${shift} ${r2} \
         --rm-dup force-first \
-        --out ${_output[&quot;prune&quot;]:annr} \
+        --out ${_output["prune"]:annr} \
         --threads ${numThreads}
 </pre></div>
 </div>
@@ -705,9 +705,9 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[LD_pruning_2]
-input: group_by = &quot;all&quot;
-output: f&#39;{cwd}/{step_name[:-2]}/LD_pruned_variants.txt&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+input: group_by = "all"
+output: f'{cwd}/{step_name[:-2]}/LD_pruned_variants.txt'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     Rscript ${modular_script_dir}/reference_data/ld_prune_reference.R \
         --input ${_input:r,} \
         --output ${_output:r}

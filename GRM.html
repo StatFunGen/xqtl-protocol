@@ -630,7 +630,7 @@ usage: sos run code/SoS/data_preprocessing/genotype/GRM.ipynb
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -666,19 +666,19 @@ Sections
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # Work directory &amp; output directory
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # The filename name for output data
-parameter: modular_script_dir = path(&#39;code/script&#39;)
+parameter: modular_script_dir = path('code/script')
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 20
 parameter: genoFile = paths
-cwd = f&quot;{cwd:a}&quot;
+cwd = f"{cwd:a}"
 
 ## Code below are copied from genotype_formatting.ipynb. Change should be made to codes in that document and sync with this chunk.
 from sos.utils import expand_size
@@ -688,25 +688,25 @@ def get_genotype_file(geno_file_paths):
     #
     def valid_geno_file(x):
         suffixes = path(x).suffixes
-        if suffixes[-1] == &#39;.bed&#39;:
+        if suffixes[-1] == '.bed':
             return True
-        if len(suffixes)&gt;1 and &#39;&#39;.join(suffixes[-2:]) == &quot;.vcf.gz&quot;:
+        if len(suffixes)&gt;1 and ''.join(suffixes[-2:]) == ".vcf.gz":
             return True
         return False
     #
     def complete_geno_path(x, geno_file):
         if not valid_geno_file(x):
-            raise ValueError(f&quot;Genotype file {x} should be VCF (end with .vcf.gz) or PLINK bed file (end with .bed)&quot;)
+            raise ValueError(f"Genotype file {x} should be VCF (end with .vcf.gz) or PLINK bed file (end with .bed)")
         if not os.path.isfile(x):
             # relative path
-            if not os.path.isfile(f&#39;{geno_file:ad}/&#39; + x):
-                raise ValueError(f&quot;Cannot find genotype file {x}&quot;)
+            if not os.path.isfile(f'{geno_file:ad}/' + x):
+                raise ValueError(f"Cannot find genotype file {x}")
             else:
-                x = f&#39;{geno_file:ad}/&#39; + x
+                x = f'{geno_file:ad}/' + x
         return x
     # 
     def format_chrom(chrom):
-        if chrom.startswith(&#39;chr&#39;):
+        if chrom.startswith('chr'):
             chrom = chrom[3:]
         return chrom
     # Inputs are either VCF or bed, or a vector of them 
@@ -714,19 +714,19 @@ def get_genotype_file(geno_file_paths):
         if all([valid_geno_file(x) for x in geno_file_paths]):
             return paths(geno_file_paths)
         else: 
-            raise ValueError(f&quot;Invalid input {geno_file_paths}&quot;)
+            raise ValueError(f"Invalid input {geno_file_paths}")
     # Input is one genotype file or text list of genotype files
     geno_file = geno_file_paths[0]
     if valid_geno_file(geno_file):
         return path(geno_file)
     else: 
-        units = [x.strip().split() for x in open(geno_file).readlines() if x.strip() and not x.strip().startswith(&#39;#&#39;)]
+        units = [x.strip().split() for x in open(geno_file).readlines() if x.strip() and not x.strip().startswith('#')]
         if all([len(x) == 1 for x in units]):
             return paths([complete_geno_path(x[0], geno_file) for x in units])
         elif all([len(x) == 2 for x in units]):
             genos = dict([(format_chrom(x[0]), path(complete_geno_path(x[1], geno_file))) for x in units])
         else:
-            raise ValueError(f&quot;{geno_file} should contain one column of file names, or two columns of chrom number and corresponding file name&quot;)
+            raise ValueError(f"{geno_file} should contain one column of file names, or two columns of chrom number and corresponding file name")
         return genos
                         
 genotypes = get_genotype_file(genoFile)
@@ -741,10 +741,10 @@ genotypes = get_genotype_file(genoFile)
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Generate LOCO file list
 [grm_1]
 chrom = list(genotypes.keys())
-input: for_each = &#39;chrom&#39;
-output: f&#39;{cwd}/{genotypes[_chrom]:bn}.loco.txt&#39;
-with open(_output, &#39;w&#39;) as f:
-    f.write(&#39;\n&#39;.join([str(genotypes[x].with_suffix(&#39;&#39;)) for x in genotypes if x != _chrom]))
+input: for_each = 'chrom'
+output: f'{cwd}/{genotypes[_chrom]:bn}.loco.txt'
+with open(_output, 'w') as f:
+    f.write('\n'.join([str(genotypes[x].with_suffix('')) for x in genotypes if x != _chrom]))
 </pre></div>
 </div>
 </div>
@@ -756,9 +756,9 @@ with open(_output, &#39;w&#39;) as f:
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Compute LOCO-GRM
 [grm_2]
-output: f&#39;{_input:nn}.grm.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+output: f'{_input:nn}.grm.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "$[ ]", stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
    gcta \
    --mbfile $[_input] \
    --make-grm-gz \
@@ -774,9 +774,9 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Format output for APEX
 [grm_3]
-output: f&#39;{_input:nn}.apex.grm&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+output: f'{_input:nn}.apex.grm'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "$[ ]", stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
     Rscript $[modular_script_dir:a]/data_preprocessing/genotype/GRM.R --step format_apex \
         --grm $[_input] \
         --id $[_input:n].id \
@@ -792,12 +792,12 @@ bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Generate APEX input list
 [grm_4]
-input: group_by = &quot;all&quot;
-output: f&#39;{cwd}/{path(list(genotypes.values())[1]):bnn}.loco_grm_list.txt&#39;
-bash: expand= &quot;$[ ]&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+input: group_by = "all"
+output: f'{cwd}/{path(list(genotypes.values())[1]):bnn}.loco_grm_list.txt'
+bash: expand= "$[ ]", stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
     Rscript $[modular_script_dir:a]/data_preprocessing/genotype/GRM.R --step apex_list \
         --input $[_input:r,] \
-        --chroms $[&quot; &quot;.join(genotypes.keys())] \
+        --chroms $[" ".join(genotypes.keys())] \
         --output $[_output]
 </pre></div>
 </div>

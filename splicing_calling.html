@@ -689,7 +689,7 @@
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -703,7 +703,7 @@
                         <span class="n">The</span> <span class="n">output</span> <span class="n">directory</span> <span class="k">for</span> <span class="n">generated</span> <span class="n">files</span><span class="o">.</span>
   <span class="o">--</span><span class="n">samples</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
                         <span class="n">Sample</span> <span class="n">meta</span> <span class="n">data</span> <span class="nb">list</span>
-  <span class="o">--</span><span class="n">data</span><span class="o">-</span><span class="nb">dir</span>  <span class="n">path</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">samples</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  <span class="o">--</span><span class="n">data</span><span class="o">-</span><span class="nb">dir</span>  <span class="n">path</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">samples</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
                         <span class="n">Raw</span> <span class="n">data</span> <span class="n">directory</span><span class="p">,</span> <span class="n">default</span> <span class="n">to</span> <span class="n">the</span> <span class="n">same</span> <span class="n">directory</span> <span class="k">as</span>
                         <span class="n">sample</span> <span class="nb">list</span>
@@ -715,7 +715,7 @@
                         <span class="n">Memory</span> <span class="n">expected</span>
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">8</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
                         <span class="n">Software</span> <span class="n">container</span> <span class="n">option</span>
 
 <span class="n">Sections</span>
@@ -751,38 +751,38 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # The output directory for generated files. 
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # Sample meta data list
 parameter: samples = path
 # Raw data directory, default to the same directory as sample list
-parameter: data_dir = path(f&quot;{samples:d}&quot;)
+parameter: data_dir = path(f"{samples:d}")
 
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 8
 # Software container option
-parameter: container = &quot;&quot;
+parameter: container = ""
 from sos.utils import expand_size
-cwd = path(f&#39;{cwd:a}&#39;)
+cwd = path(f'{cwd:a}')
 
 # Build the input file lists from the sample manifest (basic SoS input plumbing; no pandas so
 # it runs in the base env, no def/handles left in globals so the lists pickle to task workers).
-# regtools strandness codes: rf-&gt;RF, fr-&gt;FR, strand_missing-&gt;XS. Blank/&quot;NA&quot; drops that sample.
+# regtools strandness codes: rf-&gt;RF, fr-&gt;FR, strand_missing-&gt;XS. Blank/"NA" drops that sample.
 _lines = open(samples).read().splitlines()
-_hdr = _lines[0].split(&#39;\t&#39;)
-_rows = [dict(zip(_hdr, _ln.split(&#39;\t&#39;))) for _ln in _lines[1:] if _ln.strip()]
-_sm = {&#39;rf&#39;: &#39;RF&#39;, &#39;fr&#39;: &#39;FR&#39;, &#39;strand_missing&#39;: &#39;XS&#39;}
-sample_id  = [(_r.get(&#39;sample_id&#39;) or &#39;NA&#39;) for _r in _rows]
-strandness = [_sm.get((_r.get(&#39;strand&#39;) or &#39;NA&#39;), (_r.get(&#39;strand&#39;) or &#39;NA&#39;)) for _r in _rows]
-bam_data   = [f&#39;{data_dir}/{_r.get(&quot;coord_bam_list&quot;)}&#39; for _r in _rows if (_r.get(&#39;coord_bam_list&#39;) or &#39;NA&#39;) != &#39;NA&#39;]
-SJtab_data = [f&#39;{data_dir}/{_r.get(&quot;SJ_list&quot;)}&#39; for _r in _rows if (_r.get(&#39;SJ_list&#39;) or &#39;NA&#39;) != &#39;NA&#39;]
+_hdr = _lines[0].split('\t')
+_rows = [dict(zip(_hdr, _ln.split('\t'))) for _ln in _lines[1:] if _ln.strip()]
+_sm = {'rf': 'RF', 'fr': 'FR', 'strand_missing': 'XS'}
+sample_id  = [(_r.get('sample_id') or 'NA') for _r in _rows]
+strandness = [_sm.get((_r.get('strand') or 'NA'), (_r.get('strand') or 'NA')) for _r in _rows]
+bam_data   = [f'{data_dir}/{_r.get("coord_bam_list")}' for _r in _rows if (_r.get('coord_bam_list') or 'NA') != 'NA']
+SJtab_data = [f'{data_dir}/{_r.get("SJ_list")}' for _r in _rows if (_r.get('SJ_list') or 'NA') != 'NA']
 del _lines, _hdr, _rows, _sm
 </pre></div>
 </div>
@@ -800,10 +800,10 @@ parameter: anchor_len = 8
 parameter: min_intron_len = 50
 # maximum intron length to be analyzed (default 500000)
 parameter: max_intron_len = 500000
-input: bam_data, group_by = 1, group_with = &quot;strandness&quot;
-output: f&#39;{cwd}/{_input:bn}.junc&#39; 
+input: bam_data, group_by = 1, group_with = "strandness"
+output: f'{cwd}/{_input:bn}.junc' 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container=container
     bash ${modular_script_dir}/molecular_phenotypes/calling/regtools_junctions.sh \
         --bam ${_input} \
         --output ${_output} \
@@ -824,16 +824,16 @@ parameter: min_clu_reads = 30
 parameter: max_intron_len = 500000 
 # minimum fraction of reads in a cluster that support a junction (default 0.001)
 parameter: min_clu_ratio = 0.001
-input: group_by = &#39;all&#39;
-output: f&#39;{cwd}/{samples:bn}_intron_usage_perind.counts.gz&#39;
+input: group_by = 'all'
+output: f'{cwd}/{samples:bn}_intron_usage_perind.counts.gz'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container=container
     rm -f ${_output:nn}.junc
     for i in ${_input:r}; do
     echo $i &gt;&gt; ${_output:nn}.junc ; done
     Rscript ${modular_script_dir}/molecular_phenotypes/calling/leafcutter_cluster_regtools.R \
         --juncfiles ${_output:nn}.junc \
-        --outprefix ${f&#39;{_output:bnn}&#39;.replace(&quot;_perind&quot;,&quot;&quot;)} \
+        --outprefix ${f'{_output:bnn}'.replace("_perind","")} \
         --rundir ${cwd} \
         --minclureads ${min_clu_reads} \
         --maxintronlen ${max_intron_len} \
@@ -845,10 +845,10 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[leafcutter_preprocessing_2]
-input: group_by = &#39;all&#39;
-output: f&#39;{cwd}/{samples:bn}_intron_usage_perind.junc&#39;
+input: group_by = 'all'
+output: f'{cwd}/{samples:bn}_intron_usage_perind.junc'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container=container
     rm -f ${_output:r}
     for i in ${_input:r}; do
     echo $i &gt;&gt; ${_output:r} ; done
@@ -864,9 +864,9 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[psichomics_1]
 input: SJtab_data
-output: f&#39;{cwd}/psichomics_junctions.txt&#39;
+output: f'{cwd}/psichomics_junctions.txt'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container=container
     Rscript ${modular_script_dir}/molecular_phenotypes/calling/splicing_calling.R \
         --step junction_quant \
         --inputs ${_input} \
@@ -880,9 +880,9 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[psichomics_2]
 # splicing annotation for psichomics (raw psichomics annotation, e.g. loadAnnotation output)
 parameter: splicing_annotation = path
-output: f&#39;{cwd}/psi_raw_data.tsv&#39;
+output: f'{cwd}/psi_raw_data.tsv'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container=container
     Rscript ${modular_script_dir}/molecular_phenotypes/calling/splicing_calling.R \
         --step quantify_psi \
         --junctions ${cwd}/psichomics_junctions.txt \

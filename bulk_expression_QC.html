@@ -654,7 +654,7 @@ preprocessing.</p>
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -668,8 +668,8 @@ preprocessing.</p>
                         <span class="n">Raw</span> <span class="n">counts</span> <span class="n">file</span> <span class="ow">is</span> <span class="n">optional</span> <span class="ow">and</span> <span class="k">if</span> <span class="n">available</span><span class="p">,</span> <span class="n">it</span> <span class="n">will</span> <span class="n">be</span>
                         <span class="n">filtered</span> <span class="n">to</span> <span class="n">match</span> <span class="k">with</span> <span class="n">the</span> <span class="n">TPM</span> <span class="n">file</span> <span class="n">sample</span> <span class="ow">and</span> <span class="n">genes</span>
   <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
-  <span class="o">--</span><span class="n">entrypoint</span>  <span class="p">(</span><span class="s1">&#39;micromamba run -a &quot;&quot; -n&#39;</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">container</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="k">if</span> <span class="n">container</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
+  <span class="o">--</span><span class="n">entrypoint</span>  <span class="p">(</span><span class="s1">'micromamba run -a "" -n'</span> <span class="o">+</span> <span class="s1">' '</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">'(_apptainer:latest|_docker:latest|\.sif)$'</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="n">container</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="k">if</span> <span class="n">container</span> <span class="k">else</span> <span class="s2">""</span>
 
   <span class="o">--</span><span class="n">job</span><span class="o">-</span><span class="n">size</span> <span class="mi">1</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">For</span> <span class="n">cluster</span> <span class="n">jobs</span><span class="p">,</span> <span class="n">number</span> <span class="n">commands</span> <span class="n">to</span> <span class="n">run</span> <span class="n">per</span> <span class="n">job</span>
@@ -702,22 +702,22 @@ preprocessing.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # Required input is TPM file
 parameter: tpm_gct = path
 # Raw counts file is optional and if available, it will be filtered to match with the TPM file sample and genes
 parameter: counts_gct = path()
-parameter: cwd = path(&quot;output&quot;)
-parameter: container = &quot;&quot;
+parameter: cwd = path("output")
+parameter: container = ""
 import re
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
-cwd = path(f&#39;{cwd:a}&#39;)
+parameter: entrypoint= ('micromamba run -a "" -n' + ' ' + re.sub(r'(_apptainer:latest|_docker:latest|\.sif)$', '', container.split('/')[-1])) if container else ""
+cwd = path(f'{cwd:a}')
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 
 # Number of threads
 parameter: numThreads = 8
@@ -731,13 +731,13 @@ parameter: numThreads = 8
 parameter: low_expr_TPM = 0.1
 parameter: low_expr_TPM_percent = 0.2
 input: tpm_gct
-output: f&#39;{cwd}/{_input:bnnn}.low_expression_filtered.tpm.gct.gz&#39;
+output: f'{cwd}/{_input:bnnn}.low_expression_filtered.tpm.gct.gz'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container, entrypoint = entrypoint
+bash: expand= "${ }", stderr = f'{_output:nnn}.stderr', stdout = f'{_output:nnn}.log', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/bulk_expression_QC.R \
         --step qc_1 \
-        --cwd &quot;${cwd}&quot; \
-        --tpm-gct &quot;${_input}&quot; \
+        --cwd "${cwd}" \
+        --tpm-gct "${_input}" \
         --low-expr-TPM ${low_expr_TPM} \
         --low-expr-TPM-percent ${low_expr_TPM_percent} \
         --numThreads ${numThreads}
@@ -755,13 +755,13 @@ parameter: topk_genes = 100
 parameter: cluster_percent = 0.6
 parameter: pvalue_cutoff = 0.05
 parameter: cluster_level = 5
-output: f&#39;{cwd}/{_input:bnnn}.outlier_removed.tpm.gct.gz&#39;
+output: f'{cwd}/{_input:bnnn}.outlier_removed.tpm.gct.gz'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout = f&#39;{_output:nnn}.log&#39;, container = container, entrypoint = entrypoint
+bash: expand= "${ }", stderr = f'{_output:nnn}.stderr', stdout = f'{_output:nnn}.log', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/bulk_expression_QC.R \
         --step qc_2 \
-        --cwd &quot;${cwd}&quot; \
-        --tpm-gct &quot;${_input}&quot; \
+        --cwd "${cwd}" \
+        --tpm-gct "${_input}" \
         --RLEFilterPercent ${RLEFilterPercent} \
         --DSFilterPercent ${DSFilterPercent} \
         --topk-genes ${topk_genes} \
@@ -779,14 +779,14 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nnn}.stderr&#39;, stdout
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[qc_3 (remove gene and samples from raw counts)]
 stop_if(not counts_gct.is_file())
-output: f&#39;{cwd}/{_input:bnnn}.geneCount.gct.gz&#39;
+output: f'{cwd}/{_input:bnnn}.geneCount.gct.gz'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= "${ }", stderr = f'{_output:nn}.stderr', stdout = f'{_output:nn}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/bulk_expression_QC.R \
         --step qc_3 \
-        --cwd &quot;${cwd}&quot; \
-        --tpm-gct &quot;${_input}&quot; \
-        --counts-gct &quot;${counts_gct}&quot; \
+        --cwd "${cwd}" \
+        --tpm-gct "${_input}" \
+        --counts-gct "${counts_gct}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>

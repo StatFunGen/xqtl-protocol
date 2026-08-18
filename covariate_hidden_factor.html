@@ -542,7 +542,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pca-with-marchenko-pastur-recommended">PCA with Marchenko-Pastur (recommended)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#peer-gtex-style">PEER (GTEx-style)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pca-with-buja-eyuboglu-permutation">PCA with Buja &amp; Eyuboglu permutation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bicv-factor-analysis-with-apex">BiCV factor analysis with APEX</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
@@ -552,7 +551,6 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reference">Reference</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">BiCV Factor Analysis with APEX</a></li>
 </ul>
 </li>
 </ul>
@@ -586,7 +584,7 @@
 <span class="n">PC1</span>  <span class="o">-</span><span class="mf">0.4525795</span>  <span class="o">-</span><span class="mf">0.0450112</span>  <span class="mf">0.0704428</span>
 </pre></div>
 </div>
-<p>The covariate file is optional for <code class="docutils literal notranslate"><span class="pre">PEER</span></code> but recommended, so that a proper xQTL model is built. <code class="docutils literal notranslate"><span class="pre">BiCV</span></code> additionally requires an indexed VCF, which the workflow generates for itself.</p>
+<p>The covariate file is optional for <code class="docutils literal notranslate"><span class="pre">PEER</span></code> but recommended, so that a proper xQTL model is built.</p>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--N</span></code>: how many hidden factors to keep. <code class="docutils literal notranslate"><span class="pre">0</span></code>, the default, lets the method choose: <code class="docutils literal notranslate"><span class="pre">Marchenko_PC</span></code> keeps components above the Marchenko-Pastur bound and <code class="docutils literal notranslate"><span class="pre">PCA</span></code> uses the Buja and Eyuboglu permutation. Give a positive number to fix the count instead, which <code class="docutils literal notranslate"><span class="pre">PEER</span></code> needs.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--choose_k_method</span></code>: <code class="docutils literal notranslate"><span class="pre">Marchenko</span></code> or the permutation alternative, selecting which rule the shared PCA step applies. It also names the output file.</p></li>
@@ -611,13 +609,11 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.residual.bed.gz</span></code> - the residualised phenotype matrix produced by the shared first step and consumed by whichever method follows, written with a <code class="docutils literal notranslate"><span class="pre">.tbi</span></code> index.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.residual.PEER_MODEL.hd5</span></code> - the fitted PEER model, from <code class="docutils literal notranslate"><span class="pre">PEER</span></code> only.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.residual.PEER.gz</span></code> and <code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.residual.PEER.diag.pdf</span></code> - the PEER factors and the convergence diagnostic plot.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.residual.bed.fake.vcf.gz</span></code> - the indexed VCF <code class="docutils literal notranslate"><span class="pre">BiCV</span></code> builds for APEX, an intermediate rather than a result.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{name}.residual.BiCV.gz</span></code> - the BiCV factors.</p></li>
 </ul>
 </section>
 <section id="minimal-working-example">
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
-<p>Four alternative methods, each a chain that starts from the same residualisation step and then estimates hidden factors its own way. Pick one; they are not run in sequence.</p>
+<p>Three alternative methods, each a chain that starts from the same residualisation step and then estimates hidden factors its own way. Pick one; they are not run in sequence.</p>
 <section id="pca-with-marchenko-pastur-recommended">
 <h3>PCA with Marchenko-Pastur (recommended)<a class="headerlink" href="#pca-with-marchenko-pastur-recommended" title="Link to this heading">#</a></h3>
 <p>The default choice. <code class="docutils literal notranslate"><span class="pre">Marchenko_PC</span></code> first residualises the phenotype on the known covariates, runs PCA on the residual matrix, and keeps the components whose eigenvalues exceed the Marchenko-Pastur upper bound, which is the threshold random noise alone would produce. The kept components are stacked back onto the known covariates.</p>
@@ -667,22 +663,6 @@
 </div>
 </div>
 </section>
-<section id="bicv-factor-analysis-with-apex">
-<h3>BiCV factor analysis with APEX<a class="headerlink" href="#bicv-factor-analysis-with-apex" title="Link to this heading">#</a></h3>
-<p>BiCV chooses the number of hidden factors by bi-cross-validation using the APEX software (Owen et al. 2016). The pipeline computes residuals on the merged covariates, builds the inputs APEX expects (an indexed VCF placeholder and a phenotype matrix), then calls <code class="docutils literal notranslate"><span class="pre">apex</span> <span class="pre">factor</span></code>. The number of factors follows GTEx recommendations or can be fixed with <code class="docutils literal notranslate"><span class="pre">--N</span></code>.</p>
-<p><strong>Timing</strong>: TBD (on toy dataset)</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb BiCV \
-    --cwd output/covariate \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
-    --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
-    --N 3
-</pre></div>
-</div>
-</div>
-</div>
-</section>
 </section>
 <section id="command-interface">
 <h2>Command Interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
@@ -697,14 +677,13 @@
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
   <span class="n">Marchenko_PC</span>
   <span class="n">PCA</span>
   <span class="n">PEER</span>
-  <span class="n">BiCV</span>
 
 <span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
   <span class="o">--</span><span class="n">modular</span><span class="o">-</span><span class="n">script</span><span class="o">-</span><span class="nb">dir</span> <span class="n">code</span><span class="o">/</span><span class="n">script</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
@@ -715,7 +694,7 @@
                         <span class="n">Merged</span> <span class="n">Covariates</span> <span class="n">File</span>
   <span class="o">--</span><span class="n">phenoFile</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
                         <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">molecular</span> <span class="n">phenotype</span> <span class="n">data</span><span class="o">.</span>
-  <span class="o">--</span><span class="n">name</span>  <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">phenoFile</span><span class="si">:</span><span class="s1">bnn</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">covFile</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">&#39;</span>
+  <span class="o">--</span><span class="n">name</span>  <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">phenoFile</span><span class="si">:</span><span class="s1">bnn</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">covFile</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">'</span>
 
   <span class="o">--</span><span class="n">job</span><span class="o">-</span><span class="n">size</span> <span class="mi">1</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">For</span> <span class="n">cluster</span> <span class="n">jobs</span><span class="p">,</span> <span class="n">number</span> <span class="n">commands</span> <span class="n">to</span> <span class="n">run</span> <span class="n">per</span> <span class="n">job</span>
@@ -725,9 +704,9 @@
                         <span class="n">Memory</span> <span class="n">expected</span>
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">8</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
                         <span class="n">Software</span> <span class="n">container</span> <span class="n">option</span>
-  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">''</span>
 
 <span class="n">Sections</span>
   <span class="o">*</span><span class="n">_1</span><span class="p">:</span>
@@ -755,18 +734,13 @@
                         <span class="n">parameter</span><span class="p">:</span> <span class="n">var_tol</span> <span class="o">=</span> <span class="mf">0.00001</span> <span class="n">minimum</span> <span class="n">variance</span> <span class="n">explained</span>
                         <span class="n">criteria</span> <span class="n">to</span> <span class="n">drop</span> <span class="n">factors</span> <span class="k">while</span> <span class="n">training</span>
       <span class="o">--</span><span class="n">convergence</span><span class="o">-</span><span class="n">mode</span> <span class="n">fast</span>
-                        <span class="n">Convergence</span> <span class="n">mode</span><span class="p">:</span> <span class="n">Convergence</span> <span class="n">mode</span> <span class="k">for</span> <span class="n">MOFAr</span> <span class="s2">&quot;slow&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;medium&quot;</span> <span class="ow">or</span> <span class="s2">&quot;fast&quot;</span><span class="p">,</span> <span class="n">corresponding</span> <span class="n">to</span> <span class="mf">1e-5</span><span class="o">%</span><span class="p">,</span> <span class="mf">1e-4</span><span class="o">%</span> <span class="ow">or</span>
+                        <span class="n">Convergence</span> <span class="n">mode</span><span class="p">:</span> <span class="n">Convergence</span> <span class="n">mode</span> <span class="k">for</span> <span class="n">MOFAr</span> <span class="s2">"slow"</span><span class="p">,</span>
+                        <span class="s2">"medium"</span> <span class="ow">or</span> <span class="s2">"fast"</span><span class="p">,</span> <span class="n">corresponding</span> <span class="n">to</span> <span class="mf">1e-5</span><span class="o">%</span><span class="p">,</span> <span class="mf">1e-4</span><span class="o">%</span> <span class="ow">or</span>
                         <span class="mf">1e-3</span><span class="o">%</span> <span class="n">deltaELBO</span> <span class="n">change</span><span class="o">.</span>
+      <span class="o">--</span><span class="n">seed</span> <span class="mi">999</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+                        <span class="n">Seed</span> <span class="k">for</span> <span class="n">the</span> <span class="n">MOFA</span> <span class="n">variational</span> <span class="n">initialisation</span><span class="p">,</span> <span class="n">making</span>
+                        <span class="n">the</span> <span class="n">fit</span> <span class="n">reproducible</span>
   <span class="n">PEER_3</span><span class="p">:</span>
-  <span class="n">BiCV_2</span><span class="p">:</span>
-  <span class="n">BiCV_3</span><span class="p">:</span>
-    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">N</span> <span class="mi">0</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
-                        <span class="n">N</span> <span class="n">factors</span><span class="p">,</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">specify</span><span class="p">,</span> <span class="n">calculated</span> <span class="n">based</span> <span class="n">on</span> <span class="n">sample</span>
-                        <span class="n">size</span> <span class="n">according</span> <span class="n">to</span> <span class="n">GTeX</span>
-      <span class="o">--</span><span class="n">iteration</span> <span class="mi">10</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
-                        <span class="n">The</span> <span class="n">number</span> <span class="n">of</span> <span class="n">iteration</span>
 </pre></div>
 </div>
 </section>
@@ -775,25 +749,25 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # The output directory for generated files. MUST BE FULL PATH
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # Merged Covariates File
 parameter: covFile = path
 # Path to the input molecular phenotype data.
 parameter: phenoFile = path
-parameter: name = f&#39;{phenoFile:bnn}.{covFile:bn}&#39;
+parameter: name = f'{phenoFile:bnn}.{covFile:bn}'
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 8
 # Software container option
-parameter: container = &quot;&quot;
-parameter: entrypoint= &quot;&quot;
+parameter: container = ""
+parameter: entrypoint= ""
 </pre></div>
 </div>
 </div>
@@ -803,16 +777,16 @@ parameter: entrypoint= &quot;&quot;
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[*_1(computing residual on merged covariates)]
 parameter: mean_impute_missing = False
 input: phenoFile, covFile
-output: f&#39;{cwd}/{name}.residual.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd}/{name}.residual.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:nn}.stderr', stdout = f'{_output:nn}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
         --step compute_residual \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${phenoFile}&quot; \
-        --covFile &quot;${covFile}&quot; \
-        --output &quot;${_output}&quot; \
-        ${&quot;--mean-impute-missing&quot; if mean_impute_missing else &quot;&quot;} \
+        --cwd "${cwd}" \
+        --phenoFile "${phenoFile}" \
+        --covFile "${covFile}" \
+        --output "${_output}" \
+        ${"--mean-impute-missing" if mean_impute_missing else ""} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -824,18 +798,18 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout 
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[Marchenko_PC_2, PCA_2]
 # Marchenko or Marchenko
-parameter: choose_k_method = &quot;Marchenko&quot;
+parameter: choose_k_method = "Marchenko"
 parameter: N = 0
-output: f&#39;{cwd}/{_input:bnnn}.{choose_k_method}_PC.gz&#39;
-task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd}/{_input:bnnn}.{choose_k_method}_PC.gz'
+task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
         --step Marchenko_PC \
-        --cwd &quot;${cwd}&quot; \
-        --residFile &quot;${_input}&quot; \
-        --covFile &quot;${covFile}&quot; \
-        --choose-k-method &quot;${choose_k_method}&quot; \
-        --output &quot;${_output}&quot; \
+        --cwd "${cwd}" \
+        --residFile "${_input}" \
+        --covFile "${covFile}" \
+        --choose-k-method "${choose_k_method}" \
+        --output "${_output}" \
         --N ${N} \
         --numThreads ${numThreads}
 </pre></div>
@@ -864,24 +838,27 @@ parameter: tol = 0.001
 #parameter: var_tol = 0.00001
 # minimum variance explained criteria to drop factors while training
 parameter: r2_tol = False
-# Convergence mode: Convergence mode for MOFAr &quot;slow&quot;, &quot;medium&quot; or &quot;fast&quot;, corresponding to 1e-5%, 1e-4% or 1e-3% deltaELBO change.
-parameter: convergence_mode = &quot;fast&quot;
+# Convergence mode: Convergence mode for MOFAr "slow", "medium" or "fast", corresponding to 1e-5%, 1e-4% or 1e-3% deltaELBO change.
+parameter: convergence_mode = "fast"
+# Seed for the MOFA variational initialisation, making the fit reproducible
+parameter: seed = 999
 # input is the residual file from the first step
-output: f&#39;{cwd:a}/{_input:bnn}.PEER_MODEL.hd5&#39;
-task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
-    python ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor_peer.py \
-        --resid-file &quot;${_input}&quot; \
-        --model-file &quot;${_output}&quot; \
-        --factors-out &quot;${cwd:a}/${_input:bnn}.PEER.factors.tsv&quot; \
-        --weights-out &quot;${cwd:a}/${_input:bnn}.PEER.weights.tsv&quot; \
-        --variance-out &quot;${cwd:a}/${_input:bnn}.PEER.variance.tsv&quot; \
+output: f'{cwd:a}/{_input:bnn}.PEER_MODEL.hd5'
+task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout', container = container, entrypoint = entrypoint
+    python3 ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor_peer.py \
+        --resid-file "${_input}" \
+        --model-file "${_output}" \
+        --factors-out "${cwd:a}/${_input:bnn}.PEER.factors.tsv" \
+        --weights-out "${cwd:a}/${_input:bnn}.PEER.weights.tsv" \
+        --variance-out "${cwd:a}/${_input:bnn}.PEER.variance.tsv" \
         --num-factor ${N} \
         --iteration ${iteration} \
-        --convergence-mode &quot;${convergence_mode}&quot; \
+        --convergence-mode "${convergence_mode}" \
         --num-threads ${numThreads} \
         --tol ${tol} \
-        --r2-tol ${r2_tol}
+        --r2-tol ${r2_tol} \
+        --seed ${seed}
 </pre></div>
 </div>
 </div>
@@ -889,14 +866,14 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout 
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[PEER_3]
-output: f&#39;{cwd:a}/{_input:bnn}.PEER.gz&#39;, f&#39;{cwd:a}/{_input:bnn}.PEER.diag.pdf&#39;
-task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bnn}.PEER.gz', f'{cwd:a}/{_input:bnn}.PEER.diag.pdf'
+task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
         --step PEER_extract \
-        --cwd &quot;${cwd}&quot; \
-        --modelFile &quot;${_input}&quot; \
-        --covFile &quot;${covFile}&quot; \
+        --cwd "${cwd}" \
+        --modelFile "${_input}" \
+        --covFile "${covFile}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -910,57 +887,6 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <li><p>Examples by PEER is at <a class="reference external" href="https://github.com/PMBio/peer/wiki/Tutorial">github</a></p></li>
 </ul>
 </section>
-</section>
-<section id="id1">
-<h3>BiCV Factor Analysis with APEX<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
-<p>The commands below were constructed and tested against the maintainers’ own reading of the program, without input from the APEX authors, so treat the parameter choices as a starting point rather than as endorsed defaults.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[BiCV_2]
-output: f&#39;{cwd:a}/{_input:bn}.fake.vcf.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;, container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
-        --step BiCV_2 \
-        --cwd &quot;${cwd}&quot; \
-        --residFile &quot;${_input}&quot; \
-        --numThreads ${numThreads}
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[BiCV_3]
-# N factors, if not specify, calculated based on sample size according to GTeX
-parameter: N = 0
-# The number of iteration
-parameter: iteration = 10
-input: output_from(1), output_from(2)
-output: f&#39;{cwd:a}/{_input[0]:bnn}.BiCV.gz&#39;
-task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
-    n_factors_file=&quot;${_output[0]:nn}.n_factors.txt&quot;
-    Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_hidden_factor.R \
-        --step BiCV_nfactors \
-        --residFile &quot;${_input[0]}&quot; \
-        --N ${N} \
-        --output &quot;$n_factors_file&quot;
-    n_factors=$(cat &quot;$n_factors_file&quot;)
-    out_prefix=&quot;${_output[0]:nn}&quot;
-    apex factor \
-        --out &quot;$out_prefix&quot; \
-        --iter ${iteration} \
-        --factors &quot;$n_factors&quot; \
-        --bed &quot;${_input[0]}&quot; \
-        --vcf &quot;${_input[1]}&quot; \
-        --threads ${numThreads} \
-        --cov &quot;${covFile}&quot;
-    mv -f &quot;$out_prefix.cov.gz&quot; &quot;${_output[0]}&quot;
-</pre></div>
-</div>
-</div>
-</div>
 </section>
 </section>
 </section>
@@ -1038,7 +964,6 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout 
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pca-with-marchenko-pastur-recommended">PCA with Marchenko-Pastur (recommended)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#peer-gtex-style">PEER (GTEx-style)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pca-with-buja-eyuboglu-permutation">PCA with Buja &amp; Eyuboglu permutation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bicv-factor-analysis-with-apex">BiCV factor analysis with APEX</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
@@ -1048,7 +973,6 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout 
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reference">Reference</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">BiCV Factor Analysis with APEX</a></li>
 </ul>
 </li>
 </ul>

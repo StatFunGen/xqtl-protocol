@@ -542,7 +542,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#grouped-empirical-bayes-matrix-factorization-gebmf">Grouped Empirical Bayes Matrix Factorization (gEBMF)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#empirical-bayes-matrix-factorization-ebmf">Empirical Bayes Matrix Factorization (EBMF)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missforest">missForest</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missxgboost">missXGBoost</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#knn-k-nearest-neighbours">KNN (k-nearest-neighbours)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#softimpute">SoftImpute</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-imputation">Mean imputation</a></li>
@@ -569,7 +568,7 @@
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>Molecular phenotype matrices are rarely complete: a feature can be unmeasured in a sample for technical reasons, and the models downstream generally require a full matrix. Dropping every feature with a missing entry throws away real signal, so this step imputes the gaps instead.</p>
-<p>Empirical Bayes matrix factorisation is the primary method here, <code class="docutils literal notranslate"><span class="pre">EBMF</span></code> for a single matrix and <code class="docutils literal notranslate"><span class="pre">gEBMF</span></code> when the data are grouped, following <a class="reference external" href="https://doi.org/10.1101/2023.11.29.23299181">Qi et al., medRxiv 2023</a>. Seven alternatives are also provided - missForest, missXGBoost, k-nearest neighbours, SoftImpute, mean imputation and limit-of-detection imputation - so a method can be matched to the assay.</p>
+<p>Empirical Bayes matrix factorisation is the primary method here, <code class="docutils literal notranslate"><span class="pre">EBMF</span></code> for a single matrix and <code class="docutils literal notranslate"><span class="pre">gEBMF</span></code> when the data are grouped, following <a class="reference external" href="https://doi.org/10.1101/2023.11.29.23299181">Qi et al., medRxiv 2023</a>. Six alternatives are also provided - missForest, k-nearest neighbours, SoftImpute, mean imputation and limit-of-detection imputation - so a method can be matched to the assay.</p>
 <p><strong>When to run it.</strong> After phenotype QC and normalisation, before covariate preprocessing and the association scan.</p>
 </section>
 <section id="input">
@@ -603,7 +602,7 @@
 </section>
 <section id="minimal-working-example">
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
-<p>Eight imputation methods plus a filter that drops features too sparse to impute. Pick one method. Two practical notes for the toy data: <code class="docutils literal notranslate"><span class="pre">--num_factor</span></code> for the EBMF and gEBMF factor models must be smaller than the number of samples, which is 60 here, so the examples use <code class="docutils literal notranslate"><span class="pre">--num_factor</span> <span class="pre">30</span></code>; and leave quality control enabled, that is do not pass <code class="docutils literal notranslate"><span class="pre">--no-qc-prior-to-impute</span></code>, so the QC matrix used for the output is available to every method.</p>
+<p>Seven imputation methods plus a filter that drops features too sparse to impute. Pick one method. Two practical notes for the toy data: <code class="docutils literal notranslate"><span class="pre">--num_factor</span></code> for the EBMF and gEBMF factor models must be smaller than the number of samples, which is 60 here, so the examples use <code class="docutils literal notranslate"><span class="pre">--num_factor</span> <span class="pre">30</span></code>; and leave quality control enabled, that is do not pass <code class="docutils literal notranslate"><span class="pre">--no-qc-prior-to-impute</span></code>, so the QC matrix used for the output is available to every method.</p>
 <section id="grouped-empirical-bayes-matrix-factorization-gebmf">
 <h3>Grouped Empirical Bayes Matrix Factorization (gEBMF)<a class="headerlink" href="#grouped-empirical-bayes-matrix-factorization-gebmf" title="Link to this heading">#</a></h3>
 <p>Grouped Empirical Bayes Matrix Factorization. Extends EBMF by fitting factors within row groups (here, by chromosome), so structure shared across molecular features in the same group is borrowed when filling in missing values. This is the recommended default for the protocol.</p>
@@ -647,11 +646,6 @@
 </div>
 </div>
 </div>
-</section>
-<section id="missxgboost">
-<h3>missXGBoost<a class="headerlink" href="#missxgboost" title="Link to this heading">#</a></h3>
-<p>Iterative imputation using gradient-boosted trees (XGBoost) as the per-feature predictor instead of random forests. Often faster and more accurate than missForest on large matrices while still modeling non-linear dependencies between features.</p>
-<p><strong>Timing</strong>: TBD (on toy dataset)</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb missxgboost \
@@ -746,14 +740,13 @@
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
   <span class="n">EBMF</span>
   <span class="n">gEBMF</span>
   <span class="n">missforest</span>
-  <span class="n">missxgboost</span>
   <span class="n">knn</span>
   <span class="n">soft</span>
   <span class="n">mean</span>
@@ -776,13 +769,13 @@
                         <span class="n">Memory</span> <span class="n">expected</span>
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">20</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
-  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
+  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">''</span>
 
 <span class="n">Sections</span>
   <span class="n">EBMF</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">prior</span> <span class="s1">&#39;ebnm_point_laplace&#39;</span>
+      <span class="o">--</span><span class="n">prior</span> <span class="s1">'ebnm_point_laplace'</span>
                         <span class="n">prior</span> <span class="n">distribution</span> <span class="n">of</span> <span class="n">loadings</span> <span class="ow">and</span> <span class="n">factors</span>
       <span class="o">--</span><span class="n">varType</span> <span class="mi">1</span>
       <span class="o">--</span><span class="n">num</span><span class="o">-</span><span class="n">factor</span> <span class="mi">60</span>
@@ -794,7 +787,6 @@
       <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">save</span><span class="o">-</span><span class="n">flash</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">True</span><span class="p">)</span>
       <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">null</span><span class="o">-</span><span class="n">check</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
   <span class="n">missforest</span><span class="p">:</span>
-  <span class="n">missxgboost</span><span class="p">:</span>
   <span class="n">knn</span><span class="p">:</span>
   <span class="n">soft</span><span class="p">:</span>
   <span class="n">mean</span><span class="p">:</span>
@@ -818,9 +810,9 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # Work directory &amp; output directory
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # Molecular phenotype matrix
 parameter: phenoFile = path
 # QC before imputation to remove unqualified features 
@@ -828,14 +820,14 @@ parameter: qc_prior_to_impute = True
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;72h&quot;
+parameter: walltime = "72h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 20
-parameter: container = &quot;&quot;
+parameter: container = ""
 import re
-parameter: entrypoint= &quot;&quot;
+parameter: entrypoint= ""
 </pre></div>
 </div>
 </div>
@@ -844,21 +836,21 @@ parameter: entrypoint= &quot;&quot;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[EBMF]
 # prior distribution of loadings and factors
-parameter: prior = &quot;ebnm_point_laplace&quot;
-parameter: varType = &#39;1&#39;
-parameter: num_factor = &#39;60&#39;
+parameter: prior = "ebnm_point_laplace"
+parameter: varType = '1'
+parameter: num_factor = '60'
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}', cores = numThreads  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step EBMF \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
-        --prior &quot;${prior}&quot; \
-        --varType &quot;${varType}&quot; \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
+        --prior "${prior}" \
+        --varType "${varType}" \
         --num-factor ${num_factor} \
         --numThreads ${numThreads}
 </pre></div>
@@ -868,26 +860,26 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[gEBMF]
-parameter: nCores = &#39;1&#39;
-parameter: num_factor = &#39;60&#39;
-parameter: backfit_iter = &#39;3&#39;
+parameter: nCores = '1'
+parameter: num_factor = '60'
+parameter: backfit_iter = '3'
 parameter: save_flash = True
 parameter: null_check = False
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;, cores = numThreads  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}', cores = numThreads  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step gEBMF \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
         --num-factor ${num_factor} \
         --nCores ${nCores} \
         --backfit-iter ${backfit_iter} \
-        --save-flash ${&quot;TRUE&quot; if save_flash else &quot;FALSE&quot;} \
-        --null-check ${&quot;TRUE&quot; if null_check else &quot;FALSE&quot;} \
+        --save-flash ${"TRUE" if save_flash else "FALSE"} \
+        --null-check ${"TRUE" if null_check else "FALSE"} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -897,15 +889,15 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[missforest]
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step missforest \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -915,14 +907,15 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[missxgboost]
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
-    bash ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.sh missxgboost \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
+    Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
+        --step missxgboost \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -932,15 +925,15 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[knn]
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step knn \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -950,15 +943,15 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[soft]
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step soft \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -968,15 +961,15 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[mean]
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step mean \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -986,15 +979,15 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[lod]
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:bn}.imputed.bed.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;  
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output: f'{cwd:a}/{_input:bn}.imputed.bed.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'  
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step lod \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --qc-prior-to-impute ${&quot;TRUE&quot; if qc_prior_to_impute else &quot;FALSE&quot;} \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
+        --qc-prior-to-impute ${"TRUE" if qc_prior_to_impute else "FALSE"} \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -1005,22 +998,22 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[bed_filter_na]
 parameter: rank_max = 50 # max rank estimated in the per-chr methyl matrix
 parameter: lambda_hyp = 30 # hyper par, indicating the importance of the nuclear norm
-parameter: impute_method = &quot;soft&quot;
+parameter: impute_method = "soft"
 # Tolerance of missingness rows with missing rate larger than tol_missing will be removed,
 # with missing rate smaller than tol_missing will be mean_imputed. Say if we want to keep rows with less than 5% missing, then we use 0.05 as tol_missing.
 parameter: tol_missing = 0.05
 input: phenoFile
-output: f&#39;{cwd:a}/{_input:nn}.filter_na.{impute_method}.bed.gz&#39;
+output: f'{cwd:a}/{_input:nn}.filter_na.{impute_method}.bed.gz'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/phenotype/phenotype_imputation.R \
         --step bed_filter_na \
-        --cwd &quot;${cwd}&quot; \
-        --phenoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
+        --cwd "${cwd}" \
+        --phenoFile "${_input}" \
+        --output "${_output}" \
         --rank-max ${rank_max} \
         --lambda-hyp ${lambda_hyp} \
-        --impute-method &quot;${impute_method}&quot; \
+        --impute-method "${impute_method}" \
         --tol-missing ${tol_missing} \
         --numThreads ${numThreads}
 </pre></div>
@@ -1103,7 +1096,6 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#grouped-empirical-bayes-matrix-factorization-gebmf">Grouped Empirical Bayes Matrix Factorization (gEBMF)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#empirical-bayes-matrix-factorization-ebmf">Empirical Bayes Matrix Factorization (EBMF)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missforest">missForest</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#missxgboost">missXGBoost</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#knn-k-nearest-neighbours">KNN (k-nearest-neighbours)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#softimpute">SoftImpute</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-imputation">Mean imputation</a></li>

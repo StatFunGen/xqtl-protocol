@@ -639,7 +639,7 @@ usage: sos run code/SoS/molecular_phenotypes/QC/apa_impute.ipynb
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -654,7 +654,7 @@ Global Workflow Options:
   --modular-script-dir code/script (as path)
   --thread 8 (as int)
   --job-size 1 (as int)
-  --container &#39;&#39;
+  --container ''
 
 Sections
   APAimpute:
@@ -670,7 +670,7 @@ Sections
       --chrlist VAL VAL ... (as type, required)
   APArename_3:
     Workflow Options:
-      --match &#39;input/covariate/protocol_example.apa_matchtable.txt&#39;
+      --match 'input/covariate/protocol_example.apa_matchtable.txt'
   APArename_4:
 </pre></div>
 </div>
@@ -680,14 +680,14 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: walltime = &#39;40h&#39;
-parameter: mem = &#39;32G&#39;
+parameter: walltime = '40h'
+parameter: mem = '32G'
 parameter: ncore = 16
 parameter: cwd = path
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 parameter: thread = 8
 parameter: job_size = 1
-parameter: container = &#39;&#39;
+parameter: container = ''
 </pre></div>
 </div>
 </div>
@@ -696,13 +696,13 @@ parameter: container = &#39;&#39;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APAimpute]
 parameter: chrlist = list
-input: [f&#39;{cwd}/apa_{x}/Dapars_result_result_temp.{x}.txt&#39; for x in chrlist]
-output: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_{x}.bed&#39; for x in chrlist]
+input: [f'{cwd}/apa_{x}/Dapars_result_result_temp.{x}.txt' for x in chrlist]
+output: [f'{cwd}/apa_{x}/Dapars_result_impute_{x}.bed' for x in chrlist]
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = ncore
-bash: expand= &quot;${ }&quot;
+bash: expand= "${ }"
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/apa_impute.R --step impute \
         --cwd ${cwd} \
-        --chrlist &quot;${chrlist}&quot;
+        --chrlist "${chrlist}"
 </pre></div>
 </div>
 </div>
@@ -712,13 +712,13 @@ bash: expand= &quot;${ }&quot;
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APArename_1]
 parameter: match = path
 parameter: chrlist = list
-input: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_{x}.bed&#39; for x in chrlist], group_by = 1
-output: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed&#39; for x in chrlist], group_by = 1
-bash: expand= &quot;${ }&quot;
+input: [f'{cwd}/apa_{x}/Dapars_result_impute_{x}.bed' for x in chrlist], group_by = 1
+output: [f'{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed' for x in chrlist], group_by = 1
+bash: expand= "${ }"
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/apa_impute.R --step rename \
-        --input &quot;${_input}&quot; \
-        --match &quot;${match}&quot; \
-        --output &quot;${_output}&quot; \
+        --input "${_input}" \
+        --match "${match}" \
+        --output "${_output}" \
         --update-end
 </pre></div>
 </div>
@@ -729,12 +729,12 @@ bash: expand= &quot;${ }&quot;
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APArename_2]
 parameter: match = path
 parameter: chrlist = list
-input: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed&#39; for x in chrlist], group_by = 1
-output: [f&#39;{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed.gz&#39; for x in chrlist], group_by = 1
-bash: expand= &quot;${ }&quot;
+input: [f'{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed' for x in chrlist], group_by = 1
+output: [f'{cwd}/apa_{x}/Dapars_result_impute_renamed_{x}.bed.gz' for x in chrlist], group_by = 1
+bash: expand= "${ }"
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/apa_impute.R --step bgzip_index \
-        --input &quot;${_input}&quot; \
-        --output &quot;${_output}&quot;
+        --input "${_input}" \
+        --output "${_output}"
 </pre></div>
 </div>
 </div>
@@ -742,21 +742,21 @@ bash: expand= &quot;${ }&quot;
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APArename_3]
-parameter: match = &quot;input/covariate/protocol_example.apa_matchtable.txt&quot; #path
-input: f&#39;{cwd}/Dapars_allchrom.bed&#39;
-output: f&#39;{cwd}/Dapars_allchrom_renamed.bed&#39;
-bash: expand= &quot;${ }&quot;
+parameter: match = "input/covariate/protocol_example.apa_matchtable.txt" #path
+input: f'{cwd}/Dapars_allchrom.bed'
+output: f'{cwd}/Dapars_allchrom_renamed.bed'
+bash: expand= "${ }"
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/apa_impute.R --step rename \
-        --input &quot;${_input}&quot; \
-        --match &quot;${match}&quot; \
-        --output &quot;${_output}&quot;
+        --input "${_input}" \
+        --match "${match}" \
+        --output "${_output}"
 
 [APArename_4]
-output: f&#39;{_input}.gz&#39;, f&#39;{_input}.gz.tbi&#39;
-bash: expand = &quot;${ }&quot;
+output: f'{_input}.gz', f'{_input}.gz.tbi'
+bash: expand = "${ }"
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/apa_impute.R --step bgzip_index \
-        --input &quot;${_input}&quot; \
-        --output &quot;${_output[0]}&quot;
+        --input "${_input}" \
+        --output "${_output[0]}"
 </pre></div>
 </div>
 </div>

@@ -802,7 +802,7 @@ INFO: Workflow merge_chrom (ID=w8e5a670551e06660) is executed successfully with 
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -816,7 +816,7 @@ Global Workflow Options:
                         Directory holding the modular analysis scripts
                         (code/script)
   --job-size 1 (as int)
-  --walltime &#39;24:00:00&#39;
+  --walltime '24:00:00'
   --mem 32G
   --numThreads 8 (as int)
 
@@ -838,14 +838,14 @@ Sections
       --chrom 0 (as int)
       --vcf-base VAL (as str, required)
       --vcf-prefix VAL (as str, required)
-      --cohort-id &#39;ADSP.R5.EUR&#39;
+      --cohort-id 'ADSP.R5.EUR'
       --output-dir VAL (as str, required)
       --W-matrix VAL (as str, required)
       --B 10000 (as int)
       --maf-min 0.0005 (as float)
       --mac-min 5 (as int)
       --msng-min 0.05 (as float)
-      --sample-list &#39;&#39;
+      --sample-list ''
   merge_chrom:
     Workflow Options:
       --chrom 0 (as int)
@@ -860,15 +860,15 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: cwd        = path(&quot;output&quot;)
+parameter: cwd        = path("output")
 # Directory holding the modular analysis scripts (code/script)
-parameter: modular_script_dir = path(&#39;code/script&#39;)
+parameter: modular_script_dir = path('code/script')
 parameter: job_size   = 1
-parameter: walltime   = &quot;24:00:00&quot;
-parameter: mem        = &quot;32G&quot;
+parameter: walltime   = "24:00:00"
+parameter: mem        = "32G"
 parameter: numThreads = 8
 
-cwd = path(f&#39;{cwd:a}&#39;)
+cwd = path(f'{cwd:a}')
 </pre></div>
 </div>
 </div>
@@ -884,9 +884,9 @@ parameter: output_dir    = str
 parameter: B         = 10000
 parameter: seed      = 123
 input:  []
-output: f&#39;{output_dir}/W_B{B}.rds&#39;
-task: trunk_workers = 1, trunk_size = 1, walltime = &#39;00:05:00&#39;, mem = &#39;4G&#39;, cores = 1
-bash: expand = &quot;${ }&quot;, stdout = f&#39;{_output:n}.stdout&#39;, stderr = f&#39;{_output:n}.stderr&#39;
+output: f'{output_dir}/W_B{B}.rds'
+task: trunk_workers = 1, trunk_size = 1, walltime = '00:05:00', mem = '4G', cores = 1
+bash: expand = "${ }", stdout = f'{_output:n}.stdout', stderr = f'{_output:n}.stderr'
     Rscript ${modular_script_dir}/reference_data/rss_ld_sketch.R \
         --step generate_w \
         --n-samples ${n_samples} \
@@ -904,45 +904,45 @@ parameter: ld_block_file = str
 parameter: chrom         = 0
 parameter: vcf_base      = str
 parameter: vcf_prefix    = str
-parameter: cohort_id     = &quot;ADSP.R5.EUR&quot;
+parameter: cohort_id     = "ADSP.R5.EUR"
 parameter: output_dir    = str
 parameter: W_matrix      = str
 parameter: B             = 10000
 parameter: maf_min       = 0.0005
 parameter: mac_min       = 5
 parameter: msng_min      = 0.05
-parameter: sample_list   = &quot;&quot;
+parameter: sample_list   = ""
 
 # Build the LD-block list from the BED (chr1..chr22; optional single-chrom filter).
 blocks = []
 with open(ld_block_file) as _fh:
     for _line in _fh:
-        if _line.startswith(&quot;#&quot;) or not _line.strip():
+        if _line.startswith("#") or not _line.strip():
             continue
         _p = _line.split()
         _c = _p[0]
-        if not (_c.startswith(&quot;chr&quot;) and _c[3:].isdigit()):
+        if not (_c.startswith("chr") and _c[3:].isdigit()):
             continue
         _cnum = int(_c[3:])
         if not (1 &lt;= _cnum &lt;= 22):
             continue
         if chrom != 0 and _cnum != chrom:
             continue
-        blocks.append({&quot;chr&quot;: _c, &quot;start&quot;: int(_p[1]), &quot;end&quot;: int(_p[2])})
+        blocks.append({"chr": _c, "start": int(_p[1]), "end": int(_p[2])})
 del _fh
-stop_if(len(blocks) == 0, msg = f&quot;No blocks found for chrom={chrom} in {ld_block_file}&quot;)
+stop_if(len(blocks) == 0, msg = f"No blocks found for chrom={chrom} in {ld_block_file}")
 
-input: for_each = &quot;blocks&quot;
-output: f&#39;{output_dir}/{_blocks[&quot;chr&quot;]}/{_blocks[&quot;chr&quot;]}_{_blocks[&quot;start&quot;]}_{_blocks[&quot;end&quot;]}/{cohort_id}.{_blocks[&quot;chr&quot;]}_{_blocks[&quot;start&quot;]}_{_blocks[&quot;end&quot;]}.dosage.gz&#39;
+input: for_each = "blocks"
+output: f'{output_dir}/{_blocks["chr"]}/{_blocks["chr"]}_{_blocks["start"]}_{_blocks["end"]}/{cohort_id}.{_blocks["chr"]}_{_blocks["start"]}_{_blocks["end"]}.dosage.gz'
 task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads
-bash: expand = &quot;${ }&quot;
+bash: expand = "${ }"
     Rscript ${modular_script_dir}/reference_data/rss_ld_sketch.R \
         --step process_block \
         --vcf-base ${vcf_base} \
         --vcf-prefix ${vcf_prefix} \
-        --chrom ${_blocks[&quot;chr&quot;]} \
-        --block-start ${_blocks[&quot;start&quot;]} \
-        --block-end ${_blocks[&quot;end&quot;]} \
+        --chrom ${_blocks["chr"]} \
+        --block-start ${_blocks["start"]} \
+        --block-end ${_blocks["end"]} \
         --w-matrix ${W_matrix} \
         --cohort-id ${cohort_id} \
         --output-dir ${output_dir} \
@@ -950,7 +950,7 @@ bash: expand = &quot;${ }&quot;
         --maf-min ${maf_min} \
         --mac-min ${mac_min} \
         --msng-min ${msng_min} \
-        --sample-list &quot;${sample_list}&quot;
+        --sample-list "${sample_list}"
 </pre></div>
 </div>
 </div>
@@ -961,122 +961,122 @@ bash: expand = &quot;${ }&quot;
 parameter: chrom      = 0
 parameter: output_dir = str
 parameter: cohort_id  = str
-parameter: plink2_bin = &quot;plink2&quot;
+parameter: plink2_bin = "plink2"
 
 import os, glob
 
 if chrom != 0:
-    chroms = [f&quot;chr{chrom}&quot;]
+    chroms = [f"chr{chrom}"]
 else:
     chroms = sorted(set(
         os.path.basename(_d)
-        for _d in glob.glob(os.path.join(output_dir, &quot;chr*&quot;))
+        for _d in glob.glob(os.path.join(output_dir, "chr*"))
         if os.path.isdir(_d)
     ))
 
-input: for_each = &quot;chroms&quot;
-output: f&quot;{output_dir}/{_chroms}/{cohort_id}.{_chroms}.pgen&quot;
+input: for_each = "chroms"
+output: f"{output_dir}/{_chroms}/{cohort_id}.{_chroms}.pgen"
 task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads
-bash: expand = &quot;$[ ]&quot;
+bash: expand = "$[ ]"
 
     set -euo pipefail
     shopt -s nullglob
 
-    chrom_dir=&quot;$[output_dir]/$[_chroms]&quot;
-    final_prefix=&quot;${chrom_dir}/$[cohort_id].$[_chroms]&quot;
-    merge_list=&quot;${chrom_dir}/$[cohort_id].$[_chroms]_pmerge_list.txt&quot;
+    chrom_dir="$[output_dir]/$[_chroms]"
+    final_prefix="${chrom_dir}/$[cohort_id].$[_chroms]"
+    merge_list="${chrom_dir}/$[cohort_id].$[_chroms]_pmerge_list.txt"
 
     # Step 1: Convert each block dosage.gz -&gt; sorted per-block pgen
-    &gt; &quot;${merge_list}&quot;
-    files=(&quot;${chrom_dir}&quot;/*/*.dosage.gz)
+    &gt; "${merge_list}"
+    files=("${chrom_dir}"/*/*.dosage.gz)
     if [ ${#files[@]} -eq 0 ]; then
-        echo &quot;No dosage files found in ${chrom_dir}&quot; &gt;&amp;2
+        echo "No dosage files found in ${chrom_dir}" &gt;&amp;2
         exit 1
     fi
-    for dosage_gz in &quot;${files[@]}&quot;; do
-        block_dir=$(dirname &quot;${dosage_gz}&quot;)
-        block_tag=$(basename &quot;${block_dir}&quot;)
-        prefix=&quot;${block_dir}/$[cohort_id].${block_tag}_tmp&quot;
-        map_file=&quot;${block_dir}/$[cohort_id].${block_tag}.map&quot;
-        psam_file=&quot;${block_dir}/$[cohort_id].${block_tag}.psam&quot;
-        meta_file=&quot;${block_dir}/$[cohort_id].${block_tag}.meta&quot;
+    for dosage_gz in "${files[@]}"; do
+        block_dir=$(dirname "${dosage_gz}")
+        block_tag=$(basename "${block_dir}")
+        prefix="${block_dir}/$[cohort_id].${block_tag}_tmp"
+        map_file="${block_dir}/$[cohort_id].${block_tag}.map"
+        psam_file="${block_dir}/$[cohort_id].${block_tag}.psam"
+        meta_file="${block_dir}/$[cohort_id].${block_tag}.meta"
 
-        B=$(grep &quot;^B=&quot; &quot;${meta_file}&quot; | cut -d= -f2)
-        printf &#39;#FID\tIID\n&#39; &gt; &quot;${psam_file}&quot;
+        B=$(grep "^B=" "${meta_file}" | cut -d= -f2)
+        printf '#FID\tIID\n' &gt; "${psam_file}"
         for i in $(seq 1 ${B}); do
-            printf &#39;S%d\tS%d\n&#39; ${i} ${i} &gt;&gt; &quot;${psam_file}&quot;
+            printf 'S%d\tS%d\n' ${i} ${i} &gt;&gt; "${psam_file}"
         done
 
         $[plink2_bin] \
-            --import-dosage &quot;${dosage_gz}&quot; format=1 noheader \
-            --psam &quot;${psam_file}&quot; \
-            --map  &quot;${map_file}&quot; \
+            --import-dosage "${dosage_gz}" format=1 noheader \
+            --psam "${psam_file}" \
+            --map  "${map_file}" \
             --make-pgen \
-            --out  &quot;${prefix}_unsorted&quot; \
+            --out  "${prefix}_unsorted" \
             --silent
 
         $[plink2_bin] \
-            --pfile &quot;${prefix}_unsorted&quot; \
+            --pfile "${prefix}_unsorted" \
             --make-pgen \
             --sort-vars \
-            --out  &quot;${prefix}&quot; \
+            --out  "${prefix}" \
             --silent
 
-        rm -f &quot;${prefix}_unsorted.pgen&quot; &quot;${prefix}_unsorted.pvar&quot; &quot;${prefix}_unsorted.psam&quot;
-        echo &quot;${prefix}&quot; &gt;&gt; &quot;${merge_list}&quot;
+        rm -f "${prefix}_unsorted.pgen" "${prefix}_unsorted.pvar" "${prefix}_unsorted.psam"
+        echo "${prefix}" &gt;&gt; "${merge_list}"
     done
 
     # Step 2: Merge all per-block pgens -&gt; one per-chrom pgen
     $[plink2_bin] \
-        --pmerge-list &quot;${merge_list}&quot; pfile \
+        --pmerge-list "${merge_list}" pfile \
         --make-pgen \
         --sort-vars \
-        --out  &quot;${final_prefix}&quot;
+        --out  "${final_prefix}"
 
     # Remove PLINK merge intermediates immediately after merge
-    rm -f &quot;${final_prefix}-merge.pgen&quot; &quot;${final_prefix}-merge.pvar&quot; &quot;${final_prefix}-merge.psam&quot;
+    rm -f "${final_prefix}-merge.pgen" "${final_prefix}-merge.pvar" "${final_prefix}-merge.psam"
 
     # Step 3: Concatenate .afreq
     first=1
-    for f in &quot;${chrom_dir}&quot;/*/*.afreq; do
-        if [ &quot;${first}&quot; -eq 1 ]; then
-            cat &quot;${f}&quot; &gt; &quot;${final_prefix}.afreq&quot;
+    for f in "${chrom_dir}"/*/*.afreq; do
+        if [ "${first}" -eq 1 ]; then
+            cat "${f}" &gt; "${final_prefix}.afreq"
             first=0
         else
-            tail -n +2 &quot;${f}&quot; &gt;&gt; &quot;${final_prefix}.afreq&quot;
+            tail -n +2 "${f}" &gt;&gt; "${final_prefix}.afreq"
         fi
     done
 
-R: expand = &quot;$[ ]&quot;
+R: expand = "$[ ]"
 
-    meta_files &lt;- list.files(&quot;$[output_dir]/$[_chroms]&quot;,
-                             pattern = &quot;[.]meta$&quot;, recursive = TRUE,
+    meta_files &lt;- list.files("$[output_dir]/$[_chroms]",
+                             pattern = "[.]meta$", recursive = TRUE,
                              full.names = TRUE)
     if (length(meta_files) &gt; 0) {
-      fields &lt;- c(&quot;n_total&quot;, &quot;n_passed&quot;, &quot;n_multiallelic&quot;, &quot;n_monomorphic&quot;,
-                  &quot;n_all_na&quot;, &quot;n_high_msng&quot;, &quot;n_low_maf&quot;, &quot;n_low_mac&quot;)
+      fields &lt;- c("n_total", "n_passed", "n_multiallelic", "n_monomorphic",
+                  "n_all_na", "n_high_msng", "n_low_maf", "n_low_mac")
       stats &lt;- do.call(rbind, lapply(meta_files, function(f) {
-        lines &lt;- grep(&quot;^n_&quot;, readLines(f), value = TRUE)
-        kv &lt;- strsplit(lines, &quot;=&quot;)
+        lines &lt;- grep("^n_", readLines(f), value = TRUE)
+        kv &lt;- strsplit(lines, "=")
         vals &lt;- setNames(as.integer(sapply(kv, `[`, 2)), sapply(kv, `[`, 1))
         as.data.frame(as.list(vals[fields]))
       }))
       totals &lt;- colSums(stats, na.rm = TRUE)
       summary &lt;- data.frame(t(totals))
       summary$pct_dropped &lt;- round(100 * (1 - summary$n_passed / summary$n_total), 1)
-      cat(&quot;\n=== Filter Summary for $[_chroms] ===\n&quot;)
+      cat("\n=== Filter Summary for $[_chroms] ===\n")
       print(data.frame(value = unlist(summary), row.names = names(summary)))
     }
 
-bash: expand = &quot;$[ ]&quot;
+bash: expand = "$[ ]"
 
     # Step 5: Cleanup block intermediates
-    chrom_dir=&quot;$[output_dir]/$[_chroms]&quot;
-    final_prefix=&quot;${chrom_dir}/$[cohort_id].$[_chroms]&quot;
+    chrom_dir="$[output_dir]/$[_chroms]"
+    final_prefix="${chrom_dir}/$[cohort_id].$[_chroms]"
 
-    rm -f &quot;${final_prefix}_pmerge_list.txt&quot;
-    for block_dir in &quot;${chrom_dir}&quot;/*/; do
-        rm -rf &quot;${block_dir}&quot;
+    rm -f "${final_prefix}_pmerge_list.txt"
+    for block_dir in "${chrom_dir}"/*/; do
+        rm -rf "${block_dir}"
     done
 </pre></div>
 </div>

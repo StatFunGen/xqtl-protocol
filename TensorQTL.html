@@ -639,11 +639,11 @@ library(genio)
 # Example phenotype file (MWE: protocol_example, chr22)
 # ------------------------------------------------------------------
 # A text file listing one phenotype .bed.gz per chromosome.
-pheno_path &lt;- fread(&quot;output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt&quot;)
+pheno_path &lt;- fread("output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt")
 head(pheno_path)
 
 # One chromosome of phenotype data in BED-like format (.bed.gz).
-pheno &lt;- fread(&quot;output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.chr22.bed.gz&quot;)
+pheno &lt;- fread("output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.chr22.bed.gz")
 pheno[1:5, 1:8]
 </pre></div>
 </div>
@@ -684,11 +684,11 @@ pheno[1:5, 1:8]
 # Example genotype file (MWE: protocol_example)
 # ------------------------------------------------------------------
 # A text file with two columns: chromosome ID and PLINK prefix path.
-geno_path &lt;- fread(file.path(&quot;output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt&quot;))
+geno_path &lt;- fread(file.path("output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt"))
 head(geno_path)
 
 # Read the merged PLINK set (.bed/.bim/.fam) for the toy sample.
-plink_data &lt;- read_plink(&quot;output/plink/protocol_example.genotype.merged.plink_qc&quot;)
+plink_data &lt;- read_plink("output/plink/protocol_example.genotype.merged.plink_qc")
 genotypes &lt;- plink_data$X
 genotypes[1:5, 1:5]
 </pre></div>
@@ -740,7 +740,7 @@ Reading: output/plink/protocol_example.genotype.merged.plink_qc.bed
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># ------------------------------------------------------------------
 # Example covariates file (MWE: protocol_example)
 # ------------------------------------------------------------------
-cov &lt;- fread(&quot;output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz&quot;)
+cov &lt;- fread("output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz")
 cov[, 1:5]
 dim(cov)
 </pre></div>
@@ -802,7 +802,7 @@ dim(cov)
 # ------------------------------------------------------------------
 # Gene-level cis-window (start/end) defining the SNP search region per gene.
 # Omit to use --window for a symmetric +/-1Mb window around each gene TSS.
-window &lt;- fread(&quot;input/reference_data/TAD/TADB_enhanced_cis.bed&quot;)
+window &lt;- fread("input/reference_data/TAD/TADB_enhanced_cis.bed")
 head(window)
 </pre></div>
 </div>
@@ -835,19 +835,19 @@ head(window)
 # ------------------------------------------------------------------
 # Provide an interaction term as a separate file via --interaction
 # when it is not already part of the covariate file.
-int &lt;- fread(&quot;input/ROSMAP_interaction_example.tsv&quot;)
+int &lt;- fread("input/ROSMAP_interaction_example.tsv")
 head(int)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span> <span class="ow">in</span> <span class="n">fread</span><span class="p">(</span><span class="s2">&quot;input/ROSMAP_interaction_example.tsv&quot;</span><span class="p">):</span> <span class="n">File</span> <span class="s1">&#39;input/ROSMAP_interaction_example.tsv&#39;</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">exist</span> <span class="ow">or</span> <span class="ow">is</span> <span class="n">non</span><span class="o">-</span><span class="n">readable</span><span class="o">.</span> <span class="n">getwd</span><span class="p">()</span><span class="o">==</span><span class="s1">&#39;/mnt/lustre/lab/gwang/home/rl3328/protocol_testing/xqtl-protocol_archived&#39;</span>
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="n">Error</span> <span class="ow">in</span> <span class="n">fread</span><span class="p">(</span><span class="s2">"input/ROSMAP_interaction_example.tsv"</span><span class="p">):</span> <span class="n">File</span> <span class="s1">'input/ROSMAP_interaction_example.tsv'</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">exist</span> <span class="ow">or</span> <span class="ow">is</span> <span class="n">non</span><span class="o">-</span><span class="n">readable</span><span class="o">.</span> <span class="n">getwd</span><span class="p">()</span><span class="o">==</span><span class="s1">'/mnt/lustre/lab/gwang/home/rl3328/protocol_testing/xqtl-protocol_archived'</span>
 <span class="ne">Traceback</span>:
 
-<span class="mi">1</span><span class="o">.</span> <span class="n">stopf</span><span class="p">(</span><span class="s2">&quot;File &#39;</span><span class="si">%s</span><span class="s2">&#39; does not exist or is non-readable. getwd()==&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> 
+<span class="mi">1</span><span class="o">.</span> <span class="n">stopf</span><span class="p">(</span><span class="s2">"File '</span><span class="si">%s</span><span class="s2">' does not exist or is non-readable. getwd()=='</span><span class="si">%s</span><span class="s2">'"</span><span class="p">,</span> 
  <span class="o">.</span>     <span class="n">file</span><span class="p">,</span> <span class="n">getwd</span><span class="p">())</span>
 <span class="mi">2</span><span class="o">.</span> <span class="n">raise_condition</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="n">gettextf</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span><span class="p">),</span> <span class="n">c</span><span class="p">(</span><span class="n">class</span><span class="p">,</span> 
- <span class="o">.</span>     <span class="s2">&quot;simpleError&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;condition&quot;</span><span class="p">))</span>
+ <span class="o">.</span>     <span class="s2">"simpleError"</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">,</span> <span class="s2">"condition"</span><span class="p">))</span>
 <span class="mi">3</span><span class="o">.</span> <span class="n">signal</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1062,7 +1062,7 @@ $<span class="math notranslate nohighlight">\(
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -1091,7 +1091,7 @@ Global Workflow Options:
   --region-list-phenotype-column 4 (as int)
   --keep-sample . (as path)
                         Set list of sample to be keep
-  --interaction &#39;&#39;
+  --interaction ''
                         FIXME: please document
   --customized-cis-windows . (as path)
                         An optional list documenting the custom cis window for
@@ -1108,7 +1108,7 @@ Global Workflow Options:
                         gene_name in the region
   --MAC 0 (as int)
                         Minor allele count cutoff
-  --trans-geno-chromosome &#39;&#39;
+  --trans-geno-chromosome ''
                         Specify genotype chromosome for trans analysis (e.g.
                         --trans-geno-chromosome 5) When set, trans step loads
                         this genotype chrom instead of the one from input_files
@@ -1123,20 +1123,20 @@ Global Workflow Options:
                         For cluster jobs, number commands to run per job
   --walltime 12h
   --mem 16G
-  --container &#39;&#39;
+  --container ''
                         Container option for software to run the analysis:
                         docker or singularity
-  --entrypoint &#39;&#39;
+  --entrypoint ''
   --maf-threshold  MAC/(2.0*N)
 
                         Minor allele frequency cutoff. It will overwrite minor
                         allele cutoff. You may consider setting it to higher for
                         interaction analysis if you have statistical power
                         concerns
-  --pvalue-cutoff &#39;5e-8&#39;
+  --pvalue-cutoff '5e-8'
                         Filtering significant trans associations (for trans_2
                         workflow)
-  --qvalue-cutoff &#39;&#39;
+  --qvalue-cutoff ''
 
 Sections
   cis_1:
@@ -1167,9 +1167,9 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # Path to the work directory of the analysis.
-parameter: cwd = path(&#39;output&#39;)
+parameter: cwd = path('output')
 # Phenotype file, or a list of phenotype per region.
 parameter: phenotype_file = path
 # A genotype file in PLINK binary format (bed/bam/fam) format, or a list of genotype per chrom
@@ -1186,7 +1186,7 @@ parameter: region_list_phenotype_column = 4
 # Set list of sample to be keep
 parameter: keep_sample = path()
 # FIXME: please document
-parameter: interaction = &quot;&quot;
+parameter: interaction = ""
 
 # An optional list documenting the custom cis window for each region to analyze, with four column, chr, start, end, region ID (eg gene ID).
 # If this list is not provided, the default `window` parameter (see below) will be used.
@@ -1202,7 +1202,7 @@ parameter: chromosome = []
 parameter: MAC = 0
 # Specify genotype chromosome for trans analysis (e.g. --trans-geno-chromosome 5)
 # When set, trans step loads this genotype chrom instead of the one from input_files
-parameter: trans_geno_chromosome = &quot;&quot;
+parameter: trans_geno_chromosome = ""
 
 # Specify the cis window for the up and downstream radius to analyze around the region of interest in units of bp
 # This parameter will be set to zero if `customized_cis_windows` is provided.
@@ -1212,32 +1212,32 @@ parameter: window = 1000000
 parameter: numThreads = 8
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
-parameter: walltime = &#39;12h&#39;
-parameter: mem = &#39;16G&#39;
+parameter: walltime = '12h'
+parameter: mem = '16G'
 # Container option for software to run the analysis: docker or singularity
-parameter: container = &#39;&#39;
-parameter: entrypoint = &#39;&#39;
+parameter: container = ''
+parameter: entrypoint = ''
 import re
 
 # Use the header of the covariate file to decide the sample size
 import pandas as pd
-N = len(pd.read_csv(covariate_file, sep = &quot;\t&quot;,nrows = 1).columns) - 1
+N = len(pd.read_csv(covariate_file, sep = "\t",nrows = 1).columns) - 1
 
 # Minor allele frequency cutoff. It will overwrite minor allele cutoff.
 # You may consider setting it to higher for interaction analysis if you have statistical power concerns
 parameter: maf_threshold = MAC/(2.0*N)
 
 # Filtering significant trans associations (for trans_2 workflow)
-parameter: pvalue_cutoff = &quot;5e-8&quot;
-parameter: qvalue_cutoff = &quot;&quot;
+parameter: pvalue_cutoff = "5e-8"
+parameter: qvalue_cutoff = ""
 
 
 import os
 import pandas as pd
 
 def adapt_file_path(file_path, reference_file):
-    &quot;&quot;&quot;
-    Adapt a single file path based on its existence and a reference file&#39;s path.
+    """
+    Adapt a single file path based on its existence and a reference file's path.
 
     Args:
     - file_path (str): The file path to adapt.
@@ -1248,7 +1248,7 @@ def adapt_file_path(file_path, reference_file):
 
     Raises:
     - FileNotFoundError: If no valid file path is found.
-    &quot;&quot;&quot;
+    """
     reference_path = os.path.dirname(reference_file)
 
     # Check if the file exists
@@ -1260,24 +1260,24 @@ def adapt_file_path(file_path, reference_file):
     if os.path.isfile(file_name):
         return file_name
 
-    # Check file name in reference file&#39;s directory
+    # Check file name in reference file's directory
     file_in_ref_dir = os.path.join(reference_path, file_name)
     if os.path.isfile(file_in_ref_dir):
         return file_in_ref_dir
 
-    # Check original file path prefixed with reference file&#39;s directory
+    # Check original file path prefixed with reference file's directory
     file_prefixed = os.path.join(reference_path, file_path)
     if os.path.isfile(file_prefixed):
         return file_prefixed
 
     # If all checks fail, raise an error
-    raise FileNotFoundError(f&quot;No valid path found for file: {file_path}&quot;)
+    raise FileNotFoundError(f"No valid path found for file: {file_path}")
 
 def adapt_file_path_all(df, column_name, reference_file):
     return df[column_name].apply(lambda x: adapt_file_path(x, reference_file))
 
 
-if (str(genotype_file).endswith(&quot;bed&quot;) or str(genotype_file).endswith(&quot;pgen&quot;)) and str(phenotype_file).endswith(&quot;bed.gz&quot;):
+if (str(genotype_file).endswith("bed") or str(genotype_file).endswith("pgen")) and str(phenotype_file).endswith("bed.gz"):
     input_files = [[phenotype_file, genotype_file]]
     if len(chromosome) &gt; 0:
         input_chroms = [int(x) for x in chromosome]
@@ -1286,29 +1286,29 @@ if (str(genotype_file).endswith(&quot;bed&quot;) or str(genotype_file).endswith(
 else:
     import pandas as pd
     import os
-    molecular_pheno_files = pd.read_csv(phenotype_file, sep = &quot;\t&quot;)
+    molecular_pheno_files = pd.read_csv(phenotype_file, sep = "\t")
     
-    if &quot;#dir&quot; in molecular_pheno_files.columns and &quot;#chr&quot; not in molecular_pheno_files.columns:
-        molecular_pheno_files = molecular_pheno_files.rename(columns={&quot;#dir&quot;: &quot;path&quot;})
-        if &quot;#id&quot; in molecular_pheno_files.columns:
-            molecular_pheno_files = molecular_pheno_files.rename(columns={&quot;#id&quot;: &quot;#chr&quot;})
+    if "#dir" in molecular_pheno_files.columns and "#chr" not in molecular_pheno_files.columns:
+        molecular_pheno_files = molecular_pheno_files.rename(columns={"#dir": "path"})
+        if "#id" in molecular_pheno_files.columns:
+            molecular_pheno_files = molecular_pheno_files.rename(columns={"#id": "#chr"})
     
-    if &quot;#chr&quot; in molecular_pheno_files.columns:
-        molecular_pheno_files = molecular_pheno_files.groupby([&#39;#chr&#39;,&#39;path&#39;]).size().reset_index(name=&#39;count&#39;).drop(&quot;count&quot;,axis = 1).rename(columns = {&quot;#chr&quot;:&quot;#id&quot;})
-    genotype_files = pd.read_csv(genotype_file,sep = &quot;\t&quot;)
-    genotype_files[&quot;#id&quot;] = [x.replace(&quot;chr&quot;,&quot;&quot;) for x in genotype_files[&quot;#id&quot;].astype(str)] # e.g. remove chr1 to 1
-    genotype_files[&quot;#path&quot;] = genotype_files[&quot;#path&quot;].apply(lambda x: adapt_file_path(x, genotype_file))
-    molecular_pheno_files[&quot;#id&quot;] = [x.replace(&quot;chr&quot;,&quot;&quot;) for x in molecular_pheno_files[&quot;#id&quot;].astype(str)]
-    input_files = molecular_pheno_files.merge(genotype_files, on = &quot;#id&quot;)
+    if "#chr" in molecular_pheno_files.columns:
+        molecular_pheno_files = molecular_pheno_files.groupby(['#chr','path']).size().reset_index(name='count').drop("count",axis = 1).rename(columns = {"#chr":"#id"})
+    genotype_files = pd.read_csv(genotype_file,sep = "\t")
+    genotype_files["#id"] = [x.replace("chr","") for x in genotype_files["#id"].astype(str)] # e.g. remove chr1 to 1
+    genotype_files["#path"] = genotype_files["#path"].apply(lambda x: adapt_file_path(x, genotype_file))
+    molecular_pheno_files["#id"] = [x.replace("chr","") for x in molecular_pheno_files["#id"].astype(str)]
+    input_files = molecular_pheno_files.merge(genotype_files, on = "#id")
     
     # Only keep chromosome specified in --chromosome
     if len(chromosome) &gt; 0:
-        input_files = input_files[input_files[&#39;#id&#39;].isin(chromosome)]
+        input_files = input_files[input_files['#id'].isin(chromosome)]
     input_files = input_files.values.tolist()
     input_chroms = [x[0] for x in input_files]
     input_files = [x[1:] for x in input_files]
     if len(name) == 0:
-        name = f&#39;{path(input_files[0][0]):bnn}&#39; if len(input_files) == 1 else f&#39;{path(input_files[0][0]):bnnn}&#39;
+        name = f'{path(input_files[0][0]):bnn}' if len(input_files) == 1 else f'{path(input_files[0][0]):bnnn}'
 </pre></div>
 </div>
 </div>
@@ -1327,43 +1327,43 @@ parameter: permutation = True
 # Extract interaction name
 var_interaction = interaction
 if os.path.isfile(interaction):
-    interaction_s = pd.read_csv(interaction, sep=&#39;\t&#39;, index_col=0)
+    interaction_s = pd.read_csv(interaction, sep='\t', index_col=0)
     var_interaction = interaction_s.columns[0] # interaction name
 test_regional_association = permutation and len(var_interaction) == 0
 
-input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
-output_files = dict([(&quot;parquet&quot;, f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl_pairs.{&quot;&quot; if input_chroms[_index] == 0 else input_chroms[_index]}.parquet&#39;), # This convention is necessary to match the pattern of map_norminal output
-                     (&quot;nominal&quot;, f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_chr%s&quot; % input_chroms[_index]}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl.pairs.tsv.gz&#39;)])
+input: input_files, group_by = len(input_files[0]), group_with = "input_chroms"
+output_files = dict([("parquet", f'{cwd:a}/{_input[0]:bnn}{"_%s" % var_interaction if interaction else ""}.cis_qtl_pairs.{"" if input_chroms[_index] == 0 else input_chroms[_index]}.parquet'), # This convention is necessary to match the pattern of map_norminal output
+                     ("nominal", f'{cwd:a}/{_input[0]:bnn}{"" if input_chroms[_index] == 0 else "_chr%s" % input_chroms[_index]}{"_%s" % var_interaction if interaction else ""}.cis_qtl.pairs.tsv.gz')])
 if test_regional_association:
-    output_files[&quot;regional&quot;] = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;&quot; if input_chroms[_index] == 0 else &quot;_chr%s&quot; % input_chroms[_index]}{&quot;_%s&quot; % var_interaction if interaction else &quot;&quot;}.cis_qtl.regional.tsv.gz&#39;
+    output_files["regional"] = f'{cwd:a}/{_input[0]:bnn}{"" if input_chroms[_index] == 0 else "_chr%s" % input_chroms[_index]}{"_%s" % var_interaction if interaction else ""}.cis_qtl.regional.tsv.gz'
 output: output_files
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[&quot;nominal&quot;]:bnnn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn}.stderr&#39;, stdout = f&#39;{_output[&quot;nominal&quot;]:nnn}.stdout&#39;, container = container, entrypoint = entrypoint
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output["nominal"]:bnnn}'
+bash: expand= "${ }", stderr = f'{_output["nominal"]:nnn}.stderr', stdout = f'{_output["nominal"]:nnn}.stdout', container = container, entrypoint = entrypoint
     python3 ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.py \
         --step cis \
-        --cwd &quot;${cwd}&quot; \
-        --genotype-file &quot;${_input[1]}&quot; \
-        --phenotype-file &quot;${_input[0]}&quot; \
-        --covariate-file &quot;${covariate_file}&quot; \
-        --interaction &quot;${interaction}&quot; \
+        --cwd "${cwd}" \
+        --genotype-file "${_input[1]}" \
+        --phenotype-file "${_input[0]}" \
+        --covariate-file "${covariate_file}" \
+        --interaction "${interaction}" \
         --chromosome ${input_chroms[_index]} \
         --window ${window} \
         --MAC ${MAC} \
         --maf-threshold ${maf_threshold} \
-        --pvalue-cutoff &quot;${pvalue_cutoff}&quot; \
-        --qvalue-cutoff &quot;${qvalue_cutoff}&quot; \
+        --pvalue-cutoff "${pvalue_cutoff}" \
+        --qvalue-cutoff "${qvalue_cutoff}" \
         --permutation ${permutation} \
-        ${&quot;--skip-nominal-if-exist&quot; if skip_nominal_if_exist else &quot;&quot;} \
-        ${&quot;--covariate-pattern &quot; + &quot; &quot;.join([str(x) for x in covariate_pattern]) if len(covariate_pattern) else &quot;&quot;} \
-        ${&quot;--region-list &quot; + str(region_list) + &quot; --region-list-phenotype-column &quot; + str(region_list_phenotype_column) if region_list.is_file() else &quot;&quot;} \
-        ${&quot;--keep-sample &quot; + str(keep_sample) if keep_sample.is_file() else &quot;&quot;} \
-        ${&quot;--customized-cis-windows &quot; + str(customized_cis_windows) if customized_cis_windows.is_file() else &quot;&quot;} \
-        ${&quot;--phenotype-group &quot; + str(phenotype_group) if phenotype_group.is_file() else &quot;&quot;} \
+        ${"--skip-nominal-if-exist" if skip_nominal_if_exist else ""} \
+        ${"--covariate-pattern " + " ".join([str(x) for x in covariate_pattern]) if len(covariate_pattern) else ""} \
+        ${"--region-list " + str(region_list) + " --region-list-phenotype-column " + str(region_list_phenotype_column) if region_list.is_file() else ""} \
+        ${"--keep-sample " + str(keep_sample) if keep_sample.is_file() else ""} \
+        ${"--customized-cis-windows " + str(customized_cis_windows) if customized_cis_windows.is_file() else ""} \
+        ${"--phenotype-group " + str(phenotype_group) if phenotype_group.is_file() else ""} \
         --numThreads ${numThreads}
 
     # Add per-gene Storey q-values to the raw nominal table (in place; re-bgzip+tabix)
     Rscript ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.R \
-        nominal_qvalues &quot;${_output[&#39;nominal&#39;]}&quot; &quot;${interaction}&quot;
+        nominal_qvalues "${_output['nominal']}" "${interaction}"
 </pre></div>
 </div>
 </div>
@@ -1371,16 +1371,16 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[&quot;nominal&quot;]:nnn
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[cis_2]
-done_if(&quot;regional&quot; not in _input.labels)
-input: group_by = &quot;all&quot;
-output_file_prefix = name if len(_input[&quot;nominal&quot;]) &gt; 1 else f&#39;{_input[&quot;nominal&quot;][0]:bnnnn}&#39;
-output: f&#39;{cwd}/{output_file_prefix}.cis_qtl_regional_significance.tsv.gz&#39;,
-        f&#39;{cwd}/{output_file_prefix}.cis_qtl_regional_significance.summary.txt&#39;
-input_files = [str(x) for x in _input[&quot;regional&quot;]]
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+done_if("regional" not in _input.labels)
+input: group_by = "all"
+output_file_prefix = name if len(_input["nominal"]) &gt; 1 else f'{_input["nominal"][0]:bnnnn}'
+output: f'{cwd}/{output_file_prefix}.cis_qtl_regional_significance.tsv.gz',
+        f'{cwd}/{output_file_prefix}.cis_qtl_regional_significance.summary.txt'
+input_files = [str(x) for x in _input["regional"]]
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.R \
-        regional_postprocess &quot;${_output[0]}&quot; &quot;${_output[1]}&quot; ${&quot; &quot;.join(input_files)}
+        regional_postprocess "${_output[0]}" "${_output[1]}" ${" ".join(input_files)}
 </pre></div>
 </div>
 </div>
@@ -1395,37 +1395,37 @@ parameter: pval_threshold = 1.0
 parameter: permutation = False
 parameter: pval = 0.0
 
-input: input_files, group_by = len(input_files[0]), group_with = &quot;input_chroms&quot;
-output: nominal = f&#39;{cwd:a}/{_input[0]:bnn}{&quot;_chr%s&quot; % input_chroms[_index] if input_chroms[_index] != 0 else &quot;&quot;}{&quot;_geno_chr%s&quot; % trans_geno_chromosome if trans_geno_chromosome else &quot;&quot;}.trans_qtl{&quot;_p_%.0e&quot; % pval if pval &gt; 0.0 else &quot;&quot;}.pairs.tsv.gz&#39;
+input: input_files, group_by = len(input_files[0]), group_with = "input_chroms"
+output: nominal = f'{cwd:a}/{_input[0]:bnn}{"_chr%s" % input_chroms[_index] if input_chroms[_index] != 0 else ""}{"_geno_chr%s" % trans_geno_chromosome if trans_geno_chromosome else ""}.trans_qtl{"_p_%.0e" % pval if pval &gt; 0.0 else ""}.pairs.tsv.gz'
 
 trans_genotype_file = genotype_file if trans_geno_chromosome else _input[1]
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container, entrypoint = entrypoint
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout', container = container, entrypoint = entrypoint
     python3 ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.py \
         --step trans \
-        --cwd &quot;${cwd}&quot; \
-        --genotype-file &quot;${trans_genotype_file}&quot; \
-        --phenotype-file &quot;${_input[0]}&quot; \
-        --covariate-file &quot;${covariate_file}&quot; \
-        --output &quot;${_output[&#39;nominal&#39;]}&quot; \
-        --trans-geno-chromosome &quot;${trans_geno_chromosome}&quot; \
+        --cwd "${cwd}" \
+        --genotype-file "${trans_genotype_file}" \
+        --phenotype-file "${_input[0]}" \
+        --covariate-file "${covariate_file}" \
+        --output "${_output['nominal']}" \
+        --trans-geno-chromosome "${trans_geno_chromosome}" \
         --window ${window} \
         --MAC ${MAC} \
         --maf-threshold ${maf_threshold} \
         --batch-size ${batch_size} \
         --pval-threshold ${pval_threshold} \
         --pval ${pval} \
-        --pvalue-cutoff &quot;${pvalue_cutoff}&quot; \
-        --qvalue-cutoff &quot;${qvalue_cutoff}&quot; \
-        ${&quot;--covariate-pattern &quot; + &quot; &quot;.join([str(x) for x in covariate_pattern]) if len(covariate_pattern) else &quot;&quot;} \
-        ${&quot;--region-list &quot; + str(region_list) + &quot; --region-list-phenotype-column &quot; + str(region_list_phenotype_column) if region_list.is_file() else &quot;&quot;} \
-        ${&quot;--keep-sample &quot; + str(keep_sample) if keep_sample.is_file() else &quot;&quot;} \
-        ${&quot;--customized-cis-windows &quot; + str(customized_cis_windows) if customized_cis_windows.is_file() else &quot;&quot;} \
+        --pvalue-cutoff "${pvalue_cutoff}" \
+        --qvalue-cutoff "${qvalue_cutoff}" \
+        ${"--covariate-pattern " + " ".join([str(x) for x in covariate_pattern]) if len(covariate_pattern) else ""} \
+        ${"--region-list " + str(region_list) + " --region-list-phenotype-column " + str(region_list_phenotype_column) if region_list.is_file() else ""} \
+        ${"--keep-sample " + str(keep_sample) if keep_sample.is_file() else ""} \
+        ${"--customized-cis-windows " + str(customized_cis_windows) if customized_cis_windows.is_file() else ""} \
         --numThreads ${numThreads}
 
     # Add global Storey q-values to the raw trans table (in place; re-bgzip+tabix)
     Rscript ${modular_script_dir}/association_scan/TensorQTL/TensorQTL.R \
-        trans_qvalues &quot;${_output[&#39;nominal&#39;]}&quot;
+        trans_qvalues "${_output['nominal']}"
 </pre></div>
 </div>
 </div>

@@ -687,7 +687,7 @@
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -698,7 +698,7 @@
 <span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
   <span class="o">--</span><span class="n">cwd</span> <span class="n">output</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
                         <span class="n">working</span> <span class="n">directory</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
                         <span class="n">Software</span> <span class="n">container</span> <span class="n">option</span>
 
 <span class="n">Sections</span>
@@ -727,9 +727,9 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # working directory
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # Software container option
-parameter: container = &quot;&quot;
+parameter: container = ""
 </pre></div>
 </div>
 </div>
@@ -739,7 +739,7 @@ parameter: container = &quot;&quot;
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># make configuration file for GREGOR
 [gregor_conf, gregor_1]
 parameter: gregor_db = path
-parameter: pop = &#39;EUR&#39;
+parameter: pop = 'EUR'
 parameter: index_snp_file = path
 parameter: bed_file_index = path
 parameter:  r2_threshold = 0.7
@@ -747,8 +747,8 @@ parameter: ld_window_size = 10000
 parameter: min_neighbor = 10
 parameter: job_number = 10
 input: index_snp_file, bed_file_index
-output: f&#39;{cwd:a}/{_input[0]:bnn}.gregor.conf&#39;
-report: output = f&#39;{_output}&#39;, expand = True
+output: f'{cwd:a}/{_input[0]:bnn}.gregor.conf'
+report: output = f'{_output}', expand = True
     ##############################################################################
     # CHIPSEQ ENRICHMENT CONFIGURATION FILE
     # This configuration file contains run-time configuration of
@@ -776,8 +776,8 @@ report: output = f&#39;{_output}&#39;, expand = True
     ###############################################################################
     BATCHTYPE = local ##  run jobs on local machine
 
-bash: expand = True, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
-    sed -i &#39;/^$/d&#39; {_output}
+bash: expand = True, stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
+    sed -i '/^$/d' {_output}
 </pre></div>
 </div>
 </div>
@@ -788,7 +788,7 @@ bash: expand = True, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_outp
 </div>
 <p>With the docker image:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">GREGOR_folder</span>
-<span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">v</span> <span class="s2">&quot;$PWD:/usr/src/myapp&quot;</span> <span class="o">-</span><span class="n">it</span> <span class="n">custom</span><span class="o">-</span><span class="n">perl</span>
+<span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">v</span> <span class="s2">"$PWD:/usr/src/myapp"</span> <span class="o">-</span><span class="n">it</span> <span class="n">custom</span><span class="o">-</span><span class="n">perl</span>
 <span class="n">perl</span> <span class="n">script</span><span class="o">/</span><span class="n">GREGOR</span> <span class="o">--</span><span class="n">conf</span> <span class="n">example</span><span class="o">/</span><span class="n">mvsusie_annotation</span><span class="o">.</span><span class="n">conf</span>
 <span class="n">perl</span> <span class="n">script</span><span class="o">/</span><span class="n">GREGOR</span> <span class="o">--</span><span class="n">conf</span> <span class="n">example</span><span class="o">/</span><span class="n">susie_annotation</span><span class="o">.</span><span class="n">conf</span>
 </pre></div>
@@ -797,8 +797,8 @@ bash: expand = True, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_outp
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># run GREGOR
 [gregor_2]
-output: f&#39;{_input:nn}_gregor_output/StatisticSummaryFile.txt&#39;
-bash: expand = True, container = container, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+output: f'{_input:nn}_gregor_output/StatisticSummaryFile.txt'
+bash: expand = True, container = container, stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
     GREGOR --conf {_input} &amp;&amp; touch {_output}
 </pre></div>
 </div>
@@ -808,45 +808,45 @@ bash: expand = True, container = container, stderr = f&#39;{_output}.stderr&#39;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Fisher test of enrichment
 [gregor_3]
-output: f&#39;{_input:ad}_variant_counts.txt&#39;, f&#39;{_input:ad}_enrichment_results.txt&#39;
-bash: expand = &#39;$[ ]&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+output: f'{_input:ad}_variant_counts.txt', f'{_input:ad}_enrichment_results.txt'
+bash: expand = '$[ ]', stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout'
 
     cd $[_input:ad]/  # The issue was that,{_input:ad}_variant_counts.txt is not in the same dir as the input  
     # Loop through each subdirectory
     for dir in */; do
         # Ensure that the directory is not empty
-        if [[ -d &quot;$dir&quot; ]]; then
+        if [[ -d "$dir" ]]; then
             # Calculate the total number of lines in neighbor.*.txt files
-            total_lines=$(find &quot;$dir&quot; -name &#39;neighbor.*.txt&#39; -exec cat {} + | wc -l)
+            total_lines=$(find "$dir" -name 'neighbor.*.txt' -exec cat {} + | wc -l)
 
             # Count the number of neighbor.*.txt files
-            file_count=$(find &quot;$dir&quot; -name &#39;neighbor.*.txt&#39; | wc -l)
+            file_count=$(find "$dir" -name 'neighbor.*.txt' | wc -l)
 
             # Calculate the adjusted row number
             row_num=$((total_lines - file_count))
 
             # Check if PValue.txt exists
-            if [[ -f &quot;${dir}/PValue.txt&quot; ]]; then
+            if [[ -f "${dir}/PValue.txt" ]]; then
                 # Append the row count to PValue.txt and save as PValue_new.txt
-                (cat &quot;${dir}/PValue.txt&quot;; echo &quot;N1_N2 = $row_num&quot;) &gt; &quot;${dir}/PValue_N1_N2.txt&quot;
+                (cat "${dir}/PValue.txt"; echo "N1_N2 = $row_num") &gt; "${dir}/PValue_N1_N2.txt"
             fi
         fi
     done
 
     # Header for the new summary file
-    echo -e &quot;Bed_File\tInBed_Index_SNP\tExpectNum_of_InBed_SNP\tPValue\tN1_N2\tNp\tNp_Nn&quot; &gt; $[_output[0]]
+    echo -e "Bed_File\tInBed_Index_SNP\tExpectNum_of_InBed_SNP\tPValue\tN1_N2\tNp\tNp_Nn" &gt; $[_output[0]]
 
     # Calculate Np and Np_Nn for the neighbor_SNP directory
-    if [[ -d &quot;neighbor_SNP&quot; ]]; then
-        if [[ -f &quot;neighbor_SNP/index.snp.neighbors.txt&quot; ]]; then
-            Np=$(($(wc -l &lt; &quot;index_SNP/annotated.index.snp.txt&quot;) - 1))
+    if [[ -d "neighbor_SNP" ]]; then
+        if [[ -f "neighbor_SNP/index.snp.neighbors.txt" ]]; then
+            Np=$(($(wc -l &lt; "index_SNP/annotated.index.snp.txt") - 1))
         else
             Np=0
         fi
-        Np_Nn_files=($(find &quot;neighbor_SNP&quot; -name &#39;neighbor.chr*txt&#39;))
+        Np_Nn_files=($(find "neighbor_SNP" -name 'neighbor.chr*txt'))
         Np_Nn=0
-        for file in &quot;${Np_Nn_files[@]}&quot;; do
-            Np_Nn=$(($Np_Nn + $(wc -l &lt; &quot;$file&quot;)))
+        for file in "${Np_Nn_files[@]}"; do
+            Np_Nn=$(($Np_Nn + $(wc -l &lt; "$file")))
         done
         Np_Nn=$(($Np_Nn - ${#Np_Nn_files[@]}))
     fi
@@ -854,24 +854,24 @@ bash: expand = &#39;$[ ]&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout =
     # Loop through each subdirectory
     for dir in */; do
         # Ensure that the directory is not empty
-        if [[ -d &quot;$dir&quot; ]]; then
+        if [[ -d "$dir" ]]; then
             # Check if PValue_new.txt exists
-            if [[ -f &quot;${dir}PValue_N1_N2.txt&quot; ]]; then
+            if [[ -f "${dir}PValue_N1_N2.txt" ]]; then
                 # Extract values from PValue_new.txt
-                inBedIndexSNPNum=$(grep &quot;inBedIndexSNPNum&quot; &quot;${dir}PValue_N1_N2.txt&quot; | cut -d &#39;=&#39; -f2 | tr -d &#39;[:space:]&#39;)
-                expectedS=$(grep &quot;expectedS&quot; &quot;${dir}PValue_N1_N2.txt&quot; | cut -d &#39;=&#39; -f2 | tr -d &#39;[:space:]&#39;)
-                p3=$(grep &quot;p3&quot; &quot;${dir}PValue_N1_N2.txt&quot; | cut -d &#39;=&#39; -f2 | tr -d &#39;[:space:]&#39;)
-                N1_N2=$(grep &quot;N1_N2&quot; &quot;${dir}PValue_N1_N2.txt&quot; | cut -d &#39;=&#39; -f2 | tr -d &#39;[:space:]&#39;)
+                inBedIndexSNPNum=$(grep "inBedIndexSNPNum" "${dir}PValue_N1_N2.txt" | cut -d '=' -f2 | tr -d '[:space:]')
+                expectedS=$(grep "expectedS" "${dir}PValue_N1_N2.txt" | cut -d '=' -f2 | tr -d '[:space:]')
+                p3=$(grep "p3" "${dir}PValue_N1_N2.txt" | cut -d '=' -f2 | tr -d '[:space:]')
+                N1_N2=$(grep "N1_N2" "${dir}PValue_N1_N2.txt" | cut -d '=' -f2 | tr -d '[:space:]')
                 # Get the directory name as the Bed_File
-                bedFile=$(basename &quot;$dir&quot;)
+                bedFile=$(basename "$dir")
                 # Append the data to the summary file
-                echo -e &quot;$bedFile\t$inBedIndexSNPNum\t$expectedS\t$p3\t$N1_N2\t$Np\t$Np_Nn&quot; &gt;&gt; $[_output[0]]
+                echo -e "$bedFile\t$inBedIndexSNPNum\t$expectedS\t$p3\t$N1_N2\t$Np\t$Np_Nn" &gt;&gt; $[_output[0]]
             fi
         fi
     done
 
-R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
-    res &lt;- read.table(${_output[0]:r}, sep =&#39;\t&#39;, header=T) 
+R: expand = '${ }', stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout'
+    res &lt;- read.table(${_output[0]:r}, sep ='\t', header=T) 
     for(i in 1:nrow(res)){
         n1 = res$InBed_Index_SNP[i]
         n2 = res$N1_N2[i] - n1
@@ -881,10 +881,10 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
         # Construct the contingency matrix
         dat = matrix(c(n1, n2, np - n1, nn - n2), nrow = 2)
 
-        # Perform Fisher&#39;s exact test
-        test_res = fisher.test(dat, alternative = &#39;two.sided&#39;)
+        # Perform Fisher's exact test
+        test_res = fisher.test(dat, alternative = 'two.sided')
 
-        # Store the results in &#39;res&#39;
+        # Store the results in 'res'
         res$odds[i] &lt;- test_res$estimate
         res$low[i] &lt;- test_res$conf.int[1]
         res$high[i] &lt;- test_res$conf.int[2]
@@ -904,8 +904,8 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
 parameter: fisher1 = path
 parameter: fisher2 = path
 input: fisher1, fisher2
-output: f&#39;{cwd:a}/{_input[0]:dbn}_vs_{_input[1]:dbn}_enrichment.pdf&#39;
-R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;, container = container
+output: f'{cwd:a}/{_input[0]:dbn}_vs_{_input[1]:dbn}_enrichment.pdf'
+R: expand = '${ }', stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout', container = container
     library(tidyverse)
     library(ggplot2)    
     group1 &lt;- read.table(${_input[0]:r}, header=T)
@@ -913,12 +913,12 @@ R: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&
     group1$group &lt;- ${_input[0]:dbnr}
     group2$group &lt;- ${_input[1]:dbnr}
     res_all &lt;- rbind(group1, group2)
-    res_all$feature &lt;- gsub(&quot;.bed&quot;,&quot;&quot;,res_all$Bed_File)
-    res_all &lt;- res_all %&gt;%filter(!(str_detect(feature,&quot;hg38&quot;)))%&gt;%filter(!(p_fisher == 1))%&gt;% na.omit 
+    res_all$feature &lt;- gsub(".bed","",res_all$Bed_File)
+    res_all &lt;- res_all %&gt;%filter(!(str_detect(feature,"hg38")))%&gt;%filter(!(p_fisher == 1))%&gt;% na.omit 
     p &lt;- res_all%&gt;%
         arrange(odds)%&gt;%ggplot()+geom_point(aes(x = odds, y = reorder(feature,-odds), color = group))+
-            geom_vline(aes( xintercept = 0 ))+theme_bw()+theme(text = element_text(size = 20))+xlab(&quot;Odds Ratio&quot;)+
-                geom_linerange(aes(xmin = low, xmax= high , y = feature ), color= &#39;grey40&#39;)+ylab(&quot;Functional Annotations&quot;)
+            geom_vline(aes( xintercept = 0 ))+theme_bw()+theme(text = element_text(size = 20))+xlab("Odds Ratio")+
+                geom_linerange(aes(xmin = low, xmax= high , y = feature ), color= 'grey40')+ylab("Functional Annotations")
     ggsave(plot = p, filename = ${_output:r}, height = 24, width = 20)
 </pre></div>
 </div>

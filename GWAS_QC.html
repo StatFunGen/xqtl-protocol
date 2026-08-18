@@ -804,7 +804,7 @@
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -922,122 +922,122 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # the output directory for generated files
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # A string to identify your analysis run
 parameter: name = str
 # PLINK binary files (either BED/BIM/FAM or PGEN/PVAR/PSAM format)
 parameter: genoFile = paths
 # The path to the file that contains the list of samples to remove (format FID, IID)
-parameter: remove_samples = path(&#39;.&#39;)
+parameter: remove_samples = path('.')
 # The path to the file that contains the list of samples to keep (format FID, IID)
-parameter: keep_samples = path(&#39;.&#39;)
+parameter: keep_samples = path('.')
 # The path to the file that contains the list of variants to keep
-parameter: keep_variants = path(&#39;.&#39;)
+parameter: keep_variants = path('.')
 # The path to the file that contains the list of variants to exclude
-parameter: exclude_variants = path(&#39;.&#39;)
+parameter: exclude_variants = path('.')
 # Kinship coefficient threshold for related individuals
 # (e.g first degree above 0.25, second degree above 0.125, third degree above 0.0625)
 parameter: kinship = 0.0625
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 20
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
-cwd = path(f&quot;{cwd:a}&quot;)
+cwd = path(f"{cwd:a}")
 
 # Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
 def determine_plink_format(file_path):
-    &quot;&quot;&quot;
+    """
     Determine the PLINK file format based on file extensions and companion files.
     
     Args:
         file_path (str or Path): Path to the input file
     
     Returns:
-        str: &#39;plink1&#39; or &#39;plink2&#39;
-    &quot;&quot;&quot;
-    # Convert to string if it&#39;s a Path object
+        str: 'plink1' or 'plink2'
+    """
+    # Convert to string if it's a Path object
     file_path = str(file_path)
     
     # Check direct file extensions
-    if file_path.endswith(&#39;.bed&#39;):
-        return &#39;plink1&#39;
-    elif file_path.endswith(&#39;.pgen&#39;):
-        return &#39;plink2&#39;
+    if file_path.endswith('.bed'):
+        return 'plink1'
+    elif file_path.endswith('.pgen'):
+        return 'plink2'
     
-    # If the file doesn&#39;t have a standard extension, try to infer format
+    # If the file doesn't have a standard extension, try to infer format
     try:
         # Remove the file extension if present
-        base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
+        base_path = file_path.rsplit('.', 1)[0] if '.' in file_path else file_path
         
         # Check for PLINK1 companion files
         plink1_companion_files = [
-            f&quot;{base_path}.bim&quot;,
-            f&quot;{base_path}.fam&quot;
+            f"{base_path}.bim",
+            f"{base_path}.fam"
         ]
         
         # Check for PLINK2 companion files
         plink2_companion_files = [
-            f&quot;{base_path}.pvar&quot;,
-            f&quot;{base_path}.psam&quot;
+            f"{base_path}.pvar",
+            f"{base_path}.psam"
         ]
         
         # Check PLINK1 format
         if all(os.path.exists(f) for f in plink1_companion_files):
-            return &#39;plink1&#39;
+            return 'plink1'
         
         # Check PLINK2 format
         if all(os.path.exists(f) for f in plink2_companion_files):
-            return &#39;plink2&#39;
+            return 'plink2'
     
     except Exception as e:
-        print(f&quot;Error determining PLINK format: {e}&quot;)
+        print(f"Error determining PLINK format: {e}")
     
-    # Default to PLINK1 if can&#39;t determine
-    return &#39;plink1&#39;
+    # Default to PLINK1 if can't determine
+    return 'plink1'
 
 
 # Get the appropriate PLINK command based on the input file format
 def get_plink_command_prefix(file_path):
     format_type = determine_plink_format(file_path)
-    if format_type == &#39;plink1&#39;:
-        return &quot;--bfile&quot;
+    if format_type == 'plink1':
+        return "--bfile"
     else:  # plink2
-        return &quot;--pfile&quot;
+        return "--pfile"
         
 # Generate the appropriate file extension based on the requested format
 def get_output_extension(output_format, is_prune=False):
-    if output_format == &#39;plink1&#39;:
-        return &#39;.bed&#39; if not is_prune else &#39;.prune.bed&#39;
+    if output_format == 'plink1':
+        return '.bed' if not is_prune else '.prune.bed'
     else:  # plink2
-        return &#39;.pgen&#39; if not is_prune else &#39;.prune.pgen&#39;
+        return '.pgen' if not is_prune else '.prune.pgen'
         
 # Choose the make-bed or make-pgen command based on desired output format
 def get_make_command(output_format):
-    if output_format == &#39;plink1&#39;:
-        return &#39;--make-bed&#39;
+    if output_format == 'plink1':
+        return '--make-bed'
     else:  # plink2
-        return &#39;--make-pgen&#39;
+        return '--make-pgen'
 
 def get_other_args_flags(other_args):
     import re
     if not other_args:
-        return &quot;&quot;
+        return ""
     args = [other_args] if isinstance(other_args, str) else list(other_args)
     flags = []
     for arg in args:
         arg = str(arg)
-        if not re.fullmatch(r&quot;[A-Za-z0-9][A-Za-z0-9_.:-]*&quot;, arg):
-            raise ValueError(f&quot;Cannot safely pass PLINK other_args value: {arg}&quot;)
-        flags.append(f&quot;--other-arg {arg}&quot;)
-    return &quot; &quot;.join(flags)
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]*", arg):
+            raise ValueError(f"Cannot safely pass PLINK other_args value: {arg}")
+        flags.append(f"--other-arg {arg}")
+    return " ".join(flags)
 </pre></div>
 </div>
 </div>
@@ -1052,18 +1052,18 @@ def get_other_args_flags(other_args):
 # PLINK binary file
 parameter: kin_maf = 0.01
 input: genoFile
-output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot;+name) if name else &quot;&quot;}.kin0&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
+output: f'{cwd}/{_input:bn}{("."+name) if name else ""}.kin0'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
 plink_command = get_plink_command_prefix(genoFile)
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+bash: expand= "${ }", stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh king \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${genoFile}&quot; \
-        --plink-command &quot;${plink_command}&quot; \
-        --out-prefix &quot;${_output:n}&quot; \
-        --keep-samples &quot;${keep_samples}&quot; \
-        --remove-samples &quot;${remove_samples}&quot; \
-        --name &quot;${name}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${genoFile}" \
+        --plink-command "${plink_command}" \
+        --out-prefix "${_output:n}" \
+        --keep-samples "${keep_samples}" \
+        --remove-samples "${remove_samples}" \
+        --name "${name}" \
         --kinship ${kinship} \
         --kin-maf ${kin_maf} \
         --numThreads ${numThreads}
@@ -1074,18 +1074,18 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Select a list of unrelated individual with an attempt to maximize the unrelated individuals selected from the data 
-[king_2: shared = &quot;related_id&quot; ]
-related_id = [x.strip() for x in open(_input).readlines() if not x.startswith(&quot;#&quot;)]
-output: f&#39;{_input:n}.related_id&#39;
-with open(_output, &#39;a&#39;):
+[king_2: shared = "related_id" ]
+related_id = [x.strip() for x in open(_input).readlines() if not x.startswith("#")]
+output: f'{_input:n}.related_id'
+with open(_output, 'a'):
     pass
-done_if(len(related_id) == 0, msg = f&quot;No related individuals detected from {_input}.&quot;)
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f&#39;{_output}.stdout&#39;
+done_if(len(related_id) == 0, msg = f"No related individuals detected from {_input}.")
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
     Rscript ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.R \
         --step king_2 \
-        --input &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
+        --input "${_input}" \
+        --output "${_output}" \
         --kinship ${kinship}
 </pre></div>
 </div>
@@ -1095,22 +1095,22 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output}.stderr&#39;, stdout = f
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Split genotype data into related and unrelated samples, if related individuals are detected
 [king_3]
-depends: sos_variable(&quot;related_id&quot;)
+depends: sos_variable("related_id")
 input: output_from(2), genoFile
 output_format = determine_plink_format(_input[1])
 output_ext = get_output_extension(output_format)
-output: unrelated_bed = f&#39;{cwd}/{_input[0]:bn}.unrelated{output_ext}&#39;,
-        related_bed = f&#39;{cwd}/{_input[0]:bn}.related{output_ext}&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+output: unrelated_bed = f'{cwd}/{_input[0]:bn}.unrelated{output_ext}',
+        related_bed = f'{cwd}/{_input[0]:bn}.related{output_ext}'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh king_split \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input[1]}&quot; \
-        --remove-samples &quot;${_input[0]}&quot; \
-        ${(&#39;--keep-samples &quot;%s&quot;&#39; % keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-        --out-unrelated &quot;${_output[0]:n}&quot; \
-        --out-related &quot;${_output[1]:n}&quot; \
-        --related-output &quot;${_output[1]}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${_input[1]}" \
+        --remove-samples "${_input[0]}" \
+        ${('--keep-samples "%s"' % keep_samples) if keep_samples.is_file() else ""} \
+        --out-unrelated "${_output[0]:n}" \
+        --out-related "${_output[1]:n}" \
+        --related-output "${_output[1]}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -1147,27 +1147,27 @@ parameter: rm_dups = False
 # Add option to process dosage
 parameter: treat_dosage_missing = False
 
-fail_if(not (keep_samples.is_file() or keep_samples == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{keep_samples}``&#39;)
-fail_if(not (keep_variants.is_file() or keep_variants == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{keep_variants}``&#39;)
-fail_if(not (remove_samples.is_file() or remove_samples == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{remove_samples}``&#39;)
+fail_if(not (keep_samples.is_file() or keep_samples == path('.')), msg = f'Cannot find ``{keep_samples}``')
+fail_if(not (keep_variants.is_file() or keep_variants == path('.')), msg = f'Cannot find ``{keep_variants}``')
+fail_if(not (remove_samples.is_file() or remove_samples == path('.')), msg = f'Cannot find ``{remove_samples}``')
 
 input: genoFile, group_by=1
 plink_command = get_plink_command_prefix(_input)
 output_format = determine_plink_format(_input)
-make_command = get_make_command(output_format) if not meta_only else &quot;--write-snplist --write-samples&quot;
-output_ext = get_output_extension(output_format) if not meta_only else &quot;.snplist&quot;
+make_command = get_make_command(output_format) if not meta_only else "--write-snplist --write-samples"
+output_ext = get_output_extension(output_format) if not meta_only else ".snplist"
 other_args_flags = get_other_args_flags(other_args)
-output: f&#39;{cwd}/{_input:bn}{(&quot;.&quot; + name) if name else &quot;&quot;}.plink_qc{&quot;.extracted&quot; if keep_variants.is_file() else &quot;&quot;}{output_ext}&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+output: f'{cwd}/{_input:bn}{("." + name) if name else ""}.plink_qc{".extracted" if keep_variants.is_file() else ""}{output_ext}'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh qc_no_prune \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input}&quot; \
-        --plink-command &quot;${plink_command}&quot; \
-        --output-format &quot;${output_format}&quot; \
-        --make-command &quot;${make_command}&quot; \
-        --out-prefix &quot;${_output:n}&quot; \
-        --name &quot;${name}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${_input}" \
+        --plink-command "${plink_command}" \
+        --output-format "${output_format}" \
+        --make-command "${make_command}" \
+        --out-prefix "${_output:n}" \
+        --name "${name}" \
         --mac-filter ${mac_filter} \
         --maf-filter ${maf_filter} \
         --maf-max-filter ${maf_max_filter} \
@@ -1175,13 +1175,13 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
         --geno-filter ${geno_filter} \
         --mind-filter ${mind_filter} \
         --hwe-filter ${hwe_filter} \
-        ${&quot;--keep-samples &quot; + str(keep_samples) if keep_samples.is_file() else &quot;&quot;} \
-        ${&quot;--remove-samples &quot; + str(remove_samples) if remove_samples.is_file() else &quot;&quot;} \
-        ${&quot;--exclude-variants &quot; + str(exclude_variants) if exclude_variants.is_file() else &quot;&quot;} \
-        ${&quot;--keep-variants &quot; + str(keep_variants) if keep_variants.is_file() else &quot;&quot;} \
-        ${&quot;--meta-only&quot; if meta_only else &quot;&quot;} \
-        ${&quot;--rm-dups&quot; if rm_dups else &quot;&quot;} \
-        ${&quot;--treat-dosage-missing&quot; if treat_dosage_missing else &quot;&quot;} \
+        ${"--keep-samples " + str(keep_samples) if keep_samples.is_file() else ""} \
+        ${"--remove-samples " + str(remove_samples) if remove_samples.is_file() else ""} \
+        ${"--exclude-variants " + str(exclude_variants) if exclude_variants.is_file() else ""} \
+        ${"--keep-variants " + str(keep_variants) if keep_variants.is_file() else ""} \
+        ${"--meta-only" if meta_only else ""} \
+        ${"--rm-dups" if rm_dups else ""} \
+        ${"--treat-dosage-missing" if treat_dosage_missing else ""} \
         ${other_args_flags} \
         --numThreads ${numThreads}
 </pre></div>
@@ -1208,22 +1208,22 @@ output_format = determine_plink_format(_input)
 make_command = get_make_command(output_format)
 output_ext = get_output_extension(output_format, is_prune=True)
 other_args_flags = get_other_args_flags(other_args)
-output: bed=f&#39;{cwd}/{_input:bn}{output_ext}&#39;, prune=f&#39;{cwd}/{_input:bn}.prune.in&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+output: bed=f'{cwd}/{_input:bn}{output_ext}', prune=f'{cwd}/{_input:bn}.prune.in'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh qc \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input}&quot; \
-        --plink-command &quot;${plink_command}&quot; \
-        --output-format &quot;${output_format}&quot; \
-        --make-command &quot;${make_command}&quot; \
-        --prune-prefix &quot;${_output[&#39;prune&#39;]:nn}&quot; \
-        --out-prefix &quot;${_output[&#39;bed&#39;]:n}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${_input}" \
+        --plink-command "${plink_command}" \
+        --output-format "${output_format}" \
+        --make-command "${make_command}" \
+        --prune-prefix "${_output['prune']:nn}" \
+        --out-prefix "${_output['bed']:n}" \
         --mac-filter ${mac_filter} \
         --window ${window} \
         --shift ${shift} \
         --r2 ${r2} \
-        ${&quot;--bad-ld&quot; if bad_ld else &quot;&quot;} \
+        ${"--bad-ld" if bad_ld else ""} \
         ${other_args_flags} \
         --numThreads ${numThreads}
 </pre></div>
@@ -1244,17 +1244,17 @@ parameter: genoFile = path
 parameter: phenoFile = path
 # If this file is provided, a genotype/phenotype sample name match will be performed
 # It must contain two column names: genotype_id, sample_id
-parameter: sample_participant_lookup = path(&quot;.&quot;)
-depends: executable(&#39;tabix&#39;), executable(&#39;bgzip&#39;)
+parameter: sample_participant_lookup = path(".")
+depends: executable('tabix'), executable('bgzip')
 input: genoFile, phenoFile
-output: f&#39;{cwd:a}/{path(_input[1]):bn}.sample_overlap.txt&#39;, f&#39;{cwd:a}/{path(_input[1]):bn}.sample_genotypes.txt&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+output: f'{cwd:a}/{path(_input[1]):bn}.sample_overlap.txt', f'{cwd:a}/{path(_input[1]):bn}.sample_genotypes.txt'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/GWAS_QC.sh genotype_phenotype_sample_overlap \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${genoFile}&quot; \
-        --phenoFile &quot;${phenoFile}&quot; \
-        --name &quot;${name}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${genoFile}" \
+        --phenoFile "${phenoFile}" \
+        --name "${name}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>

@@ -586,11 +586,11 @@
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/pathway_analysis/{name}.combined_pathway_results.rds</span></code> - one compressed RDS holding the KEGG and GO results for every gene group in a single data frame, 2842 rows and 17 columns on the example. SoS always inserts the step name, so results land in a <code class="docutils literal notranslate"><span class="pre">pathway_analysis/</span></code> subdirectory of whatever <code class="docutils literal notranslate"><span class="pre">--cwd</span></code> is given. Example <code class="docutils literal notranslate"><span class="pre">output/gsea/pathway_analysis/protocol_example.combined_pathway_results.rds</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&#39;data.frame&#39;:  2842 obs. of  17 variables:
- $ ID            : chr  &quot;hsa01524&quot; &quot;hsa04115&quot; &quot;hsa05210&quot; &quot;hsa05162&quot; ...
- $ Description   : chr  &quot;Platinum drug resistance&quot; &quot;p53 signaling pathway&quot; &quot;Colorectal cancer&quot; &quot;Measles&quot; ...
- $ GeneRatio     : chr  &quot;7/9&quot; &quot;6/9&quot; &quot;6/9&quot; &quot;6/9&quot; ...
- $ BgRatio       : chr  &quot;75/9416&quot; &quot;75/9416&quot; &quot;87/9416&quot; &quot;136/9416&quot; ...
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>'data.frame':  2842 obs. of  17 variables:
+ $ ID            : chr  "hsa01524" "hsa04115" "hsa05210" "hsa05162" ...
+ $ Description   : chr  "Platinum drug resistance" "p53 signaling pathway" "Colorectal cancer" "Measles" ...
+ $ GeneRatio     : chr  "7/9" "6/9" "6/9" "6/9" ...
+ $ BgRatio       : chr  "75/9416" "75/9416" "87/9416" "136/9416" ...
  $ RichFactor    : num  0.0933 0.08 0.069 0.0441 0.0438 ...
  $ FoldEnrichment: num  97.6 83.7 72.2 46.2 45.8 ...
 </pre></div>
@@ -637,7 +637,7 @@
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -670,8 +670,8 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # Path to the work directory of the analysis.
-parameter: cwd = path(&#39;output&#39;)
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: cwd = path('output')
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 
 parameter: genes_file = path()  # TSV file with columns: group, gene_id
 parameter: name = str
@@ -679,8 +679,8 @@ parameter: name = str
 parameter: numThreads = 8
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
-parameter: walltime = &#39;12h&#39;
-parameter: mem = &#39;16G&#39;
+parameter: walltime = '12h'
+parameter: mem = '16G'
 </pre></div>
 </div>
 </div>
@@ -689,16 +689,16 @@ parameter: mem = &#39;16G&#39;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[pathway_analysis]
 parameter: pvalue_cutoff = 1
-parameter: organism = &#39;hsa&#39;
-output: pathway_results = f&#39;{cwd:a}/{step_name}/{name}.combined_pathway_results.rds&#39;
+parameter: organism = 'hsa'
+output: pathway_results = f'{cwd:a}/{step_name}/{name}.combined_pathway_results.rds'
 
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-bash: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bnn}'
+bash: expand = '${ }', stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout'
     Rscript ${modular_script_dir}/enrichment/gsea.R \
         --genes-file ${genes_file} \
         --organism ${organism} \
         --pvalue-cutoff ${pvalue_cutoff} \
-        --output ${_output[&#39;pathway_results&#39;]}
+        --output ${_output['pathway_results']}
 </pre></div>
 </div>
 </div>

@@ -613,76 +613,76 @@ def make_lens_path(c1, c2, r, n=400):
     return Path(verts, codes)
 
 fig, ax = plt.subplots(figsize=(14, 11))
-ax.set_xlim(0, 14); ax.set_ylim(0, 11); ax.axis(&#39;off&#39;)
-fig.patch.set_facecolor(&#39;white&#39;)
+ax.set_xlim(0, 14); ax.set_ylim(0, 11); ax.axis('off')
+fig.patch.set_facecolor('white')
 
 # Background box (C)
-bg = FancyBboxPatch((0.2, 3.1), 13.6, 7.5, boxstyle=&#39;round,pad=0.15&#39;,
-                    facecolor=&#39;#F0F3F7&#39;, edgecolor=&#39;#99A9BB&#39;,
+bg = FancyBboxPatch((0.2, 3.1), 13.6, 7.5, boxstyle='round,pad=0.15',
+                    facecolor='#F0F3F7', edgecolor='#99A9BB',
                     linewidth=2.0, zorder=0)
 ax.add_patch(bg)
 
-ax.text(7.0, 10.38, r&#39;$\mathbf{C}$ : Target Set (All SNPs)&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=17, fontweight=&#39;bold&#39;, color=&#39;#1C2833&#39;)
-ax.text(0.55, 9.85, r&#39;$|C|$&#39; + &#39;\nAll SNPs&#39;,
-        ha=&#39;left&#39;, va=&#39;top&#39;, fontsize=12, color=&#39;#707B7C&#39;, linespacing=1.5)
+ax.text(7.0, 10.38, r'$\mathbf{C}$ : Target Set (All SNPs)',
+        ha='center', va='center', fontsize=17, fontweight='bold', color='#1C2833')
+ax.text(0.55, 9.85, r'$|C|$' + '\nAll SNPs',
+        ha='left', va='top', fontsize=12, color='#707B7C', linespacing=1.5)
 
 # Circles
 cx_a, cy, r = 4.8, 6.7, 2.75
 cx_b = 9.2
-circ_a = Circle((cx_a, cy), r, facecolor=&#39;#AED6F1&#39;, edgecolor=&#39;#2471A3&#39;,
+circ_a = Circle((cx_a, cy), r, facecolor='#AED6F1', edgecolor='#2471A3',
                 linewidth=3.0, alpha=0.70, zorder=1)
-circ_b = Circle((cx_b, cy), r, facecolor=&#39;#FADBD8&#39;, edgecolor=&#39;#C0392B&#39;,
+circ_b = Circle((cx_b, cy), r, facecolor='#FADBD8', edgecolor='#C0392B',
                 linewidth=3.0, alpha=0.70, zorder=1)
 ax.add_patch(circ_a); ax.add_patch(circ_b)
 
 lens = PathPatch(make_lens_path((cx_a, cy), (cx_b, cy), r),
-                 facecolor=&#39;#F0B429&#39;, edgecolor=&#39;none&#39;, alpha=0.90, zorder=2)
+                 facecolor='#F0B429', edgecolor='none', alpha=0.90, zorder=2)
 ax.add_patch(lens)
 
-ax.text(cx_a - 1.0, cy + r*0.78, r&#39;$\mathbf{A}$ : Annotated SNPs&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=14, fontweight=&#39;bold&#39;, color=&#39;#1A5276&#39;)
-ax.text(cx_b + 1.0, cy + r*0.78, r&#39;$\mathbf{B}$ : Significant SNPs&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=14, fontweight=&#39;bold&#39;, color=&#39;#7B241C&#39;)
+ax.text(cx_a - 1.0, cy + r*0.78, r'$\mathbf{A}$ : Annotated SNPs',
+        ha='center', va='center', fontsize=14, fontweight='bold', color='#1A5276')
+ax.text(cx_b + 1.0, cy + r*0.78, r'$\mathbf{B}$ : Significant SNPs',
+        ha='center', va='center', fontsize=14, fontweight='bold', color='#7B241C')
 
 mid_x = (cx_a + cx_b) / 2
-ax.text(cx_a - 1.55, cy, r&#39;$|A \setminus B|$&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=13, color=&#39;#1A5276&#39;, style=&#39;italic&#39;)
-ax.text(mid_x, cy, r&#39;$|A \cap B|$&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=14, fontweight=&#39;bold&#39;, color=&#39;#6E2F05&#39;, style=&#39;italic&#39;)
-ax.text(cx_b + 1.55, cy, r&#39;$|B \setminus A|$&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=13, color=&#39;#7B241C&#39;, style=&#39;italic&#39;)
+ax.text(cx_a - 1.55, cy, r'$|A \setminus B|$',
+        ha='center', va='center', fontsize=13, color='#1A5276', style='italic')
+ax.text(mid_x, cy, r'$|A \cap B|$',
+        ha='center', va='center', fontsize=14, fontweight='bold', color='#6E2F05', style='italic')
+ax.text(cx_b + 1.55, cy, r'$|B \setminus A|$',
+        ha='center', va='center', fontsize=13, color='#7B241C', style='italic')
 
-ax.text(13.05, 9.1, r&#39;$|\neg A \cap \neg B|$&#39;,
-        ha=&#39;right&#39;, va=&#39;center&#39;, fontsize=13, color=&#39;#4A4A4A&#39;, style=&#39;italic&#39;)
+ax.text(13.05, 9.1, r'$|\neg A \cap \neg B|$',
+        ha='right', va='center', fontsize=13, color='#4A4A4A', style='italic')
 
 # Formula box
 ax.add_patch(FancyBboxPatch((0.3, 0.08), 13.4, 2.75,
-                             boxstyle=&#39;round,pad=0.12&#39;,
-                             facecolor=&#39;#FDFEFE&#39;, edgecolor=&#39;#BDC3C7&#39;,
+                             boxstyle='round,pad=0.12',
+                             facecolor='#FDFEFE', edgecolor='#BDC3C7',
                              linewidth=1.4, zorder=0))
 
 # OR: formula centered, explanation centered below
 ax.text(7.0, 2.38,
-        r&#39;$\mathrm{Odds\ Ratio} = \dfrac{|A \cap B|\;/\;|A \setminus B|}&#39;
-        r&#39;{|B \setminus A|\;/\;|\neg A \cap \neg B|}&#39;
-        r&#39;\ =\ \dfrac{|A \cap B| \times |\neg A \cap \neg B|}&#39;
-        r&#39;{|A \setminus B| \times |B \setminus A|}$&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=12.5, color=&#39;#1C2833&#39;)
+        r'$\mathrm{Odds\ Ratio} = \dfrac{|A \cap B|\;/\;|A \setminus B|}'
+        r'{|B \setminus A|\;/\;|\neg A \cap \neg B|}'
+        r'\ =\ \dfrac{|A \cap B| \times |\neg A \cap \neg B|}'
+        r'{|A \setminus B| \times |B \setminus A|}$',
+        ha='center', va='center', fontsize=12.5, color='#1C2833')
 ax.text(7.0, 1.72,
-        &#39;odds of overlap in annotated SNPs  /  odds of overlap in non-annotated SNPs&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=11, color=&#39;#7F8C8D&#39;, style=&#39;italic&#39;)
+        'odds of overlap in annotated SNPs  /  odds of overlap in non-annotated SNPs',
+        ha='center', va='center', fontsize=11, color='#7F8C8D', style='italic')
 
 # Divider
-ax.plot([0.6, 13.4], [1.28, 1.28], color=&#39;#D5D8DC&#39;, linewidth=0.8)
+ax.plot([0.6, 13.4], [1.28, 1.28], color='#D5D8DC', linewidth=0.8)
 
 # Enrichment: formula centered, explanation centered below
 ax.text(7.0, 0.92,
-        r&#39;$\mathrm{Enrichment} = \dfrac{|A \cap B|\;/\;|B|}{|A|\;/\;|C|}$&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=12.5, color=&#39;#1C2833&#39;)
+        r'$\mathrm{Enrichment} = \dfrac{|A \cap B|\;/\;|B|}{|A|\;/\;|C|}$',
+        ha='center', va='center', fontsize=12.5, color='#1C2833')
 ax.text(7.0, 0.35,
-        &#39;fraction of significant SNPs in annotation  /  background rate of annotation in all SNPs&#39;,
-        ha=&#39;center&#39;, va=&#39;center&#39;, fontsize=11, color=&#39;#7F8C8D&#39;, style=&#39;italic&#39;)
+        'fraction of significant SNPs in annotation  /  background rate of annotation in all SNPs',
+        ha='center', va='center', fontsize=11, color='#7F8C8D', style='italic')
 
 plt.tight_layout(pad=0.2)
 plt.show()
@@ -724,8 +724,8 @@ plt.show()
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/enrichment/{trait}.{annotation-name}.enrichment_results.rds</span></code> - a list of 10 holding the point estimates, their block-jackknife standard errors and the per-chromosome estimates they derive from. Example <code class="docutils literal notranslate"><span class="pre">output/eoo_enrichment/enrichment/protocol_example.baseline.enrichment_results.rds</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>List of 10
- $ summary                 :&#39;data.frame&#39;:  2 obs. of  13 variables:
-  ..$ Annotation           : chr [1:2] &quot;maf&quot; &quot;ANNO_baseline&quot;
+ $ summary                 :'data.frame':  2 obs. of  13 variables:
+  ..$ Annotation           : chr [1:2] "maf" "ANNO_baseline"
   ..$ OR                   : num [1:2] 1 1
   ..$ OR_SE                : num [1:2] 0 0
   ..$ Enrichment           : num [1:2] 1 1
@@ -771,7 +771,7 @@ usage: sos run code/SoS/enrichment/eoo_enrichment.ipynb
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -805,8 +805,8 @@ Sections
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # Path to the work directory of the analysis.
-parameter: cwd = path(&#39;output&#39;)
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: cwd = path('output')
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 
 parameter: significant_variants_path = path
 parameter: baseline_anno_path = path
@@ -815,10 +815,10 @@ parameter: numThreads = 8
 # For cluster jobs, number commands to run per job
 parameter: trait = str
 parameter: annotation_name = str
-name = f&quot;{trait}.{annotation_name}&quot;
+name = f"{trait}.{annotation_name}"
 parameter: job_size = 1
-parameter: walltime = &#39;12h&#39;
-parameter: mem = &#39;16G&#39;
+parameter: walltime = '12h'
+parameter: mem = '16G'
 </pre></div>
 </div>
 </div>
@@ -827,15 +827,15 @@ parameter: mem = &#39;16G&#39;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[enrichment]
 parameter: annotations_start = 7
-output: enrichment = f&#39;{cwd:a}/{step_name}/{name}.enrichment_results.rds&#39;
+output: enrichment = f'{cwd:a}/{step_name}/{name}.enrichment_results.rds'
 
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
-bash: expand = &#39;${ }&#39;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bnn}'
+bash: expand = '${ }', stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout'
     Rscript ${modular_script_dir}/enrichment/eoo_enrichment.R \
         --significant-variants-path ${significant_variants_path} \
         --baseline-anno-path ${baseline_anno_path} \
         --annotations-start ${annotations_start} \
-        --output ${_output[&#39;enrichment&#39;]}
+        --output ${_output['enrichment']}
 </pre></div>
 </div>
 </div>

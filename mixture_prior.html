@@ -885,7 +885,7 @@ names(U): XtX, PCA_1, PCA_2, tPCA, identity, ALL, Ast, End, Exc, Inh, Mic, OPC, 
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -908,7 +908,7 @@ Global Workflow Options:
   --modular-script-dir code/script (as path)
   --data VAL (as path, required)
                         Input summary statistics data
-  --output-prefix &#39;&#39;
+  --output-prefix ''
                         Prefix of output files. If not specified, it will derive
                         it from data. If it is specified, for example,
                         `--output-prefix AnalysisResults` It will save output
@@ -918,10 +918,10 @@ Global Workflow Options:
                         Exchangable effect (EE) or exchangable z-scores (EZ)
   --vhat simple
                         Identifier of $\hat{V}$ estimate file Options are
-                        &quot;identity&quot;, &quot;simple&quot;, &quot;mle&quot;,
-                        &quot;vhat_corshrink_xcondition&quot;, &quot;vhat_simple_specific&quot;
+                        "identity", "simple", "mle",
+                        "vhat_corshrink_xcondition", "vhat_simple_specific"
   --mixture-components flash flash_nonneg pca canonical (as list)
-  --container &#39;&#39;
+  --container ''
   --job-size 1 (as int)
                         For cluster jobs, number commands to run per job
   --walltime 5h
@@ -940,19 +940,19 @@ Sections
                         Number of components in PCA analysis for prior set to 3
                         as in mash paper
   canonical:
-  vhat_identity:        V estimate: &quot;identity&quot; method
-  vhat_simple:          V estimate: &quot;simple&quot; method (null z-scores)
-  vhat_mle:             V estimate: &quot;mle&quot; method (mash_estimate_corr_em on a
+  vhat_identity:        V estimate: "identity" method
+  vhat_simple:          V estimate: "simple" method (null z-scores)
+  vhat_mle:             V estimate: "mle" method (mash_estimate_corr_em on a
                         random subset; needs the prior U)
     Workflow Options:
       --n-subset 6000 (as int)
                         number of samples to use
       --max-iter 6 (as int)
                         maximum number of iterations
-  vhat_corshrink_xcondition: V estimate: &quot;corshrink&quot; adaptive-shrinkage null
+  vhat_corshrink_xcondition: V estimate: "corshrink" adaptive-shrinkage null
                         correlation (run globally on the null set; the legacy
                         per-gene GTEx SumstatQuery path is not portable)
-  vhat_simple_specific: V estimate: &quot;simple_specific&quot; nearPD(cov(nullZ)) (run
+  vhat_simple_specific: V estimate: "simple_specific" nearPD(cov(nullZ)) (run
                         globally on the null set; legacy per-gene GTEx path not
                         portable)
   ud:                   Prior engine: udr ED update (opt-in; known numerical
@@ -967,9 +967,9 @@ Sections
                         number of components to show
       --[no-]to-cor (default to False)
                         whether or not to convert to correlation
-      --tol &#39;1E-6&#39;
+      --tol '1E-6'
       --[no-]remove-label (default to False)
-      --name &#39;&#39;
+      --name ''
 </pre></div>
 </div>
 </section>
@@ -980,36 +980,36 @@ Sections
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: cwd = path(&#39;./mashr_workflow_output&#39;)
-parameter: modular_script_dir = path(&#39;code/script&#39;)
+parameter: cwd = path('./mashr_workflow_output')
+parameter: modular_script_dir = path('code/script')
 # Input summary statistics data
 parameter: data = path
 # Prefix of output files. If not specified, it will derive it from data.
 # If it is specified, for example, `--output-prefix AnalysisResults`
 # It will save output files as `{cwd}/AnalysisResults*`.
-parameter: output_prefix = &#39;&#39;
-parameter: output_suffix = &#39;all&#39;
+parameter: output_prefix = ''
+parameter: output_suffix = 'all'
 # Exchangable effect (EE) or exchangable z-scores (EZ)
-parameter: effect_model = &#39;EE&#39;
+parameter: effect_model = 'EE'
 # Identifier of $\hat{V}$ estimate file
-# Options are &quot;identity&quot;, &quot;simple&quot;, &quot;mle&quot;, &quot;vhat_corshrink_xcondition&quot;, &quot;vhat_simple_specific&quot;
-parameter: vhat = &#39;simple&#39;
-parameter: mixture_components = [&#39;flash&#39;, &#39;flash_nonneg&#39;, &#39;pca&#39;,&quot;canonical&quot;]
-parameter: container = &quot;&quot;
+# Options are "identity", "simple", "mle", "vhat_corshrink_xcondition", "vhat_simple_specific"
+parameter: vhat = 'simple'
+parameter: mixture_components = ['flash', 'flash_nonneg', 'pca',"canonical"]
+parameter: container = ""
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 1
 data = data.absolute()
 cwd = cwd.absolute()
 if len(output_prefix) == 0:
-    output_prefix = f&quot;{data:bn}&quot;
-prior_data = file_target(f&quot;{cwd:a}/{output_prefix}.{effect_model}.prior.rds&quot;)
-vhat_data = file_target(f&quot;{cwd:a}/{output_prefix}.{effect_model}.V_{vhat}.rds&quot;)
+    output_prefix = f"{data:bn}"
+prior_data = file_target(f"{cwd:a}/{output_prefix}.{effect_model}.prior.rds")
+vhat_data = file_target(f"{cwd:a}/{output_prefix}.{effect_model}.V_{vhat}.rds")
 </pre></div>
 </div>
 </div>
@@ -1021,9 +1021,9 @@ vhat_data = file_target(f&quot;{cwd:a}/{output_prefix}.{effect_model}.V_{vhat}.r
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[flash]
 input: data
-output: f&quot;{cwd}/{output_prefix}.flash.rds&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
+output: f"{cwd}/{output_prefix}.flash.rds"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component flash \
@@ -1037,9 +1037,9 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout 
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[flash_nonneg]
 input: data
-output: f&quot;{cwd}/{output_prefix}.flash_nonneg.rds&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
+output: f"{cwd}/{output_prefix}.flash_nonneg.rds"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component flash_nonneg \
@@ -1056,9 +1056,9 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout 
 # set to 3 as in mash paper
 parameter: npc = 2
 input: data
-output: f&quot;{cwd}/{output_prefix}.pca.rds&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
+output: f"{cwd}/{output_prefix}.pca.rds"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component pca \
@@ -1073,9 +1073,9 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout 
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[canonical]
 input: data
-output: f&quot;{cwd}/{output_prefix}.canonical.rds&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
+output: f"{cwd}/{output_prefix}.canonical.rds"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_covariance.R \
         --data ${_input} \
         --component canonical \
@@ -1090,12 +1090,12 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout 
 <h3>Residual variance estimation<a class="headerlink" href="#residual-variance-estimation" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: &quot;identity&quot; method
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: "identity" method
 [vhat_identity]
 input: data
-output: f&#39;{vhat_data:nn}.V_identity.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+output: f'{vhat_data:nn}.V_identity.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method identity \
@@ -1107,12 +1107,12 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdou
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: &quot;simple&quot; method (null z-scores)
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: "simple" method (null z-scores)
 [vhat_simple]
 input: data
-output: f&#39;{vhat_data:nn}.V_simple.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+output: f'{vhat_data:nn}.V_simple.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method simple \
@@ -1124,16 +1124,16 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdou
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: &quot;mle&quot; method (mash_estimate_corr_em on a random subset; needs the prior U)
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: "mle" method (mash_estimate_corr_em on a random subset; needs the prior U)
 [vhat_mle]
 # number of samples to use
 parameter: n_subset = 6000
 # maximum number of iterations
 parameter: max_iter = 6
 input: data, prior_data
-output: f&#39;{vhat_data:nn}.V_mle.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+output: f'{vhat_data:nn}.V_mle.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input[0]} \
         --method mle \
@@ -1148,12 +1148,12 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdou
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: &quot;corshrink&quot; adaptive-shrinkage null correlation (run globally on the null set; the legacy per-gene GTEx SumstatQuery path is not portable)
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: "corshrink" adaptive-shrinkage null correlation (run globally on the null set; the legacy per-gene GTEx SumstatQuery path is not portable)
 [vhat_corshrink_xcondition]
 input: data
-output: f&#39;{vhat_data:nn}.V_vhat_corshrink_xcondition.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+output: f'{vhat_data:nn}.V_vhat_corshrink_xcondition.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method corshrink \
@@ -1165,12 +1165,12 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdou
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: &quot;simple_specific&quot; nearPD(cov(nullZ)) (run globally on the null set; legacy per-gene GTEx path not portable)
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># V estimate: "simple_specific" nearPD(cov(nullZ)) (run globally on the null set; legacy per-gene GTEx path not portable)
 [vhat_simple_specific]
 input: data
-output: f&#39;{vhat_data:nn}.V_vhat_simple_specific.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+output: f'{vhat_data:nn}.V_vhat_simple_specific.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_vhat.R \
         --data ${_input} \
         --method simple_specific \
@@ -1187,11 +1187,11 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Prior engine: udr ED update (opt-in; known numerical issues)
 [ud]
-input: [data, vhat_data if vhat != &quot;mle&quot; else f&#39;{vhat_data:nn}.V_simple.rds&#39;] + [f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components]
+input: [data, vhat_data if vhat != "mle" else f'{vhat_data:nn}.V_simple.rds'] + [f"{cwd}/{output_prefix}.{m}.rds" for m in mixture_components]
 output: prior_data
-comp_files = &quot;,&quot;.join([f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components])
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+comp_files = ",".join([f"{cwd}/{output_prefix}.{m}.rds" for m in mixture_components])
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_prior.R \
         --data ${_input[0]} \
         --engine ud \
@@ -1207,11 +1207,11 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Prior engine: udr TED update (opt-in; needs i.i.d./z-scale data)
 [ud_unconstrained]
-input: [data, vhat_data if vhat != &quot;mle&quot; else f&#39;{vhat_data:nn}.V_simple.rds&#39;] + [f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components]
+input: [data, vhat_data if vhat != "mle" else f'{vhat_data:nn}.V_simple.rds'] + [f"{cwd}/{output_prefix}.{m}.rds" for m in mixture_components]
 output: prior_data
-comp_files = &quot;,&quot;.join([f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components])
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+comp_files = ",".join([f"{cwd}/{output_prefix}.{m}.rds" for m in mixture_components])
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_prior.R \
         --data ${_input[0]} \
         --engine ud_ted \
@@ -1227,11 +1227,11 @@ bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span># Prior engine: mashr extreme deconvolution (the exported bovy ED)
 [ed_bovy]
-input: [data, vhat_data if vhat != &quot;mle&quot; else f&#39;{vhat_data:nn}.V_simple.rds&#39;] + [f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components]
+input: [data, vhat_data if vhat != "mle" else f'{vhat_data:nn}.V_simple.rds'] + [f"{cwd}/{output_prefix}.{m}.rds" for m in mixture_components]
 output: prior_data
-comp_files = &quot;,&quot;.join([f&quot;{cwd}/{output_prefix}.{m}.rds&quot; for m in mixture_components])
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&quot;{_output:n}.stderr&quot;, stdout = f&quot;{_output:n}.stdout&quot;, container = container
+comp_files = ",".join([f"{cwd}/{output_prefix}.{m}.rds" for m in mixture_components])
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output:bn}'
+bash: expand = "${ }", stderr = f"{_output:n}.stderr", stdout = f"{_output:n}.stdout", container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_prior.R \
         --data ${_input[0]} \
         --engine cov_ed \
@@ -1255,19 +1255,19 @@ parameter: data = path
 parameter: max_comp = -1
 # whether or not to convert to correlation
 parameter: to_cor = False
-parameter: tol = &quot;1E-6&quot;
+parameter: tol = "1E-6"
 parameter: remove_label = False
-parameter: name = &quot;&quot;
+parameter: name = ""
 input: data
-output: f&#39;{cwd:a}/{_input:bn}{(&quot;_&quot; + name.replace(&quot;$&quot;, &quot;_&quot;)) if name != &quot;&quot; else &quot;&quot;}.pdf&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container
+output: f'{cwd:a}/{_input:bn}{("_" + name.replace("$", "_")) if name != "" else ""}.pdf'
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container
     Rscript ${modular_script_dir}/pecotmr_integration/mash_plot_prior.R \
         --data ${_input} \
         --max-comp ${max_comp} \
         --tol ${tol} \
-        --name &quot;${name}&quot; \
-        ${&#39;--to-cor&#39; if to_cor else &#39;&#39;} \
-        ${&#39;--remove-label&#39; if remove_label else &#39;&#39;} \
+        --name "${name}" \
+        ${'--to-cor' if to_cor else ''} \
+        ${'--remove-label' if remove_label else ''} \
         --output ${_output}
 </pre></div>
 </div>

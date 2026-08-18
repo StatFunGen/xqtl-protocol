@@ -581,9 +581,9 @@ association testing.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">--pcaFile</span></code>: the genotype PCA result written by the <code class="docutils literal notranslate"><span class="pre">PCA</span></code> module, an RDS holding the per-sample scores in <code class="docutils literal notranslate"><span class="pre">pc_scores</span></code>. Example <code class="docutils literal notranslate"><span class="pre">output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.rds</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>List of 6
  $ pca_model :List of 7
-  ..- attr(*, &quot;class&quot;)= chr &quot;flashpca&quot;
- $ pc_scores :&#39;data.frame&#39;:  60 obs. of  28 variables:
- $ meta      : chr &quot;protocol_example.genotype.merged.plink_qc.plink_qc.prune &quot;
+  ..- attr(*, "class")= chr "flashpca"
+ $ pc_scores :'data.frame':  60 obs. of  28 variables:
+ $ meta      : chr "protocol_example.genotype.merged.plink_qc.plink_qc.prune "
  $ pc_cov    : num [1:5, 1:5] 1.91e-02 -4.83e-18 6.02e-18 -1.35e-18 2.33e-18 ...
  $ pc_mean   : num [1:5] 5.17e-17 -1.22e-17 -4.58e-17 7.87e-17 -3.73e-17
  $ pc_median : num [1:5] 0.00271 0.00131 0.00781 -0.00328 0.00532
@@ -631,7 +631,7 @@ association testing.</p>
     --covFile input/covariate/protocol_example.covariates.base.tsv \
     --name protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca \
     --tol-cov 0.4 \
-    --k `awk &#39;$3 &lt; 0.8&#39; output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.scree.txt | tail -1 | cut -f 1`
+    --k `awk '$3 &lt; 0.8' output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.scree.txt | tail -1 | cut -f 1`
 </pre></div>
 </div>
 </div>
@@ -651,7 +651,7 @@ association testing.</p>
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -671,9 +671,9 @@ association testing.</p>
                         <span class="n">Memory</span> <span class="n">expected</span>
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">8</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
                         <span class="n">Software</span> <span class="n">container</span> <span class="n">option</span>
-  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">entrypoint</span> <span class="s1">''</span>
 
 <span class="n">Sections</span>
   <span class="n">merge_genotype_pc</span><span class="p">:</span>
@@ -684,7 +684,7 @@ association testing.</p>
                         <span class="n">The</span> <span class="n">number</span> <span class="n">of</span> <span class="n">PCs</span> <span class="n">to</span> <span class="n">retain</span><span class="p">,</span> <span class="n">by</span> <span class="n">default</span> <span class="ow">is</span> <span class="mi">20</span><span class="p">,</span> <span class="ow">in</span>
                         <span class="n">practice</span> <span class="n">can</span> <span class="n">be</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">PC</span> <span class="n">that</span> <span class="n">captured</span> <span class="n">more</span> <span class="n">than</span>
                         <span class="mi">70</span><span class="o">%</span> <span class="n">PVE</span>
-      <span class="o">--</span><span class="n">name</span>  <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">covFile</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">pcaFile</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">&#39;</span>
+      <span class="o">--</span><span class="n">name</span>  <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">covFile</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">pcaFile</span><span class="si">:</span><span class="s1">bn</span><span class="si">}</span><span class="s1">'</span>
 
       <span class="o">--</span><span class="n">outliersFile</span> <span class="o">.</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
                         <span class="n">Outliers</span>
@@ -703,23 +703,23 @@ association testing.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # The output directory for generated files. 
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # The covariate file
 parameter: covFile = path
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;2G&quot;
+parameter: mem = "2G"
 # Number of threads
 parameter: numThreads = 8
 # Software container option
-parameter: container = &quot;&quot;
-parameter: entrypoint=&quot;&quot;
-cwd = path(f&quot;{cwd:a}&quot;)
+parameter: container = ""
+parameter: entrypoint=""
+cwd = path(f"{cwd:a}")
 </pre></div>
 </div>
 </div>
@@ -731,30 +731,30 @@ cwd = path(f&quot;{cwd:a}&quot;)
 parameter: pcaFile = path
 # The number of PCs to retain, by default is 20, in practice can be the number of PC that captured more than 70% PVE
 parameter: k = 20
-parameter: name = f&#39;{covFile:bn}.{pcaFile:bn}&#39;
+parameter: name = f'{covFile:bn}.{pcaFile:bn}'
 # Outliers
-parameter: outliersFile = path(&quot;.&quot;) 
+parameter: outliersFile = path(".") 
 parameter: remove_outliers = False
 # Tolerance of missingness in covariates, -1 means do nothing, otherwise for samples with covariates missing rate larger than tol_cov will be removed,
 # with missing rate smaller than tol_cov will be kept.
 parameter: tol_cov = -1.0 
 parameter: mean_impute = True
-stop_if(remove_outliers and not outliersFile.is_file(), msg = &quot;No outliers file specified, please add outliers file or remove the remove-outliers flag&quot;)
+stop_if(remove_outliers and not outliersFile.is_file(), msg = "No outliers file specified, please add outliers file or remove the remove-outliers flag")
 input: pcaFile, covFile
-output:  f&#39;{cwd:a}/{name}.gz&#39;
-task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+output:  f'{cwd:a}/{name}.gz'
+task: trunk_workers = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/data_preprocessing/covariate/covariate_formatting.R \
         --step merge_genotype_pc \
-        --cwd &quot;${cwd}&quot; \
-        --pcaFile &quot;${pcaFile}&quot; \
-        --covFile &quot;${covFile}&quot; \
-        --name &quot;${name}&quot; \
+        --cwd "${cwd}" \
+        --pcaFile "${pcaFile}" \
+        --covFile "${covFile}" \
+        --name "${name}" \
         --k ${k} \
-        --outliersFile &quot;${outliersFile}&quot; \
-        ${&quot;--remove-outliers&quot; if remove_outliers else &quot;&quot;} \
+        --outliersFile "${outliersFile}" \
+        ${"--remove-outliers" if remove_outliers else ""} \
         --tol-cov ${tol_cov} \
-        ${&quot;--mean-impute&quot; if mean_impute else &quot;&quot;} \
+        ${"--mean-impute" if mean_impute else ""} \
         --numThreads ${numThreads}
 </pre></div>
 </div>

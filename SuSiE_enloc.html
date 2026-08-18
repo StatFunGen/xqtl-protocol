@@ -646,13 +646,13 @@ object to reach the value the pipeline needs.</p>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">&lt;cwd&gt;/&lt;name&gt;.&lt;context&gt;.enrichment.rds</span></code></strong> (<code class="docutils literal notranslate"><span class="pre">xqtl_gwas_enrichment</span></code>)
 (one global enrichment estimate per GWAS and xQTL-context pair, combining all input data for that context)</p></li>
 </ul>
-<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">enrich</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;output/xqtl_gwas_enrichment/protocol_example.enloc.protocol_example.enloc.Knight_eQTL_brain.enrichment.rds&quot;</span><span class="p">)</span>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">enrich</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">"output/xqtl_gwas_enrichment/protocol_example.enloc.protocol_example.enloc.Knight_eQTL_brain.enrichment.rds"</span><span class="p">)</span>
 
 <span class="nf">str</span><span class="p">(</span><span class="n">enrich</span><span class="p">)</span>
 <span class="c1"># data.frame:  1 obs. of  6 variables:</span>
-<span class="c1"># $ gwasStudy         : chr &quot;AD_Bellenguez_2022&quot;</span>
-<span class="c1"># $ qtlStudy          : chr &quot;protocol_example.enloc.protocol_example.enloc&quot;</span>
-<span class="c1"># $ qtlContext        : chr &quot;Knight_eQTL_brain&quot;</span>
+<span class="c1"># $ gwasStudy         : chr "AD_Bellenguez_2022"</span>
+<span class="c1"># $ qtlStudy          : chr "protocol_example.enloc.protocol_example.enloc"</span>
+<span class="c1"># $ qtlContext        : chr "Knight_eQTL_brain"</span>
 <span class="c1"># $ enrichment        : num NA</span>
 <span class="c1"># $ enrichmentSe      : num NA</span>
 <span class="c1"># $ enrichmentLogOdds : num NA</span>
@@ -665,18 +665,18 @@ object to reach the value the pipeline needs.</p>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">&lt;cwd&gt;/susie_coloc/&lt;name&gt;.&lt;context&gt;&#64;&lt;gene&gt;.coloc.rds</span></code></strong> (<code class="docutils literal notranslate"><span class="pre">susie_coloc</span></code>)
 (colocalisation results for the regions of interest, one file per context and gene. When <code class="docutils literal notranslate"><span class="pre">--ld-meta-file-path</span></code> is given, coloc credible sets are reported too.)</p></li>
 </ul>
-<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;output/susie_coloc/susie_coloc/protocol_example.enloc.Knight_eQTL_brain@ENSG00000142798.coloc.rds&quot;</span><span class="p">)</span>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">"output/susie_coloc/susie_coloc/protocol_example.enloc.Knight_eQTL_brain@ENSG00000142798.coloc.rds"</span><span class="p">)</span>
 
 <span class="nf">length</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="w">   </span><span class="c1"># 1</span>
-<span class="nf">names</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="w">    </span><span class="c1"># [1] &quot;ENSG00000142798&quot;</span>
+<span class="nf">names</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="w">    </span><span class="c1"># [1] "ENSG00000142798"</span>
 
 <span class="nf">str</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">max.level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span><span class="p">)</span>
 <span class="c1"># List of 1</span>
 <span class="c1">#  $ ENSG00000142798:List of 2</span>
-<span class="c1">#   ..$ (unnamed)      : chr &quot;No coloc results due to the absence of a GWAS log Bayes factor matrix filtered by prior tolerance.&quot;</span>
-<span class="c1">#   ..$ analysis_region: chr &quot;chr1_20110062_22020160&quot;</span>
+<span class="c1">#   ..$ (unnamed)      : chr "No coloc results due to the absence of a GWAS log Bayes factor matrix filtered by prior tolerance."</span>
+<span class="c1">#   ..$ analysis_region: chr "chr1_20110062_22020160"</span>
 
-<span class="n">res</span><span class="o">$</span><span class="n">ENSG00000142798</span><span class="o">$</span><span class="n">analysis_region</span><span class="w">   </span><span class="c1"># &quot;chr1_20110062_22020160&quot;</span>
+<span class="n">res</span><span class="o">$</span><span class="n">ENSG00000142798</span><span class="o">$</span><span class="n">analysis_region</span><span class="w">   </span><span class="c1"># "chr1_20110062_22020160"</span>
 </pre></div>
 </div>
 <p>The output is a named list with one entry per gene. Each gene entry contains:</p>
@@ -795,7 +795,7 @@ each identified condition.</p>
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -818,10 +818,10 @@ each identified condition.</p>
   <span class="o">--</span><span class="n">region</span><span class="o">-</span><span class="n">name</span>  <span class="p">(</span><span class="k">as</span> <span class="nb">list</span><span class="p">)</span>
                         <span class="n">Optional</span><span class="p">:</span> <span class="k">if</span> <span class="n">a</span> <span class="n">region</span> <span class="n">name</span> <span class="ow">is</span> <span class="n">provided</span> <span class="n">the</span> <span class="n">analysis</span> <span class="n">would</span> <span class="n">be</span> <span class="n">focused</span> <span class="n">on</span> <span class="n">the</span> <span class="n">union</span> <span class="n">of</span> <span class="n">provides</span> <span class="n">region</span> <span class="nb">list</span> <span class="ow">and</span> <span class="n">region</span>
                         <span class="n">names</span>
-  <span class="o">--</span><span class="n">name</span>  <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xqtl_meta_data</span><span class="si">:</span><span class="s2">bnn</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">gwas_meta_data</span><span class="si">:</span><span class="s2">bnn</span><span class="si">}</span><span class="s2">&quot;</span>
+  <span class="o">--</span><span class="n">name</span>  <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">xqtl_meta_data</span><span class="si">:</span><span class="s2">bnn</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">gwas_meta_data</span><span class="si">:</span><span class="s2">bnn</span><span class="si">}</span><span class="s2">"</span>
 
                         <span class="n">It</span> <span class="ow">is</span> <span class="n">required</span> <span class="n">to</span> <span class="nb">input</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">analysis</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
   <span class="o">--</span><span class="n">job</span><span class="o">-</span><span class="n">size</span> <span class="mi">200</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">For</span> <span class="n">cluster</span> <span class="n">jobs</span><span class="p">,</span> <span class="n">number</span> <span class="n">commands</span> <span class="n">to</span> <span class="n">run</span> <span class="n">per</span> <span class="n">job</span>
   <span class="o">--</span><span class="n">walltime</span> <span class="mi">5</span><span class="n">m</span>
@@ -831,23 +831,23 @@ each identified condition.</p>
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">1</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
   <span class="o">--</span><span class="n">xqtl</span><span class="o">-</span><span class="n">finemapping</span><span class="o">-</span><span class="n">obj</span>  <span class="p">(</span><span class="k">as</span> <span class="nb">list</span><span class="p">)</span>
-                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">xQTL</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">fine</span> <span class="n">mapping</span> <span class="n">results</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">&#39;susie_result_trimmed &#39;</span><span class="p">)</span><span class="o">.</span>
+                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">xQTL</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">fine</span> <span class="n">mapping</span> <span class="n">results</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">'susie_result_trimmed '</span><span class="p">)</span><span class="o">.</span>
   <span class="o">--</span><span class="n">xqtl</span><span class="o">-</span><span class="n">varname</span><span class="o">-</span><span class="n">obj</span>  <span class="p">(</span><span class="k">as</span> <span class="nb">list</span><span class="p">)</span>
-                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">xQTL</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">variable</span> <span class="n">names</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">&#39; variant_names &#39;</span><span class="p">)</span><span class="o">.</span>
+                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">xQTL</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">variable</span> <span class="n">names</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">' variant_names '</span><span class="p">)</span><span class="o">.</span>
   <span class="o">--</span><span class="n">gwas</span><span class="o">-</span><span class="n">finemapping</span><span class="o">-</span><span class="n">obj</span>  <span class="p">(</span><span class="k">as</span> <span class="nb">list</span><span class="p">)</span>
-                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">GWAS</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">fine</span> <span class="n">mapping</span> <span class="n">results</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">&#39;AD_Bellenguez_2022 single_effect_regression</span>
-                        <span class="n">susie_result_trimmed</span> <span class="s1">&#39;).</span>
+                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">GWAS</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">fine</span> <span class="n">mapping</span> <span class="n">results</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">'AD_Bellenguez_2022 single_effect_regression</span>
+                        <span class="n">susie_result_trimmed</span> <span class="s1">').</span>
   <span class="o">--</span><span class="n">gwas</span><span class="o">-</span><span class="n">varname</span><span class="o">-</span><span class="n">obj</span>  <span class="p">(</span><span class="k">as</span> <span class="nb">list</span><span class="p">)</span>
-                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">GWAS</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">variable</span> <span class="n">names</span><span class="p">(</span><span class="n">eg</span> <span class="s1">&#39;AD_Bellenguez_2022 single_effect_regression</span>
-                        <span class="n">variant_names</span> <span class="s1">&#39;).</span>
+                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">GWAS</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">variable</span> <span class="n">names</span><span class="p">(</span><span class="n">eg</span> <span class="s1">'AD_Bellenguez_2022 single_effect_regression</span>
+                        <span class="n">variant_names</span> <span class="s1">').</span>
   <span class="o">--</span><span class="n">xqtl</span><span class="o">-</span><span class="n">region</span><span class="o">-</span><span class="n">obj</span>  <span class="p">(</span><span class="k">as</span> <span class="nb">list</span><span class="p">)</span>
-                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">xQTL</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">region</span> <span class="n">info</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">&#39;susie_result_trimmed region_info grange &#39;</span><span class="p">)</span><span class="o">.</span>
+                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">xQTL</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">region</span> <span class="n">info</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">'susie_result_trimmed region_info grange '</span><span class="p">)</span><span class="o">.</span>
   <span class="o">--</span><span class="n">gwas</span><span class="o">-</span><span class="n">region</span><span class="o">-</span><span class="n">obj</span>  <span class="p">(</span><span class="k">as</span> <span class="nb">list</span><span class="p">)</span>
-                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">GWAS</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">region</span> <span class="n">info</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">&#39;AD_Bellenguez_2022 single_effect_regression region_info</span>
-                        <span class="n">grange</span> <span class="s1">&#39;).</span>
-  <span class="o">--</span><span class="n">gwas</span><span class="o">-</span><span class="n">path</span> <span class="s1">&#39;&#39;</span>
+                        <span class="n">Optional</span> <span class="n">table</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">GWAS</span> <span class="n">RDS</span> <span class="n">files</span> <span class="n">to</span> <span class="n">get</span> <span class="n">region</span> <span class="n">info</span> <span class="p">(</span><span class="n">eg</span> <span class="s1">'AD_Bellenguez_2022 single_effect_regression region_info</span>
+                        <span class="n">grange</span> <span class="s1">').</span>
+  <span class="o">--</span><span class="n">gwas</span><span class="o">-</span><span class="n">path</span> <span class="s1">''</span>
                         <span class="n">Directory</span> <span class="n">path</span> <span class="k">for</span> <span class="n">GWAS</span> <span class="n">orignal</span> <span class="n">finemapping</span> <span class="n">results</span>
-  <span class="o">--</span><span class="n">qtl</span><span class="o">-</span><span class="n">path</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">qtl</span><span class="o">-</span><span class="n">path</span> <span class="s1">''</span>
                         <span class="n">Directory</span> <span class="n">path</span> <span class="k">for</span> <span class="n">xQTL</span> <span class="n">orignal</span> <span class="n">finemapping</span> <span class="n">results</span>
   <span class="o">--</span><span class="n">context</span><span class="o">-</span><span class="n">meta</span> <span class="o">.</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
                         <span class="n">a</span> <span class="n">meta</span> <span class="n">file</span> <span class="n">showing</span> <span class="n">the</span> <span class="n">context</span> <span class="ow">and</span> <span class="n">corresponding</span> <span class="n">analysis_name</span>
@@ -862,7 +862,7 @@ each identified condition.</p>
   <span class="n">susie_coloc</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
       <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">skip</span><span class="o">-</span><span class="n">enrich</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
-                        <span class="n">depends</span><span class="p">:</span> <span class="n">sos_step</span><span class="p">(</span><span class="s2">&quot;xqtl_gwas_enrichment&quot;</span><span class="p">)</span> <span class="c1">#changed skip enrichment or not</span>
+                        <span class="n">depends</span><span class="p">:</span> <span class="n">sos_step</span><span class="p">(</span><span class="s2">"xqtl_gwas_enrichment"</span><span class="p">)</span> <span class="c1">#changed skip enrichment or not</span>
       <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="nb">filter</span><span class="o">-</span><span class="n">lbf</span><span class="o">-</span><span class="n">cs</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
                         <span class="nb">filter</span> <span class="n">lbf</span> <span class="n">by</span> <span class="n">cs</span> <span class="k">as</span> <span class="n">default</span> <span class="ow">in</span> <span class="n">susie</span> <span class="n">coloc</span><span class="o">.</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">False</span> <span class="n">means</span> <span class="n">filtering</span> <span class="n">by</span> <span class="n">V</span> <span class="o">&gt;</span> <span class="n">prior_tol</span>
       <span class="o">--</span><span class="n">ld</span><span class="o">-</span><span class="n">meta</span><span class="o">-</span><span class="n">file</span><span class="o">-</span><span class="n">path</span> <span class="o">.</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
@@ -876,8 +876,8 @@ each identified condition.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # Workdir
-parameter: cwd = path(&quot;output&quot;)
-parameter: modular_script_dir = path(&#39;code/script&#39;)
+parameter: cwd = path("output")
+parameter: modular_script_dir = path('code/script')
 # A list of file paths for fine-mapped GWAS results. 
 parameter: gwas_meta_data = path
 # A list of file paths for fine-mapped xQTL results. 
@@ -889,32 +889,32 @@ parameter: region_list = path()
 # the analysis would be focused on the union of provides region list and region names
 parameter: region_name = []
 # It is required to input the name of the analysis
-parameter: name = f&quot;{xqtl_meta_data:bnn}.{gwas_meta_data:bnn}&quot;
-parameter: container = &quot;&quot;
+parameter: name = f"{xqtl_meta_data:bnn}.{gwas_meta_data:bnn}"
+parameter: container = ""
 # For cluster jobs, number commands to run per job
 parameter: job_size = 200
 # Wall clock time expected
-parameter: walltime = &quot;5m&quot;
+parameter: walltime = "5m"
 # Memory expected: quite large for enrichment analysis but small for xQTL colocalization
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 1
-#Optional table name in xQTL RDS files to get fine mapping results (eg &#39;susie_result_trimmed &#39;).
+#Optional table name in xQTL RDS files to get fine mapping results (eg 'susie_result_trimmed ').
 parameter: xqtl_finemapping_obj = []
-#Optional table name in xQTL RDS files to get variable names (eg &#39; variant_names &#39;).
+#Optional table name in xQTL RDS files to get variable names (eg ' variant_names ').
 parameter: xqtl_varname_obj = []
-#Optional table name in GWAS RDS files to get fine mapping results (eg &#39;AD_Bellenguez_2022 single_effect_regression susie_result_trimmed &#39;).
+#Optional table name in GWAS RDS files to get fine mapping results (eg 'AD_Bellenguez_2022 single_effect_regression susie_result_trimmed ').
 parameter: gwas_finemapping_obj = []
-#Optional table name in GWAS RDS files to get variable names(eg &#39;AD_Bellenguez_2022 single_effect_regression variant_names &#39;).
+#Optional table name in GWAS RDS files to get variable names(eg 'AD_Bellenguez_2022 single_effect_regression variant_names ').
 parameter: gwas_varname_obj = []
-#Optional table name in xQTL RDS files to get region info (eg &#39;susie_result_trimmed region_info grange &#39;).
+#Optional table name in xQTL RDS files to get region info (eg 'susie_result_trimmed region_info grange ').
 parameter: xqtl_region_obj = []
-#Optional table name in GWAS RDS files to get region info (eg &#39;AD_Bellenguez_2022 single_effect_regression region_info grange &#39;).
+#Optional table name in GWAS RDS files to get region info (eg 'AD_Bellenguez_2022 single_effect_regression region_info grange ').
 parameter: gwas_region_obj = []
 #Directory path for GWAS orignal finemapping results 
-parameter: gwas_path = &#39;&#39;
+parameter: gwas_path = ''
 #Directory path for xQTL orignal finemapping results 
-parameter: qtl_path = &#39;&#39;
+parameter: qtl_path = ''
 # a meta file showing the context and corresponding analysis_name
 parameter: context_meta = path()
 # Optional: if a region list is provide the analysis will be focused on provided region. 
@@ -932,7 +932,7 @@ parameter: minp = False
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_analysis_regions: shared = {&#39;enrichment_rows&#39;: &quot;list(__import__(&#39;csv&#39;).DictReader(open(enrichment_manifest), delimiter=chr(9)))&quot;}]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_analysis_regions: shared = {'enrichment_rows': "list(__import__('csv').DictReader(open(enrichment_manifest), delimiter=chr(9)))"}]
 # Resolve the per-condition xQTL x GWAS enrichment units into a manifest TSV via
 # enloc_manifest.R -- the coordinate-overlap pairing + per-condition study
 # routing that the legacy get_analysis_regions did in-notebook with pandas. The
@@ -940,18 +940,18 @@ parameter: minp = False
 # auto-triggers this step via depends: sos_variable -- the notebook is invoked
 # exactly as before (e.g. sos run SuSiE_enloc.ipynb xqtl_gwas_enrichment).
 input: None
-enrichment_manifest = f&quot;{cwd:a}/get_analysis_regions/{name}.enrichment_manifest.tsv&quot;
-bash: expand = &quot;${ }&quot;, container = container
+enrichment_manifest = f"{cwd:a}/get_analysis_regions/{name}.enrichment_manifest.tsv"
+bash: expand = "${ }", container = container
     mkdir -p ${cwd:a}/get_analysis_regions
     Rscript ${modular_script_dir}/pecotmr_integration/enloc_manifest.R --mode enrichment \
         --xqtl-meta ${xqtl_meta_data} --gwas-meta ${gwas_meta_data} \
-        ${(&quot;--context-meta &quot; + str(context_meta)) if context_meta.is_file() else &quot;&quot;} \
-        ${(&quot;--qtl-path &quot; + str(qtl_path)) if qtl_path else &quot;&quot;} \
-        ${(&quot;--gwas-path &quot; + str(gwas_path)) if gwas_path else &quot;&quot;} \
-        ${(&quot;--region-list &quot; + str(region_list)) if region_list.is_file() else &quot;&quot;} \
-        ${(&quot;--region-name &quot; + &quot;,&quot;.join(region_name)) if len(region_name) &gt; 0 else &quot;&quot;} \
-        ${(&quot;--gwas-finemapping-obj &quot; + &quot; &quot;.join([str(x) for x in gwas_finemapping_obj])) if len(gwas_finemapping_obj) &gt; 0 else &quot;&quot;} \
-        ${&quot;--minp&quot; if minp else &quot;&quot;} \
+        ${("--context-meta " + str(context_meta)) if context_meta.is_file() else ""} \
+        ${("--qtl-path " + str(qtl_path)) if qtl_path else ""} \
+        ${("--gwas-path " + str(gwas_path)) if gwas_path else ""} \
+        ${("--region-list " + str(region_list)) if region_list.is_file() else ""} \
+        ${("--region-name " + ",".join(region_name)) if len(region_name) &gt; 0 else ""} \
+        ${("--gwas-finemapping-obj " + " ".join([str(x) for x in gwas_finemapping_obj])) if len(gwas_finemapping_obj) &gt; 0 else ""} \
+        ${"--minp" if minp else ""} \
         --output ${enrichment_manifest}
 </pre></div>
 </div>
@@ -959,25 +959,25 @@ bash: expand = &quot;${ }&quot;, container = container
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_overlapped_analysis_regions: shared = {&#39;coloc_rows&#39;: &quot;list(__import__(&#39;csv&#39;).DictReader(open(coloc_manifest), delimiter=chr(9)))&quot;}]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_overlapped_analysis_regions: shared = {'coloc_rows': "list(__import__('csv').DictReader(open(coloc_manifest), delimiter=chr(9)))"}]
 # Resolve the per-(condition,region) xQTL x GWAS coloc units into a manifest TSV
 # via enloc_manifest.R --mode coloc -- the block_top_loci variant-overlap pairing
 # + per-condition study routing that the legacy get_overlapped_analysis_regions
 # did in-notebook with pandas. Shared as coloc_rows, so [susie_coloc]
 # auto-triggers this step (sos run SuSiE_enloc.ipynb susie_coloc) unchanged.
 input: None
-coloc_manifest = f&quot;{cwd:a}/get_overlapped_analysis_regions/{name}.coloc_manifest.tsv&quot;
-bash: expand = &quot;${ }&quot;, container = container
+coloc_manifest = f"{cwd:a}/get_overlapped_analysis_regions/{name}.coloc_manifest.tsv"
+bash: expand = "${ }", container = container
     mkdir -p ${cwd:a}/get_overlapped_analysis_regions
     Rscript ${modular_script_dir}/pecotmr_integration/enloc_manifest.R --mode coloc \
         --xqtl-meta ${xqtl_meta_data} --gwas-meta ${gwas_meta_data} \
-        ${(&quot;--context-meta &quot; + str(context_meta)) if context_meta.is_file() else &quot;&quot;} \
-        ${(&quot;--qtl-path &quot; + str(qtl_path)) if qtl_path else &quot;&quot;} \
-        ${(&quot;--gwas-path &quot; + str(gwas_path)) if gwas_path else &quot;&quot;} \
-        ${(&quot;--region-list &quot; + str(region_list)) if region_list.is_file() else &quot;&quot;} \
-        ${(&quot;--region-name &quot; + &quot;,&quot;.join(region_name)) if len(region_name) &gt; 0 else &quot;&quot;} \
-        ${(&quot;--gwas-finemapping-obj &quot; + &quot; &quot;.join([str(x) for x in gwas_finemapping_obj])) if len(gwas_finemapping_obj) &gt; 0 else &quot;&quot;} \
-        ${&quot;--minp&quot; if minp else &quot;&quot;} \
+        ${("--context-meta " + str(context_meta)) if context_meta.is_file() else ""} \
+        ${("--qtl-path " + str(qtl_path)) if qtl_path else ""} \
+        ${("--gwas-path " + str(gwas_path)) if gwas_path else ""} \
+        ${("--region-list " + str(region_list)) if region_list.is_file() else ""} \
+        ${("--region-name " + ",".join(region_name)) if len(region_name) &gt; 0 else ""} \
+        ${("--gwas-finemapping-obj " + " ".join([str(x) for x in gwas_finemapping_obj])) if len(gwas_finemapping_obj) &gt; 0 else ""} \
+        ${"--minp" if minp else ""} \
         --output ${coloc_manifest}
 </pre></div>
 </div>
@@ -986,21 +986,21 @@ bash: expand = &quot;${ }&quot;, container = container
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[xqtl_gwas_enrichment]
-depends: sos_variable(&quot;enrichment_rows&quot;)
+depends: sos_variable("enrichment_rows")
 jobs = enrichment_rows
-stop_if(len(jobs) == 0, f&#39;No files left for analysis&#39;)
-_qtl_groups = [j[&#39;qtl_files&#39;].split(&#39;,&#39;) for j in jobs]
-input: [f for grp in _qtl_groups for f in grp], group_by = lambda x: _qtl_groups, group_with = &quot;jobs&quot;
-output: f&#39;{cwd:a}/{name}.{_jobs[&quot;unit_id&quot;]}.enrichment.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
+stop_if(len(jobs) == 0, f'No files left for analysis')
+_qtl_groups = [j['qtl_files'].split(',') for j in jobs]
+input: [f for grp in _qtl_groups for f in grp], group_by = lambda x: _qtl_groups, group_with = "jobs"
+output: f'{cwd:a}/{name}.{_jobs["unit_id"]}.enrichment.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container
     set -e
     # The xQTL and GWAS sides are already S4 FineMappingResult collections
     # (fine_mapping output); qtl_enrichment.R combines its multi-file inputs
     # itself, so the legacy legacy_enloc_finemap_convert.R step is gone.
     Rscript ${modular_script_dir}/pecotmr_integration/qtl_enrichment.R \
-        --qtl-fine-mapping ${&quot; &quot;.join([str(x) for x in _input])} \
-        --gwas-fine-mapping ${_jobs[&quot;gwas_files&quot;].replace(&quot;,&quot;, &quot; &quot;)} \
+        --qtl-fine-mapping ${" ".join([str(x) for x in _input])} \
+        --gwas-fine-mapping ${_jobs["gwas_files"].replace(",", " ")} \
         --ncore ${numThreads} \
         --output ${_output}
 </pre></div>
@@ -1010,9 +1010,9 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_coloc]
-depends: sos_variable(&quot;coloc_rows&quot;)
-# depends: sos_step(&quot;xqtl_gwas_enrichment&quot;) #changed
-stop_if(len(coloc_rows) == 0, f&#39;No files left for analysis&#39;)
+depends: sos_variable("coloc_rows")
+# depends: sos_step("xqtl_gwas_enrichment") #changed
+stop_if(len(coloc_rows) == 0, f'No files left for analysis')
 # skip enrichment or not
 parameter: skip_enrich=False
 # filter lbf by cs as default in susie coloc. default is False means filtering by V &gt; prior_tol
@@ -1020,20 +1020,20 @@ parameter: filter_lbf_cs = False
 # ld reference path for postprocessing 
 parameter: ld_meta_file_path = path()
 jobs = coloc_rows
-_qtl_groups = [j[&#39;qtl_files&#39;].split(&#39;,&#39;) for j in jobs]
-input: [f for grp in _qtl_groups for f in grp], group_by = lambda x: _qtl_groups, group_with = &quot;jobs&quot;
-output: f&#39;{cwd:a}/{step_name}/{name}.{_jobs[&quot;unit_id&quot;]}.coloc.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container
+_qtl_groups = [j['qtl_files'].split(',') for j in jobs]
+input: [f for grp in _qtl_groups for f in grp], group_by = lambda x: _qtl_groups, group_with = "jobs"
+output: f'{cwd:a}/{step_name}/{name}.{_jobs["unit_id"]}.coloc.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container
     set -e
     # xQTL + GWAS sides are already S4 FineMappingResult collections; coloc.R
     # combines its multi-file inputs itself (no legacy conversion). The enrichment
-    # file (context before &#39;@&#39; in unit_id) tunes colocPipeline&#39;s prior.
+    # file (context before '@' in unit_id) tunes colocPipeline's prior.
     Rscript ${modular_script_dir}/pecotmr_integration/coloc.R \
-        --qtl-fine-mapping ${&quot; &quot;.join([str(x) for x in _input])} \
-        --gwas-input ${_jobs[&quot;gwas_files&quot;].replace(&quot;,&quot;, &quot; &quot;)} \
-        ${(&#39;--filter-lbf-cs&#39; if filter_lbf_cs else &#39;&#39;)} \
-        ${(&#39;--enrichment &#39;+cwd.absolute().joinpath(name + &quot;.&quot; + _jobs[&quot;unit_id&quot;].split(&quot;@&quot;)[0] + &quot;.enrichment.rds&quot;).as_posix()) if not skip_enrich else &#39;&#39;} \
+        --qtl-fine-mapping ${" ".join([str(x) for x in _input])} \
+        --gwas-input ${_jobs["gwas_files"].replace(",", " ")} \
+        ${('--filter-lbf-cs' if filter_lbf_cs else '')} \
+        ${('--enrichment '+cwd.absolute().joinpath(name + "." + _jobs["unit_id"].split("@")[0] + ".enrichment.rds").as_posix()) if not skip_enrich else ''} \
         --output ${_output}
 </pre></div>
 </div>

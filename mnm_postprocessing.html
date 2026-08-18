@@ -699,7 +699,7 @@ set of inputs, none of which the example data ships:</p>
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_postprocessing.ipynb susie_to_tsv \
     --cwd output_postproc --study toy \
     --rds_path input/mnm_postprocessing/protocol_example.ENSG00000283047.fine_mapping.rds \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -714,7 +714,7 @@ set of inputs, none of which the example data ships:</p>
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_postprocessing.ipynb fsusie_to_tsv \
     --cwd output_postproc --study &lt;study_name&gt; \
     --rds_path input/mnm_postprocessing/protocol_example.fsusie.fine_mapping.rds \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -729,7 +729,7 @@ set of inputs, none of which the example data ships:</p>
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_postprocessing.ipynb susie_tsv_collapse \
     --cwd output_postproc --study &lt;study_name&gt; \
     --tsv_path output_postproc/*.lbf.tsv \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -745,13 +745,13 @@ set of inputs, none of which the example data ships:</p>
     --cwd output_postproc --study &lt;study_name&gt; \
     --rds_path &lt;fine_mapping_dir&gt;/*.fine_mapping.rds \
     --annot_tibble &lt;annotation_tibble.tsv&gt; \
-    --container &#39;&#39; -j1
+    --container '' -j1
 
 sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
     --cwd output_postproc --study &lt;study_name&gt; \
     --rds_path &lt;fine_mapping_dir&gt;/*.fine_mapping.rds \
     --trait_to_select 1 \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -767,7 +767,7 @@ sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
     --cwd output_postproc --study &lt;study_name&gt; \
     --SNP_list &lt;variant_list.txt&gt; \
     --annotation_rds &lt;annotation.rds&gt; \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -783,7 +783,7 @@ sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
     --cwd output_postproc --study &lt;study_name&gt; \
     --rds_path input/mnm_postprocessing/protocol_example.fsusie.fine_mapping.rds \
     --annot_tibble &lt;annotation_tibble.tsv&gt; \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -798,7 +798,7 @@ sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_postprocessing.ipynb mv_susie \
     --cwd output_postproc --study &lt;study_name&gt; \
     --rds_path input/mnm_postprocessing/protocol_example.mvsusie.fine_mapping.rds \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -817,7 +817,7 @@ sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
     --prefix &lt;fm_rds_prefix&gt; --suffix &lt;fm_rds_suffix&gt; \
     --qtl_type cis --min_corr 0.8 \
     --geno_ref &lt;genotype_reference.bim.gz&gt; \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -835,7 +835,7 @@ sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
     --file_path &lt;fine_mapping_dir&gt; \
     --prefix &lt;fm_rds_prefix&gt; --suffix &lt;fm_rds_suffix&gt; \
     --condition_meta &lt;gwas_meta.tsv&gt; \
-    --container &#39;&#39; -j1
+    --container '' -j1
 </pre></div>
 </div>
 </div>
@@ -844,20 +844,20 @@ sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">get_condition</span> <span class="o">&lt;-</span> <span class="n">function</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">Author</span><span class="p">,</span> <span class="n">qtl_type</span><span class="p">){</span>
     <span class="n">strings</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">()</span>
     <span class="k">for</span><span class="p">(</span><span class="n">condition</span> <span class="ow">in</span> <span class="n">conditions</span><span class="p">){</span>
-        <span class="n">string</span> <span class="o">=</span>  <span class="n">paste</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">Author</span><span class="p">,</span> <span class="n">qtl_type</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>  
-        <span class="n">string</span> <span class="o">=</span> <span class="n">paste</span><span class="p">(</span><span class="n">unique</span><span class="p">(</span><span class="n">unlist</span><span class="p">(</span><span class="n">strsplit</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">))),</span> <span class="n">collapse</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">string</span> <span class="o">=</span>  <span class="n">paste</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">Author</span><span class="p">,</span> <span class="n">qtl_type</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">"_"</span><span class="p">)</span>  
+        <span class="n">string</span> <span class="o">=</span> <span class="n">paste</span><span class="p">(</span><span class="n">unique</span><span class="p">(</span><span class="n">unlist</span><span class="p">(</span><span class="n">strsplit</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">))),</span> <span class="n">collapse</span> <span class="o">=</span> <span class="s2">"_"</span><span class="p">)</span>
         <span class="n">strings</span> <span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="n">strings</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span>
     <span class="p">}</span>
     <span class="k">return</span><span class="p">(</span><span class="n">strings</span><span class="p">)</span>
 <span class="p">}</span>
 
-<span class="n">raw_name</span><span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;Mic&quot;</span><span class="p">,</span><span class="s2">&quot;Ast&quot;</span><span class="p">,</span><span class="s2">&quot;Oli&quot;</span><span class="p">,</span><span class="s2">&quot;OPC&quot;</span><span class="p">,</span><span class="s2">&quot;Exc&quot;</span><span class="p">,</span><span class="s2">&quot;Inh&quot;</span><span class="p">,</span><span class="s2">&quot;DLPFC&quot;</span><span class="p">,</span><span class="s2">&quot;PCC&quot;</span><span class="p">,</span><span class="s2">&quot;AC&quot;</span><span class="p">)</span>
-<span class="n">raw_name_kellis</span><span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="s2">&quot;Mic_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Ast_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Oli_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;OPC_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Exc_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Inh_Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;Ast.10&quot;</span><span class="p">,</span><span class="s2">&quot;Mic.12&quot;</span><span class="p">,</span><span class="s2">&quot;Mic.13&quot;</span><span class="p">)</span>
+<span class="n">raw_name</span><span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="s2">"Mic"</span><span class="p">,</span><span class="s2">"Ast"</span><span class="p">,</span><span class="s2">"Oli"</span><span class="p">,</span><span class="s2">"OPC"</span><span class="p">,</span><span class="s2">"Exc"</span><span class="p">,</span><span class="s2">"Inh"</span><span class="p">,</span><span class="s2">"DLPFC"</span><span class="p">,</span><span class="s2">"PCC"</span><span class="p">,</span><span class="s2">"AC"</span><span class="p">)</span>
+<span class="n">raw_name_kellis</span><span class="o">&lt;-</span> <span class="n">c</span><span class="p">(</span><span class="s2">"Mic_Kellis"</span><span class="p">,</span><span class="s2">"Ast_Kellis"</span><span class="p">,</span><span class="s2">"Oli_Kellis"</span><span class="p">,</span><span class="s2">"OPC_Kellis"</span><span class="p">,</span><span class="s2">"Exc_Kellis"</span><span class="p">,</span><span class="s2">"Inh_Kellis"</span><span class="p">,</span><span class="s2">"Ast.10"</span><span class="p">,</span><span class="s2">"Mic.12"</span><span class="p">,</span><span class="s2">"Mic.13"</span><span class="p">)</span>
 
-<span class="n">dejager_name</span> <span class="o">&lt;-</span> <span class="n">get_condition</span><span class="p">(</span><span class="n">raw_name</span><span class="p">,</span> <span class="s2">&quot;De_Jager&quot;</span><span class="p">,</span><span class="s2">&quot;eQTL&quot;</span><span class="p">)</span>
-<span class="n">kellis_name</span> <span class="o">&lt;-</span> <span class="n">get_condition</span><span class="p">(</span><span class="n">raw_name_kellis</span><span class="p">,</span> <span class="s2">&quot;Kellis&quot;</span><span class="p">,</span><span class="s2">&quot;eQTL&quot;</span><span class="p">)</span>
+<span class="n">dejager_name</span> <span class="o">&lt;-</span> <span class="n">get_condition</span><span class="p">(</span><span class="n">raw_name</span><span class="p">,</span> <span class="s2">"De_Jager"</span><span class="p">,</span><span class="s2">"eQTL"</span><span class="p">)</span>
+<span class="n">kellis_name</span> <span class="o">&lt;-</span> <span class="n">get_condition</span><span class="p">(</span><span class="n">raw_name_kellis</span><span class="p">,</span> <span class="s2">"Kellis"</span><span class="p">,</span><span class="s2">"eQTL"</span><span class="p">)</span>
 <span class="n">eQTL_meta</span> <span class="o">&lt;-</span> <span class="n">data</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="n">raw_name</span> <span class="o">=</span> <span class="n">c</span><span class="p">(</span><span class="n">raw_name</span><span class="p">,</span> <span class="n">raw_name_kellis</span><span class="p">),</span> <span class="n">new_name</span> <span class="o">=</span> <span class="n">c</span><span class="p">(</span><span class="n">dejager_name</span><span class="p">,</span> <span class="n">kellis_name</span><span class="p">))</span>
-<span class="n">write_delim</span><span class="p">(</span><span class="n">eQTL_meta</span><span class="p">,</span> <span class="s2">&quot;output/mnm_postprocessing/eQTL_meta.tsv&quot;</span><span class="p">)</span>
+<span class="n">write_delim</span><span class="p">(</span><span class="n">eQTL_meta</span><span class="p">,</span> <span class="s2">"output/mnm_postprocessing/eQTL_meta.tsv"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -875,7 +875,7 @@ sos run pipeline/mnm_postprocessing.ipynb susie_upsetR_cs_plot \
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -901,11 +901,11 @@ Global Workflow Options:
                         A region list file documenting the chr_pos_ref_alt of a
                         susie_object
   --study VAL (as str, required)
-  --container &#39;&#39;
+  --container ''
                         Path to work directory where output locates Containers
                         that contains the necessary packages
   --modular-script-dir code/script (as path)
-  --entrypoint  (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+  --entrypoint  ('micromamba run -a "" -n' + ' ' + re.sub(r'(_apptainer:latest|_docker:latest|\.sif)$', '', container.split('/')[-1])) if container else ""
 
   --job-size 1 (as int)
                         For cluster jobs, number commands to run per job
@@ -937,8 +937,8 @@ Sections
     Workflow Options:
       --region-list . (as path)
                         Migrated: identical to susie_to_tsv but preserves the
-                        sQTL / leafcutter2 filename sanitization (&quot;*&quot; -&gt; &quot;N&quot;;
-                        &quot;:&quot;/&quot;+&quot; scrubbed from the task tag), since intron ids
+                        sQTL / leafcutter2 filename sanitization ("*" -&gt; "N";
+                        ":"/"+" scrubbed from the task tag), since intron ids
                         contain shell-hostile characters. Consumes a
                         FineMappingResult RDS and writes the topLoci / lbf /
                         cs_summary views.
@@ -961,12 +961,12 @@ Sections
 
   *_to_tsv_2:
     Workflow Options:
-      --name  f&#39;{_input[0]:b}&#39;.split(&quot;.&quot;)[0]
+      --name  f'{_input[0]:b}'.split(".")[0]
 
                         Reduce: concatenate the per-region variant tables (the
                         *variant.tsv outputs of the parallel _1 map step) into
                         one file, in R via data.table::rbindlist (fill=TRUE
-                        aligns columns). _input carries all of _1&#39;s outputs, so
+                        aligns columns). _input carries all of _1's outputs, so
                         keep only the variant tables (not the lbf / effect
                         ones).
   susie_tsv_collapse:
@@ -993,7 +993,7 @@ Sections
       --rds-path  paths
 
                         UpSet plot of credible-set variant overlap across the
-                        FineMappingResult(s)&#39; (study, context, trait, method)
+                        FineMappingResult(s)' (study, context, trait, method)
                         tuples. pecotmr does no plotting; the UpSet lives in
                         fine_mapping_upset.R.
   susie_upsetR_cs_plot:
@@ -1003,8 +1003,8 @@ Sections
                         Credible-set overlap UpSet plot across the
                         FineMappingResult(s), via fine_mapping_upset.R (pecotmr
                         does no plotting). trait_to_select is retained for CLI
-                        compatibility; the single-trait &quot;CS shared with other
-                        phenotypes&quot; sub-view is a deferred wrapper option.
+                        compatibility; the single-trait "CS shared with other
+                        phenotypes" sub-view is a deferred wrapper option.
       --trait-to-select 1 (as int)
   tmp_annotatation_of_snps_1:
     Workflow Options:
@@ -1055,7 +1055,7 @@ Sections
                         per chunk we process at most 200 datasets
       --region-file . (as path)
                         Region list should have last column being region name.
-      --file-path &#39;&#39;
+      --file-path ''
                         the path stored original output files
       --prefix  (as list)
                         assuming orinal files are named as prefix.id.suffix
@@ -1137,11 +1137,11 @@ Sections
                         filtering; lfsr / conditional_effect are per-(variant,
                         context) numeric columns, so the legacy filter_lfsr
                         semicolon split/rejoin is gone. `export_suffix`
-                        deliberately differs from step 1&#39;s `--suffix` (input
+                        deliberately differs from step 1's `--suffix` (input
                         rds) to avoid CLI collision.
-      --export-prefix &#39;&#39;
-      --export-suffix &#39;cis_results_db.rds&#39;
-      --fsusie-prefix &#39;&#39;
+      --export-prefix ''
+      --export-suffix 'cis_results_db.rds'
+      --fsusie-prefix ''
       --[no-]preset-top-loci (default to False)
       --signal-cutoff 0.025 (as float)
                         PIP cutoff for getTopLoci; optional independent CS
@@ -1156,10 +1156,10 @@ Sections
                         Combine per-region .top_loci.bed.gz files into one
                         study-level file. Public-facing name:
                         {name}.{qtl_type}[.{variant_tag}].top_loci.bed.gz
-      --variant-tag &#39;&#39;
+      --variant-tag ''
       --combine auto
-                        &#39;auto&#39; (default): skip step 3 if region_name or
-                        region_list is set; &#39;yes&#39;: force run; &#39;no&#39;: force skip.
+                        'auto' (default): skip step 3 if region_name or
+                        region_list is set; 'yes': force run; 'no': force skip.
       --region-list . (as path)
                         Re-declared so this step can detect step-1 subset
                         filters.
@@ -1169,8 +1169,8 @@ Sections
       --per-chunk 100 (as int)
       --gwas-meta-path . (as path)
       --qtl-meta-path . (as path)
-      --gwas-file-path &#39;&#39;
-      --qtl-file-path &#39;&#39;
+      --gwas-file-path ''
+      --qtl-file-path ''
       --region-list . (as path)
                         Optional: focus on a region list (last column = region
                         id) and/or region names.
@@ -1196,22 +1196,22 @@ Sections
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # A region list file documenting the chr_pos_ref_alt of a susie_object
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 parameter: study = str
 name = study
 
 ## Path to work directory where output locates
 ## Containers that contains the necessary packages
-parameter: container = &quot;&quot;
+parameter: container = ""
 import re
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
-parameter: entrypoint= (&#39;micromamba run -a &quot;&quot; -n&#39; + &#39; &#39; + re.sub(r&#39;(_apptainer:latest|_docker:latest|\.sif)$&#39;, &#39;&#39;, container.split(&#39;/&#39;)[-1])) if container else &quot;&quot;
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
+parameter: entrypoint= ('micromamba run -a "" -n' + ' ' + re.sub(r'(_apptainer:latest|_docker:latest|\.sif)$', '', container.split('/')[-1])) if container else ""
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;96h&quot;
+parameter: walltime = "96h"
 # Memory expected
-parameter: mem = &quot;6G&quot;
+parameter: mem = "6G"
 # Number of threads
 parameter: numThreads = 2
 parameter: windows = 1000000
@@ -1234,9 +1234,9 @@ from sos.utils import expand_size
 parameter: region_list = path()
 parameter: rds_path = paths
 input: rds_path, group_by = 1
-output: f&quot;{cwd}/{_input:bn}.variant.tsv&quot;, f&quot;{cwd}/{_input:bn}.lbf.tsv&quot;, f&quot;{cwd}/{_input:bn}.effect.tsv&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+output: f"{cwd}/{_input:bn}.variant.tsv", f"{cwd}/{_input:bn}.lbf.tsv", f"{cwd}/{_input:bn}.effect.tsv"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand = '${ }', stdout = f"{_output[0]:nn}.stdout", stderr = f"{_output[0]:nn}.stderr", container = container, entrypoint = entrypoint
     export_script=${modular_script_dir}/pecotmr_integration/fine_mapping_export.R
     Rscript $export_script --input ${_input} --view topLoci --signal-cutoff 0 --output ${_output[0]}
     Rscript $export_script --input ${_input} --view lbf --output ${_output[1]}
@@ -1249,17 +1249,17 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, std
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[sQTL_susie_to_tsv_1]
 # Migrated: identical to susie_to_tsv but preserves the sQTL / leafcutter2
-# filename sanitization (&quot;*&quot; -&gt; &quot;N&quot;; &quot;:&quot;/&quot;+&quot; scrubbed from the task tag), since
+# filename sanitization ("*" -&gt; "N"; ":"/"+" scrubbed from the task tag), since
 # intron ids contain shell-hostile characters. Consumes a FineMappingResult RDS
 # and writes the topLoci / lbf / cs_summary views.
 parameter: region_list = path()
 parameter: rds_path = paths
 input: rds_path, group_by = 1
-input_name = f&quot;{_input:bn}&quot;.replace(&#39;*&#39;, &#39;N&#39;)
-output: f&quot;{cwd}/{input_name}.variant.tsv&quot;, f&quot;{cwd}/{input_name}.lbf.tsv&quot;, f&quot;{cwd}/{input_name}.effect.tsv&quot;
-tags = f&#39;{step_name}_{_output[0]:bn}&#39;.replace(&#39;:&#39;, &#39;_&#39;).replace(&#39;+&#39;, &#39;ps&#39;)
+input_name = f"{_input:bn}".replace('*', 'N')
+output: f"{cwd}/{input_name}.variant.tsv", f"{cwd}/{input_name}.lbf.tsv", f"{cwd}/{input_name}.effect.tsv"
+tags = f'{step_name}_{_output[0]:bn}'.replace(':', '_').replace('+', 'ps')
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = tags
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+bash: expand = '${ }', stdout = f"{_output[0]:nn}.stdout", stderr = f"{_output[0]:nn}.stderr", container = container, entrypoint = entrypoint
     export_script=${modular_script_dir}/pecotmr_integration/fine_mapping_export.R
     Rscript $export_script --input ${_input} --view topLoci --signal-cutoff 0 --output ${_output[0]}
     Rscript $export_script --input ${_input} --view lbf --output ${_output[1]}
@@ -1281,9 +1281,9 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, std
 parameter: region_list = path()
 parameter: rds_path = paths
 input: rds_path, group_by = 1
-output: f&quot;{cwd}/{_input:bn}.variant.tsv&quot;, f&quot;{cwd}/{_input:bn}.lbf.tsv&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&quot;{step_name}_{_output[0]:bn}&quot;
-bash: expand = &quot;${ }&quot;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, stderr = f&quot;{_output[0]:nn}.stderr&quot;, container = container, entrypoint = entrypoint
+output: f"{cwd}/{_input:bn}.variant.tsv", f"{cwd}/{_input:bn}.lbf.tsv"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f"{step_name}_{_output[0]:bn}"
+bash: expand = "${ }", stdout = f"{_output[0]:nn}.stdout", stderr = f"{_output[0]:nn}.stderr", container = container, entrypoint = entrypoint
     export_script=${modular_script_dir}/pecotmr_integration/fine_mapping_export.R
     Rscript $export_script --input ${_input} --view topLoci --signal-cutoff 0 --output ${_output[0]}
     Rscript $export_script --input ${_input} --view lbf --output ${_output[1]}
@@ -1296,15 +1296,15 @@ bash: expand = &quot;${ }&quot;, stdout = f&quot;{_output[0]:nn}.stdout&quot;, s
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[*_to_tsv_2]
 # Reduce: concatenate the per-region variant tables (the *variant.tsv outputs of
 # the parallel _1 map step) into one file, in R via data.table::rbindlist
-# (fill=TRUE aligns columns). _input carries all of _1&#39;s outputs, so keep only
+# (fill=TRUE aligns columns). _input carries all of _1's outputs, so keep only
 # the variant tables (not the lbf / effect ones).
-parameter: name = f&#39;{_input[0]:b}&#39;.split(&quot;.&quot;)[0]
-input: group_by = &quot;all&quot;
-output: f&quot;{cwd}/{name}.all_variants.tsv&quot;
-R: expand = &quot;${ }&quot;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+parameter: name = f'{_input[0]:b}'.split(".")[0]
+input: group_by = "all"
+output: f"{cwd}/{name}.all_variants.tsv"
+R: expand = "${ }", stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container, entrypoint = entrypoint
     library(data.table)
-    files &lt;- Filter(function(f) endsWith(f, &quot;variant.tsv&quot;), c(${_input:r,}))
-    fwrite(rbindlist(lapply(files, fread), fill = TRUE), ${_output:r}, sep = &quot;\t&quot;)
+    files &lt;- Filter(function(f) endsWith(f, "variant.tsv"), c(${_input:r,}))
+    fwrite(rbindlist(lapply(files, fread), fill = TRUE), ${_output:r}, sep = "\t")
 </pre></div>
 </div>
 </div>
@@ -1316,14 +1316,14 @@ R: expand = &quot;${ }&quot;, stdout = f&quot;{_output:n}.stdout&quot;, stderr =
 # by chromosome. Chromosome split is plain python (no pandas); the concat is R
 # data.table::rbindlist (headers handled by fread; fill=TRUE aligns columns).
 parameter: tsv_path = paths
-chromosome = list(set(str(x).split(&quot;.&quot;)[-5].split(&quot;_&quot;)[0].replace(&quot;chr&quot;, &quot;&quot;) for x in tsv_path))
-input: tsv_path, for_each = &quot;chromosome&quot;
-output: f&#39;{cwd}/{_input[0]:bnnnnnnn}.chr{_chromosome}.unisusie_rss.lbf.tsv&#39;
-R: expand = &quot;${ }&quot;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container, entrypoint = entrypoint
+chromosome = list(set(str(x).split(".")[-5].split("_")[0].replace("chr", "") for x in tsv_path))
+input: tsv_path, for_each = "chromosome"
+output: f'{cwd}/{_input[0]:bnnnnnnn}.chr{_chromosome}.unisusie_rss.lbf.tsv'
+R: expand = "${ }", stdout = f"{_output}.stdout", stderr = f"{_output}.stderr", container = container, entrypoint = entrypoint
     library(data.table)
-    files &lt;- list.files(dirname(&quot;${_input[0]}&quot;),
-                        pattern = &quot;\\.chr${_chromosome}_.*lbf\\.tsv$&quot;, full.names = TRUE)
-    fwrite(rbindlist(lapply(files, fread), fill = TRUE), &quot;${_output}&quot;, sep = &quot;\t&quot;)
+    files &lt;- list.files(dirname("${_input[0]}"),
+                        pattern = "\\.chr${_chromosome}_.*lbf\\.tsv$", full.names = TRUE)
+    fwrite(rbindlist(lapply(files, fread), fill = TRUE), "${_output}", sep = "\t")
 </pre></div>
 </div>
 </div>
@@ -1336,11 +1336,11 @@ R: expand = &quot;${ }&quot;, stdout = f&quot;{_output}.stdout&quot;, stderr = f
 # ggplot lives in fine_mapping_pip_plot.R. (The regulatory/gene annotation
 # overlay is a deferred enhancement; annot_tibble is kept for CLI compat.)
 parameter: rds_path = paths
-parameter: annot_tibble = path(&quot;~/Annotatr_builtin_annotation_tibble.tsv&quot;)
+parameter: annot_tibble = path("~/Annotatr_builtin_annotation_tibble.tsv")
 input: rds_path, group_by = 1
-output: f&#39;{cwd}/{_input:bn}.pip_landscape_plot.pdf&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+output: f'{cwd}/{_input:bn}.pip_landscape_plot.pdf'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_pip_plot.R \
         --input ${_input} \
         --output ${_output}
@@ -1351,16 +1351,16 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_upsetR_plot]
-# UpSet plot of credible-set variant overlap across the FineMappingResult(s)&#39;
+# UpSet plot of credible-set variant overlap across the FineMappingResult(s)'
 # (study, context, trait, method) tuples. pecotmr does no plotting; the UpSet
 # lives in fine_mapping_upset.R.
 parameter: rds_path = paths
 input: rds_path
-output: f&#39;{cwd}/{name}.UpSetR.pdf&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+output: f'{cwd}/{name}.UpSetR.pdf'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_upset.R \
-        --input ${&quot; &quot;.join([str(x) for x in _input])} \
+        --input ${" ".join([str(x) for x in _input])} \
         --output ${_output}
 </pre></div>
 </div>
@@ -1371,16 +1371,16 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[susie_upsetR_cs_plot]
 # Credible-set overlap UpSet plot across the FineMappingResult(s), via
 # fine_mapping_upset.R (pecotmr does no plotting). trait_to_select is retained
-# for CLI compatibility; the single-trait &quot;CS shared with other phenotypes&quot;
+# for CLI compatibility; the single-trait "CS shared with other phenotypes"
 # sub-view is a deferred wrapper option.
 parameter: rds_path = paths
 parameter: trait_to_select = 1
 input: rds_path
-output: f&#39;{cwd}/{name}.UpSetR_cs.pdf&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+output: f'{cwd}/{name}.UpSetR_cs.pdf'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_upset.R \
-        --input ${&quot; &quot;.join([str(x) for x in _input])} \
+        --input ${" ".join([str(x) for x in _input])} \
         --output ${_output}
 </pre></div>
 </div>
@@ -1392,22 +1392,22 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 parameter: SNP_list = path
 parameter: annotation_rds = path
 input: SNP_list
-output: f&#39;{cwd}/{_input:b}.annotated.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container
-    library(&quot;dplyr&quot;)
-    library(&quot;readr&quot;) 
-    library(&quot;purrr&quot;)
-    library(&quot;stringr&quot;)
-    sharing_snp = readRDS(&quot;${_input}&quot;)
+output: f'{cwd}/{_input:b}.annotated.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+R: expand = '${ }', stdout = f"{_output}.stdout", stderr = f"{_output}.stderr", container = container
+    library("dplyr")
+    library("readr") 
+    library("purrr")
+    library("stringr")
+    sharing_snp = readRDS("${_input}")
     sharing_snp_fsusie = sharing_snp[[1]]%&gt;%filter(haQTL == 1 | mQTL == 1)
-    sharing_snp_fsusie = sharing_snp_fsusie%&gt;%mutate(X1 =  read.table(text = sharing_snp_fsusie$variants, sep = &quot;:&quot;)$V1, X2 = read.table(text = read.table(text = sharing_snp_fsusie$variants, sep = &quot;:&quot;)$V2 , sep = &quot;_&quot;)$V1  )
+    sharing_snp_fsusie = sharing_snp_fsusie%&gt;%mutate(X1 =  read.table(text = sharing_snp_fsusie$variants, sep = ":")$V1, X2 = read.table(text = read.table(text = sharing_snp_fsusie$variants, sep = ":")$V2 , sep = "_")$V1  )
     sharing_snp_fsusie = sharing_snp_fsusie%&gt;%select(variants,chr = X1, pos = X2)
-    annotation = readRDS(&quot;${annotation_rds}&quot;)
-    print(&quot;data loaded&quot;)
-    result = sharing_snp_fsusie%&gt;%mutate(annot = map2( chr,pos , ~ annotation%&gt;%filter(X1 == .x, X2 &lt;= .y, X3 &gt;= .y)%&gt;%pull(X5)))%&gt;%mutate(annot = map_chr(annot, ~paste0(.x ,collapse = &quot;,&quot;)) )
-    print(&quot;snp annotated&quot;)
-    result%&gt;%saveRDS(&quot;${_output}&quot;)
+    annotation = readRDS("${annotation_rds}")
+    print("data loaded")
+    result = sharing_snp_fsusie%&gt;%mutate(annot = map2( chr,pos , ~ annotation%&gt;%filter(X1 == .x, X2 &lt;= .y, X3 &gt;= .y)%&gt;%pull(X5)))%&gt;%mutate(annot = map_chr(annot, ~paste0(.x ,collapse = ",")) )
+    print("snp annotated")
+    result%&gt;%saveRDS("${_output}")
 </pre></div>
 </div>
 </div>
@@ -1417,16 +1417,16 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&q
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[tmp_annotatation_of_snps_2]
 parameter: SNP_list = path
 parameter: annotation_rds = path
-output: f&#39;{cwd}/{_input:b}.annotated_rev.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&quot;{_output}.stderr&quot;, container = container
-    library(&quot;dplyr&quot;)
-    library(&quot;readr&quot;) 
-    library(&quot;purrr&quot;)
-    library(&quot;stringr&quot;)
+output: f'{cwd}/{_input:b}.annotated_rev.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+R: expand = '${ }', stdout = f"{_output}.stdout", stderr = f"{_output}.stderr", container = container
+    library("dplyr")
+    library("readr") 
+    library("purrr")
+    library("stringr")
     result = readRDS(${_input:r})
-    result_rev = tibble(annot = unique(annotation$X5))%&gt;%mutate(variants = map(annot, ~  result%&gt;%filter( str_detect(annot,.x))%&gt;%pull(variants)) )%&gt;%mutate( variants = map_chr(variants,~paste0(.x ,collapse = &quot;,&quot;))  )
-    result_rev%&gt;%saveRDS(&quot;${_output}&quot;)
+    result_rev = tibble(annot = unique(annotation$X5))%&gt;%mutate(variants = map(annot, ~  result%&gt;%filter( str_detect(annot,.x))%&gt;%pull(variants)) )%&gt;%mutate( variants = map_chr(variants,~paste0(.x ,collapse = ","))  )
+    result_rev%&gt;%saveRDS("${_output}")
 </pre></div>
 </div>
 </div>
@@ -1440,11 +1440,11 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output}.stdout&quot;, stderr = f&q
 # trim=FALSE). The effect-curve PDF is a deferred plot wrapper (pecotmr does no
 # plotting); annot_tibble is kept for CLI compatibility.
 parameter: rds_path = paths
-parameter: annot_tibble = path(&quot;~/Annotatr_builtin_annotation_tibble.tsv&quot;)
+parameter: annot_tibble = path("~/Annotatr_builtin_annotation_tibble.tsv")
 input: rds_path, group_by = 1
-output: f&#39;{cwd}/{_input:bn}.estimated_effect.tsv&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+output: f'{cwd}/{_input:bn}.estimated_effect.tsv'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_export.R \
         --input ${_input} \
         --view credible_band \
@@ -1462,9 +1462,9 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 # trim=FALSE). The region PDF is a deferred plot wrapper.
 parameter: rds_path = paths
 input: rds_path, group_by = 1
-output: f&#39;{cwd}/{_input:bn}.affected_region.tsv&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr = f&quot;{_output:n}.stderr&quot;, container = container, entrypoint = entrypoint
+output: f'{cwd}/{_input:bn}.affected_region.tsv'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_export.R \
         --input ${_input} \
         --view affected_regions \
@@ -1476,34 +1476,34 @@ bash: expand = &#39;${ }&#39;, stdout = f&quot;{_output:n}.stdout&quot;, stderr 
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>#[uni_susie_2]
-input: group_with = &quot;genoFile&quot;
-output: f&quot;{_input:n}.vcf.bgz&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = f&quot;{_output:nn}.stderr&quot;, container = container
+input: group_with = "genoFile"
+output: f"{_input:n}.vcf.bgz"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+R: expand = '${ }', stdout = f"{_output:nn}.stdout", stderr = f"{_output:nn}.stderr", container = container
    ## Define create_vcf function
            create_vcf = function (chrom, pos, nea, ea, snp = NULL, ea_af = NULL, effect = NULL, 
         se = NULL, pval = NULL, name = NULL,cs = NULL, pip = NULL) 
     {
         stopifnot(length(chrom) == length(pos))
         if (is.null(snp)) {
-            snp &lt;- paste0(chrom, &quot;:&quot;, pos)
+            snp &lt;- paste0(chrom, ":", pos)
         }
-        snp &lt;- paste0(chrom, &quot;:&quot;, pos)
+        snp &lt;- paste0(chrom, ":", pos)
         nsnp &lt;- length(chrom)
         gen &lt;- list()
         ## Setupt data content for each sample column
         if (!is.null(ea_af)) 
-            gen[[&quot;AF&quot;]] &lt;- matrix(ea_af, nsnp)
+            gen[["AF"]] &lt;- matrix(ea_af, nsnp)
         if (!is.null(effect)) 
-            gen[[&quot;ES&quot;]] &lt;- matrix(effect, nsnp)
+            gen[["ES"]] &lt;- matrix(effect, nsnp)
         if (!is.null(se)) 
-            gen[[&quot;SE&quot;]] &lt;- matrix(se, nsnp)
+            gen[["SE"]] &lt;- matrix(se, nsnp)
         if (!is.null(pval)) 
-            gen[[&quot;LP&quot;]] &lt;- matrix(-log10(pval), nsnp)
+            gen[["LP"]] &lt;- matrix(-log10(pval), nsnp)
         if (!is.null(cs)) 
-            gen[[&quot;CS&quot;]] &lt;- matrix(cs, nsnp)
+            gen[["CS"]] &lt;- matrix(cs, nsnp)
         if (!is.null(pip)) 
-            gen[[&quot;PIP&quot;]] &lt;- matrix(pip, nsnp)
+            gen[["PIP"]] &lt;- matrix(pip, nsnp)
         gen &lt;- S4Vectors::SimpleList(gen)
         
       ## Setup snps info for the fix columns
@@ -1511,15 +1511,15 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = 
             end = pos + pmax(nchar(nea), nchar(ea)) - 1, names = snp))
          coldata &lt;- S4Vectors::DataFrame(Studies = name, row.names = name)
     ## Setup header informations
-        hdr &lt;- VariantAnnotation::VCFHeader(header = IRanges::DataFrameList(fileformat = S4Vectors::DataFrame(Value = &quot;VCFv4.2&quot;, 
-            row.names = &quot;fileformat&quot;)), sample = name)
-        VariantAnnotation::geno(hdr) &lt;- S4Vectors::DataFrame(Number = c(&quot;A&quot;, 
-            &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;), Type = c(&quot;Float&quot;, &quot;Float&quot;, 
-            &quot;Float&quot;, &quot;Float&quot;, &quot;Float&quot;, &quot;Float&quot;), Description = c(&quot;Effect size estimate relative to the alternative allele&quot;, 
-            &quot;Standard error of effect size estimate&quot;, &quot;-log10 p-value for effect estimate&quot;,  
-            &quot;Alternate allele frequency in the association study&quot;,
-            &quot;The CS this variate are captured, 0 indicates not in any cs&quot;, &quot;The posterior inclusion probability to a CS&quot;), 
-            row.names = c(&quot;ES&quot;, &quot;SE&quot;, &quot;LP&quot;, &quot;AF&quot;, &quot;CS&quot;, &quot;PIP&quot;))
+        hdr &lt;- VariantAnnotation::VCFHeader(header = IRanges::DataFrameList(fileformat = S4Vectors::DataFrame(Value = "VCFv4.2", 
+            row.names = "fileformat")), sample = name)
+        VariantAnnotation::geno(hdr) &lt;- S4Vectors::DataFrame(Number = c("A", 
+            "A", "A", "A", "A", "A"), Type = c("Float", "Float", 
+            "Float", "Float", "Float", "Float"), Description = c("Effect size estimate relative to the alternative allele", 
+            "Standard error of effect size estimate", "-log10 p-value for effect estimate",  
+            "Alternate allele frequency in the association study",
+            "The CS this variate are captured, 0 indicates not in any cs", "The posterior inclusion probability to a CS"), 
+            row.names = c("ES", "SE", "LP", "AF", "CS", "PIP"))
       ## Save only the meta information in the sample columns 
         VariantAnnotation::geno(hdr) &lt;- subset(VariantAnnotation::geno(hdr), 
             rownames(VariantAnnotation::geno(hdr)) %in% names(gen))
@@ -1529,16 +1529,16 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = 
         VariantAnnotation::alt(vcf) &lt;- Biostrings::DNAStringSetList(as.list(ea))
         VariantAnnotation::ref(vcf) &lt;- Biostrings::DNAStringSet(nea)
       ## Add fixed values
-        VariantAnnotation::fixed(vcf)$FILTER &lt;- &quot;PASS&quot;
+        VariantAnnotation::fixed(vcf)$FILTER &lt;- "PASS"
           return(sort(vcf))
         }
-    library(&quot;susieR&quot;)
-    library(&quot;dplyr&quot;)
-    library(&quot;tibble&quot;)
-    library(&quot;purrr&quot;)
-    library(&quot;readr&quot;)
-    library(&quot;tidyr&quot;)
-    library(&quot;stringr&quot;)
+    library("susieR")
+    library("dplyr")
+    library("tibble")
+    library("purrr")
+    library("readr")
+    library("tidyr")
+    library("stringr")
     
     # Get list of cs snps
     susie_list = readRDS(${_input:r})
@@ -1551,30 +1551,30 @@ R: expand = &#39;${ }&#39;, stdout = f&quot;{_output:nn}.stdout&quot;, stderr = 
         }
     if(length(susie_tb_ls) &gt;= 2){ 
       for(i in 2:length(susie_tb_ls)){
-          susie_tb_ls[[i]] = full_join(susie_tb_ls[[i-1]],susie_tb_ls[[i]], by = &quot;snps&quot;) 
+          susie_tb_ls[[i]] = full_join(susie_tb_ls[[i-1]],susie_tb_ls[[i]], by = "snps") 
         }
     }
-    m = c(&quot;cs&quot;,&quot;pip&quot;,&quot;coef&quot;)    
+    m = c("cs","pip","coef")    
     output = list()
     for(i in m){
     output[[i]] = susie_tb_ls[[length(susie_tb_ls)]]%&gt;%select(contains(i))%&gt;%as.matrix
     }
     snps_tb = susie_tb_ls[[length(susie_tb_ls)]]%&gt;%mutate(
-                         chr = map_chr(snps,~read.table(text = .x,sep = &quot;:&quot;,as.is = T)$V1),
-                         pos_alt_ref = map_chr(snps,~read.table(text = .x,sep = &quot;:&quot;,as.is = TRUE)$V2),
-                         pos = map_dbl(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE)$V1),
-                         alt = map_chr(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE, colClass = &quot;character&quot;)$V2),
-                         ref = map_chr(pos_alt_ref,~read.table(text = .x,sep = &quot;_&quot;,as.is = TRUE, colClass = &quot;character&quot;)$V3))
+                         chr = map_chr(snps,~read.table(text = .x,sep = ":",as.is = T)$V1),
+                         pos_alt_ref = map_chr(snps,~read.table(text = .x,sep = ":",as.is = TRUE)$V2),
+                         pos = map_dbl(pos_alt_ref,~read.table(text = .x,sep = "_",as.is = TRUE)$V1),
+                         alt = map_chr(pos_alt_ref,~read.table(text = .x,sep = "_",as.is = TRUE, colClass = "character")$V2),
+                         ref = map_chr(pos_alt_ref,~read.table(text = .x,sep = "_",as.is = TRUE, colClass = "character")$V3))
     
-    snps_tb = snps_tb%&gt;%filter(str_detect(ref, &quot;[ACTG]&quot;) &amp; str_detect(alt, &quot;[ACTG]&quot;))
+    snps_tb = snps_tb%&gt;%filter(str_detect(ref, "[ACTG]") &amp; str_detect(alt, "[ACTG]"))
     output_vcf = create_vcf(
             chrom = snps_tb$chr,
              pos = snps_tb$pos,
              ea = snps_tb$alt,
              nea = snps_tb$ref,
-             effect = snps_tb%&gt;%select(contains(&quot;coef&quot;))%&gt;%as.matrix ,
-             pip = snps_tb%&gt;%select(contains(&quot;pip&quot;))%&gt;%as.matrix,
-             cs = snps_tb%&gt;%select(contains(&quot;cs&quot;))%&gt;%as.matrix,
+             effect = snps_tb%&gt;%select(contains("coef"))%&gt;%as.matrix ,
+             pip = snps_tb%&gt;%select(contains("pip"))%&gt;%as.matrix,
+             cs = snps_tb%&gt;%select(contains("cs"))%&gt;%as.matrix,
              name = names(susie_list))
     VariantAnnotation::writeVcf(output_vcf,${_output:nr},index = TRUE)
 </pre></div>
@@ -1594,9 +1594,9 @@ parameter: rds_path = paths
 import os
 os.makedirs(str(cwd), exist_ok=True)
 input: rds_path, group_by = 1
-output: dynamic(f&quot;{cwd}/{_input:bn}.*.vcf.bgz&quot;)
-task: trunk_workers = 1, trunk_size = 1, walltime = &#39;2h&#39;, mem = mem, cores = 1, tags = f&#39;{step_name}_{_input:bn}&#39;
-bash: expand = &#39;${ }&#39;, stdout = f&quot;{cwd}/{_input:bn}.vcf.stdout&quot;, stderr = f&quot;{cwd}/{_input:bn}.vcf.stderr&quot;, container = container, entrypoint = entrypoint
+output: dynamic(f"{cwd}/{_input:bn}.*.vcf.bgz")
+task: trunk_workers = 1, trunk_size = 1, walltime = '2h', mem = mem, cores = 1, tags = f'{step_name}_{_input:bn}'
+bash: expand = '${ }', stdout = f"{cwd}/{_input:bn}.vcf.stdout", stderr = f"{cwd}/{_input:bn}.vcf.stderr", container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_vcf.R \
         --input ${_input} \
         --output ${cwd}/${_input:bn}.vcf.bgz \
@@ -1614,7 +1614,7 @@ parameter: per_chunk = 200
 # Region list should have last column being region name.
 parameter:region_file=path()
 # the path stored original output files
-parameter:file_path=&#39;&#39;
+parameter:file_path=''
 # assuming orinal files are named as prefix.id.suffix
 # prefix of the original files (before id) to identify file.
 parameter:prefix=[]
@@ -1657,46 +1657,46 @@ parameter: mnm = False
 # in fine_mapping.R + the fine_mapping_cis_db_export.R wrapper below.
 import os
 
-_region_rows = [tuple((_l.rstrip(&#39;\n&#39;).split(&#39;\t&#39;) + [&#39;&#39;, &#39;&#39;, &#39;&#39;, &#39;&#39;])[:4])
+_region_rows = [tuple((_l.rstrip('\n').split('\t') + ['', '', '', ''])[:4])
                 for _l in open(region_file)
-                if _l.strip() and not _l.startswith(&#39;#&#39;)]
+                if _l.strip() and not _l.startswith('#')]
 
 _focus = set(region_name)
 if region_list.is_file():
-    _focus |= {_l.rstrip(&#39;\n&#39;).split(&#39;\t&#39;)[-1] for _l in open(region_list)
-               if _l.strip() and not _l.startswith(&#39;#&#39;)}
+    _focus |= {_l.rstrip('\n').split('\t')[-1] for _l in open(region_list)
+               if _l.strip() and not _l.startswith('#')}
 if len(_focus) &gt; 0:
-    _region_rows = [r for r in _region_rows if r[3] in _focus or f&quot;{r[0]}_{r[3]}&quot; in _focus]
+    _region_rows = [r for r in _region_rows if r[3] in _focus or f"{r[0]}_{r[3]}" in _focus]
 
 # candidate names: prefix.id.suffix (plain id first, then chr_id), pick existing.
-_pfxs = list(prefix) if len(prefix) &gt; 0 else [&#39;&#39;]
+_pfxs = list(prefix) if len(prefix) &gt; 0 else ['']
 _meta = []
 _data = []
 for _chr, _start, _end, _id in _region_rows:
-    _plain = [f&quot;{file_path}/{(p + &#39;.&#39;) if p else &#39;&#39;}{_id}.{suffix}&quot; for p in _pfxs]
+    _plain = [f"{file_path}/{(p + '.') if p else ''}{_id}.{suffix}" for p in _pfxs]
     _plain = [c for c in _plain if os.path.exists(c)]
-    _chrid = [f&quot;{file_path}/{(p + &#39;.&#39;) if p else &#39;&#39;}{_chr}_{_id}.{suffix}&quot; for p in _pfxs]
+    _chrid = [f"{file_path}/{(p + '.') if p else ''}{_chr}_{_id}.{suffix}" for p in _pfxs]
     _chrid = [c for c in _chrid if os.path.exists(c)]
     _files = _plain if _plain else _chrid
     if _files:
         _meta.append((_chr, _start, _end, _id))
         _data.append(_files)
 
-regional_data = {&#39;meta&#39;: _meta, &#39;data&#39;: _data}
-meta_info = regional_data[&#39;meta&#39;]
-stop_if(len(regional_data[&#39;data&#39;]) == 0, &#39;No input FineMappingResult files found for any region.&#39;)
-# db suffix mirrors cis_results_export_2&#39;s block_results_db / cis_results_db split
-_db_kind = &#39;block_results_db&#39; if gwas else &#39;cis_results_db&#39;
-_purity_arg = f&quot;--min-purity {min_corr[0]}&quot; if len(min_corr) &gt; 0 else &quot;&quot;
+regional_data = {'meta': _meta, 'data': _data}
+meta_info = regional_data['meta']
+stop_if(len(regional_data['data']) == 0, 'No input FineMappingResult files found for any region.')
+# db suffix mirrors cis_results_export_2's block_results_db / cis_results_db split
+_db_kind = 'block_results_db' if gwas else 'cis_results_db'
+_purity_arg = f"--min-purity {min_corr[0]}" if len(min_corr) &gt; 0 else ""
 
-input: regional_data[&quot;data&quot;], group_by = lambda x: regional_data[&quot;data&quot;], group_with = &quot;meta_info&quot;
-output: f&quot;{cwd}/{name}_cache/{name}_{_meta_info[3]}.tsv&quot;
-task: trunk_workers = job_size, walltime = walltime, trunk_size = job_size, mem = mem, cores = numThreads, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container = container, entrypoint = entrypoint
+input: regional_data["data"], group_by = lambda x: regional_data["data"], group_with = "meta_info"
+output: f"{cwd}/{name}_cache/{name}_{_meta_info[3]}.tsv"
+task: trunk_workers = job_size, walltime = walltime, trunk_size = job_size, mem = mem, cores = numThreads, tags = f'{_output:bn}'
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container = container, entrypoint = entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_cis_db_export.R \
         --input ${_input} \
         --combined-data-output ${cwd}/${name}.${_meta_info[3]}.${_db_kind}.rds \
-        ${(&#39;--combined-data-sumstats-output %s/%s.%s.%s.sumstats.rds&#39; % (cwd, name, _meta_info[3], _db_kind)) if not (fsusie or mnm) else &#39;&#39;} \
+        ${('--combined-data-sumstats-output %s/%s.%s.%s.sumstats.rds' % (cwd, name, _meta_info[3], _db_kind)) if not (fsusie or mnm) else ''} \
         --region-id ${_meta_info[3]} --chr ${_meta_info[0]} --start ${_meta_info[1]} --end ${_meta_info[2]} \
         --signal-cutoff ${pip_thres} ${_purity_arg} \
         --meta-output ${_output} \
@@ -1715,40 +1715,40 @@ skip_if(step1_only)
 parameter: exported_file = path()
 # optional: qtl or gwas, there is slightly different in qtl and gwas rds file
 parameter: gwas = False
-input: group_by = &#39;all&#39;
-output: f&quot;{cwd}/{name}.{&#39;block_results_db&#39; if gwas else &#39;cis_results_db&#39;}.tsv&quot; 
-# stop_if(_input[0] not in locals().keys(), &#39;All files have been exported already&#39;) #FIXME should we remove to a separate file. sothat we can stop globally as above
-task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = 1, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    if [ -e &quot;${_output:ad}/${name}_cache/&quot; ]; then
-        sed &#39;s/^chr/#chr/&#39; `ls ${_output:ad}/${name}_cache/*tsv |head -n1` | head -n 1 &gt; ${_output:an}.temp
+input: group_by = 'all'
+output: f"{cwd}/{name}.{'block_results_db' if gwas else 'cis_results_db'}.tsv" 
+# stop_if(_input[0] not in locals().keys(), 'All files have been exported already') #FIXME should we remove to a separate file. sothat we can stop globally as above
+task: trunk_workers = 1, walltime = '1h', trunk_size = 1, mem = '16G', cores = 1, tags = f'{_output:bn}'
+bash: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
+    if [ -e "${_output:ad}/${name}_cache/" ]; then
+        sed 's/^chr/#chr/' `ls ${_output:ad}/${name}_cache/*tsv |head -n1` | head -n 1 &gt; ${_output:an}.temp
         tail -n +2 -q ${_output:ad}/${name}_cache/*.tsv &gt;&gt; ${_output:an}.temp
-        error_files=$(find &quot;${_output:ad}/${name}_cache/&quot; -type f -name &quot;*_error&quot;)
+        error_files=$(find "${_output:ad}/${name}_cache/" -type f -name "*_error")
 
         if [[ -n $error_files ]]; then
             cat $error_files &gt;&gt; ${_output:an}.error_genes
         else
-            echo &quot;No truncated files detected&quot;
+            echo "No truncated files detected"
         fi
     else
-        echo &quot;All files have been exported already&quot;
+        echo "All files have been exported already"
     fi
     
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    if (file.exists(paste0(${_output:anr},&quot;.temp&quot;))) {
+R: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
+    if (file.exists(paste0(${_output:anr},".temp"))) {
         library(tidyverse)
-        meta &lt;- read_delim(paste0(${_output:anr},&quot;.temp&quot;), delim = &#39;\t&#39;)
+        meta &lt;- read_delim(paste0(${_output:anr},".temp"), delim = '\t')
 
-        if (${&quot;TRUE&quot; if exported_file.is_file() else &quot;FALSE&quot;}){
-          exp_meta &lt;- read_delim(${exported_file:r}, delim = &#39;\t&#39;)
+        if (${"TRUE" if exported_file.is_file() else "FALSE"}){
+          exp_meta &lt;- read_delim(${exported_file:r}, delim = '\t')
           meta &lt;- bind_rows(meta, exp_meta) %&gt;%
               group_by(`#chr`, start, end, region_id, TSS) %&gt;%
               summarise(across(c(original_data, combined_data, combined_data_sumstats, conditions, conditions_top_loci), 
-                               ~paste(unique(.), collapse = &quot;,&quot;)),
-                        .groups = &#39;drop&#39;)
+                               ~paste(unique(.), collapse = ",")),
+                        .groups = 'drop')
               }
 
-        write_delim(meta, ${_output:r}, delim = &#39;\t&#39;)
+        write_delim(meta, ${_output:r}, delim = '\t')
     }
 </pre></div>
 </div>
@@ -1761,8 +1761,8 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
 parameter: step1_only = False
 
 skip_if(step1_only)
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;   
-    rm -rf &quot;${_input:ad}/${name}_cache/&quot;
+bash: expand = "${ }", container = container, stderr = f'{_input:n}.stderr', stdout = f'{_input:n}.stdout'   
+    rm -rf "${_input:ad}/${name}_cache/"
     rm -rf ${_input:an}.temp
 </pre></div>
 </div>
@@ -1776,18 +1776,18 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n
 parameter: step1_only = False
 
 skip_if(step1_only)
-output: f&quot;{cwd}/{name}.union_export.tsv.gz&quot; 
-task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = 1, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;   
-    rm -rf &quot;${_input:ad}/${name}_cache/&quot;
+output: f"{cwd}/{name}.union_export.tsv.gz" 
+task: trunk_workers = 1, walltime = '1h', trunk_size = 1, mem = '16G', cores = 1, tags = f'{_output:bn}'
+bash: expand = "${ }", container = container, stderr = f'{_input:n}.stderr', stdout = f'{_input:n}.stdout'   
+    rm -rf "${_input:ad}/${name}_cache/"
     rm -rf ${_input:an}.temp
 
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+R: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     library(tidyverse)
     library(data.table)
 
     mtx &lt;- read_delim(${_input:r})
-    files &lt;- mtx %&gt;% filter(!is.na(conditions_top_loci)) %&gt;% pull(combined_data) %&gt;% paste0(${_input[0]:dr},&#39;/&#39;,.)
+    files &lt;- mtx %&gt;% filter(!is.na(conditions_top_loci)) %&gt;% pull(combined_data) %&gt;% paste0(${_input[0]:dr},'/',.)
     all_top_loci &lt;- data.frame()
 
     for (i in seq_along(files)) {
@@ -1809,7 +1809,7 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
 
       all_top_loci &lt;- bind_rows(all_top_loci, file_top_loci)
       if (i %% 100 == 0) {
-        message(sprintf(&quot;Have processed %d files.&quot;, i))
+        message(sprintf("Have processed %d files.", i))
       }
     }
     fwrite(all_top_loci, ${_output:r})
@@ -1824,11 +1824,11 @@ R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.
 parameter: cache_path=path
 parameter: output_file = str
 parameter: remove_cache = False
-output: f&quot;{cache_path:d}/{output_file}&quot; 
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n}.stderr&#39;, stdout = f&#39;{_input:n}.stdout&#39;   
-    head -n 1 -q ${cache_path}/*.tsv | sed &#39;s/^chr/#chr/&#39; | head -n 1 &gt; ${_output}
+output: f"{cache_path:d}/{output_file}" 
+bash: expand = "${ }", container = container, stderr = f'{_input:n}.stderr', stdout = f'{_input:n}.stdout'   
+    head -n 1 -q ${cache_path}/*.tsv | sed 's/^chr/#chr/' | head -n 1 &gt; ${_output}
     tail -n +2 -q ${cache_path}/*.tsv &gt;&gt; ${_output}
-    if ${&quot;true&quot; if remove_cache else &quot;false&quot;}; then
+    if ${"true" if remove_cache else "false"}; then
         rm -rf ${cache_path}
     fi
 </pre></div>
@@ -1843,14 +1843,14 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_input:n
 # getTopLoci does the PIP/CS + independent purity filtering; lfsr /
 # conditional_effect are per-(variant, context) numeric columns, so the legacy
 # filter_lfsr semicolon split/rejoin is gone.
-# `export_suffix` deliberately differs from step 1&#39;s `--suffix` (input rds) to avoid CLI collision.
+# `export_suffix` deliberately differs from step 1's `--suffix` (input rds) to avoid CLI collision.
 parameter: export_path = cwd
-parameter: export_prefix = &#39;&#39;  # falls back to step-1 `name` if empty
-parameter: export_suffix = &#39;&#39;  # empty =&gt; derived from `gwas` below
+parameter: export_prefix = ''  # falls back to step-1 `name` if empty
+parameter: export_suffix = ''  # empty =&gt; derived from `gwas` below
 # Re-declared so the suffix can default by mode: step 1 writes
 # block_results_db.rds under --gwas True, else cis_results_db.rds.
 parameter: gwas = False
-parameter: fsusie_prefix = &#39;&#39;
+parameter: fsusie_prefix = ''
 parameter: preset_top_loci = False
 # PIP cutoff for getTopLoci; optional independent CS purity (min.abs.corr) cutoff (&lt;0 =&gt; none).
 parameter: signal_cutoff = 0.025
@@ -1860,15 +1860,15 @@ parameter: lfsr_thres = 0.01
 
 _pfx = export_prefix if export_prefix else name
 import glob as _glob
-_suffix = export_suffix if export_suffix else (&#39;block_results_db.rds&#39; if gwas else &#39;cis_results_db.rds&#39;)
-_rds_files = sorted(_glob.glob(f&quot;{export_path}/{_pfx}.{fsusie_prefix}*.{_suffix}&quot;))
-stop_if(len(_rds_files) == 0, f&quot;No RDS files matched: {export_path}/{_pfx}.{fsusie_prefix}*.{_suffix}&quot;)
-_purity_arg = f&quot;--min-purity {min_purity}&quot; if float(min_purity) &gt;= 0 else &quot;&quot;
+_suffix = export_suffix if export_suffix else ('block_results_db.rds' if gwas else 'cis_results_db.rds')
+_rds_files = sorted(_glob.glob(f"{export_path}/{_pfx}.{fsusie_prefix}*.{_suffix}"))
+stop_if(len(_rds_files) == 0, f"No RDS files matched: {export_path}/{_pfx}.{fsusie_prefix}*.{_suffix}")
+_purity_arg = f"--min-purity {min_purity}" if float(min_purity) &gt;= 0 else ""
 
 input: _rds_files, group_by = 1
-output: f&quot;{cwd}/summary/{_input:bnn}.top_loci.bed.gz&quot;
-task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+output: f"{cwd}/summary/{_input:bnn}.top_loci.bed.gz"
+task: trunk_workers = 1, walltime = '1h', trunk_size = job_size, mem = '16G', cores = 1, tags = f'{_output:bn}'
+bash: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', entrypoint=entrypoint
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_top_loci_bed.R \
         --input ${_input} \
         --signal-cutoff ${signal_cutoff} ${_purity_arg} \
@@ -1884,36 +1884,36 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:
 # Combine per-region .top_loci.bed.gz files into one study-level file.
 # Public-facing name: {name}.{qtl_type}[.{variant_tag}].top_loci.bed.gz
 parameter: qtl_type = str
-parameter: variant_tag = &#39;&#39;
-# &#39;auto&#39; (default): skip step 3 if region_name or region_list is set; &#39;yes&#39;: force run; &#39;no&#39;: force skip.
-parameter: combine = &#39;auto&#39;
+parameter: variant_tag = ''
+# 'auto' (default): skip step 3 if region_name or region_list is set; 'yes': force run; 'no': force skip.
+parameter: combine = 'auto'
 # Re-declared so this step can detect step-1 subset filters.
 parameter: region_list = path()
 parameter: region_name = []
-stop_if(combine not in (&#39;auto&#39;, &#39;yes&#39;, &#39;no&#39;), f&quot;--combine must be auto|yes|no, got {combine}&quot;)
+stop_if(combine not in ('auto', 'yes', 'no'), f"--combine must be auto|yes|no, got {combine}")
 _region_filter_set = (region_list.is_file() or len(region_name) &gt; 0)
-_do_combine = (combine == &#39;yes&#39;) or (combine == &#39;auto&#39; and not _region_filter_set)
-skip_if(not _do_combine, f&quot;Skipping combine: combine={combine}, region_filter_set={_region_filter_set}&quot;)
-_tag = f&quot;.{variant_tag}&quot; if variant_tag else &quot;&quot;
-input: group_by = &#39;all&#39;
-output: f&quot;{cwd}/summary/{name}.{qtl_type}{_tag}.top_loci.bed.gz&quot;
-task: trunk_workers = 1, walltime = &#39;2h&#39;, trunk_size = 1, mem = &#39;8G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, entrypoint=entrypoint
+_do_combine = (combine == 'yes') or (combine == 'auto' and not _region_filter_set)
+skip_if(not _do_combine, f"Skipping combine: combine={combine}, region_filter_set={_region_filter_set}")
+_tag = f".{variant_tag}" if variant_tag else ""
+input: group_by = 'all'
+output: f"{cwd}/summary/{name}.{qtl_type}{_tag}.top_loci.bed.gz"
+task: trunk_workers = 1, walltime = '2h', trunk_size = 1, mem = '8G', cores = 1, tags = f'{_output:bn}'
+bash: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', entrypoint=entrypoint
     set -euo pipefail
-    mkdir -p &quot;$(dirname &quot;${_output}&quot;)&quot;
+    mkdir -p "$(dirname "${_output}")"
     GZ=$(command -v bgzip || echo gzip)
     {
         # header from first non-empty file
         for f in ${_input}; do
-            if [ &quot;$(zcat -f &quot;$f&quot; 2&gt;/dev/null | wc -l)&quot; -ge 2 ]; then
-                zcat -f &quot;$f&quot; | head -1
+            if [ "$(zcat -f "$f" 2&gt;/dev/null | wc -l)" -ge 2 ]; then
+                zcat -f "$f" | head -1
                 break
             fi
         done
         # data rows from every non-empty file
         for f in ${_input}; do
-            if [ &quot;$(zcat -f &quot;$f&quot; 2&gt;/dev/null | wc -l)&quot; -ge 2 ]; then
-                zcat -f &quot;$f&quot; | tail -n +2
+            if [ "$(zcat -f "$f" 2&gt;/dev/null | wc -l)" -ge 2 ]; then
+                zcat -f "$f" | tail -n +2
             fi
         done
     } | $GZ &gt; ${_output}
@@ -1927,8 +1927,8 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:
 parameter: per_chunk = 100
 parameter: gwas_meta_path = path()
 parameter: qtl_meta_path = path()
-parameter: gwas_file_path = &#39;&#39;
-parameter: qtl_file_path = &#39;&#39;
+parameter: gwas_file_path = ''
+parameter: qtl_file_path = ''
 # Optional: focus on a region list (last column = region id) and/or region names.
 parameter: region_list = path()
 parameter: region_name = []
@@ -1937,47 +1937,47 @@ parameter: region_name = []
 # pairing that feeds coloc wants breadth, not just the strongest signal.
 parameter: signal_cutoff = 0.0
 # Orchestration only (no pandas / no helper defs): pair each QTL region with the
-# GWAS blocks it overlaps by coordinate, resolving both sides&#39; original_data
+# GWAS blocks it overlaps by coordinate, resolving both sides' original_data
 # (per-study/per-block S4 FineMappingResult files). fine_mapping_overlap.R does
 # the allele-aware variant overlap + stamps block_top_loci onto the meta row.
 import os, csv
 
-if qtl_file_path == &#39;&#39;:  qtl_file_path  = str(qtl_meta_path.parent)
-if gwas_file_path == &#39;&#39;: gwas_file_path = str(gwas_meta_path.parent)
+if qtl_file_path == '':  qtl_file_path  = str(qtl_meta_path.parent)
+if gwas_file_path == '': gwas_file_path = str(gwas_meta_path.parent)
 
-_hasTop = lambda r: (r.get(&#39;conditions_top_loci&#39;) or &#39;&#39;).strip() not in (&#39;&#39;, &#39;NA&#39;)
-_g = [r for r in csv.DictReader(open(gwas_meta_path), delimiter=&#39;\t&#39;) if _hasTop(r)]
-_q = [r for r in csv.DictReader(open(qtl_meta_path),  delimiter=&#39;\t&#39;) if _hasTop(r)]
+_hasTop = lambda r: (r.get('conditions_top_loci') or '').strip() not in ('', 'NA')
+_g = [r for r in csv.DictReader(open(gwas_meta_path), delimiter='\t') if _hasTop(r)]
+_q = [r for r in csv.DictReader(open(qtl_meta_path),  delimiter='\t') if _hasTop(r)]
 
 _focus = set(region_name)
 if region_list.is_file():
-    _focus |= {l.rstrip(&#39;\n&#39;).split(&#39;\t&#39;)[-1] for l in open(region_list) if l.strip() and not l.startswith(&#39;#&#39;)}
+    _focus |= {l.rstrip('\n').split('\t')[-1] for l in open(region_list) if l.strip() and not l.startswith('#')}
 if len(_focus) &gt; 0:
-    _q = [r for r in _q if r[&#39;region_id&#39;] in _focus or f&quot;{r[&#39;#chr&#39;]}_{r[&#39;region_id&#39;]}&quot; in _focus]
+    _q = [r for r in _q if r['region_id'] in _focus or f"{r['#chr']}_{r['region_id']}" in _focus]
 
 _meta = []
 _qtl_data = []
 for q in _q:
-    qchr, qs, qe = q[&#39;#chr&#39;], int(q[&#39;start&#39;]), int(q[&#39;end&#39;])
-    blocks = [g for g in _g if g[&#39;#chr&#39;] == qchr and int(g[&#39;start&#39;]) &lt;= qe and int(g[&#39;end&#39;]) &gt;= qs]
-    gfiles = [f&quot;{gwas_file_path}/{x.strip()}&quot; for g in blocks for x in g[&#39;original_data&#39;].split(&#39;,&#39;) if x.strip()]
+    qchr, qs, qe = q['#chr'], int(q['start']), int(q['end'])
+    blocks = [g for g in _g if g['#chr'] == qchr and int(g['start']) &lt;= qe and int(g['end']) &gt;= qs]
+    gfiles = [f"{gwas_file_path}/{x.strip()}" for g in blocks for x in g['original_data'].split(',') if x.strip()]
     gfiles = [f for f in gfiles if os.path.exists(f)]
-    qfiles = [f&quot;{qtl_file_path}/{x.strip()}&quot; for x in q[&#39;original_data&#39;].split(&#39;,&#39;) if x.strip()]
+    qfiles = [f"{qtl_file_path}/{x.strip()}" for x in q['original_data'].split(',') if x.strip()]
     qfiles = [f for f in qfiles if os.path.exists(f)]
     if gfiles and qfiles:
-        _meta.append((qchr, q[&#39;start&#39;], q[&#39;end&#39;], q[&#39;region_id&#39;], gfiles))
+        _meta.append((qchr, q['start'], q['end'], q['region_id'], gfiles))
         _qtl_data.append(qfiles)
 
-stop_if(len(_qtl_data) == 0, &#39;No overlapping QTL x GWAS region pairs with existing files.&#39;)
+stop_if(len(_qtl_data) == 0, 'No overlapping QTL x GWAS region pairs with existing files.')
 meta_info = _meta
 
-input: [f for grp in _qtl_data for f in grp], group_by = lambda x: _qtl_data, group_with = &quot;meta_info&quot;
-output: f&quot;{cwd}/gwas_qtl/cache/{name}_gwas_batch_meta_{_meta_info[3]}.tsv&quot;
-task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+input: [f for grp in _qtl_data for f in grp], group_by = lambda x: _qtl_data, group_with = "meta_info"
+output: f"{cwd}/gwas_qtl/cache/{name}_gwas_batch_meta_{_meta_info[3]}.tsv"
+task: trunk_workers = 1, walltime = '1h', trunk_size = job_size, mem = '16G', cores = 1, tags = f'{_output:bn}'
+bash: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     Rscript ${modular_script_dir}/pecotmr_integration/fine_mapping_overlap.R \
-        --qtl ${&quot; &quot;.join([str(x) for x in _input])} \
-        --gwas ${&quot; &quot;.join(_meta_info[4])} \
+        --qtl ${" ".join([str(x) for x in _input])} \
+        --gwas ${" ".join(_meta_info[4])} \
         --signal-cutoff ${signal_cutoff} \
         --qtl-meta ${qtl_meta_path} --region-id ${_meta_info[3]} \
         --meta-output ${_output} \
@@ -1992,21 +1992,21 @@ bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:
 # set it as True if you only want run first step (running parallel) and combine them manually after all finished 
 parameter: step1_only = False
 skip_if(step1_only)
-input: group_by = &#39;all&#39;
-output: f&quot;{cwd}/{name}.overlapped.gwas.tsv&quot;
-task: trunk_workers = 1, walltime = &#39;1h&#39;, trunk_size = job_size, mem = &#39;16G&#39;, cores = 1, tags = f&#39;{_output:bn}&#39;
-R: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+input: group_by = 'all'
+output: f"{cwd}/{name}.overlapped.gwas.tsv"
+task: trunk_workers = 1, walltime = '1h', trunk_size = job_size, mem = '16G', cores = 1, tags = f'{_output:bn}'
+R: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     library(data.table)
     exp_path &lt;- ${_input[0]:adr}
-    meta_files &lt;- c(${&quot;,&quot;.join([&#39;&quot;%s&quot;&#39; % x.absolute() for x in _input])})
-    exp_files &lt;- list.files(exp_path, &quot;_gwas_batch_export&quot;, full.names = T)
+    meta_files &lt;- c(${",".join(['"%s"' % x.absolute() for x in _input])})
+    exp_files &lt;- list.files(exp_path, "_gwas_batch_export", full.names = T)
     meta_list &lt;- exp_list &lt;- list()
     meta_combined &lt;- rbindlist(lapply(meta_files, fread), fill = TRUE)
     exp_combined &lt;- rbindlist(lapply(exp_files, fread), fill = TRUE)
-    fwrite(exp_combined, gsub(&quot;tsv&quot;,&quot;export.csv.gz&quot;,&quot;${_output}&quot;))
-    fwrite(meta_combined, &quot;${_output}&quot;, sep = &#39;\t&#39;)
+    fwrite(exp_combined, gsub("tsv","export.csv.gz","${_output}"))
+    fwrite(meta_combined, "${_output}", sep = '\t')
   
-#bash: expand = &quot;${ }&quot;, container = container, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+#bash: expand = "${ }", container = container, stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     # rm -rf ${_input[0]:adr}
 </pre></div>
 </div>

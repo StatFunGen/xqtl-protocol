@@ -798,7 +798,7 @@ testing.</p>
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -824,7 +824,7 @@ testing.</p>
                         <span class="n">Memory</span> <span class="n">expected</span>
   <span class="o">--</span><span class="n">numThreads</span> <span class="mi">8</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
                         <span class="n">Number</span> <span class="n">of</span> <span class="n">threads</span>
-  <span class="o">--</span><span class="n">container</span> <span class="s1">&#39;&#39;</span>
+  <span class="o">--</span><span class="n">container</span> <span class="s1">''</span>
                         <span class="n">Software</span> <span class="n">container</span> <span class="n">option</span>
 
 <span class="n">Sections</span>
@@ -833,7 +833,7 @@ testing.</p>
       <span class="o">--</span><span class="n">junc</span><span class="o">-</span><span class="n">path</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
       <span class="o">--</span><span class="n">file</span><span class="o">-</span><span class="n">suffix</span> <span class="n">junc</span>
       <span class="o">--</span><span class="n">leafcutter</span><span class="o">-</span><span class="n">version</span> <span class="n">leafcutter2</span>
-      <span class="o">--</span><span class="n">dataset</span> <span class="s1">&#39;ROSMAP_DLPFC&#39;</span>
+      <span class="o">--</span><span class="n">dataset</span> <span class="s1">'ROSMAP_DLPFC'</span>
   <span class="n">Jointcall_samples</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
       <span class="o">--</span><span class="n">sample</span><span class="o">-</span><span class="n">table</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
@@ -877,24 +877,24 @@ testing.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # The output directory for generated files. 
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 # intron usage ratio file wiht samples after QC
 # optional parameter black list if user want to blacklist some chromosomes and not to analyze
-parameter: chr_blacklist = path(&quot;.&quot;)
+parameter: chr_blacklist = path(".")
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 8
 # Software container option
-parameter: container = &quot;&quot;
+parameter: container = ""
 from sos.utils import expand_size
-cwd = path(f&#39;{cwd:a}&#39;)
+cwd = path(f'{cwd:a}')
 </pre></div>
 </div>
 </div>
@@ -903,14 +903,14 @@ cwd = path(f&#39;{cwd:a}&#39;)
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[Junc_list]
 parameter: junc_path = path
-parameter: file_suffix = &quot;junc&quot;
-parameter: leafcutter_version = &quot;leafcutter2&quot;
-parameter: dataset = &quot;ROSMAP_DLPFC&quot;
-output: f&#39;{cwd}/{leafcutter_version}/{dataset}_intron_usage_perind.junc&#39;
-bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stderr&#39; 
+parameter: file_suffix = "junc"
+parameter: leafcutter_version = "leafcutter2"
+parameter: dataset = "ROSMAP_DLPFC"
+output: f'{cwd}/{leafcutter_version}/{dataset}_intron_usage_perind.junc'
+bash: container=container, expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stderr' 
     cd ${cwd}
     realpath  ${junc_path}/*${file_suffix} &gt; ${_output}.tmp
-    grep -v &quot;all&quot; ${_output}.tmp &gt; ${_output}
+    grep -v "all" ${_output}.tmp &gt; ${_output}
     rm ${_output}.tmp
 </pre></div>
 </div>
@@ -921,10 +921,10 @@ bash: container=container, expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[Jointcall_samples]
 parameter: sample_table = path
 parameter: junc_list = path
-parameter: leafcutter_version = &quot;leafcutter2&quot;
+parameter: leafcutter_version = "leafcutter2"
 input: sample_table, junc_list
-output: f&#39;{cwd}/{leafcutter_version}/{sample_table:b}.rnaseq&#39;
-bash: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stderr&#39;
+output: f'{cwd}/{leafcutter_version}/{sample_table:b}.rnaseq'
+bash: container=container, expand = "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stderr'
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
         --step jointcall_samples \
         --sample-table ${_input[0]} \
@@ -940,17 +940,17 @@ bash: container=container, expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]
 parameter: ratios = path
 parameter: pseudo_ratio = False 
 import os
-if os.path.isfile(f&#39;{ratios:dd}/black_list.txt&#39;):
-    chr_blacklist = f&#39;{ratios:dd}/black_list.txt&#39;
-input: ratios, group_by = &#39;all&#39;
-output: f&#39;{ratios}_phenotype_file_list.txt&#39;
+if os.path.isfile(f'{ratios:dd}/black_list.txt'):
+    chr_blacklist = f'{ratios:dd}/black_list.txt'
+input: ratios, group_by = 'all'
+output: f'{ratios}_phenotype_file_list.txt'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container=container
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
         --step prepare_phenotype \
         --input ${ratios} \
         --chr-blacklist ${chr_blacklist} \
-        ${(&#39;--pseudo-ratio&#39; if pseudo_ratio else &#39;&#39;)}
+        ${('--pseudo-ratio' if pseudo_ratio else '')}
 </pre></div>
 </div>
 </div>
@@ -960,20 +960,20 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[leafcutter_norm_2]
 parameter: autosomes = True
 # Build the per-chromosome file list for concatenation (no pandas; runs in the base env).
-_lines = open(f&#39;{_input[0]}&#39;).read().splitlines()
-_hdr = _lines[0].split(&#39;\t&#39;)
-_rows = [dict(zip(_hdr, _ln.split(&#39;\t&#39;))) for _ln in _lines[1:] if _ln.strip()]
+_lines = open(f'{_input[0]}').read().splitlines()
+_hdr = _lines[0].split('\t')
+_rows = [dict(zip(_hdr, _ln.split('\t'))) for _ln in _lines[1:] if _ln.strip()]
 if autosomes:
-    print(&quot;Analyzing autosomes 1 to 22...&quot;)
-    _rows = [_r for _r in _rows if _r[&#39;#chr&#39;].startswith(&#39;chr&#39;) and _r[&#39;#chr&#39;][3:].isdigit() and 1 &lt;= int(_r[&#39;#chr&#39;][3:]) &lt;= 22]
-file_inv = [_r[&#39;#dir&#39;] for _r in _rows]
+    print("Analyzing autosomes 1 to 22...")
+    _rows = [_r for _r in _rows if _r['#chr'].startswith('chr') and _r['#chr'][3:].isdigit() and 1 &lt;= int(_r['#chr'][3:]) &lt;= 22]
+file_inv = [_r['#dir'] for _r in _rows]
 del _lines, _hdr, _rows
 input: file_inv # This design is necessary to avoid using for_each, as sos can not take chr number as an input.
-output: f&#39;{_input[0]:n}_raw_data.txt&#39;
+output: f'{_input[0]:n}_raw_data.txt'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container=container
     head -1 ${_input[0]:r}  &gt; ${_output}
-    cat ${_input:r} | grep -v &quot;#Chr&quot; &gt;&gt; ${_output}
+    cat ${_input:r} | grep -v "#Chr" &gt;&gt; ${_output}
 </pre></div>
 </div>
 </div>
@@ -988,31 +988,31 @@ parameter: mean_impute = False
 parameter: na_rate = 0.4
 # minimal variance across samples for an event to be kept (default 0.001, psichomics suggested)
 parameter: min_variance = 0.001
-parameter: qced_data = path(&quot;.&quot;)
+parameter: qced_data = path(".")
 parameter: bgzip=False
 import os
 if qced_data.is_dir():
-    print(&#39;Target Qced file with suffix &quot;_raw_data.txt&quot;&#39;)
-    input_file = paths([os.path.join(qced_data, x) for x in os.listdir(qced_data) if x.endswith(&#39;_raw_data.txt&#39;)])
+    print('Target Qced file with suffix "_raw_data.txt"')
+    input_file = paths([os.path.join(qced_data, x) for x in os.listdir(qced_data) if x.endswith('_raw_data.txt')])
     bgzip=True
 else:
-    print(&#39;Loading QCed data as input file; enabling mean imputation for any remaining NAs.&#39;)
+    print('Loading QCed data as input file; enabling mean imputation for any remaining NAs.')
     input_file = paths(qced_data)
     mean_impute = True
 input: input_file
-output: f&#39;{_input:n}.qqnorm.txt&#39;
+output: f'{_input:n}.qqnorm.txt'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container=container
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
         --step qqnorm \
         --input ${_input} \
         --output ${_output} \
         --na-rate ${na_rate} \
         --min-variance ${min_variance} \
-        ${(&#39;--mean-impute&#39; if mean_impute else &#39;&#39;)}
-    if ${&#39;true&#39; if bgzip else &#39;false&#39;}; then
-        bgzip -c &quot;${_output}&quot; &gt; &quot;${_output:n}.bed.gz&quot;
-        tabix -p bed &quot;${_output:n}.bed.gz&quot;
+        ${('--mean-impute' if mean_impute else '')}
+    if ${'true' if bgzip else 'false'}; then
+        bgzip -c "${_output}" &gt; "${_output:n}.bed.gz"
+        tabix -p bed "${_output:n}.bed.gz"
     fi
 </pre></div>
 </div>
@@ -1022,10 +1022,10 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdou
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[psichomics_norm_1]
 parameter: ratios = path
-input: ratios, group_by = &#39;all&#39;
-output: f&#39;{cwd}/psichomics_raw_data_bedded.txt&#39; 
+input: ratios, group_by = 'all'
+output: f'{cwd}/psichomics_raw_data_bedded.txt' 
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container=container
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
         --step psichomics_bed \
         --input ${_input} \
@@ -1041,9 +1041,9 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 parameter: na_rate = 0.4
 # minimal variance across samples for an event to be kept (default 0.001, psichomics suggested)
 parameter: min_variance = 0.001
-output: f&#39;{_input:n}.qqnorm.txt&#39;
+output: f'{_input:n}.qqnorm.txt'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;, container=container
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container=container
     Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
         --step qqnorm \
         --input ${_input} \

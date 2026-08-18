@@ -953,11 +953,11 @@ polyfun <code class="docutils literal notranslate"><span class="pre">.results</s
 <p>Step 3 pools every trait passed to <code class="docutils literal notranslate"><span class="pre">postprocess</span></code>. To re-meta a subset – neurodegenerative traits
 only, say – without re-running the regression or the per-trait standardization, <code class="docutils literal notranslate"><span class="pre">meta_subset</span></code> works
 from the cached <code class="docutils literal notranslate"><span class="pre">.sldsc_postprocess.rds</span></code>. It is light enough to run interactively:</p>
-<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">&quot;sldsc_results.rds&quot;</span><span class="p">)</span>
-<span class="n">neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="s">&quot;AD_GWAX&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;PD_meta&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ALS_meta&quot;</span><span class="p">)</span>
-<span class="n">view_neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">:::</span><span class="nf">.sldscViewForMeta</span><span class="p">(</span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="s">&quot;single&quot;</span><span class="p">)</span>
+<div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">res</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">readRDS</span><span class="p">(</span><span class="s">"sldsc_results.rds"</span><span class="p">)</span>
+<span class="n">neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="s">"AD_GWAX"</span><span class="p">,</span><span class="w"> </span><span class="s">"PD_meta"</span><span class="p">,</span><span class="w"> </span><span class="s">"ALS_meta"</span><span class="p">)</span>
+<span class="n">view_neuro</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">:::</span><span class="nf">.sldscViewForMeta</span><span class="p">(</span><span class="n">res</span><span class="o">$</span><span class="n">per_trait</span><span class="p">[</span><span class="n">neuro</span><span class="p">],</span><span class="w"> </span><span class="s">"single"</span><span class="p">)</span>
 <span class="n">meta_neuro_taustar</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">pecotmr</span><span class="o">::</span><span class="nf">metaSldscRandom</span><span class="p">(</span>
-<span class="w">  </span><span class="n">view_neuro</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;my_target_anno&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tauStar&quot;</span>
+<span class="w">  </span><span class="n">view_neuro</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"my_target_anno"</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"tauStar"</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -989,7 +989,7 @@ from the cached <code class="docutils literal notranslate"><span class="pre">.sl
                [workflow_name | -t targets] [options] [workflow_options]
   workflow_name:        Single or combined workflows defined in this script
   targets:              One or more targets to generate
-  options:              Single-hyphen sos parameters (see &quot;sos run -h&quot; for details)
+  options:              Single-hyphen sos parameters (see "sos run -h" for details)
   workflow_options:     Double-hyphen workflow-specific parameters
 
 Workflows:
@@ -1034,10 +1034,10 @@ Global Workflow Options:
   --target-anno-dir . (as path)
   --baseline-ld-dir . (as path)
   --frqfile-dir . (as path)
-  --plink-name &#39;ADSP_chr&#39;
+  --plink-name 'ADSP_chr'
   --weights-dir . (as path)
-  --baseline-name &#39;baseline_chr&#39;
-  --weight-name &#39;weights_chr&#39;
+  --baseline-name 'baseline_chr'
+  --weight-name 'weights_chr'
   --n-blocks 200 (as int)
   --numThreads 16 (as int)
                         Number of threads
@@ -1056,22 +1056,22 @@ Sections
                         snps   -&gt; output .l2.ldscore.gz --snp_list absent -&gt;
                         compute_ldscores         -&gt; output .l2.ldscore.parquet
                         LD-score column name (this is what becomes the .results
-                        &quot;Category&quot; in [get_heritability], with a &quot;_&lt;ref-ld-
-                        index&gt;&quot; suffix appended there): * compute_ldscores
+                        "Category" in [get_heritability], with a "_&lt;ref-ld-
+                        index&gt;" suffix appended there): * compute_ldscores
                         ALWAYS keeps the annot column name(s): single annot
-                        column &quot;ANNOT&quot;          -&gt; ldscore column &quot;ANNOT&quot; joint
-                        annot columns &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...  -&gt;
-                        &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,... * ldsc --l2 has a quirk: with
+                        column "ANNOT"          -&gt; ldscore column "ANNOT" joint
+                        annot columns "ANNOT_1","ANNOT_2",...  -&gt;
+                        "ANNOT_1","ANNOT_2",... * ldsc --l2 has a quirk: with
                         EXACTLY ONE annotation (n_annot == 1) it HARD-CODES the
-                        ldscore column name to &quot;L2&quot; and DROPS the annot&#39;s
+                        ldscore column name to "L2" and DROPS the annot's
                         original column name. With &gt;=2 annotations it uses
-                        &quot;&lt;annot_name&gt;L2&quot; (&quot;ANNOT_1L2&quot;,&quot;ANNOT_2L2&quot;,...). =&gt; a
-                        single-target snplist run reports &quot;L2_0&quot; in .results,
-                        while a single-target no-snplist run reports &quot;ANNOT_0&quot;.
+                        "&lt;annot_name&gt;L2" ("ANNOT_1L2","ANNOT_2L2",...). =&gt; a
+                        single-target snplist run reports "L2_0" in .results,
+                        while a single-target no-snplist run reports "ANNOT_0".
                         [postprocess] auto- detects either; only matters if you
                         pass --target-categories explicitly.  CM column
                         requirement for snplist:  ldsc --l2 --print-snps
-                        requires the target annot to (a) carry a &quot;CM&quot;
+                        requires the target annot to (a) carry a "CM"
                         (centimorgan) column and (b) line up with the plink .bim
                         (same SNP set, same row order). This step handles both
                         internally (normalize_for_ldsc: takes CM from the .bim
@@ -1087,27 +1087,27 @@ Sections
     Workflow Options:
       --target-anno-dirs  paths()
 
-                        --- about the &quot;.results&quot; Category column and the &quot;_0 /
-                        _1&quot; suffix --- Each (trait, target_dir) pair is ONE
+                        --- about the ".results" Category column and the "_0 /
+                        _1" suffix --- Each (trait, target_dir) pair is ONE
                         polyfun call; its `ldsc --ref-ld-chr` always gets
                         exactly two LD-score sources, in this order:
-                        &quot;&lt;target_dir&gt;/&lt;target&gt;.&quot;   (index 0)  ,
-                        &quot;&lt;baseline_dir&gt;/&lt;baseline&gt;&quot;   (index 1) With --overlap-
+                        "&lt;target_dir&gt;/&lt;target&gt;."   (index 0)  ,
+                        "&lt;baseline_dir&gt;/&lt;baseline&gt;"   (index 1) With --overlap-
                         annot, every annotation column in the .results
-                        &quot;Category&quot; is named  &lt;ldscore_column_name&gt;_&lt;ref-ld-
-                        index&gt;: index 0 = the target file   -&gt; &quot;ANNOT_0&quot;  (no-
+                        "Category" is named  &lt;ldscore_column_name&gt;_&lt;ref-ld-
+                        index&gt;: index 0 = the target file   -&gt; "ANNOT_0"  (no-
                         snplist; compute_ldscores keeps the annot col name) -&gt;
-                        &quot;L2_0&quot;    (snplist + single annot; ldsc hard-codes &quot;L2&quot;,
-                        see below) -&gt; &quot;ANNOT_1_0&quot;,&quot;ANNOT_2_0&quot;      (no-snplist
+                        "L2_0"    (snplist + single annot; ldsc hard-codes "L2",
+                        see below) -&gt; "ANNOT_1_0","ANNOT_2_0"      (no-snplist
                         joint dir, N&gt;=2 annot cols) -&gt;
-                        &quot;ANNOT_1L2_0&quot;,&quot;ANNOT_2L2_0&quot;  (snplist joint dir, N&gt;=2 -&gt;
-                        &quot;&lt;name&gt;L2&quot;) index 1 = the baseline file -&gt;
-                        &quot;base_1&quot;,&quot;Coding_UCSC_1&quot;, ...  (the 97 baseline annots)
+                        "ANNOT_1L2_0","ANNOT_2L2_0"  (snplist joint dir, N&gt;=2 -&gt;
+                        "&lt;name&gt;L2") index 1 = the baseline file -&gt;
+                        "base_1","Coding_UCSC_1", ...  (the 97 baseline annots)
                         So in this pipeline the suffix is only ever 0 (target)
                         or 1 (baseline); it would continue 0,1,2,... only if you
                         handed `ldsc --ref-ld-chr` more than two sources. (Why
                         ANNOT_0 vs L2_0: see the [make_annotation_files_ldscore]
-                        header — ldsc&#39;s &quot;n_annot == 1 -&gt; column name &#39;L2&#39;&quot; quirk
+                        header — ldsc's "n_annot == 1 -&gt; column name 'L2'" quirk
                         vs compute_ldscores keeping the annot column name.)
                         [postprocess] auto-detects the target Category; if you
                         instead pass --target-categories, the names must match
@@ -1143,11 +1143,11 @@ Sections
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
 # Path to the work directory of the analysis.
-parameter: cwd = path(&#39;output&#39;)
+parameter: cwd = path('output')
 # Prefix for the analysis output
 parameter: annotation_name = str
 # Directory holding the modular R wrapper scripts (code/script).
-parameter: modular_script_dir = path(&#39;code/script&#39;)
+parameter: modular_script_dir = path('code/script')
 
 # MAF cutoff for sLDSC. Default 0.05 per sLDSC recommendation (rare-variant LD is unstable
 # and HapMap3-style regression weights are common-variant by construction).
@@ -1173,18 +1173,18 @@ parameter: sumstat_dir = path() # Directory containing GWAS summary statistics
 parameter: target_anno_dir = path()  # Directory containing target annotation files: output of ldscore
 parameter: baseline_ld_dir = path()  # Directory containing baseline LD score files (computed against our panel)
 parameter: frqfile_dir = path()  # Directory containing allele frequency files (.frq, our panel)
-parameter: plink_name = &quot;ADSP_chr&quot;
+parameter: plink_name = "ADSP_chr"
 parameter: weights_dir = path()  # Directory containing LD weights (computed against our panel)
-parameter: baseline_name = &quot;baseline_chr&quot;  # Prefix of baseline annotation files
-parameter: weight_name = &quot;weights_chr&quot;  # Prefix of LD weights files
+parameter: baseline_name = "baseline_chr"  # Prefix of baseline annotation files
+parameter: weight_name = "weights_chr"  # Prefix of LD weights files
 parameter: n_blocks = 200
 
 # Number of threads
 parameter: numThreads = 16
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
-parameter: walltime = &#39;12h&#39;
-parameter: mem = &#39;16G&#39;
+parameter: walltime = '12h'
+parameter: mem = '16G'
 </pre></div>
 </div>
 </div>
@@ -1209,9 +1209,9 @@ parameter: mem = &#39;16G&#39;
 #   &lt;cwd&gt;/&lt;annotation_name&gt;_joint/&lt;annotation_name&gt;_joint.&lt;chr&gt;.{...}                (when compute_joint and N&gt;=2)
 #
 # Workflows:
-#   - Workflow A (&quot;all at once&quot;): compute_single=TRUE, compute_joint=TRUE (defaults).
+#   - Workflow A ("all at once"): compute_single=TRUE, compute_joint=TRUE (defaults).
 #     Produces both, fits the case where you have already chosen the joint set.
-#   - Workflow B (&quot;exploratory then conditional&quot;):
+#   - Workflow B ("exploratory then conditional"):
 #       Step 1: compute_single=TRUE, compute_joint=FALSE.
 #               Run on N candidate annotations -&gt; N single-target dirs.
 #               Inspect single-target results, identify K significant ones.
@@ -1225,21 +1225,21 @@ parameter: mem = &#39;16G&#39;
 #   --snp_list given  -&gt; ldsc --l2 --print-snps   -&gt; output .l2.ldscore.gz
 #   --snp_list absent -&gt; compute_ldscores         -&gt; output .l2.ldscore.parquet
 #
-#   LD-score column name (this is what becomes the .results &quot;Category&quot; in
-#   [get_heritability], with a &quot;_&lt;ref-ld-index&gt;&quot; suffix appended there):
+#   LD-score column name (this is what becomes the .results "Category" in
+#   [get_heritability], with a "_&lt;ref-ld-index&gt;" suffix appended there):
 #     * compute_ldscores  ALWAYS keeps the annot column name(s):
-#         single annot column &quot;ANNOT&quot;          -&gt; ldscore column &quot;ANNOT&quot;
-#         joint  annot columns &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...  -&gt; &quot;ANNOT_1&quot;,&quot;ANNOT_2&quot;,...
+#         single annot column "ANNOT"          -&gt; ldscore column "ANNOT"
+#         joint  annot columns "ANNOT_1","ANNOT_2",...  -&gt; "ANNOT_1","ANNOT_2",...
 #     * ldsc --l2 has a quirk: with EXACTLY ONE annotation (n_annot == 1) it
-#       HARD-CODES the ldscore column name to &quot;L2&quot; and DROPS the annot&#39;s original
-#       column name. With &gt;=2 annotations it uses &quot;&lt;annot_name&gt;L2&quot;
-#       (&quot;ANNOT_1L2&quot;,&quot;ANNOT_2L2&quot;,...).
-#     =&gt; a single-target snplist run reports &quot;L2_0&quot; in .results, while a
-#        single-target no-snplist run reports &quot;ANNOT_0&quot;.  [postprocess] auto-
+#       HARD-CODES the ldscore column name to "L2" and DROPS the annot's original
+#       column name. With &gt;=2 annotations it uses "&lt;annot_name&gt;L2"
+#       ("ANNOT_1L2","ANNOT_2L2",...).
+#     =&gt; a single-target snplist run reports "L2_0" in .results, while a
+#        single-target no-snplist run reports "ANNOT_0".  [postprocess] auto-
 #        detects either; only matters if you pass --target-categories explicitly.
 #
 #   CM column requirement for snplist:  ldsc --l2 --print-snps requires the
-#   target annot to (a) carry a &quot;CM&quot; (centimorgan) column and (b) line up with
+#   target annot to (a) carry a "CM" (centimorgan) column and (b) line up with
 #   the plink .bim (same SNP set, same row order). This step handles both
 #   internally (normalize_for_ldsc: takes CM from the .bim 4th column, re-expands
 #   the annot onto the .bim rows, filling 0). Therefore the plink .bim files MUST
@@ -1255,7 +1255,7 @@ import csv
 import os
 
 if not (compute_single or compute_joint):
-    raise ValueError(&quot;[make_annotation_files_ldscore] at least one of compute_single or compute_joint must be TRUE&quot;)
+    raise ValueError("[make_annotation_files_ldscore] at least one of compute_single or compute_joint must be TRUE")
 
 def adapt_file_path(file_path, reference_file):
     reference_path = os.path.dirname(reference_file)
@@ -1270,37 +1270,37 @@ def adapt_file_path(file_path, reference_file):
     file_prefixed = os.path.join(reference_path, file_path)
     if os.path.isfile(file_prefixed):
         return file_prefixed
-    raise FileNotFoundError(f&quot;No valid path found for file: {file_path}&quot;)
+    raise FileNotFoundError(f"No valid path found for file: {file_path}")
 
 def _read_tsv(p):
     with open(p) as _f:
-        return list(csv.DictReader(_f, delimiter=&quot;\t&quot;))
+        return list(csv.DictReader(_f, delimiter="\t"))
 
 # ---- Parse inputs and determine N (stdlib; no pandas so it runs in the base env) ----
-if (str(annotation_file).endswith((&#39;rds&#39;, &#39;tsv&#39;, &#39;txt&#39;, &#39;tsv.gz&#39;, &#39;txt.gz&#39;)) and
-    str(reference_anno_file).endswith(&#39;annot.gz&#39;)):
-    # Case 1: direct file paths (single-chromosome run). Multiple target files separated by &#39;,&#39;.
-    target_files_direct = str(annotation_file).split(&#39;,&#39;)
+if (str(annotation_file).endswith(('rds', 'tsv', 'txt', 'tsv.gz', 'txt.gz')) and
+    str(reference_anno_file).endswith('annot.gz')):
+    # Case 1: direct file paths (single-chromosome run). Multiple target files separated by ','.
+    target_files_direct = str(annotation_file).split(',')
     N_targets = len(target_files_direct)
     input_files = [[*target_files_direct, str(reference_anno_file), str(genome_ref_file)]]
     input_chroms = [int(x) for x in chromosome] if len(chromosome) &gt; 0 else [0]
 else:
-    # Case 2: txt list with #id and one or more &#39;path&#39; columns
+    # Case 2: txt list with #id and one or more 'path' columns
     _tgt = _read_tsv(annotation_file); _ref = _read_tsv(reference_anno_file); _gen = _read_tsv(genome_ref_file)
     for _rows in (_tgt, _ref, _gen):
         for _r in _rows:
-            _r[&quot;#id&quot;] = str(_r[&quot;#id&quot;]).replace(&quot;chr&quot;, &quot;&quot;)
-    path_columns = [k for k in _tgt[0].keys() if k.startswith(&quot;path&quot;)]
+            _r["#id"] = str(_r["#id"]).replace("chr", "")
+    path_columns = [k for k in _tgt[0].keys() if k.startswith("path")]
     N_targets = len(path_columns)
     for _r in _tgt:
         for _c in path_columns:
             _r[_c] = adapt_file_path(_r[_c], str(annotation_file))
-    _ref_by = {_r[&quot;#id&quot;]: adapt_file_path(_r[&quot;path&quot;], str(reference_anno_file)) for _r in _ref}
-    _gen_by = {_r[&quot;#id&quot;]: adapt_file_path(_r[&quot;path&quot;], str(genome_ref_file)) for _r in _gen}
+    _ref_by = {_r["#id"]: adapt_file_path(_r["path"], str(reference_anno_file)) for _r in _ref}
+    _gen_by = {_r["#id"]: adapt_file_path(_r["path"], str(genome_ref_file)) for _r in _gen}
     _keep = set(str(c) for c in chromosome) if len(chromosome) &gt; 0 else None
     input_chroms = []; input_files = []
     for _r in _tgt:                                    # inner-join on #id, preserving target order
-        _id = _r[&quot;#id&quot;]
+        _id = _r["#id"]
         if _id not in _ref_by or _id not in _gen_by:
             continue
         if _keep is not None and _id not in _keep:
@@ -1310,14 +1310,14 @@ else:
 
 # ---- Determine output format ----
 use_print_snps = snp_list.is_file()
-ldscore_ext = &quot;l2.ldscore.gz&quot; if use_print_snps else &quot;l2.ldscore.parquet&quot;
+ldscore_ext = "l2.ldscore.gz" if use_print_snps else "l2.ldscore.parquet"
 
 if ld_wind_kb &gt; 0:
     ld_window_param = ld_wind_kb
-    ld_window_flag = &quot;--ld-wind-kb&quot;
+    ld_window_flag = "--ld-wind-kb"
 else:
     ld_window_param = ld_wind_cm
-    ld_window_flag = &quot;--ld-wind-cm&quot;
+    ld_window_flag = "--ld-wind-cm"
 
 emit_single = compute_single
 emit_joint  = compute_joint and N_targets &gt;= 2
@@ -1327,83 +1327,83 @@ def chrom_outputs(chrom):
     outs = []
     if emit_single:
         for i in range(N_targets):
-            name = f&quot;{annotation_name}_single_{i+1}&quot;
-            prefix = f&quot;{cwd:a}/{name}/{name}.{chrom}&quot;
-            outs += [f&quot;{prefix}.annot.gz&quot;, f&quot;{prefix}.{ldscore_ext}&quot;, f&quot;{prefix}.l2.M&quot;]
+            name = f"{annotation_name}_single_{i+1}"
+            prefix = f"{cwd:a}/{name}/{name}.{chrom}"
+            outs += [f"{prefix}.annot.gz", f"{prefix}.{ldscore_ext}", f"{prefix}.l2.M"]
     if emit_joint:
-        name = f&quot;{annotation_name}_joint&quot;
-        prefix = f&quot;{cwd:a}/{name}/{name}.{chrom}&quot;
-        outs += [f&quot;{prefix}.annot.gz&quot;, f&quot;{prefix}.{ldscore_ext}&quot;, f&quot;{prefix}.l2.M&quot;]
+        name = f"{annotation_name}_joint"
+        prefix = f"{cwd:a}/{name}/{name}.{chrom}"
+        outs += [f"{prefix}.annot.gz", f"{prefix}.{ldscore_ext}", f"{prefix}.l2.M"]
     return outs
 
-input: input_files, group_by = N_targets + 2, group_with = &quot;input_chroms&quot;
+input: input_files, group_by = N_targets + 2, group_with = "input_chroms"
 
 output: chrom_outputs(input_chroms[_index])
 
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bnn}&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bnn}'
 
 # ---- Step A: write the .annot.gz files for this chromosome (R worker) ----
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[0]}.stderr&#39;, stdout = f&#39;{_output[0]}.stdout&#39;
+bash: expand = "${ }", stderr = f'{_output[0]}.stderr', stdout = f'{_output[0]}.stdout'
     Rscript ${modular_script_dir}/enrichment/make_annotation.R --step annot \
-        --targets ${&quot;,&quot;.join(str(p.absolute()) for p in _input[:-2])} \
+        --targets ${",".join(str(p.absolute()) for p in _input[:-2])} \
         --reference-anno ${_input[-2]:a} \
         --bfile-prefix ${_input[-1]:na} \
         --score-column ${score_column} \
-        ${(&#39;--is-range&#39; if is_range else &#39;&#39;)} \
-        ${(&#39;--use-print-snps&#39; if use_print_snps else &#39;&#39;)} \
-        ${(&#39;--emit-single&#39; if emit_single else &#39;&#39;)} \
-        ${(&#39;--emit-joint&#39; if emit_joint else &#39;&#39;)} \
+        ${('--is-range' if is_range else '')} \
+        ${('--use-print-snps' if use_print_snps else '')} \
+        ${('--emit-single' if emit_single else '')} \
+        ${('--emit-joint' if emit_joint else '')} \
         --annotation-name ${annotation_name} --cwd ${cwd:a} --chrom ${input_chroms[_index]}
 
-# ---- Step C: run polyfun&#39;s LD-score computation for each emitted annotation file (external). ----
-bash: expand = &quot;$[ ]&quot;, stderr = f&#39;{_output[1]}.stderr&#39;, stdout = f&#39;{_output[1]}.stdout&#39;
+# ---- Step C: run polyfun's LD-score computation for each emitted annotation file (external). ----
+bash: expand = "$[ ]", stderr = f'{_output[1]}.stderr', stdout = f'{_output[1]}.stdout'
     set -e
-    chrom=&quot;$[input_chroms[_index]]&quot;
+    chrom="$[input_chroms[_index]]"
 
     run_polyfun() {
-        local annot=&quot;$1&quot;
-        local out_prefix=&quot;$2&quot;
-        if [ &quot;$[str(use_print_snps)]&quot; = &quot;True&quot; ]; then
+        local annot="$1"
+        local out_prefix="$2"
+        if [ "$[str(use_print_snps)]" = "True" ]; then
             ldsc \
                 --print-snps $[snp_list] \
                 $[ld_window_flag] $[ld_window_param] \
-                --out &quot;$out_prefix&quot; \
+                --out "$out_prefix" \
                 --bfile $[_input[-1]:nar] \
                 --yes-really \
-                --annot &quot;$annot&quot; \
+                --annot "$annot" \
                 --l2
         else
             compute_ldscores \
-                --annot &quot;$annot&quot; \
+                --annot "$annot" \
                 --bfile $[_input[-1]:nar] \
                 $[ld_window_flag] $[ld_window_param] \
-                --out &quot;${out_prefix}.$[ldscore_ext]&quot; \
+                --out "${out_prefix}.$[ldscore_ext]" \
                 --allow-missing
         fi
     }
 
-    if [ &quot;$[str(emit_single)]&quot; = &quot;True&quot; ]; then
+    if [ "$[str(emit_single)]" = "True" ]; then
         for i in $(seq 1 $[N_targets]); do
-            name=&quot;$[annotation_name]_single_$i&quot;
-            annot=&quot;$[cwd:a]/$name/$name.$chrom.annot.gz&quot;
-            prefix=&quot;$[cwd:a]/$name/$name.$chrom&quot;
-            run_polyfun &quot;$annot&quot; &quot;$prefix&quot;
+            name="$[annotation_name]_single_$i"
+            annot="$[cwd:a]/$name/$name.$chrom.annot.gz"
+            prefix="$[cwd:a]/$name/$name.$chrom"
+            run_polyfun "$annot" "$prefix"
         done
     fi
-    if [ &quot;$[str(emit_joint)]&quot; = &quot;True&quot; ]; then
-        name=&quot;$[annotation_name]_joint&quot;
-        annot=&quot;$[cwd:a]/$name/$name.$chrom.annot.gz&quot;
-        prefix=&quot;$[cwd:a]/$name/$name.$chrom&quot;
-        run_polyfun &quot;$annot&quot; &quot;$prefix&quot;
+    if [ "$[str(emit_joint)]" = "True" ]; then
+        name="$[annotation_name]_joint"
+        annot="$[cwd:a]/$name/$name.$chrom.annot.gz"
+        prefix="$[cwd:a]/$name/$name.$chrom"
+        run_polyfun "$annot" "$prefix"
     fi
 
 # ---- Step D: write .l2.M (+ .l2.M_5_50 when .frq present) files (R worker) ----
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[2]}.stderr&#39;, stdout = f&#39;{_output[2]}.stdout&#39;
+bash: expand = "${ }", stderr = f'{_output[2]}.stderr', stdout = f'{_output[2]}.stdout'
     Rscript ${modular_script_dir}/enrichment/make_annotation.R --step mfiles \
         --annotation-name ${annotation_name} --cwd ${cwd:a} --chrom ${input_chroms[_index]} \
-        ${(&#39;--emit-single&#39; if emit_single else &#39;&#39;)} ${(&#39;--emit-joint&#39; if emit_joint else &#39;&#39;)} \
+        ${('--emit-single' if emit_single else '')} ${('--emit-joint' if emit_joint else '')} \
         --n-targets ${N_targets} --ldscore-ext ${ldscore_ext} \
-        ${(&#39;--use-print-snps&#39; if use_print_snps else &#39;&#39;)} \
+        ${('--use-print-snps' if use_print_snps else '')} \
         --frq-file ${frqfile_dir}/${plink_name}${input_chroms[_index]}.frq
 </pre></div>
 </div>
@@ -1423,21 +1423,21 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output[2]}.stderr&#39;, stdout
 # typically N _single_&lt;i&gt; directories plus optionally one _joint directory.
 
 #
-# --- about the &quot;.results&quot; Category column and the &quot;_0 / _1&quot; suffix ---
+# --- about the ".results" Category column and the "_0 / _1" suffix ---
 # Each (trait, target_dir) pair is ONE polyfun call; its `ldsc --ref-ld-chr`
 # always gets exactly two LD-score sources, in this order:
-#     &quot;&lt;target_dir&gt;/&lt;target&gt;.&quot;   (index 0)  ,  &quot;&lt;baseline_dir&gt;/&lt;baseline&gt;&quot;   (index 1)
-# With --overlap-annot, every annotation column in the .results &quot;Category&quot; is
+#     "&lt;target_dir&gt;/&lt;target&gt;."   (index 0)  ,  "&lt;baseline_dir&gt;/&lt;baseline&gt;"   (index 1)
+# With --overlap-annot, every annotation column in the .results "Category" is
 # named  &lt;ldscore_column_name&gt;_&lt;ref-ld-index&gt;:
-#     index 0 = the target file   -&gt; &quot;ANNOT_0&quot;  (no-snplist; compute_ldscores keeps the annot col name)
-#                                  -&gt; &quot;L2_0&quot;    (snplist + single annot; ldsc hard-codes &quot;L2&quot;, see below)
-#                                  -&gt; &quot;ANNOT_1_0&quot;,&quot;ANNOT_2_0&quot;      (no-snplist joint dir, N&gt;=2 annot cols)
-#                                  -&gt; &quot;ANNOT_1L2_0&quot;,&quot;ANNOT_2L2_0&quot;  (snplist joint dir, N&gt;=2 -&gt; &quot;&lt;name&gt;L2&quot;)
-#     index 1 = the baseline file -&gt; &quot;base_1&quot;,&quot;Coding_UCSC_1&quot;, ...  (the 97 baseline annots)
+#     index 0 = the target file   -&gt; "ANNOT_0"  (no-snplist; compute_ldscores keeps the annot col name)
+#                                  -&gt; "L2_0"    (snplist + single annot; ldsc hard-codes "L2", see below)
+#                                  -&gt; "ANNOT_1_0","ANNOT_2_0"      (no-snplist joint dir, N&gt;=2 annot cols)
+#                                  -&gt; "ANNOT_1L2_0","ANNOT_2L2_0"  (snplist joint dir, N&gt;=2 -&gt; "&lt;name&gt;L2")
+#     index 1 = the baseline file -&gt; "base_1","Coding_UCSC_1", ...  (the 97 baseline annots)
 # So in this pipeline the suffix is only ever 0 (target) or 1 (baseline); it would
 # continue 0,1,2,... only if you handed `ldsc --ref-ld-chr` more than two sources.
-# (Why ANNOT_0 vs L2_0: see the [make_annotation_files_ldscore] header — ldsc&#39;s
-#  &quot;n_annot == 1 -&gt; column name &#39;L2&#39;&quot; quirk vs compute_ldscores keeping the annot
+# (Why ANNOT_0 vs L2_0: see the [make_annotation_files_ldscore] header — ldsc's
+#  "n_annot == 1 -&gt; column name 'L2'" quirk vs compute_ldscores keeping the annot
 #  column name.)  [postprocess] auto-detects the target Category; if you instead pass
 # --target-categories, the names must match this column exactly.
 #
@@ -1446,7 +1446,7 @@ parameter: all_traits = []
 
 import os
 
-with open(all_traits_file, &#39;r&#39;) as f:
+with open(all_traits_file, 'r') as f:
     trait_paths = [os.path.join(sumstat_dir, line.strip()) for line in f if line.strip()]
 
 # Build (trait, target_dir) Cartesian product as parallel flat lists.
@@ -1457,49 +1457,49 @@ for td in target_anno_dirs:
         input_list.append(t)
         target_meta.append(str(td))
 
-input: input_list, group_by = 1, group_with = &quot;target_meta&quot;
+input: input_list, group_by = 1, group_with = "target_meta"
 
-output: f&quot;{cwd:a}/{os.path.basename(target_meta[_index])}/{os.path.basename(_input[0])}.log&quot;,  \
-        f&quot;{cwd:a}/{os.path.basename(target_meta[_index])}/{os.path.basename(_input[0])}.results&quot;
+output: f"{cwd:a}/{os.path.basename(target_meta[_index])}/{os.path.basename(_input[0])}.log",  \
+        f"{cwd:a}/{os.path.basename(target_meta[_index])}/{os.path.basename(_input[0])}.results"
 
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
 
-bash: expand = &quot;${ }&quot;
-    target_dir=&quot;${target_meta[_index]}&quot;
-    target_name=&quot;$(basename ${target_meta[_index]})&quot;
-    trait=&quot;$(basename ${_input[0]})&quot;
-    output_dir=&quot;${cwd:a}/$target_name&quot;
-    mkdir -p &quot;$output_dir&quot;
+bash: expand = "${ }"
+    target_dir="${target_meta[_index]}"
+    target_name="$(basename ${target_meta[_index]})"
+    trait="$(basename ${_input[0]})"
+    output_dir="${cwd:a}/$target_name"
+    mkdir -p "$output_dir"
 
     # MAF cutoff handling. Only 0 (disabled) or 0.05 (sLDSC default) are supported;
     # other values would require recomputing LD scores at that cutoff.
-    frq_file_check=&quot;${frqfile_dir}/${plink_name}22.frq&quot;
-    if [ &quot;${maf_cutoff}&quot; = &quot;0&quot; ] || [ &quot;${maf_cutoff}&quot; = &quot;0.0&quot; ]; then
-        echo &quot;maf_cutoff = 0: skipping MAF filter (--not-M-5-50)&quot;
-        frq_option=&quot;--not-M-5-50&quot;
-    elif [ &quot;${maf_cutoff}&quot; = &quot;0.05&quot; ]; then
-        if [ -f &quot;$frq_file_check&quot; ]; then
-            echo &quot;maf_cutoff = 0.05: using --frqfile-chr (MAF &gt; 5%)&quot;
-            frq_option=&quot;--frqfile-chr ${frqfile_dir}/${plink_name}&quot;
+    frq_file_check="${frqfile_dir}/${plink_name}22.frq"
+    if [ "${maf_cutoff}" = "0" ] || [ "${maf_cutoff}" = "0.0" ]; then
+        echo "maf_cutoff = 0: skipping MAF filter (--not-M-5-50)"
+        frq_option="--not-M-5-50"
+    elif [ "${maf_cutoff}" = "0.05" ]; then
+        if [ -f "$frq_file_check" ]; then
+            echo "maf_cutoff = 0.05: using --frqfile-chr (MAF &gt; 5%)"
+            frq_option="--frqfile-chr ${frqfile_dir}/${plink_name}"
         else
-            echo &quot;ERROR: maf_cutoff=0.05 requires .frq files for the reference panel,&quot;
-            echo &quot;       but none found at ${frqfile_dir}/${plink_name}*.frq.&quot;
-            echo &quot;       Provide .frq files in frqfile_dir, or set maf_cutoff=0 (NOT recommended).&quot;
+            echo "ERROR: maf_cutoff=0.05 requires .frq files for the reference panel,"
+            echo "       but none found at ${frqfile_dir}/${plink_name}*.frq."
+            echo "       Provide .frq files in frqfile_dir, or set maf_cutoff=0 (NOT recommended)."
             exit 1
         fi
     else
-        echo &quot;ERROR: maf_cutoff=${maf_cutoff} is not supported. Only 0 (no filter) or&quot;
-        echo &quot;       0.05 (sLDSC default) are accepted. Other values would require&quot;
-        echo &quot;       recomputing LD scores at that cutoff.&quot;
+        echo "ERROR: maf_cutoff=${maf_cutoff} is not supported. Only 0 (no filter) or"
+        echo "       0.05 (sLDSC default) are accepted. Other values would require"
+        echo "       recomputing LD scores at that cutoff."
         exit 1
     fi
 
     run_ldsc() {
-        local extra_args=&quot;$1&quot;
+        local extra_args="$1"
         ldsc \
             --h2 ${sumstat_dir}/$trait \
-            --ref-ld-chr &quot;$target_dir/$target_name.&quot;,&quot;${baseline_ld_dir}/${baseline_name}&quot; \
-            --out &quot;$output_dir/$trait&quot; \
+            --ref-ld-chr "$target_dir/$target_name.","${baseline_ld_dir}/${baseline_name}" \
+            --out "$output_dir/$trait" \
             --overlap-annot \
             --w-ld-chr ${weights_dir}/${weight_name} \
             $frq_option \
@@ -1509,22 +1509,22 @@ bash: expand = &quot;${ }&quot;
             $extra_args
     }
 
-    run_ldsc &quot;&quot;
-    log_file=&quot;$output_dir/$trait.log&quot;
+    run_ldsc ""
+    log_file="$output_dir/$trait.log"
 
     # FloatingPointError retry ladder (preserved from original): 30 -&gt; 20 -&gt; 10
     for max in 30 20 10; do
-        if [ -f &quot;$log_file&quot; ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;$log_file&quot;; then
-            echo &quot;FloatingPointError detected, retrying with --chisq-max $max...&quot;
-            run_ldsc &quot;--chisq-max $max&quot;
+        if [ -f "$log_file" ] &amp;&amp; grep -q "FloatingPointError\|invalid value encountered in sqrt" "$log_file"; then
+            echo "FloatingPointError detected, retrying with --chisq-max $max..."
+            run_ldsc "--chisq-max $max"
         else
             break
         fi
     done
 
-    if [ -f &quot;$log_file&quot; ] &amp;&amp; grep -q &quot;FloatingPointError\|invalid value encountered in sqrt&quot; &quot;$log_file&quot;; then
-        echo &quot;ERROR: FloatingPointError persists for trait $trait at target $target_name even with --chisq-max 10&quot;
-        echo &quot;This trait may have severe numerical instability issues in the summary statistics.&quot;
+    if [ -f "$log_file" ] &amp;&amp; grep -q "FloatingPointError\|invalid value encountered in sqrt" "$log_file"; then
+        echo "ERROR: FloatingPointError persists for trait $trait at target $target_name even with --chisq-max 10"
+        echo "This trait may have severe numerical instability issues in the summary statistics."
     fi
 </pre></div>
 </div>
@@ -1540,16 +1540,16 @@ parameter: min_maf  = 0.001
 parameter: keep_hla = False
 parameter: chi2_cut = 30
 input: sumstats
-output: f&quot;{_input:n}.munged.parquet&quot;
-bash: expand=True, stderr=f&#39;{_output:nn}.stderr&#39;, stdout=f&#39;{_output:nn}.stdout&#39;
+output: f"{_input:n}.munged.parquet"
+bash: expand=True, stderr=f'{_output:nn}.stderr', stdout=f'{_output:nn}.stdout'
     munge_polyfun_sumstats \
         --sumstats {_input} \
         --out {_output} \
-        {&#39;--n {}&#39;.format(n) if n&gt;0 else &#39;&#39;} \
-        {&#39;--min-info {}&#39;.format(min_info)} \
-        {&#39;--min-maf {}&#39;.format(min_maf)} \
-        {&#39;--chi2-cutoff {}&#39;.format(chi2_cut)} \
-        {&#39;--keep-hla&#39; if keep_hla else &#39;&#39;} \
+        {'--n {}'.format(n) if n&gt;0 else ''} \
+        {'--min-info {}'.format(min_info)} \
+        {'--min-maf {}'.format(min_maf)} \
+        {'--chi2-cutoff {}'.format(chi2_cut)} \
+        {'--keep-hla' if keep_hla else ''} \
         --remove-strand-ambig
 </pre></div>
 </div>
@@ -1571,16 +1571,16 @@ parameter: traits_file = path()             # text file: one trait sumstats file
 parameter: heritability_cwd = path()        # parent directory of [get_heritability] outputs (contains &lt;annotation_name&gt;_single_&lt;i&gt;/ subdirs and optionally &lt;annotation_name&gt;_joint/)
 parameter: target_categories = []           # target annotation names. Auto-detected from the joint-run results if empty.
 parameter: target_categories_label = []     # optional display names, same order as target_categories;
-                                            # when given, every &quot;target&quot; column / tau*-block colname in
+                                            # when given, every "target" column / tau*-block colname in
                                             # the output RDS is renamed to these (params$target_categories
                                             # holds the labels, params$target_categories_orig the originals).
 parameter: target_anno_dir = path()         # directory of target .annot.gz files used for sd_C and binary detection (typically the joint dir, since it carries all target columns)
 
 input: traits_file
-output: f&quot;{cwd:a}/{annotation_name}.sldsc_postprocess.rds&quot;
+output: f"{cwd:a}/{annotation_name}.sldsc_postprocess.rds"
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     Rscript ${modular_script_dir}/pecotmr_integration/sldsc_postprocess.R \
         --traits-file ${traits_file} \
         --heritability-cwd ${heritability_cwd} \
@@ -1589,8 +1589,8 @@ bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout 
         --frqfile-dir ${frqfile_dir} \
         --plink-name ${plink_name} \
         --maf-cutoff ${maf_cutoff} \
-        ${(&#39;--target-categories &#39; + &#39;,&#39;.join(target_categories)) if target_categories else &#39;&#39;} \
-        ${(&#39;--target-categories-label &#39; + &#39;,&#39;.join(target_categories_label)) if target_categories_label else &#39;&#39;} \
+        ${('--target-categories ' + ','.join(target_categories)) if target_categories else ''} \
+        ${('--target-categories-label ' + ','.join(target_categories_label)) if target_categories_label else ''} \
         --output ${_output}
 </pre></div>
 </div>
@@ -1612,14 +1612,14 @@ parameter: target_categories = []             # target annotation names to meta 
 # --target-categories empty here (or pass the labels, not the original ANNOT_* names).
 
 input: postprocess_rds, subset_traits_file
-output: f&quot;{cwd:a}/{annotation_name}.{subset_name}.meta.rds&quot;
+output: f"{cwd:a}/{annotation_name}.{subset_name}.meta.rds"
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
 
-bash: expand = &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+bash: expand = "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     Rscript ${modular_script_dir}/pecotmr_integration/sldsc_meta_subset.R \
         --postprocess-rds ${postprocess_rds} \
         --subset-traits-file ${subset_traits_file} \
-        ${(&#39;--target-categories &#39; + &#39;,&#39;.join(target_categories)) if target_categories else &#39;&#39;} \
+        ${('--target-categories ' + ','.join(target_categories)) if target_categories else ''} \
         --output ${_output}
 </pre></div>
 </div>

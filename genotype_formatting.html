@@ -693,7 +693,7 @@ which the protocol does not yet ship.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink \
-    --genoFile `ls input/genotype/protocol_example.genotype.chr*.vcf.gz | grep -vE &quot;rawchr|withfmt|add_chr&quot;` \
+    --genoFile `ls input/genotype/protocol_example.genotype.chr*.vcf.gz | grep -vE "rawchr|withfmt|add_chr"` \
     --cwd output/genotype_formatting/plink \
     --name protocol_example \
     -j 4
@@ -727,7 +727,7 @@ which the protocol does not yet ship.</p>
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
     --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged.bed \
     --cwd output/genotype_formatting/genotype_by_chrom \
-    --chrom `cut -f 1 output/genotype_formatting/plink/protocol_example.genotype.merged.bim | uniq | sed &quot;s/chr//g&quot;` \
+    --chrom `cut -f 1 output/genotype_formatting/plink/protocol_example.genotype.merged.bim | uniq | sed "s/chr//g"` \
     -j 4
 </pre></div>
 </div>
@@ -744,7 +744,7 @@ which the protocol does not yet ship.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb plink_to_vcf \
-    --genoFile `ls output/genotype_formatting/plink/protocol_example.genotype.chr*.bed | sed &quot;s/.bed//g&quot;` \
+    --genoFile `ls output/genotype_formatting/plink/protocol_example.genotype.chr*.bed | sed "s/.bed//g"` \
     --cwd output/genotype_formatting/vcf \
     --name protocol_example.genotype
 </pre></div>
@@ -840,7 +840,7 @@ one by hand.</p>
                <span class="p">[</span><span class="n">workflow_name</span> <span class="o">|</span> <span class="o">-</span><span class="n">t</span> <span class="n">targets</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">workflow_options</span><span class="p">]</span>
   <span class="n">workflow_name</span><span class="p">:</span>        <span class="n">Single</span> <span class="ow">or</span> <span class="n">combined</span> <span class="n">workflows</span> <span class="n">defined</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">script</span>
   <span class="n">targets</span><span class="p">:</span>              <span class="n">One</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">targets</span> <span class="n">to</span> <span class="n">generate</span>
-  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">&quot;sos run -h&quot;</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
+  <span class="n">options</span><span class="p">:</span>              <span class="n">Single</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">sos</span> <span class="n">parameters</span> <span class="p">(</span><span class="n">see</span> <span class="s2">"sos run -h"</span> <span class="k">for</span> <span class="n">details</span><span class="p">)</span>
   <span class="n">workflow_options</span><span class="p">:</span>     <span class="n">Double</span><span class="o">-</span><span class="n">hyphen</span> <span class="n">workflow</span><span class="o">-</span><span class="n">specific</span> <span class="n">parameters</span>
 
 <span class="n">Workflows</span><span class="p">:</span>
@@ -926,16 +926,16 @@ one by hand.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[global]
-parameter: modular_script_dir = path(&#39;code/script&#39;)  # override with --modular-script-dir
+parameter: modular_script_dir = path('code/script')  # override with --modular-script-dir
 # Work directory &amp; output directory
-parameter: cwd = path(&quot;output&quot;)
+parameter: cwd = path("output")
 import re
 # For cluster jobs, number commands to run per job
 parameter: job_size = 1
 # Wall clock time expected
-parameter: walltime = &quot;5h&quot;
+parameter: walltime = "5h"
 # Memory expected
-parameter: mem = &quot;16G&quot;
+parameter: mem = "16G"
 # Number of threads
 parameter: numThreads = 20
 # the path to a bed file or VCF file, a vector of bed files or VCF files, or a text file listing the bed files or VCF files to process
@@ -943,31 +943,31 @@ parameter: genoFile = paths
 parameter: name = str
 # use this function to edit memory string for PLINK input
 from sos.utils import expand_size
-cwd = f&quot;{cwd:a}&quot;
+cwd = f"{cwd:a}"
 
 import os
 def get_genotype_file(geno_file_paths):
     def valid_geno_file(x):
         suffixes = path(x).suffixes
-        if suffixes[-1] in [&#39;.bed&#39;, &#39;.pgen&#39;]:
+        if suffixes[-1] in ['.bed', '.pgen']:
             return True
-        if len(suffixes) &gt; 1 and &#39;&#39;.join(suffixes[-2:]) == &quot;.vcf.gz&quot;:
+        if len(suffixes) &gt; 1 and ''.join(suffixes[-2:]) == ".vcf.gz":
             return True
         return False
     #
     def complete_geno_path(x, geno_file):
         if not valid_geno_file(x):
-            raise ValueError(f&quot;Genotype file {x} should be VCF (end with .vcf.gz) or PLINK bed file (end with .bed)&quot;)
+            raise ValueError(f"Genotype file {x} should be VCF (end with .vcf.gz) or PLINK bed file (end with .bed)")
         if not os.path.isfile(x):
             # relative path
-            if not os.path.isfile(f&#39;{geno_file:ad}/&#39; + x):
-                raise ValueError(f&quot;Cannot find genotype file {x}&quot;)
+            if not os.path.isfile(f'{geno_file:ad}/' + x):
+                raise ValueError(f"Cannot find genotype file {x}")
             else:
-                x = f&#39;{geno_file:ad}/&#39; + x
+                x = f'{geno_file:ad}/' + x
         return x
     # 
     def format_chrom(chrom):
-        if chrom.startswith(&#39;chr&#39;):
+        if chrom.startswith('chr'):
             chrom = chrom[3:]
         return chrom
     # Inputs are either VCF or bed, or a vector of them 
@@ -975,93 +975,93 @@ def get_genotype_file(geno_file_paths):
         if all([valid_geno_file(x) for x in geno_file_paths]):
             return paths(geno_file_paths)
         else: 
-            raise ValueError(f&quot;Invalid input {geno_file_paths}&quot;)
+            raise ValueError(f"Invalid input {geno_file_paths}")
     # Input is one genotype file or text list of genotype files
     geno_file = geno_file_paths[0]
     if valid_geno_file(geno_file):
         return paths(geno_file)
     else: 
-        units = [x.strip().split() for x in open(geno_file).readlines() if x.strip() and not x.strip().startswith(&#39;#&#39;)]
+        units = [x.strip().split() for x in open(geno_file).readlines() if x.strip() and not x.strip().startswith('#')]
         if all([len(x) == 1 for x in units]):
             return paths([complete_geno_path(x[0], geno_file) for x in units])
         elif all([len(x) == 2 for x in units]):
             genos = dict([(format_chrom(x[0]), path(complete_geno_path(x[1], geno_file))) for x in units])
         else:
-            raise ValueError(f&quot;{geno_file} should contain one column of file names, or two columns of chrom number and corresponding file name&quot;)
+            raise ValueError(f"{geno_file} should contain one column of file names, or two columns of chrom number and corresponding file name")
         return genos
 
 # Determine if the file is in PLINK1 (BED/BIM/FAM) or PLINK2 (PGEN/PVAR/PSAM) format
 def determine_plink_format(file_path):
-    &quot;&quot;&quot;
+    """
     Determine the PLINK file format based on file extensions and companion files.
     
     Args:
         file_path (str or Path): Path to the input file
     
     Returns:
-        str: &#39;plink1&#39; or &#39;plink2&#39;
-    &quot;&quot;&quot;
-    # Convert to string if it&#39;s a Path object
+        str: 'plink1' or 'plink2'
+    """
+    # Convert to string if it's a Path object
     file_path = str(file_path)
     
     # Check direct file extensions
-    if file_path.endswith(&#39;.bed&#39;):
-        return &#39;plink1&#39;
-    elif file_path.endswith(&#39;.pgen&#39;):
-        return &#39;plink2&#39;
+    if file_path.endswith('.bed'):
+        return 'plink1'
+    elif file_path.endswith('.pgen'):
+        return 'plink2'
     
-    # If the file doesn&#39;t have a standard extension, try to infer format
+    # If the file doesn't have a standard extension, try to infer format
     try:
         # Remove the file extension if present
-        base_path = file_path.rsplit(&#39;.&#39;, 1)[0] if &#39;.&#39; in file_path else file_path
+        base_path = file_path.rsplit('.', 1)[0] if '.' in file_path else file_path
         
         # Check for PLINK1 companion files
         plink1_companion_files = [
-            f&quot;{base_path}.bim&quot;,
-            f&quot;{base_path}.fam&quot;
+            f"{base_path}.bim",
+            f"{base_path}.fam"
         ]
         
         # Check for PLINK2 companion files
         plink2_companion_files = [
-            f&quot;{base_path}.pvar&quot;,
-            f&quot;{base_path}.psam&quot;
+            f"{base_path}.pvar",
+            f"{base_path}.psam"
         ]
         
         # Check PLINK1 format
         if all(os.path.exists(f) for f in plink1_companion_files):
-            return &#39;plink1&#39;
+            return 'plink1'
         
         # Check PLINK2 format
         if all(os.path.exists(f) for f in plink2_companion_files):
-            return &#39;plink2&#39;
+            return 'plink2'
     
     except Exception as e:
-        print(f&quot;Error determining PLINK format: {e}&quot;)
+        print(f"Error determining PLINK format: {e}")
     
-    # Default to PLINK1 if can&#39;t determine
-    return &#39;plink1&#39;
+    # Default to PLINK1 if can't determine
+    return 'plink1'
 
 # Get the appropriate PLINK command prefix
 def get_plink_command_prefix(file_path):
     format_type = determine_plink_format(file_path)
-    if format_type == &#39;plink1&#39;:
-        return &quot;--bfile&quot;
+    if format_type == 'plink1':
+        return "--bfile"
     else:  # plink2
-        return &quot;--pfile&quot;
+        return "--pfile"
 
 # Get output file extension based on format
 def get_output_extension(format_type):
-    if format_type == &#39;plink1&#39;:
-        return &quot;bed&quot;
+    if format_type == 'plink1':
+        return "bed"
     else:  # plink2
-        return &quot;pgen&quot;       
+        return "pgen"       
      
 # Choose the make-bed or make-pgen command based on desired output format
 def get_make_command(output_format):
-    if output_format == &#39;plink1&#39;:
-        return &#39;--make-bed&#39;
+    if output_format == 'plink1':
+        return '--make-bed'
     else:  # plink2
-        return &#39;--make-pgen&#39;
+        return '--make-pgen'
 genoFile = get_genotype_file(genoFile)
 </pre></div>
 </div>
@@ -1076,19 +1076,19 @@ if isinstance(genoFile, dict):
     genoFile = genoFile.values()
 
 input: genoFile, group_by = 1
-output: f&#39;{cwd}/{_input:bn}.vcf.gz&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output[0]:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:nn}.stderr&#39;, stdout = f&#39;{_output:nn}.stdout&#39;
+output: f'{cwd}/{_input:bn}.vcf.gz'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, cores = numThreads, tags = f'{step_name}_{_output[0]:bn}'
+bash: expand= "${ }", stderr = f'{_output:nn}.stderr', stdout = f'{_output:nn}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh plink_to_vcf_1 \
-        --genoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --mem &quot;${mem}&quot; \
+        --genoFile "${_input}" \
+        --output "${_output}" \
+        --mem "${mem}" \
         --numThreads ${numThreads}
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout'
     Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step vcf_gz_summary \
-        --data-files &quot;${_output}&quot;
+        --data-files "${_output}"
 </pre></div>
 </div>
 </div>
@@ -1105,23 +1105,23 @@ parameter: remove_duplicates = False
 parameter: add_chr = True
 parameter: keep_dosage = False
 # The path to the file that contains the list of samples to remove (format FID, IID)
-parameter: remove_samples = path(&#39;.&#39;)
+parameter: remove_samples = path('.')
 # The path to the file that contains the list of samples to keep (format FID, IID)
-parameter: keep_samples = path(&#39;.&#39;)
-fail_if(not (keep_samples.is_file() or keep_samples == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{keep_samples}``&#39;)
-fail_if(not (remove_samples.is_file() or remove_samples == path(&#39;.&#39;)), msg = f&#39;Cannot find ``{remove_samples}``&#39;)
+parameter: keep_samples = path('.')
+fail_if(not (keep_samples.is_file() or keep_samples == path('.')), msg = f'Cannot find ``{keep_samples}``')
+fail_if(not (remove_samples.is_file() or remove_samples == path('.')), msg = f'Cannot find ``{remove_samples}``')
 
 if isinstance(genoFile, dict):
     genoFile = genoFile.values()
 
 input: genoFile, group_by = 1
-output: f&#39;{cwd}/{_input:bnn}.{&quot;pgen&quot; if keep_dosage else &quot;bed&quot;}&#39;
+output: f'{cwd}/{_input:bnn}.{"pgen" if keep_dosage else "bed"}'
 
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh vcf_to_plink \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${_input}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -1137,24 +1137,24 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 parameter: window = 0
 # Region definition
 parameter: region_list = path
-regions = [x.strip().split() for x in open(region_list).readlines() if x.strip() and not x.strip().startswith(&#39;#&#39;)]
-input: genoFile, for_each = &#39;regions&#39;
-output: f&#39;{cwd}/{region_list:bn}_genotype_by_region/{_input:bn}.{_regions[3]}.bed&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+regions = [x.strip().split() for x in open(region_list).readlines() if x.strip() and not x.strip().startswith('#')]
+input: genoFile, for_each = 'regions'
+output: f'{cwd}/{region_list:bn}_genotype_by_region/{_input:bn}.{_regions[3]}.bed'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh genotype_by_region_1 \
-        --genoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot; \
-        --region-chrom &quot;${_regions[0]}&quot; \
-        --region-start &quot;${_regions[1]}&quot; \
-        --region-end &quot;${_regions[2]}&quot; \
+        --genoFile "${_input}" \
+        --output "${_output}" \
+        --region-chrom "${_regions[0]}" \
+        --region-start "${_regions[1]}" \
+        --region-end "${_regions[2]}" \
         --window ${window} \
         --numThreads ${numThreads}
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step file_size_summary \
-        --data-files &quot;${_output}&quot;
+        --data-files "${_output}"
 </pre></div>
 </div>
 </div>
@@ -1170,17 +1170,17 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 # Region definition
 parameter: region_list = path
 parameter: float_type = 16
-regions = [x.strip().split() for x in open(region_list).readlines() if x.strip() and not x.strip().startswith(&#39;#&#39;)]
-input: genoFile, for_each = &#39;regions&#39;
-output: f&#39;{cwd}/{region_list:bn}_LD/{_input:bn}.{_regions[0]}_{_regions[1]}_{_regions[2]}.float{float_type}.rds&#39;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
-    plink --bfile &quot;${_input:n}&quot; --out &quot;${_output:nn}&quot; \
-        --chr &quot;${_regions[0]}&quot; --from-bp &quot;${_regions[1]}&quot; --to-bp &quot;${_regions[2]}&quot; \
+regions = [x.strip().split() for x in open(region_list).readlines() if x.strip() and not x.strip().startswith('#')]
+input: genoFile, for_each = 'regions'
+output: f'{cwd}/{region_list:bn}_LD/{_input:bn}.{_regions[0]}_{_regions[1]}_{_regions[2]}.float{float_type}.rds'
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
+    plink --bfile "${_input:n}" --out "${_output:nn}" \
+        --chr "${_regions[0]}" --from-bp "${_regions[1]}" --to-bp "${_regions[2]}" \
         --r square0 --make-just-bim --threads ${numThreads}
     Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step ld_by_region_plink_1 \
-        --output &quot;${_output}&quot;
+        --output "${_output}"
 </pre></div>
 </div>
 </div>
@@ -1206,28 +1206,28 @@ It needs a semicolon-separated master file with one dataset per line, Z-file IDs
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[genotype_by_chrom_1]
-stop_if(len(paths(genoFile))&gt;1, msg = &quot;This workflow expects one input genotype file.&quot;)
+stop_if(len(paths(genoFile))&gt;1, msg = "This workflow expects one input genotype file.")
 parameter: chrom = list
 chrom = list(set(chrom))
-input: genoFile, for_each = &quot;chrom&quot;
+input: genoFile, for_each = "chrom"
 plink_command = get_plink_command_prefix(_input)
 output_format = determine_plink_format(_input)
 output_ext = get_output_extension(output_format)
 make_command = get_make_command(output_format)
-output: f&#39;{cwd}/{_input:bn}.{_chrom}.{output_ext}&#39;
+output: f'{cwd}/{_input:bn}.{_chrom}.{output_ext}'
 # look up for genotype file
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh genotype_by_chrom \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input}&quot; \
-        --name &quot;${name}&quot; \
-        --output &quot;${_output}&quot; \
-        --plink-command &quot;${plink_command}&quot; \
-        --make-command &quot;${make_command}&quot; \
-        --output-format &quot;${output_format}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${_input}" \
+        --name "${name}" \
+        --output "${_output}" \
+        --plink-command "${plink_command}" \
+        --make-command "${make_command}" \
+        --output-format "${output_format}" \
         --chrom ${_chrom} \
-        --mem &quot;${mem}&quot; \
+        --mem "${mem}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -1236,11 +1236,11 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[genotype_by_chrom_2]
-input: group_by = &quot;all&quot;
+input: group_by = "all"
 output_format = determine_plink_format(_input)
 output_ext = get_output_extension(output_format)
-output: f&#39;{_input[0]:nn}.{step_name[:-2]}_files.txt&#39;
-sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = f&quot;{output_ext}&quot;)
+output: f'{_input[0]:nn}.{step_name[:-2]}_files.txt'
+sos_run("write_data_list", data_files = _input, out = _output, ext = f"{output_ext}")
 </pre></div>
 </div>
 </div>
@@ -1248,9 +1248,9 @@ sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = f
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[plink_to_vcf_2]
-input: group_by = &quot;all&quot;
-output: f&#39;{_input[0]:nnn}.{step_name[:-2]}_files.txt&#39;
-sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = &quot;vcf.gz&quot;)
+input: group_by = "all"
+output: f'{_input[0]:nnn}.{step_name[:-2]}_files.txt'
+sos_run("write_data_list", data_files = _input, out = _output, ext = "vcf.gz")
 </pre></div>
 </div>
 </div>
@@ -1258,9 +1258,9 @@ sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = &
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[genotype_by_region_2]
-input: group_by = &quot;all&quot;
-output: f&#39;{_input[0]:nn}.{step_name[:-2]}_files.txt&#39;
-sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = &quot;bed&quot;)
+input: group_by = "all"
+output: f'{_input[0]:nn}.{step_name[:-2]}_files.txt'
+sos_run("write_data_list", data_files = _input, out = _output, ext = "bed")
 </pre></div>
 </div>
 </div>
@@ -1269,9 +1269,9 @@ sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = &
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[ld_by_region_*_2]
 parameter: region_list = path
-input: group_by = &quot;all&quot;
-output: f&#39;{cwd}/{region_list:bn}_LD/{genoFile:bn}.ld.list&#39;
-sos_run(&quot;write_data_list&quot;, data_files = _input, out = _output, ext = &quot;npy.gz&quot;)
+input: group_by = "all"
+output: f'{cwd}/{region_list:bn}_LD/{genoFile:bn}.ld.list'
+sos_run("write_data_list", data_files = _input, out = _output, ext = "npy.gz")
 </pre></div>
 </div>
 </div>
@@ -1284,13 +1284,13 @@ parameter: ext = str
 parameter: data_files = paths
 input: data_files
 output: out
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step write_data_list \
-        --data-files &quot;${&quot;::&quot;.join([str(x) for x in _input])}&quot; \
-        --ext &quot;${ext}&quot; \
-        --output &quot;${_output}&quot; \
+        --data-files "${"::".join([str(x) for x in _input])}" \
+        --ext "${ext}" \
+        --output "${_output}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -1306,18 +1306,18 @@ skip_if(len(genoFile) == 1)
 # File prefix for the analysis output
 parameter: name = str
 # The path to the file that contains the list of samples to keep (format FID, IID)
-parameter: keep_samples = path(&#39;.&#39;)
+parameter: keep_samples = path('.')
 parameter: extra_plink_opts = []
-parameter: mem = &#39;300G&#39;
-input: genoFile, group_by = &#39;all&#39;
-output: f&quot;{cwd}/{name}{_input[0]:x}&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+parameter: mem = '300G'
+input: genoFile, group_by = 'all'
+output: f"{cwd}/{name}{_input[0]:x}"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh merge_plink \
-        --cwd &quot;${cwd}&quot; \
-        --genoFile &quot;${_input}&quot; \
-        --name &quot;${name}&quot; \
-        --mem &quot;${mem}&quot; \
+        --cwd "${cwd}" \
+        --genoFile "${_input}" \
+        --name "${name}" \
+        --mem "${mem}" \
         --numThreads ${numThreads}
 </pre></div>
 </div>
@@ -1332,18 +1332,18 @@ bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout =
 skip_if(len(genoFile) == 1)
 # File prefix for the analysis output
 parameter: name = str
-input: genoFile, group_by = &#39;all&#39;
-output:  f&quot;{cwd}/{name}.vcf.gz&quot;
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f&#39;{step_name}_{_output:bn}&#39;
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output:n}.stderr&#39;, stdout = f&#39;{_output:n}.stdout&#39;
+input: genoFile, group_by = 'all'
+output:  f"{cwd}/{name}.vcf.gz"
+task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
+bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout'
     bash ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.sh merge_vcf \
-        --genoFile &quot;${_input}&quot; \
-        --output &quot;${_output}&quot;
+        --genoFile "${_input}" \
+        --output "${_output}"
 
-bash: expand= &quot;${ }&quot;, stderr = f&#39;{_output[0]:n}.stderr&#39;, stdout = f&#39;{_output[0]:n}.stdout&#39;
+bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout'
     Rscript ${modular_script_dir}/data_preprocessing/genotype/genotype_formatting.R \
         --step vcf_gz_summary \
-        --data-files &quot;${_output}&quot;
+        --data-files "${_output}"
 </pre></div>
 </div>
 </div>
