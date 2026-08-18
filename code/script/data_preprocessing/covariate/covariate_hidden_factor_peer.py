@@ -11,8 +11,14 @@
 # TSV files that R can read WITHOUT the MOFA2 Bioconductor package / reticulate.
 #
 # This is the whole Python surface of the notebook: mofapy2 stays external,
-# but the R worker calls this as a proper standalone script (not a generated
-# heredoc) and reads only the TSV sidecars afterwards.
+# and the [PEER_2] notebook cell calls this as a proper standalone script (not a
+# generated heredoc); the R PEER_extract step then reads only the TSV sidecars.
+#
+# Reproducibility: mofapy2 seeds numpy from the training option `seed` before the
+# random initialisation of the variational parameters (build_model/init_model.py),
+# and defaults to a clock-derived seed when none is given — so --seed is what makes
+# a fit repeatable. Under a fixed seed the outputs are byte-identical run to run and
+# unaffected by --num-threads.
 # ============================================================
 import argparse
 import os
@@ -47,6 +53,9 @@ def parse_args():
     p.add_argument("--num-threads", default="8", help="BLAS thread count")
     p.add_argument("--tol", type=float, default=0.001, help="Convergence tolerance")
     p.add_argument("--r2-tol", default="False", help="Optional dropR2 setting; False disables it")
+    p.add_argument("--seed", type=int, default=42,
+                   help="RNG seed for MOFA training (mofapy2 seeds numpy before the random "
+                        "initialisation of the variational parameters); makes the fit reproducible")
     return p.parse_args()
 
 
@@ -87,7 +96,7 @@ def main():
         tolerance=args.tol,
         gpu_mode=False,
         verbose=True,
-        seed=42,
+        seed=args.seed,
     )
     r2_tol = str(args.r2_tol).lower()
     if r2_tol not in ("false", "f", "0", "none", "null", ""):

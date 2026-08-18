@@ -6,6 +6,7 @@
 # Steps (selected via --step):
 #   compute_residual — regress covariates out of phenotype (notebook [*_1])
 #   Marchenko_PC     — Marchenko-Pastur PCA on residual file (notebook [Marchenko_PC_2])
+#   PEER_extract     — extract PEER (mofapy2) factors from model sidecars (notebook [PEER_3])
 #
 # Legacy combined steps (kept for backward compatibility):
 #   Marchenko_PC_full — compute_residual + Marchenko_PC in one call
@@ -30,6 +31,9 @@ opt_list <- list(
   # Input for Marchenko_PC sub-step
   make_option("--residFile",             type = "character", default = NULL,
               help = "[Marchenko_PC] Residual phenotype .bed.gz from compute_residual"),
+  # Input for PEER_extract
+  make_option("--modelFile",             type = "character", default = NULL,
+              help = "[PEER_extract] PEER model .hd5 file written by covariate_hidden_factor_peer.py"),
   make_option("--output",                type = "character", default = NULL,
               help = "Optional explicit output path"),
   make_option("--choose-k-method",       type = "character", default = "Marchenko",
@@ -61,6 +65,10 @@ hidden_factor_prefix <- function(pheno_file, cov_file) {
 
 residual_prefix <- function(resid_file) {
   sub("\\.residual\\.bed\\.gz$", "", basename(resid_file))
+}
+
+peer_model_prefix <- function(model_file) {
+  sub("\\.PEER_MODEL\\.[^.]+$", "", basename(model_file))
 }
 
 explicit_or_default_output <- function(opt, default_file) {
@@ -310,11 +318,122 @@ run_marchenko_from_resid <- function(opt) {
               out_file, n_factors, length(common_samples)))
 }
 
+# Diagnostic PDF from the PEER TSV sidecars (replaces the MOFA2 plot_* family).
+# factors_df: '#id' (Factor*) + sample columns; weights_df: 'feature' + Factor*;
+# variance_df: factor, r2 (per-factor rows + a 'Total' row).
+make_peer_diag_pdf <- function(factors_df, weights_df, variance_df, diag_file) {
+  suppressPackageStartupMessages({
+    library(ggplot2)
+    library(tidyr)
+  })
+  factor_names <- factors_df$`#id`
+  sample_cols <- setdiff(colnames(factors_df), "#id")
+  fac_mat <- as.matrix(factors_df[, sample_cols, drop = FALSE])   # K x N
+  rownames(fac_mat) <- factor_names
+
+  pdf(diag_file, width = 7, height = 5)
+
+  # (1) Variance explained per factor
+  vperf <- variance_df[variance_df$factor != "Total", , drop = FALSE]
+  vperf$factor <- factor(vperf$factor, levels = vperf$factor)
+  total_r2 <- variance_df$r2[variance_df$factor == "Total"]
+  subtitle <- if (length(total_r2) == 1) sprintf("Total variance explained: %.2f%%", total_r2) else NULL
+  print(
+    ggplot(vperf, aes(x = factor, y = r2)) +
+      geom_col(fill = "steelblue") +
+      labs(title = "Variance explained per factor", subtitle = subtitle,
+           x = NULL, y = "Variance explained (%)") +
+      theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
+
+  # (2) Factor value distributions across samples
+  long <- pivot_longer(factors_df, all_of(sample_cols), names_to = "sample", values_to = "value")
+  long$`#id` <- factor(long$`#id`, levels = factor_names)
+  print(
+    ggplot(long, aes(x = `#id`, y = value)) +
+      geom_boxplot(outlier.size = 0.6, fill = "grey85") +
+      labs(title = "Factor value distributions", x = NULL, y = "Factor value") +
+      theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
+
+  # (3) Scatter of the first two factors + (4) factor correlation heatmap
+  if (length(factor_names) >= 2L) {
+    scat <- data.frame(sample = sample_cols, F1 = fac_mat[1, ], F2 = fac_mat[2, ])
+    print(
+      ggplot(scat, aes(x = F1, y = F2)) +
+        geom_point(color = "steelblue", alpha = 0.8) +
+        labs(title = "Samples in factor space",
+             x = factor_names[1], y = factor_names[2]) +
+        theme_bw()
+    )
+    cor_mat <- cor(t(fac_mat))
+    cor_long <- as.data.frame(as.table(cor_mat))
+    colnames(cor_long) <- c("Var1", "Var2", "cor")
+    cor_long$Var1 <- factor(cor_long$Var1, levels = factor_names)
+    cor_long$Var2 <- factor(cor_long$Var2, levels = rev(factor_names))
+    print(
+      ggplot(cor_long, aes(Var1, Var2, fill = cor)) +
+        geom_tile() +
+        scale_fill_gradient2(limits = c(-1, 1), low = "blue", mid = "white", high = "red") +
+        labs(title = "Factor correlation", x = NULL, y = NULL) +
+        theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    )
+  }
+
+  # (5) Top features by |weight| for Factor1
+  f1 <- factor_names[1]
+  top <- weights_df[order(-abs(weights_df[[f1]])), c("feature", f1)]
+  top <- head(top, 10)
+  top$feature <- factor(top$feature, levels = rev(top$feature))
+  print(
+    ggplot(top, aes(x = .data[[f1]], y = feature)) +
+      geom_col(fill = "darkorange") +
+      labs(title = sprintf("Top 10 features by weight (%s)", f1),
+           x = "Weight", y = NULL) +
+      theme_bw()
+  )
+
+  invisible(dev.off())
+}
+
+# PEER_extract sub-step: takes modelFile, matching notebook [PEER_3].
+# Reads the TSV sidecars written by PEER_fit (no MOFA2 package / reticulate).
+run_peer_extract <- function(opt) {
+  if (is.null(opt$modelFile)) stop("--modelFile is required for PEER_extract")
+  if (is.null(opt$covFile)) stop("--covFile is required for PEER_extract")
+  cat("=== PEER_extract (from PEER TSV sidecars) ===\n")
+  bname <- peer_model_prefix(opt$modelFile)
+  base_dir <- dirname(opt$modelFile)
+  factors_file  <- file.path(base_dir, paste0(bname, ".PEER.factors.tsv"))
+  weights_file  <- file.path(base_dir, paste0(bname, ".PEER.weights.tsv"))
+  variance_file <- file.path(base_dir, paste0(bname, ".PEER.variance.tsv"))
+  for (f in c(factors_file, weights_file, variance_file)) {
+    if (!file.exists(f)) {
+      stop(sprintf("Expected PEER sidecar not found: %s (run PEER_fit first)", f))
+    }
+  }
+  factors_df  <- read_delim(factors_file,  delim = "\t", show_col_types = FALSE)
+  weights_df  <- read_delim(weights_file,  delim = "\t", show_col_types = FALSE)
+  variance_df <- read_delim(variance_file, delim = "\t", show_col_types = FALSE)
+
+  cov_df <- read_delim(opt$covFile, delim = "\t", show_col_types = FALSE)
+  common_samples <- intersect(colnames(cov_df), colnames(factors_df))
+  out_file <- file.path(opt$cwd, paste0(bname, ".PEER.gz"))
+  (rbind(cov_df[, common_samples, drop = FALSE], factors_df[, common_samples, drop = FALSE]) %>%
+      write_delim(out_file, "\t"))
+
+  diag_file <- file.path(opt$cwd, paste0(bname, ".PEER.diag.pdf"))
+  make_peer_diag_pdf(factors_df, weights_df, variance_df, diag_file)
+  cat(sprintf("Output: %s (%d factors × %d samples)\n",
+              out_file, nrow(factors_df), length(common_samples) - 1L))
+}
+
 # ── Dispatch ─────────────────────────────────────────────────────────────────
 switch(opt$step,
   # Fine-grained sub-steps (matching notebook structure)
   compute_residual = run_compute_residual(opt),
   Marchenko_PC     = run_marchenko_from_resid(opt),
+  PEER_extract     = run_peer_extract(opt),
   # Legacy combined step (backward compatibility)
   Marchenko_PC_full = {
     if (is.null(opt$phenoFile)) stop("--phenoFile is required")
@@ -322,6 +441,6 @@ switch(opt$step,
     run_marchenko(opt)
   },
   stop(sprintf(
-    "Unknown step '%s'. Available: compute_residual, Marchenko_PC, Marchenko_PC_full",
+    "Unknown step '%s'. Available: compute_residual, Marchenko_PC, PEER_extract, Marchenko_PC_full",
     opt$step))
 )
