@@ -165,6 +165,66 @@ do_process_block <- function(argv) {
 }
 
 
+# ---- pure: mirror-pair canonical event IDs ---------------------------------
+# Given variant records (parallel CHROM/POS/ID/REF/ALT vectors), compute the
+# canonical directional event-ID mapping for same-position REF/ALT-swap
+# ("mirror") indel pairs -- the ambiguous cases where INS vs DEL anchoring can
+# flip effect-allele orientation. Returns a data.frame (ID/CHROM/POS/REF/ALT/
+# event_id/event_type/event_pos/event_ref/event_alt) with ONLY mirror-pair rows
+# (0 rows if none). No file I/O; do_merge_chrom owns reading/writing/substitution.
+canonicalize_mirror_event_ids <- function(chrom, pos, id, ref, alt) {
+  empty_map <- data.frame(
+    ID = character(0), CHROM = character(0), POS = integer(0),
+    REF = character(0), ALT = character(0), event_id = character(0),
+    event_type = character(0), event_pos = integer(0),
+    event_ref = character(0), event_alt = character(0),
+    check.names = FALSE, stringsAsFactors = FALSE)
+  if (!length(id)) return(empty_map)
+  canonical_event <- function(chrom, pos, id, ref, alt) {
+    ref <- toupper(ref); alt <- toupper(alt); pos <- as.integer(pos)
+    chrom <- if (grepl("^chr", id)) sub(":.*$", "", id) else paste0("chr", sub("^chr", "", chrom))
+    # Only length-changing alleles receive an internal event ID.
+    if (nchar(ref) == nchar(alt))
+      return(c(event_id = id, event_type = "UNCHANGED", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    if (grepl("[<>*]|\\[|\\]", ref) || grepl("[<>*]|\\[|\\]", alt) ||
+        grepl(",", alt, fixed = TRUE))
+      return(c(event_id = paste(chrom, pos, ref, alt, sep = ":"),
+               event_type = "SYMBOLIC", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    r <- strsplit(ref, "", fixed = TRUE)[[1]]
+    a <- strsplit(alt, "", fixed = TRUE)[[1]]
+    prefix <- 0L
+    while (length(r) && length(a) && r[1] == a[1]) {
+      r <- r[-1]; a <- a[-1]; prefix <- prefix + 1L
+    }
+    while (length(r) && length(a) && tail(r, 1) == tail(a, 1)) {
+      r <- head(r, -1); a <- head(a, -1)
+    }
+    rr <- paste(r, collapse = ""); aa <- paste(a, collapse = "")
+    event_pos <- pos + prefix
+    if (!nzchar(rr) && nzchar(aa)) {
+      event_pos <- event_pos - 1L; type <- "INS"
+      id <- paste(chrom, event_pos, type, aa, sep = ":")
+    } else if (nzchar(rr) && !nzchar(aa)) {
+      type <- "DEL"; id <- paste(chrom, event_pos, type, rr, sep = ":")
+    } else {
+      type <- "SUB"; id <- paste(chrom, event_pos, type, rr, aa, sep = ":")
+    }
+    c(event_id = id, event_type = type, event_pos = event_pos,
+      event_ref = rr, event_alt = aa)
+  }
+  event <- t(mapply(canonical_event, chrom, pos, id, ref, alt, SIMPLIFY = TRUE))
+  event_map <- data.frame(ID = id, CHROM = chrom, POS = pos, REF = ref, ALT = alt,
+                          event, check.names = FALSE, stringsAsFactors = FALSE)
+  event_map <- event_map[event_map$event_type %in% c("INS", "DEL"), , drop = FALSE]
+  # MIRROR-ONLY: keep only indels whose exact ref/alt swap exists at the same
+  # position (the sign-flip cases). Non-mirror indels stay standard.
+  nk <- paste(event_map$CHROM, event_map$POS, event_map$REF, event_map$ALT, sep = ":")
+  sk <- paste(event_map$CHROM, event_map$POS, event_map$ALT, event_map$REF, sep = ":")
+  event_map[sk %in% nk, , drop = FALSE]
+}
+
 # ---- merge_chrom -----------------------------------------------------------
 do_merge_chrom <- function(argv) {
   chrom_dir <- argv$chrom_dir
@@ -204,54 +264,10 @@ do_merge_chrom <- function(argv) {
   if (!file.rename(afreq_tmp, paste0(final_prefix, ".afreq")))
     stop("Could not atomically install reconciled .afreq")
 
-  # Create a directional minimal-event identifier without changing VCF alleles.
-  canonical_event <- function(chrom, pos, id, ref, alt) {
-    ref <- toupper(ref); alt <- toupper(alt); pos <- as.integer(pos)
-    chrom <- if (grepl("^chr", id)) sub(":.*$", "", id) else paste0("chr", sub("^chr", "", chrom))
-    # Only length-changing alleles receive an internal event ID.
-    if (nchar(ref) == nchar(alt))
-      return(c(event_id = id, event_type = "UNCHANGED", event_pos = pos,
-               event_ref = ref, event_alt = alt))
-    if (grepl("[<>*]|\\[|\\]", ref) || grepl("[<>*]|\\[|\\]", alt) ||
-        grepl(",", alt, fixed = TRUE))
-      return(c(event_id = paste(chrom, pos, ref, alt, sep = ":"),
-               event_type = "SYMBOLIC", event_pos = pos,
-               event_ref = ref, event_alt = alt))
-    r <- strsplit(ref, "", fixed = TRUE)[[1]]
-    a <- strsplit(alt, "", fixed = TRUE)[[1]]
-    prefix <- 0L
-    while (length(r) && length(a) && r[1] == a[1]) {
-      r <- r[-1]; a <- a[-1]; prefix <- prefix + 1L
-    }
-    while (length(r) && length(a) && tail(r, 1) == tail(a, 1)) {
-      r <- head(r, -1); a <- head(a, -1)
-    }
-    rr <- paste(r, collapse = ""); aa <- paste(a, collapse = "")
-    event_pos <- pos + prefix
-    if (!nzchar(rr) && nzchar(aa)) {
-      event_pos <- event_pos - 1L; type <- "INS"
-      id <- paste(chrom, event_pos, type, aa, sep = ":")
-    } else if (nzchar(rr) && !nzchar(aa)) {
-      type <- "DEL"; id <- paste(chrom, event_pos, type, rr, sep = ":")
-    } else {
-      type <- "SUB"; id <- paste(chrom, event_pos, type, rr, aa, sep = ":")
-    }
-    c(event_id = id, event_type = type, event_pos = event_pos,
-      event_ref = rr, event_alt = aa)
-  }
+  # Canonical event IDs for mirror-pair indels (pure transform; defined above).
   chrom_col <- if ("#CHROM" %in% names(pvar)) "#CHROM" else "CHROM"
-  event <- t(mapply(canonical_event, pvar[[chrom_col]], pvar$POS, pvar$ID,
-                    pvar$REF, pvar$ALT, SIMPLIFY = TRUE))
-  event_map <- data.frame(ID = pvar$ID, CHROM = pvar[[chrom_col]],
-                          POS = pvar$POS, REF = pvar$REF, ALT = pvar$ALT,
-                          event, check.names = FALSE, stringsAsFactors = FALSE)
-  event_map <- event_map[event_map$event_type %in% c("INS", "DEL"), , drop = FALSE]
-
-  # MIRROR-ONLY: keep only indels whose exact ref/alt swap exists at the same
-  # position (the sign-flip cases). Non-mirror indels stay standard.
-  nk <- paste(event_map$CHROM, event_map$POS, event_map$REF, event_map$ALT, sep = ":")
-  sk <- paste(event_map$CHROM, event_map$POS, event_map$ALT, event_map$REF, sep = ":")
-  event_map <- event_map[sk %in% nk, , drop = FALSE]
+  event_map <- canonicalize_mirror_event_ids(pvar[[chrom_col]], pvar$POS,
+                                             pvar$ID, pvar$REF, pvar$ALT)
 
   # Only when there ARE mirror pairs do we emit a mapping and relabel IDs.
   # Panels with no ambiguous indels (e.g. R4) stay fully standard.
@@ -346,14 +362,18 @@ p <- add_argument(p, "--sample-list", help = "process_block: optional sample sub
 p <- add_argument(p, "--output", help = "generate_w: output W .rds")
 p <- add_argument(p, "--chrom-dir", help = "merge_chrom: chromosome output directory", default = "")
 p <- add_argument(p, "--final-prefix", help = "merge_chrom: final pgen/pvar/afreq prefix", default = "")
-argv <- parse_args(p)
+# Run the CLI only when executed directly (Rscript), not when sourced for
+# unit testing of the pure helpers above.
+if (sys.nframe() == 0L) {
+  argv <- parse_args(p)
 
-if (identical(argv$step, "generate_w")) {
-  do_generate_w(argv)
-} else if (identical(argv$step, "process_block")) {
-  do_process_block(argv)
-} else if (identical(argv$step, "merge_chrom")) {
-  do_merge_chrom(argv)
-} else {
-  stop("--step must be 'generate_w', 'process_block', or 'merge_chrom'")
+  if (identical(argv$step, "generate_w")) {
+    do_generate_w(argv)
+  } else if (identical(argv$step, "process_block")) {
+    do_process_block(argv)
+  } else if (identical(argv$step, "merge_chrom")) {
+    do_merge_chrom(argv)
+  } else {
+    stop("--step must be 'generate_w', 'process_block', or 'merge_chrom'")
+  }
 }

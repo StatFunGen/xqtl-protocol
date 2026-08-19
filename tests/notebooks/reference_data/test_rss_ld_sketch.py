@@ -132,3 +132,16 @@ def test_rss_merge_chrom_mirror_event_ids(run_r, run_sos, repo_root, tmp_path):
     got = (chrom_dir / "protocol_example.chr22.event_id.tsv").read_text()
     exp = (repo_root / FIX / "expected" / "event_id.tsv").read_text()
     assert got == exp
+
+
+
+def test_canonicalize_mirror_event_ids_unit(run_r, repo_root):
+    # Direct unit test of the pure canonicalize_mirror_event_ids() function:
+    # sources the worker and exercises the mirror-pair rule on a tiny in-memory
+    # fixture -- no pipeline run. A mirror pair is relabeled (INS keeps pos,
+    # DEL is pos+1); a non-mirror indel and a SNP are excluded; empty input
+    # yields an empty (0-row) mapping.
+    checker = repo_root / "tests/helpers/canonicalize_mirror_check.R"
+    p = run_r(checker, [repo_root / WORKER])
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "UNIT_OK" in p.stdout
