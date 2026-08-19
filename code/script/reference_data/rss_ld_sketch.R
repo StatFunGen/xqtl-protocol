@@ -61,7 +61,7 @@ do_process_block <- function(argv) {
     if (is.na(argv$vcf_base)) stop("process_block needs --vcf or --vcf-base")
     all_files <- list.files(argv$vcf_base, full.names = TRUE)
     pat <- paste0("^", argv$vcf_prefix, chrom, "[:.]")
-    vcf_files <- sort(all_files[grepl("\\.bgz$", all_files) &
+    vcf_files <- sort(all_files[grepl("\\.(bgz|vcf\\.gz)$", all_files) &
                                 grepl(pat, basename(all_files))])
     if (!length(vcf_files)) stop(sprintf("No VCF files for %s in %s", chrom, argv$vcf_base))
   }
@@ -164,9 +164,206 @@ do_process_block <- function(argv) {
   cat(sprintf("Wrote %d variants -> %s\n", n_passed, basename(paste0(pfx, ".dosage.gz"))))
 }
 
+
+# ---- pure: mirror-pair canonical event IDs ---------------------------------
+# Given variant records (parallel CHROM/POS/ID/REF/ALT vectors), compute the
+# canonical directional event-ID mapping for same-position REF/ALT-swap
+# ("mirror") indel pairs -- the ambiguous cases where INS vs DEL anchoring can
+# flip effect-allele orientation. Returns a data.frame (ID/CHROM/POS/REF/ALT/
+# event_id/event_type/event_pos/event_ref/event_alt) with ONLY mirror-pair rows
+# (0 rows if none). No file I/O; do_merge_chrom owns reading/writing/substitution.
+canonicalize_mirror_event_ids <- function(chrom, pos, id, ref, alt) {
+  empty_map <- data.frame(
+    ID = character(0), CHROM = character(0), POS = integer(0),
+    REF = character(0), ALT = character(0), event_id = character(0),
+    event_type = character(0), event_pos = integer(0),
+    event_ref = character(0), event_alt = character(0),
+    check.names = FALSE, stringsAsFactors = FALSE)
+  if (!length(id)) return(empty_map)
+  canonical_event <- function(chrom, pos, id, ref, alt) {
+    ref <- toupper(ref); alt <- toupper(alt); pos <- as.integer(pos)
+    chrom <- if (grepl("^chr", id)) sub(":.*$", "", id) else paste0("chr", sub("^chr", "", chrom))
+    # Only length-changing alleles receive an internal event ID.
+    if (nchar(ref) == nchar(alt))
+      return(c(event_id = id, event_type = "UNCHANGED", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    if (grepl("[<>*]|\\[|\\]", ref) || grepl("[<>*]|\\[|\\]", alt) ||
+        grepl(",", alt, fixed = TRUE))
+      return(c(event_id = paste(chrom, pos, ref, alt, sep = ":"),
+               event_type = "SYMBOLIC", event_pos = pos,
+               event_ref = ref, event_alt = alt))
+    r <- strsplit(ref, "", fixed = TRUE)[[1]]
+    a <- strsplit(alt, "", fixed = TRUE)[[1]]
+    prefix <- 0L
+    while (length(r) && length(a) && r[1] == a[1]) {
+      r <- r[-1]; a <- a[-1]; prefix <- prefix + 1L
+    }
+    while (length(r) && length(a) && tail(r, 1) == tail(a, 1)) {
+      r <- head(r, -1); a <- head(a, -1)
+    }
+    rr <- paste(r, collapse = ""); aa <- paste(a, collapse = "")
+    event_pos <- pos + prefix
+    if (!nzchar(rr) && nzchar(aa)) {
+      event_pos <- event_pos - 1L; type <- "INS"
+      id <- paste(chrom, event_pos, type, aa, sep = ":")
+    } else if (nzchar(rr) && !nzchar(aa)) {
+      type <- "DEL"; id <- paste(chrom, event_pos, type, rr, sep = ":")
+    } else {
+      type <- "SUB"; id <- paste(chrom, event_pos, type, rr, aa, sep = ":")
+    }
+    c(event_id = id, event_type = type, event_pos = event_pos,
+      event_ref = rr, event_alt = aa)
+  }
+  event <- t(mapply(canonical_event, chrom, pos, id, ref, alt, SIMPLIFY = TRUE))
+  event_map <- data.frame(ID = id, CHROM = chrom, POS = pos, REF = ref, ALT = alt,
+                          event, check.names = FALSE, stringsAsFactors = FALSE)
+  event_map <- event_map[event_map$event_type %in% c("INS", "DEL"), , drop = FALSE]
+  # MIRROR-ONLY: keep only indels whose exact ref/alt swap exists at the same
+  # position (the sign-flip cases). Non-mirror indels stay standard.
+  nk <- paste(event_map$CHROM, event_map$POS, event_map$REF, event_map$ALT, sep = ":")
+  sk <- paste(event_map$CHROM, event_map$POS, event_map$ALT, event_map$REF, sep = ":")
+  event_map[sk %in% nk, , drop = FALSE]
+}
+
+# ---- merge_chrom helpers ---------------------------------------------------
+
+# Shared reader for the tab tables plink2 writes (.pvar/.afreq).
+read_tab <- function(f) read.delim(f, check.names = FALSE, comment.char = "",
+                                   stringsAsFactors = FALSE)
+
+# Gather per-block .afreq rows, validate against the merged .pvar, reorder to
+# match, and atomically install the reconciled .afreq. Returns the pvar table.
+reconcile_afreq <- function(final_prefix, afreq_files) {
+  pvar <- read_tab(paste0(final_prefix, ".pvar"))
+  afreq <- do.call(rbind, lapply(afreq_files, read_tab))
+  if (!"ID" %in% names(pvar) || !"ID" %in% names(afreq))
+    stop("Both .pvar and .afreq must contain an ID column")
+  if (anyNA(pvar$ID) || anyNA(afreq$ID)) stop("Missing variant ID detected")
+  if (anyDuplicated(pvar$ID)) stop("Duplicate IDs in final .pvar")
+  if (anyDuplicated(afreq$ID)) stop("Duplicate IDs across block .afreq files")
+
+  missing_ids <- setdiff(pvar$ID, afreq$ID)
+  extra_ids <- setdiff(afreq$ID, pvar$ID)
+  message("AFREQ_RECONCILE pvar=", nrow(pvar), " block_afreq=", nrow(afreq),
+          " missing=", length(missing_ids), " extra=", length(extra_ids))
+  if (length(missing_ids)) {
+    writeLines(missing_ids, paste0(final_prefix, ".afreq.missing_ids.txt"))
+    stop("Final .afreq is incomplete; see .afreq.missing_ids.txt")
+  }
+  if (length(extra_ids))
+    writeLines(extra_ids, paste0(final_prefix, ".afreq.extra_ids.txt"))
+
+  afreq <- afreq[match(pvar$ID, afreq$ID), , drop = FALSE]
+  stopifnot(identical(as.character(afreq$ID), as.character(pvar$ID)))
+  afreq_tmp <- paste0(final_prefix, ".afreq.tmp")
+  write.table(afreq, afreq_tmp, sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = TRUE)
+  if (!file.rename(afreq_tmp, paste0(final_prefix, ".afreq")))
+    stop("Could not atomically install reconciled .afreq")
+  pvar
+}
+
+# Given a mirror-pair event_map (nrow > 0), write the .event_id.tsv sidecar and
+# substitute the event IDs into the final .pvar and .afreq (atomic, guarded).
+apply_event_id_substitution <- function(final_prefix, event_map) {
+  duplicated_event <- duplicated(event_map$event_id) |
+                      duplicated(event_map$event_id, fromLast = TRUE)
+  if (any(duplicated_event)) {
+    write.table(event_map[duplicated_event, ],
+                paste0(final_prefix, ".event_id.collisions.tsv"),
+                sep = "\t", quote = FALSE, row.names = FALSE)
+    stop("Canonical event-ID collision detected; see .event_id.collisions.tsv")
+  }
+  event_tmp <- paste0(final_prefix, ".event_id.tsv.tmp")
+  write.table(event_map, event_tmp, sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = TRUE)
+  if (!file.rename(event_tmp, paste0(final_prefix, ".event_id.tsv")))
+    stop("Could not atomically install event-ID mapping")
+
+  id2event <- setNames(event_map$event_id, event_map$ID)
+  pv <- read_tab(paste0(final_prefix, ".pvar"))
+  hit <- pv$ID %in% names(id2event)
+  pv$ID[hit] <- id2event[pv$ID[hit]]
+  if (anyDuplicated(pv$ID)) stop("Event-ID substitution produced duplicate IDs in .pvar")
+  pv_tmp <- paste0(final_prefix, ".pvar.tmp")
+  write.table(pv, pv_tmp, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+  if (!file.rename(pv_tmp, paste0(final_prefix, ".pvar")))
+    stop("Could not atomically install event-ID .pvar")
+
+  af <- read_tab(paste0(final_prefix, ".afreq"))
+  hitf <- af$ID %in% names(id2event)
+  af$ID[hitf] <- id2event[af$ID[hitf]]
+  if (anyDuplicated(af$ID)) stop("Event-ID substitution produced duplicate IDs in .afreq")
+  af_tmp <- paste0(final_prefix, ".afreq.tmp")
+  write.table(af, af_tmp, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+  if (!file.rename(af_tmp, paste0(final_prefix, ".afreq")))
+    stop("Could not atomically install event-ID .afreq")
+}
+
+# Tally the per-block .meta filter counts and print the per-chromosome summary.
+summarize_block_filters <- function(chrom_dir) {
+  meta_files <- list.files(chrom_dir, pattern = "[.]meta$", recursive = TRUE,
+                           full.names = TRUE)
+  if (!length(meta_files)) return(invisible(NULL))
+  fields <- c("n_total", "n_passed", "n_multiallelic", "n_monomorphic",
+              "n_all_na", "n_high_msng", "n_low_maf", "n_low_mac")
+  stats <- do.call(rbind, lapply(meta_files, function(f) {
+    lines <- grep("^n_", readLines(f), value = TRUE)
+    kv <- strsplit(lines, "=", fixed = TRUE)
+    vals <- setNames(as.integer(vapply(kv, function(x) x[[2]], character(1))),
+                     vapply(kv, function(x) x[[1]], character(1)))
+    as.data.frame(as.list(vals[fields]))
+  }))
+  totals <- colSums(stats, na.rm = TRUE)
+  summary <- data.frame(t(totals))
+  summary$pct_dropped <- round(100 * (1 - summary$n_passed / summary$n_total), 1)
+  cat("\n=== Filter Summary for ", basename(chrom_dir), " ===\n", sep = "")
+  print(data.frame(value = unlist(summary), row.names = names(summary)))
+}
+
+# Remove the plink2 merge intermediates and per-block working directories.
+cleanup_merge_intermediates <- function(final_prefix, block_dirs) {
+  unlink(c(paste0(final_prefix, "_pmerge_list.txt"),
+           paste0(final_prefix, "-merge.pgen"),
+           paste0(final_prefix, "-merge.pvar"),
+           paste0(final_prefix, "-merge.psam")))
+  unlink(block_dirs, recursive = TRUE)
+}
+
+# ---- merge_chrom -----------------------------------------------------------
+do_merge_chrom <- function(argv) {
+  chrom_dir <- argv$chrom_dir
+  final_prefix <- argv$final_prefix
+  block_dirs <- list.dirs(chrom_dir, recursive = FALSE, full.names = TRUE)
+  afreq_files <- unlist(lapply(block_dirs, function(d) {
+    list.files(d, pattern = "[.]afreq$", full.names = TRUE)
+  }), use.names = FALSE)
+  if (!length(afreq_files)) stop("No block .afreq files found under ", chrom_dir)
+
+  # Reconcile per-block .afreq against the merged .pvar (installs the .afreq).
+  pvar <- reconcile_afreq(final_prefix, afreq_files)
+
+  # Canonical event IDs for mirror-pair indels (pure transform; defined above).
+  chrom_col <- if ("#CHROM" %in% names(pvar)) "#CHROM" else "CHROM"
+  event_map <- canonicalize_mirror_event_ids(pvar[[chrom_col]], pvar$POS,
+                                             pvar$ID, pvar$REF, pvar$ALT)
+
+  # Only when there ARE mirror pairs do we emit a mapping and relabel IDs.
+  # Panels with no ambiguous indels (e.g. R4) stay fully standard.
+  if (nrow(event_map) > 0) {
+    apply_event_id_substitution(final_prefix, event_map)
+    message("EVENT_ID_SUBSTITUTION mirror_variants=", nrow(event_map))
+  } else {
+    message("EVENT_ID_SUBSTITUTION mirror_variants=0 (no ambiguous indels; panel left standard)")
+  }
+
+  summarize_block_filters(chrom_dir)
+  cleanup_merge_intermediates(final_prefix, block_dirs)
+}
+
 # ---- CLI -------------------------------------------------------------------
-p <- arg_parser("RSS LD random-projection sketch (generate_w / process_block)")
-p <- add_argument(p, "--step", help = "generate_w | process_block")
+p <- arg_parser("RSS LD random-projection sketch (generate_w / process_block / merge_chrom)")
+p <- add_argument(p, "--step", help = "generate_w | process_block | merge_chrom")
 p <- add_argument(p, "--n-samples", help = "generate_w: total sample size n")
 p <- add_argument(p, "--B", help = "sketch dimension B", default = "10000")
 p <- add_argument(p, "--seed", help = "generate_w: RNG seed", default = "123")
@@ -184,12 +381,20 @@ p <- add_argument(p, "--mac-min", help = "process_block: min MAC", default = "5"
 p <- add_argument(p, "--msng-min", help = "process_block: max missingness", default = "0.05")
 p <- add_argument(p, "--sample-list", help = "process_block: optional sample subset file", default = "")
 p <- add_argument(p, "--output", help = "generate_w: output W .rds")
-argv <- parse_args(p)
+p <- add_argument(p, "--chrom-dir", help = "merge_chrom: chromosome output directory", default = "")
+p <- add_argument(p, "--final-prefix", help = "merge_chrom: final pgen/pvar/afreq prefix", default = "")
+# Run the CLI only when executed directly (Rscript), not when sourced for
+# unit testing of the pure helpers above.
+if (sys.nframe() == 0L) {
+  argv <- parse_args(p)
 
-if (identical(argv$step, "generate_w")) {
-  do_generate_w(argv)
-} else if (identical(argv$step, "process_block")) {
-  do_process_block(argv)
-} else {
-  stop("--step must be 'generate_w' or 'process_block'")
+  if (identical(argv$step, "generate_w")) {
+    do_generate_w(argv)
+  } else if (identical(argv$step, "process_block")) {
+    do_process_block(argv)
+  } else if (identical(argv$step, "merge_chrom")) {
+    do_merge_chrom(argv)
+  } else {
+    stop("--step must be 'generate_w', 'process_block', or 'merge_chrom'")
+  }
 }
