@@ -859,6 +859,9 @@ each identified condition.</p>
   <span class="n">get_overlapped_analysis_regions</span><span class="p">:</span> <span class="n">get</span> <span class="n">overlapped</span> <span class="n">regions</span> <span class="kn">from</span><span class="w"> </span><span class="nn">flatten</span> <span class="n">table</span><span class="p">,</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">regions</span> <span class="k">with</span> <span class="n">overlapped</span> <span class="n">variants</span> <span class="ow">and</span> <span class="n">select</span> <span class="n">those</span>
                         <span class="n">regions</span> <span class="k">for</span> <span class="n">coloc</span> <span class="n">analysis</span>
   <span class="n">xqtl_gwas_enrichment</span><span class="p">:</span>
+    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
+      <span class="o">--</span><span class="n">seed</span> <span class="o">-</span><span class="mi">1</span> <span class="p">(</span><span class="k">as</span> <span class="nb">int</span><span class="p">)</span>
+                        <span class="n">Reproducibility</span><span class="p">:</span> <span class="n">integer</span> <span class="n">RNG</span> <span class="n">seed</span> <span class="k">for</span> <span class="n">the</span> <span class="n">multiple</span><span class="o">-</span><span class="n">imputation</span> <span class="n">sampler</span><span class="p">;</span> <span class="o">-</span><span class="mi">1</span> <span class="o">=</span> <span class="n">unset</span> <span class="p">(</span><span class="n">nondeterministic</span><span class="p">)</span>
   <span class="n">susie_coloc</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
       <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">skip</span><span class="o">-</span><span class="n">enrich</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
@@ -987,6 +990,11 @@ bash: expand = "${ }", container = container
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[xqtl_gwas_enrichment]
 depends: sos_variable("enrichment_rows")
+# Reproducibility: integer RNG seed for the enrichment multiple-imputation
+# sampler, which draws in C++ and so is unreachable from R's set.seed; -1 = unset
+# (nondeterministic).
+parameter: seed = -1
+seed_arg = f"--seed {seed}" if seed &gt;= 0 else ""
 jobs = enrichment_rows
 stop_if(len(jobs) == 0, f'No files left for analysis')
 _qtl_groups = [j['qtl_files'].split(',') for j in jobs]
@@ -1002,6 +1010,7 @@ bash: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.st
         --qtl-fine-mapping ${" ".join([str(x) for x in _input])} \
         --gwas-fine-mapping ${_jobs["gwas_files"].replace(",", " ")} \
         --ncore ${numThreads} \
+        ${seed_arg} \
         --output ${_output}
 </pre></div>
 </div>

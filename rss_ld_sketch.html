@@ -543,7 +543,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal Working Example</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-generate-the-projection-matrix-w-run-once-per-cohort-n-samples-must-equal-the-vcf-sample-count">Step 1. Generate the projection matrix W (run once per cohort; <code class="docutils literal notranslate"><span class="pre">--n-samples</span></code> must equal the VCF sample count).</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-process-all-ld-blocks-for-the-chromosome-read-the-vcf-filter-variants-and-write-per-block-dosage-sketches-u-w-g">Step 2. Process all LD blocks for the chromosome — read the VCF, filter variants, and write per-block dosage sketches U = WᵀG.</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-merge-the-per-block-dosage-sketches-into-one-per-chromosome-plink2-pgen">Step 3. Merge the per-block dosage sketches into one per-chromosome PLINK2 pgen.</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-merge-the-per-block-dosage-sketches-reconcile-allele-frequencies-and-relabel-mirror-pair-indels-with-canonical-event-ids">Step 3. Merge the per-block dosage sketches, reconcile allele frequencies, and relabel mirror-pair indels with canonical event IDs.</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
@@ -576,7 +576,7 @@
 <li><p>U : (B × p) — stochastic genotype sample = WᵀG, stored in pgen</p></li>
 <li><p><span class="math notranslate nohighlight">\(\hat{R}\)</span> : (p × p) — approximate LD matrix, computed on-the-fly by SuSiE-RSS from U</p></li>
 </ul>
-<p>The workflow has three steps run in order: <code class="docutils literal notranslate"><span class="pre">generate_W</span></code> (build the projection matrix), <code class="docutils literal notranslate"><span class="pre">process_block</span></code> (read VCF per LD block and write per-block dosage sketches), and <code class="docutils literal notranslate"><span class="pre">merge_chrom</span></code> (merge per-block dosages into one per-chromosome pgen).</p>
+<p>The workflow has three steps run in order: <code class="docutils literal notranslate"><span class="pre">generate_W</span></code> (build the projection matrix), <code class="docutils literal notranslate"><span class="pre">process_block</span></code> (read VCF per LD block and write per-block dosage sketches), and <code class="docutils literal notranslate"><span class="pre">merge_chrom</span></code> (merge per-block dosages into one per-chromosome pgen). During <code class="docutils literal notranslate"><span class="pre">merge_chrom</span></code>, allele-frequency rows are reconciled to the final sorted <code class="docutils literal notranslate"><span class="pre">.pvar</span></code>; missing or duplicate IDs stop the workflow, while extra block rows are reported and excluded. During <code class="docutils literal notranslate"><span class="pre">merge_chrom</span></code>, the step also detects indels that form an exact REF/ALT-swap (“mirror”) pair at the same position — the ambiguous cases where insertion vs. deletion anchoring can flip effect-allele orientation during association harmonization. Only these mirror-pair indels are assigned a canonical directional event ID (e.g. <code class="docutils literal notranslate"><span class="pre">chr22:pos:INS:T</span></code> and <code class="docutils literal notranslate"><span class="pre">chr22:pos:DEL:T</span></code>); the event ID replaces the variant ID in <code class="docutils literal notranslate"><span class="pre">.pvar</span></code> and <code class="docutils literal notranslate"><span class="pre">.afreq</span></code>, and the original↔event mapping is recorded in a <code class="docutils literal notranslate"><span class="pre">.event_id.tsv</span></code>. All other variants — SNPs, equal-length substitutions, and non-mirror indels — keep their standard IDs. If a panel contains no mirror pairs, no <code class="docutils literal notranslate"><span class="pre">.event_id.tsv</span></code> is written and <code class="docutils literal notranslate"><span class="pre">.pvar</span></code>/<code class="docutils literal notranslate"><span class="pre">.afreq</span></code> are left fully standard. The <code class="docutils literal notranslate"><span class="pre">.pgen</span></code> genotype data is never modified.</p>
 <p>Summary-statistic fine-mapping needs an LD matrix, and storing the full genotype matrix for
 a whole-genome panel is expensive. The sketch keeps a random projection of the genotypes
 instead: small enough to distribute, but sufficient to reconstruct the LD structure that
@@ -597,7 +597,7 @@ LD reference. The output is reference data, not a per-study result.</p>
 </div>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--vcf-base</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/rss_ld_sketch</span></code></strong> together with <code class="docutils literal notranslate"><span class="pre">--vcf-prefix</span> <span class="pre">protocol_example.genotype.</span></code>
-(directory of bgzipped, tabix-indexed VCFs named <code class="docutils literal notranslate"><span class="pre">{vcf_prefix}{chr}.*.bgz</span></code>; the toy cohort is <code class="docutils literal notranslate"><span class="pre">protocol_example.genotype.chr22.bgz</span></code>, 60 individuals)</p></li>
+(directory of bgzipped, tabix-indexed VCFs named <code class="docutils literal notranslate"><span class="pre">{vcf_prefix}{chr}.*.bgz</span></code> or <code class="docutils literal notranslate"><span class="pre">{vcf_prefix}{chr}.*.vcf.gz</span></code>; the toy cohort is <code class="docutils literal notranslate"><span class="pre">protocol_example.genotype.chr22.vcf.gz</span></code>, 60 individuals)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE_001	...</span>
 </pre></div>
@@ -608,7 +608,7 @@ LD reference. The output is reference data, not a per-study result.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">--cwd</span> <span class="pre">output/rss_ld_sketch</span></code> (working directory for logs and job files. Defaults to <code class="docutils literal notranslate"><span class="pre">output</span></code>.)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--output-dir</span> <span class="pre">output/rss_ld_sketch</span></code> (directory the sketch products are written to)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--seed</span> <span class="pre">999</span></code> (random seed for the projection matrix, so a sketch can be reproduced)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--W-matrix</span></code> <strong><code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/W_B50.npy</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--W-matrix</span></code> <strong><code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/W_B50.rds</span></code></strong>
 (the shared projection matrix, passed to <code class="docutils literal notranslate"><span class="pre">process_block</span></code> after <code class="docutils literal notranslate"><span class="pre">generate_W</span></code> has written it)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--chrom</span> <span class="pre">chr22</span></code> (chromosome to process)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--cohort-id</span> <span class="pre">protocol_example</span></code> (tag used in the per-block and merged output filenames)</p></li>
@@ -617,12 +617,10 @@ LD reference. The output is reference data, not a per-study result.</p>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/W_B50.npy</span></code></strong>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/W_B50.rds</span></code></strong>
 (shared projection matrix written once by <code class="docutils literal notranslate"><span class="pre">generate_W</span></code>, shape n_samples x B; <code class="docutils literal notranslate"><span class="pre">process_block</span></code> reads it back for every LD block so all blocks share one projection)</p></li>
 </ul>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">float32</span> <span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
-<span class="p">[[</span><span class="o">-</span><span class="mf">0.1402</span>  <span class="mf">0.1288</span>  <span class="mf">0.0365</span> <span class="o">-</span><span class="mf">0.1945</span> <span class="o">-</span><span class="mf">0.0747</span><span class="p">]</span>
- <span class="p">[</span><span class="o">-</span><span class="mf">0.1671</span> <span class="o">-</span><span class="mf">0.1341</span>  <span class="mf">0.2251</span> <span class="o">-</span><span class="mf">0.1030</span>  <span class="mf">0.0038</span><span class="p">]]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">R</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">double</span> <span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>   <span class="c1"># saveRDS/readRDS; one row per sample, one column per sketch dim</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -653,8 +651,16 @@ LD reference. The output is reference data, not a per-study result.</p>
 <span class="n">chr22</span>	<span class="n">chr22</span><span class="p">:</span><span class="mi">16102937</span><span class="p">:</span><span class="n">C</span><span class="p">:</span><span class="n">T</span>	<span class="n">C</span>	<span class="n">T</span>	<span class="mf">0.308333</span>	<span class="mi">120</span>	<span class="o">-</span><span class="mf">1.849294</span>	<span class="mf">2.069429</span>
 </pre></div>
 </div>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/chr22/protocol_example.chr22.event_id.tsv</span></code></strong> (mirror-pair indel mapping, written by <code class="docutils literal notranslate"><span class="pre">merge_chrom</span></code> only when such pairs exist; records the original ID alongside the canonical event ID)</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ID</span>  <span class="n">CHROM</span>  <span class="n">POS</span>  <span class="n">REF</span>  <span class="n">ALT</span>  <span class="n">event_id</span>  <span class="n">event_type</span>  <span class="n">event_pos</span>  <span class="n">event_ref</span>  <span class="n">event_alt</span>
+<span class="n">chr22</span><span class="p">:</span><span class="mi">16500000</span><span class="p">:</span><span class="n">A</span><span class="p">:</span><span class="n">AT</span>  <span class="mi">22</span>  <span class="mi">16500000</span>  <span class="n">A</span>  <span class="n">AT</span>  <span class="n">chr22</span><span class="p">:</span><span class="mi">16500000</span><span class="p">:</span><span class="n">INS</span><span class="p">:</span><span class="n">T</span>  <span class="n">INS</span>  <span class="mi">16500000</span>    <span class="n">T</span>
+<span class="n">chr22</span><span class="p">:</span><span class="mi">16500000</span><span class="p">:</span><span class="n">AT</span><span class="p">:</span><span class="n">A</span>  <span class="mi">22</span>  <span class="mi">16500000</span>  <span class="n">AT</span>  <span class="n">A</span>  <span class="n">chr22</span><span class="p">:</span><span class="mi">16500001</span><span class="p">:</span><span class="n">DEL</span><span class="p">:</span><span class="n">T</span>  <span class="n">DEL</span>  <span class="mi">16500001</span>  <span class="n">T</span>
+</pre></div>
+</div>
+<p>Only indels that form an exact REF/ALT-swap pair at the same position are included — the cases where insertion vs. deletion anchoring is ambiguous. The example above shows one such pair: the same single-base event at chr22:16500000 represented as both an insertion (<code class="docutils literal notranslate"><span class="pre">A</span></code>→<code class="docutils literal notranslate"><span class="pre">AT</span></code>) and a deletion (<code class="docutils literal notranslate"><span class="pre">AT</span></code>→<code class="docutils literal notranslate"><span class="pre">A</span></code>), each assigned a canonical event ID. SNPs, equal-length substitutions, symbolic alleles, and non-mirror indels are omitted and retain their standard IDs.</p>
 <p>These feed SuSiE-RSS fine-mapping: load with a metadata TSV (one row per chromosome, columns <code class="docutils literal notranslate"><span class="pre">#chrom</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">path</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code> = pgen prefix). Use the X (genotype) interface for <code class="docutils literal notranslate"><span class="pre">susie_rss(z,</span> <span class="pre">X=X)</span></code> or the R (correlation) interface for <code class="docutils literal notranslate"><span class="pre">susie_rss(z,</span> <span class="pre">R=R)</span></code>.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">generate_W</span></code> step declares its output as <code class="docutils literal notranslate"><span class="pre">W_B&lt;B&gt;.rds</span></code>, but the example on disk is <code class="docutils literal notranslate"><span class="pre">W_B50.npy</span></code>. The code is authoritative; the example data predates the current naming.</p>
 </section>
 <section id="minimal-working-example">
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
@@ -679,7 +685,7 @@ LD reference. The output is reference data, not a per-study result.</p>
   import pkg_resources
 INFO: Running <span class=" -Color -Color-Green">generate_W</span>: 
 INFO: <span class=" -Color -Color-Green">generate_W</span> is <span class=" -Color -Color-Green">completed</span>.
-INFO: <span class=" -Color -Color-Green">generate_W</span> output:   <span class=" -Color -Color-Green">output/rss_ld_sketch/W_B50.npy</span>
+INFO: <span class=" -Color -Color-Green">generate_W</span> output:   <span class=" -Color -Color-Green">output/rss_ld_sketch/W_B50.rds</span>
 INFO: Workflow generate_W (ID=w68f63c60d8da4b5e) is executed successfully with 1 completed step.
 </pre></div>
 </div>
@@ -719,8 +725,8 @@ INFO: Workflow process_block (ID=w8c1e759d62203ef6) is executed successfully wit
 </div>
 </div>
 </section>
-<section id="step-3-merge-the-per-block-dosage-sketches-into-one-per-chromosome-plink2-pgen">
-<h3>Step 3. Merge the per-block dosage sketches into one per-chromosome PLINK2 pgen.<a class="headerlink" href="#step-3-merge-the-per-block-dosage-sketches-into-one-per-chromosome-plink2-pgen" title="Link to this heading">#</a></h3>
+<section id="step-3-merge-the-per-block-dosage-sketches-reconcile-allele-frequencies-and-relabel-mirror-pair-indels-with-canonical-event-ids">
+<h3>Step 3. Merge the per-block dosage sketches, reconcile allele frequencies, and relabel mirror-pair indels with canonical event IDs.<a class="headerlink" href="#step-3-merge-the-per-block-dosage-sketches-reconcile-allele-frequencies-and-relabel-mirror-pair-indels-with-canonical-event-ids" title="Link to this heading">#</a></h3>
 <p><strong>Timing</strong>: TBD (on toy dataset)</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -1033,51 +1039,8 @@ bash: expand = "$[ ]"
         --sort-vars \
         --out  "${final_prefix}"
 
-    # Remove PLINK merge intermediates immediately after merge
-    rm -f "${final_prefix}-merge.pgen" "${final_prefix}-merge.pvar" "${final_prefix}-merge.psam"
-
-    # Step 3: Concatenate .afreq
-    first=1
-    for f in "${chrom_dir}"/*/*.afreq; do
-        if [ "${first}" -eq 1 ]; then
-            cat "${f}" &gt; "${final_prefix}.afreq"
-            first=0
-        else
-            tail -n +2 "${f}" &gt;&gt; "${final_prefix}.afreq"
-        fi
-    done
-
-R: expand = "$[ ]"
-
-    meta_files &lt;- list.files("$[output_dir]/$[_chroms]",
-                             pattern = "[.]meta$", recursive = TRUE,
-                             full.names = TRUE)
-    if (length(meta_files) &gt; 0) {
-      fields &lt;- c("n_total", "n_passed", "n_multiallelic", "n_monomorphic",
-                  "n_all_na", "n_high_msng", "n_low_maf", "n_low_mac")
-      stats &lt;- do.call(rbind, lapply(meta_files, function(f) {
-        lines &lt;- grep("^n_", readLines(f), value = TRUE)
-        kv &lt;- strsplit(lines, "=")
-        vals &lt;- setNames(as.integer(sapply(kv, `[`, 2)), sapply(kv, `[`, 1))
-        as.data.frame(as.list(vals[fields]))
-      }))
-      totals &lt;- colSums(stats, na.rm = TRUE)
-      summary &lt;- data.frame(t(totals))
-      summary$pct_dropped &lt;- round(100 * (1 - summary$n_passed / summary$n_total), 1)
-      cat("\n=== Filter Summary for $[_chroms] ===\n")
-      print(data.frame(value = unlist(summary), row.names = names(summary)))
-    }
-
-bash: expand = "$[ ]"
-
-    # Step 5: Cleanup block intermediates
-    chrom_dir="$[output_dir]/$[_chroms]"
-    final_prefix="${chrom_dir}/$[cohort_id].$[_chroms]"
-
-    rm -f "${final_prefix}_pmerge_list.txt"
-    for block_dir in "${chrom_dir}"/*/; do
-        rm -rf "${block_dir}"
-    done
+    # Step 3: reconcile .afreq, relabel mirror-pair indels with event IDs, summarize filters, and cleanup.
+    Rscript $[modular_script_dir]/reference_data/rss_ld_sketch.R       --step merge_chrom       --chrom-dir "$[output_dir]/$[_chroms]"       --final-prefix "$[output_dir]/$[_chroms]/$[cohort_id].$[_chroms]"
 </pre></div>
 </div>
 </div>
@@ -1094,7 +1057,7 @@ bash: expand = "$[ ]"
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">VCF</span> <span class="pre">files</span> <span class="pre">for</span> <span class="pre">chrXX</span> <span class="pre">in</span> <span class="pre">{vcf_base}</span></code></p></td>
 <td><p>VCF naming or extension mismatch</p></td>
-<td><p>Files must end in <code class="docutils literal notranslate"><span class="pre">.bgz</span></code> and be named <code class="docutils literal notranslate"><span class="pre">{vcf_prefix}{chr}.*.bgz</span></code>; check <code class="docutils literal notranslate"><span class="pre">--vcf-base</span></code> and <code class="docutils literal notranslate"><span class="pre">--vcf-prefix</span></code>.</p></td>
+<td><p>Files must end in <code class="docutils literal notranslate"><span class="pre">.bgz</span></code> or <code class="docutils literal notranslate"><span class="pre">.vcf.gz</span></code> and be named <code class="docutils literal notranslate"><span class="pre">{vcf_prefix}{chr}.*</span></code>; check <code class="docutils literal notranslate"><span class="pre">--vcf-base</span></code> and <code class="docutils literal notranslate"><span class="pre">--vcf-prefix</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">W</span> <span class="pre">shape</span> <span class="pre">mismatch</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">--n-samples</span></code> or <code class="docutils literal notranslate"><span class="pre">--B</span></code> differs from the W used</p></td>
@@ -1191,7 +1154,7 @@ bash: expand = "$[ ]"
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-working-example">Minimal Working Example</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-generate-the-projection-matrix-w-run-once-per-cohort-n-samples-must-equal-the-vcf-sample-count">Step 1. Generate the projection matrix W (run once per cohort; <code class="docutils literal notranslate"><span class="pre">--n-samples</span></code> must equal the VCF sample count).</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-process-all-ld-blocks-for-the-chromosome-read-the-vcf-filter-variants-and-write-per-block-dosage-sketches-u-w-g">Step 2. Process all LD blocks for the chromosome — read the VCF, filter variants, and write per-block dosage sketches U = WᵀG.</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-merge-the-per-block-dosage-sketches-into-one-per-chromosome-plink2-pgen">Step 3. Merge the per-block dosage sketches into one per-chromosome PLINK2 pgen.</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-merge-the-per-block-dosage-sketches-reconcile-allele-frequencies-and-relabel-mirror-pair-indels-with-canonical-event-ids">Step 3. Merge the per-block dosage sketches, reconcile allele frequencies, and relabel mirror-pair indels with canonical event IDs.</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-interface">Command Interface</a></li>
