@@ -61,7 +61,7 @@ do_process_block <- function(argv) {
     if (is.na(argv$vcf_base)) stop("process_block needs --vcf or --vcf-base")
     all_files <- list.files(argv$vcf_base, full.names = TRUE)
     pat <- paste0("^", argv$vcf_prefix, chrom, "[:.]")
-    vcf_files <- sort(all_files[grepl("\\.bgz$", all_files) &
+    vcf_files <- sort(all_files[grepl("\\.(bgz|vcf\\.gz)$", all_files) &
                                 grepl(pat, basename(all_files))])
     if (!length(vcf_files)) stop(sprintf("No VCF files for %s in %s", chrom, argv$vcf_base))
   }

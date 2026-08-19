@@ -3,7 +3,7 @@
 Worker: code/script/reference_data/rss_ld_sketch.R (generate_w / process_block).
 
 Fixtures (tests/fixtures/rss_ld_sketch), from the MWE:
-  protocol_example.genotype.chr22.bgz(.tbi)  60-sample chr22 VCF
+  protocol_example.genotype.chr22.vcf.gz(.tbi)  60-sample chr22 VCF
   protocol_example.ld_blocks.bed             3 blocks (16-20M / 30-34M / 44-48M)
   expected/afreq_deterministic.tsv           MWE reference .afreq, columns 1-6
 
@@ -26,7 +26,7 @@ B = 50
 def _run_blocks(run_r, repo_root, tmp_path):
     """generate_w then process_block over the 3 fixture blocks; return tmp_path."""
     worker = repo_root / WORKER
-    vcf = repo_root / FIX / "protocol_example.genotype.chr22.bgz"
+    vcf = repo_root / FIX / "protocol_example.genotype.chr22.vcf.gz"
     W = tmp_path / "W_B50.rds"
     p = run_r(worker, ["--step", "generate_w", "--n-samples", "60", "--B", B,
                        "--seed", "123", "--output", W])
@@ -34,14 +34,14 @@ def _run_blocks(run_r, repo_root, tmp_path):
     for bs, be in BLOCKS:
         p = run_r(worker, ["--step", "process_block", "--vcf", vcf, "--chrom", "chr22",
                            "--block-start", bs, "--block-end", be, "--w-matrix", W,
-                           "--cohort-id", "protocol_example.", "--output-dir", tmp_path, "--B", B])
+                           "--cohort-id", "protocol_example", "--output-dir", tmp_path, "--B", B])
         assert p.returncode == 0, p.stdout + p.stderr
     return tmp_path
 
 
 def _block_file(tmp_path, bs, be, ext):
     tag = f"chr22_{bs}_{be}"
-    return tmp_path / "chr22" / tag / f"protocol_example..{tag}.{ext}"
+    return tmp_path / "chr22" / tag / f"protocol_example.{tag}.{ext}"
 
 
 def test_rss_process_block_afreq_deterministic(run_r, repo_root, tmp_path):
@@ -83,7 +83,7 @@ def test_rss_process_block_via_sos(run_r, run_sos, repo_root, tmp_path):
     p = run_sos(repo_root / NB, "process_block", {
         "ld_block_file": repo_root / FIX / "protocol_example.ld_blocks.bed",
         "chrom": 22, "vcf_base": repo_root / FIX, "vcf_prefix": "protocol_example.genotype.",
-        "cohort_id": "protocol_example.", "output_dir": tmp_path, "W_matrix": W, "B": B,
+        "cohort_id": "protocol_example", "output_dir": tmp_path, "W_matrix": W, "B": B,
         "modular_script_dir": repo_root / "code/script"})
     assert p.returncode == 0, p.stdout + p.stderr
     rows = []
@@ -100,10 +100,35 @@ def test_rss_merge_chrom(run_r, run_sos, repo_root, tmp_path):
     # + concatenated afreq + the base-R filter summary (ported off data.table).
     _run_blocks(run_r, repo_root, tmp_path)
     p = run_sos(repo_root / NB, "merge_chrom", {
-        "chrom": 22, "output_dir": tmp_path, "cohort_id": "protocol_example.",
+        "chrom": 22, "output_dir": tmp_path, "cohort_id": "protocol_example",
         "modular_script_dir": repo_root / "code/script"})
     assert p.returncode == 0, p.stdout + p.stderr
     chrom_dir = tmp_path / "chr22"
-    assert (chrom_dir / "protocol_example..chr22.pgen").exists()
-    afreq = (chrom_dir / "protocol_example..chr22.afreq").read_text().splitlines()
-    assert afreq[0].startswith("#CHROM") and len(afreq) - 1 == 673   # all variants merged
+    assert (chrom_dir / "protocol_example.chr22.pgen").exists()
+    afreq = (chrom_dir / "protocol_example.chr22.afreq").read_text().splitlines()
+    assert afreq[0].startswith("#CHROM") and len(afreq) - 1 == 675   # all variants merged (incl. injected mirror pair)
+
+
+def test_rss_merge_chrom_mirror_event_ids(run_r, run_sos, repo_root, tmp_path):
+    # The fixture cohort carries one same-position ref/alt-swap indel pair
+    # (A/AT and AT/A at 16500000). merge_chrom must relabel that pair with
+    # canonical event IDs and emit the .event_id.tsv sidecar; every other
+    # variant keeps its standard chr:pos:ref:alt ID.
+    _run_blocks(run_r, repo_root, tmp_path)
+    p = run_sos(repo_root / NB, "merge_chrom", {
+        "chrom": 22, "output_dir": tmp_path, "cohort_id": "protocol_example",
+        "modular_script_dir": repo_root / "code/script"})
+    assert p.returncode == 0, p.stdout + p.stderr
+    chrom_dir = tmp_path / "chr22"
+
+    # the mirror pair is relabeled in the .pvar: INS keeps pos, DEL is pos+1
+    pvar = (chrom_dir / "protocol_example.chr22.pvar").read_text().splitlines()
+    ids_at_site = [ln.split("\t")[2] for ln in pvar
+                   if not ln.startswith("#") and ln.split("\t")[1] in ("16500000", "16500001")]
+    assert "chr22:16500000:INS:T" in ids_at_site
+    assert "chr22:16500001:DEL:T" in ids_at_site
+
+    # the .event_id.tsv sidecar matches the expected mapping byte-for-byte
+    got = (chrom_dir / "protocol_example.chr22.event_id.tsv").read_text()
+    exp = (repo_root / FIX / "expected" / "event_id.tsv").read_text()
+    assert got == exp
