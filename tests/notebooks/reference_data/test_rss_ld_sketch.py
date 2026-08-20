@@ -111,7 +111,7 @@ def test_rss_merge_chrom(run_r, run_sos, repo_root, tmp_path):
 
 def test_rss_merge_chrom_mirror_event_ids(run_r, run_sos, repo_root, tmp_path):
     # The fixture cohort carries one same-position ref/alt-swap indel pair
-    # (A/AT and AT/A at 16500000). merge_chrom must relabel that pair with
+    # (C/CGAT and CGAT/C at 17250000). merge_chrom must relabel that pair with
     # canonical event IDs and emit the .event_id.tsv sidecar; every other
     # variant keeps its standard chr:pos:ref:alt ID.
     _run_blocks(run_r, repo_root, tmp_path)
@@ -124,9 +124,9 @@ def test_rss_merge_chrom_mirror_event_ids(run_r, run_sos, repo_root, tmp_path):
     # the mirror pair is relabeled in the .pvar: INS keeps pos, DEL is pos+1
     pvar = (chrom_dir / "protocol_example.chr22.pvar").read_text().splitlines()
     ids_at_site = [ln.split("\t")[2] for ln in pvar
-                   if not ln.startswith("#") and ln.split("\t")[1] in ("16500000", "16500001")]
-    assert "chr22:16500000:INS:T" in ids_at_site
-    assert "chr22:16500001:DEL:T" in ids_at_site
+                   if not ln.startswith("#") and ln.split("\t")[1] in ("17250000", "17250001")]
+    assert "chr22:17250000:INS:GAT" in ids_at_site
+    assert "chr22:17250001:DEL:GAT" in ids_at_site
 
     # the .event_id.tsv sidecar matches the expected mapping byte-for-byte
     got = (chrom_dir / "protocol_example.chr22.event_id.tsv").read_text()
