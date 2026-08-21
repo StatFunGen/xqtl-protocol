@@ -42,10 +42,10 @@ def test_normalize_tmm_cpm_voom(run_r, repo_root, tmp_path):
     fix = repo_root / FIX
     p = run_r(repo_root / WORKER,
               ["--step", "normalize", "--cwd", tmp_path,
-               "--tpm-gct", fix / "input.tpm.gct.gz",
-               "--counts-gct", fix / "input.geneCount.gct.gz",
+               "--tpm-gct", fix / "protocol_example.rnaseq.tpm.gct.gz",
+               "--counts-gct", fix / "protocol_example.rnaseq.geneCount.gct.gz",
                "--annotation-gtf", fix / "annotation.gene.gtf",
-               "--sample-participant-lookup", fix / "sample_participant_lookup.txt",
+               "--sample-participant-lookup", fix / "protocol_example.rnaseq.sample_participant_lookup.txt",
                "--count-threshold", 1, "--quantile-normalize"])
     assert p.returncode == 0, p.stdout + p.stderr
     out = tmp_path / "input.tmm_cpm_voom.expression.bed.gz"

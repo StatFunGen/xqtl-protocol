@@ -71,7 +71,7 @@ fixture_files=(
     "code/snakemake/tests/data/rss_analysis_mwe/ld_reference/protocol_example.ld_meta_file.tsv"
     "code/snakemake/tests/data/rss_analysis_mwe/ld_reference/protocol_example.chr22_49355984_50799822.cor.xz"
     "code/snakemake/tests/data/rss_analysis_mwe/ld_reference/protocol_example.chr22_49355984_50799822.bim"
-    "code/snakemake/tests/data/rss_analysis_mwe/rss_analysis/protocol_example.gwas_meta_data.tsv"
+    "code/snakemake/tests/data/rss_analysis_mwe/rss_analysis/protocol_example.protocol_example.rss_mwe.gwas_meta.tsv"
     "code/snakemake/tests/data/rss_analysis_mwe/rss_analysis/protocol_example.column_mapping.txt"
     "code/snakemake/tests/data/rss_analysis_mwe/rss_analysis/protocol_example.gwas_sumstats.chr22.tsv.gz"
     "code/snakemake/tests/data/rss_analysis_mwe/rss_analysis/protocol_example.gwas_sumstats.chr22.tsv.gz.tbi"
@@ -92,7 +92,7 @@ mkdir -p "${OUTPUT_DIR}"
 
 common_args=(
     --ld-meta-data code/snakemake/tests/data/rss_analysis_mwe/ld_reference/protocol_example.ld_meta_file.tsv
-    --gwas-meta-data code/snakemake/tests/data/rss_analysis_mwe/rss_analysis/protocol_example.gwas_meta_data.tsv
+    --gwas-meta-data code/snakemake/tests/data/rss_analysis_mwe/rss_analysis/protocol_example.protocol_example.rss_mwe.gwas_meta.tsv
     --region-name 22:49355984-50799822
     --cwd "${OUTPUT_DIR}"
 )

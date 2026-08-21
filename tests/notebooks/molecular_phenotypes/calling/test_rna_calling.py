@@ -96,7 +96,7 @@ def test_fastp_manifest(run_r, repo_root, tmp_path):
     fix = repo_root / FIX
     trimmed = [f"out/{s}_{r}.fastq.trimmed.fq.gz" for s in ("SAMPLE_001", "SAMPLE_002") for r in ("R1", "R2")]
     out = tmp_path / "fastq.list.trimmed.txt"
-    p = run_r(repo_root / WORKER, ["--step", "fastp_manifest", "--sample-list", fix / "fastq.list.txt",
+    p = run_r(repo_root / WORKER, ["--step", "fastp_manifest", "--sample-list", fix / "protocol_example.rnaseq.fastq.list.txt",
                                    "--is-paired-end", 1, "--output", out, "--input", *trimmed])
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.read_text() == (fix / "expected" / "fastq.list.trimmed.txt").read_text()
@@ -193,7 +193,7 @@ def test_fastqc(run_sh, repo_root, tmp_path):
     fix = repo_root / FIX
     fq = fix / "fastq" / "SAMPLE_001_R1.fastq.gz"
     p = run_sh(repo_root / SH, [
-        "fastqc", "--cwd", tmp_path, "--sample-list", fix / "fastq.list.txt",
+        "fastqc", "--cwd", tmp_path, "--sample-list", fix / "protocol_example.rnaseq.fastq.list.txt",
         "--data-dir", fix / "fastq", "--input-fastq", fq, "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
     # FastQC's real output + the CWD-level aliases the wrapper links
@@ -303,7 +303,7 @@ def test_rnaseqc_call(run_sh, repo_root, tmp_path):
     fix = repo_root / FIX
     ref = fix / "reference"
     p = run_sh(repo_root / SH, [
-        "rnaseqc_call", "--cwd", tmp_path, "--sample-list", fix / "fastq.list.txt",
+        "rnaseqc_call", "--cwd", tmp_path, "--sample-list", fix / "protocol_example.rnaseq.fastq.list.txt",
         "--data-dir", ref, "--gtf", ref / "chr22.window.collapsed.gtf",
         "--reference-fasta", ref / "chr22.window.fa.gz",
         "--input-bam", fix / "bam" / "SAMPLE_001.cord.bam", "--sample-id", "SAMPLE_001",

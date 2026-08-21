@@ -22,8 +22,8 @@ def test_susie_twas(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
         {
             "name": "test_study",
             "cwd": cwd,
-            "genoFile": qtl_mini / "example.chr22.bed",
-            "phenoFile": qtl_mini / "pheno_manifest_multicontext.tsv",
+            "genoFile": qtl_mini / "protocol_example.genotype.chr22.bed",
+            "phenoFile": qtl_mini / "protocol_example.pheno_manifest_context.tsv",
             "covFile": qtl_mini / "example_covariates.tsv",
             "customized-association-windows": qtl_mini / "association_windows.bed",
             "region-name": GENE,

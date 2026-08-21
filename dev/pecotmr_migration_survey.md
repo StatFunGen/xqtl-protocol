@@ -39,10 +39,10 @@ User-specified subset:
 
 ## MWE data conventions discovered
 
-- **Genotype**: BOTH PLINK1 (e.g. `input/colocboost/example.chr22.bed/.bim/.fam`) AND VCF / bgzipped formats (`input/genotype/protocol_example.genotype.chr*.vcf.gz`, `*.bgz`). **No PLINK2 (pgen/pvar/psam) files present** in the MWE.
+- **Genotype**: BOTH PLINK1 (e.g. `input/colocboost/protocol_example.genotype.chr22.bed/.bim/.fam`) AND VCF / bgzipped formats (`input/genotype/protocol_example.genotype.chr*.vcf.gz`, `*.bgz`). **No PLINK2 (pgen/pvar/psam) files present** in the MWE.
 - **Phenotype BED**: standard QTLtools format with `#chr, start, end, ID, SAMPLE_001, SAMPLE_002, ...`. Matches what our new `qtl_dataset_construct.R` parses.
 - **Covariate file**: **QTLtools convention** — `#id` header + rows like `sex`, `age`, `PC1`, ... with sample columns. **This is the opposite orientation from what the new wrapper expects** (we updated the script to take samples-as-rows since the user described `--phenotype-covariates` as "molecular trait PCs, same shape as genotype PCs").
-- **Per-region manifest TSVs** (`fine_mapping_meta.tsv`, `pheno_manifest_multicontext.tsv`): columns `#chr, start, end, ID, path, cond, cov_path` — one row per (region, context). The same `cov_path` is reused across contexts in the MWE examples.
+- **Per-region manifest TSVs** (`fine_mapping_meta.tsv`, `protocol_example.pheno_manifest_context.tsv`): columns `#chr, start, end, ID, path, cond, cov_path` — one row per (region, context). The same `cov_path` is reused across contexts in the MWE examples.
 - **xQTL meta TSVs** (TWAS / cTWAS / enloc inputs): point at pre-computed per-(study, gene) `*.univariate_susie_twas_weights.rds` files. These workflows do NOT recompute fits; they consume the pre-built RDS files.
 - **GWAS inputs** (`input/rss_analysis/`, `input/twas/`): tabix-indexed `.tsv.gz` plus a YAML column-mapping file.
 

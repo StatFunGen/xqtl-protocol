@@ -145,7 +145,7 @@ gwas_meta <- data.table(
 )
 fwrite(
   gwas_meta,
-  file.path(rss_dir, "protocol_example.gwas_meta_data.tsv"),
+  file.path(rss_dir, "protocol_example.protocol_example.rss_mwe.gwas_meta.tsv"),
   sep = "\t"
 )
 

@@ -90,7 +90,7 @@ def qtl_dataset(run_r, repo_root, qtl_mini, tmp_path_factory):
     p = run_r(script, [
         "--study", "test_study",
         "--genotype-prefix", qtl_mini / "example.chr22",
-        "--phenotype-manifest", qtl_mini / "pheno_manifest_multicontext.tsv",
+        "--phenotype-manifest", qtl_mini / "protocol_example.pheno_manifest_context.tsv",
         "--transpose-covariates",
         "--output", out,
     ], timeout=600)
