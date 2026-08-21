@@ -133,6 +133,9 @@ parser <- add_argument(parser, "--r-mismatch",
 parser <- add_argument(parser, "--rss-control",
                        help = "GWAS mode: JSON object of susieR::susie_rss_control() settings (e.g. '{\"check_prior\":true,\"mismatch_estimator\":\"map\"}'), forwarded as fineMappingPipeline rssControl. Empty = susie_rss_control() defaults.",
                        type = "character", default = "")
+parser <- add_argument(parser, "--keep-full-fit",
+                       help = "GWAS mode: retain the pre-fallback multi-effect fit (fineMappingPipeline keepFullFit): 'none' (default; keep none) or 'fallback' (only regions that fell back to SER, where the retained multi-effect fit genuinely differs from the reported SER result).",
+                       type = "character", default = "none")
 # --- Multivariate / joint-fit knobs (QTL mode; mvsusie / fsusie). Each is
 # opt-in and omitted from the pipeline call when left at its default, so this
 # wrapper also runs against a pecotmr build that predates twasWeights / usePCA.
@@ -321,12 +324,17 @@ if (has_gwas) {
   ser_fallback <- as.logical(argv$ser_fallback)
   if (is.na(ser_fallback))
     stop("--ser-fallback must be TRUE or FALSE (got: ", argv$ser_fallback, ")")
+  keep_full_fit <- argv$keep_full_fit
+  if (!keep_full_fit %in% c("none", "fallback"))
+    stop("--keep-full-fit must be 'none' or 'fallback' (got: ", keep_full_fit, ")")
   # GWAS-only SuSiE-RSS knobs on top of the shared cs_args. rFinite forwards
   # only when set; --rss-control (JSON) becomes the rssControl named list of
-  # susie_rss_control() settings.
+  # susie_rss_control() settings. keepFullFit defaults to 'none' (drop the
+  # pre-fallback multi-effect fit) unless the caller asks to retain it.
   gwas_args <- c(cs_args,
                  list(serFallback = ser_fallback,
-                      rMismatch   = argv$r_mismatch))
+                      rMismatch   = argv$r_mismatch,
+                      keepFullFit = keep_full_fit))
   if (nzchar(argv$r_finite)) gwas_args$rFinite <- as.numeric(argv$r_finite)
   if (nzchar(argv$rss_control) && argv$rss_control != "." &&
       argv$rss_control != "{}") {
