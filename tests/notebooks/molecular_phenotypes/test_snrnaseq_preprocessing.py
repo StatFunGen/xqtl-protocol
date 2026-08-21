@@ -37,7 +37,7 @@ def sctk_out(run_r, repo_root, tmp_path_factory):
         "--step", "sctk_qc",
         "--input-dir", repo_root / FX / "cellranger",
         "--output-dir", out_dir,
-        "--sample-meta", repo_root / FX / "id_mapping.csv",
+        "--sample-meta", repo_root / FX / "protocol_example.snrnaseq.id_mapping.csv",
         "--num-threads", "2"], timeout=1200)
     assert p.returncode == 0, p.stdout + p.stderr
     return out_dir
@@ -87,7 +87,7 @@ def test_cell_annotation(sctk_out, run_r, repo_root, tmp_path):
         "--step", "cell_annotation",
         "--sctk-rds", sctk_out / "SCTK_results" / "filtered_seuratobj.rds",
         "--output-dir", tmp_path,
-        "--seurat-ref", repo_root / FX / "seurat_ref_SE.rds",
+        "--seurat-ref", repo_root / FX / "protocol_example.snrnaseq.seurat_ref_SE.rds",
         "--downsample-n", "1000",
         "--num-threads", "2"], timeout=1200)
     assert p.returncode == 0, p.stdout + p.stderr
@@ -99,7 +99,7 @@ def test_sctk_qc_via_sos(run_sos, repo_root, tmp_path):
     p = run_sos(repo_root / NB, "sctk_qc", {
         "input_dir": repo_root / FX / "cellranger",
         "output_dir": tmp_path,
-        "sample_meta": repo_root / FX / "id_mapping.csv",
+        "sample_meta": repo_root / FX / "protocol_example.snrnaseq.id_mapping.csv",
         "numThreads": 2,
         "modular_script_dir": repo_root / MSD})
     assert p.returncode == 0, p.stdout + p.stderr

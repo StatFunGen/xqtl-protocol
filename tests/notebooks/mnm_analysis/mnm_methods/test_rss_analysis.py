@@ -21,7 +21,7 @@ def test_gwas_finemapping(run_sos, read_rds, repo_root, tmp_path):
         {
             "cwd": cwd,
             "modular-script-dir": repo_root / "code/script",
-            "gwas-meta": fx / "rss_analysis/gwas_meta_data.tsv",
+            "gwas-meta": fx / "rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv",
             "regions": "chr22:49355984-50799822",
             "ld-meta": fx / "ld_reference/ld_meta_file.tsv",
         },

@@ -38,7 +38,7 @@ def _qc_1(run_r, repo_root, cwd):
     fix = repo_root / FIX
     p = run_r(repo_root / WORKER,
               ["--step", "qc_1", "--cwd", cwd,
-               "--tpm-gct", fix / "input.tpm.gct.gz", "--numThreads", "1"])
+               "--tpm-gct", fix / "protocol_example.rnaseq.tpm.gct.gz", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
     out = cwd / "input.low_expression_filtered.tpm.gct.gz"
     assert out.exists(), "qc_1 output missing"
@@ -91,7 +91,7 @@ def test_qc_3_subset_counts(run_r, repo_root, tmp_path):
     fix = repo_root / FIX
     p = run_r(repo_root / WORKER,
               ["--step", "qc_3", "--cwd", tmp_path, "--tpm-gct", tpm2,
-               "--counts-gct", fix / "input.geneCount.gct.gz", "--numThreads", "1"])
+               "--counts-gct", fix / "protocol_example.rnaseq.geneCount.gct.gz", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
     out = tmp_path / "input.low_expression_filtered.outlier_removed.geneCount.gct.gz"
     assert out.exists(), "qc_3 output missing"
@@ -109,8 +109,8 @@ def test_qc_workflow_via_sos(run_sos, repo_root, tmp_path):
     # SoS wiring: `sos run bulk_expression_QC.ipynb qc` chains qc_1 -> qc_2 -> qc_3.
     fix = repo_root / FIX
     p = run_sos(repo_root / NB, "qc", {
-        "tpm_gct": fix / "input.tpm.gct.gz",
-        "counts_gct": fix / "input.geneCount.gct.gz",
+        "tpm_gct": fix / "protocol_example.rnaseq.tpm.gct.gz",
+        "counts_gct": fix / "protocol_example.rnaseq.geneCount.gct.gz",
         "cwd": tmp_path, "numThreads": 1,
         "modular_script_dir": repo_root / MSD})
     assert p.returncode == 0, p.stdout + p.stderr

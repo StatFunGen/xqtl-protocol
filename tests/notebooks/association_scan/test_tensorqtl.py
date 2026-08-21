@@ -34,7 +34,7 @@ PARQUET = "example_geneexpr.cis_qtl_pairs.22.parquet"
 
 def _scan_args(fix, cwd):
     return ["--step", "cis", "--cwd", str(cwd),
-            "--genotype-file", str(fix / "example.chr22.bed"),
+            "--genotype-file", str(fix / "protocol_example.genotype.chr22.bed"),
             "--phenotype-file", str(fix / "example_geneexpr.bed.gz"),
             "--covariate-file", str(fix / "example_covariates.tsv"),
             "--chromosome", "22", "--window", "1000000",
@@ -100,7 +100,7 @@ def test_cis_via_sos(run_sos, repo_root, tmp_path):
     # sibling bash commands, never nested.
     fix = repo_root / FIX
     p = run_sos(repo_root / NB, "cis", {
-        "genotype_file": fix / "example.chr22.bed",
+        "genotype_file": fix / "protocol_example.genotype.chr22.bed",
         "phenotype_file": fix / "example_geneexpr.bed.gz",
         "covariate_file": fix / "example_covariates.tsv",
         "name": "protocol_example", "chromosome": 22, "MAC": 0,

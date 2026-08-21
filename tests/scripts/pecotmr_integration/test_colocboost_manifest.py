@@ -13,7 +13,7 @@ def test_colocboost_manifest(run_r, repo_root, tmp_path):
     fx = repo_root / "tests/fixtures/qtl_mini"
     out = tmp_path / "manifest.tsv"
     p = run_r(repo_root / "code/script/pecotmr_integration/colocboost_manifest.R",
-              ["--pheno-manifest", fx / "pheno_manifest_multicontext.tsv",
+              ["--pheno-manifest", fx / "protocol_example.pheno_manifest_context.tsv",
                "--customized-association-windows", fx / "association_windows.bed",
                "--region-name", "ENSG00000283047", "--cis-window", "1000000",
                "--output", out], timeout=120)

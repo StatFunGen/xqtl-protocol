@@ -11,7 +11,7 @@ EXPECTED = "tests/fixtures/gwas_rss_manifest/expected/gwas_rss_manifest.tsv"
 def test_gwas_rss_manifest(run_r, repo_root, tmp_path):
     out = tmp_path / "manifest.tsv"
     p = run_r(repo_root / "code/script/pecotmr_integration/gwas_rss_manifest.R",
-              ["--gwas-meta", repo_root / "tests/fixtures/rss_analysis/gwas_meta_data.tsv",
+              ["--gwas-meta", repo_root / "tests/fixtures/rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv",
                "--regions", "chr22:49355984-50799822", "--output", out], timeout=120)
     assert p.returncode == 0, p.stdout + p.stderr
     rows = [l.split("\t") for l in out.read_text().splitlines()]
