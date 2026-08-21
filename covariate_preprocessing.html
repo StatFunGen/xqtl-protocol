@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -585,23 +585,23 @@
 <tbody>
 <tr class="row-even"><td><p>Observed covariates and genotype PCs only</p></td>
 <td><p>1</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.covariates.base.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.rds</span></code>; <code class="docutils literal notranslate"><span class="pre">output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.scree.txt</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/covariate_formatting/covariates.base.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.rds</span></code>; <code class="docutils literal notranslate"><span class="pre">output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.scree.txt</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Automatically select PCA hidden factors</p></td>
 <td><p>1 → 2</p></td>
-<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">output/rnaseq/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
+<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>Use a fixed number of PEER factors</p></td>
 <td><p>1 → 3</p></td>
-<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">output/rnaseq/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
+<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Use PCA factors with configurable dimension selection</p></td>
 <td><p>1 → 4</p></td>
-<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">output/rnaseq/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
+<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>Select hidden factors by bi-cross-validation</p></td>
 <td><p>1 → 5</p></td>
-<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">output/rnaseq/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
+<td><p>Step 1 inputs; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -615,7 +615,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_formatting.ipynb merge_genotype_pc \
     --cwd output/covariate \
     --pcaFile output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.rds \
-    --covFile input/covariate/protocol_example.covariates.base.tsv \
+    --covFile tests/fixtures/covariate_formatting/covariates.base.tsv \
     --name protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca \
     --tol-cov 0.4 \
     --k `awk '$3 &lt; 0.8' output/genotype/genotype_pca/protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.scree.txt | tail -1 | cut -f 1`
@@ -631,7 +631,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb Marchenko_PC \
     --cwd output/covariate \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
+    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
     --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
     --mean-impute-missing
 </pre></div>
@@ -646,7 +646,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb PEER \
     --cwd output/covariate \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
+    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
     --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
     --N 3
 </pre></div>
@@ -661,7 +661,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb PCA \
     --cwd output/covariate \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
+    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
     --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
     --choose_k_method Marchenko \
     --mean-impute-missing
@@ -677,7 +677,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/covariate_hidden_factor.ipynb BiCV \
     --cwd output/covariate \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
+    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
     --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
     --N 3
 </pre></div>

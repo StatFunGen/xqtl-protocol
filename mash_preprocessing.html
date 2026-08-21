@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -581,7 +581,7 @@
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <p><strong><code class="docutils literal notranslate"><span class="pre">susie_to_mash</span></code></strong> - builds the MASH input from fine-mapped SuSiE results:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--fine_mapping_meta</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.fine_mapping_meta.tsv</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--fine_mapping_meta</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/fine_mapping_meta.tsv</span></code></strong>
 (index of the fine-mapped RDS files, one row per region and context. Columns <code class="docutils literal notranslate"><span class="pre">chrom</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">region_id</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_id</span></code>, <code class="docutils literal notranslate"><span class="pre">context</span></code>, <code class="docutils literal notranslate"><span class="pre">susie_path</span></code>, <code class="docutils literal notranslate"><span class="pre">sumstats_path</span></code>, <code class="docutils literal notranslate"><span class="pre">conditions</span></code>.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chrom</span>	<span class="n">start</span>	<span class="n">end</span>	<span class="n">region_id</span>	<span class="n">gene_id</span>	<span class="n">context</span>	<span class="n">susie_path</span>	<span class="n">sumstats_path</span>	<span class="o">...</span>
@@ -800,7 +800,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_preprocessing.ipynb susie_to_mash \
     --name protocol_example_mash \
-    --fine_mapping_meta input/finemapping/protocol_example.fine_mapping_meta.tsv \
+    --fine_mapping_meta tests/fixtures/qtl_mini/fine_mapping_meta.tsv \
     --finemapping_column susie_path \
     --sig_p_cutoff 0.1 \
     --cwd output/mash_preprocessing
@@ -817,8 +817,8 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_preprocessing.ipynb random_null_tensorqtl \
     --name protocol_example_mash \
-    --region_file input/finemapping/protocol_example.region \
-    --sum_files input/protocol_example.sumstats_list.txt \
+    --region_file output/mash_preprocessing/protocol_example.region \
+    --sum_files output/mash_preprocessing/protocol_example.sumstats_list.txt \
     --traits bulk_rnaseq \
     --cwd output/mash_preprocessing
 </pre></div>

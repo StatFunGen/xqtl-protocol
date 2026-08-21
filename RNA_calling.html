@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -666,7 +666,7 @@
 </section>
 <section id="minimal-working-example">
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
-<p>These commands use the two demo samples listed in <code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.rnaseq.fastq.list.txt</span></code>, with the simplest alignment recipe, no WASP filtering and no unique-read filtering, which is what quantifying expression for eQTL analysis calls for. The main path is <code class="docutils literal notranslate"><span class="pre">fastqc</span></code>, <code class="docutils literal notranslate"><span class="pre">fastp_trim_adaptor</span></code>, <code class="docutils literal notranslate"><span class="pre">STAR_align</span></code>, <code class="docutils literal notranslate"><span class="pre">rnaseqc_call</span></code>, <code class="docutils literal notranslate"><span class="pre">rsem_call</span></code>, run in that order; the remaining blocks are optional or alternatives. The raw FASTQ files are not distributed in this repository, so <code class="docutils literal notranslate"><span class="pre">--data-dir</span></code> is shown as a placeholder and has to point at the directory holding the files the manifest names.</p>
+<p>These commands use the two demo samples listed in <code class="docutils literal notranslate"><span class="pre">tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt</span></code>, with the simplest alignment recipe, no WASP filtering and no unique-read filtering, which is what quantifying expression for eQTL analysis calls for. The main path is <code class="docutils literal notranslate"><span class="pre">fastqc</span></code>, <code class="docutils literal notranslate"><span class="pre">fastp_trim_adaptor</span></code>, <code class="docutils literal notranslate"><span class="pre">STAR_align</span></code>, <code class="docutils literal notranslate"><span class="pre">rnaseqc_call</span></code>, <code class="docutils literal notranslate"><span class="pre">rsem_call</span></code>, run in that order; the remaining blocks are optional or alternatives. The raw FASTQ files are not distributed in this repository, so <code class="docutils literal notranslate"><span class="pre">--data-dir</span></code> is shown as a placeholder and has to point at the directory holding the files the manifest names.</p>
 <section id="convert-bam-back-to-fastq-optional">
 <h3>Convert BAM back to FASTQ (optional)<a class="headerlink" href="#convert-bam-back-to-fastq-optional" title="Link to this heading">#</a></h3>
 <p>Only needed when the starting material is aligned BAM rather than FASTQ.</p>
@@ -675,7 +675,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb bam_to_fastq \
 --cwd output/rnaseq \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/bam
 </pre></div>
 </div>
@@ -689,7 +689,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb fastqc \
 --cwd output/rnaseq/fastqc \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq
 </pre></div>
 </div>
@@ -704,7 +704,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb fastp_trim_adaptor \
 --cwd output/rnaseq \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq
 </pre></div>
 </div>
@@ -719,7 +719,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb trimmomatic_trim_adaptor \
 --cwd output/rnaseq \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq
 </pre></div>
 </div>
@@ -734,7 +734,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb STAR_align \
 --cwd output/rnaseq/bam \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq \
 --STAR-index reference_data/STAR_Index \
 --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
@@ -755,7 +755,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb strand_detected \
 --cwd output/rnaseq/bam \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq
 </pre></div>
 </div>
@@ -770,7 +770,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb picard_qc \
 --cwd output/rnaseq/bam \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq \
 --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
 --ref-flat reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat \
@@ -788,7 +788,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rnaseqc_call \
 --cwd output/rnaseq/bam \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq \
 --gtf reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
 --reference-fasta reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
@@ -806,7 +806,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb rsem_call \
 --cwd output/rnaseq/bam \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq \
 --RSEM-index reference_data/RSEM_Index \
 --bam-list output/rnaseq/bam/protocol_example.rnaseq.fastq.list.bam_file_list
@@ -823,7 +823,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/RNA_calling.ipynb filter_reads \
 --cwd output/rnaseq/bam \
---sample-list input/rnaseq/protocol_example.rnaseq.fastq.list.txt \
+--sample-list tests/fixtures/rna_calling/protocol_example.rnaseq.fastq.list.txt \
 --data-dir path/to/fastq
 </pre></div>
 </div>

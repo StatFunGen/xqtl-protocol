@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -569,7 +569,7 @@
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">--input-dir</span></code>: the CellRanger output directory, holding the per-sample counts folder with <code class="docutils literal notranslate"><span class="pre">filtered_feature_bc_matrix</span></code>. Example <code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.cellranger/</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--sample-meta</span></code>: a CSV mapping cell barcodes to individuals, with columns <code class="docutils literal notranslate"><span class="pre">libraryBatch</span></code>, <code class="docutils literal notranslate"><span class="pre">cellBarcode</span></code> and <code class="docutils literal notranslate"><span class="pre">individualID</span></code>. Example <code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.id_mapping.csv</span></code>:</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">--sample-meta</span></code>: a CSV mapping cell barcodes to individuals, with columns <code class="docutils literal notranslate"><span class="pre">libraryBatch</span></code>, <code class="docutils literal notranslate"><span class="pre">cellBarcode</span></code> and <code class="docutils literal notranslate"><span class="pre">individualID</span></code>. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/snrnaseq_preprocessing/protocol_example.snrnaseq.id_mapping.csv</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">libraryBatch</span><span class="p">,</span><span class="n">cellBarcode</span><span class="p">,</span><span class="n">individualID</span>
 <span class="mi">190403</span><span class="o">-</span><span class="n">B4</span><span class="o">-</span><span class="n">A</span><span class="p">,</span><span class="n">ATTATCCCAGGACATG</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">R2670295</span>
 <span class="mi">190403</span><span class="o">-</span><span class="n">B4</span><span class="o">-</span><span class="n">A</span><span class="p">,</span><span class="n">GAGCTGCCACACGGAA</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">R1743384</span>
@@ -577,7 +577,7 @@
 </div>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--sctk-rds</span></code>: for <code class="docutils literal notranslate"><span class="pre">cell_annotation</span></code>, the QC-filtered Seurat object written by <code class="docutils literal notranslate"><span class="pre">sctk_qc</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--seurat-ref</span></code>: the annotated reference dataset the cell types are transferred from. Example <code class="docutils literal notranslate"><span class="pre">input/snrnaseq/protocol_example.snrnaseq.seurat_ref_SE.rds</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--seurat-ref</span></code>: the annotated reference dataset the cell types are transferred from. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/snrnaseq_preprocessing/protocol_example.snrnaseq.seurat_ref_SE.rds</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--output-dir</span></code>: the directory outputs are written to.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--name</span></code>: the prefix given to every output filename, <code class="docutils literal notranslate"><span class="pre">protocol_example.snrnaseq</span></code> by default, so results stay traceable to the dataset.</p></li>
 </ul>
@@ -607,9 +607,9 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/snRNAseq_preprocessing.ipynb sctk_qc \
-    --input-dir input/snrnaseq/protocol_example.snrnaseq.cellranger \
+    --input-dir &lt;path/to/protocol_example.snrnaseq.cellranger&gt; \
     --output-dir output/snrna_seq \
-    --sample-meta input/snrnaseq/protocol_example.snrnaseq.id_mapping.csv \
+    --sample-meta tests/fixtures/snrnaseq_preprocessing/protocol_example.snrnaseq.id_mapping.csv \
     --name protocol_example.snrnaseq
 </pre></div>
 </div>
@@ -624,7 +624,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/snRNAseq_preprocessing.ipynb cell_annotation \
     --sctk-rds output/snrna_seq/SCTK_results/protocol_example.snrnaseq.filtered_seuratobj.rds \
     --output-dir output/snrna_seq \
-    --seurat-ref input/snrnaseq/protocol_example.snrnaseq.seurat_ref_SE.rds \
+    --seurat-ref tests/fixtures/snrnaseq_preprocessing/protocol_example.snrnaseq.seurat_ref_SE.rds \
     --name protocol_example.snrnaseq
 </pre></div>
 </div>

@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -733,9 +733,9 @@ $ lfsr: matrix [300, 34] 0.4152503251174 0.256402051661698 0.256546494031719 0.3
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_posterior.ipynb posterior \
     --cwd output/mash_posterior \
-    --analysis-units input/finemapping/protocol_example.analysis_units.txt \
-    --mash-model input/mash/protocol_example.mash_model.rds \
-    --posterior-vhat-files input/twas/protocol_example.posterior_vhat.rds \
+    --analysis-units output/mash_posterior/protocol_example.analysis_units.txt \
+    --mash-model output/mash_posterior/protocol_example.mash_model.rds \
+    --posterior-vhat-files output/mash_posterior/protocol_example.posterior_vhat.rds \
     --data-table-name strong \
     --exclude-condition 1 3
 </pre></div>
@@ -747,7 +747,7 @@ $ lfsr: matrix [300, 34] 0.4152503251174 0.256402051661698 0.256546494031719 0.3
 <h3>Step 2. Compute posterior contrasts between conditions for the sliced data<a class="headerlink" href="#step-2-compute-posterior-contrasts-between-conditions-for-the-sliced-data" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>Rscript -e 'p &lt;- strsplit(readLines("input/finemapping/protocol_example.analysis_units.txt")[1], "\\s+")[[1]][1]; saveRDS(readRDS(p)$strong, "output/mash_posterior/protocol_example.region1_sumstats.rds")'
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>Rscript -e 'p &lt;- strsplit(readLines("output/mash_posterior/protocol_example.analysis_units.txt")[1], "\\s+")[[1]][1]; saveRDS(readRDS(p)$strong, "output/mash_posterior/protocol_example.region1_sumstats.rds")'
 printf 'region1\t%s\n' "$PWD/output/mash_posterior/cache/protocol_example.posterior_input.posterior.rds" &gt; output/mash_posterior/posterior_manifest.txt
 printf 'region1\t%s\n' "$PWD/output/mash_posterior/protocol_example.region1_sumstats.rds" &gt; output/mash_posterior/sum_manifest.txt
 
@@ -767,7 +767,7 @@ sos run pipeline/mash_posterior.ipynb mash_posterior_contrast \
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_posterior.ipynb posterior_contrast_plot \
     --cwd output/mash_posterior \
-    --analysis-units input/finemapping/protocol_example.analysis_units.txt
+    --analysis-units output/mash_posterior/protocol_example.analysis_units.txt
 </pre></div>
 </div>
 </div>
@@ -780,9 +780,9 @@ sos run pipeline/mash_posterior.ipynb mash_posterior_contrast \
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_posterior.ipynb feature_score_meta \
     --cwd output/mash_posterior \
-    --analysis-units input/finemapping/protocol_example.analysis_units.txt \
-    --posterior-file input/protocol_example.posterior.rds \
-    --sum-file input/protocol_example.sumstats.rds
+    --analysis-units output/mash_posterior/protocol_example.analysis_units.txt \
+    --posterior-file tests/fixtures/mash_posterior/posterior.rds \
+    --sum-file output/mash_posterior/protocol_example.sumstats.rds
 </pre></div>
 </div>
 </div>
@@ -795,9 +795,9 @@ sos run pipeline/mash_posterior.ipynb mash_posterior_contrast \
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_posterior.ipynb feature_score_finemap \
     --cwd output/mash_posterior \
-    --analysis-units input/finemapping/protocol_example.analysis_units.txt \
-    --posterior-file input/protocol_example.posterior.rds \
-    --sum-file input/protocol_example.sumstats.rds
+    --analysis-units output/mash_posterior/protocol_example.analysis_units.txt \
+    --posterior-file tests/fixtures/mash_posterior/posterior.rds \
+    --sum-file output/mash_posterior/protocol_example.sumstats.rds
 </pre></div>
 </div>
 </div>
@@ -810,9 +810,9 @@ sos run pipeline/mash_posterior.ipynb mash_posterior_contrast \
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_posterior.ipynb feature_score_nsig \
     --cwd output/mash_posterior \
-    --analysis-units input/finemapping/protocol_example.analysis_units.txt \
-    --posterior-file input/protocol_example.posterior.rds \
-    --sum-file input/protocol_example.sumstats.rds
+    --analysis-units output/mash_posterior/protocol_example.analysis_units.txt \
+    --posterior-file tests/fixtures/mash_posterior/posterior.rds \
+    --sum-file output/mash_posterior/protocol_example.sumstats.rds
 </pre></div>
 </div>
 </div>
@@ -825,9 +825,9 @@ sos run pipeline/mash_posterior.ipynb mash_posterior_contrast \
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mash_posterior.ipynb feature_pval_pair \
     --cwd output/mash_posterior \
-    --analysis-units input/finemapping/protocol_example.analysis_units.txt \
-    --posterior-file input/protocol_example.posterior.rds \
-    --sum-file input/protocol_example.sumstats.rds
+    --analysis-units output/mash_posterior/protocol_example.analysis_units.txt \
+    --posterior-file tests/fixtures/mash_posterior/posterior.rds \
+    --sum-file output/mash_posterior/protocol_example.sumstats.rds
 </pre></div>
 </div>
 </div>

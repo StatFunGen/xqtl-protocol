@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -586,7 +586,7 @@ then it is far harder to trace.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span> <span class="pre">input/genotype/protocol_example.genotype.chr*.vcf.gz</span></code> (+ <code class="docutils literal notranslate"><span class="pre">.tbi</span></code>): the per-chromosome
 pVCFs to QC, from upstream genotype calling. A manifest may be given instead –
-<code class="docutils literal notranslate"><span class="pre">input/genotype/protocol_example.genotype.vcf_list.txt</span></code>, two columns, chromosome number and VCF
+<code class="docutils literal notranslate"><span class="pre">tests/fixtures/vcf_qc/protocol_example.genotype.vcf_list.txt</span></code>, two columns, chromosome number and VCF
 path – which lets the chromosomes run in parallel. This is the only required data input;
 everything else is reference material or a threshold.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--dbsnp-variants</span> <span class="pre">input/reference_data/00-All.add_chr.variants.gz</span></code> (+ <code class="docutils literal notranslate"><span class="pre">.tbi</span></code>) (required for <code class="docutils literal notranslate"><span class="pre">qc</span></code>):
@@ -670,7 +670,7 @@ example output is empty and no dump can be shown here yet.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb rename_chrs \
-    --genoFile input/genotype/protocol_example.genotype.rawchr.chr22.vcf.gz \
+    --genoFile output/vcf_qc/protocol_example.genotype.rawchr.chr22.vcf.gz \
     --cwd output/vcf_qc
 </pre></div>
 </div>
@@ -682,7 +682,7 @@ example output is empty and no dump can be shown here yet.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb dbsnp_annotate \
-    --genoFile input/genotype/protocol_example.genotype.chr22.vcf.gz \
+    --genoFile tests/fixtures/vcf_qc/protocol_example.genotype.chr22.vcf.gz \
     --cwd output/vcf_qc
 </pre></div>
 </div>
@@ -703,9 +703,9 @@ own <code class="docutils literal notranslate"><span class="pre">--name</span></
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb qc \
-    --genoFile input/genotype/protocol_example.genotype.chr22.vcf.gz \
-    --dbsnp-variants input/reference_data/00-All.add_chr.variants.gz \
-    --reference-genome input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --genoFile tests/fixtures/vcf_qc/protocol_example.genotype.chr22.vcf.gz \
+    --dbsnp-variants &lt;path/to/00-All.add_chr.variants.gz&gt; \
+    --reference-genome &lt;path/to/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta&gt; \
     --cwd output/vcf_qc \
     --skip_vcf_header_filtering True
 </pre></div>
@@ -718,9 +718,9 @@ own <code class="docutils literal notranslate"><span class="pre">--name</span></
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb qc \
-    --genoFile input/genotype/protocol_example.genotype.vcf_list.txt \
-    --dbsnp-variants input/reference_data/00-All.add_chr.variants.gz \
-    --reference-genome input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --genoFile tests/fixtures/vcf_qc/protocol_example.genotype.vcf_list.txt \
+    --dbsnp-variants &lt;path/to/00-All.add_chr.variants.gz&gt; \
+    --reference-genome &lt;path/to/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta&gt; \
     --cwd output/vcf_qc \
     --skip_vcf_header_filtering True \
     -j 2
@@ -736,9 +736,9 @@ own <code class="docutils literal notranslate"><span class="pre">--name</span></
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb qc \
-    --genoFile input/genotype/protocol_example.genotype.withfmt.chr22.vcf.gz \
-    --dbsnp-variants input/reference_data/00-All.add_chr.variants.gz \
-    --reference-genome input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --genoFile output/vcf_qc/protocol_example.genotype.withfmt.chr22.vcf.gz \
+    --dbsnp-variants &lt;path/to/00-All.add_chr.variants.gz&gt; \
+    --reference-genome &lt;path/to/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta&gt; \
     --cwd output/vcf_qc_withfmt \
     -j 2
 </pre></div>

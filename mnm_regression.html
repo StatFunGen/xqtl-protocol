@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -608,9 +608,9 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <p><strong>Gene-expression mode (<code class="docutils literal notranslate"><span class="pre">input/colocboost/</span></code>) - the example below:</strong></p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/example.chr22.bed</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed</span></code></strong>
 (PLINK1 binary genotype set. Pass the <code class="docutils literal notranslate"><span class="pre">.bed</span></code>; the <code class="docutils literal notranslate"><span class="pre">.bim</span></code> and <code class="docutils literal notranslate"><span class="pre">.fam</span></code> are read automatically. chr22, 1,995 variants and 49 samples.)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/pheno_manifest_multicontext.tsv</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv</span></code></strong>
 (phenotype list, one row per region and context. Columns <code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span> <span class="pre">path</span> <span class="pre">cond</span> <span class="pre">cov_path</span></code>: <code class="docutils literal notranslate"><span class="pre">path</span></code> is the bgzipped and tabixed phenotype matrix, <code class="docutils literal notranslate"><span class="pre">cond</span></code> names the context, <code class="docutils literal notranslate"><span class="pre">cov_path</span></code> the per-context covariates. 32 rows in the toy file.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr	start	end	ID	path	cond	cov_path</span>
@@ -619,7 +619,7 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/example_covariates.tsv</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/example_covariates.tsv</span></code></strong>
 (covariates, one row per covariate and one column per sample; passed with <code class="docutils literal notranslate"><span class="pre">--transpose-covariates</span></code>.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ID</span>	<span class="n">SAMPLE_001</span>	<span class="n">SAMPLE_002</span>	<span class="n">SAMPLE_003</span>	<span class="o">...</span>
@@ -628,7 +628,7 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/association_windows.bed</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/association_windows.bed</span></code></strong>
 (analysis window per region, columns <code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span></code>: the gene TSS +/- 500 kb, clamped at the chromosome edges. 16 regions.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr	start	end	ID</span>
@@ -638,9 +638,9 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 </div>
 <p><strong>Peak mode (<code class="docutils literal notranslate"><span class="pre">input/</span></code>) - same interface, alternative input:</strong></p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/genotype/protocol_example.genotype.chr22.bed</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed</span></code></strong>
 (same PLINK1 layout, a different cohort: chr22, 1,995 variants and 1,287 samples with <code class="docutils literal notranslate"><span class="pre">S####</span></code> identifiers.)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/phenotype/protocol_example.pheno_manifest.tsv</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/pheno_manifest.tsv</span></code></strong>
 (peak list, 5 columns <code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span> <span class="pre">path</span></code>; one row per peak, <code class="docutils literal notranslate"><span class="pre">path</span></code> pointing at the per-peak bgzipped matrix.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr	start	end	ID	path</span>
@@ -649,7 +649,7 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.covariates.tsv</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/covariate_hidden_factor/covariates.tsv</span></code></strong>
 (same shape as the gene-expression covariates, keyed by <code class="docutils literal notranslate"><span class="pre">#id</span></code>.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#id	SAMPLE_001	SAMPLE_002	SAMPLE_003	...</span>
@@ -658,7 +658,7 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.association_windows.bed</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/association_windows.bed</span></code></strong>
 (cis window per peak, same four columns and no header row.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chr22</span>	<span class="mi">0</span>	<span class="mi">19959512</span>	<span class="n">C22P107555</span>
@@ -674,7 +674,7 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--cwd</span> <span class="pre">output/mnm</span></code> (working directory all outputs are written under. Defaults to <code class="docutils literal notranslate"><span class="pre">output</span></code>.)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--name</span> <span class="pre">protocol_example</span></code> (tag used in every output filename)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/association_windows.bed</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/association_windows.bed</span></code></strong>
 (association windows per region. Without it a fixed window of <code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> is used.)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--cis-window</span> <span class="pre">1000000</span></code> (half-width of the fixed association window used when no window file is given)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--region-name</span> <span class="pre">ENSG00000283047</span></code> (restrict the run to named regions; the union of all regions is used if omitted)</p></li>
@@ -692,7 +692,7 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
 <p><strong>qtl_dataset_construct</strong></p>
 <ul class="simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">output/mnm/qtl_dataset/protocol_example.qtl_dataset.rds</span></code></strong> (the assembled <code class="docutils literal notranslate"><span class="pre">QtlDataset</span></code>: a genotype handle plus per-region phenotype and covariate data, reused by every method downstream.)</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_dataset/expected/qtl_dataset.rds</span></code></strong> (the assembled <code class="docutils literal notranslate"><span class="pre">QtlDataset</span></code>: a genotype handle plus per-region phenotype and covariate data, reused by every method downstream.)</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>S4 object  &lt;QtlDataset&gt;
 $ keepIndel: logical [1:1] TRUE
@@ -802,10 +802,10 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb qtl_dataset_construct+susie_twas \
     --name protocol_example --cwd output_uni \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
-    --covFile input/colocboost/example_covariates.tsv \
-    --customized-association-windows input/colocboost/association_windows.bed \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
+    --covFile tests/fixtures/qtl_mini/example_covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     --region-name ENSG00000130538 --transpose-covariates --save-data -j1
 </pre></div>
 </div>
@@ -819,11 +819,11 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mnm \
     --name protocol_example --cwd output_mnm \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
-    --covFile input/colocboost/example_covariates.tsv \
-    --customized-association-windows input/colocboost/association_windows.bed \
-    --fine-mapping-meta input/colocboost/fine_mapping_meta.tsv \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
+    --covFile tests/fixtures/qtl_mini/example_covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
+    --fine-mapping-meta tests/fixtures/qtl_mini/fine_mapping_meta.tsv \
     --transpose-covariates --save-data -j1
 </pre></div>
 </div>
@@ -842,10 +842,10 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb susie_twas \
     --name protocol_example \
     --cwd output_10peaks \
-    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
-    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
-    --covFile input/covariate/protocol_example.covariates.tsv \
-    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/pheno_manifest.tsv \
+    --covFile tests/fixtures/covariate_hidden_factor/covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     -j1
 </pre></div>
 </div>
@@ -860,10 +860,10 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mnm \
     --name protocol_example \
     --cwd output_10peaks \
-    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
-    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
-    --covFile input/covariate/protocol_example.covariates.tsv \
-    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/pheno_manifest.tsv \
+    --covFile tests/fixtures/covariate_hidden_factor/covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     --fine-mapping-meta output_10peaks/fine_mapping_meta.tsv \
     -j1
 </pre></div>
@@ -880,10 +880,10 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mnm \
     --name protocol_example --cwd output_mnm3 \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
-    --covFile input/colocboost/example_covariates.tsv \
-    --customized-association-windows input/colocboost/association_windows.bed \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
+    --covFile tests/fixtures/qtl_mini/example_covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     --save-data -j1
 </pre></div>
 </div>
@@ -898,13 +898,13 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mnm_genes \
     --name protocol_example --cwd output_mnmgenes \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
-    --covFile input/colocboost/example_covariates.tsv \
-    --customized-association-windows input/colocboost/association_windows.bed \
-    --pheno_id_map_file input/colocboost/pheno_id_map.tsv \
-    --fine_mapping_meta input/colocboost/fine_mapping_meta.tsv \
-    --keep-samples input/colocboost/keep_samples.txt \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
+    --covFile tests/fixtures/qtl_mini/example_covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
+    --pheno_id_map_file tests/fixtures/qtl_mini/pheno_id_map.tsv \
+    --fine_mapping_meta tests/fixtures/qtl_mini/fine_mapping_meta.tsv \
+    --keep-samples tests/fixtures/qtl_mini/keep_samples.txt \
     --save-data -j1
 </pre></div>
 </div>
@@ -919,10 +919,10 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb fsusie \
     --name protocol_example --cwd output/fsusie \
-    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
-    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
-    --covFile input/covariate/protocol_example.covariates.tsv \
-    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/pheno_manifest.tsv \
+    --covFile tests/fixtures/covariate_hidden_factor/covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     --cis-window 0 --max-cv-variants 5000 --save-data -j1
 </pre></div>
 </div>
@@ -937,10 +937,10 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mvfsusie \
     --name protocol_example --cwd output/mvfsusie \
-    --genoFile input/genotype/protocol_example.genotype.chr22.bed \
-    --phenoFile input/phenotype/protocol_example.pheno_manifest.tsv \
-    --covFile input/covariate/protocol_example.covariates.tsv \
-    --customized-association-windows input/finemapping/protocol_example.association_windows.bed \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/pheno_manifest.tsv \
+    --covFile tests/fixtures/covariate_hidden_factor/covariates.tsv \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     --save-data -j1
 </pre></div>
 </div>
@@ -1090,7 +1090,7 @@ Sections
                         contexts/genes at analysis time.  Manifest schema
                         (qtl_dataset_construct.R): columns ID, path, cond and an
                         optional cov_path; extra columns (e.g. #chr/start/end)
-                        are ignored. The toy MWE pheno_manifest_multicontext.tsv
+                        are ignored. The toy MWE protocol_example.pheno_manifest_context.tsv
                         already matches -- a single-context analysis just points
                         at a one-`cond` manifest (or selects the context
                         downstream). QTLtools-format covariate TSVs (rows =
@@ -1325,7 +1325,7 @@ skip_analysis_pip_cutoff = [f"'{y}'={x}" for x,y in zip(skip_analysis_pip_cutoff
 #
 # Manifest schema (qtl_dataset_construct.R): columns ID, path, cond and an
 # optional cov_path; extra columns (e.g. #chr/start/end) are ignored. The toy
-# MWE pheno_manifest_multicontext.tsv already matches -- a single-context
+# MWE protocol_example.pheno_manifest_context.tsv already matches -- a single-context
 # analysis just points at a one-`cond` manifest (or selects the context
 # downstream). QTLtools-format covariate TSVs (rows = covariates) need
 # --transpose-covariates.
@@ -1713,7 +1713,7 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
 <tr class="row-even"><td><p>mnm</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">--phenotype-manifest</span> <span class="pre">missing</span> <span class="pre">required</span> <span class="pre">column(s):</span> <span class="pre">cond</span></code></p></td>
 <td><p>Single-context manifest used</p></td>
-<td><p>Use the multi-context manifest (<code class="docutils literal notranslate"><span class="pre">pheno_manifest_multicontext.tsv</span></code>).</p></td>
+<td><p>Use the multi-context manifest (<code class="docutils literal notranslate"><span class="pre">protocol_example.pheno_manifest_context.tsv</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p>both</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">shared</span> <span class="pre">samples</span> <span class="pre">between</span> <span class="pre">phenotype</span> <span class="pre">and</span> <span class="pre">phenotype-covariate</span></code></p></td>

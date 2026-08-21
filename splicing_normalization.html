@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -654,7 +654,7 @@ testing.</p>
 <h2>Minimal Working Example<a class="headerlink" href="#minimal-working-example" title="Link to this heading">#</a></h2>
 <section id="build-the-junction-list">
 <h3>Build the junction list<a class="headerlink" href="#build-the-junction-list" title="Link to this heading">#</a></h3>
-<p>RNA-seq sample IDs differ from the WGS sample IDs, so the joint-call sample lookup table is first subset to the RNA-seq samples used in the sQTL analysis, matching the sample set used elsewhere in the protocol. The table pairs each sample ID with its participant ID. Example <code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.rnaseq.sample_participant_lookup.txt</span></code>, 2 columns and 61 rows:</p>
+<p>RNA-seq sample IDs differ from the WGS sample IDs, so the joint-call sample lookup table is first subset to the RNA-seq samples used in the sQTL analysis, matching the sample set used elsewhere in the protocol. The table pairs each sample ID with its participant ID. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.sample_participant_lookup.txt</span></code>, 2 columns and 61 rows:</p>
 <p><code class="docutils literal notranslate"><span class="pre">Junc_list</span></code> globs <code class="docutils literal notranslate"><span class="pre">--junc-path</span></code> for per-sample <code class="docutils literal notranslate"><span class="pre">*.junc</span></code> files, resolves them to absolute paths and drops the <code class="docutils literal notranslate"><span class="pre">all</span></code> entry, leaving one list file. No directory of <code class="docutils literal notranslate"><span class="pre">.junc</span></code> files ships here, so <code class="docutils literal notranslate"><span class="pre">--junc-path</span></code> is a placeholder.</p>
 <p><strong>Timing</strong>: TBD (on toy dataset)</p>
 <div class="cell docutils container">
@@ -677,7 +677,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb Jointcall_samples \
     --cwd output/splicing \
-    --sample-table input/rnaseq/protocol_example.rnaseq.sample_participant_lookup.txt \
+    --sample-table tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.sample_participant_lookup.txt \
     --junc-list output/splicing/leafcutter2/protocol_example_intron_usage_perind.junc \
     --leafcutter-version leafcutter2
 </pre></div>
@@ -694,7 +694,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
     --cwd output/splicing \
-    --ratios input/rnaseq/protocol_example.leafcutter.intron_usage_perind.counts.gz \
+    --ratios ../../output_test/leafcutter/normalize/protocol_example.leafcutter.intron_usage_perind.counts.gz \
     --mean_impute 
 </pre></div>
 </div>
@@ -709,7 +709,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb psichomics_norm \
     --cwd output/splicing \
-    --ratios input/rnaseq/protocol_example.psichomics.psi_raw_data.tsv 
+    --ratios ../../output_test/leafcutter/normalize/protocol_example.psichomics.psi_raw_data.tsv 
 </pre></div>
 </div>
 </div>
@@ -763,7 +763,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb leafcutter_qqnorm \
     --cwd output/splicing \
-    --qced-data input/rnaseq/protocol_example.leafcutter.intron_usage_perind.counts.gz_raw_data.txt \
+    --qced-data ../../output_test/leafcutter/normalize/protocol_example.leafcutter.intron_usage_perind.counts.gz_raw_data.txt \
     --container oras://ghcr.io/cumc/leafcutter_apptainer:latest
 </pre></div>
 </div>

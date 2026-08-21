@@ -218,10 +218,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -678,7 +678,7 @@ python<span class="w"> </span>model_training_model5_only.py<span class="w"> </sp
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">R</span><span class="p">:</span>
     <span class="n">suppressPackageStartupMessages</span><span class="p">(</span><span class="n">library</span><span class="p">(</span><span class="n">vroom</span><span class="p">))</span>
-    <span class="n">results</span> <span class="o">&lt;-</span> <span class="n">vroom</span><span class="p">(</span><span class="s2">"output/xqtl_modifier_score/protocol_example/model_results/predictions_parquet_catboost/predictions_weighted_model_chr2.tsv"</span><span class="p">,</span> <span class="n">show_col_types</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">&lt;-</span> <span class="n">vroom</span><span class="p">(</span><span class="s2">"tests/fixtures/ems_training/expected/predictions_weighted_model_chr2.tsv"</span><span class="p">,</span> <span class="n">show_col_types</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">)</span>
     <span class="n">s</span> <span class="o">&lt;-</span> <span class="n">results</span><span class="err">$</span><span class="n">standard_subset_weighted_pred_prob</span>
     <span class="n">cat</span><span class="p">(</span><span class="s2">"SCORE DISTRIBUTION ANALYSIS</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span> <span class="n">cat</span><span class="p">(</span><span class="n">strrep</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span>
     <span class="n">cat</span><span class="p">(</span><span class="s2">"Total variants analyzed:"</span><span class="p">,</span> <span class="n">length</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">)</span>
@@ -724,7 +724,7 @@ python<span class="w"> </span>model_training_model5_only.py<span class="w"> </sp
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">R</span><span class="p">:</span>
     <span class="n">suppressPackageStartupMessages</span><span class="p">(</span><span class="n">library</span><span class="p">(</span><span class="n">vroom</span><span class="p">))</span>
-    <span class="n">results</span> <span class="o">&lt;-</span> <span class="n">vroom</span><span class="p">(</span><span class="s2">"output/xqtl_modifier_score/protocol_example/model_results/predictions_parquet_catboost/predictions_weighted_model_chr2.tsv"</span><span class="p">,</span> <span class="n">show_col_types</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">&lt;-</span> <span class="n">vroom</span><span class="p">(</span><span class="s2">"tests/fixtures/ems_training/expected/predictions_weighted_model_chr2.tsv"</span><span class="p">,</span> <span class="n">show_col_types</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">)</span>
     <span class="n">hp</span> <span class="o">&lt;-</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="err">$</span><span class="n">standard_subset_weighted_pred_prob</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">,</span> <span class="p">]</span>
     <span class="n">hp</span> <span class="o">&lt;-</span> <span class="n">hp</span><span class="p">[</span><span class="n">order</span><span class="p">(</span><span class="o">-</span><span class="n">hp</span><span class="err">$</span><span class="n">standard_subset_weighted_pred_prob</span><span class="p">),</span> <span class="p">]</span>
     <span class="n">cat</span><span class="p">(</span><span class="s2">"HIGH-PRIORITY VARIANTS (Score &gt;0.8)</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span> <span class="n">cat</span><span class="p">(</span><span class="n">strrep</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span>
@@ -771,7 +771,7 @@ python<span class="w"> </span>model_training_model5_only.py<span class="w"> </sp
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Model performance on the held-out test set (written by [train] as summary JSON).</span>
 <span class="n">R</span><span class="p">:</span>
     <span class="n">suppressPackageStartupMessages</span><span class="p">(</span><span class="n">library</span><span class="p">(</span><span class="n">jsonlite</span><span class="p">))</span>
-    <span class="n">summ</span> <span class="o">&lt;-</span> <span class="n">fromJSON</span><span class="p">(</span><span class="s2">"output/xqtl_modifier_score/protocol_example/model_results/model_5_summary_chr_chr2_NPR_1.json"</span><span class="p">)</span>
+    <span class="n">summ</span> <span class="o">&lt;-</span> <span class="n">fromJSON</span><span class="p">(</span><span class="s2">"tests/fixtures/ems_training/expected/model_5_summary_chr_chr2_NPR_1.json"</span><span class="p">)</span>
     <span class="n">m</span> <span class="o">&lt;-</span> <span class="n">summ</span><span class="err">$</span><span class="n">CatBoost</span><span class="err">$</span><span class="n">standard_subset_weighted</span>
     <span class="n">cat</span><span class="p">(</span><span class="s2">"MODEL PERFORMANCE ON TEST SET</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span> <span class="n">cat</span><span class="p">(</span><span class="n">strrep</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span>
     <span class="n">cat</span><span class="p">(</span><span class="n">sprintf</span><span class="p">(</span><span class="s2">"Average Precision (AP): </span><span class="si">%.4f</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">m</span><span class="err">$</span><span class="n">AP_test</span><span class="p">))</span>

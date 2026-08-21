@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -592,15 +592,15 @@
 <tbody>
 <tr class="row-even"><td><p>Produce a QC-passed, chromosome-partitioned PLINK dataset</p></td>
 <td><p>1 → 2 → 3 → 4</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">input/genotype/protocol_example.genotype.chr22.vcf.gz</span></code><br><code class="docutils literal notranslate"><span class="pre">input/reference_data/00-All.add_chr.variants.gz</span></code><br><code class="docutils literal notranslate"><span class="pre">input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/vcf_qc/protocol_example.genotype.chr22.vcf.gz</span></code><br><code class="docutils literal notranslate"><span class="pre">input/reference_data/00-All.add_chr.variants.gz</span></code><br><code class="docutils literal notranslate"><span class="pre">input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Match samples and estimate PCA in unrelated individuals</p></td>
 <td><p>1 → 2 → 3 → 4 → 5 → 6 → 7 → 8</p></td>
-<td><p>Basic-route inputs plus <code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.rnaseq.bed.gz</span></code></p></td>
+<td><p>Basic-route inputs plus <code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>Retain related individuals by PCA projection</p></td>
 <td><p>1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12</p></td>
-<td><p>Standard-PCA inputs plus <code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.pca_pheno.txt</span></code></p></td>
+<td><p>Standard-PCA inputs plus <code class="docutils literal notranslate"><span class="pre">tests/fixtures/pca/protocol_example.pca_pheno.txt</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -612,9 +612,9 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb qc \
-    --genoFile input/genotype/protocol_example.genotype.chr22.vcf.gz \
-    --dbsnp-variants input/reference_data/00-All.add_chr.variants.gz \
-    --reference-genome input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta \
+    --genoFile tests/fixtures/vcf_qc/protocol_example.genotype.chr22.vcf.gz \
+    --dbsnp-variants &lt;path/to/00-All.add_chr.variants.gz&gt; \
+    --reference-genome &lt;path/to/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta&gt; \
     --cwd output/vcf_qc \
     --skip-vcf-header-filtering True
 </pre></div>
@@ -683,7 +683,7 @@ sos run pipeline/genotype_formatting.ipynb merge_plink \
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
     --cwd output/gwas_qc/genotype \
     --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.fam \
-    --phenoFile input/rnaseq/protocol_example.rnaseq.bed.gz
+    --phenoFile tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz
 </pre></div>
 </div>
 </div>
@@ -756,7 +756,7 @@ sos run pipeline/genotype_formatting.ipynb merge_plink \
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/PCA.ipynb project_samples \
     --cwd output/pca_uf \
     --genoFile output/pca_related/protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed \
-    --phenoFile input/covariate/protocol_example.pca_pheno.txt \
+    --phenoFile tests/fixtures/pca/protocol_example.pca_pheno.txt \
     --pca-model output/pca_uf/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.rds \
     --label-col race --pop-col race --name protocol_example --maha-k 2
 </pre></div>

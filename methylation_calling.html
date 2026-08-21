@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -712,7 +712,7 @@
 </pre></div>
 </div>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{sample}.sample_qcs.sesame.tsv</span></code> - per-sample QC metrics. Example <code class="docutils literal notranslate"><span class="pre">output/methylation/protocol_example.methylation.sample_sheet_int.sample_qcs.sesame.tsv</span></code>, 14 rows:</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/{sample}.sample_qcs.sesame.tsv</span></code> - per-sample QC metrics. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/methylation_calling/expected/protocol_example.methylation.sample_sheet_int.sample_qcs.sesame.tsv</span></code>, 14 rows:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">id</span>  <span class="n">num_dtna</span>  <span class="n">frac_dtna</span>  <span class="n">num_dt</span>  <span class="n">frac_dt</span>  <span class="n">num_dt_mk</span>
 <span class="mi">200783410067</span><span class="n">_R04C0</span>  <span class="mi">0</span>  <span class="mi">0</span>  <span class="mi">852978</span>  <span class="mf">0.984334483868846</span>  <span class="mi">852976</span>
 <span class="mi">200783410067</span><span class="n">_R05C0</span>  <span class="mi">0</span>  <span class="mi">0</span>  <span class="mi">852085</span>  <span class="mf">0.98330396409683</span>  <span class="mi">852082</span>
@@ -735,12 +735,14 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/methylation_calling.ipynb sesame \
-    --sample-sheet input/methylation/protocol_example.methylation.sample_sheet.csv \
+    --sample-sheet output_rerun/methylation/protocol_example.methylation.sample_sheet.csv \
     --container containers/methylation.sif
 
 sos run pipeline/methylation_calling.ipynb sesame \
-    --sample-sheet input/methylation/protocol_example.methylation.sample_sheet_int.csv \
+    --sample-sheet tests/fixtures/methylation_calling/protocol_example.methylation.sample_sheet_int.csv \
     --container containers/methylation.sif --sample_sheet_header_rows 0
+
+The example IDATs are not shipped in this repository: the test stages them from the Bioconductor `minfiData` package. `tests/fixtures/methylation_calling/` contains only the sample sheet and the expected chr22 output.
 </pre></div>
 </div>
 </div>
@@ -753,7 +755,7 @@ sos run pipeline/methylation_calling.ipynb sesame \
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/methylation_calling.ipynb minfi \
-    --sample-sheet input/methylation_minfi/protocol_example.methylation.sample_sheet.csv \
+    --sample-sheet output_rerun/methylation/protocol_example.methylation.sample_sheet.csv \
     --container containers/methylation.sif
 </pre></div>
 </div>

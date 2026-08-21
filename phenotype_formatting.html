@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -572,7 +572,7 @@
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>: the molecular phenotype data, required by every workflow. A tabix-indexed UCSC <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> for the BED workflows, a <code class="docutils literal notranslate"><span class="pre">gct.gz</span></code> for the GCT ones, and a list of BAM paths for <code class="docutils literal notranslate"><span class="pre">bam_subsetting</span></code>. Example <code class="docutils literal notranslate"><span class="pre">output/rnaseq/protocol_example.rnaseq.bed.bed.gz</span></code>:</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>: the molecular phenotype data, required by every workflow. A tabix-indexed UCSC <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> for the BED workflows, a <code class="docutils literal notranslate"><span class="pre">gct.gz</span></code> for the GCT ones, and a list of BAM paths for <code class="docutils literal notranslate"><span class="pre">bam_subsetting</span></code>. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr   start     end       ID               SAMPLE_001         SAMPLE_002</span>
 <span class="n">chr22</span>  <span class="mi">10939387</span>  <span class="mi">10961337</span>  <span class="n">ENSG00000283047</span>  <span class="mf">37.0768403309204</span>   <span class="mf">0.0</span>
 </pre></div>
@@ -585,10 +585,10 @@
 </pre></div>
 </div>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--TAD-list</span></code>: the TAD boundary file for <code class="docutils literal notranslate"><span class="pre">phenotype_annotate_by_tad</span></code>, in the same 4-column shape. Example <code class="docutils literal notranslate"><span class="pre">input/reference_data/TAD/TADB_enhanced_cis.bed</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--TAD-list</span></code>: the TAD boundary file for <code class="docutils literal notranslate"><span class="pre">phenotype_annotate_by_tad</span></code>, in the same 4-column shape. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/generalized_TADB/expected/TADB_enhanced_cis.bed</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--phenotype-per-tad</span></code>: the minimum number of features a TAD must contain to be kept, <code class="docutils literal notranslate"><span class="pre">2</span></code> by default.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--region</span></code>: coordinates passed through to <code class="docutils literal notranslate"><span class="pre">samtools</span> <span class="pre">view</span></code> by <code class="docutils literal notranslate"><span class="pre">bam_subsetting</span></code>, for example <code class="docutils literal notranslate"><span class="pre">--region</span> <span class="pre">chr21</span> <span class="pre">chr22</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--keep-samples</span></code>: for <code class="docutils literal notranslate"><span class="pre">gct_extract_samples</span></code>, a file listing the sample IDs to retain, one per line. Example <code class="docutils literal notranslate"><span class="pre">input/colocboost/keep_samples.txt</span></code>:</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">--keep-samples</span></code>: for <code class="docutils literal notranslate"><span class="pre">gct_extract_samples</span></code>, a file listing the sample IDs to retain, one per line. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/keep_samples.txt</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SAMPLE_001</span>
 <span class="n">SAMPLE_002</span>
 <span class="n">SAMPLE_003</span>
@@ -626,7 +626,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_formatting.ipynb phenotype_by_chrom \
     --cwd output/phenotype_uf \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
+    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
     --name protocol_example \
     --chrom chr22
 </pre></div>
@@ -642,7 +642,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_formatting.ipynb phenotype_by_chrom_gct \
     --cwd output/phenotype_gct \
-    --phenoFile input/rnaseq/protocol_example.rnaseq.gene_tpm.gct.gz \
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/protocol_example.rnaseq.gene_tpm.gct.gz \
     --chrom chr21 chr22
 </pre></div>
 </div>
@@ -657,8 +657,8 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_formatting.ipynb phenotype_by_region \
     --cwd output/phenotype_by_region \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
-    --region-list input/reference_data/TAD/protocol_example_protein.enhanced_cis_chr22.bed
+    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
+    --region-list output/phenotype/phenotype_by_chrom_for_cis/protocol_example_protein.enhanced_cis_chr22.bed
 </pre></div>
 </div>
 </div>
@@ -672,8 +672,8 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_formatting.ipynb phenotype_annotate_by_tad \
     --cwd output/phenotype_by_region \
-    --phenoFile output/rnaseq/protocol_example.rnaseq.bed.bed.gz \
-    --TAD-list input/reference_data/TAD/TADB_enhanced_cis.bed \
+    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
+    --TAD-list tests/fixtures/generalized_TADB/expected/TADB_enhanced_cis.bed \
     --phenotype-per-tad 2
 </pre></div>
 </div>
@@ -688,8 +688,8 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_formatting.ipynb gct_extract_samples \
     --cwd output/phenotype_gct \
-    --phenoFile input/rnaseq/protocol_example.rnaseq.gene_tpm.gct.gz \
-    --keep-samples input/colocboost/keep_samples.txt
+    --phenoFile output/phenotype/phenotype_by_chrom_for_cis/protocol_example.rnaseq.gene_tpm.gct.gz \
+    --keep-samples tests/fixtures/phenotype_formatting/keep_samples.txt
 </pre></div>
 </div>
 </div>

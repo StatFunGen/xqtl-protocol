@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -586,7 +586,7 @@ any QTL scan – the association modules read the matrices this module writes.</
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">pseudobulk_counts</span></code> – aggregate single-nuclei counts into a pseudobulk matrix:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--seurat-files</span> <span class="pre">input/snrnaseq/protocol_example.snrnaseq.seurat_MIC.rds</span></code>: the Seurat objects to aggregate, each carrying <code class="docutils literal notranslate"><span class="pre">celltype</span></code> and <code class="docutils literal notranslate"><span class="pre">sample</span></code> in
+<li><p><code class="docutils literal notranslate"><span class="pre">--seurat-files</span> <span class="pre">tests/fixtures/pseudobulk_preprocessing/protocol_example.snrnaseq.seurat_MIC.rds</span></code>: the Seurat objects to aggregate, each carrying <code class="docutils literal notranslate"><span class="pre">celltype</span></code> and <code class="docutils literal notranslate"><span class="pre">sample</span></code> in
 <code class="docutils literal notranslate"><span class="pre">meta.data</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> (required): where the pseudobulk matrix is written.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--celltype</span></code> (default <code class="docutils literal notranslate"><span class="pre">MIC</span></code>): the cell type to subset to. Objects lacking it are skipped.</p></li>
@@ -594,7 +594,7 @@ any QTL scan – the association modules read the matrices this module writes.</
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">sampleid_mapping</span></code> – rename matrix columns to study sample IDs:</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">--map-file</span> <span class="pre">input/snrnaseq/protocol_example.snrnaseq.id_map.csv</span></code> (required): two-column map from nuclei-level
+<li><p><code class="docutils literal notranslate"><span class="pre">--map-file</span> <span class="pre">tests/fixtures/pseudobulk_preprocessing/protocol_example.snrnaseq.id_map.csv</span></code> (required): two-column map from nuclei-level
 IDs to study sample IDs.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">individualID</span><span class="p">,</span><span class="n">sampleid</span>
 <span class="n">DONOR_001</span><span class="p">,</span><span class="n">SAMPLE_001</span>
@@ -602,8 +602,8 @@ IDs to study sample IDs.</p>
 </pre></div>
 </div>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--meta-files</span> <span class="pre">input/snrnaseq/protocol_example.snrnaseq.metadata_MIC.csv</span></code> and
-<code class="docutils literal notranslate"><span class="pre">--count-files</span> <span class="pre">input/snrnaseq/protocol_example.snrnaseq.pseudobulk_counts_MIC.csv.gz</span></code>: the
+<li><p><code class="docutils literal notranslate"><span class="pre">--meta-files</span> <span class="pre">tests/fixtures/pseudobulk_preprocessing/protocol_example.snrnaseq.metadata_MIC.csv</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--count-files</span> <span class="pre">tests/fixtures/pseudobulk_preprocessing/protocol_example.snrnaseq.pseudobulk_counts_MIC.csv.gz</span></code>: the
 metadata and count matrices to relabel. The count matrix is genes by samples:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">,</span><span class="n">SAMPLE_001</span><span class="p">,</span><span class="n">SAMPLE_002</span><span class="p">,</span><span class="n">SAMPLE_003</span><span class="p">,</span><span class="n">SAMPLE_004</span><span class="p">,</span><span class="n">SAMPLE_005</span><span class="p">,</span><span class="n">SAMPLE_006</span><span class="p">,</span><span class="n">SAMPLE_007</span><span class="p">,</span><span class="n">SAMPLE_008</span>
 <span class="n">ENSG00000000001</span><span class="p">,</span><span class="mi">299</span><span class="p">,</span><span class="mi">172</span><span class="p">,</span><span class="mi">139</span><span class="p">,</span><span class="mi">269</span><span class="p">,</span><span class="mi">742</span><span class="p">,</span><span class="mi">166</span><span class="p">,</span><span class="mi">696</span><span class="p">,</span><span class="mi">820</span><span class="p">,</span><span class="mi">428</span><span class="p">,</span><span class="mi">811</span><span class="p">,</span><span class="mi">188</span><span class="p">,</span><span class="mi">593</span><span class="p">,</span><span class="mi">131</span><span class="p">,</span><span class="mi">270</span><span class="p">,</span><span class="mi">873</span><span class="p">,</span><span class="mi">49</span><span class="p">,</span><span class="mi">1244</span><span class="p">,</span><span class="mi">259</span><span class="p">,</span>
@@ -616,7 +616,7 @@ metadata and count matrices to relabel. The count matrix is genes by samples:</p
 <p><code class="docutils literal notranslate"><span class="pre">pseudobulk_qc</span></code> – filter, optionally batch-correct and normalise:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--meta-files</span></code> and <code class="docutils literal notranslate"><span class="pre">--count-files</span></code>: the pseudobulk matrices and their metadata.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> (required) and <code class="docutils literal notranslate"><span class="pre">--tech-vars-file</span> <span class="pre">input/snrnaseq/protocol_example.snrnaseq.tech_vars_MIC.csv</span></code>
+<li><p><code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> (required) and <code class="docutils literal notranslate"><span class="pre">--tech-vars-file</span> <span class="pre">tests/fixtures/pseudobulk_preprocessing/protocol_example.snrnaseq.tech_vars_MIC.csv</span></code>
 (required): output location, and the technical
 covariates to regress out.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--min-count</span></code> (default <code class="docutils literal notranslate"><span class="pre">5</span></code>), <code class="docutils literal notranslate"><span class="pre">--min-total-count</span></code> (default <code class="docutils literal notranslate"><span class="pre">15</span></code>), <code class="docutils literal notranslate"><span class="pre">--min-prop</span></code> (default <code class="docutils literal notranslate"><span class="pre">0.1</span></code>):
@@ -630,7 +630,7 @@ features carried forward.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">phenotype_formatting</span></code> – reshape residuals into the phenotype format (snATAC-seq only):</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--residual-files</span> <span class="pre">input/snrnaseq/atac_residuals/MIC/protocol_example.snrnaseq.MIC_residuals.txt</span></code>:
+<li><p><code class="docutils literal notranslate"><span class="pre">--residual-files</span> <span class="pre">tests/fixtures/pseudobulk_preprocessing/protocol_example.snrnaseq.MIC_residuals.txt</span></code>:
 the residualised matrices to reformat.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--gtf-file</span> <span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf</span></code>
 (required): gene model supplying the coordinates.</p></li>
@@ -685,7 +685,7 @@ matrix per cell type, which <code class="docutils literal notranslate"><span cla
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing.ipynb</span><span class="w"> </span><span class="n">pseudobulk_counts</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">seurat</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.seurat_MIC.rds</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">seurat</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.seurat_MIC.rds</span><span class="w"> </span>\
 <span class="w">    </span><span class="o">--</span><span class="n">celltype</span><span class="w"> </span><span class="n">MIC</span><span class="w"> </span>\
 <span class="w">    </span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">dir</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>
 </pre></div>
@@ -700,8 +700,8 @@ matrix per cell type, which <code class="docutils literal notranslate"><span cla
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing.ipynb</span><span class="w"> </span><span class="n">sampleid_mapping</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">map</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.id_map.csv</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.metadata_MIC.csv</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">map</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.id_map.csv</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.metadata_MIC.csv</span><span class="w"> </span>\
 <span class="w">    </span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">dir</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>
 </pre></div>
 </div>
@@ -715,9 +715,9 @@ matrix per cell type, which <code class="docutils literal notranslate"><span cla
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing.ipynb</span><span class="w"> </span><span class="n">pseudobulk_qc</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.metadata_MIC.csv</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">count</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.pseudobulk_counts_MIC.csv.gz</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">tech</span><span class="o">-</span><span class="n">vars</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.tech_vars_MIC.csv</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.metadata_MIC.csv</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">count</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.pseudobulk_counts_MIC.csv.gz</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">tech</span><span class="o">-</span><span class="n">vars</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.tech_vars_MIC.csv</span><span class="w"> </span>\
 <span class="w">    </span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">dir</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span>
 </pre></div>
 </div>
@@ -731,9 +731,9 @@ matrix per cell type, which <code class="docutils literal notranslate"><span cla
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-r notranslate"><div class="highlight"><pre><span></span><span class="n">sos</span><span class="w"> </span><span class="n">run</span><span class="w"> </span><span class="n">pipeline</span><span class="o">/</span><span class="n">pseudobulk_preprocessing.ipynb</span><span class="w"> </span><span class="n">phenotype_formatting</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">residual</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">snrnaseq</span><span class="o">/</span><span class="n">atac_residuals</span><span class="o">/</span><span class="n">MIC</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.MIC_residuals.txt</span><span class="w"> </span>\
+<span class="w">    </span><span class="o">--</span><span class="n">residual</span><span class="o">-</span><span class="n">files</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">pseudobulk_preprocessing</span><span class="o">/</span><span class="n">protocol_example.snrnaseq.MIC_residuals.txt</span><span class="w"> </span>\
 <span class="w">    </span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">dir</span><span class="w"> </span><span class="n">output</span><span class="o">/</span><span class="n">snrna_seq</span><span class="w"> </span>\
-<span class="w">    </span><span class="o">--</span><span class="n">gtf</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">input</span><span class="o">/</span><span class="n">reference_data</span><span class="o">/</span><span class="n">Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf</span>
+<span class="w">    </span><span class="o">--</span><span class="n">gtf</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">tests</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">gene_annotation</span><span class="o">/</span><span class="n">Homo_sapiens.GRCh38.103.collapse_only.gene.chr22.gtf.gz</span>
 </pre></div>
 </div>
 </div>

@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="current nav bd-sidenav">
@@ -671,7 +671,7 @@ form appended to the gene model.</p></li>
 <li><p>the SUPPA and TAD annotations – from <code class="docutils literal notranslate"><span class="pre">SUPPA_annotation_1..2</span></code> and <code class="docutils literal notranslate"><span class="pre">psi_hg38_annotation</span></code>.</p></li>
 </ul>
 <p>All paths are relative to <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">output/reference_data/ERCC92.gtf</span></code>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/reference_data_preparation/ERCC92.gtf</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ERCC</span><span class="o">-</span><span class="mi">00002</span>	<span class="n">ERCC</span>	<span class="n">exon</span>	<span class="mi">1</span>	<span class="mi">1061</span>	<span class="mf">0.000000</span>	<span class="o">+</span>	<span class="o">.</span>	<span class="n">gene_id</span> <span class="s2">"ERCC-00002"</span><span class="p">;</span> <span class="n">transcript_id</span> <span class="s2">"DQ459430"</span><span class="p">;</span>
 <span class="n">ERCC</span><span class="o">-</span><span class="mi">00003</span>	<span class="n">ERCC</span>	<span class="n">exon</span>	<span class="mi">1</span>	<span class="mi">1023</span>	<span class="mf">0.000000</span>	<span class="o">+</span>	<span class="o">.</span>	<span class="n">gene_id</span> <span class="s2">"ERCC-00003"</span><span class="p">;</span> <span class="n">transcript_id</span> <span class="s2">"DQ516784"</span><span class="p">;</span>
 </pre></div>
@@ -783,7 +783,7 @@ one another, so run only the ones the analysis needs.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb gene_annotation \
     --cwd output/reference_data \
-    --ercc-gtf output/reference_data/ERCC92.gtf \
+    --ercc-gtf tests/fixtures/reference_data_preparation/ERCC92.gtf \
     --hg-gtf output/reference_data/Homo_sapiens.GRCh38.103.chr.gtf \
     --hg-reference output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta \
     --stranded 
@@ -877,7 +877,7 @@ module. Run it there against <code class="docutils literal notranslate"><span cl
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb ercc_gtf \
-    --ercc-gtf output/reference_data/ERCC92.gtf \
+    --ercc-gtf tests/fixtures/reference_data_preparation/ERCC92.gtf \
     --cwd output/reference_data
 </pre></div>
 </div>
@@ -891,7 +891,7 @@ module. Run it there against <code class="docutils literal notranslate"><span cl
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb psi_hg38_annotation \
-    --hg-gtf input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf \
+    --hg-gtf tests/fixtures/gene_annotation/Homo_sapiens.GRCh38.103.collapse_only.gene.chr22.gtf.gz \
     --hgrc-db &lt;path&gt;/hgrc_db \
     --cwd output/reference_data
 </pre></div>
@@ -906,7 +906,7 @@ module. Run it there against <code class="docutils literal notranslate"><span cl
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb Tad_annotateion \
-    --TAD-list input/reference_data/TAD/&lt;tad_list&gt; \
+    --TAD-list output/reference_data/tad_list \
     --region-list &lt;path&gt;/region_list.txt \
     --TAD-genotype &lt;path&gt;/tad_genotype \
     --cwd output/reference_data

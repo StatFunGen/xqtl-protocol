@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -597,12 +597,12 @@ phenotypes, use <code class="docutils literal notranslate"><span class="pre">mnm
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <p>GWAS inputs – supply either form:</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">--gwas-meta</span> <span class="pre">input/rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv</span></code>  TSV with columns <code class="docutils literal notranslate"><span class="pre">study_id</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code> (relative to the meta file, or absolute) and an optional <code class="docutils literal notranslate"><span class="pre">column_mapping</span></code> naming a per-study YAML. One row per study.</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">--gwas-meta</span> <span class="pre">tests/fixtures/rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv</span></code>  TSV with columns <code class="docutils literal notranslate"><span class="pre">study_id</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code> (relative to the meta file, or absolute) and an optional <code class="docutils literal notranslate"><span class="pre">column_mapping</span></code> naming a per-study YAML. One row per study.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">study_id</span>	<span class="n">path</span>	<span class="n">column_mapping</span>
 <span class="n">AD_Bellenguez_2022</span>	<span class="n">protocol_example</span><span class="o">.</span><span class="n">gwas_sumstats</span><span class="o">.</span><span class="n">chr22</span><span class="o">.</span><span class="n">tsv</span><span class="o">.</span><span class="n">gz</span>	<span class="n">protocol_example</span><span class="o">.</span><span class="n">gwas_column_mapping</span><span class="o">.</span><span class="n">fixed</span><span class="o">.</span><span class="n">yml</span>
 </pre></div>
 </div>
-<p>In this file <code class="docutils literal notranslate"><span class="pre">path</span></code> resolves to <code class="docutils literal notranslate"><span class="pre">input/rss_analysis/protocol_example.gwas_sumstats.chr22.tsv.gz</span></code>
+<p>In this file <code class="docutils literal notranslate"><span class="pre">path</span></code> resolves to <code class="docutils literal notranslate"><span class="pre">tests/fixtures/rss_analysis/protocol_example.gwas_sumstats.chr22.tsv.gz</span></code>
 and <code class="docutils literal notranslate"><span class="pre">column_mapping</span></code> to <code class="docutils literal notranslate"><span class="pre">input/rss_analysis/protocol_example.gwas_column_mapping.fixed.yml</span></code>.</p>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--gwas-tsv-list</span> <span class="pre">S1=path1</span> <span class="pre">...</span></code>: explicit <code class="docutils literal notranslate"><span class="pre">STUDY=PATH</span></code> pairs; no per-study column mapping is possible this way.</p></li>
@@ -616,7 +616,7 @@ and <code class="docutils literal notranslate"><span class="pre">column_mapping<
 <p>LD reference and genome:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">--ld-meta</span></code> (required): LD-reference meta TSV with columns <code class="docutils literal notranslate"><span class="pre">#chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code>, where <code class="docutils literal notranslate"><span class="pre">path</span></code> is a genotype prefix. One LD block per row, or a single row with <code class="docutils literal notranslate"><span class="pre">start=end=0</span></code> for a whole chromosome. The reference must be genotype-backed (PLINK2/PLINK1/GDS/VCF).
-The protocol ships <code class="docutils literal notranslate"><span class="pre">input/ld_reference/protocol_example.ld_meta_file.tsv</span></code>, whose prefixes point
+The protocol ships <code class="docutils literal notranslate"><span class="pre">tests/fixtures/ld_reference/ld_meta_file.tsv</span></code>, whose prefixes point
 into <code class="docutils literal notranslate"><span class="pre">input/ld_reference/chr*/</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr	start	end	path</span>
 <span class="n">chr1</span>	<span class="mi">16103</span>	<span class="mi">2888443</span>	<span class="n">chr1</span><span class="o">/</span><span class="n">protocol_example</span><span class="o">.</span><span class="n">LD</span><span class="o">.</span><span class="n">chr1</span>
@@ -695,9 +695,9 @@ single-effect posterior summaries, and the QC provenance of the variants that we
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/rss_analysis.ipynb \
     generate_manifest+generate_gwas_sumstats+gwas_fine_mapping+gwas_rss_plot \
     --cwd output/rss_analysis --modular-script-dir code/script \
-    --gwas-meta input/rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv \
+    --gwas-meta tests/fixtures/rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv \
     --regions chr22:49355984-50799822 \
-    --ld-meta input/ld_reference/protocol_example.ld_meta_file.tsv
+    --ld-meta tests/fixtures/ld_reference/ld_meta_file.tsv
 </pre></div>
 </div>
 </div>
@@ -711,9 +711,9 @@ single-effect posterior summaries, and the QC provenance of the variants that we
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/rss_analysis.ipynb \
     generate_manifest+generate_gwas_sumstats+gwas_fine_mapping+gwas_rss_plot \
     --cwd output/rss_analysis --modular-script-dir code/script \
-    --gwas-meta input/rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv \
+    --gwas-meta tests/fixtures/rss_analysis/protocol_example.rss_mwe.gwas_meta.tsv \
     --regions chr22:49355984-50799822 \
-    --ld-meta input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --ld-meta tests/fixtures/ld_reference/ld_meta_file.tsv \
     --qc-method slalom --impute --qc-args '{"mafCutoff":0.01}' \
     --min-abs-corr 0.5 --method-args '{"susie":{"L":10}}'
 </pre></div>

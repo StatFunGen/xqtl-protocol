@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -588,7 +588,7 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 <tbody>
 <tr class="row-even"><td><p>Estimate global xQTL–GWAS enrichment</p></td>
 <td><p>1</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">input/susie_enloc_data/protocol_example.enloc.gwas_meta.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">input/susie_enloc_data/protocol_example.enloc.xqtl_meta.tsv</span></code>; fine-mapping objects referenced by those tables</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/susie_enloc/protocol_example.enloc.gwas_meta.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/susie_enloc/protocol_example.enloc.xqtl_meta.tsv</span></code>; fine-mapping objects referenced by those tables</p></td>
 </tr>
 <tr class="row-odd"><td><p>Test pairwise colocalization</p></td>
 <td><p>2</p></td>
@@ -596,7 +596,7 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 </tr>
 <tr class="row-even"><td><p>Run standard TWAS and MR</p></td>
 <td><p>3</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">input/twas/protocol_example.twas.gwas_meta.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">input/twas/protocol_example.twas.xqtl_meta.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">input/ld_reference/protocol_example.ld_meta_file.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">input/twas/protocol_example.twas.LD_blocks.chr22.bed</span></code>; <code class="docutils literal notranslate"><span class="pre">input/twas/protocol_example.twas.data_type_table.txt</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/twas/protocol_example.twas.gwas_meta.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/twas/protocol_example.twas.xqtl_meta.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/ld_reference/ld_meta_file.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/twas/protocol_example.twas.LD_blocks.chr22.bed</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/twas/protocol_example.twas.data_type_table.txt</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Fine-map genes and SNPs jointly with cTWAS</p></td>
 <td><p>4 → 5 → 6</p></td>
@@ -608,7 +608,7 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 </tr>
 <tr class="row-odd"><td><p>Combine PTWAS and fastenloc evidence</p></td>
 <td><p>8</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">input/twas/protocol_example.ptwas.output</span></code>; <code class="docutils literal notranslate"><span class="pre">input/twas/protocol_example.fastenloc.gene.out</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/intact/protocol_example.ptwas.output</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/intact/protocol_example.fastenloc.gene.out</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -621,16 +621,16 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_enloc.ipynb xqtl_gwas_enrichment \
-    --gwas-meta-data input/susie_enloc_data/protocol_example.enloc.gwas_meta.tsv \
-    --xqtl-meta-data input/susie_enloc_data/protocol_example.enloc.xqtl_meta.tsv \
+    --gwas-meta-data tests/fixtures/susie_enloc/protocol_example.enloc.gwas_meta.tsv \
+    --xqtl-meta-data tests/fixtures/susie_enloc/protocol_example.enloc.xqtl_meta.tsv \
     --xqtl-finemapping-obj preset_variants_result susie_result_trimmed \
     --xqtl-varname-obj preset_variants_result variant_names \
     --gwas-finemapping-obj AD_Bellenguez_2022 RSS_QC_RAISS_imputed susie_result_trimmed \
     --gwas-varname-obj  AD_Bellenguez_2022 RSS_QC_RAISS_imputed variant_names \
     --xqtl-region-obj   region_info grange \
-    --qtl-path input/susie_enloc_data \
-    --gwas-path input/susie_enloc_data \
-    --context-meta input/susie_enloc_data/protocol_example.enloc.context_meta.tsv \
+    --qtl-path output/xqtl_gwas_enrichment/susie_enloc_data \
+    --gwas-path output/xqtl_gwas_enrichment/susie_enloc_data \
+    --context-meta tests/fixtures/susie_enloc/protocol_example.enloc.context_meta.tsv \
     --cwd output/xqtl_gwas_enrichment
 </pre></div>
 </div>
@@ -644,17 +644,17 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/SuSiE_enloc.ipynb susie_coloc \
-    --gwas-meta-data input/susie_enloc_data/protocol_example.enloc.gwas_meta.tsv \
-    --xqtl-meta-data input/susie_enloc_data/protocol_example.enloc.xqtl_meta.tsv \
+    --gwas-meta-data tests/fixtures/susie_enloc/protocol_example.enloc.gwas_meta.tsv \
+    --xqtl-meta-data tests/fixtures/susie_enloc/protocol_example.enloc.xqtl_meta.tsv \
     --xqtl-finemapping-obj preset_variants_result susie_result_trimmed \
     --xqtl-varname-obj preset_variants_result variant_names \
     --gwas-finemapping-obj AD_Bellenguez_2022 RSS_QC_RAISS_imputed susie_result_trimmed \
     --gwas-varname-obj  AD_Bellenguez_2022 RSS_QC_RAISS_imputed variant_names \
     --xqtl-region-obj   region_info grange \
-    --qtl-path input/susie_enloc_data \
-    --gwas-path input/susie_enloc_data \
-    --context-meta input/susie_enloc_data/protocol_example.enloc.context_meta.tsv \
-    --ld-meta-file-path input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --qtl-path output/xqtl_gwas_enrichment/susie_enloc_data \
+    --gwas-path output/xqtl_gwas_enrichment/susie_enloc_data \
+    --context-meta tests/fixtures/susie_enloc/protocol_example.enloc.context_meta.tsv \
+    --ld-meta-file-path tests/fixtures/ld_reference/ld_meta_file.tsv \
     --skip-enrich \
     --cwd output/susie_coloc
 </pre></div>
@@ -670,12 +670,12 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/twas_ctwas.ipynb twas \
     --cwd output --name protocol_example \
-    --gwas_meta_data input/twas/protocol_example.twas.gwas_meta.tsv \
-    --xqtl_meta_data input/twas/protocol_example.twas.xqtl_meta.tsv \
-    --ld_meta_data input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --gwas_meta_data tests/fixtures/twas/protocol_example.twas.gwas_meta.tsv \
+    --xqtl_meta_data tests/fixtures/twas/protocol_example.twas.xqtl_meta.tsv \
+    --ld_meta_data tests/fixtures/ld_reference/ld_meta_file.tsv \
     --ld_reference_sample_size 17000 \
-    --regions input/twas/protocol_example.twas.LD_blocks.chr22.bed \
-    --xqtl_type_table input/twas/protocol_example.twas.data_type_table.txt \
+    --regions tests/fixtures/twas/protocol_example.twas.LD_blocks.chr22.bed \
+    --xqtl_type_table tests/fixtures/twas/protocol_example.twas.data_type_table.txt \
     --rsq_pval_cutoff 0.05 --rsq_cutoff 0.01 \
     --region-name chr22_10000000_19000000
 </pre></div>
@@ -692,10 +692,10 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/twas_ctwas.ipynb ctwas \
     --cwd output --name protocol_example \
     --thin 1 --prior_var_structure shared_all \
-    --gwas_meta_data input/twas/protocol_example.twas.gwas_meta.tsv \
-    --xqtl_meta_data input/twas/protocol_example.twas.xqtl_meta.tsv \
-    --ld_meta_data input/ld_reference/protocol_example.ld_meta_file.tsv \
-    --regions input/twas/protocol_example.twas.LD_blocks.chr22.bed \
+    --gwas_meta_data tests/fixtures/twas/protocol_example.twas.gwas_meta.tsv \
+    --xqtl_meta_data tests/fixtures/twas/protocol_example.twas.xqtl_meta.tsv \
+    --ld_meta_data tests/fixtures/ld_reference/ld_meta_file.tsv \
+    --regions tests/fixtures/twas/protocol_example.twas.LD_blocks.chr22.bed \
     --twas_weight_cutoff 0 \
     --region-name chr22_10000000_19000000
 </pre></div>
@@ -713,10 +713,10 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
     --run_param_est --skip_assembly --thin 1 \
     --prior_var_structure shared_all \
     --cwd output --name protocol_example \
-    --gwas_meta_data input/twas/protocol_example.twas.gwas_meta.tsv \
-    --xqtl_meta_data input/twas/protocol_example.twas.xqtl_meta.tsv \
-    --ld_meta_data input/ld_reference/protocol_example.ld_meta_file.tsv \
-    --regions input/twas/protocol_example.twas.LD_blocks.chr22.bed
+    --gwas_meta_data tests/fixtures/twas/protocol_example.twas.gwas_meta.tsv \
+    --xqtl_meta_data tests/fixtures/twas/protocol_example.twas.xqtl_meta.tsv \
+    --ld_meta_data tests/fixtures/ld_reference/ld_meta_file.tsv \
+    --regions tests/fixtures/twas/protocol_example.twas.LD_blocks.chr22.bed
 </pre></div>
 </div>
 </div>
@@ -732,10 +732,10 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
     --run_finemapping --skip_assembly \
     --prior_var_structure shared_all \
     --cwd output --name protocol_example \
-    --gwas_meta_data input/twas/protocol_example.twas.gwas_meta.tsv \
-    --xqtl_meta_data input/twas/protocol_example.twas.xqtl_meta.tsv \
-    --ld_meta_data input/ld_reference/protocol_example.ld_meta_file.tsv \
-    --regions input/twas/protocol_example.twas.LD_blocks.chr22.bed \
+    --gwas_meta_data tests/fixtures/twas/protocol_example.twas.gwas_meta.tsv \
+    --xqtl_meta_data tests/fixtures/twas/protocol_example.twas.xqtl_meta.tsv \
+    --ld_meta_data tests/fixtures/ld_reference/ld_meta_file.tsv \
+    --regions tests/fixtures/twas/protocol_example.twas.LD_blocks.chr22.bed \
     --region-name chr22_10000000_19000000
 </pre></div>
 </div>
@@ -750,12 +750,12 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/twas_ctwas.ipynb quantile_twas \
     --cwd output --name protocol_example \
-    --gwas_meta_data input/twas/protocol_example.twas.gwas_meta.tsv \
-    --xqtl_meta_data input/twas/protocol_example.twas.xqtl_meta.tsv \
-    --ld_meta_data input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --gwas_meta_data tests/fixtures/twas/protocol_example.twas.gwas_meta.tsv \
+    --xqtl_meta_data tests/fixtures/twas/protocol_example.twas.xqtl_meta.tsv \
+    --ld_meta_data tests/fixtures/ld_reference/ld_meta_file.tsv \
     --ld_reference_sample_size 17000 \
-    --regions input/twas/protocol_example.twas.LD_blocks.chr22.bed \
-    --xqtl_type_table input/twas/protocol_example.twas.data_type_table.txt \
+    --regions tests/fixtures/twas/protocol_example.twas.LD_blocks.chr22.bed \
+    --xqtl_type_table tests/fixtures/twas/protocol_example.twas.data_type_table.txt \
     --region-name chr22_10000000_19000000
 </pre></div>
 </div>
@@ -769,8 +769,8 @@ Enrichment, colocalization, standard TWAS, cTWAS, quantile TWAS, and INTACT answ
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/intact.ipynb intact \
-    --fastenloc-file input/twas/protocol_example.fastenloc.gene.out \
-    --ptwas-file input/twas/protocol_example.ptwas.output \
+    --fastenloc-file tests/fixtures/intact/protocol_example.fastenloc.gene.out \
+    --ptwas-file tests/fixtures/intact/protocol_example.ptwas.output \
     --tissue DLPFC \
     --cwd output/intact
 </pre></div>

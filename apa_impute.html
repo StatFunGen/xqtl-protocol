@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -570,7 +570,7 @@
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">--cwd</span></code>: the DaPars working directory, holding one <code class="docutils literal notranslate"><span class="pre">apa_{chr}/</span></code> subdirectory per chromosome with the raw <code class="docutils literal notranslate"><span class="pre">Dapars_result_result_temp.{chr}.txt</span></code> PDUI matrix in it. Genes are rows, samples are columns. Required.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--chrlist</span></code>: the chromosomes to process, one or more values. Required.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--match</span></code>, used by <code class="docutils literal notranslate"><span class="pre">APArename</span></code> only: a two-column table mapping the DaPars project IDs to the sample names to use instead. Example <code class="docutils literal notranslate"><span class="pre">input/covariate/protocol_example.apa_matchtable.txt</span></code>:</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">--match</span></code>, used by <code class="docutils literal notranslate"><span class="pre">APArename</span></code> only: a two-column table mapping the DaPars project IDs to the sample names to use instead. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/apa_impute/protocol_example.apa_matchtable.txt</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ProjID</span>     <span class="n">SampleID</span>
 <span class="n">Sample001</span>  <span class="n">SampleA</span>
 </pre></div>
@@ -618,7 +618,7 @@
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/apa_impute.ipynb APArename \
     --cwd output/apa \
     --chrlist chr22 \
-    --match input/covariate/protocol_example.apa_matchtable.txt
+    --match tests/fixtures/apa_impute/protocol_example.apa_matchtable.txt
 </pre></div>
 </div>
 </div>
@@ -670,7 +670,7 @@ Sections
       --chrlist VAL VAL ... (as type, required)
   APArename_3:
     Workflow Options:
-      --match 'input/covariate/protocol_example.apa_matchtable.txt'
+      --match 'tests/fixtures/apa_impute/protocol_example.apa_matchtable.txt'
   APArename_4:
 </pre></div>
 </div>
@@ -742,7 +742,7 @@ bash: expand= "${ }"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[APArename_3]
-parameter: match = "input/covariate/protocol_example.apa_matchtable.txt" #path
+parameter: match = "tests/fixtures/apa_impute/protocol_example.apa_matchtable.txt" #path
 input: f'{cwd}/Dapars_allchrom.bed'
 output: f'{cwd}/Dapars_allchrom_renamed.bed'
 bash: expand= "${ }"

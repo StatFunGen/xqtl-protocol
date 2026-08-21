@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -594,10 +594,10 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.genotype.chr22.bed</span></code> with matching <code class="docutils literal notranslate"><span class="pre">.bim</span></code> and <code class="docutils literal notranslate"><span class="pre">.fam</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed</span></code> with matching <code class="docutils literal notranslate"><span class="pre">.bim</span></code> and <code class="docutils literal notranslate"><span class="pre">.fam</span></code></p></td>
 <td><p>PLINK genotype data</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.pheno_manifest_multicontext.tsv</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.protocol_example.pheno_manifest_context.tsv</span></code></p></td>
 <td><p>Maps each gene and context to its indexed phenotype BED and covariate file</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.gene_expression.context1.bed.gz</span></code> with <code class="docutils literal notranslate"><span class="pre">.tbi</span></code></p></td>
@@ -606,10 +606,10 @@
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.gene_expression.context2.bed.gz</span></code> with <code class="docutils literal notranslate"><span class="pre">.tbi</span></code></p></td>
 <td><p>Context 2 molecular-trait values</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.covariates.tsv</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/covariate_hidden_factor/covariates.tsv</span></code></p></td>
 <td><p>Covariates for the two contexts</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input/finemapping/protocol_example.association_windows.bed</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/association_windows.bed</span></code></p></td>
 <td><p>Cis-association window for each gene</p></td>
 </tr>
 </tbody>
@@ -624,10 +624,10 @@
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/mnm_regression.ipynb<span class="w"> </span>qtl_dataset_construct+susie_twas<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--name<span class="w"> </span>protocol_example<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cwd<span class="w"> </span>output_uni<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--genoFile<span class="w"> </span>input/finemapping/protocol_example.genotype.chr22.bed<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--phenoFile<span class="w"> </span>input/finemapping/protocol_example.pheno_manifest_multicontext.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--covFile<span class="w"> </span>input/finemapping/protocol_example.covariates.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--customized-association-windows<span class="w"> </span>input/finemapping/protocol_example.association_windows.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--genoFile<span class="w"> </span>tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--phenoFile<span class="w"> </span>tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--covFile<span class="w"> </span>tests/fixtures/covariate_hidden_factor/covariates.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--customized-association-windows<span class="w"> </span>tests/fixtures/qtl_mini/association_windows.bed<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--region-name<span class="w"> </span>ENSG00000130538<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--transpose-covariates<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--save-data<span class="w"> </span><span class="se">\</span>

@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -589,17 +589,17 @@ run <code class="docutils literal notranslate"><span class="pre">mnm_regression<
 </ul>
 <p><strong>Individual-level xQTL inputs.</strong></p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/example.chr22.bed</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed</span></code></strong>
 (genotype data in PLINK <code class="docutils literal notranslate"><span class="pre">bed</span></code> format; either one file for the whole genome or a list of per-chromosome files)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/pheno_manifest_multicontext.tsv</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv</span></code></strong>
 (a manifest of phenotype files per region, one row per region and context, in UCSC <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> format with a <code class="docutils literal notranslate"><span class="pre">bed.gz.tbi</span></code> index)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/example_covariates.tsv</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/example_covariates.tsv</span></code></strong>
 (covariate files matching the phenotype list)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--transpose-covariates</span></code> (set when the covariate file has samples in columns rather than rows)</p></li>
 </ul>
 <p><strong>Region selection.</strong></p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">input/colocboost/association_windows.bed</span></code></strong>
+<li><p><code class="docutils literal notranslate"><span class="pre">--customized-association-windows</span></code> <strong><code class="docutils literal notranslate"><span class="pre">tests/fixtures/qtl_mini/association_windows.bed</span></code></strong>
 (association windows for variants, cis or trans. Without it a fixed-size window of <code class="docutils literal notranslate"><span class="pre">--cis-window</span></code> (default 1000000) is used around each region.)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--region-name</span> <span class="pre">ENSG00000130538</span></code> (restrict the analysis to named regions. If dropped, the union of all regions across all phenotype region lists is analyzed.)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--region-list</span></code> (a file of regions to analyze; the last column must be the region name)</p></li>
@@ -701,10 +701,10 @@ $ ENSG00000283047: List of 7  &lt;colocboost&gt;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colocboost \
     --name colocboost_xqtl --cwd output/colocboost_xqtl \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
-    --covFile input/colocboost/example_covariates.tsv --transpose-covariates \
-    --customized-association-windows input/colocboost/association_windows.bed \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
+    --covFile tests/fixtures/qtl_mini/example_covariates.tsv --transpose-covariates \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     --region-name ENSG00000130538 \
     --no-separate-gwas --xqtl-coloc -j1
 </pre></div>
@@ -720,12 +720,12 @@ $ ENSG00000283047: List of 7  &lt;colocboost&gt;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colocboost \
     --name colocboost_gwas --cwd output/colocboost_gwas \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
-    --covFile input/colocboost/example_covariates.tsv --transpose-covariates \
-    --customized-association-windows input/colocboost/association_windows.bed \
-    --gwas-meta-data input/colocboost/gwas_meta.txt \
-    --ld-meta-data input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
+    --covFile tests/fixtures/qtl_mini/example_covariates.tsv --transpose-covariates \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
+    --gwas-meta-data tests/fixtures/qtl_mini/gwas_meta.txt \
+    --ld-meta-data tests/fixtures/ld_reference/ld_meta_file.tsv \
     --region-name ENSG00000130538 \
     --separate-gwas --xqtl-coloc -j1
 </pre></div>
@@ -741,12 +741,12 @@ $ ENSG00000283047: List of 7  &lt;colocboost&gt;
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/colocboost.ipynb colocboost \
     --name colocboost_multi_ld --cwd output/colocboost_multi_ld \
-    --genoFile input/colocboost/example.chr22.bed \
-    --phenoFile input/colocboost/pheno_manifest_multicontext.tsv \
-    --covFile input/colocboost/example_covariates.tsv --transpose-covariates \
-    --customized-association-windows input/colocboost/association_windows.bed \
-    --gwas-meta-data input/colocboost/gwas_meta.txt \
-    --ld-meta-data input/ld_reference/protocol_example.ld_meta_file.tsv \
+    --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
+    --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
+    --covFile tests/fixtures/qtl_mini/example_covariates.tsv --transpose-covariates \
+    --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
+    --gwas-meta-data tests/fixtures/qtl_mini/gwas_meta.txt \
+    --ld-meta-data tests/fixtures/ld_reference/ld_meta_file.tsv \
     --region-name ENSG00000130538 \
     --separate-gwas --xqtl-coloc -j1
 </pre></div>

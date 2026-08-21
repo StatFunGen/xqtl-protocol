@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -574,7 +574,7 @@
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>: the molecular phenotype matrix in BED layout, the first four columns being <code class="docutils literal notranslate"><span class="pre">#chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code> and <code class="docutils literal notranslate"><span class="pre">ID</span></code> and the rest one column per sample, with missing entries written as <code class="docutils literal notranslate"><span class="pre">NA</span></code>. Example <code class="docutils literal notranslate"><span class="pre">input/proteomics/protocol_example.protein.missing.bed.gz</span></code>, a toy matrix with roughly 10% of values set to missing so the methods have gaps to fill:</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code>: the molecular phenotype matrix in BED layout, the first four columns being <code class="docutils literal notranslate"><span class="pre">#chr</span></code>, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code> and <code class="docutils literal notranslate"><span class="pre">ID</span></code> and the rest one column per sample, with missing entries written as <code class="docutils literal notranslate"><span class="pre">NA</span></code>. Example <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz</span></code>, a toy matrix with roughly 10% of values set to missing so the methods have gaps to fill:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr   start   end     ID                            SAMPLE_001          SAMPLE_002</span>
 <span class="n">chr12</span>  <span class="mi">752578</span>  <span class="mi">752579</span>  <span class="n">chr12_ENSG00000060237_Q9H4A3</span>  <span class="mf">0.238966360190167</span>   <span class="o">-</span><span class="mf">0.611171227886468</span>
 <span class="n">chr12</span>  <span class="mi">990508</span>  <span class="mi">990509</span>  <span class="n">chr12_ENSG00000082805_Q8IUD2</span>  <span class="n">NA</span>                  <span class="o">-</span><span class="mf">1.86313205860919</span>
@@ -610,7 +610,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb gEBMF \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf \
     --num_factor 30
 </pre></div>
@@ -625,7 +625,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb EBMF \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf \
     --num_factor 30
 </pre></div>
@@ -640,7 +640,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb missforest \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf
 </pre></div>
 </div>
@@ -649,7 +649,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb missxgboost \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf
 </pre></div>
 </div>
@@ -663,7 +663,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb knn \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf
 </pre></div>
 </div>
@@ -677,7 +677,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb soft \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf
 </pre></div>
 </div>
@@ -691,7 +691,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb mean \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf
 </pre></div>
 </div>
@@ -705,7 +705,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb lod \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz \
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz \
     --cwd output/phenotype_imputation_uf
 </pre></div>
 </div>
@@ -720,7 +720,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb bed_filter_na \
     --cwd output/phenotype_imputation_uf \
-    --phenoFile input/proteomics/protocol_example.protein.missing.bed.gz
+    --phenoFile tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz
 </pre></div>
 </div>
 </div>

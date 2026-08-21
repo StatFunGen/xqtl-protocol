@@ -67,7 +67,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Reference Data Standardization" href="reference_data_preparation.html" />
-    <link rel="prev" title="Which pipelines do I need?" href="xqtl_protocol_landing_page.html" />
+    <link rel="prev" title="Build your xQTL analysis workflow" href="xqtl_protocol_landing_page.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -221,10 +221,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="current nav bd-sidenav">
@@ -706,7 +706,7 @@
 <p><strong>What it does:</strong> Combine the processed human and ERCC annotations into the GTF used downstream.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb gene_annotation --cwd output/reference_data --ercc-gtf output/reference_data/ERCC92.gtf --hg-gtf output/reference_data/Homo_sapiens.GRCh38.103.chr.gtf --hg-reference output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta --stranded
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb gene_annotation --cwd output/reference_data --ercc-gtf tests/fixtures/reference_data_preparation/ERCC92.gtf --hg-gtf output/reference_data/Homo_sapiens.GRCh38.103.chr.gtf --hg-reference output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta --stranded
 </pre></div>
 </div>
 </div>
@@ -763,7 +763,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb psi_hg38_annotation \
     --hg-gtf output/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
-    --hgrc-db input/reference_data/hgnc_complete_set.txt \
+    --hgrc-db output/reference_data/hgnc_complete_set.txt \
     --cwd output/reference_data
 </pre></div>
 </div>
@@ -776,7 +776,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/VCF_QC.ipynb dbsnp_annotate \
-    --genoFile input/genotype/protocol_example.genotype.chr22.vcf.gz \
+    --genoFile tests/fixtures/vcf_qc/protocol_example.genotype.chr22.vcf.gz \
     --cwd output/vcf_qc
 </pre></div>
 </div>
@@ -789,8 +789,8 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/generalized_TADB.ipynb default \
-    --tad-input input/tadb/protocol_example.brain_TADs.txt \
-    --gene-coords input/tadb/protocol_example.gene_start_end.tsv \
+    --tad-input tests/fixtures/generalized_TADB/protocol_example.brain_TADs.txt \
+    --gene-coords tests/fixtures/generalized_TADB/protocol_example.gene_start_end.tsv \
     --cwd output/tadb
 </pre></div>
 </div>
@@ -804,7 +804,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/rss_ld_sketch.ipynb generate_W --n-samples 60 --output-dir output/rss_ld_sketch --B 50 --seed 123 --cwd output/rss_ld_sketch
 
-sos run pipeline/rss_ld_sketch.ipynb process_block --ld-block-file input/rss_ld_sketch/protocol_example.ld_blocks.bed --chrom 22 --vcf-base input/rss_ld_sketch --vcf-prefix protocol_example.genotype. --output-dir output/rss_ld_sketch --W-matrix output/rss_ld_sketch/W_B50.rds --B 50 --cohort-id protocol_example --cwd output/rss_ld_sketch
+sos run pipeline/rss_ld_sketch.ipynb process_block --ld-block-file tests/fixtures/rss_ld_sketch/protocol_example.ld_blocks.bed --chrom 22 --vcf-base output/rss_ld_sketch/rss_ld_sketch --vcf-prefix protocol_example.genotype. --output-dir output/rss_ld_sketch --W-matrix output/rss_ld_sketch/W_B50.rds --B 50 --cohort-id protocol_example --cwd output/rss_ld_sketch
 
 sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sketch --cohort-id protocol_example --chrom 22 --cwd output/rss_ld_sketch
 </pre></div>
@@ -823,7 +823,7 @@ sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sket
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Downloads</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.fa</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/Homo_sapiens.GRCh38.103.chr.gtf</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/ERCC92.fa</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/ERCC92.gtf</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/00-All.vcf.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/00-All.vcf.gz.tbi</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.fa</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/Homo_sapiens.GRCh38.103.chr.gtf</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/ERCC92.fa</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/reference_data_preparation/ERCC92.gtf</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/00-All.vcf.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/00-All.vcf.gz.tbi</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Basic genome</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta</span></code>; <code class="docutils literal notranslate"><span class="pre">output/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.dict</span></code> and FASTA index</p></td>
@@ -850,7 +850,7 @@ sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sket
 <td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/00-All.variants.gz</span></code> lookup plus the annotated VCF under <code class="docutils literal notranslate"><span class="pre">output/vcf_qc/</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>TAD windows</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">output/tadb/generalized_TAD.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">output/tadb/generalized_TADB.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">output/tadb/TADB_enhanced_cis.bed</span></code>; <code class="docutils literal notranslate"><span class="pre">output/tadb/extended_TADB.bed</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/generalized_TADB/expected/generalized_TAD.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/generalized_TADB/expected/generalized_TADB.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/generalized_TADB/expected/TADB_enhanced_cis.bed</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/generalized_TADB/expected/extended_TADB.bed</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>RSS LD sketch</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/W_B50.rds</span></code>; block-level <code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/protocol_example.&lt;block&gt;.dosage.gz</span></code>; chromosome-level <code class="docutils literal notranslate"><span class="pre">output/rss_ld_sketch/protocol_example.22.pgen</span></code> products</p></td>
@@ -916,7 +916,7 @@ sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sket
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Which pipelines do I need?</p>
+        <p class="prev-next-title">Build your xQTL analysis workflow</p>
       </div>
     </a>
     <a class="right-next"

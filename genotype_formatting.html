@@ -219,10 +219,10 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Which pipelines do I need?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -693,7 +693,7 @@ which the protocol does not yet ship.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb vcf_to_plink \
-    --genoFile `ls input/genotype/protocol_example.genotype.chr*.vcf.gz | grep -vE "rawchr|withfmt|add_chr"` \
+    --genoFile `ls output/genotype_final/protocol_example.genotype.chr*.vcf.gz | grep -vE "rawchr|withfmt|add_chr"` \
     --cwd output/genotype_formatting/plink \
     --name protocol_example \
     -j 4
@@ -780,7 +780,7 @@ the toy data as it stands; <code class="docutils literal notranslate"><span clas
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb genotype_by_region \
     --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged \
-    --region-list input/genotype/protocol_example.genotype.region_list.txt \
+    --region-list output/genotype_final/protocol_example.genotype.region_list.txt \
     --window 0 \
     --cwd output/genotype_formatting/by_region \
     --name protocol_example.genotype
@@ -797,7 +797,7 @@ the toy data as it stands; <code class="docutils literal notranslate"><span clas
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/genotype_formatting.ipynb ld_by_region_plink \
     --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged \
-    --region-list input/genotype/protocol_example.genotype.region_list.txt \
+    --region-list output/genotype_final/protocol_example.genotype.region_list.txt \
     --float-type 16 \
     --cwd output/genotype_formatting/ld \
     --name protocol_example.genotype
