@@ -219,9 +219,9 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Start here</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Run Your First xQTL Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_demo.html">Environment Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
@@ -694,7 +694,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
     --cwd output/splicing \
-    --ratios ../../output_test/leafcutter/normalize/protocol_example.leafcutter.intron_usage_perind.counts.gz \
+    --ratios output/leafcutter/normalize/protocol_example.leafcutter.intron_usage_perind.counts.gz \
     --mean_impute 
 </pre></div>
 </div>
@@ -709,7 +709,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb psichomics_norm \
     --cwd output/splicing \
-    --ratios ../../output_test/leafcutter/normalize/protocol_example.psichomics.psi_raw_data.tsv 
+    --ratios output/leafcutter/normalize/protocol_example.psichomics.psi_raw_data.tsv 
 </pre></div>
 </div>
 </div>
@@ -731,8 +731,8 @@ testing.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
-    --cwd ../../output_test/leafcutter/normalize \
-    --ratios ../../output_test/leafcutter/PCC_sample_list_subset_leafcutter_intron_usage_perind.counts.gz \
+    --cwd output/leafcutter/normalize \
+    --ratios output/leafcutter/PCC_sample_list_subset_leafcutter_intron_usage_perind.counts.gz \
     --container oras://ghcr.io/cumc/leafcutter_apptainer:latest \
     --no_norm # add no norm to skip last step (qqnorm) in leafcutter_norm
 </pre></div>
@@ -747,7 +747,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/phenotype_imputation.ipynb EBMF \
     --phenoFile &lt;output_from_step1&gt; \
-    --cwd ../../output_test/leafcutter/imputation \
+    --cwd output/leafcutter/imputation \
     --prior ebnm_point_laplace --varType 1 \
     --container oras://ghcr.io/cumc/factor_analysis_apptainer:latest \
     --mem 40G --numThreads 20 --walltime 100h 
@@ -763,7 +763,7 @@ testing.</p>
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb leafcutter_qqnorm \
     --cwd output/splicing \
-    --qced-data ../../output_test/leafcutter/normalize/protocol_example.leafcutter.intron_usage_perind.counts.gz_raw_data.txt \
+    --qced-data output/leafcutter/normalize/protocol_example.leafcutter.intron_usage_perind.counts.gz_raw_data.txt \
     --container oras://ghcr.io/cumc/leafcutter_apptainer:latest
 </pre></div>
 </div>
@@ -774,8 +774,8 @@ testing.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb leafcutter_norm \
-    --cwd ../../output_test/leafcutter/normalize \
-    --ratios ../../output_test/leafcutter/PCC_sample_list_subset_leafcutter_intron_usage_perind.counts.gz \
+    --cwd output/leafcutter/normalize \
+    --ratios output/leafcutter/PCC_sample_list_subset_leafcutter_intron_usage_perind.counts.gz \
     --container oras://ghcr.io/cumc/leafcutter_apptainer:latest \
     --mean_impute
 </pre></div>
