@@ -48,7 +48,7 @@ def test_normalize_tmm_cpm_voom(run_r, repo_root, tmp_path):
                "--sample-participant-lookup", fix / "protocol_example.rnaseq.sample_participant_lookup.txt",
                "--count-threshold", 1, "--quantile-normalize"])
     assert p.returncode == 0, p.stdout + p.stderr
-    out = tmp_path / "input.tmm_cpm_voom.expression.bed.gz"
+    out = tmp_path / "protocol_example.rnaseq.tmm_cpm_voom.expression.bed.gz"
     assert out.exists() and (tmp_path / (out.name + ".tbi")).exists(), "missing bgzip/tabix output"
     _assert_num_match(gzip.open(out, "rt").read(),
                       gzip.open(fix / "expected.tmm_cpm_voom.expression.bed.gz", "rt").read())
