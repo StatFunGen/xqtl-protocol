@@ -38,11 +38,11 @@ def test_phenotype_by_chrom(run_sos, repo_root, tmp_path):
                  "name": "protocol_example", "chrom": "chr22"},
                 cwd=repo_root, timeout=600)
     assert p.returncode == 0, p.stdout + p.stderr
-    assert (out / "protocol_protocol_example.genotype.chr22.bed.gz").exists()
-    assert (out / "protocol_protocol_example.genotype.chr22.bed.gz.tbi").exists()
+    assert (out / "protocol_example.chr22.bed.gz").exists()
+    assert (out / "protocol_example.chr22.bed.gz.tbi").exists()
     assert (out / "protocol_example.phenotype_by_chrom_files.txt").exists()
     assert (out / "protocol_example.phenotype_by_chrom_files.region_list.txt").exists()
-    _expect(repo_root, out / "protocol_protocol_example.genotype.chr22.bed.gz")
+    _expect(repo_root, out / "protocol_example.chr22.bed.gz")
     _expect(repo_root, out / "protocol_example.phenotype_by_chrom_files.txt", normalize_paths=True)
     _expect(repo_root, out / "protocol_example.phenotype_by_chrom_files.region_list.txt", normalize_paths=True)
 

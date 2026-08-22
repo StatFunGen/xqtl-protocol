@@ -40,7 +40,7 @@ def _qc_1(run_r, repo_root, cwd):
               ["--step", "qc_1", "--cwd", cwd,
                "--tpm-gct", fix / "protocol_example.rnaseq.tpm.gct.gz", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
-    out = cwd / "input.low_expression_filtered.tpm.gct.gz"
+    out = cwd / "protocol_example.rnaseq.low_expression_filtered.tpm.gct.gz"
     assert out.exists(), "qc_1 output missing"
     return out
 
@@ -67,7 +67,7 @@ def test_qc_2_outlier_removal(run_r, repo_root, tmp_path):
     p = run_r(repo_root / WORKER,
               ["--step", "qc_2", "--cwd", tmp_path, "--tpm-gct", tpm1, "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
-    out = tmp_path / "input.low_expression_filtered.outlier_removed.tpm.gct.gz"
+    out = tmp_path / "protocol_example.rnaseq.low_expression_filtered.outlier_removed.tpm.gct.gz"
     assert out.exists(), "qc_2 output missing"
     header, g2 = _read_gct(out)
     assert header[0] == "gene_ID"
@@ -85,7 +85,7 @@ def test_qc_3_subset_counts(run_r, repo_root, tmp_path):
     p = run_r(repo_root / WORKER,
               ["--step", "qc_2", "--cwd", tmp_path, "--tpm-gct", tpm1, "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
-    tpm2 = tmp_path / "input.low_expression_filtered.outlier_removed.tpm.gct.gz"
+    tpm2 = tmp_path / "protocol_example.rnaseq.low_expression_filtered.outlier_removed.tpm.gct.gz"
     tpm_header, tpm_genes = _read_gct(tpm2)
 
     fix = repo_root / FIX
@@ -93,7 +93,7 @@ def test_qc_3_subset_counts(run_r, repo_root, tmp_path):
               ["--step", "qc_3", "--cwd", tmp_path, "--tpm-gct", tpm2,
                "--counts-gct", fix / "protocol_example.rnaseq.geneCount.gct.gz", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
-    out = tmp_path / "input.low_expression_filtered.outlier_removed.geneCount.gct.gz"
+    out = tmp_path / "protocol_example.rnaseq.low_expression_filtered.outlier_removed.geneCount.gct.gz"
     assert out.exists(), "qc_3 output missing"
     cnt_header, cnt_genes = _read_gct(out)
     # raw counts subset to exactly the QC'd TPM genes and samples
@@ -114,6 +114,6 @@ def test_qc_workflow_via_sos(run_sos, repo_root, tmp_path):
         "cwd": tmp_path, "numThreads": 1,
         "modular_script_dir": repo_root / MSD})
     assert p.returncode == 0, p.stdout + p.stderr
-    assert (tmp_path / "input.low_expression_filtered.tpm.gct.gz").exists()
-    assert (tmp_path / "input.low_expression_filtered.outlier_removed.tpm.gct.gz").exists()
-    assert (tmp_path / "input.low_expression_filtered.outlier_removed.geneCount.gct.gz").exists()
+    assert (tmp_path / "protocol_example.rnaseq.low_expression_filtered.tpm.gct.gz").exists()
+    assert (tmp_path / "protocol_example.rnaseq.low_expression_filtered.outlier_removed.tpm.gct.gz").exists()
+    assert (tmp_path / "protocol_example.rnaseq.low_expression_filtered.outlier_removed.geneCount.gct.gz").exists()

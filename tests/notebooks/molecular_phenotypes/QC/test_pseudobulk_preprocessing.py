@@ -66,7 +66,7 @@ def test_sampleid_mapping(run_r, repo_root, tmp_path):
                "--meta-files", fix / "protocol_example.snrnaseq.metadata_MIC.csv",
                "--count-files", fix / "counts_MIC.csv.gz", "--output-dir", tmp_path])
     assert p.returncode == 0, p.stdout + p.stderr
-    got = (tmp_path / "metadata_MIC.csv").read_text()
+    got = (tmp_path / "protocol_example.snrnaseq.metadata_MIC.csv").read_text()
     exp = (fix / "expected_metadata_MIC.csv").read_text()
     assert got == exp
     # regression: the count-file remap (rewrite sample header via id_map, body verbatim

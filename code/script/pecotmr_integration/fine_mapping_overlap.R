@@ -91,6 +91,14 @@ if (length(pieces) == 0L) {
   out <- do.call(rbind, pieces)
 }
 
+# Deterministic row order: the QTL FineMappingResult may hold several contexts,
+# and their emission order is not guaranteed. Sort so the output is reproducible.
+.ord <- do.call(order, c(lapply(intersect(
+  c("qtl_study", "qtl_context", "qtl_region_id", "gwas_study", "gwas_region_id",
+    "variant_id", "A1", "A2"), names(out)), function(k) out[[k]]),
+  list(method = "radix")))
+out <- out[.ord, , drop = FALSE]
+
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 conn <- if (grepl("\\.gz$", argv$output)) gzfile(argv$output, "w") else file(argv$output, "w")
 write.table(out, file = conn, sep = "\t", quote = FALSE, row.names = FALSE, na = "")
