@@ -6,7 +6,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 SOS = REPO / "code" / "SoS"
-LANDING = SOS / "xqtl_protocol_landing_page.html"
+LANDING = SOS / "xqtl_protocol_workflow_builder.html"
 FIXTURE_PATH = re.compile(r"tests/fixtures/[A-Za-z0-9_.@+/*?\[\]{}-]+")
 STALE_INPUT = re.compile(r"(?<![A-Za-z0-9_./-])input/[A-Za-z0-9_.@+/*?\[\]{}-]+")
 LOCAL_ABSOLUTE = re.compile(r"(?:/restricted/projectnb/|/projectnb/|/Users/|/home/|/gpfs/|/mnt/|/scratch/|~/)")

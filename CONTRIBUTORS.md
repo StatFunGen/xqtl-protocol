@@ -1,4 +1,4 @@
-# Our team
+# Contributors
 
 The FunGen-xQTL Computational Protocol is developed by the Analysis Working Group of
 the NIA FunGen-xQTL consortium. This page acknowledges the people who built and
@@ -52,3 +52,6 @@ maintain it.
 | Stephen Montgomery | Department of Pathology, Stanford University                    |
 | Xiaoquan Wen     | Department of Biostatistics, University of Michigan               |
 
+---
+
+New to the protocol? See [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_demo.html) to get running, or the [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) to find the pipelines for your study.
