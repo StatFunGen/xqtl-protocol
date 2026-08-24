@@ -71,6 +71,16 @@ view_fn <- switch(view,
                      "variant_id", "pip"), names(tl)), drop = FALSE]
   })
 
+# The LD-block id from the RDS filename (shape {study}.{block_id}.{suffix}.rds,
+# e.g. AD_Bellenguez_2022.chr1_16103_2888443.gwas_finemap.rds -> chr1_16103_2888443).
+# Regex-extract the chrN_start_end token so it is robust to study names containing
+# underscores/dots and to any suffix; NA when no token matches. This is the true
+# block identifier, distinct from region_id (the analysed variant span).
+.blockIdFromName <- function(bn) {
+  m <- regmatches(bn, regexpr("chr[0-9XYMT]+_[0-9]+_[0-9]+", bn))
+  if (length(m) == 1L) m else NA_character_
+}
+
 pieces <- list()
 for (path in inputs) {
   fmr <- readRDS(path)
@@ -84,7 +94,8 @@ for (path in inputs) {
                    NULL
                  })
   if (is.null(df) || nrow(df) == 0L) next
-  df$source <- basename(path)
+  df$source   <- basename(path)
+  df$block_id <- .blockIdFromName(basename(path))
   pieces[[length(pieces) + 1L]] <- df
 }
 if (length(pieces) == 0L) {
@@ -93,6 +104,7 @@ if (length(pieces) == 0L) {
   out <- data.frame(study = character(0), context = character(0),
                     trait = character(0), region_id = character(0),
                     method = character(0), source = character(0),
+                    block_id = character(0),
                     stringsAsFactors = FALSE)
 } else {
   # Pad missing columns across pieces so rbind doesn't lose rows.

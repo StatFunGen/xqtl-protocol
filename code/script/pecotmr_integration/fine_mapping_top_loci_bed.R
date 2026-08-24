@@ -77,6 +77,14 @@ bedFrom <- function(tl, me) {
   out
 }
 
+# LD-block id from the RDS filename ({study}.{block_id}.{suffix}.rds); the true
+# block identifier, distinct from region_id (the analysed variant span). NA when
+# the filename carries no chrN_start_end token.
+.blockIdFromName <- function(bn) {
+  m <- regmatches(bn, regexpr("chr[0-9XYMT]+_[0-9]+_[0-9]+", bn))
+  if (length(m) == 1L) m else NA_character_
+}
+
 pieces <- list()
 for (path in inputs) {
   fmr <- readRDS(path)
@@ -88,11 +96,14 @@ for (path in inputs) {
                  error = function(e) { message(basename(path), ": ", conditionMessage(e)); NULL })
   if (is.null(tl) || nrow(tl) == 0L) next
   me <- as.data.frame(getMarginalEffects(fmr))
-  pieces[[length(pieces) + 1L]] <- bedFrom(tl, me)
+  piece <- bedFrom(tl, me)
+  piece$block_id <- .blockIdFromName(basename(path))
+  pieces[[length(pieces) + 1L]] <- piece
 }
 
 out <- if (length(pieces) == 0L) {
-  data.frame(chr = character(0), pos = integer(0), stringsAsFactors = FALSE)
+  data.frame(chr = character(0), pos = integer(0), block_id = character(0),
+             stringsAsFactors = FALSE)
 } else {
   cols <- unique(unlist(lapply(pieces, names)))
   for (k in seq_along(pieces)) {
