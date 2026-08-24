@@ -4,6 +4,23 @@ Developed for reproducible & reusable molecular QTL analyses for the NIH/NIA
 Alzheimer's Disease Sequencing Project (ADSP) Functional Genomics xQTL (FunGen-xQTL)
 Project.
 
+## What the protocol covers
+
+| Stage | What it does |
+|---|---|
+| **Molecular phenotypes** | Quantify expression, splicing, methylation and polyadenylation from bulk RNA-seq, single-nuclei or array data |
+| **Data preprocessing** | Genotype QC and formatting, phenotype imputation and formatting, covariate and hidden-factor estimation |
+| **QTL association testing** | cis and trans scans with TensorQTL, quantile-regression QTL, hierarchical multiple testing |
+| **Multivariate modelling** | MASH, to borrow information across tissues and cell types |
+| **Fine-mapping and TWAS** | SuSiE, mvSuSiE, fSuSiE and SuSiE-RSS, from individual-level data or summary statistics, with TWAS weights |
+| **GWAS integration** | Colocalization (SuSiE-enloc, ColocBoost), TWAS and cTWAS, INTACT |
+| **Enrichment and validation** | Pathway analysis, GREGOR, stratified LD score regression |
+
+Not every project needs every stage. The
+[xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html)
+asks what you measured and what you want to find out, then shows the modules on
+that route with the commands to run them.
+
 ## Getting started
 
 | I want to... | Go to |
