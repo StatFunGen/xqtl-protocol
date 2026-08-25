@@ -133,6 +133,9 @@ parser <- add_argument(parser, "--r-mismatch",
 parser <- add_argument(parser, "--rss-control",
                        help = "GWAS mode: JSON object of susieR::susie_rss_control() settings (e.g. '{\"check_prior\":true,\"mismatch_estimator\":\"map\"}'), forwarded as fineMappingPipeline rssControl. Empty = susie_rss_control() defaults.",
                        type = "character", default = "")
+parser <- add_argument(parser, "--keep-original-fit",
+                       help = "GWAS mode: TRUE/FALSE. Retain the pre-fallback multi-effect fit (fineMappingPipeline keepFullFit) on SER-fallback regions, where it genuinely differs from the reported SER result. Default FALSE (keep none).",
+                       type = "character", default = "FALSE")
 # --- Multivariate / joint-fit knobs (QTL mode; mvsusie / fsusie). Each is
 # opt-in and omitted from the pipeline call when left at its default, so this
 # wrapper also runs against a pecotmr build that predates twasWeights / usePCA.
@@ -321,12 +324,20 @@ if (has_gwas) {
   ser_fallback <- as.logical(argv$ser_fallback)
   if (is.na(ser_fallback))
     stop("--ser-fallback must be TRUE or FALSE (got: ", argv$ser_fallback, ")")
+  keep_original_fit <- as.logical(argv$keep_original_fit)
+  if (is.na(keep_original_fit))
+    stop("--keep-original-fit must be TRUE or FALSE (got: ", argv$keep_original_fit, ")")
+  # TRUE retains the pre-fallback multi-effect fit only on SER-fallback regions
+  # (keepFullFit = "fallback"); FALSE (default) drops it (keepFullFit = "none").
+  # pecotmr's "all" mode is intentionally not exposed.
+  keep_full_fit <- if (isTRUE(keep_original_fit)) "fallback" else "none"
   # GWAS-only SuSiE-RSS knobs on top of the shared cs_args. rFinite forwards
   # only when set; --rss-control (JSON) becomes the rssControl named list of
   # susie_rss_control() settings.
   gwas_args <- c(cs_args,
                  list(serFallback = ser_fallback,
-                      rMismatch   = argv$r_mismatch))
+                      rMismatch   = argv$r_mismatch,
+                      keepFullFit = keep_full_fit))
   if (nzchar(argv$r_finite)) gwas_args$rFinite <- as.numeric(argv$r_finite)
   if (nzchar(argv$rss_control) && argv$rss_control != "." &&
       argv$rss_control != "{}") {
