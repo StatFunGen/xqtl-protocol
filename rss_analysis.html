@@ -643,6 +643,7 @@ into <code class="docutils literal notranslate"><span class="pre">input/ld_refer
 <li><p><code class="docutils literal notranslate"><span class="pre">--L</span></code> (<code class="docutils literal notranslate"><span class="pre">20</span></code>) and <code class="docutils literal notranslate"><span class="pre">--L-greedy</span></code> (<code class="docutils literal notranslate"><span class="pre">5</span></code>): SuSiE fit defaults.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--method-args</span></code>: JSON overriding any of the above per method, e.g. <code class="docutils literal notranslate"><span class="pre">{&quot;susie&quot;:{&quot;L&quot;:10}}</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--ser-fallback</span></code> / <code class="docutils literal notranslate"><span class="pre">--no-ser-fallback</span></code> (default on), <code class="docutils literal notranslate"><span class="pre">--r-finite</span></code>, <code class="docutils literal notranslate"><span class="pre">--r-mismatch</span></code> (<code class="docutils literal notranslate"><span class="pre">eb_mix</span></code>), <code class="docutils literal notranslate"><span class="pre">--rss-control</span></code>: numerical safeguards for the RSS likelihood.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--[no-]keep-original-fit</span></code> (default off): retain the pre-fallback multi-effect fit on SER-fallback regions (where it differs from the reported SER fit); off keeps none.</p></li>
 </ul>
 <p>Other:</p>
 <ul class="simple">
@@ -795,6 +796,7 @@ single-effect posterior summaries, and the QC provenance of the variants that we
   <span class="o">--</span><span class="n">r</span><span class="o">-</span><span class="n">finite</span> <span class="s1">''</span>
   <span class="o">--</span><span class="n">r</span><span class="o">-</span><span class="n">mismatch</span> <span class="s1">'eb_mix'</span>
   <span class="o">--</span><span class="n">rss</span><span class="o">-</span><span class="n">control</span> <span class="s1">''</span>
+  <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">keep</span><span class="o">-</span><span class="n">original</span><span class="o">-</span><span class="n">fit</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
   <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">no</span><span class="o">-</span><span class="n">plot</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
                         <span class="o">---</span> <span class="n">plot</span> <span class="n">opt</span><span class="o">-</span><span class="n">out</span>
                         <span class="o">---------------------------------------------------</span>
@@ -862,6 +864,7 @@ parameter: ser_fallback = True    # fall back to single-effect (SER) when susieR
 parameter: r_finite = ''          # finite-sample R size; empty -&gt; auto (LD-panel sample size)
 parameter: r_mismatch = 'eb_mix'  # LD-mismatch correction: 'none' | 'eb' | 'eb_mix' (residual-mixture EB, default)
 parameter: rss_control = ''       # JSON object of susie_rss_control() settings, e.g. '{"check_prior":true,"mismatch_estimator":"map"}'; empty -&gt; defaults
+parameter: keep_original_fit = False # GWAS: retain the pre-fallback multi-effect fit on SER-fallback regions (keepFullFit=fallback); default False keeps none
 # --- plot opt-out ---------------------------------------------------
 parameter: no_plot = False
 # --- output prefix for the manifest file ----------------------------
@@ -955,6 +958,7 @@ bash: expand = '${ }', stderr = f"{_output}.stderr", stdout = f"{_output}.stdout
         --r-mismatch ${r_mismatch} \
         ${('--r-finite ' + str(r_finite)) if str(r_finite) != '' else ''} \
         ${('--rss-control ' + repr(rss_control)) if rss_control else ''} \
+        --keep-original-fit ${'TRUE' if keep_original_fit else 'FALSE'} \
         --output ${_output}
 </pre></div>
 </div>
