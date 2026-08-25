@@ -4,14 +4,12 @@ Developed for reproducible & reusable molecular QTL analyses for the NIH/NIA
 Alzheimer's Disease Sequencing Project (ADSP) Functional Genomics xQTL (FunGen-xQTL)
 Project.
 
-![QTL Diagram](xQTL_Protocol_Feb_2024.png)
-
 ## Getting started
 
 | I want to... | Go to |
 |---|---|
 | **Set up my computing environment** | [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_demo.html) |
-| **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_landing_page.html) |
+| **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) |
 
 ## Overview of the protocol
 
@@ -100,7 +98,7 @@ separately; commands that need them show the expected path.
 - FunGen-xQTL data resources and results:
   <https://github.com/statfungen/xqtl-resources>
 
-## Our team
+## Contributors
 
 This repository is developed by the Analysis Working Group of the NIA FunGen-xQTL
 consortium. Lead developers, contributors and leadership are listed

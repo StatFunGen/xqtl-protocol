@@ -64,7 +64,7 @@
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Build your xQTL analysis workflow" href="xqtl_protocol_landing_page.html" />
+    <link rel="next" title="xQTL Analysis Workflow Builder" href="xqtl_protocol_workflow_builder.html" />
     <link rel="prev" title="FunGen-xQTL Computational Protocol" href="README.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -222,7 +222,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Environment Setup</a></li>
-<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_landing_page.html">Build your xQTL analysis workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xqtl_protocol_workflow_builder.html">xQTL Analysis Workflow Builder</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference data</span></p>
 <ul class="nav bd-sidenav">
@@ -262,14 +262,13 @@
 </ul>
 </details></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Pre-processing</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data Preprocessing</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1 has-children"><a class="reference internal" href="genotype_preprocessing.html">Genotype preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="VCF_QC.html">Genotype VCF File Quality Control</a></li>
 <li class="toctree-l2"><a class="reference internal" href="genotype_formatting.html">Genotype Data Formatting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="GWAS_QC.html">Genotype PLINK File Quality Control</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PCA.html">Principal Component Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="GRM.html">Genomic Relationship Matrices</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="phenotype_preprocessing.html">Phenotype preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -293,7 +292,7 @@
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="qtl_association_postprocessing.html">Hierarchical Multiple Testing</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Model</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Multivariate Mixture Models</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1 has-children"><a class="reference internal" href="MASH.html">Multivariate adaptive shrinkage (MASH) mini-protocol</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="multivariate_mixture_vignette.html">Learning multivariate effect patterns for MASH</a></li>
@@ -343,6 +342,10 @@
 <li class="toctree-l1"><a class="reference internal" href="ems_training.html">scEEMS Model Training</a></li>
 
 <li class="toctree-l1"><a class="reference internal" href="ems_prediction.html">scEEMS Prediction</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">About</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="CONTRIBUTORS.html">Contributors</a></li>
 </ul>
 
     </div>
@@ -584,7 +587,7 @@
 </table>
 </div>
 <blockquote>
-<div><p><strong>Not sure which pipelines you need?</strong> Use the <a class="reference download internal" download="" href="_downloads/a6870bf9d4dce7a26e35382287daed98/xqtl_protocol_landing_page.html"><span class="xref download myst">pipeline selector</span></a>. Answer a few questions about your data — molecular phenotype, whether you are fine-mapping from individual-level data or summary statistics, whether you are integrating with GWAS — and it lists the pipelines that apply, with their inputs, outputs and the commands to run them. This page covers <em>how</em> to run a pipeline; the selector tells you <em>which</em>.</p>
+<div><p><strong>Not sure which pipelines you need?</strong> Use the <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html">pipeline selector</a>. Answer a few questions about your data — molecular phenotype, whether you are fine-mapping from individual-level data or summary statistics, whether you are integrating with GWAS — and it lists the pipelines that apply, with their inputs, outputs and the commands to run them. This page covers <em>how</em> to run a pipeline; the selector tells you <em>which</em>.</p>
 </div></blockquote>
 <section id="before-you-start">
 <h2>Before You Start<a class="headerlink" href="#before-you-start" title="Link to this heading">#</a></h2>
@@ -726,7 +729,7 @@ grep<span class="w"> </span>-n<span class="w"> </span>-A16<span class="w"> </spa
 </pre></div>
 </div>
 <p>Translating what you find into command-line flags: <code class="docutils literal notranslate"><span class="pre">output_prefix=&quot;toy&quot;</span></code> becomes <code class="docutils literal notranslate"><span class="pre">--output-prefix</span> <span class="pre">toy</span></code>, <code class="docutils literal notranslate"><span class="pre">fx</span> <span class="pre">/</span> <span class="pre">&quot;twas/protocol_example.x.tsv&quot;</span></code> becomes <code class="docutils literal notranslate"><span class="pre">tests/fixtures/twas/protocol_example.x.tsv</span></code>, and <code class="docutils literal notranslate"><span class="pre">repo_root</span> <span class="pre">/</span> <span class="pre">&quot;code/script&quot;</span></code> becomes <code class="docutils literal notranslate"><span class="pre">--modular-script-dir</span> <span class="pre">code/script</span></code>.</p>
-<p>Next, use the <a class="reference download internal" download="" href="_downloads/a6870bf9d4dce7a26e35382287daed98/xqtl_protocol_landing_page.html"><span class="xref download myst">Interactive xQTL Pipeline Guide</span></a> to choose the modules that match your molecular phenotype and scientific goal.</p>
+<p>Next, use the <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html">Interactive xQTL Pipeline Guide</a> to choose the modules that match your molecular phenotype and scientific goal.</p>
 </section>
 </section>
 <hr class="docutils" />
@@ -815,11 +818,11 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
       </div>
     </a>
     <a class="right-next"
-       href="xqtl_protocol_landing_page.html"
+       href="xqtl_protocol_workflow_builder.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Build your xQTL analysis workflow</p>
+        <p class="prev-next-title">xQTL Analysis Workflow Builder</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
