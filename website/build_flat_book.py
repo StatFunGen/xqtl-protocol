@@ -188,6 +188,8 @@ def stage_book(output: Path):
     output.mkdir(parents=True)
 
     write_flat_markdown(REPO_ROOT / "README.md", output / "README.md", notebooks, assets_by_name)
+    if (REPO_ROOT / "CONTRIBUTORS.md").exists():
+        write_flat_markdown(REPO_ROOT / "CONTRIBUTORS.md", output / "CONTRIBUTORS.md", notebooks, assets_by_name)
     website_out = output / "website"
     website_out.mkdir()
     for name in ["_config.yml", "_toc.yml", "references.bib", "xqtl_wf.png", "xqtl_wf.svg"]:
