@@ -44,12 +44,10 @@
 
 #### Reference data (Step 1)
 #### Molecular Phenotypes (Step 2)
-#### Data Pre-processing (Step 3)
-#### QTL Association Testing (Step 4)
-#### Multivariate Mixture Model (Step 5)
-#### Multiomics Regression Models (Step 6)
-#### GWAS Integration (Step 7)
-#### Enrichment and Validation (Step 8)
+#### QTL Association Testing (Step 3)
+#### Multiomics Regression Models (Step 4)
+#### GWAS Integration (Step 5)
+#### Enrichment and Validation (Step 6)
 
 ## Materials
 
@@ -72,17 +70,13 @@
 
 ### 2. Molecular Phenotypes
 
-### 3. Data Pre-processing
+### 3. QTL Association Testing
 
-### 4. QTL Association Testing
+### 4. Multiomics Regression Models
 
-### 5. Multivariate Mixture Model
+### 5. GWAS Integration
 
-### 6. Multiomics Regression Models
-
-### 7. GWAS Integration
-
-### 8. Enrichment and Validation
+### 6. Enrichment and Validation
 
 
 ## Timing
@@ -94,9 +88,7 @@
 |------|-----|
 |Reference data|X minutes|
 |Molecular Phenotypes|X minutes|
-|Data Pre-processing|X minutes|
 |QTL Association Testing|X minutes|
-|Multivariate Mixture Model|X minutes|
 |Multiomics Regression Models|X minutes|
 |GWAS Integration|X minutes|
 |Enrichment and Validation|X minutes|
