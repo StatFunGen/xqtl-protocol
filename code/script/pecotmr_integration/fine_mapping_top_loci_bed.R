@@ -49,7 +49,7 @@ bedFrom <- function(tl, me) {
     a1         = pick(tl, "A1"),
     a2         = pick(tl, "A2"),
     variant_ID = pick(tl, "variant_id"),
-    MAF        = pick(tl, "af"),
+    af         = pick(tl, "af"),
     betahat    = pick(mm, "beta"),
     sebetahat  = pick(mm, "se"),
     z          = pick(mm, "z"),

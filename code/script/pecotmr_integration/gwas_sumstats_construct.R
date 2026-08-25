@@ -37,9 +37,16 @@
 #                     empty (none), one (applied to every study), or one
 #                     per study. Keys are the standard names (chrom, pos,
 #                     variant_id, A1, A2, z, n_sample, and optionally beta,
-#                     se, p, maf, info); values are the column name as it
+#                     se, p, af, maf, info); values are the column name as it
 #                     appears in the TSV. Required: chrom, pos, variant_id,
 #                     A1, A2, z, n_sample.
+#                     FREQUENCY: `af:` declares the DIRECTIONAL effect-allele
+#                     frequency and is exported as top_loci$af (complemented on
+#                     allele harmonization); e.g. `af: effect_allele_frequency`.
+#                     `maf:` (or FRQ) is a DIRECTIONLESS minor-allele frequency
+#                     used only for the --maf QC filter -- it is NEVER exported
+#                     as af. Declare `af:` to get a directional af; without it,
+#                     top_loci$af is NA (with a warning).
 #   --ld-block        Analysis region as chr:start-end
 #   --ld-meta         LD-meta TSV (#chr, start, end, path)
 #   --genome          Genome build label (e.g. "GRCh38"). Default "GRCh38"
