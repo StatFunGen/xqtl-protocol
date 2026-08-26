@@ -44,5 +44,5 @@ def test_enrichment_and_coloc(run_sos, read_rds, repo_root, tmp_path):
     cf = cwd / "susie_coloc/protocol_example.MiGA_GTS_eQTL@ENSG00000142798.coloc.rds"
     assert cf.exists(), p.stdout
     cinfo = read_rds(cf)
-    assert cinfo["class"] == "data.frame"
-    assert "PP.H4.abf" in cinfo["names"], cinfo
+    assert cinfo["class"] == "ColocResult"
+    assert "PP.H4.abf" in cinfo["colnames"], cinfo

@@ -1,4 +1,4 @@
-"""Tier B: colocboost.R -> xQTL colocalization list over a qtl_mini gene."""
+"""Tier B: colocboost.R -> xQTL ColocBoostResult over a qtl_mini gene."""
 from __future__ import annotations
 
 import pytest
@@ -15,5 +15,5 @@ def test_colocboost(qtl_dataset, run_r, read_rds, repo_root, tmp_path):
                "--seed", "1", "--output", out], timeout=600)
     assert p.returncode == 0, p.stdout + p.stderr
     info = read_rds(out)
-    assert info["class"] == "list" and "xqtl_coloc" in info["names"]
+    assert info["class"] == "ColocBoostResult" and "isColocalized" in info["colnames"]
     assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)

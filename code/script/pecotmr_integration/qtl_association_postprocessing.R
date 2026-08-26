@@ -145,10 +145,13 @@ if (!is.na(argv$output_dir)) {
   base <- sub("\\.[^.]*$", "", basename(argv$output))
 
   # Enriched regional = input regional + the correction columns (row order kept).
-  newCols <- setdiff(names(r), c(names(regional), "study", "context", "trait",
-                                 "entry", "varY", "traitPos"))
+  # The per-tuple table lives in mcols() on the collection; `[` selects elements,
+  # not columns, so the column work goes through mcols() throughout.
+  md <- S4Vectors::mcols(r)
+  newCols <- setdiff(names(md), c(names(regional), "study", "context", "trait",
+                                  "varY", "traitPos"))
   regionalOut <- cbind(as.data.frame(regional),
-                       as.data.frame(S4Vectors::as.data.frame(r[, newCols, drop = FALSE])))
+                       as.data.frame(S4Vectors::as.data.frame(md[, newCols, drop = FALSE])))
   readr::write_tsv(regionalOut, file.path(od, paste0(base, ".cis_regional.fdr.tsv.gz")))
 
   # Per-method EVENT-significance column (which genes pass): permutation and the
@@ -162,9 +165,9 @@ if (!is.na(argv$output_dir)) {
   summary_rows <- list()
   for (m in names(flavours)) {
     fcol <- flavours[[m]]
-    if (is.null(r[[fcol]])) next
+    if (is.null(md[[fcol]])) next
     # significant events (per-gene) at the FDR threshold
-    keep <- !is.na(r[[fcol]]) & as.numeric(r[[fcol]]) < argv$fdr_threshold
+    keep <- !is.na(md[[fcol]]) & as.numeric(md[[fcol]]) < argv$fdr_threshold
     events <- regionalOut[keep, , drop = FALSE]
     if (nrow(events) > 0)
       readr::write_tsv(events, file.path(od, paste0(base, ".significant_events.", m, ".tsv.gz")))

@@ -37,8 +37,8 @@ def test_colocboost_xqtl(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     out = cwd / f"colocboost/test_coloc.{GENE}.colocboost.rds"
     assert out.exists(), p.stdout
     info = read_rds(out)
-    assert info["class"] == "list"
-    assert "xqtl_coloc" in info["names"]
+    assert info["class"] == "ColocBoostResult"
+    assert "isColocalized" in info["colnames"]
     # regression: the seeded (seed=999) colocboost result reproduces the committed
     # snapshot within tolerance; the comparator strips computing_time difftimes.
     assert_matches_expected(out, repo_root / EXPECTED / f"test_coloc.{GENE}.colocboost.rds",

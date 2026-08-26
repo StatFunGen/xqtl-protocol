@@ -2,7 +2,7 @@
 # fine_mapping_upset.R
 #
 # Render an UpSet plot of credible-set variant overlap across one or more
-# FineMappingResult RDSes. Each (study, context, trait, method, region_id)
+# FineMappingResult RDSes. Each (study, context, trait, method, blockId)
 # tuple becomes one set; the set members are the variant IDs in the union
 # of that tuple's credible sets. Useful for visualizing which signals are
 # shared across studies / contexts / traits.
@@ -48,7 +48,7 @@ if (length(inputs) == 0L)
 
 # Build a named list of {set-label -> variant_ids} for UpSetR::fromList().
 # getCs(fmr) aggregates every entry's credible sets into one table already
-# tagged with the row identity (study/context/trait/region_id/method), so each
+# tagged with the row identity (study/context/trait/blockId/method), so each
 # per-tuple set is a split() on the label -- no per-entry loop.
 sets <- list()
 for (path in inputs) {
@@ -60,7 +60,7 @@ for (path in inputs) {
   cs <- tryCatch(as.data.frame(getCs(fmr)), error = function(e) NULL)
   if (is.null(cs) || nrow(cs) == 0L || !"variant_id" %in% names(cs)) next
   label <- if (methods::is(fmr, "GwasFineMappingResult")) {
-    paste(cs$study, cs$method, cs$region_id, sep = "|")
+    paste(cs$study, cs$method, cs$blockId, sep = "|")
   } else {
     paste(cs$study, cs$context, cs$trait, cs$method, sep = "|")
   }

@@ -37,7 +37,7 @@
 #                    context=value pairs (e.g. "context1=0.1,context2=0").
 #                    A negative value selects the data-driven 3/ncol(X)
 #                    default. Empty (default) disables the skip (0).
-#   --output         Output RDS path (one colocboost-pipeline list)
+#   --output         Output RDS path (one ColocBoostResult collection)
 
 suppressPackageStartupMessages({
   library(argparser)

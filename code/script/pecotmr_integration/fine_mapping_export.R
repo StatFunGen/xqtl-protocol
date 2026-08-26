@@ -4,7 +4,7 @@
 # Export a view (topLoci / credibleSets / pip / marginals) of one or more
 # QtlFineMappingResult / GwasFineMappingResult RDSes as a single concatenated
 # TSV. Adds identifier columns derived from the FMR row (study, context,
-# trait, method for QTL; study, method, region_id for GWAS) so a downstream
+# trait, method for QTL; study, method, blockId for GWAS) so a downstream
 # consumer can split the table back per-tuple.
 #
 # Inputs:
@@ -47,7 +47,7 @@ minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
 
 # Each view maps to a collection-level pecotmr accessor that already aggregates
 # every entry into one tidy table carrying the row identity columns (study /
-# context / trait / region_id / method) alongside the per-variant columns. The
+# context / trait / blockId / method) alongside the per-variant columns. The
 # wrapper only tags each row with its source RDS and concatenates across inputs.
 view_fn <- switch(view,
   topLoci   = function(fmr)
@@ -67,7 +67,7 @@ view_fn <- switch(view,
   # pip view: the (identity + variant_id + pip) projection of topLoci.
   pip       = function(fmr) {
     tl <- as.data.frame(getTopLoci(fmr, signalCutoff = argv$signal_cutoff))
-    tl[, intersect(c("study", "context", "trait", "region_id", "method",
+    tl[, intersect(c("study", "context", "trait", "blockId", "method",
                      "variant_id", "pip"), names(tl)), drop = FALSE]
   })
 
@@ -75,7 +75,7 @@ view_fn <- switch(view,
 # e.g. AD_Bellenguez_2022.chr1_16103_2888443.gwas_finemap.rds -> chr1_16103_2888443).
 # Regex-extract the chrN_start_end token so it is robust to study names containing
 # underscores/dots and to any suffix; NA when no token matches. This is the true
-# block identifier, distinct from region_id (the analysed variant span).
+# block identifier read off the path, alongside pecotmr's own blockId column.
 .blockIdFromName <- function(bn) {
   m <- regmatches(bn, regexpr("chr[0-9XYMT]+_[0-9]+_[0-9]+", bn))
   if (length(m) == 1L) m else NA_character_
@@ -102,7 +102,7 @@ if (length(pieces) == 0L) {
   message("No rows produced; writing an empty TSV with the id-column ",
           "header so downstream consumers don't error on missing files.")
   out <- data.frame(study = character(0), context = character(0),
-                    trait = character(0), region_id = character(0),
+                    trait = character(0), blockId = character(0),
                     method = character(0), source = character(0),
                     block_id = character(0),
                     stringsAsFactors = FALSE)

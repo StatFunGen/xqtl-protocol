@@ -88,7 +88,12 @@ def test_pca_detect_outliers(run_r, repo_root, tmp_path):
     p = run_r(repo_root / WORKER, [
         "--step", "detect_outliers", "--cwd", tmp_path, "--pca-result", fix / f"{BASE}.pca.rds",
         "--prob", "0.975", "--pval", "0.05", "--robust", "FALSE", "--pop-col", "", "--k", "20",
-        "--distance-output", maha, "--identified-outliers-output", outliers])
+        "--distance-output", maha, "--identified-outliers-output", outliers,
+        # Both plot paths default to <pca-result>.mahalanobis_{qq,hist}.png, i.e.
+        # *inside* the committed fixture dir; point them at tmp_path so a suite
+        # run does not rewrite the checked-in PNGs.
+        "--qqplot-output", tmp_path / "maha_qq.png",
+        "--hist-output", tmp_path / "maha_hist.png"])
     assert p.returncode == 0, p.stdout + p.stderr
     assert maha.exists() and outliers.exists()
     # regression: the Mahalanobis distances (tolerant) and the identified-outlier

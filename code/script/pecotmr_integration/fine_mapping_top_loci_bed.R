@@ -34,7 +34,7 @@ argv <- parse_args(parser)
 inputs <- as.character(argv$input)
 if (length(inputs) == 0L) stop("--input requires at least one RDS path.")
 minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
-idCols <- c("study", "context", "trait", "region_id", "method", "variant_id")
+idCols <- c("study", "context", "trait", "blockId", "method", "variant_id")
 
 # The published BED columns, in order; only those available are emitted.
 bedFrom <- function(tl, me) {
@@ -63,7 +63,7 @@ bedFrom <- function(tl, me) {
     logBF      = pick(tl, "logBF"),
     conditional_effect = pick(tl, "conditional_effect"),
     lfsr       = pick(tl, "lfsr"),
-    region_id  = pick(tl, "region_id"),
+    blockId    = pick(tl, "blockId"),
     context    = pick(tl, "context"),
     stringsAsFactors = FALSE)
   # Keep the full, stable BED schema (NA where a column does not apply, e.g.
@@ -78,7 +78,7 @@ bedFrom <- function(tl, me) {
 }
 
 # LD-block id from the RDS filename ({study}.{block_id}.{suffix}.rds); the true
-# block identifier, distinct from region_id (the analysed variant span). NA when
+# block identifier read off the path, alongside pecotmr's own blockId column. NA when
 # the filename carries no chrN_start_end token.
 .blockIdFromName <- function(bn) {
   m <- regmatches(bn, regexpr("chr[0-9XYMT]+_[0-9]+_[0-9]+", bn))
