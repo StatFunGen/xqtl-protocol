@@ -55,13 +55,18 @@
 #                     (default), "slalom", "dentist".
 #   --impute          Flag: run RAISS sumstat imputation in
 #                     summaryStatsQc(impute = TRUE) against the LD sketch.
-#   --maf             MAF cutoff (summaryStatsQc mafCutoff). Default 0.0025.
+#   --maf             Study MAF cutoff (summaryStatsQc mafCutoff). Default
+#                     0.0025.
+#   --ld-maf          LD reference-panel MAF cutoff (summaryStatsQc
+#                     ldMafCutoff): drop panel variants below it before the LD
+#                     is built and before RAISS imputes. Composes with --maf.
+#                     Default 0.005; 0 disables.
 #   --skip-region     Comma-separated chr:start-end window(s) whose variants
 #                     are dropped (summaryStatsQc skipRegion).
 #   --qc-args         Optional JSON object of extra named kwargs spliced
 #                     into summaryStatsQc(). May not set a key already
-#                     controlled by a dedicated flag (mafCutoff / skipRegion /
-#                     pipCutoffToSkip / zMismatchQc / impute).
+#                     controlled by a dedicated flag (mafCutoff / ldMafCutoff /
+#                     skipRegion / pipCutoffToSkip / zMismatchQc / impute).
 #   --output          Output RDS path
 
 suppressPackageStartupMessages({
@@ -112,6 +117,9 @@ parser <- add_argument(parser, "--pip-cutoff-to-skip",
 parser <- add_argument(parser, "--maf",
                        help = "Minor-allele-frequency cutoff (summaryStatsQc mafCutoff); drop variants below it. 0 disables.",
                        type = "numeric", default = 0.0025)
+parser <- add_argument(parser, "--ld-maf",
+                       help = "LD reference-panel MAF cutoff (summaryStatsQc ldMafCutoff); drop panel variants whose panel MAF is below it, before the LD is built and before RAISS imputes. Study-side --maf is separate and composes. 0 disables.",
+                       type = "numeric", default = 0.005)
 parser <- add_argument(parser, "--skip-region",
                        help = "Comma-separated chr:start-end window(s) whose overlapping variants are dropped (summaryStatsQc skipRegion). Empty = none.",
                        type = "character", default = "")
@@ -201,12 +209,13 @@ qc_extra <- if (nzchar(argv$qc_args) && argv$qc_args != "." &&
 # Reject collisions between explicit flags and --qc-args. Dedicated flags win;
 # passing the same key via --qc-args is an error so behavior is unambiguous.
 clash <- intersect(names(qc_extra),
-                   c("zMismatchQc", "impute", "mafCutoff", "skipRegion",
-                     "pipCutoffToSkip", "alleleFlipKriging", "effectiveN"))
+                   c("zMismatchQc", "impute", "mafCutoff", "ldMafCutoff",
+                     "skipRegion", "pipCutoffToSkip", "alleleFlipKriging",
+                     "effectiveN"))
 if (length(clash) > 0L)
   stop("--qc-args sets ", paste(clash, collapse = ", "),
        " which is also controlled by a dedicated flag (--qc-method / ",
-       "--impute / --maf / --skip-region / --pip-cutoff-to-skip / ",
+       "--impute / --maf / --ld-maf / --skip-region / --pip-cutoff-to-skip / ",
        "--allele-flip-kriging / --effective-n). Pass it via the dedicated flag.")
 
 # --skip-region: comma-separated chr:start-end windows -> character vector
@@ -312,6 +321,7 @@ gss_out <- if (argv$skip_qc) {
                           impute          = isTRUE(argv$impute),
                           pipCutoffToSkip = argv$pip_cutoff_to_skip,
                           mafCutoff       = argv$maf,
+                          ldMafCutoff     = argv$ld_maf,
                           effectiveN      = effN),
                     if (isTRUE(argv$allele_flip_kriging))
                       list(alleleFlipKriging = TRUE) else list(),
