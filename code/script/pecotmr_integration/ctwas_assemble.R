@@ -4,7 +4,7 @@
 # cTWAS step 1: LD-block grid + flat weights -> assembled cTWAS inputs.
 # Reads the block-grid manifest, loads each block's GwasSumStats RDS, loads the
 # FLAT set of per-gene weight RDS, and calls pecotmr::assembleCtwasInputs(),
-# which places each gene into its home LD block internally from the `region`
+# which places each gene into its home LD block internally from the `traitPos`
 # provenance (matching cTWAS's p0 rule) and builds the ctwas-shape input set
 # (z_snp, weights, region_info, snp_map, LD_map, LD/snpInfo loader closures).
 # The result is saved to a single RDS that ctwas_est.R consumes downstream.
@@ -20,7 +20,7 @@
 #                            gwas_sumstats_rds  (per-block GwasSumStats RDS)
 #   --twas-weights         Comma-separated FLAT per-gene weight RDS
 #                          (TwasWeights or QtlFineMappingResult; each carries
-#                          `region` provenance for placement)
+#                          `traitPos` provenance for placement)
 #   --fine-mapping-results Optional comma-separated FineMappingResult RDS used
 #                          only as the CS / PIP rescue-filter source
 #                          (NOT the weight source)
@@ -37,6 +37,7 @@
 suppressPackageStartupMessages({
   library(argparser)
   library(pecotmr)
+  library(S4Vectors)
 })
 
 parser <- arg_parser("cTWAS step 1: assemble inputs from block grid + flat weights")
@@ -90,15 +91,22 @@ if (nrow(manifest) < 2L)
   stop("Manifest must list at least two LD blocks. cTWAS's EM cannot ",
        "converge on a single region.")
 
-# Per-block GWAS sum-stats keyed by region_id (the LD-block grid).
-gwasSumStatsByRegion <- list()
+# One GwasSumStats whose ELEMENTS are the LD blocks, keyed by blockId -- what
+# assembleCtwasInputs() consumes. The blocks are written by separate
+# gwas_sumstats_construct.R steps, so each piece is stamped with its manifest
+# region_id (a per-block construct call keys on the seqname, which is the same
+# for every block on a chromosome) and combined. combineGwasSumStats() unions
+# the per-block LD panels and concatenates the per-element QC audit.
+gwasParts <- vector("list", nrow(manifest))
 for (i in seq_len(nrow(manifest))) {
-  rid <- manifest$region_id[[i]]
-  gwasSumStatsByRegion[[rid]] <- readRDS(manifest$gwas_sumstats_rds[[i]])
+  part <- readRDS(manifest$gwas_sumstats_rds[[i]])
+  S4Vectors::mcols(part)$blockId <- manifest$region_id[[i]]
+  gwasParts[[i]] <- part
 }
+gwasSumStats <- combineGwasSumStats(gwasParts)
 
 # FLAT weight source: an unnamed list of per-gene weight objects. assembleCtwasInputs
-# combines them and places each gene into its home block by `region`.
+# combines them and places each gene into its home block by `traitPos`.
 weightPaths <- split_paths(argv$twas_weights)
 if (length(weightPaths) == 0L)
   stop("--twas-weights lists no weight RDS paths.")
@@ -112,7 +120,7 @@ fmr <- if (length(fmrPaths) > 0L)
          combineFineMappingResults(lapply(fmrPaths, readRDS)) else NULL
 
 inputs <- assembleCtwasInputs(
-  gwasSumStats      = gwasSumStatsByRegion,
+  gwasSumStats      = gwasSumStats,
   twasWeights       = weightObjs,
   twasZ             = tz,
   fineMappingResult = fmr,

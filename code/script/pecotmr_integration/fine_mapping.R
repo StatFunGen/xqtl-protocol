@@ -427,14 +427,14 @@ cat(sprintf("Wrote fineMapping result for %s (%d row(s)) to %s\n",
 if (has_gwas && !is.null(res)) {
   invisible(tryCatch({
     for (i in seq_len(nrow(res))) {
+      row_i    <- res[i]
       study_i  <- as.character(res$study[i])
-      region_i <- as.character(res$region_id[i])
+      region_i <- as.character(res$blockId[i])
       method_i <- as.character(res$method[i])
-      ent <- res$entry[[i]]
-      tl  <- tryCatch(getTopLoci(ent), error = function(e) NULL)
+      tl  <- tryCatch(as.data.frame(getTopLoci(row_i)), error = function(e) NULL)
       ncs <- if (!is.null(tl) && "cs_95" %in% names(tl))
                length(setdiff(unique(tl$cs_95), 0)) else NA
-      fit <- tryCatch(getSusieFit(ent), error = function(e) NULL)
+      fit <- tryCatch(getSusieFit(row_i), error = function(e) NULL)
       ser <- if (!is.null(fit) && !is.null(fit$serFallbackUsed))
                isTRUE(fit$serFallbackUsed) else NA
       cat(sprintf("[FM %s %s] method=%s CS(cs_95)=%s SER-fallback=%s\n",

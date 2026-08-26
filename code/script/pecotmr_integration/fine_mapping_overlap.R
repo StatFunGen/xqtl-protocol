@@ -32,7 +32,7 @@ parser <- add_argument(parser, "--signal-cutoff",
 parser <- add_argument(parser, "--output",
                        help = "Output TSV path (the overlap table)", type = "character")
 # Optional enloc meta-update outputs: emit the QTL region's meta row with a
-# `block_top_loci` column listing the GWAS blocks (region_ids) that share >=1
+# `block_top_loci` column listing the GWAS blocks (blockIds) that share >=1
 # top-locus variant -- the column the coloc manifest (enloc_manifest.R --mode
 # coloc) pairs on.
 parser <- add_argument(parser, "--qtl-meta",
@@ -56,7 +56,7 @@ if (length(gwasPaths) == 0L)
   stop("--gwas requires at least one GwasFineMappingResult RDS.")
 
 pieces <- list()
-blockTopLoci <- character(0)   # GWAS blocks (region_ids) with >=1 shared variant
+blockTopLoci <- character(0)   # GWAS blocks (blockIds) with >=1 shared variant
 for (gp in gwasPaths) {
   gwas <- readRDS(gp)
   if (!methods::is(gwas, "GwasFineMappingResult")) {
@@ -72,7 +72,7 @@ for (gp in gwasPaths) {
   if (is.null(ov) || nrow(ov) == 0L) next
   ov$gwas_source <- basename(gp)
   pieces[[length(pieces) + 1L]] <- ov
-  blockTopLoci <- c(blockTopLoci, unique(as.character(gwas$region_id)))
+  blockTopLoci <- c(blockTopLoci, unique(as.character(gwas$blockId)))
 }
 blockTopLoci <- unique(blockTopLoci)
 
@@ -94,7 +94,7 @@ if (length(pieces) == 0L) {
 # Deterministic row order: the QTL FineMappingResult may hold several contexts,
 # and their emission order is not guaranteed. Sort so the output is reproducible.
 .ord <- do.call(order, c(lapply(intersect(
-  c("qtl_study", "qtl_context", "qtl_region_id", "gwas_study", "gwas_region_id",
+  c("qtl_study", "qtl_context", "qtl_blockId", "gwas_study", "gwas_blockId",
     "variant_id", "A1", "A2"), names(out)), function(k) out[[k]]),
   list(method = "radix")))
 out <- out[.ord, , drop = FALSE]

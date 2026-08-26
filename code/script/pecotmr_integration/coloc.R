@@ -23,7 +23,7 @@
 #   --p12-max              Cap on enrichment-adjusted p12 (default 1e-3)
 #   --no-adjust-pips       Disable adjustPips (default: PIPs renormalized to overlap)
 #   --finemapping-methods  Comma-separated list for inline GWAS FM when --gwas-input is GwasSumStats (default 'susie')
-#   --output               Output RDS path (data.frame of coloc results)
+#   --output               Output RDS path (ColocResult collection)
 
 suppressPackageStartupMessages({
   library(argparser)

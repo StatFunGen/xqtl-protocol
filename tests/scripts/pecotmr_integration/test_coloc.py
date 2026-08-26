@@ -1,4 +1,4 @@
-"""Tier B: coloc.R -> per-pair coloc data.frame (PP.H0..H4) from the committed
+"""Tier B: coloc.R -> per-pair ColocResult (PP.H0..H4) from the committed
 enloc QTL + GWAS S4 FineMappingResult fixtures (the modern format the pipeline
 produces; the legacy-conversion step has been retired)."""
 from __future__ import annotations
@@ -18,5 +18,5 @@ def test_coloc(run_r, read_rds, repo_root, tmp_path):
                "--gwas-input", repo_root / GWAS, "--output", out], timeout=300)
     assert p.returncode == 0, p.stdout + p.stderr
     info = read_rds(out)
-    assert info["class"] == "data.frame" and "PP.H4.abf" in info["names"]
+    assert info["class"] == "ColocResult" and "PP.H4.abf" in info["colnames"]
     assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)

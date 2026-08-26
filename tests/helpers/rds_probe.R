@@ -37,6 +37,14 @@ for (acc in c("getStudy", "getContexts", "getMethodNames")) {
 if (is.list(obj) && !isS4(obj) && !is.null(names(obj)))
   summ$names <- names(obj)
 
+# The per-row metadata columns. On the collection classes these carry the
+# identity tuple and the result fields (PP.H4.abf, isColocalized, ...), which
+# `names()` does not reach: on a RangedTupleList `names()` is the ELEMENT names.
+# Only a plain character vector: on a QtlDataset colnames() is a per-assay
+# AtomicList, which is sample ids rather than a column list and does not coerce.
+cn <- tryCatch(colnames(obj), error = function(e) NULL)
+if (is.character(cn) && length(cn) > 0L) summ$colnames <- I(cn)
+
 # CtwasResult: surface the top gene-level signal (max susie_pip + its z), so a
 # smoke test can assert numeric parity independent of the SNP-background rows.
 if (methods::is(obj, "CtwasResult") && exists("getFinemap")) {

@@ -60,7 +60,7 @@ if (is.null(tl) || nrow(tl) == 0L) { writeStub("No usable PIP vectors"); quit(sa
 
 isGwas <- methods::is(fmr, "GwasFineMappingResult")
 panel <- if (isGwas) {
-  sprintf("%s | %s | %s", tl$study, tl$method, tl$region_id)
+  sprintf("%s | %s | %s", tl$study, tl$method, tl$blockId)
 } else {
   sprintf("%s | %s | %s", tl$context, tl$trait, tl$method)
 }
