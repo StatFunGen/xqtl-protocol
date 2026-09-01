@@ -552,6 +552,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analyses-on-high-performance-computing-clusters">Analyses on High Performance Computing Clusters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-your-own-data">Using your own data</a></li>
 </ul>
             </nav>
         </div>
@@ -776,6 +777,51 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
 <p>The demo on this page runs on a desktop workstation. Production analyses typically run on an HPC cluster, and SoS supports this natively via <a class="reference external" href="https://vatlab.github.io/sos-docs/doc/user_guide/task_statement.html">SoS Remote Tasks</a> on <a class="reference external" href="https://vatlab.github.io/sos-docs/doc/user_guide/host_setup.html">configured host computers</a>.</p>
 <p>We provide a <a class="reference external" href="https://github.com/statfungen/xqtl-protocol/blob/main/code/misc/Job_Example.ipynb">toy example for running SoS pipelines on a typical HPC cluster environment</a> — first-time users are encouraged to work through it before launching real jobs. It covers the host and task configuration you’ll reuse for every subsequent pipeline, and it’s schedule-agnostic (SLURM, LSF, SGE, PBS/Torque all work).</p>
 </section>
+<hr class="docutils" />
+<section id="using-your-own-data">
+<h2>Using your own data<a class="headerlink" href="#using-your-own-data" title="Link to this heading">#</a></h2>
+<p>The examples above run against files committed in <code class="docutils literal notranslate"><span class="pre">tests/fixtures/</span></code>. To run the same
+pipeline on your own study, replace those paths with your own – the parameters do
+not change.</p>
+<p>Most modules expect some combination of:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>What it wants</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code></p></td>
+<td><p>Genotypes: PLINK <code class="docutils literal notranslate"><span class="pre">.bed/.bim/.fam</span></code>, or a list of per-chromosome files</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--phenoFile</span></code></p></td>
+<td><p>Molecular phenotype matrix: bgzipped BED, <code class="docutils literal notranslate"><span class="pre">#chr</span> <span class="pre">start</span> <span class="pre">end</span> <span class="pre">ID</span></code> then one column per sample</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--covFile</span></code></p></td>
+<td><p>Covariates, gzipped</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--region-list</span></code></p></td>
+<td><p>Regions to analyse, or a region list produced by an earlier step</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--cwd</span></code></p></td>
+<td><p>Where outputs are written</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Sample identifiers must match across the genotype, phenotype and covariate files.
+Most “no overlapping samples” errors come from a mismatch here rather than from a
+problem with the data itself.</p>
+<p>To see the parameters a module accepts:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sos<span class="w"> </span>run<span class="w"> </span>pipeline/&lt;module&gt;.ipynb<span class="w"> </span>-h
+</pre></div>
+</div>
+<p>And for a set of arguments known to work, look at that module’s test – each one
+carries a parameter set that CI runs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>grep<span class="w"> </span>-rl<span class="w"> </span><span class="s1">'run_sos'</span><span class="w"> </span>tests/notebooks<span class="w"> </span>--include<span class="o">=</span><span class="s1">'*.py'</span>
+</pre></div>
+</div>
+</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -858,6 +904,7 @@ pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analyses-on-high-performance-computing-clusters">Analyses on High Performance Computing Clusters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-your-own-data">Using your own data</a></li>
 </ul>
   </nav></div>
 
