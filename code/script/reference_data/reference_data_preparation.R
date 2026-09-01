@@ -8,7 +8,6 @@
 #   faidx          — index a FASTA (Rsamtools; replaces `samtools faidx`)
 #   hg_gtf_1       — match GTF chr naming to the FASTA + transcript_biotype->transcript_type
 #   ercc_gtf       — expand the ERCC exon GTF into gene/transcript/exon records
-#   suppa_annot    — psichomics annotation RDS from a directory of SUPPA .ioe files
 #   tad_annotate   — annotate regions with the TAD they fall inside + genotype-file list
 #
 # Conventions: read with vroom, sequences via Biostrings, faidx via Rsamtools.
@@ -27,10 +26,6 @@ parser <- add_argument(parser, "--output", type = "character", default = "", hel
 parser <- add_argument(parser, "--hg-reference", type = "character", default = "",
                        help = "[hg_gtf_1] genome FASTA (to detect chr naming)")
 parser <- add_argument(parser, "--hg-gtf", type = "character", default = "", help = "[hg_gtf_1] GTF to reformat")
-parser <- add_argument(parser, "--ioe-dir", type = "character", default = "",
-                       help = "[suppa_annot] directory of SUPPA .ioe files")
-parser <- add_argument(parser, "--genome", type = "character", default = "hg38",
-                       help = "[suppa_annot] genome tag for parseSuppaAnnotation")
 parser <- add_argument(parser, "--tad-list", type = "character", default = "",
                        help = "[tad_annotate] TAD table (#chr,start,end,tad_index)")
 parser <- add_argument(parser, "--region-list", type = "character", default = "",
@@ -109,17 +104,6 @@ ercc_gtf <- function(argv) {
 }
 
 # ---------------------------------------------------------------------------
-# suppa_annot: psichomics annotation object from SUPPA .ioe files ([SUPPA_annotation_2])
-# ---------------------------------------------------------------------------
-suppa_annot <- function(argv) {
-  suppressPackageStartupMessages(library(psichomics))
-  suppa <- parseSuppaAnnotation(argv$ioe_dir, genome = argv$genome)
-  annot <- prepareAnnotationFromEvents(suppa)
-  saveRDS(annot, argv$output)
-  message(sprintf("Written: %s", argv$output))
-}
-
-# ---------------------------------------------------------------------------
 # tad_annotate: regions inside each TAD + genotype-file list ([Tad_annotateion])
 #   Faithful port of the pandas step: merge on '#chr' with pandas _x/_y suffixes
 #   (TAD coords = _x, region coords = _y), keep regions strictly inside a TAD,
@@ -152,7 +136,6 @@ switch(argv$step,
   faidx          = faidx(argv),
   hg_gtf_1       = hg_gtf_1(argv),
   ercc_gtf       = ercc_gtf(argv),
-  suppa_annot    = suppa_annot(argv),
   tad_annotate   = tad_annotate(argv),
   stop(sprintf("Unknown step: '%s'", argv$step))
 )

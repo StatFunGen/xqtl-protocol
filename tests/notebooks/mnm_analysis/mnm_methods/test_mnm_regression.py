@@ -52,3 +52,34 @@ def test_susie_twas(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     exp = repo_root / "tests/fixtures/mnm_regression/expected"
     assert_matches_expected(fmr, exp / "univariate_bvsr.rds", mode="tolerant",
                             rtol=1e-6, atol=1e-8)
+
+
+def test_mnm(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
+    """`mnm` fits every context of one gene jointly with mvSuSiE over the QtlDataset that
+    qtl_dataset_construct writes, so the two steps run together. Value-compared: the fit is
+    byte-identical across seeded reruns on one machine."""
+    cwd = tmp_path / "mnm"
+    p = run_sos(
+        repo_root / "pipeline/mnm_regression.ipynb",
+        "qtl_dataset_construct+mnm",
+        {
+            "name": "test_study",
+            "cwd": cwd,
+            "genoFile": qtl_mini / "protocol_example.genotype.chr22.bed",
+            "phenoFile": qtl_mini / "protocol_example.pheno_manifest_context.tsv",
+            "covFile": qtl_mini / "example_covariates.tsv",
+            "customized-association-windows": qtl_mini / "association_windows.bed",
+            "region-name": GENE,
+            "transpose-covariates": True,          # QTLtools-format covariates
+            "seed": 1,                              # reproducible mvsusie fit
+            "modular_script_dir": repo_root / "code/script",
+        },
+        cwd=repo_root, timeout=900)
+    assert p.returncode == 0, p.stdout + p.stderr
+
+    fmr = cwd / f"multivariate_fine_mapping/test_study.{GENE}.multicontext_bvsr.rds"
+    assert fmr.exists(), f"missing multi-context output:\n{p.stdout}"
+    assert read_rds(fmr)["class"] == "QtlFineMappingResult"
+    exp = repo_root / "tests/fixtures/mnm_regression/expected"
+    assert_matches_expected(fmr, exp / "multicontext_bvsr.rds", mode="tolerant",
+                            rtol=1e-6, atol=1e-8)

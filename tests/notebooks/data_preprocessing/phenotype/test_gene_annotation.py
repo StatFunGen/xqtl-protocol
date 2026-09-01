@@ -101,34 +101,3 @@ def test_annotate_leafcutter_isoforms(run_sos, repo_root, tmp_path):
     _expect(repo_root, out / "protocol_example.leafcutter.phenotype.bed.phenotype_group.txt")
 
 
-def test_annotate_psichomics_isoforms(run_sos, repo_root, tmp_path):
-    out = tmp_path / "out"
-    fx = repo_root / FX
-    p = run_sos(repo_root / NB, "annotate_psichomics_isoforms",
-                {**_base(repo_root, out),
-                 "phenoFile": fx / "protocol_example.psichomics.phenotype.tsv",
-                 "coordinate_annotation": fx / EXON},
-                cwd=repo_root, timeout=600)
-    assert p.returncode == 0, p.stdout + p.stderr
-    assert (out / "protocol_example.psichomics.phenotype.formated.bed.gz").exists()
-    assert (out / "protocol_example.psichomics.phenotype.phenotype_group.txt").exists()
-    _expect(repo_root, out / "protocol_example.psichomics.phenotype.formated.bed.gz")
-    _expect(repo_root, out / "protocol_example.psichomics.phenotype.phenotype_group.txt")
-
-
-# Commented out: this test hits the live Ensembl biomaRt web service
-# (biomaRt::useEnsembl -> *.archive.ensembl.org), which times out / is
-# unreliable from CI runners. Run it manually when validating the
-# annotate_coord_biomart step against Ensembl.
-# def test_annotate_coord_biomart(run_sos, repo_root, tmp_path):
-#     """End-to-end against Ensembl biomaRt (requires network)."""
-#     out = tmp_path / "out"
-#     p = run_sos(repo_root / NB, "annotate_coord_biomart",
-#                 {**_base(repo_root, out),
-#                  "phenoFile": repo_root / FX / "protocol_example.rnaseq.gene_ID.tsv",
-#                  "ensembl_version": 115},
-#                 cwd=repo_root, timeout=300)
-#     assert p.returncode == 0, p.stdout + p.stderr
-#     bed = out / "protocol_example.rnaseq.gene_ID.bed.gz"
-#     assert bed.exists() and (out / "protocol_example.rnaseq.gene_ID.bed.gz.tbi").exists()
-#     assert (out / "protocol_example.rnaseq.gene_ID.region_list.txt").exists()

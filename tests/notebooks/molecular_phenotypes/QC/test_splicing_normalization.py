@@ -1,7 +1,7 @@
-"""Notebook tier: splicing_normalization.ipynb workers (leafcutter + psichomics).
+"""Notebook tier: splicing_normalization.ipynb workers (leafcutter).
 
-splicing_normalization.R ports the leafcutter prepare_phenotype_table.py logic and the
-psichomics blocks. Fixtures + references are the 20-sample MWE leafcutter/psichomics outputs.
+splicing_normalization.R ports the leafcutter prepare_phenotype_table.py logic.
+Fixtures + references are the 20-sample MWE leafcutter outputs.
 Float phenotype values are compared NUMERICALLY (identical doubles): Python's shortest-repr
 and R's differ cosmetically on ~4% of values in the 16th/17th digit, but the doubles — what
 downstream tools parse — are identical.
@@ -65,16 +65,6 @@ def test_qqnorm(run_r, repo_root, tmp_path):
     _assert_num_match(out.read_text(),
                       gzip.open(repo_root / FIX / "expected_raw_data.qqnorm.txt.gz", "rt").read(),
                       label_cols=4)
-
-
-def test_psichomics_bed(run_r, repo_root, tmp_path):
-    out = tmp_path / "bedded.txt"
-    p = run_r(repo_root / WORKER,
-              ["--step", "psichomics_bed", "--input", repo_root / FIX / "psi_raw_data.tsv.gz",
-               "--output", out])
-    assert p.returncode == 0, p.stdout + p.stderr
-    _assert_num_match(out.read_text(),
-                      gzip.open(repo_root / FIX / "expected_bedded.txt.gz", "rt").read(), label_cols=4)
 
 
 def test_jointcall_samples(run_r, repo_root, tmp_path):

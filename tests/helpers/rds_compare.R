@@ -30,7 +30,7 @@ normPaths <- length(args) >= 4L && !is.na(suppressWarnings(as.integer(args[[4L]]
   as.integer(args[[4L]]) == 1L
 # sortRows (optional 5th arg, "1"): canonicalize every data.frame's ROW ORDER (sort by
 # all columns) before comparing, for outputs whose rows are an unordered set emitted in a
-# non-deterministic order (e.g. SUPPA/psichomics per-event-type tables). Opt-in, since row
+# non-deterministic order (e.g. per-event-type tables). Opt-in, since row
 # order is meaningful in most outputs.
 sortRows <- length(args) >= 5L && !is.na(suppressWarnings(as.integer(args[[5L]]))) &&
   as.integer(args[[5L]]) == 1L

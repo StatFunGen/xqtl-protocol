@@ -1,7 +1,9 @@
 #!/usr/bin/env Rscript
 # ============================================================
-# psichomics_hg38_annotation.R
+# psichomics_hg38_annotation.R  (retired)
 # Standalone CLI worker for reference_data_preparation.ipynb [psi_hg38_annotation].
+# Retired with the rest of the psichomics/SUPPA track: SUPPA is unmaintained
+# upstream, and the [psi_hg38_annotation] cell it served is gone.
 #
 # Reconcile the gene-symbol column of the psichomics hg38 splicing annotation
 # (loadAnnotation, AnnotationHub AH63657) to Ensembl gene IDs, drawing on four
