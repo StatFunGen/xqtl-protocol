@@ -1,4 +1,4 @@
 # expected-output regression manifest — twas
 # columns: output <tab> mode <tab> rtol <tab> atol <tab> notes
-gwas_sumstats.chr22.rds	tolerant	1e-6	1e-8	GwasSumStats S4 (one chr22 LD block) from gwas_sumstats_construct.R; deterministic. Compared with normalize_paths=True — the S4 embeds the machine-specific LD-reference path.
+gwas_sumstats.chr22.rds	tolerant	1e-6	1e-8	GwasSumStats S4 (one chr22 LD block) from gwas_sumstats_construct.R; deterministic. Compared with normalize_paths=True — the S4 embeds the machine-specific LD-reference path. Re-baselined for pecotmr 0.7.8 (#591 class cleanup): the genome build moved off the SumStatsBase `genome` slot into seqinfo(), so this fixture now records genome=GRCh38; values are unchanged (old-vs-new all.equal 1e-6 with the build neutralized).
 twas.chr22.rds	tolerant	1e-6	1e-8	TWAS-Z GRanges from twas.R (causalInferencePipeline) over the committed S4 TwasWeights + a built GwasSumStats; deterministic, no embedded paths.
