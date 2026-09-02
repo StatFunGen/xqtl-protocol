@@ -546,7 +546,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteins">Proteins</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter-clusters-to-genes">Leafcutter clusters to genes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter-isoforms">Leafcutter isoforms</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#psichomics-isoforms">Psichomics isoforms</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-coordinate-annotation-with-biomart">Alternative coordinate annotation with biomaRt</a></li>
 </ul>
 </li>
@@ -555,7 +554,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-pyqtl">Implementation using <code class="docutils literal notranslate"><span class="pre">pyqtl</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-biomart">Implementation using biomaRt</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotation-of-leafcutter-isoform">Annotation of leafcutter isoform</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#processing-of-psichomics-output">Processing of psichomics output</a></li>
 </ul>
 </li>
 </ul>
@@ -576,7 +574,7 @@
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>Molecular phenotype matrices arrive keyed by feature ID alone – an ENSEMBL gene ID, a UniProt accession, a leafcutter intron-cluster label – but every downstream QTL step needs a genomic position to define a cis window. This module attaches those coordinates, turning a plain matrix into a coordinate-sorted, bgzipped and tabix-indexed <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> file.</p>
 <p>Coordinates come from a collapsed gene-model GTF, following the <a class="reference external" href="https://github.com/broadinstitute/gtex-pipeline/blob/master/qtl/src/eqtl_prepare_expression.py">GTEx pipeline</a> convention, so the annotation used here matches the one used to build the GTF in the first place. Feature IDs that the GTF does not contain are dropped rather than guessed at, which is why the row count of the output can be lower than that of the input.</p>
-<p>Which route applies depends on how the features are named. Gene-level expression matrices match the GTF directly. Protein matrices carry <code class="docutils literal notranslate"><span class="pre">gene_id|UniProt</span></code> composite IDs and need an auxiliary mapping to reach a gene. Leafcutter intron clusters are not genes at all: they are genomic intervals that must first be mapped onto the genes they overlap, which also produces the phenotype-group file that grouped multiple-testing correction later consumes. Psichomics PSI output is already grouped by gene symbol, so it only needs that symbol translated to an ENSEMBL ID.</p>
+<p>Which route applies depends on how the features are named. Gene-level expression matrices match the GTF directly. Protein matrices carry <code class="docutils literal notranslate"><span class="pre">gene_id|UniProt</span></code> composite IDs and need an auxiliary mapping to reach a gene. Leafcutter intron clusters are not genes at all: they are genomic intervals that must first be mapped onto the genes they overlap, which also produces the phenotype-group file that grouped multiple-testing correction later consumes.</p>
 <p>An older <code class="docutils literal notranslate"><span class="pre">biomaRt</span></code> route is retained for reference. It places a single-base TSS interval rather than the full gene body and is obsolete; new analyses should use the GTF-based route.</p>
 <p><strong>When to run it.</strong> After a molecular phenotype matrix has been assembled and normalised, and before any QTL association scan, since the association modules read the coordinates from this <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code>.</p>
 </section>
@@ -614,7 +612,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;phenoFile</span> <span class="pre">stem&gt;.region_list.txt</span></code> – one row per retained feature giving its coordinates, ID and the path of the <code class="docutils literal notranslate"><span class="pre">bed.gz</span></code> it came from; QTL modules read this to enumerate cis regions.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;phenoFile</span> <span class="pre">stem&gt;.gene_list.tsv</span></code> – the feature IDs that were successfully matched to the GTF.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">*.leafcutter.clusters_to_genes.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">*.exon_list</span></code> – from <code class="docutils literal notranslate"><span class="pre">map_leafcutter_cluster_to_gene</span></code>: the cluster-to-gene assignment and the exon table it was derived from.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">*.phenotype_group.txt</span></code> – from the leafcutter and psichomics isoform workflows: the isoform-to-gene grouping used by grouped multiple-testing correction.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.phenotype_group.txt</span></code> – from the leafcutter isoform workflow: the isoform-to-gene grouping used by grouped multiple-testing correction.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/expected/protocol_example.rnaseq.bed.bed.gz</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#chr	start	end	ID	strand	SAMPLE_001</span>
@@ -759,21 +757,6 @@
     --intron-count tests/fixtures/gene_annotation/protocol_example.leafcutter.intron_count.tsv \
     --coordinate-annotation &lt;path/to/Homo_sapiens.GRCh38.103.chr.gtf&gt; \
     --map-stra site
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="psichomics-isoforms">
-<h3>Psichomics isoforms<a class="headerlink" href="#psichomics-isoforms" title="Link to this heading">#</a></h3>
-<p>For psichomics splicing quantifications, each event ID ends in <code class="docutils literal notranslate"><span class="pre">_&lt;gene_id&gt;</span></code>; the gene ID is matched against the GTF to obtain coordinates. The output is a coordinate-annotated phenotype BED plus a phenotype-group file.</p>
-<p><strong>Timing</strong>: ~2 min (on toy dataset)</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_psichomics_isoforms \
-    --cwd output/gene_annotation \
-    --phenoFile tests/fixtures/gene_annotation/protocol_example.psichomics.phenotype.tsv \
-    --coordinate-annotation &lt;path/to/Homo_sapiens.GRCh38.103.chr.gtf&gt;
 </pre></div>
 </div>
 </div>
@@ -934,7 +917,6 @@
   <span class="n">annotate_coord_biomart</span>
   <span class="n">map_leafcutter_cluster_to_gene</span>
   <span class="n">annotate_leafcutter_isoforms</span>
-  <span class="n">annotate_psichomics_isoforms</span>
 
 <span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
   <span class="o">--</span><span class="n">modular</span><span class="o">-</span><span class="n">script</span><span class="o">-</span><span class="nb">dir</span> <span class="n">code</span><span class="o">/</span><span class="n">script</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
@@ -981,9 +963,7 @@
   <span class="n">map_leafcutter_cluster_to_gene</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
       <span class="o">--</span><span class="n">intron</span><span class="o">-</span><span class="n">count</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-                        <span class="n">Extract</span> <span class="n">the</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">case</span> <span class="n">psichromatic</span> <span class="n">needs</span> <span class="n">to</span> <span class="n">be</span>
-                        <span class="n">processed</span> <span class="n">the</span> <span class="n">same</span> <span class="n">way</span> <span class="n">PheoFile</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">step</span> <span class="ow">is</span> <span class="n">the</span>
-                        <span class="n">intron_count</span> <span class="n">file</span>
+                        <span class="n">PhenoFile</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">step</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">intron_count</span> <span class="n">file</span>
       <span class="o">--</span><span class="n">coordinate</span><span class="o">-</span><span class="n">annotation</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
                         <span class="n">gtf</span> <span class="n">annotation</span> <span class="k">with</span> <span class="n">exons</span> <span class="p">(</span><span class="n">the</span> <span class="n">full</span> <span class="n">gene</span> <span class="n">model</span><span class="p">),</span> <span class="n">used</span> <span class="n">to</span>
                         <span class="nb">map</span> <span class="n">intron</span> <span class="n">splice</span> <span class="n">sites</span> <span class="n">to</span> <span class="n">genes</span>
@@ -999,11 +979,6 @@
                         <span class="n">cluster</span> <span class="n">length</span> <span class="n">that</span> <span class="n">intersects</span> <span class="k">with</span> <span class="n">a</span> <span class="n">gene</span><span class="p">,</span> <span class="n">used</span> <span class="n">to</span>
                         <span class="n">determine</span> <span class="n">mapping</span> <span class="n">to</span> <span class="n">the</span> <span class="n">gene</span><span class="o">.</span>
   <span class="n">annotate_leafcutter_isoforms</span><span class="p">:</span>
-    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">sample</span><span class="o">-</span><span class="n">participant</span><span class="o">-</span><span class="n">lookup</span> <span class="o">.</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
-      <span class="o">--</span><span class="n">coordinate</span><span class="o">-</span><span class="n">annotation</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-                        <span class="n">gtf</span> <span class="n">annotation</span> <span class="k">with</span> <span class="n">exons</span> <span class="p">(</span><span class="n">the</span> <span class="n">full</span> <span class="n">gene</span> <span class="n">model</span><span class="p">)</span>
-  <span class="n">annotate_psichomics_isoforms</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
       <span class="o">--</span><span class="n">sample</span><span class="o">-</span><span class="n">participant</span><span class="o">-</span><span class="n">lookup</span> <span class="o">.</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
       <span class="o">--</span><span class="n">coordinate</span><span class="o">-</span><span class="n">annotation</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
@@ -1107,8 +1082,7 @@ bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[map_leafcutter_cluster_to_gene]
-## Extract the code in case psichromatic needs to be processed the same way
-## PheoFile in this step is the intron_count file
+## PhenoFile in this step is the intron_count file
 parameter: intron_count = path
 # gtf annotation with exons (the full gene model), used to map intron splice sites to genes
 parameter: coordinate_annotation = path
@@ -1149,31 +1123,6 @@ bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:
         --phenoFile "${_input[0]}" \
         --annotation-gtf "${_input[1]}" \
         --cluster-map "${_input[3]}" \
-        --sample-participant-lookup "${sample_participant_lookup}" \
-        --output-bed "${_output[0]}" \
-        --output-phenotype-group "${_output[1]}"
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="processing-of-psichomics-output">
-<h3>Processing of psichomics output<a class="headerlink" href="#processing-of-psichomics-output" title="Link to this heading">#</a></h3>
-<p>It occurs that the psichomatic by default grouped the isoforms by gene name, so only thing needs to be done is to extract this information and potentially renamed the gene symbol into ENSG ID</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[annotate_psichomics_isoforms]
-parameter: sample_participant_lookup = path()
-# gtf annotation with exons (the full gene model)
-parameter: coordinate_annotation = path
-input: phenoFile, coordinate_annotation
-output: f'{cwd:a}/{_input[0]:bn}.formated.bed.gz', f'{cwd:a}/{_input[0]:bn}.phenotype_group.txt'
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime,  mem = mem, tags = f'{step_name}_{_output[0]:bn}'  
-bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container = container, entrypoint = entrypoint
-    Rscript ${modular_script_dir}/data_preprocessing/phenotype/gene_annotation.R \
-        --step annotate_psichomics_isoforms \
-        --phenoFile "${_input[0]}" \
-        --annotation-gtf "${_input[1]}" \
         --sample-participant-lookup "${sample_participant_lookup}" \
         --output-bed "${_output[0]}" \
         --output-phenotype-group "${_output[1]}"
@@ -1259,7 +1208,6 @@ bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#proteins">Proteins</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter-clusters-to-genes">Leafcutter clusters to genes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter-isoforms">Leafcutter isoforms</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#psichomics-isoforms">Psichomics isoforms</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-coordinate-annotation-with-biomart">Alternative coordinate annotation with biomaRt</a></li>
 </ul>
 </li>
@@ -1268,7 +1216,6 @@ bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-pyqtl">Implementation using <code class="docutils literal notranslate"><span class="pre">pyqtl</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-using-biomart">Implementation using biomaRt</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotation-of-leafcutter-isoform">Annotation of leafcutter isoform</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#processing-of-psichomics-output">Processing of psichomics output</a></li>
 </ul>
 </li>
 </ul>

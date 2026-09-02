@@ -553,11 +553,9 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-star-index">8. Build the STAR index</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-rsem-index">9. Build the RSEM index</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-refflat-annotation">10. Generate RefFlat annotation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-suppa-event-annotation">11. Generate SUPPA event annotation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-the-psichomics-hg38-annotation">12. Generate the psichomics HG38 annotation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-a-study-vcf-with-dbsnp-identifiers-optional">13. Annotate a study VCF with dbSNP identifiers (optional)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-generalized-tad-boundaries-optional">14. Construct generalized TAD boundaries (optional)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-an-ld-sketch-for-rss-analysis-optional">15. Construct an LD sketch for RSS analysis (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-a-study-vcf-with-dbsnp-identifiers-optional">11. Annotate a study VCF with dbSNP identifiers (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-generalized-tad-boundaries-optional">12. Construct generalized TAD boundaries (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-an-ld-sketch-for-rss-analysis-optional">13. Construct an LD sketch for RSS analysis (optional)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
@@ -585,11 +583,11 @@
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>This mini-protocol walks through how the reference data used throughout the xQTL Protocol are downloaded, formatted, and indexed. It is an introductory, top-to-bottom guide: each step calls a single workflow from <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/reference_data_preparation.html"><code class="docutils literal notranslate"><span class="pre">reference_data_preparation.ipynb</span></code></a>, with additional workflows from <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/VCF_QC.html"><code class="docutils literal notranslate"><span class="pre">VCF_QC.ipynb</span></code></a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/generalized_TADB.html"><code class="docutils literal notranslate"><span class="pre">generalized_TADB.ipynb</span></code></a>, and <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/rss_ld_sketch.html"><code class="docutils literal notranslate"><span class="pre">rss_ld_sketch.ipynb</span></code></a>.</p>
-<p>The commands are organized as selectable routes rather than one mandatory 15-step chain. Steps 1–12 prepare the core genome and the RNA-seq, RSEM, Picard, SUPPA, or psichomics resources needed by the selected route. Steps 13–15 are independent optional workflows for dbSNP annotation, TAD-based association windows, and RSS LD sketches.</p>
+<p>The commands are organized as selectable routes rather than one mandatory 13-step chain. Steps 1–10 prepare the core genome and the RNA-seq, RSEM, or Picard resources needed by the selected route. Steps 11–13 are independent optional workflows for dbSNP annotation, TAD-based association windows, and RSS LD sketches.</p>
 </section>
 <section id="steps">
 <h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
-<p>Choose a route before running commands; the 15 commands are not one mandatory chain.</p>
+<p>Choose a route before running commands; the 13 commands are not one mandatory chain.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p><strong>Analysis goal</strong></p></th>
@@ -614,24 +612,16 @@
 <td><p>1 → 2 → 3 → 5 → 6 → 7 → 8 → 10</p></td>
 <td><p>-</p></td>
 </tr>
-<tr class="row-even"><td><p>SUPPA splicing annotation</p></td>
-<td><p>1 → 2 → 3 → 5 → 6 → 7 → 11</p></td>
-<td><p>-</p></td>
-</tr>
-<tr class="row-odd"><td><p>psichomics HG38 annotation</p></td>
-<td><p>1 → 2 → 3 → 5 → 6 → 7 → 12</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">input/reference_data/hgnc_complete_set.txt</span></code></p></td>
-</tr>
 <tr class="row-even"><td><p>Add dbSNP rsIDs to a study VCF</p></td>
-<td><p>4 → 13</p></td>
+<td><p>4 → 11</p></td>
 <td><p>Internet access and a study VCF</p></td>
 </tr>
 <tr class="row-odd"><td><p>TAD-based association windows</p></td>
-<td><p>14</p></td>
+<td><p>12</p></td>
 <td><p>Tissue-specific TAD calls and gene coordinates</p></td>
 </tr>
 <tr class="row-even"><td><p>RSS fine-mapping or TWAS</p></td>
-<td><p>15</p></td>
+<td><p>13</p></td>
 <td><p>LD-block definitions and genotype VCFs</p></td>
 </tr>
 </tbody>
@@ -748,33 +738,8 @@
 </div>
 </div>
 </section>
-<section id="generate-suppa-event-annotation">
-<h3>11. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/reference_data_preparation.html">Generate SUPPA event annotation</a><a class="headerlink" href="#generate-suppa-event-annotation" title="Link to this heading">#</a></h3>
-<p><strong>What it does:</strong> Generate SUPPA event files and the SUPPA annotation RDS used for event-level splicing analysis.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb SUPPA_annotation --cwd output/reference_data --hg-gtf output/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="generate-the-psichomics-hg38-annotation">
-<h3>12. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/reference_data_preparation.html">Generate the psichomics HG38 annotation</a><a class="headerlink" href="#generate-the-psichomics-hg38-annotation" title="Link to this heading">#</a></h3>
-<p><strong>What it does:</strong> Reconcile the processed GTF with an HGNC database and create <code class="docutils literal notranslate"><span class="pre">psichomics_hg38_annotation.rds</span></code>. The regular example-input bundle does not currently include the required HGNC table.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb psi_hg38_annotation \
-    --hg-gtf output/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf \
-    --hgrc-db output/reference_data/hgnc_complete_set.txt \
-    --cwd output/reference_data
-</pre></div>
-</div>
-</div>
-</div>
-</section>
 <section id="annotate-a-study-vcf-with-dbsnp-identifiers-optional">
-<h3>13. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/VCF_QC.html">Annotate a study VCF with dbSNP identifiers (optional)</a><a class="headerlink" href="#annotate-a-study-vcf-with-dbsnp-identifiers-optional" title="Link to this heading">#</a></h3>
+<h3>11. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/VCF_QC.html">Annotate a study VCF with dbSNP identifiers (optional)</a><a class="headerlink" href="#annotate-a-study-vcf-with-dbsnp-identifiers-optional" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Add rsIDs to a study VCF when downstream tools require named variants.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -787,7 +752,7 @@
 </div>
 </section>
 <section id="construct-generalized-tad-boundaries-optional">
-<h3>14. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/generalized_TADB.html">Construct generalized TAD boundaries (optional)</a><a class="headerlink" href="#construct-generalized-tad-boundaries-optional" title="Link to this heading">#</a></h3>
+<h3>12. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/generalized_TADB.html">Construct generalized TAD boundaries (optional)</a><a class="headerlink" href="#construct-generalized-tad-boundaries-optional" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Combine tissue-specific TAD calls into customized cis-association windows.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -801,7 +766,7 @@
 </div>
 </section>
 <section id="construct-an-ld-sketch-for-rss-analysis-optional">
-<h3>15. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/rss_ld_sketch.html">Construct an LD sketch for RSS analysis (optional)</a><a class="headerlink" href="#construct-an-ld-sketch-for-rss-analysis-optional" title="Link to this heading">#</a></h3>
+<h3>13. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/rss_ld_sketch.html">Construct an LD sketch for RSS analysis (optional)</a><a class="headerlink" href="#construct-an-ld-sketch-for-rss-analysis-optional" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Generate, process and merge LD-sketch products for summary-statistics regression.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -843,12 +808,6 @@ sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sket
 <tr class="row-odd"><td><p>Picard QC</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.ref.flat</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>SUPPA</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/hg38.Homo_sapiens.GRCh38.103.chr.reformatted.ERCC_SE_strict.ioe</span></code> and the other SUPPA <code class="docutils literal notranslate"><span class="pre">.ioe</span></code> event files; <code class="docutils literal notranslate"><span class="pre">output/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.SUPPA_annotation.rds</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p>psichomics</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/psichomics_hg38_annotation.rds</span></code></p></td>
-</tr>
 <tr class="row-even"><td><p>dbSNP study-VCF annotation</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/reference_data/00-All.variants.gz</span></code> lookup plus the annotated VCF under <code class="docutils literal notranslate"><span class="pre">output/vcf_qc/</span></code></p></td>
 </tr>
@@ -864,8 +823,8 @@ sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sket
 </section>
 <section id="anticipated-results">
 <h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
-<p>After the selected route among steps 1–12, the reference directory contains the formatted genome and the annotations required by that analysis. The basic route produces the processed genome and gene annotation; the RNA-seq routes additionally produce the combined ERCC annotation and, as selected, the STAR index, RSEM index, RefFlat annotation, SUPPA event annotation, or psichomics HG38 annotation.</p>
-<p>Optional step 13 produces a study VCF annotated with dbSNP rsIDs. Optional step 14 produces generalized TAD and TAD-boundary files such as <code class="docutils literal notranslate"><span class="pre">generalized_TAD.tsv</span></code>, <code class="docutils literal notranslate"><span class="pre">generalized_TADB.tsv</span></code>, <code class="docutils literal notranslate"><span class="pre">TADB_enhanced_cis.bed</span></code>, and <code class="docutils literal notranslate"><span class="pre">extended_TADB.bed</span></code>. Optional step 15 produces the random-projection matrix and the block- and chromosome-level LD-sketch products consumed by RSS workflows.</p>
+<p>After the selected route among steps 1–10, the reference directory contains the formatted genome and the annotations required by that analysis. The basic route produces the processed genome and gene annotation; the RNA-seq routes additionally produce the combined ERCC annotation and, as selected, the STAR index, RSEM index, or RefFlat annotation.</p>
+<p>Optional step 11 produces a study VCF annotated with dbSNP rsIDs. Optional step 12 produces generalized TAD and TAD-boundary files such as <code class="docutils literal notranslate"><span class="pre">generalized_TAD.tsv</span></code>, <code class="docutils literal notranslate"><span class="pre">generalized_TADB.tsv</span></code>, <code class="docutils literal notranslate"><span class="pre">TADB_enhanced_cis.bed</span></code>, and <code class="docutils literal notranslate"><span class="pre">extended_TADB.bed</span></code>. Optional step 13 produces the random-projection matrix and the block- and chromosome-level LD-sketch products consumed by RSS workflows.</p>
 <p>Proceed to the molecular-phenotype or genotype-preprocessing mini-protocol required by the selected analysis route.</p>
 </section>
 <section id="command-interface">
@@ -962,11 +921,9 @@ sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sket
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-star-index">8. Build the STAR index</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-rsem-index">9. Build the RSEM index</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-refflat-annotation">10. Generate RefFlat annotation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-suppa-event-annotation">11. Generate SUPPA event annotation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-the-psichomics-hg38-annotation">12. Generate the psichomics HG38 annotation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-a-study-vcf-with-dbsnp-identifiers-optional">13. Annotate a study VCF with dbSNP identifiers (optional)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-generalized-tad-boundaries-optional">14. Construct generalized TAD boundaries (optional)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-an-ld-sketch-for-rss-analysis-optional">15. Construct an LD sketch for RSS analysis (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-a-study-vcf-with-dbsnp-identifiers-optional">11. Annotate a study VCF with dbSNP identifiers (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-generalized-tad-boundaries-optional">12. Construct generalized TAD boundaries (optional)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#construct-an-ld-sketch-for-rss-analysis-optional">13. Construct an LD sketch for RSS analysis (optional)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>

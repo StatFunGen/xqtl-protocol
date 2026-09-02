@@ -545,7 +545,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-junction-list">Build the junction list</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-call-the-samples">Joint-call the samples</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter">Leafcutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#psichomics-psi-values">Psichomics PSI values</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter-with-ebmf-imputation">Leafcutter with EBMF imputation</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-qc">Step 1. QC</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-imputation">Step 2. Imputation</a></li>
@@ -569,33 +568,25 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="splicing-qc-and-normalization">
 <h1>Splicing QC and Normalization<a class="headerlink" href="#splicing-qc-and-normalization" title="Link to this heading">#</a></h1>
-<p>Quality control and normalisation of alternative-splicing quantifications from <code class="docutils literal notranslate"><span class="pre">leafcutter</span></code> and <code class="docutils literal notranslate"><span class="pre">psichomics</span></code>.</p>
+<p>Quality control and normalisation of alternative-splicing quantifications from <code class="docutils literal notranslate"><span class="pre">leafcutter</span></code>.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>Quality control and normalization of alternative-splicing quantifications produced by the <code class="docutils literal notranslate"><span class="pre">leafcutter</span></code> and <code class="docutils literal notranslate"><span class="pre">psichomics</span></code> tools. Raw outputs are converted to BED format, features with high per-sample missingness (default 40%) are dropped, low-variance introns/events (default min variance 0.001) are removed, values are quantile-normalized, and remaining missing values are mean-imputed. The normalized tables are ready to use as molecular phenotypes for tensorQTL.</p>
+<p>Quality control and normalization of alternative-splicing quantifications produced by the <code class="docutils literal notranslate"><span class="pre">leafcutter</span></code> tool. Raw outputs are converted to BED format, features with high per-sample missingness (default 40%) are dropped, low-variance introns (default min variance 0.001) are removed, values are quantile-normalized, and remaining missing values are mean-imputed. The normalized tables are ready to use as molecular phenotypes for tensorQTL.</p>
 <p>Intron excision ratios are not comparable across samples as they come out of the caller.
 They are compositional - each intron is a fraction of its cluster - and sparse, because an
 intron unused in a sample has no reads rather than a zero. Left alone, both properties show
 up in association testing as signal that tracks sequencing depth and sample handling rather
 than genotype. The steps here filter clusters, impute the missing entries and quantile
 normalise, which is what makes the phenotype usable downstream.</p>
-<p>Two quantification tools are supported and they need different handling, hence the separate
-workflows: <code class="docutils literal notranslate"><span class="pre">leafcutter_norm</span></code> and <code class="docutils literal notranslate"><span class="pre">leafcutter_qqnorm</span></code> for LeafCutter output, <code class="docutils literal notranslate"><span class="pre">psichomics_norm</span></code>
-for PSI values from psichomics.</p>
+<p><code class="docutils literal notranslate"><span class="pre">leafcutter_norm</span></code> runs the whole route; <code class="docutils literal notranslate"><span class="pre">leafcutter_qqnorm</span></code> is the normalisation half on its
+own, for when QC and imputation happened elsewhere.</p>
 <p><strong>When to run it.</strong> After splicing calling, before phenotype preprocessing and association
 testing.</p>
 </section>
 <section id="input">
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">--ratios</span></code>: the splicing ratio matrix to normalise, and the main input to all three workflows. Which form it takes depends on the workflow: <code class="docutils literal notranslate"><span class="pre">leafcutter_norm</span></code> expects the leafcutter per-cluster intron usage counts, <code class="docutils literal notranslate"><span class="pre">leafcutter_qqnorm</span></code> an already-QCed numeric intron-ratio table, and <code class="docutils literal notranslate"><span class="pre">psichomics_norm</span></code> a psichomics PSI matrix keyed by splicing-event ID. Example <code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.psichomics.psi_raw_data.tsv</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ID</span>                                                    <span class="n">SAMPLE_001</span>  <span class="n">SAMPLE_002</span>  <span class="n">SAMPLE_003</span>
-<span class="n">SE_22_</span><span class="o">+</span><span class="n">_42438332_42438832_42439332_42439832_ENSG</span><span class="o">...</span>   <span class="n">NA</span>          <span class="mf">0.3414</span>      <span class="mf">0.1858</span>
-<span class="n">SE_22_</span><span class="o">-</span><span class="n">_42440332_42440832_42441332_42441832_ENSG</span><span class="o">...</span>   <span class="mf">0.7942</span>      <span class="mf">0.1614</span>      <span class="mf">0.2509</span>
-</pre></div>
-</div>
-<p>The leafcutter equivalents are <code class="docutils literal notranslate"><span class="pre">protocol_example.leafcutter.intron_usage_perind.counts.gz</span></code> (counts, <code class="docutils literal notranslate"><span class="pre">count/total</span></code> per sample) and <code class="docutils literal notranslate"><span class="pre">..._raw_data.txt</span></code> (the QC-ready numeric table).</p>
-</li>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--ratios</span></code>: the splicing ratio matrix to normalise, and the main input to both workflows. Which form it takes depends on the workflow: <code class="docutils literal notranslate"><span class="pre">leafcutter_norm</span></code> expects the leafcutter per-cluster intron usage counts, <code class="docutils literal notranslate"><span class="pre">protocol_example.leafcutter.intron_usage_perind.counts.gz</span></code> (counts, <code class="docutils literal notranslate"><span class="pre">count/total</span></code> per sample), and <code class="docutils literal notranslate"><span class="pre">leafcutter_qqnorm</span></code> an already-QCed numeric intron-ratio table, <code class="docutils literal notranslate"><span class="pre">..._raw_data.txt</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--qced-data</span></code>: where step 3 looks for its input. A directory, the default <code class="docutils literal notranslate"><span class="pre">.</span></code>, is scanned for files ending <code class="docutils literal notranslate"><span class="pre">_raw_data.txt</span></code>. A single file is used directly, and that case also forces <code class="docutils literal notranslate"><span class="pre">--mean_impute</span></code> on to fill any remaining NAs.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--no_norm</span></code>: stop <code class="docutils literal notranslate"><span class="pre">leafcutter_norm</span></code> before step 3, leaving the QCed table un-normalised. This is how the three-step route gets a QC-only result to hand to the imputer.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--mean_impute</span></code>: off by default. Fills missing ratios by the mean; step 3 turns it on by itself when <code class="docutils literal notranslate"><span class="pre">--qced-data</span></code> names a file.</p></li>
@@ -622,20 +613,6 @@ testing.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Chr  start  end  ID  SAMPLE_001</span>
 <span class="n">chr22</span>  <span class="mi">16671178</span>  <span class="mi">16671518</span>  <span class="n">chr22</span><span class="p">:</span><span class="mi">16671178</span><span class="p">:</span><span class="mi">1667151</span>  <span class="o">-</span><span class="mf">0.25101591868327155</span>
 <span class="n">chr22</span>  <span class="mi">16671588</span>  <span class="mi">16673600</span>  <span class="n">chr22</span><span class="p">:</span><span class="mi">16671588</span><span class="p">:</span><span class="mi">1667360</span>  <span class="o">-</span><span class="mf">1.261282157758418</span>
-</pre></div>
-</div>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">{cwd}/psichomics_raw_data_bedded.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">{input}.qqnorm.txt</span></code> - the psichomics PSI matrix parsed into BED format and then quantile-normalised.</p>
-<p>Example <code class="docutils literal notranslate"><span class="pre">output/splicing/psichomics_raw_data_bedded.txt</span></code>, 24 columns and 31 rows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Chr  start  end  ID</span>
-<span class="n">chr22</span>  <span class="mi">42438332</span>  <span class="mi">42439832</span>  <span class="n">SE_22_</span><span class="o">+</span><span class="n">_42438332_424</span>
-<span class="n">chr22</span>  <span class="mi">42440332</span>  <span class="mi">42441832</span>  <span class="n">SE_22_</span><span class="o">-</span><span class="n">_42440332_424</span>
-</pre></div>
-</div>
-<p>and <code class="docutils literal notranslate"><span class="pre">output/splicing/psichomics_raw_data_bedded.qqnorm.txt</span></code>, 24 columns and 31 rows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Chr  start  end  ID</span>
-<span class="n">chr22</span>  <span class="mi">42438332</span>  <span class="mi">42439832</span>  <span class="n">SE_22_</span><span class="o">+</span><span class="n">_42438332_424</span>
-<span class="n">chr22</span>  <span class="mi">42440332</span>  <span class="mi">42441832</span>  <span class="n">SE_22_</span><span class="o">-</span><span class="n">_42440332_424</span>
 </pre></div>
 </div>
 </li>
@@ -699,20 +676,6 @@ testing.</p>
     --cwd output/splicing \
     --ratios output/leafcutter/normalize/protocol_example.leafcutter.intron_usage_perind.counts.gz \
     --mean_impute 
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="psichomics-psi-values">
-<h3>Psichomics PSI values<a class="headerlink" href="#psichomics-psi-values" title="Link to this heading">#</a></h3>
-<p>This workflow parses psichomics splicing-event IDs into BED coordinates, applies NA and variance filters, and then quantile-normalizes each event. See the <a class="reference external" href="http://bioconductor.org/packages/release/bioc/html/psichomics.html">psichomics documentation</a>. The only QC applied to PSI values here is NA removal and a minimal variance filter; the psichomics maintainers suggest some further QC, <a class="reference external" href="https://github.com/nuno-agostinho/psichomics/issues/450">discussed here</a>. For reference, the default minimal variance used in leafcutter QC is 0.001. Because the alternative-splicing event types in psichomics outputs differ, normalization is performed per event (rows) rather than per sample (columns).</p>
-<p><strong>Timing</strong>: TBD (on toy dataset)</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb psichomics_norm \
-    --cwd output/splicing \
-    --ratios output/leafcutter/normalize/protocol_example.psichomics.psi_raw_data.tsv 
 </pre></div>
 </div>
 </div>
@@ -809,7 +772,6 @@ testing.</p>
   <span class="n">Jointcall_samples</span>
   <span class="n">leafcutter_norm</span>
   <span class="n">leafcutter_qqnorm</span>
-  <span class="n">psichomics_norm</span>
 
 <span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
   <span class="o">--</span><span class="n">modular</span><span class="o">-</span><span class="n">script</span><span class="o">-</span><span class="nb">dir</span> <span class="n">code</span><span class="o">/</span><span class="n">script</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
@@ -858,20 +820,9 @@ testing.</p>
                         <span class="n">kept</span> <span class="p">(</span><span class="n">default</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">leafcutter</span> <span class="n">default</span><span class="p">)</span>
       <span class="o">--</span><span class="nb">min</span><span class="o">-</span><span class="n">variance</span> <span class="mf">0.001</span> <span class="p">(</span><span class="k">as</span> <span class="nb">float</span><span class="p">)</span>
                         <span class="n">minimal</span> <span class="n">variance</span> <span class="n">across</span> <span class="n">samples</span> <span class="k">for</span> <span class="n">an</span> <span class="n">event</span> <span class="n">to</span> <span class="n">be</span> <span class="n">kept</span>
-                        <span class="p">(</span><span class="n">default</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">psichomics</span> <span class="n">suggested</span><span class="p">)</span>
+                        <span class="p">(</span><span class="n">default</span> <span class="mf">0.001</span><span class="p">)</span>
       <span class="o">--</span><span class="n">qced</span><span class="o">-</span><span class="n">data</span> <span class="o">.</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">)</span>
       <span class="o">--</span><span class="p">[</span><span class="n">no</span><span class="o">-</span><span class="p">]</span><span class="n">bgzip</span> <span class="p">(</span><span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="p">)</span>
-  <span class="n">psichomics_norm_1</span><span class="p">:</span>
-    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">ratios</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-  <span class="n">psichomics_norm_2</span><span class="p">:</span>
-    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">na</span><span class="o">-</span><span class="n">rate</span> <span class="mf">0.4</span> <span class="p">(</span><span class="k">as</span> <span class="nb">float</span><span class="p">)</span>
-                        <span class="n">minimal</span> <span class="n">NA</span> <span class="n">rate</span> <span class="n">within</span> <span class="n">sample</span> <span class="n">values</span> <span class="k">for</span> <span class="n">an</span> <span class="n">event</span> <span class="n">to</span> <span class="n">be</span>
-                        <span class="n">kept</span> <span class="p">(</span><span class="n">default</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">leafcutter</span> <span class="n">default</span><span class="p">)</span>
-      <span class="o">--</span><span class="nb">min</span><span class="o">-</span><span class="n">variance</span> <span class="mf">0.001</span> <span class="p">(</span><span class="k">as</span> <span class="nb">float</span><span class="p">)</span>
-                        <span class="n">minimal</span> <span class="n">variance</span> <span class="n">across</span> <span class="n">samples</span> <span class="k">for</span> <span class="n">an</span> <span class="n">event</span> <span class="n">to</span> <span class="n">be</span> <span class="n">kept</span>
-                        <span class="p">(</span><span class="n">default</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">psichomics</span> <span class="n">suggested</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -989,7 +940,7 @@ stop_if(no_norm)
 parameter: mean_impute = False
 # minimal NA rate within sample values for an event to be kept (default 0.4, leafcutter default)
 parameter: na_rate = 0.4
-# minimal variance across samples for an event to be kept (default 0.001, psichomics suggested)
+# minimal variance across samples for an event to be kept (default 0.001)
 parameter: min_variance = 0.001
 parameter: qced_data = path(".")
 parameter: bgzip=False
@@ -1017,42 +968,6 @@ bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:
         bgzip -c "${_output}" &gt; "${_output:n}.bed.gz"
         tabix -p bed "${_output:n}.bed.gz"
     fi
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[psichomics_norm_1]
-parameter: ratios = path
-input: ratios, group_by = 'all'
-output: f'{cwd}/psichomics_raw_data_bedded.txt' 
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= "${ }", stderr = f'{_output:n}.stderr', stdout = f'{_output:n}.stdout', container=container
-    Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
-        --step psichomics_bed \
-        --input ${_input} \
-        --output ${_output}
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[psichomics_norm_2]
-# minimal NA rate within sample values for an event to be kept (default 0.4, leafcutter default)
-parameter: na_rate = 0.4
-# minimal variance across samples for an event to be kept (default 0.001, psichomics suggested)
-parameter: min_variance = 0.001
-output: f'{_input:n}.qqnorm.txt'
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads
-bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:n}.stdout', container=container
-    Rscript ${modular_script_dir}/molecular_phenotypes/QC/splicing_normalization.R \
-        --step qqnorm \
-        --input ${_input} \
-        --output ${_output} \
-        --na-rate ${na_rate} \
-        --min-variance ${min_variance}
 </pre></div>
 </div>
 </div>
@@ -1133,7 +1048,6 @@ bash: expand= "${ }", stderr = f'{_output[0]:n}.stderr', stdout = f'{_output[0]:
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-junction-list">Build the junction list</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-call-the-samples">Joint-call the samples</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter">Leafcutter</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#psichomics-psi-values">Psichomics PSI values</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#leafcutter-with-ebmf-imputation">Leafcutter with EBMF imputation</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-qc">Step 1. QC</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-imputation">Step 2. Imputation</a></li>

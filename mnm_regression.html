@@ -596,8 +596,8 @@ expression into a GWAS cohort - which is why fine-mapping and weights come from 
 rather than two, with <code class="docutils literal notranslate"><span class="pre">skip_twas_weights</span></code> defaulting to <code class="docutils literal notranslate"><span class="pre">False</span></code>. In practice the pipeline
 runs per region: <code class="docutils literal notranslate"><span class="pre">susie_twas</span></code> performs univariate fine-mapping and trains weights with
 several methods, writing one <code class="docutils literal notranslate"><span class="pre">*.univariate_twas_weights.rds</span></code> per region; run it with
-<code class="docutils literal notranslate"><span class="pre">--save-data</span></code> so the combined fine-mapping object is kept. <code class="docutils literal notranslate"><span class="pre">mnm</span></code> then consumes that output
-through a <code class="docutils literal notranslate"><span class="pre">--fine-mapping-meta</span></code> table and produces the multi-context ensemble weights, one
+<code class="docutils literal notranslate"><span class="pre">--save-data</span></code> so the combined fine-mapping object is kept. <code class="docutils literal notranslate"><span class="pre">mnm</span></code> reads the QtlDataset that
+<code class="docutils literal notranslate"><span class="pre">qtl_dataset_construct</span></code> writes and produces the multi-context ensemble weights, one
 <code class="docutils literal notranslate"><span class="pre">*.multicontext_bvsr.rds</span></code> per gene.</p>
 <p>Two input modes take identical commands: a bulk RNA-seq matrix keyed by Ensembl gene ID
 with association windows at TSS +/- 500 kb, or a list of peaks or any other molecular
@@ -686,8 +686,6 @@ phenotypes and covariates in hand. From summary statistics only, use <code class
 <li><p><code class="docutils literal notranslate"><span class="pre">--keep-samples</span></code> (a file of sample IDs to retain before fine-mapping)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--max-cv-variants</span> <span class="pre">5000</span></code> (cap on the variants carried into cross-validated TWAS weights; <code class="docutils literal notranslate"><span class="pre">-1</span></code> for no cap)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--pheno-id-map-file</span></code> (maps phenotype IDs to the IDs used in the region list, when the two differ)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--fine-mapping-meta</span></code> <strong><code class="docutils literal notranslate"><span class="pre">output/mnm/fine_mapping_meta_mnm.tsv</span></code></strong>
-(the manifest of per-region fine-mapping results, consumed by the multi-gene and fSuSiE workflows)</p></li>
 </ul>
 </section>
 </section>
@@ -820,13 +818,12 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <p><strong>Timing</strong>: TBD (on toy dataset)</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mnm \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb qtl_dataset_construct+mnm \
     --name protocol_example --cwd output_mnm \
     --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
     --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv \
     --covFile tests/fixtures/qtl_mini/example_covariates.tsv \
     --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
-    --fine-mapping-meta tests/fixtures/qtl_mini/fine_mapping_meta.tsv \
     --transpose-covariates --save-data -j1
 </pre></div>
 </div>
@@ -860,14 +857,13 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
 <p><strong>Timing</strong>: TBD (on toy dataset)</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb mnm \
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/mnm_regression.ipynb qtl_dataset_construct+mnm \
     --name protocol_example \
     --cwd output_10peaks \
     --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed \
     --phenoFile tests/fixtures/qtl_mini/pheno_manifest.tsv \
     --covFile tests/fixtures/covariate_hidden_factor/covariates.tsv \
     --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
-    --fine-mapping-meta output_10peaks/fine_mapping_meta.tsv \
     -j1
 </pre></div>
 </div>
@@ -906,7 +902,6 @@ str(w$entry[[1]], max.level = 1)   # variantIds / susieFit / topLoci / cvResult
     --covFile tests/fixtures/qtl_mini/example_covariates.tsv \
     --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed \
     --pheno_id_map_file tests/fixtures/qtl_mini/pheno_id_map.tsv \
-    --fine_mapping_meta tests/fixtures/qtl_mini/fine_mapping_meta.tsv \
     --keep-samples tests/fixtures/qtl_mini/keep_samples.txt \
     --save-data -j1
 </pre></div>

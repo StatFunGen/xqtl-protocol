@@ -916,7 +916,7 @@ def adapt_file_path_all(df, column_name, reference_file):
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_analysis_regions: shared = "regional_data"]
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[get_analysis_regions: shared = ["regional_data", "meta_data"]]
 # input is genoFile, phenoFile, covFile and optionally region_list. If region_list presents then we only analyze what's contained in the list.
 # regional_data should be a dictionary like:
 #{'data': [("genotype_1.bed", "phenotype_1.bed.gz", "covariate_1.gz"), ("genotype_2.bed", "phenotype_1.bed.gz", "phenotype_2.bed.gz", "covariate_1.gz", "covariate_2.gz") ... ],
@@ -1106,31 +1106,126 @@ else:
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[quantile_qtl_twas_weight]
-depends: sos_variable("regional_data")
-# Check if both 'data' and 'meta_info' are empty lists
-stop_if(len(regional_data['data']) == 0, f'Either genotype or phenotype data are not available for region {", ".join(region_name)}.')
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[qtl_dataset_construct]
+# Build one pecotmr::QtlDataset from the phenotype manifest derived from
+# regional_data, replacing the per-region file I/O in quantile_qtl_twas_weight.
+# Writes a manifest TSV (one row per context: cond, path, cov_path) then calls
+# pecotmr::loadQtlDatasetFromManifest() to build and serialize the QtlDataset.
+# Downstream quantile_qtl_twas_weight loads this single RDS and uses the
+# QtlDataset accessors (getGenotypes, getPhenotypes, getPhenotypeCovariates)
+# instead of re-reading phenotype files per region.
+depends: sos_variable("regional_data"), sos_variable("meta_data")
+output: f"{cwd:a}/qtl_dataset/{name}.qtl_dataset.rds"
+# All code that references shared sos_variables must appear AFTER output: so that
+# SoS backward analysis (which only evaluates up to the output: directive) never
+# tries to execute it with regional_data / meta_data undefined.
+if len(regional_data['data']) == 0:
+    from sos.utils import StopInputGroup
+    raise StopInputGroup('No phenotype data available to build QtlDataset.')
 
-meta_info = regional_data['meta_info']
-input: regional_data["data"], group_by = lambda x: group_by_region(x, regional_data["data"]), group_with = "meta_info"
+import os, pandas as pd
+manifest_rows = []
+for _, row in meta_data.iterrows():
+    conds = str(row['cond']).split(',')
+    paths = str(row['path']).split(',')
+    cov_paths = str(row['cov_path']).split(',')
+    for cond, pheno_path, cov_path in zip(conds, paths, cov_paths):
+        manifest_rows.append({'cond': cond.strip(), 'path': pheno_path.strip(), 'cov_path': cov_path.strip()})
+manifest_df = pd.DataFrame(manifest_rows, columns=['cond', 'path', 'cov_path']).drop_duplicates(subset=['cond', 'path', 'cov_path'])
+os.makedirs(f"{cwd:a}/qtl_dataset", exist_ok=True)
+manifest_path = f"{cwd:a}/qtl_dataset/{name}.manifest.tsv"
+manifest_df.to_csv(manifest_path, sep='\t', index=False)
+
+task: trunk_workers = 1, trunk_size = 1, walltime = walltime, mem = mem, cores = numThreads, tags = f"{step_name}_{_output:bn}"
+R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container
+    library(pecotmr)
+    manifest_path &lt;- "${manifest_path}"
+    geno_path &lt;- "${genoFile:a}"
+    genotype_prefix &lt;- if (grepl("\\.bed$", geno_path)) {
+        tools::file_path_sans_ext(geno_path)
+    } else {
+        geno_list &lt;- read.table(geno_path, header = TRUE, stringsAsFactors = FALSE)
+        tools::file_path_sans_ext(as.character(geno_list[1, 2]))
+    }
+    keep_samples_vec &lt;- character(0)
+    if (${"TRUE" if keep_samples.is_file() else "FALSE"}) {
+        keep_samples_vec &lt;- unique(trimws(unlist(strsplit(
+            readLines(${keep_samples:ar}), "[[:space:]]+"))))
+    }
+    qd &lt;- loadQtlDatasetFromManifest(
+        manifest            = manifest_path,
+        study               = "${name}",
+        genotypes           = genotype_prefix,
+        mafCutoff           = ${maf},
+        macCutoff           = ${mac},
+        imissCutoff         = ${imiss},
+        keepIndel           = ${"TRUE" if indel else "FALSE"},
+        keepSamples         = keep_samples_vec,
+        keepVariants        = character(0),
+        transposeCovariates = TRUE,
+        scaleResiduals      = FALSE)
+    dir.create(dirname("${_output:a}"), showWarnings = FALSE, recursive = TRUE)
+    saveRDS(qd, "${_output:a}")
+    message(paste0("QtlDataset built: ", length(getContexts(qd)),
+                   " context(s) saved to ${_output:a}"))
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[quantile_qtl_twas_weight]
+depends: sos_variable("regional_data"), sos_variable("meta_data"), path(f"{cwd:a}/qtl_dataset/{name}.qtl_dataset.rds")
+# Check if both 'data' and 'meta_info' are empty lists
+if len(regional_data['data']) == 0:
+    from sos.utils import StopInputGroup
+    raise StopInputGroup(f'No data for region(s): {region_name}')
+
+meta_info = regional_data["meta_info"]
+input: path(f"{cwd:a}/qtl_dataset/{name}.qtl_dataset.rds"), for_each = "meta_info"
 output: f'{cwd:a}/{step_name}/{name}.{_meta_info[0].split(":")[0]}_{_meta_info[2]}.univariate_qr_twas_weights.rds'
 task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, cores = numThreads, tags = f'{step_name}_{_output:bn}'
 R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stderr", container = container
     options(warn=1)
     library(pecotmr)
     library(qQTLR)
+    library(SummarizedExperiment)
+    library(GenomicRanges)
     library(readr)
     start_time_total &lt;- proc.time()
-    
-    phenotype_files = c(${",".join(['"%s"' % x.absolute() for x in _input[1:len(_input)//2+1]])})
-    covariate_files = c(${",".join(['"%s"' % x.absolute() for x in _input[len(_input)//2+1:]])})
+
+    # Load the pre-built QtlDataset (built by qtl_dataset_construct)
+    qd &lt;- readRDS(${_input:ar})
+
     conditions = c(${",".join(['"%s"' % x for x in _meta_info[4:]])})
     region = ${("'%s'" % _meta_info[0]) if int(_meta_info[0].split('-')[-1])&gt;0 else 'NULL'} # if the end position is zero return NULL
     association_window = "${_meta_info[1]}"
     extract_region_name = list(${",".join([("c('"+x+"')") if isinstance(x, str) else ("c"+ str(x)) for x in _meta_info[3]])})
     phenotype_header = ${"4" if int(_meta_info[0].split('-')[-1])&gt;0 else "1"}
-    region_name_col = ${"4" if int(_meta_info[0].split('-')[-1])&gt;0 else "1"} 
+    region_name_col = ${"4" if int(_meta_info[0].split('-')[-1])&gt;0 else "1"}
 
+    # Parse association window as GRanges for getGenotypes / getMaf
+    assoc_parts &lt;- strsplit("${_meta_info[1]}", "[:-]")[[1]]
+    assoc_gr &lt;- GenomicRanges::GRanges(
+        seqnames = assoc_parts[1],
+        ranges   = IRanges::IRanges(start = as.integer(assoc_parts[2]),
+                                    end   = as.integer(assoc_parts[3]))
+    )
+
+    # Extract genotype block once; shared across all contexts for this region
+    X_full &lt;- pecotmr::getGenotypes(qd, region = assoc_gr)  # samples x variants
+    maf_full &lt;- pecotmr::getMaf(qd, region = assoc_gr)      # named by variant ID
+
+    # Normalize variant IDs to colon format (chr:pos:ref:alt) to match
+    # the keep_variants file which uses colons rather than underscores.
+    colnames(X_full) &lt;- pecotmr:::normalizeVariantId(colnames(X_full))
+    names(maf_full)  &lt;- pecotmr:::normalizeVariantId(names(maf_full))
+
+    if (ncol(X_full) == 0) {
+        message("No SNPs in association window ${_meta_info[1]}")
+        saveRDS(list(${_meta_info[2]} = "No SNPs in window"), ${_output:ar}, compress='xz')
+        quit(save="no")
+    }
 
     # extract subset of samples
     keep_samples = NULL
@@ -1174,9 +1269,8 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
           message(paste(length(keep_variants_list), "variants are specified to be kept for analysis"))
         } else if (all(c("context", "molecular_trait_object_id", "variant_id") %in% names(keep_variants_data))) {
           # Multi-column format: filter by context and molecular_trait_object_id
-          # For genotype loading: use union of all matching variants across all contexts
           current_region = "${_meta_info[2]}"
-          original_region_ids = c(${",".join([("'%s'" % x) if isinstance(x, str) else ",".join(["'%s'" % i for i in x]) for x in _meta_info[3]])})
+          original_region_ids = c(${",".join([("'%s'" % x) if isinstance(x, str) else ",".join([("'%s'" % i) for i in x]) for x in _meta_info[3]])})
           all_region_ids = unique(c(current_region, original_region_ids))
           current_contexts = conditions
           keep_variants_region_data = keep_variants_data[
@@ -1184,7 +1278,6 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
             keep_variants_data$context %in% current_contexts, ]
           keep_variants_list = unique(as.character(keep_variants_region_data$variant_id))
           keep_variants_list = keep_variants_list[keep_variants_list != ""]
-          # Flag for per-context filtering in the loop
           keep_variants_per_context = TRUE
           message(paste(length(keep_variants_list), "variants matched for region", current_region,
                         "across", length(current_contexts), "contexts (per-context filtering enabled)"))
@@ -1200,62 +1293,66 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
       }
     }
 
-    # Load regional association data
-    tryCatch({
-    fdat = load_regional_association_data(genotype = ${_input[0]:anr},
-                                          phenotype = phenotype_files,
-                                          covariate = covariate_files,
-                                          region = ${("'%s'" % _meta_info[0]) if int(_meta_info[0].split('-')[-1])&gt;0 else 'NULL'}, # if the end position is zero return NULL
-                                          association_window = "${_meta_info[1]}",
-                                          conditions = conditions,
-                                          maf_cutoff = ${maf},
-                                          mac_cutoff = ${mac},
-                                          imiss_cutoff = ${imiss},
-                                          keep_indel = ${"TRUE" if indel else "FALSE"},
-                                          keep_samples = keep_samples,
-                                          extract_region_name = list(${",".join([("c('"+x+"')") if isinstance(x, str) else ("c"+ str(x)) for x in _meta_info[3]])}),
-                                          phenotype_header = ${"4" if int(_meta_info[0].split('-')[-1])&gt;0 else "1"},
-                                          region_name_col = ${"4" if int(_meta_info[0].split('-')[-1])&gt;0 else "1"},
-                                          scale_residuals = FALSE)
-    }, NoSNPsError = function(e) {
-        message("Error: ", paste(e$message, "${_meta_info[2] + '@' + _meta_info[1]}"))
-        saveRDS(list(${_meta_info[2]} = e$message), ${_output:ar}, compress='xz')
-        quit(save="no")
-    })
-  
-    if (${"TRUE" if save_data else "FALSE"}) {
-        # save data object for debug purpose
-        saveRDS(list(${_meta_info[2]} = fdat), "${_output:ann}.univariate.rds", compress='xz')
-    }
-    
     # setup univariate analysis pipeline options
     if ("${_meta_info[2]}" != "${_meta_info[3]}") {
         region_name = c("${_meta_info[2]}", c(${",".join([("c('"+x+"')") if isinstance(x, str) else ("c"+ str(x)) for x in _meta_info[3]])}))
     } else {
         region_name = "${_meta_info[2]}"
     }
-  
-    region_info = list(region_coord=parse_region("${_meta_info[0]}"), grange=parse_region("${_meta_info[1]}"), region_name=region_name)
-    
+
+    region_info = list(region_coord=parseRegion("${_meta_info[0]}"), grange=parseRegion("${_meta_info[1]}"), region_name=region_name)
+
     fitted = list()
     condition_names = vector()
-    r = 1
-    while (r&lt;=length(fdat$Y)) {
-        X &lt;- fdat$X_data[[r]]
-        Y &lt;- fdat$Y[[r]]
+    r = 1L
+    while (r &lt;= length(conditions)) {
+        ctx &lt;- conditions[r]
+        original_ids &lt;- extract_region_name[[r]]
+
+        # Get phenotype for this context and gene/protein IDs from QtlDataset
+        se_pheno &lt;- tryCatch(
+            pecotmr::getPhenotypes(qd, contexts = ctx, traitId = original_ids),
+            error = function(e) {
+                message("getPhenotypes error for ctx=", ctx, ": ", e$message)
+                NULL
+            })
+        if (is.null(se_pheno)) {
+            message("Skipping context ", ctx, " (trait not found in QtlDataset)")
+            r &lt;- r + 1L
+            next
+        }
+
+        Y_mat &lt;- t(SummarizedExperiment::assay(se_pheno, 1L))  # samples x traits
+        Z_mat &lt;- pecotmr::getPhenotypeCovariates(qd, contexts = ctx)[[ctx]]  # samples x covariates
+
+        # Intersect samples among genotypes, phenotypes, and covariates
+        common_samps &lt;- intersect(rownames(X_full),
+                         intersect(rownames(Y_mat), rownames(Z_mat)))
+        if (!is.null(keep_samples)) {
+            common_samps &lt;- intersect(common_samps, keep_samples)
+        }
+        if (length(common_samps) == 0) {
+            message("No common samples for context ", ctx, ", skipping.")
+            r &lt;- r + 1L
+            next
+        }
+        X &lt;- X_full[common_samps, , drop = FALSE]
+        Y &lt;- Y_mat[common_samps, , drop = FALSE]
+        Z &lt;- Z_mat[common_samps, , drop = FALSE]
+        maf &lt;- maf_full  # MAF named by variant ID, same for all contexts
+
         if (is.null(dim(Y))) {
-            Y &lt;- matrix(Y, nrow = length(Y), ncol = 1)
+            Y &lt;- matrix(Y, nrow = length(Y), ncol = 1L)
         }
-        colnames(Y) &lt;- extract_region_name[[r]]
-        Z &lt;- fdat$covar[[r]]
-        # Update condition names first
-        new_names = names(fdat$residual_Y)[r]
-        new_col_names = list(${",".join([("c('"+x+"')") if isinstance(x, str) else ("c"+ str(x)) for x in _meta_info[3]])})[[r]]
-        if (is.null(new_col_names)) {
-            new_col_names = 1:ncol(fdat$residual_Y[[r]])
-        }
-        if(!(identical(new_names, new_col_names))) {
-            new_names = paste(new_names, new_col_names, sep="_")
+        colnames(Y) &lt;- original_ids
+
+        # Update condition names
+        ctx_name &lt;- conditions[r]
+        new_col_names &lt;- extract_region_name[[r]]
+        if (!identical(ctx_name, new_col_names)) {
+            new_names &lt;- paste(ctx_name, new_col_names, sep = "_")
+        } else {
+            new_names &lt;- new_col_names
         }
 
         column_results &lt;- lapply(1:ncol(Y), function(i) {
@@ -1264,7 +1361,6 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
             # Determine per-context variant list
             current_keep_variants = keep_variants_list
             if (keep_variants_per_context &amp;&amp; !is.null(keep_variants_region_data)) {
-              ctx_name = names(fdat$residual_Y)[r]
               ctx_filtered = keep_variants_region_data[keep_variants_region_data$context == ctx_name, ]
               if (nrow(ctx_filtered) &gt; 0) {
                 current_keep_variants = unique(as.character(ctx_filtered$variant_id))
@@ -1281,9 +1377,9 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
                 Y = Y_col,
                 Z = Z,
                 ld_reference_meta_file=${('"%s"' % ld_reference_meta_file) if not ld_reference_meta_file.is_dir() else "NULL"},
-                maf = fdat$maf[[r]],
+                maf = maf,
                 twas_maf_cutoff = ${min_twas_maf},
-                region_id = paste0(colnames(Y_col), "_", names(fdat$residual_Y)[r]),
+                region_id = paste0(colnames(Y_col), "_", ctx_name),
                 quantile_qtl_tau_list = seq(0.05, 0.95, by = 0.05),
                 quantile_twas_tau_list = seq(0.01, 0.99, by = 0.01),
                 screen_method = "${screen_method}",
@@ -1304,7 +1400,7 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
             }
 
             qr_results$region_info = region_info
-            qr_results$maf = fdat$maf[[r]]
+            qr_results$maf = maf
 
             return(qr_results)
         })
@@ -1316,10 +1412,7 @@ R: expand = '${ }', stdout = f"{_output:n}.stdout", stderr = f"{_output:n}.stder
             message("Analysis completed for: ", paste(new_names, collapse=","))
         }
 
-        # Release memory
-        fdat$residual_X[[r]] &lt;- NA
-        fdat$residual_Y[[r]] &lt;- NA
-        r = r + 1
+        r = r + 1L
     }
 
     # Set names for the final results

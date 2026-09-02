@@ -546,13 +546,12 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieve-gene-coordinates-from-ensembl-biomart">3. Retrieve gene coordinates from Ensembl BioMart</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#map-leafcutter-clusters-to-genes">4. Map LeafCutter clusters to genes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-leafcutter-isoforms">5. Annotate LeafCutter isoforms</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-psichomics-isoforms">6. Annotate psichomics isoforms</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-bed-phenotype-by-chromosome">7. Partition a BED phenotype by chromosome</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-gct-phenotype-by-chromosome">8. Partition a GCT phenotype by chromosome</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-phenotype-by-predefined-regions">9. Partition a phenotype by predefined regions</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-tad-based-phenotype-regions">10. Define TAD-based phenotype regions</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-selected-samples-from-a-gct-matrix">11. Extract selected samples from a GCT matrix</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-bam-files-by-genomic-region">12. Subset BAM files by genomic region</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-bed-phenotype-by-chromosome">6. Partition a BED phenotype by chromosome</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-gct-phenotype-by-chromosome">7. Partition a GCT phenotype by chromosome</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-phenotype-by-predefined-regions">8. Partition a phenotype by predefined regions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-tad-based-phenotype-regions">9. Define TAD-based phenotype regions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-selected-samples-from-a-gct-matrix">10. Extract selected samples from a GCT matrix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-bam-files-by-genomic-region">11. Subset BAM files by genomic region</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
@@ -580,11 +579,11 @@
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>This mini-protocol walks through how molecular-phenotype matrices are prepared for downstream xQTL analysis. Each step calls a workflow from <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_imputation.html"><code class="docutils literal notranslate"><span class="pre">phenotype_imputation.ipynb</span></code></a>, <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/gene_annotation.html"><code class="docutils literal notranslate"><span class="pre">gene_annotation.ipynb</span></code></a>, or <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html"><code class="docutils literal notranslate"><span class="pre">phenotype_formatting.ipynb</span></code></a>.</p>
-<p>The commands are selectable routes rather than one mandatory chain. Impute only matrices containing missing values. Choose the annotation workflow matching gene, protein, LeafCutter, or psichomics identifiers, then choose the formatting workflow required by the downstream analysis unit. GCT sample extraction and BAM subsetting are independent utilities.</p>
+<p>The commands are selectable routes rather than one mandatory chain. Impute only matrices containing missing values. Choose the annotation workflow matching gene, protein, or LeafCutter identifiers, then choose the formatting workflow required by the downstream analysis unit. GCT sample extraction and BAM subsetting are independent utilities.</p>
 </section>
 <section id="steps">
 <h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
-<p>Choose a route before running commands; the 12 commands are not one mandatory chain.</p>
+<p>Choose a route before running commands; the 11 commands are not one mandatory chain.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p><strong>Analysis goal</strong></p></th>
@@ -594,11 +593,11 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Gene-expression or protein phenotype by chromosome</p></td>
-<td><p>2 → 7</p></td>
+<td><p>2 → 6</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.collapse_only.gene.ERCC.gtf</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Phenotype with missing values by chromosome</p></td>
-<td><p>1 → 2 → 7</p></td>
+<td><p>1 → 2 → 6</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_imputation/protocol_example.protein.missing.bed.gz</span></code>; gene-coordinate GTF above</p></td>
 </tr>
 <tr class="row-even"><td><p>Retrieve gene coordinates from Ensembl BioMart</p></td>
@@ -613,28 +612,24 @@
 <td><p>5</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.leafcutter.phenotype.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.leafcutter.intron_count.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.gtf</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>psichomics isoforms annotated for QTL analysis</p></td>
-<td><p>6</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.psichomics.phenotype.tsv</span></code>; <code class="docutils literal notranslate"><span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.gtf</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p>Partition a GCT matrix by chromosome</p></td>
-<td><p>8</p></td>
+<tr class="row-odd"><td><p>Partition a GCT matrix by chromosome</p></td>
+<td><p>7</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.rnaseq.gene_tpm.gct.gz</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>Partition a BED phenotype by predefined regions</p></td>
-<td><p>2 → 9</p></td>
+<tr class="row-even"><td><p>Partition a BED phenotype by predefined regions</p></td>
+<td><p>2 → 8</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz</span></code>; gene-coordinate GTF above; <code class="docutils literal notranslate"><span class="pre">input/reference_data/TAD/protocol_example_protein.enhanced_cis_chr22.bed</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>Define TAD-based phenotype regions</p></td>
-<td><p>2 → 10</p></td>
+<tr class="row-odd"><td><p>Define TAD-based phenotype regions</p></td>
+<td><p>2 → 9</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz</span></code>; gene-coordinate GTF above; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/generalized_TADB/expected/TADB_enhanced_cis.bed</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>Extract selected samples from a GCT matrix</p></td>
-<td><p>11</p></td>
+<tr class="row-even"><td><p>Extract selected samples from a GCT matrix</p></td>
+<td><p>10</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.rnaseq.gene_tpm.gct.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/keep_samples.txt</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>Subset BAM files to selected genomic regions</p></td>
-<td><p>12</p></td>
+<tr class="row-odd"><td><p>Subset BAM files to selected genomic regions</p></td>
+<td><p>11</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">input/rnaseq/bam_file_list.txt</span></code>; referenced BAM files; no example BAM is currently bundled</p></td>
 </tr>
 </tbody>
@@ -716,22 +711,8 @@
 </div>
 </div>
 </section>
-<section id="annotate-psichomics-isoforms">
-<h3>6. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/gene_annotation.html">Annotate psichomics isoforms</a><a class="headerlink" href="#annotate-psichomics-isoforms" title="Link to this heading">#</a></h3>
-<p><strong>What it does:</strong> Add genomic and gene annotations to psichomics-derived splicing phenotypes.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_psichomics_isoforms \
-    --cwd output/gene_annotation \
-    --phenoFile tests/fixtures/gene_annotation/protocol_example.psichomics.phenotype.tsv \
-    --coordinate-annotation &lt;path/to/Homo_sapiens.GRCh38.103.chr.gtf&gt;
-</pre></div>
-</div>
-</div>
-</div>
-</section>
 <section id="partition-a-bed-phenotype-by-chromosome">
-<h3>7. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Partition a BED phenotype by chromosome</a><a class="headerlink" href="#partition-a-bed-phenotype-by-chromosome" title="Link to this heading">#</a></h3>
+<h3>6. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Partition a BED phenotype by chromosome</a><a class="headerlink" href="#partition-a-bed-phenotype-by-chromosome" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Split a coordinate-annotated BED phenotype into chromosome-specific files.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -746,7 +727,7 @@
 </div>
 </section>
 <section id="partition-a-gct-phenotype-by-chromosome">
-<h3>8. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Partition a GCT phenotype by chromosome</a><a class="headerlink" href="#partition-a-gct-phenotype-by-chromosome" title="Link to this heading">#</a></h3>
+<h3>7. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Partition a GCT phenotype by chromosome</a><a class="headerlink" href="#partition-a-gct-phenotype-by-chromosome" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Split a coordinate-aware GCT matrix into chromosome-specific GCT files.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -760,7 +741,7 @@
 </div>
 </section>
 <section id="partition-a-phenotype-by-predefined-regions">
-<h3>9. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Partition a phenotype by predefined regions</a><a class="headerlink" href="#partition-a-phenotype-by-predefined-regions" title="Link to this heading">#</a></h3>
+<h3>8. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Partition a phenotype by predefined regions</a><a class="headerlink" href="#partition-a-phenotype-by-predefined-regions" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Extract phenotype features falling within each region in a supplied region list.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -774,7 +755,7 @@
 </div>
 </section>
 <section id="define-tad-based-phenotype-regions">
-<h3>10. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Define TAD-based phenotype regions</a><a class="headerlink" href="#define-tad-based-phenotype-regions" title="Link to this heading">#</a></h3>
+<h3>9. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Define TAD-based phenotype regions</a><a class="headerlink" href="#define-tad-based-phenotype-regions" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Assign phenotype features to TAD windows and generate a region list for downstream analysis.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -789,7 +770,7 @@
 </div>
 </section>
 <section id="extract-selected-samples-from-a-gct-matrix">
-<h3>11. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Extract selected samples from a GCT matrix</a><a class="headerlink" href="#extract-selected-samples-from-a-gct-matrix" title="Link to this heading">#</a></h3>
+<h3>10. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Extract selected samples from a GCT matrix</a><a class="headerlink" href="#extract-selected-samples-from-a-gct-matrix" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Retain only samples listed in a supplied keep file.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -803,7 +784,7 @@
 </div>
 </section>
 <section id="subset-bam-files-by-genomic-region">
-<h3>12. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Subset BAM files by genomic region</a><a class="headerlink" href="#subset-bam-files-by-genomic-region" title="Link to this heading">#</a></h3>
+<h3>11. <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/phenotype_formatting.html">Subset BAM files by genomic region</a><a class="headerlink" href="#subset-bam-files-by-genomic-region" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> Extract selected chromosomes or regions from every BAM listed in the input manifest.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -842,24 +823,21 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/expected/protocol_example.leafcutter.phenotype.bed.formated.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">output/gene_annotation/protocol_example.leafcutter.phenotype.phenotype_group.txt</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Step 6</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/expected/protocol_example.psichomics.phenotype.formated.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/expected/protocol_example.psichomics.phenotype.phenotype_group.txt</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p>Step 7</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype_uf/protocol_example.genotype.chr22.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/phenotype_formatting/expected/protocol_example.phenotype_by_chrom_files.txt</span></code>; its region list</p></td>
 </tr>
-<tr class="row-odd"><td><p>Step 8</p></td>
+<tr class="row-even"><td><p>Step 7</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype_gct/protocol_example.rnaseq.gene_tpm.chr21.gct</span></code>; <code class="docutils literal notranslate"><span class="pre">output/phenotype_gct/protocol_example.rnaseq.gene_tpm.chr22.gct</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>Step 9</p></td>
+<tr class="row-odd"><td><p>Step 8</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype_by_region/protocol_example_protein.enhanced_cis_chr22_phenotype_by_region/*.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">output/phenotype_by_region/*.phenotype_by_region_files.txt</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>Step 10</p></td>
+<tr class="row-even"><td><p>Step 9</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype_by_region/*_pheno_per_region.region_list</span></code>; TAD-annotated region list under <code class="docutils literal notranslate"><span class="pre">output/phenotype_by_region/</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>Step 11</p></td>
+<tr class="row-odd"><td><p>Step 10</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/phenotype_gct/protocol_example.rnaseq.gene_tpm.sample_matched.gct.gz</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>Step 12</p></td>
+<tr class="row-even"><td><p>Step 11</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">output/bam_subset/*.subsetted.bam</span></code></p></td>
 </tr>
 </tbody>
@@ -962,13 +940,12 @@ sos run pipeline/phenotype_formatting.ipynb -h
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieve-gene-coordinates-from-ensembl-biomart">3. Retrieve gene coordinates from Ensembl BioMart</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#map-leafcutter-clusters-to-genes">4. Map LeafCutter clusters to genes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-leafcutter-isoforms">5. Annotate LeafCutter isoforms</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-psichomics-isoforms">6. Annotate psichomics isoforms</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-bed-phenotype-by-chromosome">7. Partition a BED phenotype by chromosome</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-gct-phenotype-by-chromosome">8. Partition a GCT phenotype by chromosome</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-phenotype-by-predefined-regions">9. Partition a phenotype by predefined regions</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-tad-based-phenotype-regions">10. Define TAD-based phenotype regions</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-selected-samples-from-a-gct-matrix">11. Extract selected samples from a GCT matrix</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-bam-files-by-genomic-region">12. Subset BAM files by genomic region</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-bed-phenotype-by-chromosome">6. Partition a BED phenotype by chromosome</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-gct-phenotype-by-chromosome">7. Partition a GCT phenotype by chromosome</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#partition-a-phenotype-by-predefined-regions">8. Partition a phenotype by predefined regions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-tad-based-phenotype-regions">9. Define TAD-based phenotype regions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-selected-samples-from-a-gct-matrix">10. Extract selected samples from a GCT matrix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-bam-files-by-genomic-region">11. Subset BAM files by genomic region</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>

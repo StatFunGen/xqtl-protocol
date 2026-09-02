@@ -544,9 +544,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantify-intron-usage-with-leafcutter">1. Quantify intron usage with LeafCutter</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize-leafcutter-ratios">2. Normalize LeafCutter ratios</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-leafcutter-phenotypes">3. Annotate LeafCutter phenotypes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantify-annotated-events-with-psichomics">4. Quantify annotated events with psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize-psichomics-psi-values">5. Normalize psichomics PSI values</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-psichomics-phenotypes">6. Annotate psichomics phenotypes</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
@@ -565,15 +562,15 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="alternative-splicing-from-rna-seq-data">
 <h1>Alternative splicing from RNA-seq data<a class="headerlink" href="#alternative-splicing-from-rna-seq-data" title="Link to this heading">#</a></h1>
-<p>This mini-protocol produces normalized, gene-annotated splicing phenotypes for splicing-QTL analysis using either LeafCutter or psichomics.</p>
+<p>This mini-protocol produces normalized, gene-annotated splicing phenotypes for splicing-QTL analysis using LeafCutter.</p>
 <section id="miniprotocol-timing">
 <h2>Miniprotocol Timing<a class="headerlink" href="#miniprotocol-timing" title="Link to this heading">#</a></h2>
 <p>Timing: TBD</p>
 </section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>The <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_calling.html">splicing-calling module</a> provides two alternative quantification routes. LeafCutter derives intron excision ratios from STAR splice-junction files without relying on a transcript annotation. psichomics calculates percent-spliced-in (PSI) values for annotated alternative-splicing events and therefore also requires the SUPPA annotation object.</p>
-<p>The <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_normalization.html">normalization module</a> performs missingness and variability filtering followed by quantile normalization. The <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/gene_annotation.html">gene-annotation module</a> then assigns coordinates and phenotype groups required by TensorQTL. LeafCutter and psichomics are alternative routes, not one combined chain.</p>
+<p>The <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_calling.html">splicing-calling module</a> quantifies splicing with LeafCutter, which derives intron excision ratios from STAR splice-junction files without relying on a transcript annotation.</p>
+<p>The <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_normalization.html">normalization module</a> performs missingness and variability filtering followed by quantile normalization. The <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/gene_annotation.html">gene-annotation module</a> then assigns coordinates and phenotype groups required by TensorQTL.</p>
 </section>
 <section id="steps">
 <h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">#</a></h2>
@@ -593,18 +590,10 @@
 <td><p>2 → 3</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.leafcutter.intron_usage_perind.counts.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/fixtures/gene_annotation/protocol_example.leafcutter.intron_count.tsv</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>psichomics from aligned RNA-seq data</p></td>
-<td><p>4 → 5 → 6</p></td>
-<td><p>BAM list and alignments above; <code class="docutils literal notranslate"><span class="pre">input/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.SUPPA_annotation.rds</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p>psichomics from a precomputed PSI matrix</p></td>
-<td><p>5 → 6</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">input/rnaseq/protocol_example.psichomics.psi_raw_data.tsv</span></code></p></td>
-</tr>
 </tbody>
 </table>
 </div>
-<p>Within the selected route, run the commands in numerical order. The bundled example data support the two precomputed-matrix routes; the calling routes require aligned BAM files.</p>
+<p>Within the selected route, run the commands in numerical order. The bundled example data support the precomputed-matrix route; the calling route requires aligned BAM files.</p>
 <section id="quantify-intron-usage-with-leafcutter">
 <h3><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_calling.html">1. Quantify intron usage with LeafCutter</a><a class="headerlink" href="#quantify-intron-usage-with-leafcutter" title="Link to this heading">#</a></h3>
 <p><strong>What it does:</strong> <code class="docutils literal notranslate"><span class="pre">leafcutter</span></code> extracts splice junctions and clusters introns to calculate per-sample intron excision ratios.</p>
@@ -638,39 +627,6 @@
 </div>
 </div>
 </section>
-<section id="quantify-annotated-events-with-psichomics">
-<h3><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_calling.html">4. Quantify annotated events with psichomics</a><a class="headerlink" href="#quantify-annotated-events-with-psichomics" title="Link to this heading">#</a></h3>
-<p><strong>What it does:</strong> <code class="docutils literal notranslate"><span class="pre">psichomics</span></code> uses aligned reads and a SUPPA event annotation to calculate PSI values for alternative-splicing events.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_calling.ipynb psichomics   --cwd output/splicing/psichomics   --samples output/rnaseq/protocol_example.rnaseq.bam.list.txt   --data-dir output/rnaseq/star_output_wasp   --splicing-annotation &lt;path/to/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.SUPPA_annotation.rds&gt;
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="normalize-psichomics-psi-values">
-<h3><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_normalization.html">5. Normalize psichomics PSI values</a><a class="headerlink" href="#normalize-psichomics-psi-values" title="Link to this heading">#</a></h3>
-<p><strong>What it does:</strong> <code class="docutils literal notranslate"><span class="pre">psichomics_norm</span></code> filters PSI events for missingness and variability and produces a quantile-normalized event matrix.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/splicing_normalization.ipynb psichomics_norm   --cwd output/splicing/psichomics   --ratios output/leafcutter/normalize/protocol_example.psichomics.psi_raw_data.tsv
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="annotate-psichomics-phenotypes">
-<h3><a class="reference external" href="https://statfungen.github.io/xqtl-protocol/gene_annotation.html">6. Annotate psichomics phenotypes</a><a class="headerlink" href="#annotate-psichomics-phenotypes" title="Link to this heading">#</a></h3>
-<p><strong>What it does:</strong> <code class="docutils literal notranslate"><span class="pre">annotate_psichomics_isoforms</span></code> assigns genomic coordinates and phenotype groups to normalized psichomics events for TensorQTL.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/gene_annotation.ipynb annotate_psichomics_isoforms   --cwd output/splicing/psichomics   --phenoFile output/splicing/psichomics/psichomics_raw_data_bedded.qqnorm.txt   --coordinate-annotation tests/fixtures/gene_annotation/Homo_sapiens.GRCh38.103.collapse_only.gene.chr22.gtf.gz
-</pre></div>
-</div>
-</div>
-</div>
-</section>
 </section>
 <section id="output">
 <h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
@@ -694,25 +650,13 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">output/splicing/leafcutter/protocol_example.leafcutter.intron_usage_perind.counts.gz_raw_data.qqnorm.formated.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">output/splicing/leafcutter/protocol_example.leafcutter.intron_usage_perind.counts.gz_raw_data.qqnorm.phenotype_group.txt</span></code></p></td>
 <td><p>TensorQTL phenotype and grouping files</p></td>
 </tr>
-<tr class="row-odd"><td><p>psichomics calling</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">output/splicing/psichomics/psi_raw_data.tsv</span></code></p></td>
-<td><p>Raw event-level PSI matrix</p></td>
-</tr>
-<tr class="row-even"><td><p>psichomics normalization</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">output/splicing/psichomics/psichomics_raw_data_bedded.qqnorm.txt</span></code></p></td>
-<td><p>QC-filtered and normalized PSI matrix</p></td>
-</tr>
-<tr class="row-odd"><td><p>psichomics annotation</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">output/splicing/psichomics/psichomics_raw_data_bedded.qqnorm.formated.bed.gz</span></code>; <code class="docutils literal notranslate"><span class="pre">output/splicing/psichomics/psichomics_raw_data_bedded.qqnorm.phenotype_group.txt</span></code></p></td>
-<td><p>TensorQTL phenotype and grouping files</p></td>
-</tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="anticipated-results">
 <h2>Anticipated Results<a class="headerlink" href="#anticipated-results" title="Link to this heading">#</a></h2>
-<p>Each selected route ends with a coordinate-sorted, bgzip-compressed phenotype matrix and a matching phenotype-group file. Rows represent introns or annotated splicing events, columns represent samples, and the normalized values can be supplied directly to splicing-QTL association testing.</p>
+<p>Each route ends with a coordinate-sorted, bgzip-compressed phenotype matrix and a matching phenotype-group file. Rows represent introns, columns represent samples, and the normalized values can be supplied directly to splicing-QTL association testing.</p>
 </section>
 <section id="command-interface">
 <h2>Command Interface<a class="headerlink" href="#command-interface" title="Link to this heading">#</a></h2>
@@ -814,9 +758,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantify-intron-usage-with-leafcutter">1. Quantify intron usage with LeafCutter</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize-leafcutter-ratios">2. Normalize LeafCutter ratios</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-leafcutter-phenotypes">3. Annotate LeafCutter phenotypes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantify-annotated-events-with-psichomics">4. Quantify annotated events with psichomics</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize-psichomics-psi-values">5. Normalize psichomics PSI values</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annotate-psichomics-phenotypes">6. Annotate psichomics phenotypes</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>

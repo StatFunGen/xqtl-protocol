@@ -556,11 +556,9 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-star-index">Generate STAR index</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-rsem-index">Generate RSEM index</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-refflat-annotation">Generate RefFlat annotation</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-suppa-annotation">Generate SUPPA annotation</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-rsids-for-known-variants-handled-elsewhere">Extract rsIDs for known variants (handled elsewhere)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#convert-gff3-to-gtf">Convert GFF3 to GTF</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#patch-the-ercc-annotation">Patch the ERCC annotation</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-psichomics-annotation">Generate psichomics annotation</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#tad-annotation">TAD annotation</a></li>
 </ul>
 </li>
@@ -629,13 +627,11 @@ sources. Everything else consumes files those downloads produce, or that this mo
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--hg-reference</span></code> (required by <code class="docutils literal notranslate"><span class="pre">hg_reference_1</span></code>, <code class="docutils literal notranslate"><span class="pre">hg_gtf_1</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_annotation</span></code>): the reference
 genome FASTA, e.g. <code class="docutils literal notranslate"><span class="pre">input/reference_data/GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy.fasta</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--hg-gtf</span></code> (required by <code class="docutils literal notranslate"><span class="pre">hg_gtf_1</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_annotation</span></code>, <code class="docutils literal notranslate"><span class="pre">psi_hg38_annotation</span></code>): the gene model GTF.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--hg-gtf</span></code> (required by <code class="docutils literal notranslate"><span class="pre">hg_gtf_1</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_annotation</span></code>): the gene model GTF.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--gff3-file</span></code> (required by <code class="docutils literal notranslate"><span class="pre">gff3_to_gtf</span></code>): a GFF3 to convert to GTF.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--ercc-reference</span></code> (required by <code class="docutils literal notranslate"><span class="pre">hg_reference_2</span></code>): the ERCC spike-in FASTA, merged into the genome.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--ercc-gtf</span></code> (required by <code class="docutils literal notranslate"><span class="pre">ercc_gtf</span></code>): the ERCC annotation to patch and append.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--stranded</span></code> / <code class="docutils literal notranslate"><span class="pre">--no-stranded</span></code> (required by <code class="docutils literal notranslate"><span class="pre">hg_gtf_2</span></code>): whether the library is stranded.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--hgrc-db</span></code> (required by <code class="docutils literal notranslate"><span class="pre">psi_hg38_annotation</span></code>): reference database for the psichomics
-annotation. Undocumented: the code does not say what this file is or where to obtain it.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--TAD-list</span></code>, <code class="docutils literal notranslate"><span class="pre">--region-list</span></code>, <code class="docutils literal notranslate"><span class="pre">--TAD-genotype</span></code> (all required by <code class="docutils literal notranslate"><span class="pre">Tad_annotateion</span></code>): the TAD
 definitions, the regions to annotate and the genotypes to annotate them against.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--genoFile</span></code> (used by <code class="docutils literal notranslate"><span class="pre">download_dbsnp</span></code>): the dbSNP VCF to index, e.g.
@@ -666,12 +662,9 @@ form appended to the gene model.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.ref.flat</span></code> – from <code class="docutils literal notranslate"><span class="pre">RefFlat_generation</span></code>: the RefFlat annotation Picard uses for RNA metrics.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">00-All.vcf.gz</span></code> (+ <code class="docutils literal notranslate"><span class="pre">.tbi</span></code>) – from <code class="docutils literal notranslate"><span class="pre">download_dbsnp</span></code>: the dbSNP VCF, bgzipped and tabix-indexed.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">RSEM_Index/rsem_reference.grp</span></code> and <code class="docutils literal notranslate"><span class="pre">rsem_reference.n2g.idx.fa</span></code> – from <code class="docutils literal notranslate"><span class="pre">RSEM_index</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;gtf&gt;_SE_strict.ioe</span></code> – from <code class="docutils literal notranslate"><span class="pre">SUPPA_annotation_1</span></code>: the SUPPA event definitions.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;gtf&gt;.SUPPA_annotation.rds</span></code> and <code class="docutils literal notranslate"><span class="pre">psichomics_hg38_annotation.rds</span></code> – from <code class="docutils literal notranslate"><span class="pre">SUPPA_annotation_2</span></code> and
-<code class="docutils literal notranslate"><span class="pre">psi_hg38_annotation</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">look_up_gene_id.txt</span></code> – the gene-ID lookup table written alongside the gene annotation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">STAR_Index/</span></code> and the RSEM index – from <code class="docutils literal notranslate"><span class="pre">STAR_index</span></code> and <code class="docutils literal notranslate"><span class="pre">RSEM_index</span></code>.</p></li>
-<li><p>the SUPPA and TAD annotations – from <code class="docutils literal notranslate"><span class="pre">SUPPA_annotation_1..2</span></code> and <code class="docutils literal notranslate"><span class="pre">psi_hg38_annotation</span></code>.</p></li>
+<li><p>the TAD annotations – from <code class="docutils literal notranslate"><span class="pre">Tad_annotateion</span></code>.</p></li>
 </ul>
 <p>All paths are relative to <code class="docutils literal notranslate"><span class="pre">--cwd</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/reference_data_preparation/ERCC92.gtf</span></code>:</p>
@@ -686,7 +679,7 @@ form appended to the gene model.</p></li>
 </div>
 <p><strong>Only the ERCC products have committed example output.</strong> <code class="docutils literal notranslate"><span class="pre">output/reference_data/</span></code> holds
 <code class="docutils literal notranslate"><span class="pre">ERCC92.gtf</span></code>, <code class="docutils literal notranslate"><span class="pre">ERCC92.genes.patched.gtf</span></code> and <code class="docutils literal notranslate"><span class="pre">ERCC92.ref.flat</span></code>; the genome merge, collapsed gene
-model, STAR and RSEM indices and the SUPPA/TAD annotations were not run here, so no dump is shown
+model, STAR and RSEM indices and the TAD annotations were not run here, so no dump is shown
 for them.</p>
 </section>
 <section id="minimal-working-example">
@@ -697,7 +690,7 @@ for them.</p>
 steps. The four downloads are independent of each other and of everything else. Three do have to run
 in order – format the reference genome, then process the transcript and gene model, then assemble
 the gene annotation – because each reads what the one before it wrote. The remaining generators
-(STAR, RSEM, RefFlat, SUPPA, rsID and TAD) each read the formatted references and are independent of
+(STAR, RSEM, RefFlat, rsID and TAD) each read the formatted references and are independent of
 one another, so run only the ones the analysis needs.</p>
 <section id="download-the-ercc-spike-in-reference">
 <h4>Download the ERCC spike-in reference<a class="headerlink" href="#download-the-ercc-spike-in-reference" title="Link to this heading">#</a></h4>
@@ -840,20 +833,6 @@ one another, so run only the ones the analysis needs.</p>
 </div>
 </div>
 </section>
-<section id="generate-suppa-annotation">
-<h4>Generate SUPPA annotation<a class="headerlink" href="#generate-suppa-annotation" title="Link to this heading">#</a></h4>
-<p>The custom alternative-splicing annotation is generated for psichomics, based on <a class="reference external" href="https://rpubs.com/nuno-agostinho/preparing-AS-annotation">this tutorial</a>; the procedure for generating the local alternative-splicing SUPPA output is documented on the <a class="reference external" href="https://github.com/comprna/SUPPA">SUPPA GitHub page</a>. Because the original annotation provided by the psichomics package uses gene symbols, it is modified here to use Ensembl IDs. The modified annotation is then used for <a class="reference external" href="https://statfungen.github.io/xqtl-protocol/splicing_calling.html">detecting RNA alternative splicing with psichomics</a>.</p>
-<p><strong>Timing</strong>: TBD (on toy dataset)</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb SUPPA_annotation \
-    --cwd output/reference_data \
-    --hg_gtf output/reference_data/Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf 
-</pre></div>
-</div>
-</div>
-</div>
-</section>
 <section id="extract-rsids-for-known-variants-handled-elsewhere">
 <h4>Extract rsIDs for known variants (handled elsewhere)<a class="headerlink" href="#extract-rsids-for-known-variants-handled-elsewhere" title="Link to this heading">#</a></h4>
 <p>Annotating the dbSNP call set with rsIDs is done by <code class="docutils literal notranslate"><span class="pre">VCF_QC.ipynb</span></code> (<code class="docutils literal notranslate"><span class="pre">dbsnp_annotate</span></code>), not by this
@@ -881,21 +860,6 @@ module. Run it there against <code class="docutils literal notranslate"><span cl
 <div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb ercc_gtf \
     --ercc-gtf tests/fixtures/reference_data_preparation/ERCC92.gtf \
-    --cwd output/reference_data
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="generate-psichomics-annotation">
-<h4>Generate psichomics annotation<a class="headerlink" href="#generate-psichomics-annotation" title="Link to this heading">#</a></h4>
-<p><code class="docutils literal notranslate"><span class="pre">psi_hg38_annotation</span></code> builds the psichomics annotation. <code class="docutils literal notranslate"><span class="pre">--hgrc-db</span></code> is undocumented: the code does not say what this file is or where to obtain it.</p>
-<p><strong>Timing</strong>: TBD (on toy dataset)</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>sos run pipeline/reference_data_preparation.ipynb psi_hg38_annotation \
-    --hg-gtf tests/fixtures/gene_annotation/Homo_sapiens.GRCh38.103.collapse_only.gene.chr22.gtf.gz \
-    --hgrc-db &lt;path&gt;/hgrc_db \
     --cwd output/reference_data
 </pre></div>
 </div>
@@ -949,8 +913,6 @@ module. Run it there against <code class="docutils literal notranslate"><span cl
   <span class="n">STAR_index</span>
   <span class="n">RSEM_index</span>
   <span class="n">RefFlat_generation</span>
-  <span class="n">SUPPA_annotation</span>
-  <span class="n">psi_hg38_annotation</span>
   <span class="n">Tad_annotateion</span>
 
 <span class="n">Global</span> <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
@@ -1005,18 +967,6 @@ module. Run it there against <code class="docutils literal notranslate"><span cl
   <span class="n">RefFlat_generation</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
       <span class="o">--</span><span class="n">hg</span><span class="o">-</span><span class="n">gtf</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-  <span class="n">SUPPA_annotation_1</span><span class="p">:</span>
-    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">hg</span><span class="o">-</span><span class="n">gtf</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-  <span class="n">SUPPA_annotation_2</span><span class="p">:</span>
-    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">hg</span><span class="o">-</span><span class="n">gtf</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-  <span class="n">psi_hg38_annotation</span><span class="p">:</span>
-    <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
-      <span class="o">--</span><span class="n">hg</span><span class="o">-</span><span class="n">gtf</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-      <span class="o">--</span><span class="n">hgrc</span><span class="o">-</span><span class="n">db</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
-                        <span class="n">FIXME</span><span class="p">:</span> <span class="n">Please</span> <span class="n">document</span> <span class="n">what</span> <span class="n">this</span> <span class="n">file</span> <span class="ow">is</span> <span class="ow">and</span> <span class="n">where</span> <span class="n">do</span> <span class="n">we</span>
-                        <span class="n">get</span> <span class="n">it</span> <span class="nd">@xuanhe</span><span class="o">.</span>
   <span class="n">Tad_annotateion</span><span class="p">:</span>
     <span class="n">Workflow</span> <span class="n">Options</span><span class="p">:</span>
       <span class="o">--</span><span class="n">TAD</span><span class="o">-</span><span class="nb">list</span> <span class="n">VAL</span> <span class="p">(</span><span class="k">as</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
@@ -1280,53 +1230,6 @@ bash: container=container, expand= "${ }", stderr = f'{_output}.stderr', stdout 
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[SUPPA_annotation_1]
-parameter: hg_gtf = path
-input: hg_gtf
-output: f'{cwd}/hg38.{_input:bn}_SE_strict.ioe' # The stderr file must not shared the same start with the output file
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f'{step_name}_{_output:bn}'
-bash: container=container, expand= "${ }", stderr = f'{cwd}/{_input:bn}.stderr', stdout = f'{cwd}/{_input:bn}.stdout'
-    suppa generateEvents -i ${_input} -o ${cwd}/hg38.${_input:bn} -f ioe -e SE SS MX RI FL
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[SUPPA_annotation_2]
-parameter: hg_gtf = path
-output: f'{cwd}/{hg_gtf:bn}.SUPPA_annotation.rds'
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f'{step_name}_{_output:bn}'
-bash: container=container, expand= "${ }", stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
-    Rscript ${modular_script_dir}/reference_data/reference_data_preparation.R \
-        --step suppa_annot \
-        --ioe-dir ${_input:d} \
-        --genome hg38 \
-        --output ${_output}
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[psi_hg38_annotation]
-parameter: hg_gtf = path
-# FIXME: Please document what this file is and where do we get it @xuanhe.
-parameter: hgrc_db = path
-input: hg_gtf, hgrc_db
-output: f'{cwd}/psichomics_hg38_annotation.rds'
-task: trunk_workers = 1, trunk_size = job_size, walltime = walltime, mem = mem, tags = f'{step_name}_{_output:bn}'
-bash: container=container, expand= "${ }", stderr = f'{_output}.stderr', stdout = f'{_output}.stdout'
-    Rscript ${modular_script_dir}/reference_data/psichomics_hg38_annotation.R \
-        --hg-gtf ${_input[0]} \
-        --hgnc-db ${_input[1]} \
-        --output ${_output}
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
 <div class="highlight-sos notranslate"><div class="highlight"><pre><span></span>[Tad_annotateion]
 ## The tad file downloads from
 parameter: TAD_list = path
@@ -1433,11 +1336,9 @@ bash: container=container, expand= "${ }", stderr = f'{_output}.stderr', stdout 
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-star-index">Generate STAR index</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-rsem-index">Generate RSEM index</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-refflat-annotation">Generate RefFlat annotation</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-suppa-annotation">Generate SUPPA annotation</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-rsids-for-known-variants-handled-elsewhere">Extract rsIDs for known variants (handled elsewhere)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#convert-gff3-to-gtf">Convert GFF3 to GTF</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#patch-the-ercc-annotation">Patch the ERCC annotation</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-psichomics-annotation">Generate psichomics annotation</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#tad-annotation">TAD annotation</a></li>
 </ul>
 </li>
