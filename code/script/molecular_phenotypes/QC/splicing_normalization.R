@@ -6,13 +6,10 @@
 # Steps (selected via --step):
 #   prepare_phenotype — leafcutter ratios -> per-chrom .phen_<chr> / .ave /
 #                       .qqnorm_<chr> (sorted) + _phenotype_file_list.txt  ([leafcutter_norm_1])
-#   qqnorm            — NA/variance filter, row-scale, per-column rank qqnorm ([leafcutter_norm_3],
-#                       [psichomics_norm_2])
-#   psichomics_bed    — parseSplicingEvent -> BED-ordered PSI table         ([psichomics_norm_1])
+#   qqnorm            — NA/variance filter, row-scale, per-column rank qqnorm ([leafcutter_norm_3])
 #   jointcall_samples — subset a sample lookup to samples present in a junc list ([Jointcall_samples])
 #
-# Faithful port of the leafcutter prepare_phenotype_table.py logic and the psichomics
-# blocks. Numeric transforms reproduce scipy: preprocessing.scale = (x-mean)/pop_sd;
+# Faithful port of the leafcutter prepare_phenotype_table.py logic. Numeric transforms reproduce scipy: preprocessing.scale = (x-mean)/pop_sd;
 # qqnorm(x) = qnorm((rank_avg(x) - a)/(n + 1 - 2a)), a = 0.5 (n>10) else 3/8.
 # (Float string formatting follows R, not Python's shortest-repr; values are identical.)
 # ============================================================
@@ -20,7 +17,7 @@
 suppressPackageStartupMessages(library(argparser))
 
 parser <- arg_parser("splicing_normalization worker (see --step)")
-parser <- add_argument(parser, "--step", type = "character", help = "prepare_phenotype | qqnorm | psichomics_bed | jointcall_samples")
+parser <- add_argument(parser, "--step", type = "character", help = "prepare_phenotype | qqnorm | jointcall_samples")
 parser <- add_argument(parser, "--input", type = "character", default = "", help = "input file")
 parser <- add_argument(parser, "--output", type = "character", default = "", help = "output file")
 parser <- add_argument(parser, "--chr-blacklist", type = "character", default = "", help = "[prepare_phenotype] chromosome blacklist file")
@@ -116,19 +113,6 @@ qqnorm_step <- function(argv) {
 }
 
 # ---------------------------------------------------------------------------
-psichomics_bed <- function(argv) {
-  suppressPackageStartupMessages({ library(psichomics); library(vroom) })
-  d <- as.data.frame(vroom::vroom(argv$input, delim = "\t", show_col_types = FALSE))
-  rn <- d[[1]]; psi <- d[, -1, drop = FALSE]; rownames(psi) <- rn
-  ev <- parseSplicingEvent(rownames(psi))
-  bed <- data.frame(`#Chr` = ev$chrom, start = ev$start, end = ev$end, ID = rownames(ev),
-                    psi, check.names = FALSE)
-  bed[["#Chr"]] <- sub("^", "chr", bed[["#Chr"]])
-  bed <- bed[order(bed[["#Chr"]], bed$start, bed$end), ]
-  vroom::vroom_write(bed, argv$output, delim = "\t", quote = "none", escape = "none")
-}
-
-# ---------------------------------------------------------------------------
 jointcall_samples <- function(argv) {
   suppressPackageStartupMessages({ library(vroom); library(stringr); library(dplyr) })
   lookup <- vroom::vroom(argv$sample_table, delim = "\t", show_col_types = FALSE)
@@ -143,7 +127,6 @@ jointcall_samples <- function(argv) {
 switch(argv$step,
   prepare_phenotype = prepare_phenotype(argv),
   qqnorm            = qqnorm_step(argv),
-  psichomics_bed    = psichomics_bed(argv),
   jointcall_samples = jointcall_samples(argv),
   stop(sprintf("Unknown step: '%s'", argv$step))
 )

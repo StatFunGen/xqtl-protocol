@@ -7,7 +7,6 @@
 #   annotate_coord               — prepend gene/protein/atac coordinates to a matrix
 #   map_leafcutter_cluster_to_gene — map leafcutter intron clusters to genes
 #   annotate_leafcutter_isoforms — coordinate-annotate leafcutter introns per gene
-#   annotate_psichomics_isoforms — coordinate-annotate psichomics events per gene
 #   annotate_coord_biomart       — fetch coordinates from Ensembl biomaRt (network)
 #
 # Ports the Broad `qtl`/`pyqtl` logic to rtracklayer + GenomicRanges + Rsamtools.
@@ -35,7 +34,7 @@ parser <- add_argument(parser, "--phenoFile", type = "character", default = "",
 parser <- add_argument(parser, "--coordinate-annotation", type = "character", default = "",
                        help = "[annotate_coord] collapsed gene-model GTF (or ATAC index)")
 parser <- add_argument(parser, "--annotation-gtf", type = "character", default = "",
-                       help = "[leafcutter/psichomics] full gene-model GTF with exons")
+                       help = "[leafcutter] full gene-model GTF with exons")
 parser <- add_argument(parser, "--sample-participant-lookup", type = "character", default = "",
                        help = "Optional sample_id -> participant_id map")
 parser <- add_argument(parser, "--molecular-trait-type", type = "character", default = "gene",
@@ -66,7 +65,7 @@ parser <- add_argument(parser, "--output-cluster-map", type = "character", defau
 parser <- add_argument(parser, "--cluster-map", type = "character", default = "",
                        help = "[annotate_leafcutter] input cluster-to-gene map")
 parser <- add_argument(parser, "--output-phenotype-group", type = "character", default = "",
-                       help = "[leafcutter/psichomics] output phenotype-group file")
+                       help = "[leafcutter] output phenotype-group file")
 parser <- add_argument(parser, "--ensembl-version", type = "numeric", default = NA,
                        help = "[annotate_coord_biomart] Ensembl release version")
 argv <- parse_args(parser)
@@ -380,33 +379,6 @@ annotate_leafcutter_isoforms <- function(argv) {
 }
 
 # ---------------------------------------------------------------------------
-# Psichomics isoform annotation
-# ---------------------------------------------------------------------------
-annotate_psichomics_isoforms <- function(argv) {
-  gr <- rtracklayer::import(argv$annotation_gtf)
-  tss <- tss_bed(gr, "gene", "gene_id")
-  bed <- vroom::vroom(argv$phenoFile, delim = "\t",
-                      col_types = cols(.default = "c"), show_col_types = FALSE)
-  last_field <- function(s, i_from_end)
-    vapply(strsplit(as.character(s), "_", fixed = TRUE),
-           function(x) x[length(x) - i_from_end], character(1))
-  bed$gene_id <- last_field(bed$ID, 0)
-  bed <- bed %>% select(-any_of(c("#Chr", "#chr", "start", "end")))
-
-  out <- tss %>% right_join(bed, by = "gene_id") %>% arrange(chr, start)
-  out <- apply_participant_map(out, read_participant_map(argv$sample_participant_lookup))
-  out <- out %>%
-    mutate(gene_type_id = vapply(strsplit(as.character(ID), "_", fixed = TRUE),
-                                 function(x) paste0(x[length(x)], "_", x[1]), character(1)))
-  phenotype_group <- out %>% select(ID, gene_type_id)
-  bed_out <- out %>% select(-gene_id, -gene_type_id) %>%
-    select(`#chr` = chr, start, end, ID, everything())
-  write_bed_r(bed_out, argv$output_bed)
-  vroom::vroom_write(phenotype_group, argv$output_phenotype_group, delim = "\t", col_names = FALSE)
-  message(sprintf("Written: %s, %s", argv$output_bed, argv$output_phenotype_group))
-}
-
-# ---------------------------------------------------------------------------
 # annotate_coord_biomart (Ensembl web service; needs network)
 # ---------------------------------------------------------------------------
 annotate_coord_biomart <- function(argv) {
@@ -454,7 +426,6 @@ switch(argv$step,
   annotate_coord                 = annotate_coord(argv),
   map_leafcutter_cluster_to_gene = map_leafcutter_cluster_to_gene(argv),
   annotate_leafcutter_isoforms   = annotate_leafcutter_isoforms(argv),
-  annotate_psichomics_isoforms   = annotate_psichomics_isoforms(argv),
   annotate_coord_biomart         = annotate_coord_biomart(argv),
   stop(sprintf("Unknown step: '%s'", argv$step))
 )

@@ -1,7 +1,9 @@
 #!/usr/bin/env Rscript
 # ============================================================
-# splicing_calling.R
-# Standalone CLI worker for splicing_calling.ipynb psichomics steps.
+# psichomics_splicing_calling.R  (retired; was splicing_calling.R)
+# Standalone CLI worker for the psichomics steps of splicing_calling.ipynb.
+# Retired with the rest of the psichomics/SUPPA track: SUPPA is unmaintained
+# upstream, and the [psichomics_1] / [psichomics_2] cells it served are gone.
 #
 # Steps (selected via --step):
 #   junction_quant  — psichomics::prepareJunctionQuant over STAR SJ.out.tab files
