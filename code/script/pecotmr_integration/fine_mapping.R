@@ -95,11 +95,13 @@ parser <- add_argument(parser, "--pip-cutoff",
                        help = "PIP signal cutoff (fineMappingPipeline signalCutoff)",
                        type = "numeric", default = 0.025)
 parser <- add_argument(parser, "--L",
-                       help = "SuSiE number of single effects (susie L); pipeline default 20",
-                       type = "integer", default = 20L)
+                       help = "SuSiE number of single effects (susie L); pipeline default 10",
+                       type = "integer", default = 10L)
 parser <- add_argument(parser, "--L-greedy",
-                       help = "SuSiE greedy init count (susie L_greedy); pipeline default 5",
-                       type = "integer", default = 5L)
+                       help = paste("SuSiE greedy init count (susie L_greedy): a positive integer to run",
+                                    "the greedy-L loop, or 'none'/'off' to disable it; pipeline default",
+                                    "none (greedy off)"),
+                       type = "character", default = "none")
 parser <- add_argument(parser, "--method-args",
                        help = "JSON object {token: {kwarg: value, ...}, ...} for fineMappingPipeline()",
                        type = "character", default = "")
@@ -245,6 +247,22 @@ secondary_cov <- as.numeric(trimws(strsplit(argv$secondary_coverage, ",", fixed 
 median_abs_corr <- if (length(argv$median_abs_corr) != 1L || is.na(argv$median_abs_corr))
                      NULL else argv$median_abs_corr
 
+# L_greedy: 'none'/'off'/'null'/empty (case-insensitive) -> NULL, i.e. greedy-L
+# off (susie's own L_greedy default is NULL). Otherwise a positive integer.
+# The NULL is kept via the inline list() in cs_args below, which preserves a
+# named NULL through c()/do.call to fineMappingPipeline; only an x$Lgreedy <- NULL
+# assignment would drop it (re-enabling pecotmr's default 5).
+l_greedy_raw <- trimws(argv[["L_greedy"]])
+l_greedy_val <- if (tolower(l_greedy_raw) %in% c("none", "off", "null", "")) {
+  NULL
+} else {
+  v <- suppressWarnings(as.integer(l_greedy_raw))
+  if (is.na(v) || v < 1L)
+    stop("--L-greedy must be a positive integer or 'none'/'off' (got: '",
+         argv[["L_greedy"]], "')")
+  v
+}
+
 # Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
 # NULL when --seed is unset. In QTL mode the value is ALSO forwarded to the
 # pipeline as seed= (below): set.seed() only touches this process's RNG, so it
@@ -302,7 +320,7 @@ methods_arg <- if (is.null(parsed_method_args)) methods else
 # seeds the susie-family tokens and applies explicit --method-args overrides.
 cs_args <- list(methods           = methods_arg,
                 L                 = argv$L,
-                Lgreedy           = argv[["L_greedy"]],
+                Lgreedy           = l_greedy_val,
                 coverage          = argv$coverage,
                 secondaryCoverage = secondary_cov,
                 signalCutoff      = argv$pip_cutoff,
