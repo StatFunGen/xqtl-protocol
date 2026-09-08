@@ -46,10 +46,13 @@ suppressPackageStartupMessages({
   library(jsonlite)
 })
 
-parser <- arg_parser("Per-gene or per-region default-preset TWAS weights over a pre-built QtlDataset")
+parser <- arg_parser("Per-gene or per-region default-preset TWAS weights over a QtlDataset or QtlSumStats")
 parser <- add_argument(parser, "--qtl-dataset",
-                       help = "Path to a QtlDataset RDS",
-                       type = "character")
+                       help = "Path to a QtlDataset RDS (individual-level mode)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--qtl-sumstats",
+                       help = "Path to a QtlSumStats RDS (RSS mode; from qtl_sumstats_construct.R). The collection already spans one cis window, so --gene-id / --region do not apply.",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--gene-id",
                        help = "Trait identifier (gene mode); mutually exclusive with --region",
                        type = "character", default = "")
@@ -223,12 +226,24 @@ twas_weights_obj <- if (nzchar(argv$twas_weights) && argv$twas_weights != "." &&
 
 has_gene   <- nzchar(argv$gene_id)
 has_region <- nzchar(argv$region)
-if (has_gene && has_region)
-  stop("--gene-id and --region are mutually exclusive; pass exactly one.")
-if (!has_gene && !has_region)
-  stop("Specify either --gene-id (with --cis-window) or --region.")
+has_qd  <- nzchar(argv$qtl_dataset)
+has_qss <- nzchar(argv$qtl_sumstats)
+if (has_qd && has_qss)
+  stop("--qtl-dataset and --qtl-sumstats are mutually exclusive; pass exactly one.")
+if (!has_qd && !has_qss)
+  stop("Specify --qtl-dataset (individual-level) or --qtl-sumstats (RSS).")
+# A QtlSumStats is already one cis window's worth of variants, so it selects
+# nothing further; the individual-level path still needs a trait or a region.
+if (has_qss && (has_gene || has_region))
+  stop("--gene-id / --region do not apply in RSS mode: a QtlSumStats already spans one window.")
+if (has_qd) {
+  if (has_gene && has_region)
+    stop("--gene-id and --region are mutually exclusive; pass exactly one.")
+  if (!has_gene && !has_region)
+    stop("Specify either --gene-id (with --cis-window) or --region.")
+}
 
-qd <- readRDS(argv$qtl_dataset)
+qd <- readRDS(if (has_qd) argv$qtl_dataset else argv$qtl_sumstats)
 
 fmr_path <- argv$fine_mapping_result
 fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
@@ -255,7 +270,16 @@ tw_args <- c(list(methods           = methods_arg,
 if (!is.null(joint_spec))       tw_args$jointSpecification <- joint_spec
 if (!is.null(twas_weights_obj)) tw_args$twasWeights        <- twas_weights_obj
 if (!is.null(seed_val))         tw_args$seed               <- seed_val
-res <- if (has_region) {
+res <- if (has_qss) {
+  # RSS mode: no trait/region selection, and the individual-level-only knobs
+  # (cisWindow + the genotype filters) do not apply to a summary-statistics
+  # collection, so only the shared arguments are forwarded.
+  rss_args <- tw_args[intersect(
+    names(tw_args),
+    c("methods", "mashPrior", "contexts", "fineMappingResult",
+      "jointSpecification", "twasWeights", "seed"))]
+  do.call(twasWeightsPipeline, c(list(qd), rss_args))
+} else if (has_region) {
   do.call(twasWeightsPipeline,
           c(list(qd), tw_args, list(region = argv$region)))
 } else {
@@ -266,6 +290,7 @@ res <- if (has_region) {
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(res, argv$output)
 cat(sprintf("Wrote TWAS weights for %s (%d row(s)) to %s\n",
-            if (has_region) paste0("region '", argv$region, "'")
+            if (has_qss) paste0("QtlSumStats '", basename(argv$qtl_sumstats), "'")
+            else if (has_region) paste0("region '", argv$region, "'")
             else paste0("gene '", argv$gene_id, "'"),
             nrow(res), argv$output))
