@@ -64,12 +64,26 @@ def test_qtl_rss(run_sos, read_rds, repo_root, tmp_path):
     assert "sign-flip 0, strand-flip 0" in qc, qc
 
     # regression: all three are deterministic (QC/reshaping has no RNG; the susie_rss
-    # and lassosum fits are seeded), byte-identical across two runs here.
+    # and lassosum fits are seeded) and byte-identical run-to-run on one machine.
     # normalize_paths: the ldSketch embeds the genotype-panel path.
+    #
+    # The QtlSumStats is deterministic reshaping + QC with no linear algebra, so it
+    # holds at rtol=1e-6. The two FITS do not: the LD here is in-sample from 49
+    # samples, so a 200-variant panel has rank <= 48 and the solves sit close to
+    # singular, where log-Bayes-factor sums amplify last-bit BLAS differences. The
+    # macOS-vs-Linux drift measured on CI is 3.5e-6 (logBF) and 5.3e-6 (susieFit
+    # lbf_variable) -- bounded rounding, not a behaviour change, so tolerance is the
+    # right tool (cf. the TensorQTL fixtures, which use rtol=1e-4 for the same
+    # reason). rtol=1e-4 leaves ~20x headroom over the observed drift while staying
+    # four orders of magnitude tighter than a real regression: when the SuSiE L
+    # default changed, the same comparison moved by 0.49 relative.
     exp = repo_root / EXP
     assert_matches_expected(ss, exp / "qtl_sumstats.rds", mode="tolerant",
                             rtol=1e-6, atol=1e-8, normalize_paths=True)
     assert_matches_expected(fm, exp / "qtl_rss_finemap.rds", mode="tolerant",
-                            rtol=1e-6, atol=1e-8, normalize_paths=True)
+                            rtol=1e-4, atol=1e-8, normalize_paths=True)
+    # Same LD, same rank deficiency: loosened on the same basis rather than waiting
+    # for a second CI round to measure it (the fit was never reached on the run that
+    # surfaced the fine-mapping drift).
     assert_matches_expected(tw, exp / "qtl_rss_twas_weights.rds", mode="tolerant",
-                            rtol=1e-6, atol=1e-8, normalize_paths=True)
+                            rtol=1e-4, atol=1e-8, normalize_paths=True)
