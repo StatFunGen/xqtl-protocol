@@ -16,6 +16,9 @@
 #
 # GWAS — one call per per-block GwasSumStats RDS (each carrying its own
 # z-scores + LD sketch; no gene/region concept):
+#   --qtl-sumstats <RDS>           pecotmr::QtlSumStats (QTL RSS mode, from
+#                                   qtl_sumstats_construct.R): SuSiE-RSS over a
+#                                   cis window using the collection's ldSketch
 #   --gwas-sumstats <RDS>           pecotmr::GwasSumStats (per LD block,
 #                                   typically from gwas_sumstats_construct.R)
 #
@@ -63,6 +66,9 @@ parser <- add_argument(parser, "--qtl-dataset",
                        type = "character", default = "")
 parser <- add_argument(parser, "--gwas-sumstats",
                        help = "Path to a GwasSumStats RDS (GWAS mode)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--qtl-sumstats",
+                       help = "Path to a QtlSumStats RDS (QTL RSS mode; from qtl_sumstats_construct.R)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--gene-id",
                        help = "Trait identifier (QTL gene mode); mutually exclusive with --region",
@@ -275,10 +281,11 @@ if (!is.null(seed_val)) set.seed(seed_val)
 
 has_qtl  <- nzchar(argv$qtl_dataset)
 has_gwas <- nzchar(argv$gwas_sumstats)
-if (has_qtl && has_gwas)
-  stop("--qtl-dataset and --gwas-sumstats are mutually exclusive; pass exactly one.")
-if (!has_qtl && !has_gwas)
-  stop("Specify either --qtl-dataset (QTL mode) or --gwas-sumstats (GWAS mode).")
+has_qss  <- nzchar(argv$qtl_sumstats)
+if (sum(has_qtl, has_gwas, has_qss) > 1L)
+  stop("--qtl-dataset, --gwas-sumstats and --qtl-sumstats are mutually exclusive; pass exactly one.")
+if (!has_qtl && !has_gwas && !has_qss)
+  stop("Specify --qtl-dataset (QTL individual-level), --qtl-sumstats (QTL RSS) or --gwas-sumstats (GWAS RSS).")
 
 # Optional context restriction (QTL mode): NULL = all contexts in the dataset.
 contexts_arg <- if (nzchar(argv$contexts) && argv$contexts != ".")
@@ -336,9 +343,12 @@ if (!is.null(median_abs_corr)) cs_args$medianAbsCorr <- median_abs_corr
 # fineMappingResult). Added only when supplied, for pecotmr-version tolerance.
 if (!is.null(fmr_obj)) cs_args$fineMappingResult <- fmr_obj
 
-if (has_gwas) {
-  # ----- GWAS mode -------------------------------------------------------
-  gss <- readRDS(argv$gwas_sumstats)
+if (has_gwas || has_qss) {
+  # ----- RSS mode (GwasSumStats or QtlSumStats) --------------------------
+  # The SuSiE-RSS knobs below are pipeline arguments of the summary-statistics
+  # path, which pecotmr documents as "QtlSumStats / GwasSumStats only", so the
+  # two RSS inputs share this branch; fineMappingPipeline dispatches on class.
+  gss <- readRDS(if (has_gwas) argv$gwas_sumstats else argv$qtl_sumstats)
   ser_fallback <- as.logical(argv$ser_fallback)
   if (is.na(ser_fallback))
     stop("--ser-fallback must be TRUE or FALSE (got: ", argv$ser_fallback, ")")
@@ -368,8 +378,10 @@ if (has_gwas) {
            '\'{"check_prior":true,"mismatch_estimator":"map"}\'.')
     gwas_args$rssControl <- rc
   }
+  if (!is.null(seed_val)) gwas_args$seed <- seed_val
   res <- do.call(fineMappingPipeline, c(list(gss), gwas_args))
-  label <- paste0("GwasSumStats '", basename(argv$gwas_sumstats), "'")
+  label <- if (has_gwas) paste0("GwasSumStats '", basename(argv$gwas_sumstats), "'")
+           else paste0("QtlSumStats '", basename(argv$qtl_sumstats), "'")
 } else {
   # ----- QTL mode --------------------------------------------------------
   has_gene   <- nzchar(argv$gene_id)
