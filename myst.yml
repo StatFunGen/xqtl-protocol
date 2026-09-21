@@ -1,0 +1,127 @@
+# MyST / Jupyter Book 2 configuration for the FunGen-xQTL protocol site.
+#
+# The TOC points at the notebooks where they actually live. MyST derives a flat
+# page slug from each basename (code/SoS/reference_data/reference_data.ipynb ->
+# /reference-data/) and resolves relative links and images itself, so no staging
+# or link rewriting is needed. website/build_support.py handles only the two
+# things MyST cannot: the workflow-builder widget and legacy-URL redirects.
+version: 1
+project:
+  title: FunGen-xQTL Consortium
+  authors:
+    - name: The NIH/NIA Alzheimer's Disease Sequencing Project Functional Genomics xQTL Consortium
+  copyright: 2021+, FunGen xQTL Analysis Working Group
+  github: https://github.com/statfungen/xqtl-protocol
+  funding:
+    - statement: Supported by [NIH NIA](https://www.nia.nih.gov/research/ad-genetics)
+  bibliography:
+    - website/references.bib
+  toc:
+    - file: README.md
+    - title: Getting started
+      children:
+        - file: code/SoS/xqtl_protocol_demo.ipynb
+        - file: website/_generated/xqtl_protocol_workflow_builder.ipynb
+    - title: Reference data
+      children:
+        - file: code/SoS/reference_data/reference_data.ipynb
+          children:
+            - file: code/SoS/reference_data/reference_data_preparation.ipynb
+            - file: code/SoS/reference_data/generalized_TADB.ipynb
+            - file: code/SoS/reference_data/ld_prune_reference.ipynb
+            - file: code/SoS/reference_data/rss_ld_sketch.ipynb
+    - title: Molecular Phenotypes
+      children:
+        - file: code/SoS/molecular_phenotypes/bulk_expression.ipynb
+          children:
+            - file: code/SoS/molecular_phenotypes/calling/RNA_calling.ipynb
+            - file: code/SoS/molecular_phenotypes/QC/bulk_expression_QC.ipynb
+            - file: code/SoS/molecular_phenotypes/QC/bulk_expression_normalization.ipynb
+        - file: code/SoS/molecular_phenotypes/single_cell.ipynb
+          children:
+            - file: code/SoS/molecular_phenotypes/snRNAseq_preprocessing.ipynb
+            - file: code/SoS/molecular_phenotypes/QC/pseudobulk_preprocessing.ipynb
+        - file: code/SoS/molecular_phenotypes/methylation.ipynb
+          children:
+            - file: code/SoS/molecular_phenotypes/calling/methylation_calling.ipynb
+        - file: code/SoS/molecular_phenotypes/splicing.ipynb
+          children:
+            - file: code/SoS/molecular_phenotypes/calling/splicing_calling.ipynb
+            - file: code/SoS/molecular_phenotypes/QC/splicing_normalization.ipynb
+        - file: code/SoS/molecular_phenotypes/apa.ipynb
+          children:
+            - file: code/SoS/molecular_phenotypes/calling/apa_calling.ipynb
+            - file: code/SoS/molecular_phenotypes/QC/apa_impute.ipynb
+    - title: Data Preprocessing
+      children:
+        - file: code/SoS/data_preprocessing/genotype_preprocessing.ipynb
+          children:
+            - file: code/SoS/data_preprocessing/genotype/VCF_QC.ipynb
+            - file: code/SoS/data_preprocessing/genotype/genotype_formatting.ipynb
+            - file: code/SoS/data_preprocessing/genotype/GWAS_QC.ipynb
+            - file: code/SoS/data_preprocessing/genotype/PCA.ipynb
+        - file: code/SoS/data_preprocessing/phenotype_preprocessing.ipynb
+          children:
+            - file: code/SoS/data_preprocessing/phenotype/gene_annotation.ipynb
+            - file: code/SoS/data_preprocessing/phenotype/phenotype_imputation.ipynb
+            - file: code/SoS/data_preprocessing/phenotype/phenotype_formatting.ipynb
+        - file: code/SoS/data_preprocessing/covariate_preprocessing.ipynb
+          children:
+            - file: code/SoS/data_preprocessing/covariate/covariate_formatting.ipynb
+            - file: code/SoS/data_preprocessing/covariate/covariate_hidden_factor.ipynb
+    - title: QTL Association Testing
+      children:
+        - file: code/SoS/association_scan/qtl_association_testing.ipynb
+          children:
+            - file: code/SoS/association_scan/TensorQTL/TensorQTL.ipynb
+            - file: code/SoS/association_scan/quantile_models/qr_and_twas.ipynb
+        - file: code/SoS/association_scan/qtl_association_postprocessing.ipynb
+    - title: Multivariate Mixture Models
+      children:
+        - file: code/SoS/multivariate_genome/MASH.ipynb
+          children:
+            - file: code/SoS/multivariate_genome/multivariate_mixture_vignette.ipynb
+            - file: code/SoS/multivariate_genome/MASH/mash_preprocessing.ipynb
+            - file: code/SoS/multivariate_genome/MASH/mixture_prior.ipynb
+            - file: code/SoS/multivariate_genome/MASH/mash_fit.ipynb
+            - file: code/SoS/multivariate_genome/MASH/mash_posterior.ipynb
+    - title: Multiomics Regression Models
+      children:
+        - file: code/SoS/mnm_analysis/mnm_miniprotocol.ipynb
+          children:
+            - file: code/SoS/mnm_analysis/univariate_fine_mapping_twas_vignette.ipynb
+            - file: code/SoS/mnm_analysis/multivariate_multigene_fine_mapping_vignette.ipynb
+            - file: code/SoS/mnm_analysis/univariate_fine_mapping_fsusie_vignette.ipynb
+            - file: code/SoS/mnm_analysis/multivariate_fine_mapping_vignette.ipynb
+            - file: code/SoS/mnm_analysis/summary_stats_finemapping_vignette.ipynb
+            - file: code/SoS/mnm_analysis/mnm_methods/mnm_regression.ipynb
+            - file: code/SoS/mnm_analysis/mnm_methods/rss_analysis.ipynb
+            - file: code/SoS/mnm_analysis/mnm_methods/qtl_rss_analysis.ipynb
+        - file: code/SoS/mnm_analysis/mnm_postprocessing.ipynb
+    - title: GWAS Integration
+      children:
+        - file: code/SoS/pecotmr_integration/gwas_integration.ipynb
+          children:
+            - file: code/SoS/pecotmr_integration/SuSiE_enloc.ipynb
+            - file: code/SoS/pecotmr_integration/twas_ctwas.ipynb
+            - file: code/SoS/pecotmr_integration/intact.ipynb
+            - file: code/SoS/mnm_analysis/mnm_methods/colocboost.ipynb
+    - title: Enrichment and Validation
+      children:
+        - file: code/SoS/enrichment/enrichment_validation.ipynb
+          children:
+            - file: code/SoS/enrichment/eoo_enrichment.ipynb
+            - file: code/SoS/enrichment/gsea.ipynb
+            - file: code/SoS/enrichment/gregor.ipynb
+            - file: code/SoS/enrichment/sldsc_enrichment.ipynb
+    - title: xQTL Modifier Score
+      children:
+        - file: code/SoS/xqtl_modifier_score/ems_training.ipynb
+        - file: code/SoS/xqtl_modifier_score/ems_prediction.ipynb
+    - title: About
+      children:
+        - file: CONTRIBUTORS.md
+site:
+  template: book-theme
+  options:
+    logo: website/xqtl_wf.png

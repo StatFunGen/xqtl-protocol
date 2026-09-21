@@ -10,14 +10,32 @@ LANDING = SOS / "xqtl_protocol_workflow_builder.html"
 FIXTURE_PATH = re.compile(r"tests/fixtures/[A-Za-z0-9_.@+/*?\[\]{}-]+")
 STALE_INPUT = re.compile(r"(?<![A-Za-z0-9_./-])input/[A-Za-z0-9_.@+/*?\[\]{}-]+")
 LOCAL_ABSOLUTE = re.compile(r"(?:/restricted/projectnb/|/projectnb/|/Users/|/home/|/gpfs/|/mnt/|/scratch/|~/)")
-DOC_STEM = re.compile(r'data-doc="[^"]*/([^/"]+)\.html"')
+# Jupyter Book 2 publishes slugified, extensionless page URLs, so the landing
+# page links to /reference-data-preparation rather than /reference_data_preparation.html.
+DOC_SLUG = re.compile(r'data-doc="[^"]*/([^/"]+)"')
+
+def _myst_slug(name):
+    return re.sub(r"[^a-z0-9]+", "-", Path(name).stem.lower()).strip("-")
 JSON_CMD = re.compile(r'"cmd":("(?:\\.|[^"\\])*")')
 
+def _documented_slugs():
+    slugs = {s for s in DOC_SLUG.findall(LANDING.read_text()) if s}
+    assert slugs, f"No data-doc page links found in {LANDING.name}; the link scheme changed."
+    return slugs
+
+def _notebooks_by_slug():
+    by_slug = {}
+    for path in SOS.rglob("*.ipynb"):
+        if "graveyard" in path.parts or ".ipynb_checkpoints" in path.parts:
+            continue
+        by_slug.setdefault(_myst_slug(path.name), []).append(path)
+    return by_slug
+
 def _active_notebooks():
-    stems = set(DOC_STEM.findall(LANDING.read_text()))
+    by_slug = _notebooks_by_slug()
     found = []
-    for stem in sorted(stems):
-        found += [p for p in SOS.rglob(f"{stem}.ipynb") if "graveyard" not in p.parts and ".ipynb_checkpoints" not in p.parts]
+    for slug in sorted(_documented_slugs()):
+        found += by_slug.get(slug, [])
     return sorted(set(found))
 
 def _notebook_commands(path):
@@ -58,6 +76,6 @@ def test_documented_command_paths(source, command):
     assert not failures, source + ":\n" + "\n".join(f"- {item}" for item in failures)
 
 def test_active_notebook_links_resolve():
-    stems = set(DOC_STEM.findall(LANDING.read_text()))
-    resolved = {path.stem for path in _active_notebooks()}
-    assert stems <= resolved, "Missing active notebooks: " + ", ".join(sorted(stems - resolved))
+    slugs = _documented_slugs()
+    resolved = set(_notebooks_by_slug())
+    assert slugs <= resolved, "Missing active notebooks: " + ", ".join(sorted(slugs - resolved))

@@ -54,4 +54,4 @@ maintain it.
 
 ---
 
-New to the protocol? See [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_demo.html) to get running, or the [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) to find the pipelines for your study.
+New to the protocol? See [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl-protocol-demo) to get running, or the [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) to find the pipelines for your study.

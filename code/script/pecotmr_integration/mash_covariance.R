@@ -43,14 +43,16 @@ p <- add_argument(p, "--output", type = "character",
                   help = "output covariance-component RDS")
 argv <- parse_args(p)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 alpha <- if (toupper(argv$effect_model) == "EZ") 1 else 0
 dat <- readRDS(argv$data)
 
 strong <- qtlSumStatsFromBetaMatrix(
   as.matrix(dat$strong.b), as.matrix(dat$strong.s), study = "mash")
 
-components <- trimws(strsplit(argv$component, "[ ,]+")[[1L]])
-components <- components[nzchar(components)]
+components <- split_pecotmr_names(argv$component, MASH_COMPONENT_ALIASES)
 nPcs <- if (is.na(argv$npc)) NULL else argv$npc
 
 U <- mashCovarianceComponents(list(strong = strong), alpha = alpha,

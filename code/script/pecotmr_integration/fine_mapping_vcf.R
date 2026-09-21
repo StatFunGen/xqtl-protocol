@@ -2,7 +2,7 @@
 # fine_mapping_vcf.R
 #
 # Write a fine-mapping VCF (per-variant ES / CS / PIP in the sample column) from
-# a QtlFineMappingResult / GwasFineMappingResult via pecotmr::writeSumstatsVcf.
+# a QtlFineMappingResult / GwasFineMappingResult via pecotmr::writeSumStatsVcf.
 # Replaces the legacy inline create_vcf() + VariantAnnotation::writeVcf in the
 # mv_susie / uni_susie cells: the VCF assembly now lives in pecotmr's vcfWriter.
 #
@@ -33,7 +33,7 @@ if (!methods::is(fmr, "FineMappingResultBase"))
   stop("--input must be a FineMappingResult RDS (got '", class(fmr)[[1L]], "').")
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-out <- writeSumstatsVcf(
+out <- writeSumStatsVcf(
   fmr, outputPath = argv$output,
   sampleName = if (is.na(argv$sample_name)) NULL else argv$sample_name,
   splitByContext = argv$split_by_context)

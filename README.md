@@ -25,7 +25,7 @@ that route with the commands to run them.
 
 | I want to... | Go to |
 |---|---|
-| **Set up my computing environment** | [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_demo.html) |
+| **Set up my computing environment** | [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl-protocol-demo) |
 | **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) |
 
 ## Overview of the protocol
