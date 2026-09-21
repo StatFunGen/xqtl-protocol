@@ -44,9 +44,9 @@ p <- add_argument(p, "--output", type = "character", help = "output Vhat RDS")
 argv <- parse_args(p)
 
 .d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
-source(file.path(.d, "mash_common.R"))
+source(file.path(.d, "pecotmr_aliases.R"))
 
-method <- apply_mash_aliases(argv$method, MASH_VHAT_ALIASES)
+method <- apply_pecotmr_aliases(argv$method, MASH_VHAT_ALIASES)
 
 alpha <- if (toupper(argv$effect_model) == "EZ") 1 else 0
 dat <- readRDS(argv$data)

@@ -127,6 +127,9 @@ parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 # Read a whitespace-delimited ID file into a unique character vector; NULL when
 # the path is empty / "." / missing.
 read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
@@ -187,7 +190,12 @@ parsed_method_args <- if (nzchar(argv$method_args) && argv$method_args != "." &&
 contexts_arg <- if (nzchar(argv$contexts) && argv$contexts != ".")
   trimws(strsplit(argv$contexts, ",", fixed = TRUE)[[1L]]) else NULL
 
-methods <- trimws(strsplit(argv$methods, ",", fixed = TRUE)[[1L]])
+methods <- split_pecotmr_names(argv$methods, TWAS_METHOD_ALIASES, split = ",")
+# --method-args is keyed by method token, so normalise those keys too or the
+# subset check below would reject an alias the user spelled consistently.
+if (!is.null(parsed_method_args))
+  names(parsed_method_args) <- apply_pecotmr_aliases(names(parsed_method_args),
+                                                     TWAS_METHOD_ALIASES)
 methods_arg <- if (is.null(parsed_method_args)) {
   if (length(methods) == 1L && methods == "default") "default" else methods
 } else {
