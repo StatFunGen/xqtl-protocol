@@ -16,28 +16,20 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.10.2
         with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: |
-          pip install jupyter-book==1.0.4 ghp-import nbconvert
+          run-install: false
 
       - name: Build website and manuscript
+        shell: pixi exec --spec jupyter-book ghp-import nbconvert -- bash -e {0}
         run: |
-          # Build website from a temporary flat source tree. The source notebooks
-          # stay under code/SoS, while public pages are emitted as <notebook>.html.
           rm -f pipeline/*.ipynb
-          BOOK_SRC="$(mktemp -d)"
-          python website/build_flat_book.py --output "$BOOK_SRC"
-          jupyter-book build "$BOOK_SRC" --path-output . --config "$BOOK_SRC/website/_config.yml" --toc "$BOOK_SRC/website/_toc.yml"
-          python website/build_flat_book.py --redirects _build/html
-          rsync -auzP code/images/* _build/html/_images/
-          cp xqtl_flowchart.html _build/html/
+          python website/build_support.py --stage-widget
+          BASE_URL=/xqtl-protocol jupyter-book build --html
+          python website/build_support.py --widget _build/html --redirects _build/html
+          cp website/xqtl_flowchart.html _build/html/
           ghp-import -n -p -f _build/html
-
           # Link notebooks
           find code/SoS -name '*.ipynb' -not -path '*/.ipynb_checkpoints/*' -print0 | while IFS= read -r -d '' notebook; do
             ln -s "../${notebook}" "pipeline/$(basename "$notebook")"

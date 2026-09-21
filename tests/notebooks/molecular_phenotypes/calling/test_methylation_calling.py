@@ -14,7 +14,6 @@ from pathlib import Path
 from helpers.r_runner import rscript_bin
 
 NB = "pipeline/methylation_calling.ipynb"
-CROSS = "data/cross_reactive_probe_Hop2020.txt"
 SAMPLES = [("5723646052", "R02C02", "GroupA_3"), ("5723646052", "R04C01", "GroupA_2"),
            ("5723646052", "R05C02", "GroupB_3"), ("5723646053", "R04C02", "GroupB_1"),
            ("5723646053", "R05C02", "GroupA_1"), ("5723646053", "R06C02", "GroupB_2")]
