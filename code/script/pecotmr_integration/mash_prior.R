@@ -53,6 +53,9 @@ p <- add_argument(p, "--output", type = "character",
                   help = "output prior RDS (list(U, w, loglik))")
 argv <- parse_args(p)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "mash_common.R"))
+
 alpha <- if (toupper(argv$effect_model) == "EZ") 1 else 0
 dat <- readRDS(argv$data)
 
@@ -71,8 +74,7 @@ if (nzchar(argv$component_files)) {
                                 engine = argv$engine, setSeed = argv$seed)
 } else {
   # Self-contained mode: build the components here.
-  components <- trimws(strsplit(argv$components, "[ ,]+")[[1L]])
-  components <- components[nzchar(components)]
+  components <- split_mash_names(argv$components, MASH_COMPONENT_ALIASES)
   nPcs <- if (is.na(argv$npc)) NULL else argv$npc
   prior <- mashPriorCovariances(list(strong = strong), alpha = alpha, vhat = vhat,
                                 components = components, engine = argv$engine,

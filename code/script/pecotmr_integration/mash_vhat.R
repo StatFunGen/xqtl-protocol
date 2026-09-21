@@ -43,6 +43,11 @@ p <- add_argument(p, "--max-iter", type = "integer", default = 6L,
 p <- add_argument(p, "--output", type = "character", help = "output Vhat RDS")
 argv <- parse_args(p)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "mash_common.R"))
+
+method <- apply_mash_aliases(argv$method, MASH_VHAT_ALIASES)
+
 alpha <- if (toupper(argv$effect_model) == "EZ") 1 else 0
 dat <- readRDS(argv$data)
 
@@ -62,7 +67,7 @@ U <- if (nzchar(argv$prior_data)) {
   if (is.list(pr) && !is.null(pr$U)) pr$U else pr
 } else NULL
 
-vhat <- mashResidualCorrelation(ssl, alpha = alpha, method = argv$method,
+vhat <- mashResidualCorrelation(ssl, alpha = alpha, method = method,
                                 priorCovariances = U,
                                 nSubset = argv$n_subset, maxIter = argv$max_iter)
 
