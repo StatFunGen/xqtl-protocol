@@ -83,3 +83,53 @@ def test_mnm(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     exp = repo_root / "tests/fixtures/mnm_regression/expected"
     assert_matches_expected(fmr, exp / "multicontext_bvsr.rds", mode="tolerant",
                             rtol=1e-6, atol=1e-8)
+
+
+def test_fsusie_ti_export(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
+    """The native fSuSiE workflow writes one indexed table with curves and bands."""
+    import csv
+    import gzip
+    import json
+    import subprocess
+
+    cwd = tmp_path / "fsusie"
+    windows = tmp_path / "functional_region.bed"
+    windows.write_text("#chr\tstart\tend\tID\nchr22\t10000000\t18000000\tfunctional_region\n")
+    p = run_sos(
+        repo_root / "pipeline/mnm_regression.ipynb",
+        "qtl_dataset_construct+fsusie",
+        {
+            "name": "test_study", "cwd": cwd,
+            "genoFile": qtl_mini / "protocol_example.genotype.chr22.bed",
+            "phenoFile": qtl_mini / "protocol_example.pheno_manifest_context.tsv",
+            "covFile": qtl_mini / "example_covariates.tsv",
+            "customized-association-windows": windows,
+            "transpose-covariates": True, "seed": 1,
+            "susie-top-pc": 1, "mem": "40G",
+            "fsusie-method-args": json.dumps({"fsusie": {
+                "post_processing": "TI", "max_scale": 4, "L": 2,
+                "max_SNP_EM": 20, "verbose": False}}),
+            "modular_script_dir": repo_root / "code/script",
+        }, cwd=repo_root, timeout=1800)
+    assert p.returncode == 0, p.stdout + p.stderr
+    fits = list((cwd / "fsusie").glob("*.fsusie.rds"))
+    assert len(fits) == 1
+    info = read_rds(fits[0])
+    assert info["class"] == "QtlFineMappingResult"
+    assert info["nrow"] == 4  # one joint fit + one PC per context
+    table = cwd / "fsusie/test_study.exported.bed.gz"
+    assert table.with_suffix(table.suffix + ".tbi").exists()
+    with gzip.open(table, "rt") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        assert len(reader.fieldnames) == 20
+        rows = list(reader)
+    assert rows, "Fixture must exercise a nonempty credible-set export"
+    for row in rows:
+        n = int(row["grid_resolution"])
+        assert len(row["grid_effects"].split(";")) == n
+        widths = [float(v) for v in row["grid_band_halfwidth"].split(";")]
+        assert len(widths) == n and min(widths) >= 0 and max(widths) > 0
+        assert len(row["epi_mark_names"].split(";")) == len(row["epi_mark_effects"].split(";"))
+    p = subprocess.run(["tabix", str(table), "22:10000000-18000000"],
+                       capture_output=True, text=True)
+    assert p.returncode == 0 and p.stdout.strip()

@@ -436,6 +436,20 @@ def get_input_plink(wc):
     return f"{CWD}/data_preprocessing/genotype/{CONVERTED_PLINK_BASENAME}.bed"
 
 
+def sos_mem_arg(mem_mb):
+    """Forward at least 32768 MB to a SoS task in the config's native unit."""
+    return f"{max(32768, int(mem_mb))}M"
+
+def get_fsusie_region_list(theme):
+    fsusie_cfg = config["finemapping"].get("fsusie", {})
+    return (
+        f"{CWD}/finemapping/{theme}/fsusie/"
+        f"{Path(get_phenotype_bed_by_theme(theme)).name}."
+        f"{Path(fsusie_cfg.get('tad_list', '')).name}."
+        f"{fsusie_cfg.get('phenotype_per_tad', 2)}_pheno_per_region.region_list"
+    )
+
+
 # ── Include script-backed rule modules ─────────────────────────────────────────────
 include: "rules/00_phenotype_preprocessing.smk"
 include: "rules/01_molecular_phenotypes.smk"
@@ -444,6 +458,7 @@ include: "rules/03_sample_qc_pca.smk"
 include: "rules/04_phenotype_covariate_prep.smk"
 include: "rules/05_association_testing.smk"
 include: "rules/06_univariate_finemapping.smk"
+include: "rules/09_fsusie_finemapping.smk"
 
 
 # ============================================================
@@ -552,5 +567,14 @@ rule finemapping:
     input:
         expand(
             "{cwd}/finemapping/{theme}/susie_twas/.done_susie_twas",
+            cwd=CWD, theme=THEMES,
+        ),
+
+
+rule fsusie_finemapping:
+    """Run functional SuSiE over TAD regions for every configured theme."""
+    input:
+        expand(
+            "{cwd}/finemapping/{theme}/fsusie/.done_fsusie",
             cwd=CWD, theme=THEMES,
         ),
