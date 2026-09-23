@@ -74,10 +74,10 @@ export_fsusie_bed <- function(x, path, region) {
     region_id <- paste0(as.character(GenomicRanges::seqnames(rg)),"_",
                         GenomicRanges::start(rg),"_",GenomicRanges::end(rg))
     for (i in which(x$method=="fsusie")) {
-        e <- x$entry[[i]]; fit <- getSusieFit(e)
+        e <- x[i, ]; fit <- getSusieFit(e)
         if (is.null(fit$fitted_func) || is.null(fit$cred_band) || is.null(fit$outing_grid))
             stop("Functional fields absent; rerun this region with curve retention")
-        tl <- as.data.frame(getTopLoci(x[i, ], signalCutoff = 0))
+        tl <- as.data.frame(getTopLoci(e, signalCutoff = 0))
         grid <- as.numeric(fit$outing_grid)
         positions <- as.numeric(fit$trait_positions)
         probes <- as.character(fit$trait_names)
