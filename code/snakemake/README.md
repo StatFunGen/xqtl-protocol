@@ -280,3 +280,31 @@ Do not accidentally include those unless the user explicitly wants them.
    non-trivial test package is 288K.
 4. If runtime verification is requested, run `run_mwe_xqtl_core.sh` against the
    external MWE data and run `run_nontrivial_tensorqtl_susie.sh`.
+
+### Functional SuSiE
+
+The shared `fsusie_finemapping` target prepares a single-context QtlDataset,
+selects TAD regions, and calls the canonical `mnm_regression.ipynb` `fsusie`
+workflow. Configure the existing `finemapping` section, for example:
+
+```yaml
+finemapping:
+  fsusie:
+    tad_list: /path/to/TADs.bed
+    phenotype_per_tad: 16
+    cis_window: 0
+    susie_top_pc: 1
+    post_processing: TI
+```
+
+The fSuSiE workflow writes each regional RDS and a matching exported BED, then
+combines the regional tables into `fsusie/<name>.exported.bed.gz` with a tabix
+index. This requires a pecotmr version retaining fSuSiE functional summaries
+and trait names/positions in trimmed fits. Older results lacking those fields
+must be refitted. The table contains credible-set variants, grid effects,
+interpolated probe effects, and `grid_band_halfwidth`. The latter is a packed
+vector aligned with the grid: reconstruct the saved native bands as
+`grid_effects -/+ grid_band_halfwidth`. These are native fSuSiE bands, not
+standard errors. A region without a credible set contributes only its header.
+TI is the default. `susie_top_pc` controls additional univariate PC fits; this
+workflow does not invoke the TWAS-weight training steps.

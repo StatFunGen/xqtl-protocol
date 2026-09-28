@@ -60,6 +60,67 @@ suppressPackageStartupMessages({
   library(jsonlite)
 })
 
+# The 19-column FunGen_xQTL_epi.bulk.exported.bed schema plus one packed
+# grid_band_halfwidth column. Native fsusieR bands are curve +/- 3*sqrt(tt).
+export_fsusie_bed <- function(x, path, region) {
+    columns <- c("#chr","start","end","variant_ID","event_ID","region_ID",
+                 "maf","PIP","cs_coverage_0.95","TADB_start","TADB_end",
+                 "grid_resolution","cs_id","cs_root","grid_positions",
+                 "grid_effects","epi_mark_positions","epi_mark_names","epi_mark_effects",
+                 "grid_band_halfwidth")
+    pieces <- list()
+    pack <- function(z) paste(z,collapse=";")
+    rg <- GenomicRanges::GRanges(region)
+    region_id <- paste0(as.character(GenomicRanges::seqnames(rg)),"_",
+                        GenomicRanges::start(rg),"_",GenomicRanges::end(rg))
+    for (i in which(x$method=="fsusie")) {
+        e <- x[i, ]; fit <- getSusieFit(e)
+        if (is.null(fit$fitted_func) || is.null(fit$cred_band) || is.null(fit$outing_grid))
+            stop("Functional fields absent; rerun this region with curve retention")
+        tl <- as.data.frame(getTopLoci(e, signalCutoff = 0))
+        grid <- as.numeric(fit$outing_grid)
+        positions <- as.numeric(fit$trait_positions)
+        probes <- as.character(fit$trait_names)
+        context <- as.character(x$context[i])
+        stopifnot(length(grid)>1L,all(diff(grid)>0),length(positions)==length(probes))
+        # Native fSuSiE CSs and curves use the same effect index.
+        for (l in seq_along(fit$cs)) {
+            members <- fit$cs[[l]]
+            if (!length(members)) next
+            vids <- if (is.numeric(members)) getVariantIds(e)[as.integer(members)] else as.character(members)
+            t <- tl[match(vids,tl$variant_id),,drop=FALSE]
+            stopifnot(!anyNA(t$variant_id))
+            curve <- as.numeric(fit$fitted_func[[l]])
+            band <- fit$cred_band[[l]]
+            stopifnot(length(curve)==length(grid),is.matrix(band),
+                      identical(dim(band),c(2L,length(grid))))
+            midpoint <- as.numeric((band[1,]+band[2,])/2)
+            stopifnot(isTRUE(all.equal(midpoint,curve,check.attributes=FALSE)))
+            halfwidth <- as.numeric((band[1,]-band[2,])/2)
+            # Linear interpolation and constant endpoint extrapolation match
+            # interpolate_effect_estimates in Update_new_epi_export.ipynb.
+            interpolated <- approx(grid,curve,xout=positions,rule=2,ties="ordered")$y
+            cs_id <- paste(context,region_id,l,sep=":")
+            pieces[[length(pieces)+1L]] <- data.frame(
+                `#chr`=sub("^chr","",t$chrom), start=t$pos-1L,end=t$pos,
+                variant_ID=t$variant_id,event_ID=context,region_ID=region_id,
+                maf=pmin(t$af,1-t$af),PIP=t$pip,cs_coverage_0.95=l,
+                TADB_start=GenomicRanges::start(rg),TADB_end=GenomicRanges::end(rg),
+                grid_resolution=length(grid),cs_id=cs_id,cs_root=cs_id,
+                grid_positions=pack(grid),grid_effects=pack(curve),
+                epi_mark_positions=pack(positions),epi_mark_names=pack(probes),
+                epi_mark_effects=pack(interpolated),
+                grid_band_halfwidth=pack(halfwidth),check.names=FALSE)
+        }
+    }
+    out <- if (length(pieces)) do.call(rbind,pieces) else
+        as.data.frame(setNames(replicate(length(columns),character(),simplify=FALSE),columns),check.names=FALSE)
+    out <- out[,columns,drop=FALSE]
+    if (nrow(out)) out <- out[order(out$`#chr`,out$start,out$end),,drop=FALSE]
+    f <- gzfile(path,"wt"); on.exit(close(f))
+    write.table(out,f,sep="\t",quote=FALSE,row.names=FALSE,na="NA")
+}
+
 parser <- arg_parser("SuSiE fine-mapping over a pecotmr S4 input (QtlDataset or GwasSumStats)")
 parser <- add_argument(parser, "--qtl-dataset",
                        help = "Path to a QtlDataset RDS (QTL mode)",
@@ -418,7 +479,7 @@ if (has_gwas || has_qss) {
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
   run_fm <- function() if (has_region) {
-    do.call(fineMappingPipeline, c(qtl_args, list(region = argv$region)))
+    do.call(fineMappingPipeline, c(qtl_args, list(region = GenomicRanges::GRanges(argv$region))))
   } else {
     do.call(fineMappingPipeline, c(qtl_args,
                                    list(traitId = argv$gene_id,
@@ -474,4 +535,8 @@ if (has_gwas && !is.null(res)) {
     }
   }, error = function(e)
      message("fine_mapping.R: GWAS summary skipped (", conditionMessage(e), ")")))
+}
+
+if (has_qtl && has_region && "fsusie" %in% methods) {
+    export_fsusie_bed(res, sub("\\.rds$", ".exported.bed.gz", argv$output), argv$region)
 }
