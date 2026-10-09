@@ -21,10 +21,12 @@ FIX = "tests/fixtures/splicing_calling/leafcutter"
 GTF = "Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf"
 FASTA = "GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta"
 
-# 2.x exposes leafcutter2-star2junc; pre-2.0 builds do not. Use it as the version probe.
+# 2.x exposes leafcutter2-star2junc; pre-2.0 builds do not. Probe by command rather than by
+# version string: packaged builds do not always carry the upstream version (the dnachun conda
+# build is labelled 1.0.1 but ships 2.0.1), so a version comparison would wrongly reject it.
 needs_lc2 = pytest.mark.skipif(
     shutil.which("leafcutter2-star2junc") is None,
-    reason="LeafCutter2 >= 2.0 not installed (no leafcutter2-star2junc on PATH)",
+    reason="LeafCutter2 2.x not installed (no leafcutter2-star2junc on PATH)",
 )
 _ref = os.environ.get("XQTL_REFERENCE_DATA")
 needs_ref = pytest.mark.skipif(
