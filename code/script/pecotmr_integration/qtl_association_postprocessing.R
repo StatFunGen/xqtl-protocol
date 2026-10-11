@@ -118,14 +118,19 @@ entries <- lapply(genes, mkEntry)
 nVar     <- as.numeric(regional$n_variants)
 nVarFcol <- if (!is.null(nvFilt)) as.numeric(nvFilt[genes]) else NULL
 
-qssArgs <- list(
-  study = rep(argv$study, length(genes)), context = rep(argv$context, length(genes)),
-  trait = genes, entry = entries, genome = argv$genome,
-  n_variants = nVar, p_beta = as.numeric(regional$p_beta),
+# pecotmr 0.9.0: `study` -> `studyName`, and the per-trait statistic columns
+# travel in `extraCols` instead of `...` (which the constructor no longer has).
+extraCols <- list(
+  n_variants  = nVar,
+  p_beta      = as.numeric(regional$p_beta),
   beta_shape1 = as.numeric(regional$beta_shape1),
   beta_shape2 = as.numeric(regional$beta_shape2))
-if (!is.null(nVarFcol)) qssArgs$n_variants_filtered <- nVarFcol
-qss <- do.call(QtlSumStats, qssArgs)
+if (!is.null(nVarFcol)) extraCols$n_variants_filtered <- nVarFcol
+qss <- QtlSumStats(
+  studyName = rep(argv$study, length(genes)),
+  context   = rep(argv$context, length(genes)),
+  trait     = genes, entry = entries, genome = argv$genome,
+  extraCols = extraCols)
 
 filtering <- (argv$maf_cutoff > 0 || argv$cis_window > 0) && !is.null(nVarFcol)
 r <- qtlAssociationPostprocess(
@@ -157,7 +162,7 @@ if (!is.na(argv$output_dir)) {
   # Per-method EVENT-significance column (which genes pass): permutation and the
   # q-value SNP method gate events on the Storey q of the beta-approx permutation
   # p (q_beta); Bonferroni gates on its BH-FDR of the per-gene min. This matches
-  # the variant-level rules getSignificantQtls() applies.
+  # the variant-level rules significantQtls() applies.
   flavours <- c(permutation = "q_beta",
                 bonferroni_original = "fdr_bonferroni_min_original",
                 bonferroni_filtered = "fdr_bonferroni_min_filtered",
@@ -172,10 +177,13 @@ if (!is.na(argv$output_dir)) {
     if (nrow(events) > 0)
       readr::write_tsv(events, file.path(od, paste0(base, ".significant_events.", m, ".tsv.gz")))
     # significant variant-level QTL (derived, never stored)
-    sig <- tryCatch(getSignificantQtls(r, m, threshold = argv$fdr_threshold),
-                    error = function(e) NULL)
+    # Unguarded: significantQtls() aborts only when the object did not come
+    # from qtlAssociationPostprocess(), and `r` is that function's own output,
+    # so the one catchable condition cannot arise here. "No significant QTL"
+    # is a zero-length return, which the next line handles.
+    sig <- significantQtls(r, m, threshold = argv$fdr_threshold)
     nqtl <- 0L
-    if (!is.null(sig) && length(sig) > 0) {
+    if (length(sig) > 0) {
       sdf <- as.data.frame(sig)
       readr::write_tsv(sdf, file.path(od, paste0(base, ".significant_qtl.", m, ".tsv.gz")))
       nqtl <- length(sig)

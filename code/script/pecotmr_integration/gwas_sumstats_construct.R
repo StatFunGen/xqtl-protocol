@@ -137,6 +137,9 @@ parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 splitCsv <- function(s) {
   if (is.null(s) || !nzchar(s)) return(character(0))
   trimws(strsplit(s, ",", fixed = TRUE)[[1L]])
@@ -307,18 +310,20 @@ gss_out <- if (argv$skip_qc) {
   effN <- as.logical(argv$effective_n)
   if (is.na(effN))
     stop("--effective-n must be TRUE or FALSE (got: ", argv$effective_n, ")")
-  qc_call_args <- c(list(gss,
-                          zMismatchQc     = qc_method,
-                          impute          = isTRUE(argv$impute),
-                          pipCutoffToSkip = argv$pip_cutoff_to_skip,
-                          mafCutoff       = argv$maf,
-                          effectiveN      = effN),
-                    if (isTRUE(argv$allele_flip_kriging))
-                      list(alleleFlipKriging = TRUE) else list(),
-                    if (!is.null(skip_region_vec))
-                      list(skipRegion = skip_region_vec) else list(),
-                    qc_extra)
-  do.call(summaryStatsQc, qc_call_args)
+  # Still assembled under the FLAT argument names -- the wrapper flags and
+  # --qc-args both speak them -- then routed into pecotmr 0.9.0's bundles
+  # (panelFilterParam / signalScreenArgs / ...) by summary_stats_qc_args().
+  qc_flat <- c(list(zMismatchQc     = qc_method,
+                    impute          = isTRUE(argv$impute),
+                    pipCutoffToSkip = argv$pip_cutoff_to_skip,
+                    mafCutoff       = argv$maf,
+                    effectiveN      = effN),
+               if (isTRUE(argv$allele_flip_kriging))
+                 list(alleleFlipKriging = TRUE) else list(),
+               if (!is.null(skip_region_vec))
+                 list(skipRegion = skip_region_vec) else list(),
+               qc_extra)
+  do.call(summaryStatsQc, c(list(gss), summary_stats_qc_args(qc_flat)))
 }
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
@@ -331,7 +336,9 @@ cat(sprintf("Wrote %sGwasSumStats (%d stud%s: %s) over %s to %s\n",
 # ----- Per-entry QC diagnostics summary (to the step log) -------------------
 # Surface the qcInfo audit so the SoS log shows what QC did, not just the path.
 if (!argv$skip_qc) {
-  audit <- tryCatch(getQcInfo(gss_out)$entryAudit, error = function(e) NULL)
+  # Unguarded: qcInfo() is a plain slot accessor, and an absent audit is a
+  # NULL element, which the loop below skips. An error here is a real break.
+  audit <- qcInfo(gss_out)$entryAudit
   for (i in seq_along(audit)) {
     a <- audit[[i]]
     if (is.null(a)) next

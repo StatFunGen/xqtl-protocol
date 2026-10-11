@@ -44,6 +44,9 @@ parser <- add_argument(parser, "--meta-output",
                        help = "Output path for the updated meta row", type = "character", default = NA)
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 # A QTL region may span several per-study FMRs (its meta original_data); combine
 # them so overlapTopLoci sees the region's full top-loci set.
 qtlPaths <- as.character(argv$qtl)
@@ -63,13 +66,11 @@ for (gp in gwasPaths) {
     warning("Skipping non-GwasFineMappingResult input: ", gp)
     next
   }
-  ov <- tryCatch(
-    as.data.frame(overlapTopLoci(qtl, gwas, signalCutoff = argv$signal_cutoff)),
-    error = function(e) {
-      message(basename(gp), ": ", conditionMessage(e))
-      NULL
-    })
-  if (is.null(ov) || nrow(ov) == 0L) next
+  # Unguarded: "no shared variants" is a 0-row table, which the next line
+  # skips. The class check above is what rejects an unusable input; an error
+  # from the accessor itself is a real break and must surface.
+  ov <- as_variant_df(overlapTopLoci(qtl, gwas, signalCutoff = argv$signal_cutoff))
+  if (nrow(ov) == 0L) next
   ov$gwas_source <- basename(gp)
   pieces[[length(pieces) + 1L]] <- ov
   blockTopLoci <- c(blockTopLoci, unique(as.character(gwas$blockId)))

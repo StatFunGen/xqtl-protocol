@@ -56,11 +56,15 @@ argv <- parse_args(p)
 .d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
 source(file.path(.d, "pecotmr_aliases.R"))
 
+# cov_ed / ud / ud_ted -> the 0.9.0 engine spelling (a name, or the udr
+# options object that carries the ED-vs-TED choice).
+engine_arg <- mash_prior_engine(argv$engine)
+
 alpha <- if (toupper(argv$effect_model) == "EZ") 1 else 0
 dat <- readRDS(argv$data)
 
 strong <- qtlSumStatsFromBetaMatrix(
-  as.matrix(dat$strong.b), as.matrix(dat$strong.s), study = "mash")
+  as.matrix(dat$strong.b), as.matrix(dat$strong.s), studyName = "mash")
 
 vhat <- if (nzchar(argv$vhat_data)) readRDS(argv$vhat_data) else NULL
 
@@ -71,13 +75,13 @@ if (nzchar(argv$component_files)) {
   priorComponents <- do.call(c, lapply(files, readRDS))
   prior <- mashPriorCovariances(list(strong = strong), alpha = alpha, vhat = vhat,
                                 priorComponents = priorComponents,
-                                engine = argv$engine, setSeed = argv$seed)
+                                engine = engine_arg, setSeed = argv$seed)
 } else {
   # Self-contained mode: build the components here.
   components <- split_pecotmr_names(argv$components, MASH_COMPONENT_ALIASES)
   nPcs <- if (is.na(argv$npc)) NULL else argv$npc
   prior <- mashPriorCovariances(list(strong = strong), alpha = alpha, vhat = vhat,
-                                components = components, engine = argv$engine,
+                                components = components, engine = engine_arg,
                                 nPcs = nPcs, setSeed = argv$seed)
 }
 

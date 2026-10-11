@@ -14,10 +14,10 @@
 # Meta schema (one tab-separated row), exactly as SuSiE_enloc consumes it:
 #   chr start end region_id TSS original_data combined_data
 #   combined_data_sumstats conditions conditions_top_loci
-# TSS = start(getTraitPosition(db)) (NA when the trait position was never
+# TSS = start(traitPosition(db)) (NA when the trait position was never
 # supplied, e.g. a QtlSumStats-derived FMR); conditions = getContexts;
 # conditions_top_loci = contexts with >=1 top locus; chr/start/end default to
-# getRegion(db) when not supplied via --chr/--start/--end.
+# genomicRegion(db) when not supplied via --chr/--start/--end.
 
 suppressPackageStartupMessages({
   library(argparser)
@@ -46,6 +46,9 @@ parser <- add_argument(parser, "--pip-sum-output", help = "Optional pip_sum TSV 
                        type = "character", default = NA)
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 inputs <- as.character(argv$input)
 if (length(inputs) == 0L) stop("--input requires at least one FineMappingResult RDS path.")
 minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
@@ -67,27 +70,28 @@ saveRDS(db, argv$combined_data_output)
 
 # ---- 2. Marginal sumstats db (optional) ------------------------------------
 if (!is.na(argv$combined_data_sumstats_output)) {
-  me <- tryCatch(as.data.frame(getMarginalEffects(db)), error = function(e) NULL)
+  me <- as.data.frame(marginalEffects(db))
   dir.create(dirname(argv$combined_data_sumstats_output), showWarnings = FALSE, recursive = TRUE)
   saveRDS(me, argv$combined_data_sumstats_output)
 }
 
 # ---- 3. FMR-derived meta fields --------------------------------------------
-tp  <- getTraitPosition(db)
+tp  <- traitPosition(db)
 TSS <- if (methods::is(tp, "GRanges") && length(tp) > 0L) GenomicRanges::start(tp)[1L] else NA
 
-ctx <- getContexts(db)
+ctx <- contexts(db)
 conditions <- if (is.null(ctx)) "" else paste(unique(as.character(ctx)), collapse = ",")
 
-tl <- tryCatch(as.data.frame(getTopLoci(db, signalCutoff = argv$signal_cutoff, minPurity = minPurity)),
-               error = function(e) NULL)
-conditions_top_loci <- if (!is.null(tl) && nrow(tl) > 0L && "context" %in% names(tl))
+# Unguarded: an empty top-loci set is a 0-row table, which the next line
+# handles; an accessor error is a real break and must surface.
+tl <- as_variant_df(topLoci(db, signalCutoff = argv$signal_cutoff, minPurity = minPurity))
+conditions_top_loci <- if (nrow(tl) > 0L && "context" %in% names(tl))
   paste(unique(as.character(tl$context)), collapse = ",") else ""
 
 regionId <- if (!is.na(argv$region_id)) argv$region_id else {
   tr <- unique(as.character(db$trait)); if (length(tr) == 1L) tr else NA
 }
-rg  <- tryCatch(getRegion(db), error = function(e) NULL)
+rg  <- genomicRegion(db)
 gr1 <- function(fn, i) if (methods::is(rg, "GRanges") && length(rg) > 0L) fn(rg)[i] else NA
 chr   <- if (!is.na(argv$chr))   argv$chr   else as.character(gr1(GenomicRanges::seqnames, 1L))
 start <- if (!is.na(argv$start)) argv$start else gr1(GenomicRanges::start, 1L)
@@ -110,17 +114,27 @@ cat(sprintf("Wrote cis_results_db (%d FMR input(s) -> %d rows) + meta (region_id
 
 # ---- 4. pip_sum (optional) -------------------------------------------------
 if (!is.na(argv$pip_sum_output)) {
+  # The identity columns live in mcols(): on these collection classes `[[`
+  # selects an ELEMENT, not a column, so db[["study"]] is NULL and every
+  # selector below used to come out NA -- which silently produced an EMPTY
+  # pip_sum (the error that NA selection raises was being swallowed).
+  idm <- S4Vectors::mcols(db)
   rows <- lapply(seq_len(nrow(db)), function(i) {
     # NULL-safe per-row identity read: a GwasFineMappingResult has no context /
-    # trait column, so db$context is NULL and as.character(db$context[i]) would be
-    # character(0) -- length 0 -- which makes the data.frame() below error on any
-    # region with signal. Substitute a length-1 NA when the column is absent.
-    .col1 <- function(nm) { v <- db[[nm]]; if (is.null(v)) NA_character_ else as.character(v[i]) }
+    # trait column, so that column is absent from mcols() entirely. Substitute
+    # a length-1 NA, and drop those fields from the selection -- selecting on
+    # NA matches no entry. The remaining ones come straight off this row, so
+    # together they always select it.
+    .col1 <- function(nm) {
+      v <- idm[[nm]]
+      if (is.null(v)) NA_character_ else as.character(v[i])
+    }
     sel <- list(study = .col1("study"), context = .col1("context"),
                 trait = .col1("trait"), method = .col1("method"))
-    pip <- tryCatch(do.call(getPip, c(list(db), sel)), error = function(e) NULL)
-    if (is.null(pip)) return(NULL)
-    data.frame(pip_sum = sum(pip[pip > 0], na.rm = TRUE), condition = sel$context,
+    context <- sel$context
+    sel <- sel[!vapply(sel, is.na, logical(1))]
+    pipVec <- do.call(pip, c(list(db), sel))
+    data.frame(pip_sum = sum(pipVec[pipVec > 0], na.rm = TRUE), condition = context,
                stringsAsFactors = FALSE)
   })
   pipSum <- do.call(rbind, Filter(Negate(is.null), rows))

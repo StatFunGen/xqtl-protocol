@@ -32,7 +32,7 @@
 #   --separate-gwas  Flag: run per-GWAS-study separate-focal coloc
 #   --pip-cutoff-to-skip
 #                    Optional per-context single-effect skip cutoff passed to
-#                    colocboostPipeline(pipCutoffToSkip = ). Either a single
+#                    colocboostPipeline's SER pre-screen. Either a single
 #                    number applied to every context, or comma-separated
 #                    context=value pairs (e.g. "context1=0.1,context2=0").
 #                    A negative value selects the data-driven 3/ncol(X)
@@ -80,7 +80,10 @@ parser <- add_argument(parser, "--output",
 argv <- parse_args(parser)
 
 # Parse --pip-cutoff-to-skip into the scalar / context-named-vector shape
-# colocboostPipeline(pipCutoffToSkip = ) accepts. Mirrors susie_twas.R.
+# the SER pre-screen accepts. Mirrors susie_twas.R. (pecotmr 0.9.0 takes it as
+# SignalScreenParam(pip = ); a field set to 0 there is off, which is this
+# flag's documented 0 = off, and a negative value still selects the adaptive
+# 3/nVariants threshold.)
 parse_pip_cutoff <- function(s) {
   if (is.null(s) || !nzchar(s)) return(0)
   pairs <- strsplit(s, ",")[[1L]]
@@ -129,7 +132,7 @@ res <- if (has_region) {
     xqtlColoc       = xqtl_coloc,
     jointGwas       = joint_gwas,
     separateGwas    = separate_gwas,
-    pipCutoffToSkip = pip_cutoff_to_skip)
+    signalScreenArgs = SignalScreenParam(pip = pip_cutoff_to_skip))
 } else {
   colocboostPipeline(
     qd,
@@ -140,7 +143,7 @@ res <- if (has_region) {
     xqtlColoc       = xqtl_coloc,
     jointGwas       = joint_gwas,
     separateGwas    = separate_gwas,
-    pipCutoffToSkip = pip_cutoff_to_skip)
+    signalScreenArgs = SignalScreenParam(pip = pip_cutoff_to_skip))
 }
 
 # Production output is emitted verbatim — including colocboostPipeline()'s wall-clock

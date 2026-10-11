@@ -38,6 +38,9 @@ parser <- add_argument(parser, "--height",
                        type = "numeric", default = 6)
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 if (!requireNamespace("UpSetR", quietly = TRUE))
   stop("fine_mapping_upset.R requires the UpSetR package: ",
        "install.packages('UpSetR')")
@@ -47,7 +50,7 @@ if (length(inputs) == 0L)
   stop("--input requires at least one RDS path.")
 
 # Build a named list of {set-label -> variant_ids} for UpSetR::fromList().
-# getCs(fmr) aggregates every entry's credible sets into one table already
+# credibleSets(fmr) aggregates every entry's credible sets into one table already
 # tagged with the row identity (study/context/trait/blockId/method), so each
 # per-tuple set is a split() on the label -- no per-entry loop.
 sets <- list()
@@ -57,8 +60,10 @@ for (path in inputs) {
     warning("Skipping non-FineMappingResult input: ", path)
     next
   }
-  cs <- tryCatch(as.data.frame(getCs(fmr)), error = function(e) NULL)
-  if (is.null(cs) || nrow(cs) == 0L || !"variant_id" %in% names(cs)) next
+  # Unguarded: an FMR with no credible sets yields a 0-row table, which the
+  # next line skips; an accessor error is a real break and must surface.
+  cs <- as.data.frame(credibleSets(fmr))
+  if (nrow(cs) == 0L || !"variant_id" %in% names(cs)) next
   label <- if (methods::is(fmr, "GwasFineMappingResult")) {
     paste(cs$study, cs$method, cs$blockId, sep = "|")
   } else {

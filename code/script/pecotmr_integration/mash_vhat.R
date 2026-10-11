@@ -55,7 +55,7 @@ dat <- readRDS(argv$data)
 mk <- function(bKey, sKey) {
   if (is.null(dat[[bKey]])) return(NULL)
   qtlSumStatsFromBetaMatrix(as.matrix(dat[[bKey]]), as.matrix(dat[[sKey]]),
-                            study = "mash")
+                            studyName = "mash")
 }
 ssl <- Filter(Negate(is.null), list(
   strong = mk("strong.b", "strong.s"),
