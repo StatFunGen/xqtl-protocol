@@ -113,8 +113,13 @@ def test_fsusie_ti_export(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
             "customized-association-windows": windows,
             "transpose-covariates": True, "seed": 1,
             "susie-top-pc": 1, "mem": "40G",
+            # L is not an FsusieOptions entry: pecotmr supplies susiF's L from
+            # CredibleSetParam, so it travels as the wrapper's --L flag (the
+            # notebook's `L` parameter). max_scale / max_SNP_EM stay here --
+            # they are susiF's own tunables and nothing else supplies them.
+            "L": 2,
             "fsusie-method-args": json.dumps({"fsusie": {
-                "post_processing": "TI", "max_scale": 4, "L": 2,
+                "post_processing": "TI", "max_scale": 4,
                 "max_SNP_EM": 20, "verbose": False}}),
             "modular_script_dir": repo_root / "code/script",
         }, cwd=repo_root, timeout=1800)

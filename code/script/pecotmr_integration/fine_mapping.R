@@ -74,20 +74,28 @@ export_fsusie_bed <- function(x, path, region) {
     region_id <- paste0(as.character(GenomicRanges::seqnames(rg)),"_",
                         GenomicRanges::start(rg),"_",GenomicRanges::end(rg))
     for (i in which(x$method=="fsusie")) {
-        e <- x[i, ]; fit <- getSusieFit(e)
+        e <- x[i, ]; fit <- susieFit(e)
         if (is.null(fit$fitted_func) || is.null(fit$cred_band) || is.null(fit$outing_grid))
             stop("Functional fields absent; rerun this region with curve retention")
-        tl <- as.data.frame(getTopLoci(e, signalCutoff = 0))
+        # topLoci() is a GRanges from pecotmr 0.9.0 on; as_variant_df() takes
+        # its mcols so the frame keeps the plain per-variant shape this uses.
+        tl <- as_variant_df(topLoci(e, signalCutoff = 0))
         grid <- as.numeric(fit$outing_grid)
         positions <- as.numeric(fit$trait_positions)
-        probes <- as.character(fit$trait_names)
+        # pecotmr keeps only the grid POSITIONS on the fit; the trait names for
+        # the same joint fit live in the row's `jointTraits` column, index-
+        # aligned with them (each position is the midpoint of that trait's
+        # range). That column is the documented home -- the fit deliberately
+        # carries only what jointTraits cannot express.
+        probes <- strsplit(as.character(S4Vectors::mcols(x)$jointTraits[i]),
+                           ";", fixed = TRUE)[[1L]]
         context <- as.character(x$context[i])
         stopifnot(length(grid)>1L,all(diff(grid)>0),length(positions)==length(probes))
         # Native fSuSiE CSs and curves use the same effect index.
         for (l in seq_along(fit$cs)) {
             members <- fit$cs[[l]]
             if (!length(members)) next
-            vids <- if (is.numeric(members)) getVariantIds(e)[as.integer(members)] else as.character(members)
+            vids <- if (is.numeric(members)) variantIds(e)[as.integer(members)] else as.character(members)
             t <- tl[match(vids,tl$variant_id),,drop=FALSE]
             stopifnot(!anyNA(t$variant_id))
             curve <- as.numeric(fit$fitted_func[[l]])
