@@ -148,7 +148,10 @@ qd_filter_overrides <- function(argv) {
     keepIndel    = if (isTRUE(argv$drop_indel))   FALSE             else NULL,
     keepSamples  = read_ids(argv$keep_samples),
     keepVariants = read_ids(argv$keep_variants))
-  ov[!vapply(ov, is.null, logical(1))]
+  # pecotmr 0.9.0: one GenotypeFilterParam() bundle, where an UNSET field
+  # leaves the dataset's construct-time value alone -- the override role.
+  ov <- ov[!vapply(ov, is.null, logical(1))]
+  list(genotypeFilterParam = do.call(GenotypeFilterParam, ov))
 }
 
 # Seed up front for reproducible fits (mirrors the legacy susie_twas set.seed).
@@ -264,13 +267,15 @@ fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
 # --maf-cutoff/--xvar-cutoff/... args fine-mapping uses (variant QC is a data
 # property, applied identically); the cv* knobs control the cross-validated
 # predictive-performance refits.
+# maxCvVariants / cvFolds / cvThreads are now one CrossValidationParam bundle.
 tw_args <- c(list(methods           = methods_arg,
                   mashPrior         = mash_prior,
                   cisWindow         = argv$cis_window,
                   contexts          = contexts_arg,
-                  maxCvVariants     = argv$max_cv_variants,
-                  cvFolds           = argv$cv_folds,
-                  cvThreads         = argv$cv_threads,
+                  crossValidationArgs = CrossValidationParam(
+                    folds        = argv$cv_folds,
+                    numThreads   = argv$cv_threads,
+                    maxVariants  = argv$max_cv_variants),
                   fineMappingResult = fmr),
              qd_filter_overrides(argv))
 # Opt-in joint axis / resume-from-checkpoint, added only when supplied (keeps
@@ -282,10 +287,14 @@ res <- if (has_qss) {
   # RSS mode: no trait/region selection, and the individual-level-only knobs
   # (cisWindow + the genotype filters) do not apply to a summary-statistics
   # collection, so only the shared arguments are forwarded.
+  # No mashPrior / seed here: the QtlSumStats method takes neither (pre-0.9.0
+  # its signature ended in `...`, which collected both into a dots list that
+  # the summary-statistics worker never read, so dropping them changes
+  # nothing). Seeding on this path is the set.seed() above.
   rss_args <- tw_args[intersect(
     names(tw_args),
-    c("methods", "mashPrior", "contexts", "fineMappingResult",
-      "jointSpecification", "twasWeights", "seed"))]
+    c("methods", "contexts", "fineMappingResult",
+      "jointSpecification", "twasWeights"))]
   do.call(twasWeightsPipeline, c(list(qd), rss_args))
 } else if (has_region) {
   do.call(twasWeightsPipeline,

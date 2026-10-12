@@ -78,13 +78,16 @@ gwasFmr <- .loadCombine(argv$gwas_fine_mapping)
 # compatibility with a pecotmr that predates the argument.
 seed_val <- if (length(argv$seed) == 1L && !is.na(argv$seed))
               as.integer(argv$seed) else NULL
+# pecotmr 0.9.0 groups the estimator's own knobs into QtlEnrichmentParam();
+# numThreads and seed stay top-level pipeline arguments.
 enr_args <- list(
   gwasFineMappingResult = gwasFmr,
   qtlFineMappingResult  = qtlFmr,
-  numGwas               = if (is.na(argv$num_gwas)) NULL else argv$num_gwas,
-  piQtl                 = if (is.na(argv$pi_qtl))   NULL else argv$pi_qtl,
-  lambda                = argv$lambda,
-  impN                  = argv$imp_n,
+  methodArgs            = QtlEnrichmentParam(
+    numGwas = if (is.na(argv$num_gwas)) NULL else argv$num_gwas,
+    piQtl   = if (is.na(argv$pi_qtl))   NULL else argv$pi_qtl,
+    lambda  = argv$lambda,
+    impN    = argv$imp_n),
   numThreads            = argv$ncore)
 if (!is.null(seed_val)) enr_args$seed <- seed_val
 res <- do.call(qtlEnrichmentPipeline, enr_args)

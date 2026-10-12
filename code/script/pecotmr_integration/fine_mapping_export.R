@@ -38,6 +38,9 @@ parser <- add_argument(parser, "--output",
                        help = "Output TSV path", type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 view <- match.arg(argv$view, c("topLoci", "cs", "cs_summary", "pip", "marginals",
                                "lbf", "credible_band", "affected_regions"))
 inputs <- as.character(argv$input)
@@ -51,14 +54,14 @@ minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
 # wrapper only tags each row with its source RDS and concatenates across inputs.
 view_fn <- switch(view,
   topLoci   = function(fmr)
-    as.data.frame(getTopLoci(fmr, signalCutoff = argv$signal_cutoff,
-                             minPurity = minPurity)),
-  cs        = function(fmr) as.data.frame(getCs(fmr, minPurity = minPurity)),
+    as_variant_df(topLoci(fmr, signalCutoff = argv$signal_cutoff,
+                        minPurity = minPurity)),
+  cs        = function(fmr) as.data.frame(credibleSets(fmr, minPurity = minPurity)),
   # cs_summary: one row per credible set (size / purity / V / logBF / lead).
-  cs_summary = function(fmr) as.data.frame(getCredibleSetSummary(fmr)),
+  cs_summary = function(fmr) as.data.frame(credibleSetSummary(fmr)),
   # lbf: wide variant x effect log Bayes factor matrix (lbf_L1..lbf_LL).
-  lbf       = function(fmr) as.data.frame(getLbf(fmr)),
-  marginals = function(fmr) as.data.frame(getMarginalEffects(fmr)),
+  lbf       = function(fmr) as.data.frame(lbf(fmr)),
+  marginals = function(fmr) as.data.frame(marginalEffects(fmr)),
   # fSuSiE functional views (require untrimmed fits; degrade to empty otherwise).
   # credible_band = fitted effect curve + band; affected_regions = GRanges of
   # the intervals where a CS's band excludes zero (coerced to a flat table).
@@ -66,7 +69,7 @@ view_fn <- switch(view,
   affected_regions = function(fmr) as.data.frame(fsusieAffectedRegions(fmr)),
   # pip view: the (identity + variant_id + pip) projection of topLoci.
   pip       = function(fmr) {
-    tl <- as.data.frame(getTopLoci(fmr, signalCutoff = argv$signal_cutoff))
+    tl <- as_variant_df(topLoci(fmr, signalCutoff = argv$signal_cutoff))
     tl[, intersect(c("study", "context", "trait", "blockId", "method",
                      "variant_id", "pip"), names(tl)), drop = FALSE]
   })
@@ -88,12 +91,12 @@ for (path in inputs) {
     warning("Skipping non-FineMappingResult input: ", path)
     next
   }
-  df <- tryCatch(view_fn(fmr),
-                 error = function(e) {
-                   message(basename(path), ": ", conditionMessage(e))
-                   NULL
-                 })
-  if (is.null(df) || nrow(df) == 0L) next
+  # Unguarded: every view returns an EMPTY table rather than erroring when it
+  # does not apply (the fSuSiE views give a 0-row tibble / empty GRanges on a
+  # susie-only fit), and the next line skips those. An accessor error is a real
+  # break and must surface instead of silently dropping the input.
+  df <- view_fn(fmr)
+  if (nrow(df) == 0L) next
   df$source   <- basename(path)
   df$block_id <- .blockIdFromName(basename(path))
   pieces[[length(pieces) + 1L]] <- df

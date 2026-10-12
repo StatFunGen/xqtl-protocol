@@ -19,6 +19,9 @@
 encodeMetrics <- function(sample, bed, peaks, blacklist) {
 
   require(rtracklayer)
+  # seqlevelsStyle()/keepSeqlevels() are GenomeInfoDb's; GenomicRanges now
+  # Depends on Seqinfo instead, so rtracklayer no longer attaches them.
+  require(GenomeInfoDb)
   fragments <- import(bed, format="BED")
   peaks <- import(peaks, format="BED")
   blacklist <- import(blacklist, format="BED")
@@ -82,6 +85,9 @@ encodeMetrics <- function(sample, bed, peaks, blacklist) {
 crossCorrelation <- function(bed, blacklist, rmDup=FALSE) {
   
   require(rtracklayer)
+  # seqlevelsStyle()/keepSeqlevels() are GenomeInfoDb's; GenomicRanges now
+  # Depends on Seqinfo instead, so rtracklayer no longer attaches them.
+  require(GenomeInfoDb)
   require(epigenomix)
   fragments <- import(bed, format="BED")
   blacklist <- import(blacklist, format="BED")
@@ -129,6 +135,9 @@ crossCorrelation <- function(bed, blacklist, rmDup=FALSE) {
 chromatinStateOverlap <- function(sample, bed, chromState, blacklist, rmDup=FALSE) {
 
   require(rtracklayer)
+  # seqlevelsStyle()/keepSeqlevels() are GenomeInfoDb's; GenomicRanges now
+  # Depends on Seqinfo instead, so rtracklayer no longer attaches them.
+  require(GenomeInfoDb)
   epigenome <- strsplit(basename(chromState), "_")[[1]][1]
   fragments <- import(bed, format="BED")
   chromState <- import(chromState, format="BED")

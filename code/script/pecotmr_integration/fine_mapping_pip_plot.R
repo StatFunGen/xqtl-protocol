@@ -33,6 +33,9 @@ parser <- add_argument(parser, "--width", help = "Plot width in inches", type = 
 parser <- add_argument(parser, "--height", help = "Per-PIP-panel height in inches", type = "numeric", default = 3)
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 fmr <- readRDS(argv$input)
 if (!methods::is(fmr, "FineMappingResultBase"))
   stop("--input must be a FineMappingResultBase subclass (got '", class(fmr)[[1L]], "').")
@@ -53,10 +56,12 @@ writeStub <- function(msg) {
 
 if (nrow(fmr) == 0L) { writeStub("Empty FineMappingResult"); quit(save = "no") }
 
-# getTopLoci(signalCutoff = 0): every fitted variant with pos, pip, CS membership
+# topLoci(signalCutoff = 0): every fitted variant with pos, pip, CS membership
 # (cs_95 = "<method>_<index>"), and the row-identity columns -> one facet panel.
-tl <- tryCatch(as.data.frame(getTopLoci(fmr, signalCutoff = 0)), error = function(e) NULL)
-if (is.null(tl) || nrow(tl) == 0L) { writeStub("No usable PIP vectors"); quit(save = "no") }
+# Unguarded on purpose: "nothing to plot" is a 0-row table, which the next line
+# handles; an error here is a real break and must not become a blank stub.
+tl <- as_variant_df(topLoci(fmr, signalCutoff = 0))
+if (nrow(tl) == 0L) { writeStub("No usable PIP vectors"); quit(save = "no") }
 
 isGwas <- methods::is(fmr, "GwasFineMappingResult")
 panel <- if (isGwas) {

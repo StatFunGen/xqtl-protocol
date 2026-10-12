@@ -73,6 +73,9 @@ parser <- add_argument(parser, "--output", type = "character", default = "",
                        help = "Output RDS")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 for (a in c("sumstats", "study", "context", "trait", "ld_sketch", "output"))
   if (!nzchar(argv[[a]]))
     stop("--", gsub("_", "-", a), " is required")
@@ -100,18 +103,23 @@ out <- if (argv$skip_qc) {
   message("--skip-qc set; serialising the raw QtlSumStats without summaryStatsQc().")
   qss
 } else {
-  summaryStatsQc(qss,
-                 mafCutoff       = argv$maf,
-                 macCutoff       = argv$mac,
-                 imissCutoff     = argv$imiss,
-                 zMismatchQc     = argv$z_mismatch_qc,
-                 pipCutoffToSkip = argv$pip_cutoff_to_skip)
+  # Flat flag names routed into pecotmr 0.9.0's bundles: maf/mac/imiss ->
+  # PanelFilterParam, zMismatchQc -> ldMismatchQcMethod, pipCutoffToSkip ->
+  # SignalScreenParam(pip =). See summary_stats_qc_args() in pecotmr_aliases.R.
+  do.call(summaryStatsQc,
+          c(list(qss),
+            summary_stats_qc_args(list(
+              mafCutoff       = argv$maf,
+              macCutoff       = argv$mac,
+              imissCutoff     = argv$imiss,
+              zMismatchQc     = argv$z_mismatch_qc,
+              pipCutoffToSkip = argv$pip_cutoff_to_skip))))
 }
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(out, argv$output, compress = "xz")
 cat(sprintf("Wrote QtlSumStats for %s/%s/%s (%d variant(s), LD sketch %s) to %s\n",
             argv$study, argv$context, argv$trait, length(out[[1L]]),
-            if (is.null(getLdSketch(out))) "NULL" else
-              paste(dim(getLdSketch(out)), collapse = " x "),
+            if (is.null(ldSketch(out))) "NULL" else
+              paste(dim(ldSketch(out)), collapse = " x "),
             argv$output))

@@ -5,8 +5,9 @@ signal over LD), so the wide fullFit columns can only be demonstrated on a
 genuine fit. The committed enloc MiGA_eQTL fit is a real chr22 SuSiE fit with a
 credible set AND the full per-effect posterior matrices (alpha / mu / mu2 /
 lbf_variable / X_column_scale_factors). We reprocess it through pecotmr's
-buildTopLoci(fullFit=TRUE, fullFitAlphaOnly=FALSE) and assert every wide per-CS
-column lands with real (unscaled) values — an integration guard that the
+buildTopLoci(credibleSetParam = CredibleSetParam(perCsColumns = "full")) -- the
+0.9.0 spelling of the old fullFit=TRUE, fullFitAlphaOnly=FALSE pair -- and
+assert every wide per-CS column lands with real (unscaled) values — an integration guard that the
 installed pecotmr the wrappers run against actually carries the feature.
 
 The reprocessing R is written to tmp at test time (not a committed wrapper): it
@@ -37,7 +38,8 @@ names(csTables) <- vapply(c(0.95, 0.7, 0.5), pecotmr:::formatCsColumn,
 attr(csTables, "coverage") <- c(0.95, 0.7, 0.5)
 tl <- as.data.frame(pecotmr:::buildTopLoci(fit, csTables, variantNames = vn,
         method = "susie", signalCutoff = 0,
-        fullFit = TRUE, fullFitAlphaOnly = FALSE))
+        credibleSetParam = CredibleSetParam(perCsColumns = "full",
+                                            includeAllCs = FALSE)))
 write.table(tl, a[2], sep = "\t", quote = FALSE, row.names = FALSE, na = "")
 """
 

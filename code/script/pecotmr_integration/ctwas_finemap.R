@@ -15,7 +15,6 @@
 #                          screen/finemap. Mirrors the legacy ctwas_3
 #                          escape hatch for NaN-on-iter-2 EM divergence.
 #   --L                    Pass-through (default 5)
-#   --no-filter-L          Flag: disable ctwas's internal L >= 1 region screen
 #   --min-nonsnp-pip       Pass-through (default 0.5)
 #   --merge-regions        Flag: after fine-mapping, merge boundary genes'
 #                          adjacent LD blocks and re-fine-map the merged
@@ -47,9 +46,6 @@ parser <- add_argument(parser, "--param-override",
 parser <- add_argument(parser, "--L",
                        help = "Max number of credible sets per region",
                        type = "integer", default = 5L)
-parser <- add_argument(parser, "--no-filter-L",
-                       help = "Disable ctwas's internal L >= 1 region screen (toy data)",
-                       flag = TRUE)
 parser <- add_argument(parser, "--min-nonsnp-pip",
                        help = "min_nonSNP_PIP threshold for screen_regions",
                        type = "numeric", default = 0.5)
@@ -89,27 +85,38 @@ if (nzchar(argv$param_override) && argv$param_override != "." &&
   cat("Applied param override from ", argv$param_override, "\n", sep = "")
 }
 
+# pecotmr 0.9.0: ncore -> numThreads everywhere, and L splits by step. The
+# screening step has no L formal of its own -- its three knobs are
+# ctwas::screen_regions() arguments, which travel under ctwas's own names in
+# CtwasScreenOptions() -- while the fine-mapping and merge steps take L as the
+# named `maxNumSingleEffects` formal.
 screened <- screenCtwasRegions(
   est,
-  L              = argv$L,
-  ncore          = argv$ncore,
-  filter_L       = !argv$no_filter_L,
-  min_nonSNP_PIP = argv$min_nonsnp_pip)
+  numThreads = argv$ncore,
+  # Only min_nonSNP_PIP: the installed ctwas's screen_regions() has neither an
+  # `L` nor a `filter_L` argument. Pre-0.9.0 both were accepted here and then
+  # silently discarded (pecotmr filtered pass-throughs to the callee's
+  # formals); 0.9.0's options bundle validates against those formals instead,
+  # which is what surfaced it. L still matters for the fine-map / merge steps
+  # below, where it is a real argument.
+  methodArgs = CtwasOptions(
+    screen = CtwasScreenOptions(
+      min_nonSNP_PIP = argv$min_nonsnp_pip)))
 
 final <- finemapCtwasRegions(
   screened,
-  L     = argv$L,
-  ncore = argv$ncore)
+  maxNumSingleEffects = argv$L,
+  numThreads          = argv$ncore)
 
 # Optional step 4: boundary-gene region merging + re-fine-map.
 if (argv$merge_regions) {
   final <- mergeCtwasBoundaryRegions(
     final,
-    pipThresh = argv$merge_pip_cutoff,
-    filterCs  = argv$merge_filter_cs,
-    maxSNP    = argv$max_snp,
-    L         = argv$L,
-    ncore     = argv$ncore)
+    pipThresh           = argv$merge_pip_cutoff,
+    filterCs            = argv$merge_filter_cs,
+    maxSNP              = argv$max_snp,
+    maxNumSingleEffects = argv$L,
+    numThreads          = argv$ncore)
   cat("Applied boundary-region merging (merge_regions).\n")
 }
 
@@ -121,11 +128,11 @@ result <- asCtwasResult(final, keepSnps = argv$keep_snps)
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(result, argv$output)
 cat(sprintf("Wrote CtwasResult (%d row(s)) to %s\n", nrow(result), argv$output))
-fm <- getFinemap(result)
+fm <- ctwasPosteriors(result)
 if (!is.null(fm) && nrow(fm) > 0L) {
   g <- fm[fm$type != "SNP", , drop = FALSE]
   cat(sprintf("  fine-mapped rows: %d (%d gene-level, %d SNP-level)\n",
               nrow(fm), nrow(g), nrow(fm) - nrow(g)))
 } else {
-  cat("  no fine-mapped genes (no regions surviving filter_L >= 1)\n")
+  cat("  no fine-mapped genes (no regions survived screening)\n")
 }

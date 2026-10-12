@@ -1,4 +1,9 @@
 #!/usr/bin/env Rscript
+# RETIRED: superseded by pecotmr_integration/fine_mapping.R (fineMappingPipeline's
+# fsusie / mvsusie methods, and --use-pca for susie_on_top_pc). Nothing invokes this
+# file. It targets the PRE-camelCase pecotmr API -- load_regional_functional_data(),
+# parse_region(), susie_wrapper(), susie_post_processor(), twas_weights_pipeline(),
+# fsusie_wrapper() -- none of which exist any more, so it cannot run as written.
 # fsusie.R — Functional SuSiE fine-mapping for epigenomic QTL
 # Called directly by current SoS notebook task blocks.
 #
@@ -131,7 +136,10 @@ if (length(fdat$Y_coordinates) == 0) {
 }
 
 if (opt[["save-data"]]) {
-  saveRDS(list(opt$region = fdat),
+  # One element NAMED BY THE VALUE of opt$region -- list(opt$region = ...) is a
+  # syntax error, since the tag has to be a literal name (the same intent the
+  # result[[opt$region]] <- idiom above expresses).
+  saveRDS(setNames(list(fdat), opt$region),
           paste0(prefix, ".", mark_thresh, "_marks.dataset.rds"), compress="xz")
 }
 

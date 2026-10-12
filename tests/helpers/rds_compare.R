@@ -48,6 +48,9 @@ norm_paths <- function(v) {
 # identical see the contents. Ordinary lists recurse; data.frames and atomics are
 # left as-is (all.equal already compares those element-wise with tolerance), except
 # under normPaths where character leaves / columns are basename-normalized.
+# Environments open on the current canon() descent (see the closure branch).
+.open_envs <- list()
+
 canon <- function(x) {
   # Strip run-to-run-varying TIME metadata to a fixed sentinel (length preserved so a
   # genuine structural diff still surfaces). Wall-clock timings and timestamps are
@@ -68,6 +71,16 @@ canon <- function(x) {
     if (is.null(e) || environmentName(e) != "" || isNamespace(e)) {
       return("<function>")
     }
+    # A closure can be SELF-REFERENTIAL: pecotmr 0.9.0's ctwas LD_loader_fun
+    # keeps a copy of itself (`fn`) in its own frame, so descending into that
+    # frame reaches the same environment again and recurses until the node
+    # stack overflows. Collapse an environment already open on this path --
+    # both sides hit it at the same place, so the comparison stays fair.
+    if (any(vapply(.open_envs, identical, logical(1), e))) {
+      return("<recursive-closure>")
+    }
+    .open_envs[[length(.open_envs) + 1L]] <<- e
+    on.exit(.open_envs[[length(.open_envs)]] <<- NULL, add = TRUE)
     return(list(.closure = canon(as.list(e, all.names = TRUE))))
   }
   out <- if (isS4(x)) {

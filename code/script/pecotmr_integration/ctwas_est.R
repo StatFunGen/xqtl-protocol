@@ -3,7 +3,7 @@
 #
 # cTWAS step 2: estimate group prior + prior variance.
 # Reads the assembled inputs from ctwas_assemble.R and calls
-# pecotmr::estCtwasParam() (which wraps ctwas::assemble_region_data +
+# pecotmr::estCtwasGroupPriors() (which wraps ctwas::assemble_region_data +
 # ctwas::est_param). Saves the augmented state — `inputs` + `region_data`
 # + `boundary_genes` + `z_gene` + `param` — for ctwas_finemap.R to
 # consume downstream.
@@ -58,20 +58,34 @@ parser <- add_argument(parser, "--output",
 argv <- parse_args(parser)
 
 inputs <- readRDS(argv$inputs)
-est <- estCtwasParam(
+# pecotmr 0.9.0: estCtwasParam() -> estCtwasGroupPriors(), with the EM prior
+# knobs in CtwasPriorParam() (groupPriorVarStructure -> varStructure), ncore ->
+# numThreads, and the two ctwas::est_param pass-throughs in the est-param
+# options bundle under ctwas's own names.
+est <- estCtwasGroupPriors(
   inputs,
-  thin                   = argv$thin,
-  niterPrefit            = argv$niter_prefit,
-  niter                  = argv$niter,
-  groupPriorVarStructure = argv$group_prior_var_structure,
-  ncore                  = argv$ncore,
-  fallbackToPrefit       = argv$fallback_to_prefit,
-  min_group_size         = argv$min_group_size,
-  min_p_single_effect    = argv$min_p_single_effect)
+  ctwasPriorArgs = CtwasPriorParam(
+    thin             = argv$thin,
+    niterPrefit      = argv$niter_prefit,
+    niter            = argv$niter,
+    varStructure     = argv$group_prior_var_structure,
+    fallbackToPrefit = argv$fallback_to_prefit),
+  numThreads = argv$ncore,
+  # min_group_size is a formal of BOTH ctwas::assemble_region_data and
+  # ctwas::est_param. Pre-0.9.0 a single `...` was splatted into every step, so
+  # one value reached both; the per-step bundles must each carry it or
+  # assemble_region_data silently keeps ctwas's own default (100) and drops
+  # every group in a small run. min_p_single_effect is est_param's alone.
+  methodArgs = CtwasOptions(
+    regionData = CtwasRegionDataOptions(
+      min_group_size      = argv$min_group_size),
+    estParam = CtwasEstParamOptions(
+      min_group_size      = argv$min_group_size,
+      min_p_single_effect = argv$min_p_single_effect)))
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(est, argv$output)
-cat(sprintf("Wrote estCtwasParam result to %s\n", argv$output))
+cat(sprintf("Wrote estCtwasGroupPriors result to %s\n", argv$output))
 cat("group_prior:    ",
     paste(format(est$param$group_prior, digits = 4), collapse = " | "), "\n")
 cat("group_prior_var:",

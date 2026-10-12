@@ -3,6 +3,8 @@ suppressPackageStartupMessages({
   library(rtracklayer)
   library(MatrixGenerics)
   library(GenomicRanges)
+  library(GenomeInfoDb)        # seqlevelsStyle()
+  library(SummarizedExperiment) # assay()
 })
 
 p <- arg_parser("Annotate H3K9ac domains with count stats + Roadmap chromatin-state overlap and cluster them")

@@ -50,8 +50,15 @@ def test_susie_twas(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     # closes the gap is unresolved. Checked for existence + class (above) only.
     # See memory: cross-platform-numeric-divergence.
     exp = repo_root / "tests/fixtures/mnm_regression/expected"
+    # rtol 1e-5, not the 1e-6 used elsewhere: the FMR now carries the CV fold
+    # fits (the susie_twas cell cross-validates the fine-mapping pass so the
+    # TWAS pass can reuse per-fold fits), and each fold's SuSiE prior variance
+    # V -- values of order 6e-4 -- lands ~1.0e-6 relative away on ubuntu-24.04-arm
+    # while matching on x86 Linux and macOS (run 38183809313). Last-bit BLAS
+    # divergence amplified by the EM, not a result change; 1e-5 keeps ~10x
+    # headroom over the observed 1.04e-6 and still pins the fit.
     assert_matches_expected(fmr, exp / "univariate_bvsr.rds", mode="tolerant",
-                            rtol=1e-6, atol=1e-8)
+                            rtol=1e-5, atol=1e-8)
 
 
 def test_mnm(run_sos, read_rds, repo_root, qtl_mini, tmp_path):

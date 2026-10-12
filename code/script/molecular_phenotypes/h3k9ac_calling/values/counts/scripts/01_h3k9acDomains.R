@@ -2,6 +2,7 @@ suppressPackageStartupMessages({
   library(argparser)
   library(vroom)
   library(GenomicRanges)
+  library(GenomeInfoDb)   # seqlevelsStyle(), sortSeqlevels()
   library(rtracklayer)
 })
 

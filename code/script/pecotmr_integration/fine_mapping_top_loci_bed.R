@@ -31,6 +31,9 @@ parser <- add_argument(parser, "--output", help = "Output BED path",
                        type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 inputs <- as.character(argv$input)
 if (length(inputs) == 0L) stop("--input requires at least one RDS path.")
 minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
@@ -91,11 +94,13 @@ for (path in inputs) {
   if (!methods::is(fmr, "FineMappingResultBase")) {
     warning("Skipping non-FineMappingResult input: ", path); next
   }
-  tl <- tryCatch(as.data.frame(getTopLoci(fmr, signalCutoff = argv$signal_cutoff,
-                                          minPurity = minPurity)),
-                 error = function(e) { message(basename(path), ": ", conditionMessage(e)); NULL })
-  if (is.null(tl) || nrow(tl) == 0L) next
-  me <- as.data.frame(getMarginalEffects(fmr))
+  # Unguarded: "no top loci past the cutoff" is a 0-row table, which the next
+  # line skips. The class check above rejects an unusable input; an accessor
+  # error is a real break and must surface rather than silently emptying the BED.
+  tl <- as_variant_df(topLoci(fmr, signalCutoff = argv$signal_cutoff,
+                            minPurity = minPurity))
+  if (nrow(tl) == 0L) next
+  me <- as.data.frame(marginalEffects(fmr))
   piece <- bedFrom(tl, me)
   piece$block_id <- .blockIdFromName(basename(path))
   pieces[[length(pieces) + 1L]] <- piece
