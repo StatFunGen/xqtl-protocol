@@ -97,12 +97,33 @@ if (nrow(manifest) < 2L)
 # region_id (a per-block construct call keys on the seqname, which is the same
 # for every block on a chromosome) and combined. combineGwasSumStats() unions
 # the per-block LD panels and concatenates the per-element QC audit.
-gwasParts <- vector("list", nrow(manifest))
+#
+# A study with no variants in a block (QC gaps, centromeres, chromosome ends)
+# leaves an empty element: it carries no genome build and an empty range, so
+# combineGwasSumStats() rejects it ("must share one genome build (got NA)" or
+# "(study, range) must be unique"). Drop empty elements, and blocks left with
+# none. Subsetting drops the ldSketch, qcInfo and metadata slots; restore them.
+gwasParts <- list()
 for (i in seq_len(nrow(manifest))) {
   part <- readRDS(manifest$gwas_sumstats_rds[[i]])
+  keep <- lengths(part) > 0L
+  if (!any(keep)) {
+    message("Skipping LD block ", manifest$region_id[[i]], ": no GWAS variants.")
+    next
+  }
+  if (!all(keep)) {
+    message("LD block ", manifest$region_id[[i]], ": dropping ", sum(!keep),
+            " study element(s) with no variants.")
+    kept <- part[keep]
+    for (s in c("ldSketch", "qcInfo", "metadata"))
+      methods::slot(kept, s) <- methods::slot(part, s)
+    part <- kept
+  }
   S4Vectors::mcols(part)$blockId <- manifest$region_id[[i]]
-  gwasParts[[i]] <- part
+  gwasParts[[length(gwasParts) + 1L]] <- part
 }
+if (length(gwasParts) < 2L)
+  stop("Fewer than two LD blocks have GWAS variants; cTWAS's EM needs multi-block context.")
 gwasSumStats <- combineGwasSumStats(gwasParts)
 
 # FLAT weight source: an unnamed list of per-gene weight objects. assembleCtwasInputs
