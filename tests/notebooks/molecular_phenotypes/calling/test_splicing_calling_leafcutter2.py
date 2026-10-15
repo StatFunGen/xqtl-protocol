@@ -105,3 +105,103 @@ def test_cluster_and_classify(run_sos, repo_root, tmp_path):
     # junction_counts is plain integers, and is NOT a valid normalization input
     crows = [l for l in gzip.open(counts, "rt").read().splitlines() if l.strip()]
     assert "/" not in crows[1].split()[1], crows[1]
+
+
+# ---------------------------------------------------------------- differential_splicing
+# The split and join scripts are plain Python, so these run everywhere; the per-part
+# leafcutter_ds.R step needs the R leafcutter package and is not exercised here.
+import subprocess
+import sys
+
+SCRIPTS = "code/script/molecular_phenotypes/calling"
+PARTS = [str(i) for i in range(1, 23)] + ["X", "other"]
+SIG_HDR = "status\tloglr\tdf\tp\tcluster\tp.adjust"
+EFF_HDR = "intron\tlogef\tA\tB\tdeltapsi"
+
+
+def _script(repo_root, name, *args):
+    return subprocess.run([sys.executable, str(repo_root / SCRIPTS / name), *map(str, args)],
+                          capture_output=True, text=True)
+
+
+def _counts(path):
+    with gzip.open(path, "wt") as f:
+        f.write("S1 S2 S3\n")
+        f.write("chr1:10:20:clu_1_+ 1 2 3\n")
+        f.write("1:30:40:clu_2_+ 1 2 3\n")
+        f.write("chrX:10:20:clu_3_- 4 5 6\n")
+        f.write("chrY:10:20:clu_4_- 4 5 6\n")
+        f.write("GL000220.1:5:9:clu_5_+ 1 1 1\n")
+
+
+def test_ds_split_by_chromosome(repo_root, tmp_path):
+    """Every row lands in exactly one part, 'chr' or not; all 24 parts exist with the header."""
+    counts, groups = tmp_path / "c.counts.gz", tmp_path / "g.txt"
+    _counts(counts)
+    groups.write_text("S1 A\nS2 B\nS3 B\n")
+    p = _script(repo_root, "leafcutter_ds_split.py", "--counts", counts, "--groups", groups,
+                "--output-prefix", tmp_path / "parts" / "g")
+    assert p.returncode == 0, p.stderr
+    got = {}
+    for part in PARTS:
+        rows = gzip.open(tmp_path / "parts" / f"g.part_{part}.counts.gz", "rt").read().splitlines()
+        assert rows[0] == "S1 S2 S3", part
+        got[part] = [r.split()[0] for r in rows[1:]]
+    assert got["1"] == ["chr1:10:20:clu_1_+", "1:30:40:clu_2_+"]
+    assert got["X"] == ["chrX:10:20:clu_3_-"]
+    assert got["other"] == ["chrY:10:20:clu_4_-", "GL000220.1:5:9:clu_5_+"]
+    assert sum(len(v) for v in got.values()) == 5
+
+
+@pytest.mark.parametrize("groups, message", [
+    ("SAMPLE_X A\nSAMPLE_Y B\n", "no sample"),
+    ("S1 A\nS2 B\nS3 C\n", "3 groups"),
+])
+def test_ds_split_rejects_bad_groups(repo_root, tmp_path, groups, message):
+    """A groups file leafcutter_ds.R cannot use stops the run before any part is tested."""
+    counts, g = tmp_path / "c.counts.gz", tmp_path / "g.txt"
+    _counts(counts)
+    g.write_text(groups)
+    p = _script(repo_root, "leafcutter_ds_split.py", "--counts", counts, "--groups", g,
+                "--output-prefix", tmp_path / "parts" / "g")
+    assert p.returncode != 0
+    assert message in p.stderr, p.stderr
+
+
+def test_ds_merge_recomputes_fdr(repo_root, tmp_path):
+    """The joined p.adjust is Benjamini-Hochberg over every tested cluster, as R's
+    p.adjust(method = "fdr") gives in one unsplit run; empty parts are skipped."""
+    def part(name, sig_rows, eff_rows):
+        (tmp_path / f"{name}_cluster_significance.txt").write_text(
+            "".join(r + "\n" for r in ([SIG_HDR] + sig_rows if sig_rows else [])))
+        (tmp_path / f"{name}_effect_sizes.txt").write_text(
+            "".join(r + "\n" for r in ([EFF_HDR] + eff_rows if eff_rows else [])))
+        return tmp_path / f"{name}_cluster_significance.txt"
+    a = part("a", ["Success\t5\t1\t0.01\t1:clu_1_+\t0.02", "Success\t2\t1\t0.04\t1:clu_2_+\t0.04"],
+             ["1:1:2:clu_1_+\t0.1\t0.5\t0.6\t0.1"])
+    b = part("b", ["Success\t3\t1\t0.03\t2:clu_3_-\t0.03",
+                   "<=1 sample with coverage>min_coverage\tNA\tNA\tNA\t2:clu_4_-\tNA"],
+             ["2:1:2:clu_3_-\t-0.1\t0.6\t0.5\t-0.1"])
+    c = part("c", [], [])
+    p = _script(repo_root, "leafcutter_ds_merge.py", "--output-prefix", tmp_path / "all", a, b, c)
+    assert p.returncode == 0, p.stderr
+    rows = (tmp_path / "all_cluster_significance.txt").read_text().splitlines()
+    assert rows[0] == SIG_HDR
+    q = {r.split("\t")[4]: r.split("\t")[5] for r in rows[1:]}
+    # m = 3 tested: 0.01 -> 0.03, 0.03 -> min(0.045, 0.04) = 0.04, 0.04 -> 0.04
+    assert float(q["1:clu_1_+"]) == pytest.approx(0.03)
+    assert float(q["2:clu_3_-"]) == pytest.approx(0.04)
+    assert float(q["1:clu_2_+"]) == pytest.approx(0.04)
+    assert q["2:clu_4_-"] == "NA"
+    eff = (tmp_path / "all_effect_sizes.txt").read_text().splitlines()
+    assert eff[0] == EFF_HDR and len(eff) == 3
+
+
+def test_regtools_driver_rejects_bad_min_mapq(repo_root, tmp_path):
+    """--min-mapq is checked before samtools or regtools is called, so this needs neither."""
+    p = subprocess.run(["bash", str(repo_root / SCRIPTS / "regtools_junctions.sh"),
+                        "--bam", tmp_path / "x.bam", "--output", tmp_path / "x.junc",
+                        "--strandness", "XS", "--min-mapq", "unique"],
+                       capture_output=True, text=True)
+    assert p.returncode != 0
+    assert "--min-mapq must be a whole number" in p.stderr, p.stderr
