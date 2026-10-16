@@ -1,9 +1,16 @@
 """Notebook tier: mnm_postprocessing.ipynb (thin FMR wrappers).
 
 Drives the migrated cis-results-export / top-loci / plot / VCF workflows on a
-committed single-gene susie FineMappingResult fixture (derived once from the
+committed single-gene susie FineMappingResult fixture (derived from the
 qtl_mini bundle). The heavy legacy logic now lives in pecotmr + the
 pecotmr_integration wrappers, so these cells are thin bash calls.
+
+Regenerate that fixture with the same invocation test_fine_mapping.py uses --
+    fine_mapping.R --qtl-dataset <qtl_mini QtlDataset> \
+        --gene-id ENSG00000283047 --seed 1 --output <out>
+then scrub absolute paths before committing (see the expected-fixture recipe).
+Last regenerated 2026-10-13: the previous copy predated pecotmr 0.6.12 and
+still carried susieFit$cs_corr.
 """
 from __future__ import annotations
 

@@ -21,7 +21,7 @@ rule fsusie_qtl_manifest:
         region_ids = CWD + "/finemapping/{theme}/fsusie/qtl_dataset/{theme}.region_ids.txt",
         sample_ids = CWD + "/finemapping/{theme}/fsusie/qtl_dataset/{theme}.sample_ids.txt",
     params:
-        script = MODULAR_SCRIPT_DIR + "/data_preprocessing/phenotype/prepare_qtl_manifest.py",
+        script = MODULAR_SCRIPT_DIR + "/data_preprocessing/phenotype/phenotype_formatting.R",
         chromosomes = " ".join(config["chromosomes"]),
         phenotype_id_column = lambda wc: _theme_cfg(wc.theme).get("phenotype_id_column", "ID"),
     threads: 1
@@ -30,15 +30,16 @@ rule fsusie_qtl_manifest:
         runtime = config["resources"]["default"]["runtime"],
     shell:
         """
-        python3 {params.script} \
-            --bed {input.phenotype} \
-            --covariates {input.hidden_factors} \
+        Rscript {params.script} \
+            --step qtl_dataset_manifest \
+            --phenoFile {input.phenotype} \
+            --covariate-file {input.hidden_factors} \
             --context {wildcards.theme} \
             --chromosomes {params.chromosomes} \
             --phenotype-id-column {params.phenotype_id_column} \
-            --phenotype-manifest {output.manifest} \
-            --region-ids {output.region_ids} \
-            --sample-ids {output.sample_ids}
+            --output {output.manifest} \
+            --output-region-ids {output.region_ids} \
+            --output-sample-ids {output.sample_ids}
         """
 
 
