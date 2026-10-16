@@ -500,11 +500,12 @@ if (has_gwas && !is.null(res)) {
       # No per-row guards: the block-level one below already keeps a
       # diagnostics failure from touching the run, and a second layer here
       # would turn a real accessor break into silent "NA" columns.
-      # topLoci() is a GRanges from 0.9.0 on; as.data.frame() still exposes
-      # cs_95 (it becomes a column alongside the range columns).
-      tl  <- as.data.frame(topLoci(row_i))
-      ncs <- if ("cs_95" %in% names(tl))
-               length(setdiff(unique(tl$cs_95), 0)) else NA
+      # credibleSetSummary() IS the per-credible-set table, one row each, so
+      # the count is its nrow. Counting distinct cs_95 labels by hand got this
+      # wrong: the "not captured" sentinel is "<method>_0", not a bare 0, so
+      # setdiff(..., 0) never removed it and every row reported one credible
+      # set too many (1 where there were none).
+      ncs <- nrow(as.data.frame(credibleSetSummary(row_i, coverage = 0.95)))
       fit <- susieFit(row_i)
       ser <- if (!is.null(fit$serFallbackUsed))
                isTRUE(fit$serFallbackUsed) else NA
