@@ -90,3 +90,80 @@ def test_mnm(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     exp = repo_root / "tests/fixtures/mnm_regression/expected"
     assert_matches_expected(fmr, exp / "multicontext_bvsr.rds", mode="tolerant",
                             rtol=1e-6, atol=1e-8)
+
+
+def test_fsusie_ti_export(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
+    """The native fSuSiE workflow writes one indexed table with curves and bands."""
+    import csv
+    import gzip
+    import json
+    import subprocess
+
+    cwd = tmp_path / "fsusie"
+    windows = tmp_path / "functional_region.bed"
+    windows.write_text("#chr\tstart\tend\tID\nchr22\t10000000\t18000000\tfunctional_region\n")
+    p = run_sos(
+        repo_root / "pipeline/mnm_regression.ipynb",
+        "qtl_dataset_construct+fsusie",
+        {
+            "name": "test_study", "cwd": cwd,
+            "genoFile": qtl_mini / "protocol_example.genotype.chr22.bed",
+            "phenoFile": qtl_mini / "protocol_example.pheno_manifest_context.tsv",
+            "covFile": qtl_mini / "example_covariates.tsv",
+            "customized-association-windows": windows,
+            "transpose-covariates": True, "seed": 1,
+            "susie-top-pc": 1, "mem": "40G",
+            # L is not an FsusieOptions entry: pecotmr supplies susiF's L from
+            # CredibleSetParam, so it travels as the wrapper's --L flag (the
+            # notebook's `L` parameter). max_scale / max_SNP_EM stay here --
+            # they are susiF's own tunables and nothing else supplies them.
+            "L": 2,
+            "fsusie-method-args": json.dumps({"fsusie": {
+                "post_processing": "TI", "max_scale": 4,
+                "max_SNP_EM": 20, "verbose": False}}),
+            "modular_script_dir": repo_root / "code/script",
+        }, cwd=repo_root, timeout=1800)
+    assert p.returncode == 0, p.stdout + p.stderr
+    fits = list((cwd / "fsusie").glob("*.fsusie.rds"))
+    assert len(fits) == 1
+    info = read_rds(fits[0])
+    assert info["class"] == "QtlFineMappingResult"
+    assert info["nrow"] == 4  # one joint fit + one PC per context
+    table = cwd / "fsusie/test_study.exported.bed.gz"
+    assert table.with_suffix(table.suffix + ".tbi").exists()
+    with gzip.open(table, "rt") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        fields = set(reader.fieldnames)
+        rows = list(reader)
+    # Name the columns rather than count them: the published schema grows a
+    # per-coverage credible-set column per `--coverage`, so a bare count is
+    # brittle while the vocabulary is the actual contract.
+    assert {
+        "#chr", "start", "end", "ID", "REF", "ALT", "AF", "PIP",
+        "cs_id", "cs_root",
+        # wavelet level: the fitted curve on the grid
+        "grid_resolution", "grid_positions", "grid_effects",
+        "grid_band_halfwidth",
+        # trait level: that curve where the traits actually sit
+        "trait_positions", "trait_effects", "joint_traits",
+        "study", "context", "trait", "method",
+        "region_id", "region_start", "region_end",
+    } <= fields, sorted(fields)
+    assert rows, "Fixture must exercise a nonempty credible-set export"
+    for row in rows:
+        n = int(row["grid_resolution"])
+        assert len(row["grid_positions"].split(";")) == n
+        assert len(row["grid_effects"].split(";")) == n
+        widths = [float(v) for v in row["grid_band_halfwidth"].split(";")]
+        assert len(widths) == n and min(widths) >= 0 and max(widths) > 0
+        # the trait level is index-aligned across its three columns
+        assert (len(row["joint_traits"].split(";"))
+                == len(row["trait_effects"].split(";"))
+                == len(row["trait_positions"].split(";")))
+    # The published table keeps the "chr" prefix, so the tabix query must use
+    # it too -- the contig spelling is part of the index contract, and a
+    # mismatched query returns success with no rows rather than an error.
+    assert all(r["#chr"].startswith("chr") for r in rows)
+    p = subprocess.run(["tabix", str(table), "chr22:10000000-18000000"],
+                       capture_output=True, text=True)
+    assert p.returncode == 0 and p.stdout.strip(), (p.returncode, p.stderr)

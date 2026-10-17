@@ -454,7 +454,7 @@ if (has_gwas || has_qss) {
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
   run_fm <- function() if (has_region) {
-    do.call(fineMappingPipeline, c(qtl_args, list(region = argv$region)))
+    do.call(fineMappingPipeline, c(qtl_args, list(region = GenomicRanges::GRanges(argv$region))))
   } else {
     do.call(fineMappingPipeline, c(qtl_args,
                                    list(traitId = argv$gene_id,
@@ -500,11 +500,12 @@ if (has_gwas && !is.null(res)) {
       # No per-row guards: the block-level one below already keeps a
       # diagnostics failure from touching the run, and a second layer here
       # would turn a real accessor break into silent "NA" columns.
-      # topLoci() is a GRanges from 0.9.0 on; as.data.frame() still exposes
-      # cs_95 (it becomes a column alongside the range columns).
-      tl  <- as.data.frame(topLoci(row_i))
-      ncs <- if ("cs_95" %in% names(tl))
-               length(setdiff(unique(tl$cs_95), 0)) else NA
+      # credibleSetSummary() IS the per-credible-set table, one row each, so
+      # the count is its nrow. Counting distinct cs_95 labels by hand got this
+      # wrong: the "not captured" sentinel is "<method>_0", not a bare 0, so
+      # setdiff(..., 0) never removed it and every row reported one credible
+      # set too many (1 where there were none).
+      ncs <- nrow(as.data.frame(credibleSetSummary(row_i, coverage = 0.95)))
       fit <- susieFit(row_i)
       ser <- if (!is.null(fit$serFallbackUsed))
                isTRUE(fit$serFallbackUsed) else NA
@@ -519,4 +520,12 @@ if (has_gwas && !is.null(res)) {
      # loud enough to see in a CI log rather than reading as ordinary output.
      warning("fine_mapping.R: GWAS summary skipped (", conditionMessage(e), ")",
              call. = FALSE)))
+}
+
+if (has_qtl && has_region && "fsusie" %in% methods) {
+    # The published fSuSiE table (schema, packing, sort, bgzip + tabix) is
+    # pecotmr's exportToBed(); region_ID / region_* come off the result's
+    # own fitRegion() provenance, so --region is not passed again here.
+    exportToBed(res, sub("\\.rds$", ".exported.bed.gz", argv$output),
+                schema = "fsusie")
 }

@@ -7,7 +7,7 @@
 # purity), so per region this wrapper only:
 #   1. combines the per-study/context FineMappingResult RDS(es) into the
 #      cis_results_db (itself an FMR) via combineFineMappingResults, and saves it;
-#   2. saves the marginal sumstats table (getMarginalEffects) as the
+#   2. saves the marginal sumstats table (marginalEffects) as the
 #      combined_data_sumstats db;
 #   3. emits the enrichment meta row SuSiE_enloc reads and the pip_sum table.
 #
