@@ -55,7 +55,7 @@ for (gene in names(lg)) for (cn in names(lg[[gene]])) {
   TPc <- c(TPc, paste0("chr", sub("^chr", "", rc$chrom))); TPp <- c(TPp, as.integer(rc$start))
 }
 if (!length(E)) stop("No usable fine-mapping entries in: ", a$legacy)
-fmr <- QtlFineMappingResult(study = S, context = C, trait = Tr, method = rep("susie", length(E)),
+fmr <- QtlFineMappingResult(studyName = S, context = C, trait = Tr, method = rep("susie", length(E)),
                             entry = E, traitPos = GenomicRanges::GRanges(TPc, IRanges::IRanges(TPp, width = 1L)))
 dir.create(dirname(a$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(fmr, a$output)

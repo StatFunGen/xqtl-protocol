@@ -59,7 +59,7 @@ for (f in files) {
       m <- sub("_weights$", "", wn)
       fits <- if (m %in% c("susie", "susie_inf", "susie_ash")) co$susie_weights_intermediate else NULL
       E[[length(E) + 1L]] <- twasWeightsRow(variantIds = vids, weights = wv,
-                                           fits = fits, cvResult = cvMetrics(perf[[m]]))
+                                           methodFits = fits, cvResult = cvMetrics(perf[[m]]))
       S <- c(S, a$study); C <- c(C, ctx); Tr <- c(Tr, gene); M <- c(M, m)
       TPc <- c(TPc, paste0("chr", sub("^chr", "", co$region_info$region_coord$chrom)))
       TPp <- c(TPp, as.integer(co$region_info$region_coord$start))
@@ -69,7 +69,7 @@ for (f in files) {
 }
 if (!length(E)) stop("No usable (non-zero) weights in: ", a$legacy)
 
-tw <- TwasWeights(study = S, context = C, trait = Tr, method = M, entry = E,
+tw <- TwasWeights(studyName = S, context = C, trait = Tr, method = M, entry = E,
                   traitPos = GenomicRanges::GRanges(TPc, IRanges::IRanges(TPp, width = 1L)))
 dir.create(dirname(a$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(tw, a$output)
