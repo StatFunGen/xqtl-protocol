@@ -7,6 +7,7 @@
 
 suppressPackageStartupMessages({
   library(argparser)
+  library(SummarizedExperiment) # assay(), colData(), rowData()
   library(limma)
   library(edgeR)
 })

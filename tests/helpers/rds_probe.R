@@ -4,8 +4,8 @@
 # Emit a compact jsonlite structural summary of an RDS on stdout so the Python
 # test side can assert on a wrapper's output without an R testing stack. Reports
 # the S4 class, row count (for DFrame-subclass collections), and whichever
-# pecotmr accessors resolve (method names / contexts / study). Any accessor that
-# does not apply to the object is simply omitted.
+# pecotmr accessors resolve (method names / contexts / study name). Any accessor
+# that does not apply to the object is simply omitted.
 suppressWarnings(suppressMessages({
   library(pecotmr)
   library(jsonlite)
@@ -23,13 +23,18 @@ if (!is.null(nr)) summ$nrow <- as.integer(nr)
 # Optional accessors: include each only when it resolves without error and
 # returns something non-NULL. Keeps the probe generic across QtlDataset /
 # FineMappingResult / TwasWeights / CtwasResult / ...
-for (acc in c("getStudy", "getContexts", "getMethodNames")) {
-  if (!exists(acc)) next
+# pecotmr 0.9.0 dropped the `get` prefix from every accessor, so the reported
+# key can no longer be derived from the function name -- it is named here, which
+# also keeps the JSON keys stable for the Python assertions. No exists() guard:
+# an accessor missing from the installed pecotmr is a real break and must fail.
+accessors <- c(studyName = "Study", contexts = "Contexts",
+               methodNames = "MethodNames")
+for (acc in names(accessors)) {
   v <- tryCatch(do.call(acc, list(obj)), error = function(e) NULL)
   if (!is.null(v) && length(v) > 0L)
     # I() keeps these as JSON arrays even for length 1, so the Python side can
     # assert uniformly (["susie"], not the auto-unboxed scalar "susie").
-    summ[[sub("^get", "", acc)]] <- I(as.character(v))
+    summ[[accessors[[acc]]]] <- I(as.character(v))
 }
 
 # For a plain named list (e.g. assembled ctwas inputs), report the top-level
@@ -47,8 +52,8 @@ if (is.character(cn) && length(cn) > 0L) summ$colnames <- I(cn)
 
 # CtwasResult: surface the top gene-level signal (max susie_pip + its z), so a
 # smoke test can assert numeric parity independent of the SNP-background rows.
-if (methods::is(obj, "CtwasResult") && exists("getFinemap")) {
-  fm <- tryCatch(as.data.frame(getFinemap(obj)), error = function(e) NULL)
+if (methods::is(obj, "CtwasResult")) {
+  fm <- tryCatch(as.data.frame(ctwasPosteriors(obj)), error = function(e) NULL)
   if (!is.null(fm) && "susie_pip" %in% names(fm) && nrow(fm) > 0L) {
     genes <- if ("type" %in% names(fm)) fm[fm$type != "SNP", , drop = FALSE] else fm
     if (nrow(genes) > 0L) {

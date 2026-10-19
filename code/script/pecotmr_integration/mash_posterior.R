@@ -53,7 +53,7 @@ model <- if (is.list(mm) && !is.null(mm$mash_model)) mm$mash_model else mm
 
 bhat <- as.matrix(dat[[argv$bhat_key]])
 shat <- as.matrix(dat[[argv$shat_key]])
-target <- qtlSumStatsFromBetaMatrix(bhat, shat, study = "mash")
+target <- qtlSumStatsFromBetaMatrix(bhat, shat, studyName = "mash")
 conds  <- colnames(bhat)
 
 # Resolve --exclude-condition tokens: numeric tokens are 1-based column indices

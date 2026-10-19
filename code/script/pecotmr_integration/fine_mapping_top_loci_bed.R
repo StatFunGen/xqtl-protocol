@@ -1,15 +1,16 @@
 #!/usr/bin/env Rscript
 # fine_mapping_top_loci_bed.R
 #
-# Export the top-loci BED for one or more QtlFineMappingResult / GwasFineMapping
-# RDSes: the posterior view (getTopLoci, PIP/CS-filtered, with the independent
-# purity filter) joined to the marginal effects (getMarginalEffects) and
-# relabelled to the published BED schema. lfsr / conditional_effect are already
-# per-(variant, context) numeric columns (no semicolon packing / re-splitting).
+# Export the top-loci BED for one or more QtlFineMappingResult /
+# GwasFineMappingResult RDSes. The schema, the join to the marginal effects,
+# the sort and the compression all live in pecotmr::exportToBed(); this
+# wrapper only resolves the CLI, reads the inputs, and supplies the one
+# published column no S4 object can know -- `block_id`, parsed from the source
+# filename.
 #
 # Inputs:
 #   --input <RDS> [<RDS> ...]  FineMappingResult RDS paths.
-#   --signal-cutoff  PIP cutoff (getTopLoci). Default 0.025.
+#   --signal-cutoff  PIP cutoff (topLoci). Default 0.025.
 #   --min-purity     Optional CS purity (min.abs.corr) cutoff, independent of
 #                    coverage/pip. Omit for no purity filter.
 #   --output <BED>   Output BED path (bgzipped/gzipped if it ends in .gz).
@@ -34,89 +35,53 @@ argv <- parse_args(parser)
 inputs <- as.character(argv$input)
 if (length(inputs) == 0L) stop("--input requires at least one RDS path.")
 minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
-idCols <- c("study", "context", "trait", "blockId", "method", "variant_id")
 
-# The published BED columns, in order; only those available are emitted.
-bedFrom <- function(tl, me) {
-  # marginal effect columns (betahat/sebetahat/z), matched to the posterior rows
-  mm <- me[match(
-    do.call(paste, c(tl[intersect(idCols, names(tl))], sep = "\r")),
-    do.call(paste, c(me[intersect(idCols, names(me))], sep = "\r"))), , drop = FALSE]
-  pick <- function(df, col) if (col %in% names(df)) df[[col]] else NA
-  out <- data.frame(
-    chr        = pick(tl, "chrom"),
-    pos        = pick(tl, "pos"),
-    a1         = pick(tl, "A1"),
-    a2         = pick(tl, "A2"),
-    variant_ID = pick(tl, "variant_id"),
-    af         = pick(tl, "af"),
-    betahat    = pick(mm, "beta"),
-    sebetahat  = pick(mm, "se"),
-    z          = pick(mm, "z"),
-    gene_ID    = pick(tl, "trait"),
-    event_ID   = pick(tl, "context"),
-    cs_coverage_0.95 = pick(tl, "cs_95"),
-    cs_coverage_0.7  = pick(tl, "cs_70"),
-    cs_coverage_0.5  = pick(tl, "cs_50"),
-    cs_95_purity     = pick(tl, "cs_95_purity"),
-    PIP        = pick(tl, "pip"),
-    logBF      = pick(tl, "logBF"),
-    conditional_effect = pick(tl, "conditional_effect"),
-    lfsr       = pick(tl, "lfsr"),
-    blockId    = pick(tl, "blockId"),
-    context    = pick(tl, "context"),
-    stringsAsFactors = FALSE)
-  # Keep the full, stable BED schema (NA where a column does not apply, e.g.
-  # lfsr / conditional_effect for univariate methods) rather than dropping
-  # all-NA columns, so the published schema does not vary by input. Per-CS
-  # variant-level fullFit columns (within_cs_pip default +, when built with
-  # --full-fit, the wide within_cs_pip_cs<k> / cs_logbf_ / cs_effect_ sets) are
-  # appended dynamically.
-  for (cc in grep("^(within_cs_pip|cs_logbf_|cs_effect_)", names(tl), value = TRUE))
-    out[[cc]] <- tl[[cc]]
-  out
-}
-
-# LD-block id from the RDS filename ({study}.{block_id}.{suffix}.rds); the true
-# block identifier read off the path, alongside pecotmr's own blockId column. NA when
-# the filename carries no chrN_start_end token.
+# LD-block id from the RDS filename ({study}.{block_id}.{suffix}.rds), as a
+# FALLBACK for an input that does not carry one. NA when the filename has no
+# chrN_start_end token.
+#
+# `block_id` is a first-class published column now: a GwasFineMappingResult
+# records `blockId` and exportToBed() writes it, so supplying it again through
+# extraColumns would be refused as overwriting a published column. It is only
+# needed for the QTL side, whose result has no block axis -- there blockId()
+# is NA for every row, the column is dropped as empty, and the
+# filename-derived value fills it.
 .blockIdFromName <- function(bn) {
   m <- regmatches(bn, regexpr("chr[0-9XYMT]+_[0-9]+_[0-9]+", bn))
   if (length(m) == 1L) m else NA_character_
 }
 
-pieces <- list()
-for (path in inputs) {
+fmrs <- lapply(inputs, function(path) {
   fmr <- readRDS(path)
   if (!methods::is(fmr, "FineMappingResultBase")) {
-    warning("Skipping non-FineMappingResult input: ", path); next
+    warning("Skipping non-FineMappingResult input: ", path); return(NULL)
   }
-  tl <- tryCatch(as.data.frame(getTopLoci(fmr, signalCutoff = argv$signal_cutoff,
-                                          minPurity = minPurity)),
-                 error = function(e) { message(basename(path), ": ", conditionMessage(e)); NULL })
-  if (is.null(tl) || nrow(tl) == 0L) next
-  me <- as.data.frame(getMarginalEffects(fmr))
-  piece <- bedFrom(tl, me)
-  piece$block_id <- .blockIdFromName(basename(path))
-  pieces[[length(pieces) + 1L]] <- piece
-}
+  fmr
+})
+keep <- !vapply(fmrs, is.null, logical(1))
+fmrs <- fmrs[keep]
+if (length(fmrs) == 0L) stop("No FineMappingResult inputs could be read.")
 
-out <- if (length(pieces) == 0L) {
-  data.frame(chr = character(0), pos = integer(0), block_id = character(0),
-             stringsAsFactors = FALSE)
+# `block_id` is per INPUT, and exportToBed() folds the inputs into one table in
+# the order given, attaching extraColumns BEFORE the final sort -- so a vector
+# built in that same order stays aligned with its rows.
+recorded <- vapply(fmrs, function(fmr) any(!is.na(blockId(fmr))), logical(1))
+
+extraColumns <- if (any(recorded)) {
+  NULL
 } else {
-  cols <- unique(unlist(lapply(pieces, names)))
-  for (k in seq_along(pieces)) {
-    for (m in setdiff(cols, names(pieces[[k]]))) pieces[[k]][[m]] <- NA
-    pieces[[k]] <- pieces[[k]][, cols, drop = FALSE]
-  }
-  o <- do.call(rbind, pieces)
-  o[order(o$chr, suppressWarnings(as.numeric(o$pos))), , drop = FALSE]
+  rowsPerInput <- vapply(fmrs, function(fmr) {
+    nrow(as.data.frame(topLoci(fmr, signalCutoff = argv$signal_cutoff,
+                               minPurity = minPurity)))
+  }, integer(1))
+  blockIds <- vapply(inputs[keep],
+                     function(path) .blockIdFromName(basename(path)),
+                     character(1))
+  list(block_id = rep(unname(blockIds), times = rowsPerInput))
 }
 
-dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-conn <- if (grepl("\\.gz$", argv$output)) gzfile(argv$output, "w") else file(argv$output, "w")
-write.table(out, file = conn, sep = "\t", quote = FALSE, row.names = FALSE, na = "")
-close(conn)
-cat(sprintf("Wrote %d top-loci BED rows from %d input(s) to %s\n",
-            nrow(out), length(inputs), argv$output))
+exportToBed(fmrs, argv$output, schema = "topLoci",
+            signalCutoff = argv$signal_cutoff, minPurity = minPurity,
+            extraColumns = extraColumns)
+cat(sprintf("Wrote the top-loci BED from %d input(s) to %s\n",
+            length(fmrs), argv$output))

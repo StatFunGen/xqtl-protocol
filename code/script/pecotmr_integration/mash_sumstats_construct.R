@@ -100,7 +100,7 @@ if (nrow(zMat) == 0L)
 # Wrap the region's z-matrix as a multi-context QtlSumStats (one column per
 # condition). qtlSumStatsFromZMatrix stamps a non-empty qcInfo, so mashInput()
 # accepts it directly; ldSketch stays NULL (mash needs no LD reference).
-qss <- qtlSumStatsFromZMatrix(zMat, study = argv$study, context = conditions,
+qss <- qtlSumStatsFromZMatrix(zMat, studyName = argv$study, context = conditions,
                               trait = "mash")
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)

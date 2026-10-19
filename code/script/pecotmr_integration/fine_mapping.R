@@ -89,23 +89,23 @@ parser <- add_argument(parser, "--coverage",
                        help = "SuSiE primary credible-set coverage",
                        type = "numeric", default = 0.95)
 parser <- add_argument(parser, "--secondary-coverage",
-                       help = "Comma-separated secondary credible-set coverages (fineMappingPipeline secondaryCoverage)",
+                       help = "Comma-separated secondary credible-set coverages (CredibleSetParam secondaryCoverage)",
                        type = "character", default = "0.7,0.5")
 parser <- add_argument(parser, "--min-abs-corr",
-                       help = "Credible-set purity threshold (fineMappingPipeline minAbsCorr)",
+                       help = "Credible-set purity threshold (CredibleSetParam minAbsCorr)",
                        type = "numeric", default = 0.8)
 parser <- add_argument(parser, "--median-abs-corr",
-                       help = "Optional median-abs-corr purity, OR-logic with --min-abs-corr (fineMappingPipeline medianAbsCorr; requires pecotmr step-1). Omit to leave off.",
+                       help = "Optional median-abs-corr purity, OR-logic with --min-abs-corr (CredibleSetParam medianAbsCorr). Omit to leave off.",
                        type = "numeric", default = NA)
 parser <- add_argument(parser, "--pip-cutoff",
-                       help = "PIP signal cutoff (fineMappingPipeline signalCutoff)",
+                       help = "PIP signal cutoff (CredibleSetParam signalCutoff)",
                        type = "numeric", default = 0.025)
 parser <- add_argument(parser, "--L",
-                       help = "SuSiE number of single effects (susie L); pipeline default 10",
+                       help = "SuSiE number of single effects (CredibleSetParam maxNumSingleEffects); pipeline default 10",
                        type = "integer", default = 10L)
 parser <- add_argument(parser, "--L-greedy",
                        help = paste("SuSiE greedy init count (susie L_greedy): a positive integer to run",
-                                    "the greedy-L loop, or 'none'/'off' to disable it; pipeline default",
+                                    "the greedy-L loop (CredibleSetParam maxNumSingleEffectsGreedy), or 'none'/'off' to disable it; pipeline default",
                                     "none (greedy off)"),
                        type = "character", default = "none")
 parser <- add_argument(parser, "--method-args",
@@ -115,13 +115,13 @@ parser <- add_argument(parser, "--seed",
                        help = "Integer RNG seed set before fitting (reproducibility); unset = no seeding",
                        type = "integer", default = NA)
 parser <- add_argument(parser, "--cv-folds",
-                       help = "Cross-validation folds for the mash-prior / predictive refits (fineMappingPipeline cvFolds); 0 = off",
+                       help = "Cross-validation folds for the mash-prior / predictive refits (CrossValidationParam folds); 0 = off",
                        type = "integer", default = 0L)
 parser <- add_argument(parser, "--cv-threads",
-                       help = "Parallel workers for the cross-validation fold refits (fineMappingPipeline cvThreads); -1 = all cores",
+                       help = "Parallel workers for the cross-validation fold refits (CrossValidationParam numThreads); -1 = all cores",
                        type = "integer", default = 1L)
 parser <- add_argument(parser, "--pip-cutoff-to-skip",
-                       help = "Single-effect (SER) pre-screen cutoff (fineMappingPipeline pipCutoffToSkip), QTL mode; 0 = off, <0 = adaptive 3/nVariants",
+                       help = "Single-effect (SER) pre-screen cutoff (SignalScreenParam pip), QTL mode; 0 = off, <0 = adaptive 3/nVariants",
                        type = "numeric", default = 0)
 # --- GWAS-mode SuSiE-RSS knobs (fineMappingPipeline, GwasSumStats path). SER
 # fallback is ON by default (reproduces the single-panel notebook): fit a
@@ -130,19 +130,19 @@ parser <- add_argument(parser, "--pip-cutoff-to-skip",
 # mode only); rFinite forwards only when set. susie_rss_control() settings
 # (susieR >= 0.16.6) are passed as a JSON object via --rss-control.
 parser <- add_argument(parser, "--ser-fallback",
-                       help = "GWAS mode: TRUE/FALSE. Fall back to the single-effect (SER) result when susieR flags R unreliable (fineMappingPipeline serFallback). Default TRUE.",
+                       help = "GWAS mode: TRUE/FALSE. Fall back to the single-effect (SER) result when susieR flags R unreliable (SusieRssParam serFallback). Default TRUE.",
                        type = "character", default = "TRUE")
 parser <- add_argument(parser, "--r-finite",
-                       help = "GWAS mode: finite-sample R correction size (fineMappingPipeline rFinite). Empty = auto (LD-panel sample size).",
+                       help = "GWAS mode: finite-sample R correction size (SusieRssParam rFinite). Empty = auto (LD-panel sample size).",
                        type = "character", default = "")
 parser <- add_argument(parser, "--r-mismatch",
-                       help = "GWAS mode: LD-mismatch correction (fineMappingPipeline rMismatch): 'none', 'eb', or 'eb_mix' (residual-mixture EB, susieR >= 0.16.6). Default 'eb_mix'.",
+                       help = "GWAS mode: LD-mismatch correction (SusieRssParam rMismatch): 'none', 'eb', or 'eb_mix' (residual-mixture EB, susieR >= 0.16.6). Default 'eb_mix'.",
                        type = "character", default = "eb_mix")
 parser <- add_argument(parser, "--rss-control",
-                       help = "GWAS mode: JSON object of susieR::susie_rss_control() settings (e.g. '{\"check_prior\":true,\"mismatch_estimator\":\"map\"}'), forwarded as fineMappingPipeline rssControl. Empty = susie_rss_control() defaults.",
+                       help = "GWAS mode: JSON object of susieR::susie_rss_control() settings (e.g. '{\"check_prior\":true,\"mismatch_estimator\":\"map\"}'), forwarded as SusieRssParam control. Empty = susie_rss_control() defaults.",
                        type = "character", default = "")
 parser <- add_argument(parser, "--keep-original-fit",
-                       help = "GWAS mode: TRUE/FALSE. Retain the pre-fallback multi-effect fit (fineMappingPipeline keepFullFit) on SER-fallback regions, where it genuinely differs from the reported SER result. Default FALSE (keep none).",
+                       help = "GWAS mode: TRUE/FALSE. Retain the pre-fallback multi-effect fit (SusieRssParam keepFullFit) on SER-fallback regions, where it genuinely differs from the reported SER result. Default FALSE (keep none).",
                        type = "character", default = "FALSE")
 # --- Multivariate / joint-fit knobs (QTL mode; mvsusie / fsusie). Each is
 # opt-in and omitted from the pipeline call when left at its default, so this
@@ -151,7 +151,7 @@ parser <- add_argument(parser, "--joint-specification",
                        help = "Comma-separated joint-fit axes (context,trait,study) for mvsusie/fsusie; empty = implicit per-(context,trait) branch",
                        type = "character", default = "")
 parser <- add_argument(parser, "--twas-weights",
-                       help = "Optional TwasWeights RDS (preceding mr.mash run) supplying the mvSuSiE data-driven prior; omit for the canonical prior",
+                       help = "Optional TwasWeights RDS (preceding mr.mash run) supplying the mvSuSiE data-driven prior (fineMappingPipeline mrmashPrior); omit for the canonical prior",
                        type = "character", default = "")
 parser <- add_argument(parser, "--fine-mapping-result",
                        help = "Optional existing FineMappingResult RDS used as a resume cache (fineMappingPipeline fineMappingResult); (study, context, trait, method) tuples already present are not refit",
@@ -202,15 +202,20 @@ parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 # Read a whitespace-delimited ID file into a unique character vector; NULL when
 # the path is empty / "." / missing.
 read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
   unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
 
-# Build the per-call genotype-filter overrides as pipeline ARGUMENTS (NULL =
-# leave the QtlDataset's construct-time slot untouched). The pipeline applies
-# these to a validated copy; the wrapper no longer mutates @slots directly.
-# Mirrored in twas_weights.R.
+# Build the per-call genotype-filter overrides as one GenotypeFilterParam()
+# bundle (pecotmr 0.9.0 collapsed the seven loose arguments into it). An UNSET
+# field leaves the QtlDataset's construct-time slot untouched, which is exactly
+# the override role the bundle documents, so the NULLs are dropped rather than
+# passed. The pipeline applies these to a validated copy; the wrapper never
+# mutates @slots directly. Mirrored in twas_weights.R.
 qd_filter_overrides <- function(argv) {
   ov <- list(
     mafCutoff    = if (!is.na(argv$maf_cutoff))   argv$maf_cutoff   else NULL,
@@ -220,7 +225,8 @@ qd_filter_overrides <- function(argv) {
     keepIndel    = if (isTRUE(argv$drop_indel))   FALSE             else NULL,
     keepSamples  = read_ids(argv$keep_samples),
     keepVariants = read_ids(argv$keep_variants))
-  ov[!vapply(ov, is.null, logical(1))]
+  ov <- ov[!vapply(ov, is.null, logical(1))]
+  list(genotypeFilterParam = do.call(GenotypeFilterParam, ov))
 }
 
 # Parse --method-args into a nested named list of per-method kwargs.
@@ -255,9 +261,8 @@ median_abs_corr <- if (length(argv$median_abs_corr) != 1L || is.na(argv$median_a
 
 # L_greedy: 'none'/'off'/'null'/empty (case-insensitive) -> NULL, i.e. greedy-L
 # off (susie's own L_greedy default is NULL). Otherwise a positive integer.
-# The NULL is kept via the inline list() in cs_args below, which preserves a
-# named NULL through c()/do.call to fineMappingPipeline; only an x$Lgreedy <- NULL
-# assignment would drop it (re-enabling pecotmr's default 5).
+# NULL is also CredibleSetParam(maxNumSingleEffectsGreedy = )'s own default, so
+# dropping it from the bundle below leaves greedy-L off either way.
 l_greedy_raw <- trimws(argv[["L_greedy"]])
 l_greedy_val <- if (tolower(l_greedy_raw) %in% c("none", "off", "null", "")) {
   NULL
@@ -291,7 +296,11 @@ if (!has_qtl && !has_gwas && !has_qss)
 contexts_arg <- if (nzchar(argv$contexts) && argv$contexts != ".")
   trimws(strsplit(argv$contexts, ",", fixed = TRUE)[[1L]]) else NULL
 
-methods <- trimws(strsplit(argv$methods, ",", fixed = TRUE)[[1L]])
+# Snake_case spellings stay the public interface on this side (they are the
+# notebook's documented --methods values); pecotmr took its tokens camelCase,
+# so translate. Without this, --methods susie_inf / susie_ash reached
+# fineMappingPipeline verbatim and died on "unknown method token".
+methods <- split_pecotmr_names(argv$methods, FM_METHOD_ALIASES, split = ",")
 
 # Joint-fit axes for mvsusie/fsusie: "" -> NULL (implicit per-tuple branch).
 joint_spec <- if (nzchar(argv$joint_specification) && argv$joint_specification != ".")
@@ -307,9 +316,13 @@ fmr_obj <- if (nzchar(argv$fine_mapping_result) && argv$fine_mapping_result != "
 # Build the `methods` argument: the bare tokens, or the named-list {token: kwargs}
 # form when --method-args is given. SuSiE L / L_greedy defaults + susie-family
 # routing live in pecotmr (.fmNormalizeMethods); the wrapper only forwards the
-# --L / --L-greedy values as top-level args (see cs_args). --method-args keys
-# must be among the --methods tokens (no silent typos).
+# --L / --L-greedy values through the credible-set bundle (see cs_param_args).
+# --method-args keys must be among the --methods tokens (no silent typos).
 if (!is.null(parsed_method_args)) {
+  # Keyed by method token, so normalise the keys the same way or the subset
+  # check below would reject an alias the user spelled consistently.
+  names(parsed_method_args) <- apply_pecotmr_aliases(names(parsed_method_args),
+                                                     FM_METHOD_ALIASES)
   unknown <- setdiff(names(parsed_method_args), methods)
   if (length(unknown) > 0L)
     stop("--method-args has keys not listed in --methods (got '",
@@ -321,26 +334,39 @@ methods_arg <- if (is.null(parsed_method_args)) methods else
     if (tk %in% names(parsed_method_args)) parsed_method_args[[tk]] else list()),
     methods)
 
-# Credible-set / coverage knobs common to both modes. medianAbsCorr is added
-# only when set (NULL -> omitted), so the call also works against a pecotmr
-# that predates that argument. L / L_greedy are forwarded top-level; pecotmr
-# seeds the susie-family tokens and applies explicit --method-args overrides.
-cs_args <- list(methods           = methods_arg,
-                L                 = argv$L,
-                Lgreedy           = l_greedy_val,
-                coverage          = argv$coverage,
-                secondaryCoverage = secondary_cov,
-                signalCutoff      = argv$pip_cutoff,
-                minAbsCorr        = argv$min_abs_corr,
-                # Per-CS variant-level export: default emits within_cs_pip only;
-                # --full-fit widens per-CS matrices (alpha; +logbf/effect/effect-var
-                # with --full-fit-all; +filtered CS with --include-all-cs).
-                fullFit           = isTRUE(argv[["full_fit"]]),
-                fullFitAlphaOnly  = !isTRUE(argv[["full_fit_all"]]),
-                includeAllCs      = isTRUE(argv[["include_all_cs"]]))
-if (!is.null(median_abs_corr)) cs_args$medianAbsCorr <- median_abs_corr
+# Per-CS variant-level export. pecotmr 0.9.0 replaced the fullFit /
+# fullFitAlphaOnly pair with one perCsColumns choice: "none" emits only the
+# within_cs_pip scalar (the default), "alpha" also widens the per-CS alpha
+# matrices, "full" widens logbf / effect / effect-variance as well.
+per_cs_columns <- if (!isTRUE(argv[["full_fit"]])) {
+  "none"
+} else if (isTRUE(argv[["full_fit_all"]])) {
+  "full"
+} else {
+  "alpha"
+}
+
+# Credible-set / coverage knobs common to both modes, as the single
+# CredibleSetParam() bundle 0.9.0 expects (L -> maxNumSingleEffects,
+# L_greedy -> maxNumSingleEffectsGreedy). medianAbsCorr and the greedy count
+# are added only when set, so an unset field keeps the bundle's own default.
+# The susie-family token seeding and the explicit --method-args overrides still
+# live in pecotmr (.fmNormalizeMethods).
+cs_param_args <- list(coverage            = argv$coverage,
+                      secondaryCoverage   = secondary_cov,
+                      signalCutoff        = argv$pip_cutoff,
+                      minAbsCorr          = argv$min_abs_corr,
+                      perCsColumns        = per_cs_columns,
+                      includeAllCs        = isTRUE(argv[["include_all_cs"]]),
+                      maxNumSingleEffects = argv$L)
+if (!is.null(l_greedy_val))
+  cs_param_args$maxNumSingleEffectsGreedy <- l_greedy_val
+if (!is.null(median_abs_corr)) cs_param_args$medianAbsCorr <- median_abs_corr
+
+cs_args <- list(methods          = methods_arg,
+                credibleSetParam = do.call(CredibleSetParam, cs_param_args))
 # Resume cache applies to both QTL and GWAS modes (both pipeline methods accept
-# fineMappingResult). Added only when supplied, for pecotmr-version tolerance.
+# fineMappingResult). Added only when supplied.
 if (!is.null(fmr_obj)) cs_args$fineMappingResult <- fmr_obj
 
 if (has_gwas || has_qss) {
@@ -359,14 +385,13 @@ if (has_gwas || has_qss) {
   # (keepFullFit = "fallback"); FALSE (default) drops it (keepFullFit = "none").
   # pecotmr's "all" mode is intentionally not exposed.
   keep_full_fit <- if (isTRUE(keep_original_fit)) "fallback" else "none"
-  # GWAS-only SuSiE-RSS knobs on top of the shared cs_args. rFinite forwards
-  # only when set; --rss-control (JSON) becomes the rssControl named list of
-  # susie_rss_control() settings.
-  gwas_args <- c(cs_args,
-                 list(serFallback = ser_fallback,
-                      rMismatch   = argv$r_mismatch,
-                      keepFullFit = keep_full_fit))
-  if (nzchar(argv$r_finite)) gwas_args$rFinite <- as.numeric(argv$r_finite)
+  # SuSiE-RSS knobs, as the SusieRssParam() bundle 0.9.0 expects (rssControl ->
+  # control). rFinite and control forward only when set, so an unset field keeps
+  # the bundle's own default.
+  rss_param_args <- list(serFallback = ser_fallback,
+                         rMismatch   = argv$r_mismatch,
+                         keepFullFit = keep_full_fit)
+  if (nzchar(argv$r_finite)) rss_param_args$rFinite <- as.numeric(argv$r_finite)
   if (nzchar(argv$rss_control) && argv$rss_control != "." &&
       argv$rss_control != "{}") {
     rc <- tryCatch(jsonlite::fromJSON(argv$rss_control, simplifyVector = TRUE),
@@ -376,9 +401,12 @@ if (has_gwas || has_qss) {
     if (!is.list(rc) || is.null(names(rc)) || any(!nzchar(names(rc))))
       stop("--rss-control must be a JSON object with named fields, e.g. ",
            '\'{"check_prior":true,"mismatch_estimator":"map"}\'.')
-    gwas_args$rssControl <- rc
+    rss_param_args$control <- rc
   }
-  if (!is.null(seed_val)) gwas_args$seed <- seed_val
+  # No seed= here: neither RSS method takes one (pre-0.9.0 they ended in `...`,
+  # which silently swallowed it), so RSS mode is seeded by the set.seed() above.
+  gwas_args <- c(cs_args,
+                 list(susieRssParam = do.call(SusieRssParam, rss_param_args)))
   res <- do.call(fineMappingPipeline, c(list(gss), gwas_args))
   label <- if (has_gwas) paste0("GwasSumStats '", basename(argv$gwas_sumstats), "'")
            else paste0("QtlSumStats '", basename(argv$qtl_sumstats), "'")
@@ -397,17 +425,25 @@ if (has_gwas || has_qss) {
   # cisWindow is a gene-mode (traitId) knob — it expands each trait's own
   # coordinates. In region mode the literal variant window comes from --region,
   # and passing both is an error, so cisWindow rides on the traitId branch only.
+  # pipCutoffToSkip is now the `pip` field of the SER pre-screen bundle (a
+  # field set to 0 is off there, which is this flag's documented "0 = off", and
+  # a negative value still selects the adaptive 3/nVariants threshold);
+  # cvFolds / cvThreads are now the cross-validation bundle's folds /
+  # numThreads.
   qtl_args <- c(list(qd), cs_args, qd_filter_overrides(argv),
-                list(contexts        = contexts_arg,
-                     pipCutoffToSkip = argv$pip_cutoff_to_skip,
-                     cvFolds         = argv$cv_folds,
-                     cvThreads       = argv$cv_threads))
+                list(contexts            = contexts_arg,
+                     signalScreenArgs    = SignalScreenParam(
+                       pip = argv$pip_cutoff_to_skip),
+                     crossValidationArgs = CrossValidationParam(
+                       folds = argv$cv_folds, numThreads = argv$cv_threads)))
   # Opt-in multivariate / joint knobs. Each is added only when the user set it,
   # so the call stays compatible with a pecotmr that predates the argument
   # (mirrors the medianAbsCorr handling above).
   if (!is.null(joint_spec)) qtl_args$jointSpecification <- joint_spec
   if (!is.null(twas_weights_obj)) {
-    qtl_args$twasWeights <- twas_weights_obj
+    # 0.9.0 renamed this argument mrmashPrior; it still takes the TwasWeights
+    # object a preceding mr.mash run produced.
+    qtl_args$mrmashPrior <- twas_weights_obj
     qtl_args$dataDrivenPriorWeightsCutoff <- argv$data_driven_prior_weights_cutoff
   }
   if (isTRUE(argv$use_pca)) {
@@ -418,7 +454,7 @@ if (has_gwas || has_qss) {
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
   run_fm <- function() if (has_region) {
-    do.call(fineMappingPipeline, c(qtl_args, list(region = argv$region)))
+    do.call(fineMappingPipeline, c(qtl_args, list(region = GenomicRanges::GRanges(argv$region))))
   } else {
     do.call(fineMappingPipeline, c(qtl_args,
                                    list(traitId = argv$gene_id,
@@ -461,11 +497,17 @@ if (has_gwas && !is.null(res)) {
       study_i  <- as.character(res$study[i])
       region_i <- as.character(res$blockId[i])
       method_i <- as.character(res$method[i])
-      tl  <- tryCatch(as.data.frame(getTopLoci(row_i)), error = function(e) NULL)
-      ncs <- if (!is.null(tl) && "cs_95" %in% names(tl))
-               length(setdiff(unique(tl$cs_95), 0)) else NA
-      fit <- tryCatch(getSusieFit(row_i), error = function(e) NULL)
-      ser <- if (!is.null(fit) && !is.null(fit$serFallbackUsed))
+      # No per-row guards: the block-level one below already keeps a
+      # diagnostics failure from touching the run, and a second layer here
+      # would turn a real accessor break into silent "NA" columns.
+      # credibleSetSummary() IS the per-credible-set table, one row each, so
+      # the count is its nrow. Counting distinct cs_95 labels by hand got this
+      # wrong: the "not captured" sentinel is "<method>_0", not a bare 0, so
+      # setdiff(..., 0) never removed it and every row reported one credible
+      # set too many (1 where there were none).
+      ncs <- nrow(as.data.frame(credibleSetSummary(row_i, coverage = 0.95)))
+      fit <- susieFit(row_i)
+      ser <- if (!is.null(fit$serFallbackUsed))
                isTRUE(fit$serFallbackUsed) else NA
       cat(sprintf("[FM %s %s] method=%s CS(cs_95)=%s SER-fallback=%s\n",
                   study_i, region_i, method_i,
@@ -473,5 +515,17 @@ if (has_gwas && !is.null(res)) {
                   if (isTRUE(ser)) "YES" else if (identical(ser, FALSE)) "no" else "NA"))
     }
   }, error = function(e)
-     message("fine_mapping.R: GWAS summary skipped (", conditionMessage(e), ")")))
+     # warning(), not message(): this runs AFTER saveRDS, so it must never fail
+     # the run -- but a skipped summary means an accessor broke, which should be
+     # loud enough to see in a CI log rather than reading as ordinary output.
+     warning("fine_mapping.R: GWAS summary skipped (", conditionMessage(e), ")",
+             call. = FALSE)))
+}
+
+if (has_qtl && has_region && "fsusie" %in% methods) {
+    # The published fSuSiE table (schema, packing, sort, bgzip + tabix) is
+    # pecotmr's exportToBed(); region_ID / region_* come off the result's
+    # own fitRegion() provenance, so --region is not passed again here.
+    exportToBed(res, sub("\\.rds$", ".exported.bed.gz", argv$output),
+                schema = "fsusie")
 }

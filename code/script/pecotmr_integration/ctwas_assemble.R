@@ -140,16 +140,20 @@ fmrPaths <- split_paths(argv$fine_mapping_results)
 fmr <- if (length(fmrPaths) > 0L)
          combineFineMappingResults(lapply(fmrPaths, readRDS)) else NULL
 
+# pecotmr 0.9.0 grouped the four per-gene variant-pruning knobs into one
+# bundle, with two renamed: minPipCutoff -> pipRescue (same meaning -- variants
+# above it are must-keep) and maxNumVariants -> maxVariants.
 inputs <- assembleCtwasInputs(
   gwasSumStats      = gwasSumStats,
   twasWeights       = weightObjs,
   twasZ             = tz,
   fineMappingResult = fmr,
   method            = if (nzchar(argv$method)) argv$method else NULL,
-  twasWeightCutoff  = argv$twas_weight_cutoff,
-  csMinCor          = argv$cs_min_cor,
-  minPipCutoff      = argv$min_pip_cutoff,
-  maxNumVariants    = argv$max_num_variants)
+  variantPruningArgs = VariantPruningParam(
+    weightCutoff = argv$twas_weight_cutoff,
+    csMinCor     = argv$cs_min_cor,
+    pipRescue    = argv$min_pip_cutoff,
+    maxVariants  = argv$max_num_variants))
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(inputs, argv$output)

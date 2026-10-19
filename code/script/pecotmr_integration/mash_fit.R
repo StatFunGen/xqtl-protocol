@@ -49,7 +49,7 @@ U <- if (is.list(prior) && !is.null(prior$U)) prior$U else prior
 # Wrap the random (fit) subset as a beta-scale QtlSumStats. ldSketch stays NULL:
 # mash needs no LD reference.
 random <- qtlSumStatsFromBetaMatrix(
-  as.matrix(dat$random.b), as.matrix(dat$random.s), study = "mash")
+  as.matrix(dat$random.b), as.matrix(dat$random.s), studyName = "mash")
 
 model <- mashModelFit(list(random = random), alpha = alpha,
                       priorCovariances = U, vhat = vhat,

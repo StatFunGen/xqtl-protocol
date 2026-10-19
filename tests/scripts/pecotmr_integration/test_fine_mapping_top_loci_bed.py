@@ -20,6 +20,9 @@ def test_fine_mapping_top_loci_bed(run_r, repo_root, tmp_path):
               timeout=200)
     assert p.returncode == 0, p.stdout + p.stderr
     header = gzip.open(out, "rt").readline().rstrip("\n").split("\t")
-    assert "variant_ID" in header and "PIP" in header
+    # The published table is a half-open BED keyed on ID/REF/ALT (it was
+    # chr/pos/variant_ID before the schema was unified with the VCF writer).
+    assert header[:6] == ["#chr", "start", "end", "ID", "REF", "ALT"]
+    assert "PIP" in header
     assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant",
                             rtol=1e-6, atol=1e-8)

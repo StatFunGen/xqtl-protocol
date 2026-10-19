@@ -50,7 +50,7 @@ alpha <- if (toupper(argv$effect_model) == "EZ") 1 else 0
 dat <- readRDS(argv$data)
 
 strong <- qtlSumStatsFromBetaMatrix(
-  as.matrix(dat$strong.b), as.matrix(dat$strong.s), study = "mash")
+  as.matrix(dat$strong.b), as.matrix(dat$strong.s), studyName = "mash")
 
 components <- split_pecotmr_names(argv$component, MASH_COMPONENT_ALIASES)
 nPcs <- if (is.na(argv$npc)) NULL else argv$npc

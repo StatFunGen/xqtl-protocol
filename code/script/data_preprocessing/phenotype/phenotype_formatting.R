@@ -11,6 +11,8 @@
 #   phenotype_by_region_2     — build the per-region file manifest
 #   gct_extract_samples       — filter samples from a GCT by a keep-list
 #   phenotype_annotate_by_tad — build a phenotype-per-TAD region list
+#   qtl_dataset_manifest      — single-context QtlDataset phenotype manifest
+#                               (+ region-id and sample-id side files)
 #   bam_subsetting            — subset a BAM to the requested regions
 #
 # Conventions: read with vroom, manipulate with dplyr, bgzip/tabix/bam via
@@ -59,6 +61,24 @@ parser <- add_argument(parser, "--TAD_list",
 parser <- add_argument(parser, "--phenotype-per-tad",
                        help = "[phenotype_annotate_by_tad] Min phenotypes per TAD to keep",
                        type = "numeric", default = 2)
+parser <- add_argument(parser, "--covariate-file",
+                       help = "[qtl_dataset_manifest] Covariate TSV (samples as columns)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--context",
+                       help = "[qtl_dataset_manifest] Context name for the `cond` column",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--chromosomes", nargs = Inf,
+                       help = "[qtl_dataset_manifest] Chromosomes to keep, in output order",
+                       type = "character")
+parser <- add_argument(parser, "--phenotype-id-column",
+                       help = "[qtl_dataset_manifest] 4th BED column name", type = "character",
+                       default = "ID")
+parser <- add_argument(parser, "--output-region-ids",
+                       help = "[qtl_dataset_manifest] One feature id per line",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--output-sample-ids",
+                       help = "[qtl_dataset_manifest] One shared sample id per line",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--numThreads", help = "Number of threads",
                        type = "numeric", default = 1)
 argv <- parse_args(parser)
@@ -224,6 +244,57 @@ phenotype_annotate_by_tad <- function(argv) {
   message(sprintf("Written: %s (%d of %d TADs kept)", out_file, nrow(out), nrow(tad)))
 }
 
+# --- steps: QtlDataset manifest --------------------------------------------
+# One context -> one phenotype matrix, which is what
+# pecotmr::loadQtlDatasetFromManifest() resolves: every feature row points at
+# the same BED and the same covariate file. Emits the manifest plus the
+# feature-id and shared-sample-id lists the fan-out steps consume.
+qtl_dataset_manifest <- function(argv) {
+  need(argv, c("phenoFile", "covariate_file", "context", "chromosomes", "output",
+               "output_region_ids", "output_sample_ids"))
+  id_col <- argv$phenotype_id_column
+  # Absolute paths: the manifest is read from other working directories.
+  bed <- normalizePath(argv$phenoFile, mustWork = TRUE)
+  cov <- normalizePath(argv$covariate_file, mustWork = TRUE)
+
+  canonical <- function(x) tolower(sub("^chr", "", x, ignore.case = TRUE))
+  wanted <- canonical(argv$chromosomes)
+
+  header <- strsplit(read_header_line(bed), "\t", fixed = TRUE)[[1L]]
+  expected <- c("#chr", "start", "end", id_col)
+  if (!identical(header[1:4], expected))
+    stop(sprintf("%s must begin with %s", bed, paste(expected, collapse = ", ")))
+
+  pheno <- vroom::vroom(bed, delim = "\t", col_select = 1:4,
+                        col_types = cols(.default = "c"), show_col_types = FALSE)
+  names(pheno) <- c("chr", "start", "end", "ID")
+  rows <- pheno %>%
+    mutate(start = as.integer(.data$start), end = as.integer(.data$end),
+           .ord = match(canonical(.data$chr), wanted)) %>%
+    filter(!is.na(.data$.ord)) %>%
+    arrange(.data$.ord, .data$start, .data$end, .data$ID) %>%
+    transmute(chr, start, end, ID, path = bed, cond = argv$context, cov_path = cov)
+  if (nrow(rows) == 0L)
+    stop(sprintf("No features on the configured chromosomes: %s", bed))
+
+  # Samples carried by BOTH files; the covariate file names samples from its
+  # second column on (the first holds the covariate name).
+  covHeader <- strsplit(read_header_line(cov), "\t", fixed = TRUE)[[1L]]
+  samples <- sort(intersect(header[-(1:4)], covHeader[-1L]))
+  if (length(samples) == 0L)
+    stop("Phenotype BED and covariate file share no sample IDs")
+
+  out <- rows
+  names(out)[names(out) == "chr"] <- "#chr"
+  for (f in c(argv$output, argv$output_region_ids, argv$output_sample_ids))
+    dir.create(dirname(f), showWarnings = FALSE, recursive = TRUE)
+  vroom::vroom_write(out, argv$output, delim = "\t")
+  writeLines(rows$ID, argv$output_region_ids)
+  writeLines(samples, argv$output_sample_ids)
+  message(sprintf("Written: %s (%d features, %d shared samples)",
+                  argv$output, nrow(rows), length(samples)))
+}
+
 # --- steps: BAM subsetting -------------------------------------------------
 bam_subsetting <- function(argv) {
   need(argv, c("phenoFile", "region", "output"))
@@ -252,6 +323,7 @@ switch(argv$step,
   phenotype_by_region_2     = phenotype_by_region_2(argv),
   gct_extract_samples       = gct_extract_samples(argv),
   phenotype_annotate_by_tad = phenotype_annotate_by_tad(argv),
+  qtl_dataset_manifest      = qtl_dataset_manifest(argv),
   bam_subsetting            = bam_subsetting(argv),
   stop(sprintf("Unknown step: '%s'", argv$step))
 )

@@ -32,6 +32,9 @@ parser <- add_argument(parser, "--height",
                        type = "numeric", default = 3)
 argv <- parse_args(parser)
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 write_empty <- function(msg) {
   message(msg, "; writing an empty plot to ", argv$output)
   dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
@@ -48,12 +51,13 @@ if (nrow(fmr) == 0L) {
   quit(save = "no")
 }
 
-# One aggregated PIP table for the collection. getTopLoci(signalCutoff = 0)
+# One aggregated PIP table for the collection. topLoci(signalCutoff = 0)
 # returns every variant with its decoded `pos` and the row-identity columns
 # (study / method / region_id), so the panel label and position come straight
-# off the table -- one panel per (study, method, region_id).
-tl <- getTopLoci(fmr, signalCutoff = 0)
-if (is.null(tl) || nrow(tl) == 0L) {
+# off the table -- one panel per (study, method, region_id). It is a GRanges
+# from 0.9.0 on, so flatten it: nrow() on a GRanges is NULL, not a count.
+tl <- as_variant_df(topLoci(fmr, signalCutoff = 0))
+if (nrow(tl) == 0L) {
   write_empty("No PIP vectors in input")
   quit(save = "no")
 }

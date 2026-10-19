@@ -83,18 +83,24 @@ fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
   NULL
 }
 
+# pecotmr 0.9.0 grouped the eight rsq*/mr* arguments into two bundles. Pure
+# regrouping -- the CLI values carry over unchanged (--rsq-option feeds
+# `metric`, --rsq-pval-option feeds `pvalMetric`, whose default c("adj_rsq_pval",
+# "pval") is this flag's default too).
 res <- causalInferencePipeline(
   gwasSumStats      = gss,
   twasWeights       = tw,
   fineMappingResult = fmr,
-  rsqCutoff         = argv$rsq_cutoff,
-  rsqPvalCutoff     = argv$rsq_pval_cutoff,
-  rsqOption         = argv$rsq_option,
-  rsqPvalOption     = rsq_pval_option,
-  mrPipCutoff       = argv$mr_pip_cutoff,
-  mrMethod          = argv$mr_method,
-  mrCpipCutoff      = argv$mr_cpip_cutoff,
-  mrPvalCutoff      = argv$mr_pval_cutoff,
+  weightSelectionArgs = WeightSelectionParam(
+    cutoff     = argv$rsq_cutoff,
+    pvalCutoff = argv$rsq_pval_cutoff,
+    metric     = argv$rsq_option,
+    pvalMetric = rsq_pval_option),
+  mrArgs = MrParam(
+    method     = argv$mr_method,
+    pipCutoff  = argv$mr_pip_cutoff,
+    cpipCutoff = argv$mr_cpip_cutoff,
+    pvalCutoff = argv$mr_pval_cutoff),
   combineMethods    = combine_methods)
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)

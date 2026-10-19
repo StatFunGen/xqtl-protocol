@@ -117,25 +117,31 @@ genotype_prefix <- abs_path(argv$genotype_prefix)
 # The manifest's cond/path/cov_path columns are recognised via the loader's
 # snake_case aliases (cond -> context, path -> phenotypePath,
 # cov_path -> covariatePath).
+# The seven genotype filters travel as one GenotypeFilterParam() bundle. Every
+# field is passed explicitly: to QtlDataset() the bundle is a SPECIFICATION, so
+# an unset field would take the constructor's own default rather than this
+# script's CLI default -- which happen to coincide today, but pinning them keeps
+# the wrapper's documented defaults authoritative.
 qd <- loadQtlDatasetFromManifest(
   manifest            = argv$phenotype_manifest,
-  study               = argv$study,
+  studyName           = argv$study,
   genotypes           = genotype_prefix,
   genotypeCovariates  = genotype_covariates,
   scaleResiduals      = !isTRUE(argv$no_scale_residuals),
-  mafCutoff           = argv$maf_cutoff,
-  macCutoff           = argv$mac_cutoff,
-  xvarCutoff          = argv$xvar_cutoff,
-  imissCutoff         = argv$imiss_cutoff,
-  keepSamples         = keep_samples,
-  keepVariants        = keep_variants,
-  keepIndel           = !isTRUE(argv$drop_indel),
+  genotypeFilterParam = GenotypeFilterParam(
+    mafCutoff    = argv$maf_cutoff,
+    macCutoff    = argv$mac_cutoff,
+    xvarCutoff   = argv$xvar_cutoff,
+    imissCutoff  = argv$imiss_cutoff,
+    keepSamples  = keep_samples,
+    keepVariants = keep_variants,
+    keepIndel    = !isTRUE(argv$drop_indel)),
   transposeCovariates = isTRUE(argv$transpose_covariates))
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(qd, argv$output)
-contexts <- getContexts(qd)
+ctx <- contexts(qd)
 cat(sprintf("Wrote QtlDataset for study '%s' (%d contexts: %s) to %s\n",
-            argv$study, length(contexts),
-            paste(contexts, collapse = ", "),
+            argv$study, length(ctx),
+            paste(ctx, collapse = ", "),
             argv$output))

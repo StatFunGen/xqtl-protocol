@@ -130,7 +130,7 @@ if (argv$maf_cutoff > 0) {
   frq <- readSldscFrq(argv$frqfile_dir, plinkName = argv$plink_name)
 }
 
-sldscData <- SldscData(annot = annot, frq = frq, traits = traitList)
+sldscData <- SldscData(annotData = annot, frqData = frq, traits = traitList)
 
 res <- sldscPostprocessingPipeline(
   sldscData,
