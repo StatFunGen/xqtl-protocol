@@ -7,8 +7,9 @@
 # through --gwas_meta_data (#chrom pos A1 A2 variant_id z n_sample), and write the
 # matching gwas_meta TSV (study_id chrom file_path sample_size).
 # A1 is the effect (alt) allele; variant_id is chrom:pos:A2:A1. Blocks with no
-# variants after QC are skipped. A variant present in two adjacent blocks is kept
-# once, from the block that starts first. Needs bgzip and tabix on PATH.
+# variants after QC are skipped. A variant present in two blocks is kept once:
+# the measured copy over a RAISS-imputed one (imputed variants have no allele
+# frequency), otherwise the copy from the block that starts first. Needs bgzip and tabix on PATH.
 #
 # Usage:
 #   Rscript gwas_sumstats_to_tsv.R --input study.gwas_sumstats.list --study AD_main \
@@ -27,15 +28,15 @@ dir.create(a$output_dir, showWarnings = FALSE, recursive = TRUE)
 x <- rbindlist(lapply(fs, function(f) {
   g <- as.data.frame(readRDS(f))
   if (!nrow(g)) return(NULL)
-  data.table(chrom = sub("^chr", "", g$chrom), pos = g$pos, A1 = g$A1, A2 = g$A2, z = g$z, n_sample = g$N, block_start = min(g$pos))
+  data.table(chrom = sub("^chr", "", g$chrom), pos = g$pos, A1 = g$A1, A2 = g$A2, z = g$z, n_sample = g$N, imputed = is.na(g$af), block_start = min(g$pos))
 }))
 if (!nrow(x)) stop("No variants in any input file.")
-x <- x[order(as.integer(chrom), pos, block_start)]
+x <- x[order(as.integer(chrom), pos, imputed, block_start)]
 ndup <- sum(duplicated(x[, .(chrom, pos, A1, A2)]))
-x <- x[!duplicated(x[, .(chrom, pos, A1, A2)])][, block_start := NULL]
+x <- x[!duplicated(x[, .(chrom, pos, A1, A2)])][, c("imputed", "block_start") := NULL]
 x[, variant_id := paste(chrom, pos, A2, A1, sep = ":")]
 setcolorder(x, c("chrom", "pos", "A1", "A2", "variant_id", "z", "n_sample"))
-message(sprintf("%s: %d blocks, %d variants (%d variants in two adjacent blocks kept once, from the first block)", a$study, length(fs), nrow(x), ndup))
+message(sprintf("%s: %d blocks, %d variants (%d variants in two blocks kept once, preferring the measured over the RAISS-imputed copy, then the first block)", a$study, length(fs), nrow(x), ndup))
 meta <- rbindlist(lapply(split(x, by = "chrom"), function(y) {
   f <- file.path(normalizePath(a$output_dir), sprintf("%s.chr%s.tsv", a$study, y$chrom[1]))
   setnames(y, "chrom", "#chrom"); fwrite(y, f, sep = "\t")
