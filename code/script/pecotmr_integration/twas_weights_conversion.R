@@ -53,7 +53,11 @@ for (f in files) {
     for (wn in names(co$twas_weights)) {
       w <- co$twas_weights[[wn]]
       vids <- if (is.matrix(w)) rownames(w) else names(w)
-      if (is.null(vids)) vids <- co$variant_names
+      # Some releases store weights for the QC'd variant subset only, without row
+    # names; their IDs are then in preset_variants_result$variant_names
+    if (is.null(vids)) vids <- Find(function(v) length(v) == NROW(w),
+      list(co$variant_names, co$preset_variants_result$variant_names))
+    if (is.null(vids)) stop("No variant IDs of length ", NROW(w), " for ", cn, " ", wn, " in ", f)
       wv <- if (is.matrix(w)) as.numeric(w[, 1]) else as.numeric(w)
       if (all(is.na(wv)) || all(wv == 0, na.rm = TRUE)) next
       m <- sub("_weights$", "", wn)
@@ -67,7 +71,17 @@ for (f in files) {
     ctxs <- union(ctxs, ctx)
   }
 }
-if (!length(E)) stop("No usable (non-zero) weights in: ", a$legacy)
+if (!length(E)) {
+  # e.g. a gene stored as NULL or with all-zero weights: write an empty result
+  # and empty meta rows, so step 2 leaves the gene out instead of failing
+  msg <- paste("No usable (non-zero) weights in:", a$legacy)
+  warning(msg)
+  dir.create(dirname(a$output), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(structure(list(), noResult = msg), a$output)
+  file.create(a$meta_row)
+  if (nzchar(a$type_rows)) file.create(a$type_rows)
+  quit(save = "no", status = 0)
+}
 
 tw <- TwasWeights(studyName = S, context = C, trait = Tr, method = M, entry = E,
                   traitPos = GenomicRanges::GRanges(TPc, IRanges::IRanges(TPp, width = 1L)))
