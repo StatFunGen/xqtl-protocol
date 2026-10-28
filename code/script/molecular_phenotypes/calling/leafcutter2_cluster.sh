@@ -64,7 +64,7 @@ fi
 
 # 2. Chromosome naming.
 jchr=$(zcat -f "$(head -n1 "$JUNCFILES")" | head -n1 | cut -f1)
-achr=$(grep -v '^#' "$ANNOT" | head -n1 | cut -f1)
+achr=$(zcat -f "$ANNOT" | grep -v '^#' | head -n1 | cut -f1)
 case "$jchr" in chr*) jp=prefixed;; *) jp=bare;; esac
 case "$achr" in chr*) ap=prefixed;; *) ap=bare;; esac
 if [ "$jp" != "$ap" ]; then

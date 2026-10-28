@@ -1,38 +1,19 @@
 """Notebook tier: splicing_calling_leafcutter2.ipynb workflows.
 
-LeafCutter2 2.x is not in any conda channel yet (only a broken 0.0.1 on dnachun),
-so the tests that need the binary skip until it is installable. The argument-contract
-test needs no binary and always runs.
-
-Reference GTF/FASTA are not in the repository, so the full clustering test is gated
-on XQTL_REFERENCE_DATA pointing at a directory holding the protocol's pair.
+The clustering test uses the chr22 GTF + FASTA pair in FIX/reference, built by
+build_reference.R to cover the loci the junction fixtures cluster into.
 """
 from __future__ import annotations
 
 import gzip
-import os
 import shutil
-from pathlib import Path
 
 import pytest
 
 NB = "code/SoS/molecular_phenotypes/calling/splicing_calling_leafcutter2.ipynb"
 FIX = "tests/fixtures/splicing_calling/leafcutter"
-GTF = "Homo_sapiens.GRCh38.103.chr.reformatted.ERCC.gtf"
-FASTA = "GRCh38_full_analysis_set_plus_decoy_hla.noALT_noHLA_noDecoy_ERCC.fasta"
-
-# 2.x exposes leafcutter2-star2junc; pre-2.0 builds do not. Probe by command rather than by
-# version string: packaged builds do not always carry the upstream version (the dnachun conda
-# build is labelled 1.0.1 but ships 2.0.1), so a version comparison would wrongly reject it.
-needs_lc2 = pytest.mark.skipif(
-    shutil.which("leafcutter2-star2junc") is None,
-    reason="LeafCutter2 2.x not installed (no leafcutter2-star2junc on PATH)",
-)
-_ref = os.environ.get("XQTL_REFERENCE_DATA")
-needs_ref = pytest.mark.skipif(
-    not (_ref and (Path(_ref) / GTF).exists() and (Path(_ref) / FASTA).exists()),
-    reason="XQTL_REFERENCE_DATA not set to a directory holding the protocol GTF and FASTA",
-)
+GTF = "reference/Homo_sapiens.GRCh38.103.chr22.leafcutter2.reformatted.gtf"
+FASTA = "reference/chr22.leafcutter2.fa.gz"
 
 
 def test_cluster_requires_explicit_offset(run_sos, repo_root, tmp_path):
@@ -50,7 +31,6 @@ def test_cluster_requires_explicit_offset(run_sos, repo_root, tmp_path):
     assert "--offset" in (p.stdout + p.stderr)
 
 
-@needs_lc2
 def test_star2junc(run_sos, repo_root, tmp_path):
     """Converts the shipped SJ.out.tab fixtures to BED6. Needs no reference data."""
     fix = repo_root / FIX
@@ -69,20 +49,22 @@ def test_star2junc(run_sos, repo_root, tmp_path):
         assert len(rows[0].split("\t")) == 6, rows[0]
 
 
-@needs_lc2
-@needs_ref
 def test_cluster_and_classify(run_sos, repo_root, tmp_path):
     """leafcutter2_cluster on the shipped regtools junctions (hence --offset 1).
 
-    --min-clu-reads 3 because the chr22:16M-17M fixtures yield no cluster at the
-    default 30, and LeafCutter2 reports clustering success before failing later.
+    --min-clu-reads 3 because the fixtures yield no cluster at the default 30, and
+    LeafCutter2 reports clustering success before failing later. The FASTA is copied
+    into tmp_path because LeafCutter2 (pyfastx) writes its index next to it.
     """
     fix = repo_root / FIX
-    ref = Path(os.environ["XQTL_REFERENCE_DATA"])
+    fasta = tmp_path / "ref" / "chr22.leafcutter2.fa.gz"
+    fasta.parent.mkdir()
+    for ext in ("", ".fai", ".gzi"):
+        shutil.copy(fix / (FASTA + ext), str(fasta) + ext)
     p = run_sos(repo_root / NB, "leafcutter2_cluster",
                 dict(cwd=tmp_path, samples=fix / "protocol_example.sample_list.txt",
                      juncfiles=fix / "protocol_example.junction_files.txt",
-                     annotation_gtf=ref / GTF, genome_fasta=ref / FASTA,
+                     annotation_gtf=fix / GTF, genome_fasta=fasta,
                      offset=1, min_clu_reads=3),
                 cwd=repo_root, timeout=1800)
     assert p.returncode == 0, p.stdout + p.stderr
@@ -100,6 +82,10 @@ def test_cluster_and_classify(run_sos, repo_root, tmp_path):
     parts = chrom.split(":")
     assert len(parts) == 5, chrom
     assert parts[4] in {"PR", "UP", "NE", "IN"}, chrom
+    # the reference fixture covers TTC28 so that some junction is classified against
+    # the annotation rather than only labelled intergenic (IN)
+    classes = {r.split()[0].split(":")[4] for r in rows[1:]}
+    assert classes - {"IN"}, classes
     # cluster_ratios is numerator/denominator -- this is what splicing_normalization parses
     assert all("/" in c for c in cells), cells
     # junction_counts is plain integers, and is NOT a valid normalization input
@@ -108,10 +94,11 @@ def test_cluster_and_classify(run_sos, repo_root, tmp_path):
 
 
 # ---------------------------------------------------------------- differential_splicing
-# The split and join scripts are plain Python, so these run everywhere; the per-part
+# The split and join scripts need only base R, argparser and vroom; the per-part
 # leafcutter_ds.R step needs the R leafcutter package and is not exercised here.
 import subprocess
-import sys
+
+from helpers.r_runner import rscript_bin
 
 SCRIPTS = "code/script/molecular_phenotypes/calling"
 PARTS = [str(i) for i in range(1, 23)] + ["X", "other"]
@@ -120,7 +107,7 @@ EFF_HDR = "intron\tlogef\tA\tB\tdeltapsi"
 
 
 def _script(repo_root, name, *args):
-    return subprocess.run([sys.executable, str(repo_root / SCRIPTS / name), *map(str, args)],
+    return subprocess.run([rscript_bin(), str(repo_root / SCRIPTS / name), *map(str, args)],
                           capture_output=True, text=True)
 
 
@@ -139,7 +126,7 @@ def test_ds_split_by_chromosome(repo_root, tmp_path):
     counts, groups = tmp_path / "c.counts.gz", tmp_path / "g.txt"
     _counts(counts)
     groups.write_text("S1 A\nS2 B\nS3 B\n")
-    p = _script(repo_root, "leafcutter_ds_split.py", "--counts", counts, "--groups", groups,
+    p = _script(repo_root, "leafcutter_ds_split.R", "--counts", counts, "--groups", groups,
                 "--output-prefix", tmp_path / "parts" / "g")
     assert p.returncode == 0, p.stderr
     got = {}
@@ -162,7 +149,7 @@ def test_ds_split_rejects_bad_groups(repo_root, tmp_path, groups, message):
     counts, g = tmp_path / "c.counts.gz", tmp_path / "g.txt"
     _counts(counts)
     g.write_text(groups)
-    p = _script(repo_root, "leafcutter_ds_split.py", "--counts", counts, "--groups", g,
+    p = _script(repo_root, "leafcutter_ds_split.R", "--counts", counts, "--groups", g,
                 "--output-prefix", tmp_path / "parts" / "g")
     assert p.returncode != 0
     assert message in p.stderr, p.stderr
@@ -183,7 +170,7 @@ def test_ds_merge_recomputes_fdr(repo_root, tmp_path):
                    "<=1 sample with coverage>min_coverage\tNA\tNA\tNA\t2:clu_4_-\tNA"],
              ["2:1:2:clu_3_-\t-0.1\t0.6\t0.5\t-0.1"])
     c = part("c", [], [])
-    p = _script(repo_root, "leafcutter_ds_merge.py", "--output-prefix", tmp_path / "all", a, b, c)
+    p = _script(repo_root, "leafcutter_ds_merge.R", "--output-prefix", tmp_path / "all", "--files", a, b, c)
     assert p.returncode == 0, p.stderr
     rows = (tmp_path / "all_cluster_significance.txt").read_text().splitlines()
     assert rows[0] == SIG_HDR
