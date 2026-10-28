@@ -64,6 +64,9 @@ parser <- add_argument(parser, "--max-snp",
 parser <- add_argument(parser, "--keep-snps",
                        help = "Flag: retain the SNP background as a dedicated CtwasResult row",
                        flag = TRUE)
+parser <- add_argument(parser, "--missing-group-prior",
+  help = "Groups with no estimated prior (e.g. too few genes in a context): 'fill' = use the mean of the estimated gene-group priors and variances, 'error' = stop",
+  type = "character", default = "fill")
 parser <- add_argument(parser, "--ncore",
                        help = "Number of cores",
                        type = "integer", default = 1L)
@@ -83,6 +86,25 @@ if (nzchar(argv$param_override) && argv$param_override != "." &&
   if (!is.null(override$group_prior_var))
     est$param$group_prior_var <- override$group_prior_var
   cat("Applied param override from ", argv$param_override, "\n", sep = "")
+}
+
+# Groups present in the regions but absent from the estimated priors (the EM
+# drops a group when too few regions carry its genes) make ctwas stop with
+# "Missing group_prior for group". Fill them from the estimated gene groups,
+# or stop with a clear message, per --missing-group-prior.
+allGroups <- unique(unlist(lapply(est$region_data, function(rd) rd$groups)))
+missingGroups <- setdiff(allGroups, names(est$param$group_prior))
+if (length(missingGroups) > 0L) {
+  geneGroups <- setdiff(names(est$param$group_prior), "SNP")
+  if (argv$missing_group_prior != "fill" || length(geneGroups) == 0L)
+    stop("No estimated prior for group(s): ", paste(missingGroups, collapse = ", "),
+         if (length(geneGroups) == 0L) " (and no gene group was estimated to fill from)" else "")
+  fillPrior <- mean(est$param$group_prior[geneGroups])
+  fillVar <- mean(est$param$group_prior_var[geneGroups])
+  est$param$group_prior[missingGroups] <- fillPrior
+  est$param$group_prior_var[missingGroups] <- fillVar
+  warning(sprintf("Filled prior for %d group(s) without an estimate (%s): group_prior = %.3g, group_prior_var = %.3g (mean of estimated gene groups).",
+                  length(missingGroups), paste(missingGroups, collapse = ", "), fillPrior, fillVar), call. = FALSE)
 }
 
 # pecotmr 0.9.0: ncore -> numThreads everywhere, and L splits by step. The
