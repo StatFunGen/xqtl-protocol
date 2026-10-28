@@ -8,7 +8,8 @@
 #
 # Inputs:
 #   --twas-weights         Per-gene TwasWeights RDS; comma-separated for several genes
-#                          of one LD block (the block LD is then computed once)
+#                          of one LD block (the block GwasSumStats, and with it the
+#                          LD reference, is read once for all of them)
 #   --gwas-sumstats        Per-region GwasSumStats RDS (one or more studies)
 #   --fine-mapping-result  Optional per-gene FineMappingResult RDS
 #   --rsq-cutoff           CV-R^2 weight-selection cutoff (legacy rsq_cutoff)
@@ -87,6 +88,11 @@ if (length(outPaths) != length(twPaths)) stop("--output needs one path per --twa
 if (length(fmPaths) == 0L) fmPaths <- rep("", length(twPaths))
 if (length(fmPaths) != length(twPaths)) stop("--fine-mapping-result needs one path per --twas-weights entry.")
 
+# Read the block's GwasSumStats once and reuse it for every gene in the call.
+# The LD itself is pecotmr's business: causalInferencePipeline() pulls it from
+# this object's ldReference, per gene and scoped to that gene's matched
+# variants (and for a genotype panel it uses the LD factor, so the p x p matrix
+# is never formed). Nothing here computes or caches LD.
 gss <- readRDS(argv$gwas_sumstats)
 
 readFmr <- function(p) if (nzchar(p) && p != "." && file.exists(p)) readRDS(p) else NULL
