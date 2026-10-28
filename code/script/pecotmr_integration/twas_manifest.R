@@ -62,8 +62,8 @@ p <- add_argument(p, "--gwas-data", type = "character", nargs = Inf,
                   default = NA_character_, help = "Optional inline GWAS sumstats paths")
 p <- add_argument(p, "--column-mapping", type = "character", nargs = Inf,
                   default = NA_character_, help = "Optional inline GWAS column-mapping paths")
-p <- add_argument(p, "--unit", type = "character", default = "gene",
-  help = "Analysis unit: 'gene' (default; one unit per gene spanning its weight window, no LD blocks) or 'region' (legacy: genes grouped by --regions)")
+p <- add_argument(p, "--unit", type = "character", default = "region",
+  help = "Analysis unit: 'region' (default; genes grouped by --regions) or 'gene' (one unit per gene spanning its weight window, no LD blocks; twas_ctwas.ipynb passes this by default)")
 p <- add_argument(p, "--min-cv-rsq", type = "numeric", default = NA,
   help = "gene unit only: skip genes where no context/method reaches this CV r2 (with --max-cv-pval); NA = no prefilter")
 p <- add_argument(p, "--max-cv-pval", type = "numeric", default = NA,
@@ -162,10 +162,10 @@ xqtlChr <- chromAdd(xqtlDf[["#chr"]])
 xqtlTss <- suppressWarnings(as.integer(xqtlDf$TSS))
 
 # ---- per-region: overlapping genes/weights + covering GWAS -----------------
-# Analysis units. gene (default): one unit per xQTL meta row, spanning that
+# Analysis units. gene: one unit per xQTL meta row, spanning that
 # gene's weight window (meta start..end), so every weight variant is scored
 # with GWAS and LD read from the per-chromosome files; --regions /
-# --region-name, if given, only filter genes by TSS. region (legacy): genes
+# --region-name, if given, only filter genes by TSS. region (default): genes
 # binned into --regions by TSS, one unit per region.
 inRegions <- function(j) nrow(regions) == 0L ||
   any(regions$chr == xqtlChr[[j]] & !is.na(xqtlTss[[j]]) &
@@ -182,7 +182,11 @@ units <- if (argv$unit == "gene") {
       f <- trimws(strsplit(xqtlDf$original_data[[j]], ",")[[1L]])
       f <- vapply(f[nzchar(f)], adaptFilePath, character(1), referenceFile = argv$xqtl_meta, USE.NAMES = FALSE)
       for (x in f) {
-        cv <- as.list(S4Vectors::mcols(readRDS(x))$cvResult)
+        w <- readRDS(x)
+      # Legacy list-layout weights carry no per-row cvResult column: keep the
+      # gene and let pecotmr apply the CV rule.
+      if (!methods::is(w, "TwasWeights")) return(TRUE)
+      cv <- as.list(S4Vectors::mcols(w)$cvResult)
         for (r in cv) {
           v <- r$metrics
           if (is.null(v) || is.na(v["rsq"])) return(TRUE)  # no CV info: let pecotmr decide
