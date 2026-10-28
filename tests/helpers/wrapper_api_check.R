@@ -7,8 +7,7 @@
 #   UNRESOLVED  a function is called by a name that resolves nowhere -- not in
 #               the file, not in a file it source()s, not in any package it
 #               loads, not in base R. This is what an upstream rename looks
-#               like from here (pecotmr 0.9.0 dropping the `get` prefix turned
-#               every getTopLoci() call into one of these).
+#               like from here.
 #   BAD-ARG     a named argument that is not in the callee's formals, for a
 #               pecotmr function whose signature has no `...` to absorb it.
 #
@@ -21,11 +20,10 @@
 #   * do.call(fn, args) -- the argument names are a runtime value, not syntax.
 #   * source(<computed path>) -- the helper file is chosen at run time, so for
 #     those callers any definition in the scanned tree is accepted.
-#   * The `...`-dispatching S4 generics (fineMappingPipeline, twasWeightsPipeline,
-#     colocboostPipeline, qtlAssociationPostprocess): findMethods() rewrites a
-#     method's formals to the generic's `(data, ...)`, so their real argument
-#     lists are only reachable through pecotmr internals. All four have runtime
-#     tests, which is what covers them.
+#   * do.call(fn, args) is the remaining one: the argument names live in a
+#     variable, not in the call's syntax. The `...`-dispatching S4 generics
+#     (fineMappingPipeline, twasWeightsPipeline, colocboostPipeline,
+#     qtlEnrichmentPipeline, ...) ARE checked -- see methodFormals() below.
 suppressWarnings(suppressMessages(library(pecotmr)))
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -33,9 +31,34 @@ roots <- if (length(args)) args else "code/script"
 
 ns <- asNamespace("pecotmr")
 pecotmrExports <- getNamespaceExports(ns)
-# Generics whose methods' formals are rewritten to the generic's signature.
-DISPATCH_BLIND <- c("fineMappingPipeline", "twasWeightsPipeline",
-                    "colocboostPipeline", "qtlAssociationPostprocess")
+
+# The formals a method REALLY takes. When a method's signature differs from its
+# generic's, setMethod() stores a wrapper whose own formals are the generic's
+# -- `(data, ...)` -- which defines the real function as `.local` and forwards
+# to it. Reading formals(m) therefore yields `(data, ...)`, whose `...` makes
+# the BAD-ARG check below bail out, leaving every argument of every
+# dispatching pipeline unchecked -- a whole class of upstream rename reaching
+# the wrappers with this check still reporting clean. Dig `.local` out.
+methodFormals <- function(m) {
+  nms <- names(formals(m))
+  if (!identical(nms[length(nms)], "...")) return(nms)
+  b <- body(m)
+  if (is.call(b) && identical(as.character(b[[1L]])[1L], "{")) {
+    for (st in as.list(b)[-1L]) {
+      if (!(is.call(st) && length(st) == 3L &&
+            as.character(st[[1L]])[1L] %in% c("<-", "=") &&
+            identical(as.character(st[[2L]])[1L], ".local"))) next
+      # setMethod() embeds .local as a CLOSURE in the body, not as a call to
+      # `function` -- the distinction matters, since is.call() is FALSE for it
+      # and a check written only for the call form silently reports clean.
+      v <- st[[3L]]
+      if (is.function(v)) return(names(formals(v)))
+      if (is.call(v) && identical(as.character(v[[1L]])[1L], "function"))
+        return(names(formals(eval(v))))
+    }
+  }
+  nms
+}
 
 isEmptyArg <- function(x) identical(x, quote(expr = ))
 
@@ -243,14 +266,26 @@ for (f in names(parsed)) {
       note(f, "UNRESOLVED", paste0(nm, "()"))
       return(invisible())
     }
-    if (!(nm %in% pecotmrExports) || nm %in% DISPATCH_BLIND) return(invisible())
+    if (!(nm %in% pecotmrExports)) return(invisible())
     # A local binding of the same name shadows the pecotmr one: do not
     # arg-check against a signature the script is not calling.
     if (nm %in% local_defs) return(invisible())
     target <- get(nm, envir = ns)
     fml <- if (is(target, "genericFunction")) {
-      unique(unlist(c(lapply(findMethods(nm, where = ns), function(m) names(formals(m))),
-                      list(names(formals(args(target)))))))
+      ms <- findMethods(nm, where = ns)
+      # The methods' own argument lists, not the generic's `(x, ...)` facade --
+      # taking the union with the generic would drag its `...` in and bail out.
+      if (length(ms)) {
+        per <- lapply(ms, methodFormals)
+        # A `...` in ONE method must not disable the check for the generic.
+        # The variadic methods here are list fan-outs -- writeBed("list"),
+        # writeGwasVcf("list") -- that forward each element to the per-element
+        # method, so a name no method names is wrong whichever one dispatches.
+        # Only a generic whose every method is variadic is genuinely unknowable.
+        if (all(vapply(per, function(f) "..." %in% f, logical(1))))
+          unique(unlist(per))
+        else setdiff(unique(unlist(per)), "...")
+      } else names(formals(args(target)))
     } else {
       names(formals(args(target)))
     }

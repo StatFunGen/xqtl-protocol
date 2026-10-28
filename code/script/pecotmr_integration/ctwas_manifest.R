@@ -7,10 +7,10 @@
 # LD block with the per-block GwasSumStats RDS path the caller is expected to
 # build (the `region` column drives that fan-out).
 #
-# Gene -> home-LD-block PLACEMENT is no longer done here: pecotmr's
-# assembleCtwasInputs() now places each gene into its block internally from the
-# `region` provenance carried on the TwasWeights / FineMappingResult (matching
-# cTWAS's own p0 assignment rule). So this manifest is pecotmr-free and does NOT
+# Gene -> home-LD-block PLACEMENT is NOT done here: assembleCtwasInputs()
+# places each gene into its block internally from the `region` provenance
+# carried on the TwasWeights / FineMappingResult (matching cTWAS's own p0
+# assignment rule). So this manifest is pecotmr-free and does NOT
 # read the weights or the xQTL meta table — the weights are handed to
 # ctwas_assemble.R as a single FLAT set, not bucketed per block.
 #

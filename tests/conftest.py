@@ -168,8 +168,11 @@ def ctwas_chain(run_r, repo_root, tmp_path_factory):
             "--ld-block", row["region"], "--ld-meta", ldmeta,
             "--output", row["gwas_sumstats_rds"]])
     inputs = d / "ctwas_inputs.rds"
+    # --method is explicit: the committed fixture carries susie weights only, and
+    # pecotmr only defaults the method when an 'ensemble' entry is present.
     ok("ctwas_assemble.R",
-       ["--manifest", manifest, "--twas-weights", s4, "--twas-weight-cutoff", "0",
+       ["--manifest", manifest, "--twas-weights", s4, "--method", "susie",
+        "--twas-weight-cutoff", "0",
         "--cs-min-cor", "0", "--min-pip-cutoff", "0", "--max-num-variants", "Inf",
         "--output", inputs])
     est = d / "ctwas_est.rds"

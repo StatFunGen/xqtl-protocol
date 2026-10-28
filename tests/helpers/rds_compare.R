@@ -71,8 +71,8 @@ canon <- function(x) {
     if (is.null(e) || environmentName(e) != "" || isNamespace(e)) {
       return("<function>")
     }
-    # A closure can be SELF-REFERENTIAL: pecotmr 0.9.0's ctwas LD_loader_fun
-    # keeps a copy of itself (`fn`) in its own frame, so descending into that
+    # A closure can be SELF-REFERENTIAL: the ctwas LD_loader_fun keeps a copy
+    # of itself (`fn`) in its own frame, so descending into that
     # frame reaches the same environment again and recurses until the node
     # stack overflows. Collapse an environment already open on this path --
     # both sides hit it at the same place, so the comparison stays fair.
@@ -84,8 +84,16 @@ canon <- function(x) {
     return(list(.closure = canon(as.list(e, all.names = TRUE))))
   }
   out <- if (isS4(x)) {
-    sl <- methods::slotNames(x)
-    stats::setNames(lapply(sl, function(s) canon(methods::slot(x, s))), sl)
+    # The slots the CLASS defines, UNION the slots this object physically
+    # carries. A fixture serialised under an older class definition can hold a
+    # slot the class has since renamed, and methods::slot() on a name the
+    # object lacks ERRORS -- which turns a reportable difference into a
+    # crashed comparison. Record a sentinel for a slot either side lacks, so
+    # the diff names it instead.
+    sl <- union(methods::slotNames(x), setdiff(names(attributes(x)), "class"))
+    stats::setNames(lapply(sl, function(s)
+      if (methods::.hasSlot(x, s)) canon(methods::slot(x, s))
+      else "<slot-absent>"), sl)
   } else if (is.data.frame(x)) {
     if (normPaths) x[] <- lapply(x, function(col) if (is.character(col)) norm_paths(col) else col)
     if (sortRows && nrow(x) > 1L) {

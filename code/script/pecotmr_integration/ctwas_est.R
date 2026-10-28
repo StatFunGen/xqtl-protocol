@@ -25,6 +25,9 @@ suppressPackageStartupMessages({
   library(pecotmr)
 })
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 parser <- arg_parser("cTWAS step 2: estimate group prior + prior variance")
 parser <- add_argument(parser, "--inputs",
                        help = "RDS produced by ctwas_assemble.R",
@@ -58,22 +61,19 @@ parser <- add_argument(parser, "--output",
 argv <- parse_args(parser)
 
 inputs <- readRDS(argv$inputs)
-# pecotmr 0.9.0: estCtwasParam() -> estCtwasGroupPriors(), with the EM prior
-# knobs in CtwasPriorParam() (groupPriorVarStructure -> varStructure), ncore ->
-# numThreads, and the two ctwas::est_param pass-throughs in the est-param
-# options bundle under ctwas's own names.
+# The EM prior knobs travel in CtwasPriorParam(); the two ctwas::est_param
+# pass-throughs go in the est-param options bundle under ctwas's own names.
 est <- estCtwasGroupPriors(
   inputs,
-  ctwasPriorArgs = CtwasPriorParam(
+  ctwasPriorParam = CtwasPriorParam(
     thin             = argv$thin,
     niterPrefit      = argv$niter_prefit,
     niter            = argv$niter,
     varStructure     = argv$group_prior_var_structure,
     fallbackToPrefit = argv$fallback_to_prefit),
-  numThreads = argv$ncore,
+  BPPARAM = as_bpparam(argv$ncore),
   # min_group_size is a formal of BOTH ctwas::assemble_region_data and
-  # ctwas::est_param. Pre-0.9.0 a single `...` was splatted into every step, so
-  # one value reached both; the per-step bundles must each carry it or
+  # ctwas::est_param, and the per-step bundles must EACH carry it, or
   # assemble_region_data silently keeps ctwas's own default (100) and drops
   # every group in a small run. min_p_single_effect is est_param's alone.
   methodArgs = CtwasOptions(

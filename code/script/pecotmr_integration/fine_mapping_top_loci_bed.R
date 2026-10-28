@@ -3,7 +3,7 @@
 #
 # Export the top-loci BED for one or more QtlFineMappingResult /
 # GwasFineMappingResult RDSes. The schema, the join to the marginal effects,
-# the sort and the compression all live in pecotmr::exportToBed(); this
+# the sort and the compression all live in pecotmr::writeBed(); this
 # wrapper only resolves the CLI, reads the inputs, and supplies the one
 # published column no S4 object can know -- `block_id`, parsed from the source
 # filename.
@@ -41,7 +41,7 @@ minPurity <- if (is.na(argv$min_purity)) NULL else argv$min_purity
 # chrN_start_end token.
 #
 # `block_id` is a first-class published column now: a GwasFineMappingResult
-# records `blockId` and exportToBed() writes it, so supplying it again through
+# records `blockId` and writeBed() writes it, so supplying it again through
 # extraColumns would be refused as overwriting a published column. It is only
 # needed for the QTL side, whose result has no block axis -- there blockId()
 # is NA for every row, the column is dropped as empty, and the
@@ -62,7 +62,7 @@ keep <- !vapply(fmrs, is.null, logical(1))
 fmrs <- fmrs[keep]
 if (length(fmrs) == 0L) stop("No FineMappingResult inputs could be read.")
 
-# `block_id` is per INPUT, and exportToBed() folds the inputs into one table in
+# `block_id` is per INPUT, and writeBed() folds the inputs into one table in
 # the order given, attaching extraColumns BEFORE the final sort -- so a vector
 # built in that same order stays aligned with its rows.
 recorded <- vapply(fmrs, function(fmr) any(!is.na(blockId(fmr))), logical(1))
@@ -80,7 +80,7 @@ extraColumns <- if (any(recorded)) {
   list(block_id = rep(unname(blockIds), times = rowsPerInput))
 }
 
-exportToBed(fmrs, argv$output, schema = "topLoci",
+writeBed(fmrs, argv$output, schema = "topLoci",
             signalCutoff = argv$signal_cutoff, minPurity = minPurity,
             extraColumns = extraColumns)
 cat(sprintf("Wrote the top-loci BED from %d input(s) to %s\n",

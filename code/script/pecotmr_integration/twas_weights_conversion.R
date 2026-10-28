@@ -3,7 +3,7 @@
 #
 # Convert legacy FunGen-xQTL TWAS weight RDS files (the frozen Synapse release;
 # list layout gene -> "<context>_<gene>" -> twas_weights / twas_cv_result /
-# region_info) into ONE pecotmr (>= 0.8.2) TwasWeights object per gene, and
+# region_info) into ONE pecotmr TwasWeights object per gene, and
 # write the matching xqtl_meta row
 # (#chr start end region_id TSS original_data contexts).
 #
@@ -58,7 +58,7 @@ for (f in files) {
       if (all(is.na(wv)) || all(wv == 0, na.rm = TRUE)) next
       m <- sub("_weights$", "", wn)
       fits <- if (m %in% c("susie", "susie_inf", "susie_ash")) co$susie_weights_intermediate else NULL
-      E[[length(E) + 1L]] <- twasWeightsRow(variantIds = vids, weights = wv,
+      E[[length(E) + 1L]] <- TwasWeightsRow(variantIds = vids, weights = wv,
                                            methodFits = fits, cvResult = cvMetrics(perf[[m]]))
       S <- c(S, a$study); C <- c(C, ctx); Tr <- c(Tr, gene); M <- c(M, m)
       TPc <- c(TPc, paste0("chr", sub("^chr", "", co$region_info$region_coord$chrom)))

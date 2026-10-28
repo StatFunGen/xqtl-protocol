@@ -23,9 +23,9 @@ if (!is.null(nr)) summ$nrow <- as.integer(nr)
 # Optional accessors: include each only when it resolves without error and
 # returns something non-NULL. Keeps the probe generic across QtlDataset /
 # FineMappingResult / TwasWeights / CtwasResult / ...
-# pecotmr 0.9.0 dropped the `get` prefix from every accessor, so the reported
-# key can no longer be derived from the function name -- it is named here, which
-# also keeps the JSON keys stable for the Python assertions. No exists() guard:
+# The reported key is named here rather than derived from the accessor's name,
+# which keeps the JSON keys stable for the Python assertions across upstream
+# renames. No exists() guard:
 # an accessor missing from the installed pecotmr is a real break and must fail.
 accessors <- c(studyName = "Study", contexts = "Contexts",
                methodNames = "MethodNames")

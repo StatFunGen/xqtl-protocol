@@ -4,7 +4,7 @@
 # Convert legacy FunGen-xQTL QTL fine-mapping RDS files (the frozen Synapse
 # release, *.univariate_bvsr.rds; list layout gene -> "<context>_<gene>" ->
 # susie_result_trimmed / sumstats / variant_names / region_info) into ONE
-# pecotmr (>= 0.8.2) QtlFineMappingResult per gene -- the fineMappingResult
+# pecotmr QtlFineMappingResult per gene -- the fineMappingResult
 # that causalInferencePipeline (twas.R --fine-mapping-result) uses for MR.
 #
 # Study and context labels follow twas_weights_conversion.R (context = the
@@ -49,7 +49,7 @@ for (gene in names(lg)) for (cn in names(lg[[gene]])) {
                    posterior_mean = unname(pm), posterior_sd = unname(psd), cs_95 = cs95,
                    stringsAsFactors = FALSE)
   nCS <- nCS + sum(cs95 != "0")
-  E[[length(E) + 1L]] <- fineMappingRow(variantIds = vids, susieFit = fit, topLoci = tl)
+  E[[length(E) + 1L]] <- FineMappingRow(variantIds = vids, susieFit = fit, topLoci = tl)
   S <- c(S, a$study); C <- c(C, sub(paste0("[_:]", gene, "$"), "", cn)); Tr <- c(Tr, gene)
   rc <- co$region_info$region_coord
   TPc <- c(TPc, paste0("chr", sub("^chr", "", rc$chrom))); TPp <- c(TPp, as.integer(rc$start))

@@ -301,8 +301,8 @@ if (!is.null(nSample))  manifest_df$nSample  <- nSample
 gss <- loadGwasSumStatsFromManifest(
   manifest = manifest_df,
   genome   = argv$genome,
-  ldSketch = ld_sketch_spec,
-  region   = argv$ld_block)
+  ldReference = ld_sketch_spec,
+  which    = as_region_granges(argv$ld_block))
 
 # An LD block with no GWAS variants (a gap in the sumstats) cannot be QC'd:
 # write no output and exit cleanly so the caller can drop the block.
@@ -319,8 +319,8 @@ gss_out <- if (argv$skip_qc) {
   if (is.na(effN))
     stop("--effective-n must be TRUE or FALSE (got: ", argv$effective_n, ")")
   # Still assembled under the FLAT argument names -- the wrapper flags and
-  # --qc-args both speak them -- then routed into pecotmr 0.9.0's bundles
-  # (panelFilterParam / signalScreenArgs / ...) by summary_stats_qc_args().
+  # --qc-args both speak them -- then routed into summaryStatsQc()'s bundles
+  # (panelFilterParam / signalScreenParam / ...) by summary_stats_qc_args().
   qc_flat <- c(list(zMismatchQc     = qc_method,
                     impute          = isTRUE(argv$impute),
                     pipCutoffToSkip = argv$pip_cutoff_to_skip,

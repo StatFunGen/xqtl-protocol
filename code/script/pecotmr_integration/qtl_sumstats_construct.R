@@ -93,8 +93,8 @@ if (!is.na(argv$n_sample))       manifest$nSample      <- argv$n_sample
 qss <- loadQtlSumStatsFromManifest(
   manifest         = manifest,
   genome           = argv$genome,
-  ldSketch         = argv$ld_sketch,
-  region           = if (nzchar(argv$region)) argv$region else NULL,
+  ldReference      = argv$ld_sketch,
+  which            = if (nzchar(argv$region)) as_region_granges(argv$region) else NULL,
   columnMapping    = if (nzchar(argv$column_mapping)) argv$column_mapping else NULL,
   traitColumn      = if (nzchar(argv$trait_column)) argv$trait_column else NULL,
   variantIdAlleles = argv$variant_id_alleles)
@@ -103,7 +103,7 @@ out <- if (argv$skip_qc) {
   message("--skip-qc set; serialising the raw QtlSumStats without summaryStatsQc().")
   qss
 } else {
-  # Flat flag names routed into pecotmr 0.9.0's bundles: maf/mac/imiss ->
+  # Flat flag names routed into summaryStatsQc()'s bundles: maf/mac/imiss ->
   # PanelFilterParam, zMismatchQc -> ldMismatchQcMethod, pipCutoffToSkip ->
   # SignalScreenParam(pip =). See summary_stats_qc_args() in pecotmr_aliases.R.
   do.call(summaryStatsQc,
@@ -120,6 +120,6 @@ dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(out, argv$output, compress = "xz")
 cat(sprintf("Wrote QtlSumStats for %s/%s/%s (%d variant(s), LD sketch %s) to %s\n",
             argv$study, argv$context, argv$trait, length(out[[1L]]),
-            if (is.null(ldSketch(out))) "NULL" else
-              paste(dim(ldSketch(out)), collapse = " x "),
+            if (is.null(ldReference(out))) "NULL" else
+              paste(dim(ldReference(out)), collapse = " x "),
             argv$output))

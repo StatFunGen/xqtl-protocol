@@ -7,14 +7,13 @@
 #           grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
 #   source(file.path(.d, "pecotmr_aliases.R"))
 #
-# pecotmr 0.8.2 camelCased its MASH component/Vhat names and its TWAS method
-# tokens. The snake_case spellings remain the public interface on this side --
+# pecotmr spells its MASH component / Vhat names and its TWAS method tokens
+# camelCase. The snake_case spellings are the public interface on this side --
 # they are SoS step names in mixture_prior.ipynb (`[flash_nonneg]`,
 # `[vhat_simple_specific]`), they appear in output filenames that downstream
 # steps consume, and they are the documented `--twas-methods` values in
-# mnm_regression.ipynb -- so the wrappers keep accepting them and translate
-# here. Both spellings are accepted, so callers already using the pecotmr
-# names work unchanged.
+# mnm_regression.ipynb -- so the wrappers accept them and translate here. Both
+# spellings are accepted, so a caller using the pecotmr names works too.
 #
 # This is argument / return-value marshalling only; no analysis logic (that
 # lives in pecotmr).
@@ -25,17 +24,17 @@ MASH_COMPONENT_ALIASES <- c(flash_nonneg = "flashNonneg")
 # mashResidualCorrelation(method=)
 MASH_VHAT_ALIASES <- c(simple_specific = "simpleSpecific")
 
-# mashPriorCovariances(engine=). 0.9.0 renamed the engines camelCase AND folded
-# udr's ED-vs-TED choice out of the engine name into the options object, so the
-# three names this side exposes (and mixture_prior.ipynb's [ud] /
-# [ud_unconstrained] / [ed_bovy] steps pass) no longer map one-to-one:
+# mashPriorCovariances(engine=). udr's ED-vs-TED choice lives in the options
+# object rather than in the engine name, so the three names this side exposes
+# (and mixture_prior.ipynb's [ud] / [ud_unconstrained] / [ed_bovy] steps pass)
+# do not map one-to-one onto engines:
 #
 #   cov_ed  -> "covEd"    mashr's exported cov_ed(), unchanged
 #   ud      -> covUdr + unconstrained.update = "ed"
 #   ud_ted  -> covUdr + unconstrained.update = "ted"
 #
-# Both udr engines pin the update explicitly. Left unset, 0.9.0 hands the
-# choice to udr, which picks TED on z-scale data and ED on the beta scale --
+# Both udr engines pin the update explicitly. Left unset, the choice falls to
+# udr, which picks TED on z-scale data and ED on the beta scale --
 # correct on its own terms, but it would silently merge the `ud` and `ud_ted`
 # steps into the same fit on z-scale input, and those are two different
 # documented engines on this side.
@@ -88,12 +87,11 @@ split_pecotmr_names <- function(value, aliases, split = "[ ,]+") {
   apply_pecotmr_aliases(parts, aliases)
 }
 
-# pecotmr 0.9.0 returns the top-loci tables (topLoci(), overlapTopLoci()) as
-# GRanges rather than data.frames. Every consumer here wants the flat
-# per-variant table, and as.data.frame() on a GRanges PREPENDS five range
-# columns (seqnames/start/end/width/strand) that are not part of the published
-# schema -- chrom and pos are already mcols. mcols() takes the data columns
-# only, so the frame keeps exactly the shape it had before 0.9.0.
+# The top-loci tables (topLoci(), overlapTopLoci()) come back as GRanges.
+# Every consumer here wants the flat per-variant table, and as.data.frame() on
+# a GRanges PREPENDS five range columns (seqnames/start/end/width/strand) that
+# are not part of the published schema -- chrom and pos are already mcols.
+# mcols() takes the data columns only, so the frame keeps the published shape.
 #
 # Only for those variant tables: a GRanges whose RANGES are the data
 # (fsusieAffectedRegions()) must keep going through as.data.frame().
@@ -104,8 +102,8 @@ as_variant_df <- function(x) {
 
 # ---- summaryStatsQc() argument routing -------------------------------------
 #
-# pecotmr 0.9.0 split summaryStatsQc()'s flat argument list into four bundles.
-# This side still speaks the flat names: they are the wrapper flags, and
+# summaryStatsQc() takes its arguments in four bundles. This side speaks flat
+# names instead: they are the wrapper flags, and
 # --qc-args is a documented JSON passthrough whose own examples
 # ({"mafCutoff":0.01,"nCutoff":0,"alleleFlipKriging":true}, rss_analysis.ipynb)
 # span three different destinations. So route each flat name to whichever
@@ -116,37 +114,37 @@ as_variant_df <- function(x) {
 SUMSTATS_QC_RENAMES <- c(zMismatchQc = "ldMismatchQcMethod")
 
 SUMSTATS_QC_BUNDLE_CTOR <- c(
-  sumstatsFilterArgs   = "SumstatsFilterParam",
+  sumstatsFilterParam   = "SumstatsFilterParam",
   panelFilterParam     = "PanelFilterParam",
-  signalScreenArgs     = "SignalScreenParam",
-  sumstatsCleaningArgs = "SumstatsCleaningParam")
+  signalScreenParam     = "SignalScreenParam",
+  sumstatsCleaningParam = "SumstatsCleaningParam")
 
 # flat name -> "<bundle>/<field in that bundle>"
 SUMSTATS_QC_ROUTING <- c(
-  removeIndels          = "sumstatsFilterArgs/removeIndels",
-  removeStrandAmbiguous = "sumstatsFilterArgs/removeStrandAmbiguous",
-  infoCutoff            = "sumstatsFilterArgs/infoCutoff",
-  nCutoff               = "sumstatsFilterArgs/nCutoff",
+  removeIndels          = "sumstatsFilterParam/removeIndels",
+  removeStrandAmbiguous = "sumstatsFilterParam/removeStrandAmbiguous",
+  infoCutoff            = "sumstatsFilterParam/infoCutoff",
+  nCutoff               = "sumstatsFilterParam/nCutoff",
   mafCutoff             = "panelFilterParam/mafCutoff",
   macCutoff             = "panelFilterParam/macCutoff",
   imissCutoff           = "panelFilterParam/imissCutoff",
   # the *CutoffToSkip screens became one bundle, one field per metric
-  pipCutoffToSkip       = "signalScreenArgs/pip",
-  absZCutoffToSkip      = "signalScreenArgs/absZ",
-  bfCutoffToSkip        = "signalScreenArgs/bf",
-  logBfCutoffToSkip     = "signalScreenArgs/logBf",
-  coerceNumeric         = "sumstatsCleaningArgs/coerceNumeric",
-  normalizeChr          = "sumstatsCleaningArgs/normalizeChr",
-  dropNonstandardChr    = "sumstatsCleaningArgs/dropNonstandardChr",
-  dropMissData          = "sumstatsCleaningArgs/dropMissData",
-  dropPOutOfRange       = "sumstatsCleaningArgs/dropPOutOfRange",
-  clampSmallP           = "sumstatsCleaningArgs/clampSmallP",
-  smallPFloor           = "sumstatsCleaningArgs/smallPFloor",
-  dropZeroEffect        = "sumstatsCleaningArgs/dropZeroEffect",
-  dropNonpositiveSe     = "sumstatsCleaningArgs/dropNonpositiveSe")
+  pipCutoffToSkip       = "signalScreenParam/pip",
+  absZCutoffToSkip      = "signalScreenParam/absZ",
+  bfCutoffToSkip        = "signalScreenParam/bf",
+  logBfCutoffToSkip     = "signalScreenParam/logBf",
+  coerceNumeric         = "sumstatsCleaningParam/coerceNumeric",
+  normalizeChr          = "sumstatsCleaningParam/normalizeChr",
+  dropNonstandardChr    = "sumstatsCleaningParam/dropNonstandardChr",
+  dropMissData          = "sumstatsCleaningParam/dropMissData",
+  dropPOutOfRange       = "sumstatsCleaningParam/dropPOutOfRange",
+  clampSmallP           = "sumstatsCleaningParam/clampSmallP",
+  smallPFloor           = "sumstatsCleaningParam/smallPFloor",
+  dropZeroEffect        = "sumstatsCleaningParam/dropZeroEffect",
+  dropNonpositiveSe     = "sumstatsCleaningParam/dropNonpositiveSe")
 
-# Turn a flat named list of summaryStatsQc() arguments into the 0.9.0 call
-# shape: the routed ones grouped into their bundle constructors, the rest
+# Turn a flat named list of summaryStatsQc() arguments into the call shape it
+# expects: the routed ones grouped into their bundle constructors, the rest
 # passed straight through.
 summary_stats_qc_args <- function(flat) {
   nms <- names(flat)
@@ -171,3 +169,57 @@ summary_stats_qc_args <- function(flat) {
   out
 }
 
+
+# ---- analysis windows ------------------------------------------------------
+#
+# pecotmr REFUSES a "chr:start-end" string wherever it takes a window (a
+# pipeline's `region`, a loader's `which`): a window is a GRanges, or the path
+# of a BED file, so that none is misread by one base -- a BED start is 0-based
+# where a GRanges is 1-based.
+#
+# The wrappers' windows come from the CLI, where they are 1-based inclusive
+# "chr:start-end" (or the "chr_start_end" spelling that LD-block ids use), so
+# that parsing happens here: vectorised, either spelling, no "chr" prefix
+# required, chromosome canonicalised (M -> MT, 23/24 -> X/Y).
+as_region_granges <- function(regions) {
+  if (methods::is(regions, "GenomicRanges")) return(regions)
+  if (!is.character(regions) || !length(regions) || any(!nzchar(regions)))
+    stop("region must be a non-empty character vector of 'chr:start-end' ",
+         "or 'chr_start_end' windows (got ", class(regions)[[1L]], ")")
+  parts <- do.call(rbind, strsplit(regions, "[_:-]"))
+  if (ncol(parts) != 3L)
+    stop("Region format must be 'chr:start-end' or 'chr_start_end', got: ",
+         paste(regions, collapse = ", "))
+  bare <- toupper(sub("^ch(r)?", "", parts[, 1L], ignore.case = TRUE))
+  bare <- sub("^0+(?=[0-9])", "", bare, perl = TRUE)
+  bare[bare == "23"] <- "X"
+  bare[bare == "24"] <- "Y"
+  bare[bare == "M"]  <- "MT"
+  start <- suppressWarnings(as.integer(parts[, 2L]))
+  end   <- suppressWarnings(as.integer(parts[, 3L]))
+  if (anyNA(start) || anyNA(end))
+    stop("Region start/end must be integers, got: ",
+         paste(regions, collapse = ", "))
+  GenomicRanges::GRanges(paste0("chr", bare), IRanges::IRanges(start, end))
+}
+
+# ---- parallel workers ------------------------------------------------------
+#
+# CrossValidationParam() and the cTWAS steps (estCtwasGroupPriors,
+# screenCtwasRegions, finemapCtwasRegions, mergeCtwasBoundaryRegions) take a
+# BiocParallel `BPPARAM`: the caller picks the backend.
+#
+# The wrapper flags are integer counts (--cv-threads, --ncore) -- documented
+# notebook arguments, and SoS passes a core count -- so translate, keeping
+# their meaning that 1 = serial and -1 = every core. SerialParam() for a
+# single worker matters beyond speed: it runs the folds in THIS process, so
+# set.seed() here reaches them.
+as_bpparam <- function(numThreads) {
+  n <- suppressWarnings(as.integer(numThreads))
+  if (length(n) != 1L || is.na(n) || n == 0L)
+    stop("thread count must be a non-zero integer (-1 = all cores), got: ",
+         paste(numThreads, collapse = ", "))
+  if (n == 1L) return(BiocParallel::SerialParam())
+  if (n < 0L)  return(BiocParallel::MulticoreParam())
+  BiocParallel::MulticoreParam(workers = n)
+}

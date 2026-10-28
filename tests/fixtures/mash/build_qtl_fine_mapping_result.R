@@ -32,12 +32,12 @@ mkEntry <- function(cond) {
     marginal_p = 2 * pnorm(-abs(d$z)),
     pip = d$pip, posterior_mean = d$z, posterior_sd = 1, cs_95 = cs95,
     stringsAsFactors = FALSE)
-  FineMappingEntry(variantIds = d$variant_id, susieFit = list(payload = cond),
-                   topLoci = tl)
+  FineMappingRow(variantIds = d$variant_id, susieFit = list(payload = cond),
+                 topLoci = tl)
 }
 
 fmr <- QtlFineMappingResult(
-  study   = rep("protocol_example", length(conds)),
+  studyName = rep("protocol_example", length(conds)),
   context = conds,
   trait   = rep("mash", length(conds)),
   method  = rep("susie", length(conds)),
@@ -46,4 +46,4 @@ fmr <- QtlFineMappingResult(
 out <- file.path(here, "protocol_example.QtlFineMappingResult.rds")
 saveRDS(fmr, out, compress = "xz")
 cat(sprintf("Wrote %s (%d contexts, %d CS members)\n",
-            out, nrow(fmr), nrow(getCs(fmr))))
+            out, nrow(fmr), nrow(credibleSets(fmr))))

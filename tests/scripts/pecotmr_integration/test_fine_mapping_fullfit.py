@@ -33,10 +33,13 @@ csTables <- list(
   list(sets = fit$sets, cs_corr = fit$cs_corr, pip = fit$pip),   # 0.95 primary
   fit$sets_secondary$coverage_0.7,
   fit$sets_secondary$coverage_0.5)
-names(csTables) <- vapply(c(0.95, 0.7, 0.5), pecotmr:::formatCsColumn,
-                          character(1), method = "susie")
+# computeCsTables() builds these names, but it needs the genotype matrix to
+# score purity and this committed fit is trimmed, so the shape is assembled by
+# hand. The names are pecotmr's CS-column convention, written out rather than
+# re-derived from it: a change to the convention should fail here, loudly.
+names(csTables) <- c("CS_95_susie", "CS_70_susie", "CS_50_susie")
 attr(csTables, "coverage") <- c(0.95, 0.7, 0.5)
-tl <- as.data.frame(pecotmr:::buildTopLoci(fit, csTables, variantNames = vn,
+tl <- as.data.frame(pecotmr::buildTopLoci(fit, csTables, variantNames = vn,
         method = "susie", signalCutoff = 0,
         credibleSetParam = CredibleSetParam(perCsColumns = "full",
                                             includeAllCs = FALSE)))

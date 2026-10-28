@@ -118,8 +118,7 @@ entries <- lapply(genes, mkEntry)
 nVar     <- as.numeric(regional$n_variants)
 nVarFcol <- if (!is.null(nvFilt)) as.numeric(nvFilt[genes]) else NULL
 
-# pecotmr 0.9.0: `study` -> `studyName`, and the per-trait statistic columns
-# travel in `extraCols` instead of `...` (which the constructor no longer has).
+# The per-trait statistic columns travel in `extraCols`.
 extraCols <- list(
   n_variants  = nVar,
   p_beta      = as.numeric(regional$p_beta),

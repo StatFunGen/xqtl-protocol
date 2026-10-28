@@ -56,7 +56,7 @@ argv <- parse_args(p)
 .d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
 source(file.path(.d, "pecotmr_aliases.R"))
 
-# cov_ed / ud / ud_ted -> the 0.9.0 engine spelling (a name, or the udr
+# cov_ed / ud / ud_ted -> the engine pecotmr expects (a name, or the udr
 # options object that carries the ED-vs-TED choice).
 engine_arg <- mash_prior_engine(argv$engine)
 

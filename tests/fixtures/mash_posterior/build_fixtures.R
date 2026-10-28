@@ -28,7 +28,7 @@ mwe <- path.expand(Sys.getenv("MWE_MASH",
 mi <- readRDS(file.path(mwe, "protocol_example.mashr_input.rds"))
 
 mk <- function(b, s) qtlSumStatsFromBetaMatrix(as.matrix(mi[[b]]),
-                                               as.matrix(mi[[s]]), study = "mash")
+                                               as.matrix(mi[[s]]), studyName = "mash")
 ssl <- list(strong = mk("strong.b", "strong.s"),
             random = mk("random.b", "random.s"),
             null   = mk("null.b",   "null.s"))

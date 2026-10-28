@@ -6,8 +6,8 @@
 # inline fine-mapping when given sumstats), and calls
 # `pecotmr::colocPipeline()`. When `--enrichment` points at the output
 # of `qtl_enrichment.R`, the per-pair `p12` prior is scaled by
-# `(1 + enrichment)`, the "enloc" variant of coloc. (pecotmr 0.9.0 removed
-# the cap on that adjusted prior, so the former --p12-max flag is gone.)
+# `(1 + enrichment)`, the "enloc" variant of coloc. That adjusted prior is
+# uncapped.
 #
 # Inputs:
 #   --qtl-fine-mapping     Path to S4 QtlFineMappingResult RDS
@@ -74,8 +74,8 @@ argv <- parse_args(parser)
   if (length(objs) == 1L) return(objs[[1L]])
   if (all(vapply(objs, function(o) methods::is(o, "FineMappingResultBase"), logical(1)))) {
     # Preserve the (shared) ldSketch; combineFineMappingResults defaults it NULL.
-    ld <- tryCatch(objs[[1L]]@ldSketch, error = function(e) NULL)
-    return(do.call(combineFineMappingResults, c(objs, list(ldSketch = ld))))
+    ld <- tryCatch(objs[[1L]]@ldReference, error = function(e) NULL)
+    return(do.call(combineFineMappingResults, c(objs, list(ldReference = ld))))
   }
   objs[[1L]]
 }
@@ -86,12 +86,13 @@ enrich   <- if (nzchar(argv$enrichment) && argv$enrichment != "." &&
 
 methods <- trimws(strsplit(argv$finemapping_methods, ",", fixed = TRUE)[[1L]])
 
-# pecotmr 0.9.0 groups these into ColocPriorParam / ColocLbfFilterParam /
-# GwasFineMappingParam. `priors` is passed only WITHOUT an enrichment table:
-# 0.9.0 refuses both at once (with an enrichment table the priors are enloc's,
-# derived from the genome-wide QTL results, so supplying them here too would
-# mean scoring with one set and enriching with another), and it detects
-# "supplied" as missing(priors) -- so even default values must be withheld.
+# These travel as the ColocPriorParam / ColocLbfFilterParam /
+# GwasFineMappingParam bundles. `priors` is passed only WITHOUT an enrichment
+# table: colocPipeline refuses both at once (with an enrichment table the
+# priors are enloc's, derived from the genome-wide QTL results, so supplying
+# them here too would mean scoring with one set and enriching with another),
+# and it detects "supplied" as missing(priors) -- so even default values must
+# be withheld.
 # Priors the caller actually chose are not silently dropped: that combination
 # is rejected here, with pecotmr's own reasoning.
 prior_defaults <- c(p1 = 1e-4, p2 = 1e-4, p12 = 5e-6)
@@ -106,11 +107,11 @@ if (!is.null(enrich) && priors_set)
 coloc_args <- list(
   qtlFineMappingResult = qtlFmr,
   gwasInput            = gwasIn,
-  lbfFilterArgs        = ColocLbfFilterParam(
+  colocLbfFilterParam        = ColocLbfFilterParam(
     filterLbfCs = argv$filter_lbf_cs,
     secondary   = if (is.na(argv$filter_lbf_cs_secondary)) NULL
                   else argv$filter_lbf_cs_secondary),
-  gwasFineMappingArgs  = GwasFineMappingParam(methods = methods),
+  gwasFineMappingParam  = GwasFineMappingParam(methods = methods),
   enrichment           = enrich,
   adjustPips           = !argv$no_adjust_pips)
 if (is.null(enrich))

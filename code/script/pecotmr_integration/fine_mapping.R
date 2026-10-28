@@ -211,10 +211,9 @@ read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
   unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
 
 # Build the per-call genotype-filter overrides as one GenotypeFilterParam()
-# bundle (pecotmr 0.9.0 collapsed the seven loose arguments into it). An UNSET
-# field leaves the QtlDataset's construct-time slot untouched, which is exactly
-# the override role the bundle documents, so the NULLs are dropped rather than
-# passed. The pipeline applies these to a validated copy; the wrapper never
+# bundle. An UNSET field leaves the pipeline's own default in place, which is
+# exactly the override role the bundle documents, so the NULLs are dropped
+# rather than passed. The pipeline applies these to a validated copy; the wrapper never
 # mutates @slots directly. Mirrored in twas_weights.R.
 qd_filter_overrides <- function(argv) {
   ov <- list(
@@ -334,9 +333,8 @@ methods_arg <- if (is.null(parsed_method_args)) methods else
     if (tk %in% names(parsed_method_args)) parsed_method_args[[tk]] else list()),
     methods)
 
-# Per-CS variant-level export. pecotmr 0.9.0 replaced the fullFit /
-# fullFitAlphaOnly pair with one perCsColumns choice: "none" emits only the
-# within_cs_pip scalar (the default), "alpha" also widens the per-CS alpha
+# Per-CS variant-level export, as one perCsColumns choice: "none" emits only
+# the within_cs_pip scalar (the default), "alpha" also widens the per-CS alpha
 # matrices, "full" widens logbf / effect / effect-variance as well.
 per_cs_columns <- if (!isTRUE(argv[["full_fit"]])) {
   "none"
@@ -347,8 +345,8 @@ per_cs_columns <- if (!isTRUE(argv[["full_fit"]])) {
 }
 
 # Credible-set / coverage knobs common to both modes, as the single
-# CredibleSetParam() bundle 0.9.0 expects (L -> maxNumSingleEffects,
-# L_greedy -> maxNumSingleEffectsGreedy). medianAbsCorr and the greedy count
+# CredibleSetParam() bundle, where --L is maxNumSingleEffects and --L-greedy
+# is maxNumSingleEffectsGreedy. medianAbsCorr and the greedy count
 # are added only when set, so an unset field keeps the bundle's own default.
 # The susie-family token seeding and the explicit --method-args overrides still
 # live in pecotmr (.fmNormalizeMethods).
@@ -385,9 +383,9 @@ if (has_gwas || has_qss) {
   # (keepFullFit = "fallback"); FALSE (default) drops it (keepFullFit = "none").
   # pecotmr's "all" mode is intentionally not exposed.
   keep_full_fit <- if (isTRUE(keep_original_fit)) "fallback" else "none"
-  # SuSiE-RSS knobs, as the SusieRssParam() bundle 0.9.0 expects (rssControl ->
-  # control). rFinite and control forward only when set, so an unset field keeps
-  # the bundle's own default.
+  # SuSiE-RSS knobs, as the SusieRssParam() bundle, where --rss-control is
+  # `control`. rFinite and control forward only when set, so an unset field
+  # keeps the bundle's own default.
   rss_param_args <- list(serFallback = ser_fallback,
                          rMismatch   = argv$r_mismatch,
                          keepFullFit = keep_full_fit)
@@ -403,8 +401,8 @@ if (has_gwas || has_qss) {
            '\'{"check_prior":true,"mismatch_estimator":"map"}\'.')
     rss_param_args$control <- rc
   }
-  # No seed= here: neither RSS method takes one (pre-0.9.0 they ended in `...`,
-  # which silently swallowed it), so RSS mode is seeded by the set.seed() above.
+  # No seed= here: neither RSS method takes one, so RSS mode is seeded by the
+  # set.seed() above.
   gwas_args <- c(cs_args,
                  list(susieRssParam = do.call(SusieRssParam, rss_param_args)))
   res <- do.call(fineMappingPipeline, c(list(gss), gwas_args))
@@ -432,17 +430,17 @@ if (has_gwas || has_qss) {
   # numThreads.
   qtl_args <- c(list(qd), cs_args, qd_filter_overrides(argv),
                 list(contexts            = contexts_arg,
-                     signalScreenArgs    = SignalScreenParam(
+                     signalScreenParam    = SignalScreenParam(
                        pip = argv$pip_cutoff_to_skip),
-                     crossValidationArgs = CrossValidationParam(
-                       folds = argv$cv_folds, numThreads = argv$cv_threads)))
+                     crossValidationParam = CrossValidationParam(
+                       folds = argv$cv_folds, BPPARAM = as_bpparam(argv$cv_threads))))
   # Opt-in multivariate / joint knobs. Each is added only when the user set it,
   # so the call stays compatible with a pecotmr that predates the argument
   # (mirrors the medianAbsCorr handling above).
   if (!is.null(joint_spec)) qtl_args$jointSpecification <- joint_spec
   if (!is.null(twas_weights_obj)) {
-    # 0.9.0 renamed this argument mrmashPrior; it still takes the TwasWeights
-    # object a preceding mr.mash run produced.
+    # mrmashPrior takes the TwasWeights object a preceding mr.mash run
+    # produced.
     qtl_args$mrmashPrior <- twas_weights_obj
     qtl_args$dataDrivenPriorWeightsCutoff <- argv$data_driven_prior_weights_cutoff
   }
@@ -454,7 +452,7 @@ if (has_gwas || has_qss) {
   label <- if (has_region) paste0("region '", argv$region, "'")
            else paste0("gene '", argv$gene_id, "'")
   run_fm <- function() if (has_region) {
-    do.call(fineMappingPipeline, c(qtl_args, list(region = GenomicRanges::GRanges(argv$region))))
+    do.call(fineMappingPipeline, c(qtl_args, list(region = as_region_granges(argv$region))))
   } else {
     do.call(fineMappingPipeline, c(qtl_args,
                                    list(traitId = argv$gene_id,
@@ -524,8 +522,8 @@ if (has_gwas && !is.null(res)) {
 
 if (has_qtl && has_region && "fsusie" %in% methods) {
     # The published fSuSiE table (schema, packing, sort, bgzip + tabix) is
-    # pecotmr's exportToBed(); region_ID / region_* come off the result's
+    # pecotmr's writeBed(); region_ID / region_* come off the result's
     # own fitRegion() provenance, so --region is not passed again here.
-    exportToBed(res, sub("\\.rds$", ".exported.bed.gz", argv$output),
+    writeBed(res, sub("\\.rds$", ".exported.bed.gz", argv$output),
                 schema = "fsusie")
 }

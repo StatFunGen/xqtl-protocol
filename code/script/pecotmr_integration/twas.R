@@ -89,38 +89,11 @@ if (length(fmPaths) != length(twPaths)) stop("--fine-mapping-result needs one pa
 
 gss <- readRDS(argv$gwas_sumstats)
 
-# The LD matrix of the block's reference panel is the slow part and is the same
-# for every gene of the block, so compute it once and subset it per gene. Same
-# matching and sign handling as pecotmr:::.ldFromSketch; only the computeLd()
-# call is replaced by a lookup into the cached block matrix.
-.ldCache <- new.env()
-.cachedLdFromSketch <- function(ldSketch, variantIds, label = ".ldFromSketch",
-                                onMissing = c("error", "drop")) {
-  ns <- asNamespace("pecotmr")
-  ns$.ldFromSketchValidate(ldSketch, label)
-  onMissing <- match.arg(onMissing)
-  matched <- ns$.ldFromSketchMatch(ldSketch, variantIds, label, onMissing)
-  if (is.null(matched)) return(NULL)
-  key <- paste(dim(ldSketch), collapse = "x")
-  key <- paste(key, rownames(ldSketch)[1L], rownames(ldSketch)[nrow(ldSketch)])
-  if (!identical(.ldCache$key, key)) {
-    .ldCache$R <- computeLd(ldSketch, method = "sample")
-    .ldCache$key <- key
-  }
-  ldMat <- .ldCache$R[matched$idx, matched$idx, drop = FALSE]
-  if (any(matched$sign < 0)) ldMat <- ldMat * outer(matched$sign, matched$sign)
-  dimnames(ldMat) <- list(matched$keptIds, matched$keptIds)
-  if (onMissing == "drop") attr(ldMat, "keptVariantIds") <- matched$keptIds
-  ldMat
-}
-assignInNamespace(".ldFromSketch", .cachedLdFromSketch, ns = "pecotmr")
-
 readFmr <- function(p) if (nzchar(p) && p != "." && file.exists(p)) readRDS(p) else NULL
 
-# pecotmr 0.9.0 grouped the eight rsq*/mr* arguments into two bundles. Pure
-# regrouping -- the CLI values carry over unchanged (--rsq-option feeds
-# `metric`, --rsq-pval-option feeds `pvalMetric`, whose default c("adj_rsq_pval",
-# "pval") is this flag's default too).
+# The eight rsq*/mr* arguments travel as two bundles: --rsq-option feeds
+# `metric`, --rsq-pval-option feeds `pvalMetric`, whose default
+# c("adj_rsq_pval", "pval") is this flag's default too.
 # A gene with no scorable (QTL, GWAS) pair gets an empty list with a `noResult`
 # attribute, so the other genes of the block are still scored.
 for (i in seq_along(twPaths)) {
@@ -128,12 +101,12 @@ for (i in seq_along(twPaths)) {
     gwasSumStats = gss,
     twasWeights = readRDS(twPaths[i]),
     fineMappingResult = readFmr(fmPaths[i]),
-    weightSelectionArgs = WeightSelectionParam(
+    weightSelectionParam = WeightSelectionParam(
       cutoff = argv$rsq_cutoff,
       pvalCutoff = argv$rsq_pval_cutoff,
       metric = argv$rsq_option,
       pvalMetric = rsq_pval_option),
-    mrArgs = MrParam(
+    mrParam = MrParam(
       method = argv$mr_method,
       pipCutoff = argv$mr_pip_cutoff,
       cpipCutoff = argv$mr_cpip_cutoff,

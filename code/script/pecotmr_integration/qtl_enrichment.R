@@ -26,6 +26,9 @@ suppressPackageStartupMessages({
   library(pecotmr)
 })
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 parser <- arg_parser("xQTL-GWAS enrichment via qtlEnrichmentPipeline()")
 parser <- add_argument(parser, "--qtl-fine-mapping",
                        help = "Path(s) to S4 QtlFineMappingResult RDS (combined if >1)",
@@ -64,8 +67,8 @@ argv <- parse_args(parser)
   if (length(fmrs) == 1L) return(fmrs[[1L]])
   # Preserve the (shared) ldSketch: combineFineMappingResults defaults it to
   # NULL, but gwas enrichment/coloc require the RSS-derived ldSketch.
-  ld <- tryCatch(fmrs[[1L]]@ldSketch, error = function(e) NULL)
-  do.call(combineFineMappingResults, c(fmrs, list(ldSketch = ld)))
+  ld <- tryCatch(fmrs[[1L]]@ldReference, error = function(e) NULL)
+  do.call(combineFineMappingResults, c(fmrs, list(ldReference = ld)))
 }
 qtlFmr  <- .loadCombine(argv$qtl_fine_mapping)
 gwasFmr <- .loadCombine(argv$gwas_fine_mapping)
@@ -78,17 +81,17 @@ gwasFmr <- .loadCombine(argv$gwas_fine_mapping)
 # compatibility with a pecotmr that predates the argument.
 seed_val <- if (length(argv$seed) == 1L && !is.na(argv$seed))
               as.integer(argv$seed) else NULL
-# pecotmr 0.9.0 groups the estimator's own knobs into QtlEnrichmentParam();
-# numThreads and seed stay top-level pipeline arguments.
+# The estimator's own knobs travel in QtlEnrichmentParam(); the worker backend
+# (BPPARAM) and seed are top-level pipeline arguments.
 enr_args <- list(
   gwasFineMappingResult = gwasFmr,
   qtlFineMappingResult  = qtlFmr,
-  methodArgs            = QtlEnrichmentParam(
+  qtlEnrichmentParam    = QtlEnrichmentParam(
     numGwas = if (is.na(argv$num_gwas)) NULL else argv$num_gwas,
     piQtl   = if (is.na(argv$pi_qtl))   NULL else argv$pi_qtl,
     lambda  = argv$lambda,
     impN    = argv$imp_n),
-  numThreads            = argv$ncore)
+  BPPARAM               = as_bpparam(argv$ncore))
 if (!is.null(seed_val)) enr_args$seed <- seed_val
 res <- do.call(qtlEnrichmentPipeline, enr_args)
 
