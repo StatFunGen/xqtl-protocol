@@ -2,11 +2,11 @@
 # fine_mapping_bed_merge.R
 #
 # Concatenate the per-region published tables written by fine_mapping.R /
-# fine_mapping_top_loci_bed.R (pecotmr::exportToBed) into one sorted,
+# fine_mapping_top_loci_bed.R (pecotmr::writeBed) into one sorted,
 # compressed table for a study or context.
 #
 # Reads the per-region tables rather than the per-region FineMappingResult
-# RDSes on purpose: exportToBed() can fold many results into one call,
+# RDSes on purpose: writeBed() can fold many results into one call,
 # but that holds every fit in memory at once, and a genome-wide run is
 # thousands of regions. The tables are small and already carry the published
 # schema, so merging them keeps the peak footprint flat.

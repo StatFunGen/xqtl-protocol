@@ -35,6 +35,9 @@ def test_ctwas(run_sos, read_rds, repo_root, tmp_path):
             "ld_meta_data": fx / "ld_reference/ld_meta_file.ctwas.tsv",
             "region-name": "chr22_10000000_19000000",
             "twas_weights": s4,
+            # The committed weights carry susie only; pecotmr resolves the
+            # method implicitly just for an 'ensemble' entry.
+            "ctwas_method": "susie",
             "modular_script_dir": repo_root / "code/script",
         },
         cwd=repo_root, timeout=1200)

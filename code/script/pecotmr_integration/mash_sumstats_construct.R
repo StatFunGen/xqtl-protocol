@@ -98,8 +98,8 @@ if (nrow(zMat) == 0L)
        argv$region, ".")
 
 # Wrap the region's z-matrix as a multi-context QtlSumStats (one column per
-# condition). qtlSumStatsFromZMatrix stamps a non-empty qcInfo, so mashInput()
-# accepts it directly; ldSketch stays NULL (mash needs no LD reference).
+# condition). mashInput() accepts the result directly; ldReference stays NULL,
+# since mash needs no LD reference.
 qss <- qtlSumStatsFromZMatrix(zMat, studyName = argv$study, context = conditions,
                               trait = "mash")
 

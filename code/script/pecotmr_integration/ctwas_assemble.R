@@ -24,9 +24,9 @@
 #   --fine-mapping-results Optional comma-separated FineMappingResult RDS used
 #                          only as the CS / PIP rescue-filter source
 #                          (NOT the weight source)
-#   --method               Which TWAS method to feed into ctwas
-#                          (default: NULL — resolves to 'ensemble' if present,
-#                          or the sole method, or errors)
+#   --method               Which TWAS method to feed into ctwas. Required
+#                          unless the weights carry an 'ensemble' entry, which
+#                          is the only value resolved implicitly.
 #   --twas-z               Optional TWAS-Z GRanges RDS
 #   --twas-weight-cutoff   Pass-through (default 0)
 #   --cs-min-cor           Pass-through (default 0.8)
@@ -51,7 +51,7 @@ parser <- add_argument(parser, "--fine-mapping-results",
                        help = "Optional comma-separated FineMappingResult RDS (CS/PIP filter source)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--method",
-                       help = "Which TWAS method to feed into ctwas (defaults to 'ensemble' if present, or sole method)",
+                       help = "Which TWAS method to feed into ctwas (required unless the weights carry an 'ensemble' entry to default to)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--twas-z",
                        help = "Optional TWAS-Z GRanges RDS",
@@ -97,12 +97,33 @@ if (nrow(manifest) < 2L)
 # region_id (a per-block construct call keys on the seqname, which is the same
 # for every block on a chromosome) and combined. combineGwasSumStats() unions
 # the per-block LD panels and concatenates the per-element QC audit.
-gwasParts <- vector("list", nrow(manifest))
+#
+# A study with no variants in a block (QC gaps, centromeres, chromosome ends)
+# leaves an empty element: it carries no genome build and an empty range, so
+# combineGwasSumStats() rejects it ("must share one genome build (got NA)" or
+# "(study, range) must be unique"). Drop empty elements, and blocks left with
+# none. Subsetting drops the ldSketch, qcInfo and metadata slots; restore them.
+gwasParts <- list()
 for (i in seq_len(nrow(manifest))) {
   part <- readRDS(manifest$gwas_sumstats_rds[[i]])
+  keep <- lengths(part) > 0L
+  if (!any(keep)) {
+    message("Skipping LD block ", manifest$region_id[[i]], ": no GWAS variants.")
+    next
+  }
+  if (!all(keep)) {
+    message("LD block ", manifest$region_id[[i]], ": dropping ", sum(!keep),
+            " study element(s) with no variants.")
+    kept <- part[keep]
+    for (s in c("ldReference", "qcOptions", "metadata"))
+      methods::slot(kept, s) <- methods::slot(part, s)
+    part <- kept
+  }
   S4Vectors::mcols(part)$blockId <- manifest$region_id[[i]]
-  gwasParts[[i]] <- part
+  gwasParts[[length(gwasParts) + 1L]] <- part
 }
+if (length(gwasParts) < 2L)
+  stop("Fewer than two LD blocks have GWAS variants; cTWAS's EM needs multi-block context.")
 gwasSumStats <- combineGwasSumStats(gwasParts)
 
 # FLAT weight source: an unnamed list of per-gene weight objects. assembleCtwasInputs
@@ -119,16 +140,15 @@ fmrPaths <- split_paths(argv$fine_mapping_results)
 fmr <- if (length(fmrPaths) > 0L)
          combineFineMappingResults(lapply(fmrPaths, readRDS)) else NULL
 
-# pecotmr 0.9.0 grouped the four per-gene variant-pruning knobs into one
-# bundle, with two renamed: minPipCutoff -> pipRescue (same meaning -- variants
-# above it are must-keep) and maxNumVariants -> maxVariants.
+# The four per-gene variant-pruning knobs travel as one bundle. `pipRescue`
+# marks variants above it as must-keep; `maxVariants` caps the per-gene count.
 inputs <- assembleCtwasInputs(
   gwasSumStats      = gwasSumStats,
   twasWeights       = weightObjs,
   twasZ             = tz,
   fineMappingResult = fmr,
   method            = if (nzchar(argv$method)) argv$method else NULL,
-  variantPruningArgs = VariantPruningParam(
+  variantPruningParam = VariantPruningParam(
     weightCutoff = argv$twas_weight_cutoff,
     csMinCor     = argv$cs_min_cor,
     pipRescue    = argv$min_pip_cutoff,

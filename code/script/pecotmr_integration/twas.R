@@ -7,7 +7,9 @@
 # pecotmr::causalInferencePipeline().
 #
 # Inputs:
-#   --twas-weights         Per-gene TwasWeights RDS (output of twas_weights.ipynb)
+#   --twas-weights         Per-gene TwasWeights RDS; comma-separated for several genes
+#                          of one LD block (the block GwasSumStats, and with it the
+#                          LD reference, is read once for all of them)
 #   --gwas-sumstats        Per-region GwasSumStats RDS (one or more studies)
 #   --fine-mapping-result  Optional per-gene FineMappingResult RDS
 #   --rsq-cutoff           CV-R^2 weight-selection cutoff (legacy rsq_cutoff)
@@ -27,13 +29,13 @@ suppressPackageStartupMessages({
 
 parser <- arg_parser("Per-gene TWAS Z + MR via causalInferencePipeline()")
 parser <- add_argument(parser, "--twas-weights",
-                       help = "Per-gene TwasWeights RDS",
+                       help = "Per-gene TwasWeights RDS; comma-separated for several genes of the same LD block",
                        type = "character")
 parser <- add_argument(parser, "--gwas-sumstats",
                        help = "Per-LD-block GwasSumStats RDS",
                        type = "character")
 parser <- add_argument(parser, "--fine-mapping-result",
-                       help = "Optional per-gene FineMappingResult RDS",
+                       help = "Optional per-gene FineMappingResult RDS; comma-separated, one per --twas-weights entry",
                        type = "character", default = "")
 parser <- add_argument(parser, "--mr-pip-cutoff",
                        help = "Pass-through PIP cutoff for MR",
@@ -63,7 +65,7 @@ parser <- add_argument(parser, "--combine-methods",
                        help = "Comma-separated method tokens for cross-method p-value combination (combinePValues); empty = none",
                        type = "character", default = "")
 parser <- add_argument(parser, "--output",
-                       help = "Output RDS path", type = "character")
+                       help = "Output RDS path; comma-separated, one per --twas-weights entry", type = "character")
 argv <- parse_args(parser)
 
 # Cross-method combination: empty / "." -> NULL (skip), else split on comma.
@@ -73,36 +75,54 @@ combine_methods <- if (nzchar(argv$combine_methods) && argv$combine_methods != "
 # CV-p-value gate metric candidates (first present in cvPerformance is used).
 rsq_pval_option <- trimws(strsplit(argv$rsq_pval_option, ",", fixed = TRUE)[[1L]])
 
-tw  <- readRDS(argv$twas_weights)
+# One call may score several genes of the same LD block: --twas-weights,
+# --fine-mapping-result and --output are comma-separated lists, one entry per gene.
+splitList <- function(x) {
+  x <- trimws(strsplit(x, ",", fixed = TRUE)[[1L]])
+  x[nzchar(x)]
+}
+twPaths <- splitList(argv$twas_weights)
+outPaths <- splitList(argv$output)
+fmPaths <- if (nzchar(argv$fine_mapping_result)) trimws(strsplit(sub("^,", "", argv$fine_mapping_result), ",", fixed = TRUE)[[1L]]) else character(0)
+if (length(outPaths) != length(twPaths)) stop("--output needs one path per --twas-weights entry.")
+if (length(fmPaths) == 0L) fmPaths <- rep("", length(twPaths))
+if (length(fmPaths) != length(twPaths)) stop("--fine-mapping-result needs one path per --twas-weights entry.")
+
+# Read the block's GwasSumStats once and reuse it for every gene in the call.
+# The LD itself is pecotmr's business: causalInferencePipeline() pulls it from
+# this object's ldReference, per gene and scoped to that gene's matched
+# variants (and for a genotype panel it uses the LD factor, so the p x p matrix
+# is never formed). Nothing here computes or caches LD.
 gss <- readRDS(argv$gwas_sumstats)
 
-fmr_path <- argv$fine_mapping_result
-fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
-  readRDS(fmr_path)
-} else {
-  NULL
+readFmr <- function(p) if (nzchar(p) && p != "." && file.exists(p)) readRDS(p) else NULL
+
+# The eight rsq*/mr* arguments travel as two bundles: --rsq-option feeds
+# `metric`, --rsq-pval-option feeds `pvalMetric`, whose default
+# c("adj_rsq_pval", "pval") is this flag's default too.
+# A gene with no scorable (QTL, GWAS) pair gets an empty list with a `noResult`
+# attribute, so the other genes of the block are still scored.
+for (i in seq_along(twPaths)) {
+  res <- tryCatch(causalInferencePipeline(
+    gwasSumStats = gss,
+    twasWeights = readRDS(twPaths[i]),
+    fineMappingResult = readFmr(fmPaths[i]),
+    weightSelectionParam = WeightSelectionParam(
+      cutoff = argv$rsq_cutoff,
+      pvalCutoff = argv$rsq_pval_cutoff,
+      metric = argv$rsq_option,
+      pvalMetric = rsq_pval_option),
+    mrParam = MrParam(
+      method = argv$mr_method,
+      pipCutoff = argv$mr_pip_cutoff,
+      cpipCutoff = argv$mr_cpip_cutoff,
+      pvalCutoff = argv$mr_pval_cutoff),
+    combineMethods = combine_methods),
+    error = function(e) {
+      message(sprintf("No TWAS result for %s: %s", twPaths[i], conditionMessage(e)))
+      structure(list(), noResult = conditionMessage(e))
+    })
+  dir.create(dirname(outPaths[i]), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(res, outPaths[i])
+  cat(sprintf("Wrote causalInferencePipeline result to %s\n", outPaths[i]))
 }
-
-# pecotmr 0.9.0 grouped the eight rsq*/mr* arguments into two bundles. Pure
-# regrouping -- the CLI values carry over unchanged (--rsq-option feeds
-# `metric`, --rsq-pval-option feeds `pvalMetric`, whose default c("adj_rsq_pval",
-# "pval") is this flag's default too).
-res <- causalInferencePipeline(
-  gwasSumStats      = gss,
-  twasWeights       = tw,
-  fineMappingResult = fmr,
-  weightSelectionArgs = WeightSelectionParam(
-    cutoff     = argv$rsq_cutoff,
-    pvalCutoff = argv$rsq_pval_cutoff,
-    metric     = argv$rsq_option,
-    pvalMetric = rsq_pval_option),
-  mrArgs = MrParam(
-    method     = argv$mr_method,
-    pipCutoff  = argv$mr_pip_cutoff,
-    cpipCutoff = argv$mr_cpip_cutoff,
-    pvalCutoff = argv$mr_pval_cutoff),
-  combineMethods    = combine_methods)
-
-dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
-saveRDS(res, argv$output)
-cat(sprintf("Wrote causalInferencePipeline result to %s\n", argv$output))

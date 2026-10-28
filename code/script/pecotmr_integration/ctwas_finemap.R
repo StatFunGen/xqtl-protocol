@@ -36,6 +36,9 @@ suppressPackageStartupMessages({
   library(pecotmr)
 })
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 parser <- arg_parser("cTWAS step 3: screen regions + fine-map")
 parser <- add_argument(parser, "--est",
                        help = "RDS produced by ctwas_est.R",
@@ -64,6 +67,9 @@ parser <- add_argument(parser, "--max-snp",
 parser <- add_argument(parser, "--keep-snps",
                        help = "Flag: retain the SNP background as a dedicated CtwasResult row",
                        flag = TRUE)
+parser <- add_argument(parser, "--missing-group-prior",
+  help = "Groups with no estimated prior (e.g. too few genes in a context): 'fill' = use the mean of the estimated gene-group priors and variances, 'error' = stop",
+  type = "character", default = "fill")
 parser <- add_argument(parser, "--ncore",
                        help = "Number of cores",
                        type = "integer", default = 1L)
@@ -85,20 +91,38 @@ if (nzchar(argv$param_override) && argv$param_override != "." &&
   cat("Applied param override from ", argv$param_override, "\n", sep = "")
 }
 
-# pecotmr 0.9.0: ncore -> numThreads everywhere, and L splits by step. The
-# screening step has no L formal of its own -- its three knobs are
+# Groups present in the regions but absent from the estimated priors (the EM
+# drops a group when too few regions carry its genes) make ctwas stop with
+# "Missing group_prior for group". Fill them from the estimated gene groups,
+# or stop with a clear message, per --missing-group-prior.
+allGroups <- unique(unlist(lapply(est$region_data, function(rd) rd$groups)))
+missingGroups <- setdiff(allGroups, names(est$param$group_prior))
+if (length(missingGroups) > 0L) {
+  geneGroups <- setdiff(names(est$param$group_prior), "SNP")
+  if (argv$missing_group_prior != "fill" || length(geneGroups) == 0L)
+    stop("No estimated prior for group(s): ", paste(missingGroups, collapse = ", "),
+         if (length(geneGroups) == 0L) " (and no gene group was estimated to fill from)" else "")
+  fillPrior <- mean(est$param$group_prior[geneGroups])
+  fillVar <- mean(est$param$group_prior_var[geneGroups])
+  est$param$group_prior[missingGroups] <- fillPrior
+  est$param$group_prior_var[missingGroups] <- fillVar
+  warning(sprintf("Filled prior for %d group(s) without an estimate (%s): group_prior = %.3g, group_prior_var = %.3g (mean of estimated gene groups).",
+                  length(missingGroups), paste(missingGroups, collapse = ", "), fillPrior, fillVar), call. = FALSE)
+}
+
+# L splits by step. The screening step has no L formal of its own -- its
+# three knobs are
 # ctwas::screen_regions() arguments, which travel under ctwas's own names in
 # CtwasScreenOptions() -- while the fine-mapping and merge steps take L as the
 # named `maxNumSingleEffects` formal.
 screened <- screenCtwasRegions(
   est,
-  numThreads = argv$ncore,
+  BPPARAM = as_bpparam(argv$ncore),
   # Only min_nonSNP_PIP: the installed ctwas's screen_regions() has neither an
-  # `L` nor a `filter_L` argument. Pre-0.9.0 both were accepted here and then
-  # silently discarded (pecotmr filtered pass-throughs to the callee's
-  # formals); 0.9.0's options bundle validates against those formals instead,
-  # which is what surfaced it. L still matters for the fine-map / merge steps
-  # below, where it is a real argument.
+  # `L` nor a `filter_L` argument, and the options bundle validates against
+  # those formals, so passing either is an error rather than a silent no-op.
+  # L still matters for the fine-map / merge steps below, where it is a real
+  # argument.
   methodArgs = CtwasOptions(
     screen = CtwasScreenOptions(
       min_nonSNP_PIP = argv$min_nonsnp_pip)))
@@ -106,7 +130,7 @@ screened <- screenCtwasRegions(
 final <- finemapCtwasRegions(
   screened,
   maxNumSingleEffects = argv$L,
-  numThreads          = argv$ncore)
+  BPPARAM             = as_bpparam(argv$ncore))
 
 # Optional step 4: boundary-gene region merging + re-fine-map.
 if (argv$merge_regions) {
@@ -116,7 +140,7 @@ if (argv$merge_regions) {
     filterCs            = argv$merge_filter_cs,
     maxSNP              = argv$max_snp,
     maxNumSingleEffects = argv$L,
-    numThreads          = argv$ncore)
+    BPPARAM             = as_bpparam(argv$ncore))
   cat("Applied boundary-region merging (merge_regions).\n")
 }
 
@@ -128,11 +152,13 @@ result <- asCtwasResult(final, keepSnps = argv$keep_snps)
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(result, argv$output)
 cat(sprintf("Wrote CtwasResult (%d row(s)) to %s\n", nrow(result), argv$output))
+# ctwasPosteriors() hands back a GRanges, so the row count is length() and the
+# gene/SNP split reads `type` out of the metadata columns.
 fm <- ctwasPosteriors(result)
-if (!is.null(fm) && nrow(fm) > 0L) {
-  g <- fm[fm$type != "SNP", , drop = FALSE]
+if (!is.null(fm) && length(fm) > 0L) {
+  nGene <- sum(as.data.frame(fm)$type != "SNP")
   cat(sprintf("  fine-mapped rows: %d (%d gene-level, %d SNP-level)\n",
-              nrow(fm), nrow(g), nrow(fm) - nrow(g)))
+              length(fm), nGene, length(fm) - nGene))
 } else {
   cat("  no fine-mapped genes (no regions survived screening)\n")
 }

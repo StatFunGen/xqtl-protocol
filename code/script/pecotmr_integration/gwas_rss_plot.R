@@ -55,7 +55,7 @@ if (nrow(fmr) == 0L) {
 # returns every variant with its decoded `pos` and the row-identity columns
 # (study / method / region_id), so the panel label and position come straight
 # off the table -- one panel per (study, method, region_id). It is a GRanges
-# from 0.9.0 on, so flatten it: nrow() on a GRanges is NULL, not a count.
+# a GRanges, so flatten it: nrow() on a GRanges is NULL, not a count.
 tl <- as_variant_df(topLoci(fmr, signalCutoff = 0))
 if (nrow(tl) == 0L) {
   write_empty("No PIP vectors in input")

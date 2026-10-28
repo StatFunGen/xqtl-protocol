@@ -38,6 +38,10 @@
 #                           default so 'mrmash' runs out of the box, and is
 #                           also the producer of the mvSuSiE data-driven
 #                           prior consumed by fine_mapping.R --twas-weights.
+#   --no-ensemble           Skip the SR-TWAS ensemble row. The ensemble
+#                           stacks each method's OUT-OF-FOLD predictions, so
+#                           it needs --cv-folds >= 2; pecotmr errors if it is
+#                           asked for without cross-validation.
 #   --output                Output RDS path (one TwasWeights)
 
 suppressPackageStartupMessages({
@@ -93,6 +97,9 @@ parser <- add_argument(parser, "--max-cv-variants",
 parser <- add_argument(parser, "--cv-folds",
                        help = "Cross-validation folds for TWAS weight evaluation (twasWeightsPipeline cvFolds)",
                        type = "integer", default = 5L)
+parser <- add_argument(parser, "--no-ensemble",
+                       help = "Skip the SR-TWAS ensemble row; by default the per-method weights are stacked into one (needs --cv-folds >= 2)",
+                       flag = TRUE)
 parser <- add_argument(parser, "--cv-threads",
                        help = "Threads for the cross-validation refits (twasWeightsPipeline cvThreads)",
                        type = "integer", default = 1L)
@@ -136,8 +143,8 @@ read_ids <- function(p) if (nzchar(p) && p != "." && file.exists(p))
   unique(trimws(unlist(strsplit(readLines(p), "[[:space:]]+")))) else NULL
 
 # Build the per-call genotype-filter overrides as pipeline ARGUMENTS (NULL =
-# leave the QtlDataset's construct-time slot untouched). The pipeline applies
-# these to a validated copy; the wrapper no longer mutates @slots directly.
+# leave the pipeline's own default in place). The pipeline applies these to a
+# validated copy; the wrapper never mutates @slots directly.
 # Mirrors fine_mapping.R.
 qd_filter_overrides <- function(argv) {
   ov <- list(
@@ -148,8 +155,8 @@ qd_filter_overrides <- function(argv) {
     keepIndel    = if (isTRUE(argv$drop_indel))   FALSE             else NULL,
     keepSamples  = read_ids(argv$keep_samples),
     keepVariants = read_ids(argv$keep_variants))
-  # pecotmr 0.9.0: one GenotypeFilterParam() bundle, where an UNSET field
-  # leaves the dataset's construct-time value alone -- the override role.
+  # One GenotypeFilterParam() bundle, where an UNSET field leaves the
+  # pipeline's own default alone -- the override role.
   ov <- ov[!vapply(ov, is.null, logical(1))]
   list(genotypeFilterParam = do.call(GenotypeFilterParam, ov))
 }
@@ -263,6 +270,19 @@ fmr <- if (nzchar(fmr_path) && fmr_path != "." && file.exists(fmr_path)) {
   NULL
 }
 
+# The ensemble stacks OUT-OF-FOLD predictions, so it cannot be built without
+# cross-validation. Refuse the contradiction rather than quietly dropping the
+# row: a silently absent ensemble while the flag still reads as on is the
+# failure mode pecotmr's own docs call out.
+# RSS mode has no ensemble at all: stacking needs out-of-fold predictions from
+# individual-level cross-validation, and the QtlSumStats method takes no
+# ensembleParam, so the flag is simply not applicable there.
+want_ensemble <- !isTRUE(argv$no_ensemble) && !has_qss
+if (want_ensemble && argv$cv_folds < 2L)
+  stop("The SR-TWAS ensemble needs --cv-folds >= 2 (got ", argv$cv_folds,
+       "); it stacks each method's out-of-fold predictions. Raise --cv-folds, ",
+       "or pass --no-ensemble to skip the ensemble row.")
+
 # Shared args for both modes. Genotype-filter overrides ride on the same
 # --maf-cutoff/--xvar-cutoff/... args fine-mapping uses (variant QC is a data
 # property, applied identically); the cv* knobs control the cross-validated
@@ -272,11 +292,15 @@ tw_args <- c(list(methods           = methods_arg,
                   mashPrior         = mash_prior,
                   cisWindow         = argv$cis_window,
                   contexts          = contexts_arg,
-                  crossValidationArgs = CrossValidationParam(
+                  crossValidationParam = CrossValidationParam(
                     folds        = argv$cv_folds,
-                    numThreads   = argv$cv_threads,
+                    BPPARAM      = as_bpparam(argv$cv_threads),
                     maxVariants  = argv$max_cv_variants),
-                  fineMappingResult = fmr),
+                  fineMappingResult = fmr,
+                  # pecotmr defaults EnsembleParam(enabled = FALSE); this
+                  # pipeline's documented deliverable includes the stacked
+                  # SR-TWAS row, so it is on here unless --no-ensemble.
+                  ensembleParam     = EnsembleParam(enabled = want_ensemble)),
              qd_filter_overrides(argv))
 # Opt-in joint axis / resume-from-checkpoint, added only when supplied (keeps
 # the call compatible with a pecotmr that predates the argument).
@@ -287,10 +311,8 @@ res <- if (has_qss) {
   # RSS mode: no trait/region selection, and the individual-level-only knobs
   # (cisWindow + the genotype filters) do not apply to a summary-statistics
   # collection, so only the shared arguments are forwarded.
-  # No mashPrior / seed here: the QtlSumStats method takes neither (pre-0.9.0
-  # its signature ended in `...`, which collected both into a dots list that
-  # the summary-statistics worker never read, so dropping them changes
-  # nothing). Seeding on this path is the set.seed() above.
+  # No mashPrior / seed here: the QtlSumStats method takes neither. Seeding on
+  # this path is the set.seed() above.
   rss_args <- tw_args[intersect(
     names(tw_args),
     c("methods", "contexts", "fineMappingResult",

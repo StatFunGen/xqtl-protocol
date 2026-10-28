@@ -34,6 +34,9 @@ suppressPackageStartupMessages({
   library(pecotmr)
 })
 
+.d <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1L]))
+source(file.path(.d, "pecotmr_aliases.R"))
+
 p <- arg_parser("MASH feature scores from posterior contrasts")
 p <- add_argument(p, "--method", type = "character",
                   help = "meta | nsig | pval_pair | finemap")
@@ -73,7 +76,8 @@ if (length(geneIds) != length(files))
 # ldPruneByCorrelation on their genotype dosages. No-op without --genotype.
 ldPruneContrast <- function(cr) {
   if (!nzchar(argv$genotype) || !nzchar(argv$region)) return(cr)
-  X <- loadGenotypeRegion(genotype = argv$genotype, region = argv$region)
+  X <- loadGenotypeRegion(genotype = argv$genotype,
+                          which = as_region_granges(argv$region))
   # orient SNPs as columns; keep only the contrast variants that are present
   if (is.null(colnames(X)) && !is.null(rownames(X))) X <- t(X)
   common <- intersect(rownames(cr), colnames(X))

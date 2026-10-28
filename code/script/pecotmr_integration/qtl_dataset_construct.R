@@ -36,7 +36,7 @@
 #   --keep-samples         Optional file of sample IDs to keep.
 #   --keep-variants        Optional file of variant IDs to keep.
 #   --drop-indel           Drop indels (QtlDataset keepIndel = FALSE).
-#   --no-scale-residuals   Disable residual scaling (scaleResiduals = FALSE).
+#   --no-scale-residuals   Applied at analysis time; refused here (see below).
 #   --output               Output RDS path.
 
 suppressPackageStartupMessages({
@@ -59,28 +59,28 @@ parser <- add_argument(parser, "--transpose-covariates",
                        help = "Transpose covariate TSVs (QTLtools format)",
                        flag = TRUE)
 parser <- add_argument(parser, "--maf-cutoff",
-                       help = "QtlDataset() MAF cutoff",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (GenotypeFilterParam mafCutoff)",
                        type = "numeric", default = 0)
 parser <- add_argument(parser, "--xvar-cutoff",
-                       help = "QtlDataset() variance cutoff",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (GenotypeFilterParam xvarCutoff)",
                        type = "numeric", default = 0)
 parser <- add_argument(parser, "--mac-cutoff",
-                       help = "QtlDataset() minor-allele-count cutoff",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (GenotypeFilterParam macCutoff)",
                        type = "numeric", default = 0)
 parser <- add_argument(parser, "--imiss-cutoff",
-                       help = "QtlDataset() per-variant missingness cutoff",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (GenotypeFilterParam imissCutoff)",
                        type = "numeric", default = 0)
 parser <- add_argument(parser, "--drop-indel",
-                       help = "Drop indel variants (sets keepIndel = FALSE); default keeps them, matching QtlDataset()",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (GenotypeFilterParam keepIndel)",
                        flag = TRUE)
 parser <- add_argument(parser, "--keep-samples",
-                       help = "Path to a whitespace-delimited file of sample IDs to restrict to (QtlDataset keepSamples)",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (GenotypeFilterParam keepSamples)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--keep-variants",
-                       help = "Path to a whitespace-delimited file of variant IDs to restrict to (QtlDataset keepVariants)",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (GenotypeFilterParam keepVariants)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--no-scale-residuals",
-                       help = "Do not scale residuals (QtlDataset scaleResiduals = FALSE; default scales)",
+                       help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (ResidualizationParam scaleResiduals)",
                        flag = TRUE)
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
@@ -117,25 +117,37 @@ genotype_prefix <- abs_path(argv$genotype_prefix)
 # The manifest's cond/path/cov_path columns are recognised via the loader's
 # snake_case aliases (cond -> context, path -> phenotypePath,
 # cov_path -> covariatePath).
-# The seven genotype filters travel as one GenotypeFilterParam() bundle. Every
-# field is passed explicitly: to QtlDataset() the bundle is a SPECIFICATION, so
-# an unset field would take the constructor's own default rather than this
-# script's CLI default -- which happen to coincide today, but pinning them keeps
-# the wrapper's documented defaults authoritative.
+# Genotype filtering and residual scaling happen at ANALYSIS time, not here:
+# a QtlDataset stores neither, and fineMappingPipeline / twasWeightsPipeline /
+# colocboostPipeline each take a GenotypeFilterParam() and a
+# ResidualizationParam(). One stored dataset therefore serves runs that filter
+# differently, instead of baking one choice in.
+#
+# These flags are kept on this wrapper, but they REFUSE rather than silently
+# doing nothing: a run that asked for --maf-cutoff 0.01 and got an unfiltered
+# dataset back would be wrong in a way nothing downstream can see.
+# fine_mapping.R and twas_weights.R accept every one of them.
+moved <- c(
+  "--maf-cutoff"         = !is.na(argv$maf_cutoff)   && argv$maf_cutoff   != 0,
+  "--mac-cutoff"         = !is.na(argv$mac_cutoff)   && argv$mac_cutoff   != 0,
+  "--xvar-cutoff"        = !is.na(argv$xvar_cutoff)  && argv$xvar_cutoff  != 0,
+  "--imiss-cutoff"       = !is.na(argv$imiss_cutoff) && argv$imiss_cutoff != 0,
+  "--drop-indel"         = isTRUE(argv$drop_indel),
+  "--keep-samples"       = length(keep_samples)  > 0L,
+  "--keep-variants"      = length(keep_variants) > 0L,
+  "--no-scale-residuals" = isTRUE(argv$no_scale_residuals))
+if (any(moved))
+  stop("These are not construct-time options: ",
+       paste(names(moved)[moved], collapse = ", "),
+       ". Genotype filtering and residual scaling happen at analysis time -- ",
+       "pass the same flags to fine_mapping.R / twas_weights.R / colocboost.R, ",
+       "which forward them as GenotypeFilterParam() / ResidualizationParam().")
+
 qd <- loadQtlDatasetFromManifest(
   manifest            = argv$phenotype_manifest,
   studyName           = argv$study,
   genotypes           = genotype_prefix,
   genotypeCovariates  = genotype_covariates,
-  scaleResiduals      = !isTRUE(argv$no_scale_residuals),
-  genotypeFilterParam = GenotypeFilterParam(
-    mafCutoff    = argv$maf_cutoff,
-    macCutoff    = argv$mac_cutoff,
-    xvarCutoff   = argv$xvar_cutoff,
-    imissCutoff  = argv$imiss_cutoff,
-    keepSamples  = keep_samples,
-    keepVariants = keep_variants,
-    keepIndel    = !isTRUE(argv$drop_indel)),
   transposeCovariates = isTRUE(argv$transpose_covariates))
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
