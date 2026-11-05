@@ -106,7 +106,7 @@ mkEntry <- function(g) {
   mc <- S4Vectors::DataFrame(
     SNP = as.character(d$variant_id),
     P   = as.numeric(d[[argv$pvalue_col]]),
-    af  = as.numeric(d[[argv$af_col]]),
+    AF  = as.numeric(d[[argv$af_col]]),
     tss_distance = as.numeric(d$tss_distance),
     tes_distance = as.numeric(d$tes_distance))
   if ("qvalue" %in% names(d)) mc$qvalue <- as.numeric(d$qvalue)

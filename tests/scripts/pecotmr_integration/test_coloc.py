@@ -18,5 +18,5 @@ def test_coloc(run_r, read_rds, repo_root, tmp_path):
                "--gwas-input", repo_root / GWAS, "--output", out], timeout=300)
     assert p.returncode == 0, p.stdout + p.stderr
     info = read_rds(out)
-    assert info["class"] == "ColocResult" and "PP.H4.abf" in info["colnames"]
+    assert info["class"] == "ColocResult" and "pairs" in info["colnames"]
     assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)
