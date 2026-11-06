@@ -18,7 +18,8 @@
 #   --manifest             Block-grid manifest TSV with columns:
 #                            region_id          (string, unique)
 #                            gwas_sumstats_rds  (per-block GwasSumStats RDS)
-#   --twas-weights         Comma-separated FLAT per-gene weight RDS
+#   --twas-weights         Comma-separated FLAT per-gene weight RDS paths, or a text
+#                          file listing them (one per line)
 #                          (TwasWeights or QtlFineMappingResult; each carries
 #                          `traitPos` provenance for placement)
 #   --fine-mapping-results Optional comma-separated FineMappingResult RDS used
@@ -75,7 +76,11 @@ argv <- parse_args(parser)
 
 split_paths <- function(s) {
   if (is.na(s) || !nzchar(s)) return(character(0))
-  trimws(strsplit(s, ",", fixed = TRUE)[[1L]])
+  # A single non-.rds path is a text file listing the paths (comma- or line-separated).
+  if (!grepl(",", s, fixed = TRUE) && !grepl("\\.rds$", s, ignore.case = TRUE) && file.exists(s))
+    s <- paste(readLines(s), collapse = ",")
+  p <- trimws(strsplit(s, ",", fixed = TRUE)[[1L]])
+  p[nzchar(p)]
 }
 
 manifest <- read.table(argv$manifest, header = TRUE, sep = "\t",
