@@ -175,13 +175,15 @@ def _compare_table(produced, expected, rtol, atol, delimiter, normalize_paths=Fa
 
 # --------------------------------------------------------------------- rds compare
 def _compare_rds(produced, expected, tolerance: float, normalize_paths: bool = False,
-                 sort_rows: bool = False) -> str | None:
+                 sort_rows: bool = False, structure_only: list[str] | None = None) -> str | None:
     """Delegate to rds_compare.R. ``tolerance < 0`` means identical() (exact);
     ``normalize_paths`` basename-normalizes absolute-path strings first; ``sort_rows``
     canonicalizes each data.frame's row order (for unordered-set outputs). The two flags
-    are passed positionally ("0"/"1") so the arg contract is stable."""
+    are passed positionally ("0"/"1") so the arg contract is stable; ``structure_only``
+    follows them as one comma-separated argument."""
     cmd = [rscript_bin(), str(RDS_COMPARE), str(produced), str(expected), str(tolerance),
-           "1" if normalize_paths else "0", "1" if sort_rows else "0"]
+           "1" if normalize_paths else "0", "1" if sort_rows else "0",
+           ",".join(structure_only or [])]
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     if p.returncode != 0:
         raise AssertionError(f"rds_compare.R failed:\n{p.stdout}\n{p.stderr}")
@@ -223,7 +225,8 @@ def assert_matches_expected(produced, expected, *, mode: str = "exact",
                             project=None, delimiter: str | None = None,
                             normalize_paths: bool = False,
                             ignore_lines: list[str] | None = None,
-                            sort_rows: bool = False) -> None:
+                            sort_rows: bool = False,
+                            structure_only: list[str] | None = None) -> None:
     """Assert ``produced`` matches the committed ``expected`` fixture.
 
     mode:
@@ -235,8 +238,11 @@ def assert_matches_expected(produced, expected, *, mode: str = "exact",
     ``ignore_lines`` (tolerant text path only) is a list of regexes; whole lines
     matching any pattern are dropped from both sides before comparing — use it to
     mask volatile header lines (GTF ``##date`` / ``##source-version``, VCF
-    ``##fileDate``) that carry no data. Raises ``AssertionError`` locating the
-    first mismatch.
+    ``##fileDate``) that carry no data. ``structure_only`` (``.rds`` only) names
+    top-level components (S4 slots or list elements) compared by structure alone:
+    their floating-point values are zeroed on both sides, so only names, lengths,
+    dims, classes, the NA pattern and non-double values must match. Raises
+    ``AssertionError`` locating the first mismatch.
     """
     produced, expected = Path(produced), Path(expected)
     if not expected.exists():
@@ -258,7 +264,8 @@ def assert_matches_expected(produced, expected, *, mode: str = "exact",
     if mode == "exact":
         if ext == ".rds":
             diff = _compare_rds(produced, expected, tolerance=-1.0,
-                                normalize_paths=normalize_paths, sort_rows=sort_rows)
+                                normalize_paths=normalize_paths, sort_rows=sort_rows,
+                                structure_only=structure_only)
         else:
             diff = None if _read_bytes(produced) == _read_bytes(expected) else \
                 "decompressed bytes differ"
@@ -269,7 +276,8 @@ def assert_matches_expected(produced, expected, *, mode: str = "exact",
     if mode == "tolerant":
         if ext == ".rds":
             diff = _compare_rds(produced, expected, tolerance=rtol,
-                                normalize_paths=normalize_paths, sort_rows=sort_rows)
+                                normalize_paths=normalize_paths, sort_rows=sort_rows,
+                                structure_only=structure_only)
         elif ext == ".parquet":
             diff = _compare_parquet(produced, expected, rtol, atol)
         elif ext in _TABULAR_EXTS or _looks_text(_read_bytes(expected)):

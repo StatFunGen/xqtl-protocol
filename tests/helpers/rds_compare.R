@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# rds_compare.R <produced.rds> <expected.rds> <tolerance>
+# rds_compare.R <produced.rds> <expected.rds> <tolerance> [normPaths] [sortRows] [structureOnly]
 #
 # Deep-compare two RDS objects and emit a JSON verdict on stdout:
 #   {"equal": true}
@@ -34,6 +34,14 @@ normPaths <- length(args) >= 4L && !is.na(suppressWarnings(as.integer(args[[4L]]
 # order is meaningful in most outputs.
 sortRows <- length(args) >= 5L && !is.na(suppressWarnings(as.integer(args[[5L]]))) &&
   as.integer(args[[5L]]) == 1L
+# structureOnly (optional 6th arg): comma-separated names of TOP-LEVEL components (S4
+# slots or list elements) compared by structure only: every double inside them is
+# zeroed (NAs kept) on both sides, so names, lengths, dims, classes, the NA pattern
+# and the non-double values must still match, but no floating-point value does. For
+# components whose numbers drift across BLAS builds but whose shape is still worth
+# pinning, e.g. the raw colocboost runs a ColocBoostResult keeps in `fits`.
+structureOnly <- if (length(args) >= 6L && nzchar(args[[6L]]))
+  strsplit(args[[6L]], ",", fixed = TRUE)[[1L]] else character()
 
 .abs_path_re <- "^/[^ ]+/[^ /]+$"
 norm_paths <- function(v) {
@@ -121,8 +129,23 @@ canon <- function(x) {
   out
 }
 
+# Every double in `x` zeroed, NAs left in place; everything else untouched.
+# `x[] <-` rather than `x[[i]] <-`, which would delete NULL elements.
+zero_doubles <- function(x) {
+  if (is.list(x)) {
+    x[] <- lapply(x, zero_doubles)
+  } else if (is.double(x)) {
+    x[!is.na(x)] <- 0
+  }
+  x
+}
+
 produced <- canon(readRDS(args[[1L]]))
 expected <- canon(readRDS(args[[2L]]))
+for (nm in structureOnly) {
+  if (!is.null(produced[[nm]])) produced[[nm]] <- zero_doubles(produced[[nm]])
+  if (!is.null(expected[[nm]])) expected[[nm]] <- zero_doubles(expected[[nm]])
+}
 
 if (tol < 0) {
   eq <- identical(produced, expected)
