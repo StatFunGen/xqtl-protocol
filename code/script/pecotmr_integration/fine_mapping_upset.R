@@ -9,6 +9,9 @@
 #
 # Inputs:
 #   --input <RDS> [<RDS> ...]  One or more FineMappingResult RDS paths.
+#   --input-list <PATH>        File listing those RDS paths, one per line,
+#                              instead (a genome-wide list is too long for
+#                              the command line).
 #   --output <PNG>             Output PNG path.
 #   --max-sets                 Cap on the number of sets to render (UpSet
 #                              gets noisy past ~10). Default 20. Sets are
@@ -25,6 +28,9 @@ parser <- arg_parser("UpSet plot of credible-set variant overlap across FineMapp
 parser <- add_argument(parser, "--input",
                        help = "One or more FineMappingResult RDS paths",
                        type = "character", nargs = Inf)
+parser <- add_argument(parser, "--input-list",
+                       help = "File listing the FineMappingResult RDS paths, one per line (instead of --input)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output PNG path", type = "character")
 parser <- add_argument(parser, "--max-sets",
@@ -45,7 +51,8 @@ if (!requireNamespace("UpSetR", quietly = TRUE))
   stop("fine_mapping_upset.R requires the UpSetR package: ",
        "install.packages('UpSetR')")
 
-inputs <- as.character(argv$input)
+readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
+inputs <- if (nzchar(argv$input_list)) readListFile(argv$input_list) else as.character(argv$input)
 if (length(inputs) == 0L)
   stop("--input requires at least one RDS path.")
 

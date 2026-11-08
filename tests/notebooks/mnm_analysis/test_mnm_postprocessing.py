@@ -57,9 +57,29 @@ def test_cis_results_export_and_top_loci(run_sos, read_rds, repo_root, tmp_path)
     assert (cwd / "summary" / "protocol_example.eQTL.top_loci.bed.gz").exists(), p.stdout
 
 
+def test_combine_export_meta(run_sos, repo_root, tmp_path):
+    # Concatenate the per-region cache tables under one header, in file-name order.
+    # The step lists them with find rather than a glob, which overflows the command
+    # line for a genome-wide cache. cwd=tmp_path: the step logs to <cwd>/.stderr.
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    for region, start in (("r2", 200), ("r1", 100)):
+        (cache / f"protocol_example_{region}.tsv").write_text(
+            f"chr\tstart\tend\tregion_id\nchr22\t{start}\t{start + 50}\t{region}\n")
+    p = run_sos(repo_root / NB, "combine_export_meta",
+                dict(study="protocol_example", cache_path=cache, output_file="meta.tsv"),
+                cwd=tmp_path, timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert (tmp_path / "meta.tsv").read_text() == (
+        "#chr\tstart\tend\tregion_id\n"
+        "chr22\t100\t150\tr1\n"
+        "chr22\t200\t250\tr2\n")
+
+
 @pytest.mark.parametrize("wf,pattern", [
     ("susie_pip_landscape_plot", "*.pip_landscape_plot.pdf"),
     ("susie_upsetR_plot", "*.UpSetR.pdf"),
+    ("susie_upsetR_cs_plot", "*.UpSetR_cs.pdf"),
 ])
 def test_plot_wrappers(run_sos, repo_root, tmp_path, wf, pattern):
     fx = repo_root / "tests" / "fixtures" / "mnm_postprocessing"

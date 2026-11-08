@@ -6,6 +6,8 @@ from __future__ import annotations
 import gzip
 import subprocess
 
+import pytest
+
 # The published vocabulary (pecotmr::exportToBed): the VCF's own field
 # names, shared by both schemas, not the retired variant_ID / event_ID /
 # region_ID / cs_coverage_0.95 spellings.
@@ -23,7 +25,8 @@ def _write_with(path, header, rows):
             handle.write("\t".join(str(v) for v in row) + "\n")
 
 
-def test_merge_sorts_numerically_and_indexes(run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_merge_sorts_numerically_and_indexes(via_list, run_r, repo_root, tmp_path):
     # Two regions, deliberately out of order and spanning chr2 vs chr10 so a
     # plain character sort would put 10 before 2.
     a = tmp_path / "r1.exported.bed.gz"
@@ -32,9 +35,16 @@ def test_merge_sorts_numerically_and_indexes(run_r, repo_root, tmp_path):
     _write(b, [("2", 100, 101, "2:101:A:T", "c1", "chr2_1_1000", 0.5),
                ("10", 50, 51, "10:51:A:T", "c1", "chr10_1_1000", 0.7)])
     out = tmp_path / "merged.bed.gz"
+    if via_list:
+        # the notebook's form: a genome-wide list is too long for the command line
+        listing = tmp_path / "inputs.txt"
+        listing.write_text(f"{a}\n{b}\n")
+        inputs = ["--input-list", listing]
+    else:
+        inputs = ["--input", a, b]
 
     p = run_r(repo_root / "code/script/pecotmr_integration/fine_mapping_bed_merge.R",
-              ["--input", a, b, "--output", out], timeout=300)
+              [*inputs, "--output", out], timeout=300)
     assert p.returncode == 0, p.stdout + p.stderr
 
     lines = gzip.open(out, "rt").read().rstrip("\n").split("\n")
@@ -127,3 +137,17 @@ def test_merge_does_not_index_a_position_table(run_r, repo_root, tmp_path):
     # alleles survive untouched in the allele column
     assert [r[2] for r in rows] == ["G", "A", "C"]
     assert not (tmp_path / "merged.positions.tsv.gz.tbi").exists()
+
+
+def test_merge_rejects_tables_with_different_headers(run_r, repo_root, tmp_path):
+    """The tables are read one at a time, so the merge checks that they share one
+    header: binding an fSuSiE table to a top-loci one (same width, different
+    columns) would otherwise mislabel or NA-pad the merged table."""
+    a = tmp_path / "r1.exported.bed.gz"
+    b = tmp_path / "r2.top_loci.bed.gz"
+    _write(a, [("2", 300, 301, "2:301:A:T", "c1", "chr2_1_1000", 0.9)])
+    _write_with(b, TOPLOCI_HEADER, [("chr2", 99, 100, "chr2:100:G:A", "G", "A", 0.5)])
+    p = run_r(repo_root / "code/script/pecotmr_integration/fine_mapping_bed_merge.R",
+              ["--input", a, b, "--output", tmp_path / "merged.bed.gz"], timeout=300)
+    assert p.returncode != 0
+    assert "must share the header" in p.stderr, p.stderr

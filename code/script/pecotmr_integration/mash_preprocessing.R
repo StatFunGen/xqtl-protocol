@@ -20,8 +20,13 @@
 # Inputs:
 #   --objects f1 [f2 ...]   Per-region RDS files (QtlSumStats or
 #                            FineMappingResult). Mixed classes are allowed.
+#   --objects-list <path>   File listing the --objects RDS files, one per line
+#                            (instead of --objects; a genome-wide list is too
+#                            long for the command line).
 #   --region-ids id1,...    Optional comma-separated region labels (one per
 #                            object; default = file basenames).
+#   --region-ids-list <path>  File listing the region labels, one per line
+#                            (instead of --region-ids).
 #   --n-random N            Random rows sampled per object. Default 10.
 #   --n-null N              Null (max|z|<2) rows sampled per object. Default 10.
 #   --exclude-condition c   Comma-separated condition names to drop. Default none.
@@ -45,8 +50,12 @@ suppressPackageStartupMessages({
 p <- arg_parser("Assemble MASH input from per-region S4 objects via mashInput")
 p <- add_argument(p, "--objects", type = "character", nargs = Inf,
                   help = "Per-region RDS files (QtlSumStats or FineMappingResult)")
+p <- add_argument(p, "--objects-list", type = "character", default = "",
+                  help = "File listing the --objects RDS files, one per line (instead of --objects)")
 p <- add_argument(p, "--region-ids", type = "character", default = "",
                   help = "Comma-separated region labels (default: file basenames)")
+p <- add_argument(p, "--region-ids-list", type = "character", default = "",
+                  help = "File listing the region labels, one per line (instead of --region-ids)")
 p <- add_argument(p, "--n-random", type = "integer", default = 10L,
                   help = "Random rows sampled per object")
 p <- add_argument(p, "--n-null", type = "integer", default = 10L,
@@ -82,15 +91,16 @@ readIndependentVariantIds <- function(path) {
   as.character(df[[1L]])
 }
 
-paths <- as.character(argv$objects)
+splitCsv <- function(x) if (nzchar(x)) trimws(strsplit(x, ",", fixed = TRUE)[[1L]]) else character(0)
+readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
+
+paths <- if (nzchar(argv$objects_list)) readListFile(argv$objects_list) else as.character(argv$objects)
 if (length(paths) == 0L) stop("--objects requires at least one RDS file.")
 missing <- paths[!file.exists(paths)]
 if (length(missing) > 0L)
   stop("--objects file(s) not found: ", paste(missing, collapse = ", "))
 
-splitCsv <- function(x) if (nzchar(x)) trimws(strsplit(x, ",", fixed = TRUE)[[1L]]) else character(0)
-
-regionIds <- splitCsv(argv$region_ids)
+regionIds <- if (nzchar(argv$region_ids_list)) readListFile(argv$region_ids_list) else splitCsv(argv$region_ids)
 if (length(regionIds) == 0L) {
   regionIds <- tools::file_path_sans_ext(basename(paths))
 }

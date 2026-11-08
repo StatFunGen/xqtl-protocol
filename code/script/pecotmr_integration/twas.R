@@ -12,6 +12,10 @@
 #                          LD reference, is read once for all of them)
 #   --gwas-sumstats        Per-region GwasSumStats RDS (one or more studies)
 #   --fine-mapping-result  Optional per-gene FineMappingResult RDS
+#   --gene-table           TSV with one row per gene and columns twas_weights,
+#                          output and optionally fine_mapping_result, in place of
+#                          the three comma-separated lists (a chromosome-wide
+#                          region's lists are too long for the command line)
 #   --rsq-cutoff           CV-R^2 weight-selection cutoff (legacy rsq_cutoff)
 #   --rsq-pval-cutoff      CV-p-value gate for selection (legacy rsq_pval_cutoff)
 #   --rsq-option           CV r-squared metric: rsq / adj_rsq (legacy rsq_option)
@@ -36,6 +40,9 @@ parser <- add_argument(parser, "--gwas-sumstats",
                        type = "character")
 parser <- add_argument(parser, "--fine-mapping-result",
                        help = "Optional per-gene FineMappingResult RDS; comma-separated, one per --twas-weights entry",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--gene-table",
+                       help = "TSV with one row per gene: twas_weights, output and optionally fine_mapping_result (instead of the three comma-separated lists)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--mr-pip-cutoff",
                        help = "Pass-through PIP cutoff for MR",
@@ -76,14 +83,26 @@ combine_methods <- if (nzchar(argv$combine_methods) && argv$combine_methods != "
 rsq_pval_option <- trimws(strsplit(argv$rsq_pval_option, ",", fixed = TRUE)[[1L]])
 
 # One call may score several genes of the same LD block: --twas-weights,
-# --fine-mapping-result and --output are comma-separated lists, one entry per gene.
+# --fine-mapping-result and --output are comma-separated lists, one entry per
+# gene, or the columns of --gene-table, one row per gene.
 splitList <- function(x) {
   x <- trimws(strsplit(x, ",", fixed = TRUE)[[1L]])
   x[nzchar(x)]
 }
-twPaths <- splitList(argv$twas_weights)
-outPaths <- splitList(argv$output)
-fmPaths <- if (nzchar(argv$fine_mapping_result)) trimws(strsplit(sub("^,", "", argv$fine_mapping_result), ",", fixed = TRUE)[[1L]]) else character(0)
+if (nzchar(argv$gene_table)) {
+  genes <- vroom::vroom(argv$gene_table, delim = "\t", col_types = vroom::cols(.default = "c"),
+                        na = character(), progress = FALSE)
+  missing <- setdiff(c("twas_weights", "output"), names(genes))
+  if (length(missing) > 0L)
+    stop("--gene-table is missing column(s): ", paste(missing, collapse = ", "))
+  twPaths <- genes$twas_weights
+  outPaths <- genes$output
+  fmPaths <- if ("fine_mapping_result" %in% names(genes)) genes$fine_mapping_result else character(0)
+} else {
+  twPaths <- splitList(argv$twas_weights)
+  outPaths <- splitList(argv$output)
+  fmPaths <- if (nzchar(argv$fine_mapping_result)) trimws(strsplit(sub("^,", "", argv$fine_mapping_result), ",", fixed = TRUE)[[1L]]) else character(0)
+}
 if (length(outPaths) != length(twPaths)) stop("--output needs one path per --twas-weights entry.")
 if (length(fmPaths) == 0L) fmPaths <- rep("", length(twPaths))
 if (length(fmPaths) != length(twPaths)) stop("--fine-mapping-result needs one path per --twas-weights entry.")

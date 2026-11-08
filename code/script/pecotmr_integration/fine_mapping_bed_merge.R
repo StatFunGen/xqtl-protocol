@@ -20,6 +20,8 @@
 #
 # Inputs:
 #   --input <TABLE> [...]  Per-region tables (all sharing one header).
+#   --input-list <PATH>    File listing those tables, one per line, instead (a
+#                          genome-wide list is too long for the command line).
 #   --output <PATH>        Merged output; bgzipped when it ends in .gz/.bgz.
 
 suppressPackageStartupMessages({
@@ -33,18 +35,30 @@ suppressPackageStartupMessages({
 parser <- arg_parser("Merge per-region fine-mapping tables into one sorted table")
 parser <- add_argument(parser, "--input", help = "Per-region table paths",
                        type = "character", nargs = Inf)
+parser <- add_argument(parser, "--input-list",
+                       help = "File listing the per-region table paths, one per line (instead of --input)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output", help = "Merged output path",
                        type = "character")
 argv <- parse_args(parser)
 
-inputs <- as.character(argv$input)
+readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
+inputs <- if (nzchar(argv$input_list)) readListFile(argv$input_list) else as.character(argv$input)
 if (length(inputs) == 0L) stop("--input requires at least one table path.")
 
 # col_types = "c" throughout: the packed ";"-joined columns must survive
-# untouched and the table is re-emitted verbatim. vroom reads the shared
-# header once and skips it in the remaining files.
-merged <- vroom(inputs, delim = "\t", col_types = vroom::cols(.default = "c"),
-                progress = FALSE)
+# untouched and the table is re-emitted verbatim. One eager (altrep = FALSE)
+# read per file: a multi-file vroom() call, or lazy columns, keeps every file
+# open, and a genome-wide merge of thousands of tables then hits the
+# open-file limit.
+tables <- lapply(inputs, vroom, delim = "\t", col_types = vroom::cols(.default = "c"),
+                 progress = FALSE, altrep = FALSE)
+header <- names(tables[[1L]])
+differs <- !vapply(tables, function(t) identical(names(t), header), logical(1))
+if (any(differs))
+  stop("All tables must share the header of ", inputs[[1L]], "; these differ: ",
+       paste(inputs[differs], collapse = ", "))
+merged <- bind_rows(tables)
 
 cols <- names(merged)
 # A half-open BED starts #chr/start/end; anything else came from elsewhere and

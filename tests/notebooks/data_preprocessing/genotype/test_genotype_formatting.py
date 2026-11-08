@@ -13,8 +13,11 @@ from __future__ import annotations
 import os
 import subprocess
 
+import pytest
+
 from helpers.expected import assert_matches_expected
 
+NB = "pipeline/genotype_formatting.ipynb"
 WORKER = "code/script/data_preprocessing/genotype/genotype_formatting.R"
 SH = "code/script/data_preprocessing/genotype/genotype_formatting.sh"
 EXP = "tests/fixtures/genotype_formatting/expected"
@@ -51,13 +54,20 @@ def _rscript(expr):
     return r.stdout.strip()
 
 
-def test_write_data_list(run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_write_data_list(via_list, run_r, repo_root, tmp_path):
     f1 = tmp_path / "s.chr1.bed"; f1.write_text("x")
     f2 = tmp_path / "s.chr2.bed"; f2.write_text("y")
     f3 = tmp_path / "s.chr3.bed"; f3.write_text("")            # empty -> excluded
     out = tmp_path / "list.tsv"
-    files = "::".join(str(x) for x in (f1, f2, f3))
-    p = run_r(repo_root / WORKER, ["--step", "write_data_list", "--data-files", files,
+    if via_list:
+        # the notebook's form: a genome-wide list is too long for one argument
+        listing = tmp_path / "data_files.txt"
+        listing.write_text("".join(f"{x}\n" for x in (f1, f2, f3)))
+        files = ["--data-files-list", listing]
+    else:
+        files = ["--data-files", "::".join(str(x) for x in (f1, f2, f3))]
+    p = run_r(repo_root / WORKER, ["--step", "write_data_list", *files,
                                    "--ext", "bed", "--output", out])
     assert p.returncode == 0, p.stdout + p.stderr
     lines = out.read_text().splitlines()
@@ -65,6 +75,30 @@ def test_write_data_list(run_r, repo_root, tmp_path):
     assert lines[1] == f"chr1\t{f1}"
     assert lines[2] == f"chr2\t{f2}"
     assert len(lines) == 3                                     # empty chr3 dropped
+
+
+def test_genotype_by_region_manifest(run_sos, repo_root, tmp_path):
+    """genotype_by_region end to end: one PLINK fileset per region, then
+    write_data_list gathers them into the manifest through a list file (a
+    genome-wide region list is too long for one command-line argument)."""
+    regions = tmp_path / "regions.txt"
+    regions.write_text("22\t16000000\t17000000\tregA\n22\t17000000\t18000000\tregB\n")
+    out = tmp_path / "out"
+    p = run_sos(repo_root / NB, "genotype_by_region",
+                {"genoFile": repo_root / f"{BED}.bed", "region_list": regions,
+                 "window": 0, "cwd": out, "name": "test", "numThreads": 1,
+                 "modular_script_dir": repo_root / "code/script"},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    by_region = out / "regions_genotype_by_region"
+    lines = (by_region / "protocol_example.ld_genotype.chr22.genotype_by_region_files.txt"
+             ).read_text().splitlines()
+    assert lines[0] == "#id\t#path"
+    rows = [line.split("\t") for line in lines[1:]]
+    assert [r[0] for r in rows] == ["regA", "regB"]
+    assert [os.path.basename(r[1]) for r in rows] == [
+        "protocol_example.ld_genotype.chr22.regA.bed",
+        "protocol_example.ld_genotype.chr22.regB.bed"]
 
 
 def test_ld_by_region(run_r, repo_root, tmp_path):

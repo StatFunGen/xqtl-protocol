@@ -18,10 +18,11 @@
 #   --manifest             Block-grid manifest TSV with columns:
 #                            region_id          (string, unique)
 #                            gwas_sumstats_rds  (per-block GwasSumStats RDS)
-#   --twas-weights         Comma-separated FLAT per-gene weight RDS paths, or a text
-#                          file listing them (one per line)
+#   --twas-weights         Comma-separated FLAT per-gene weight RDS paths
 #                          (TwasWeights or QtlFineMappingResult; each carries
 #                          `traitPos` provenance for placement)
+#   --twas-weights-list    File listing those paths, one per line, instead (a
+#                          genome-scale list is too long for the command line)
 #   --fine-mapping-results Optional comma-separated FineMappingResult RDS used
 #                          only as the CS / PIP rescue-filter source
 #                          (NOT the weight source)
@@ -48,6 +49,9 @@ parser <- add_argument(parser, "--manifest",
 parser <- add_argument(parser, "--twas-weights",
                        help = "Comma-separated FLAT per-gene weight RDS (TwasWeights or QtlFineMappingResult)",
                        type = "character")
+parser <- add_argument(parser, "--twas-weights-list",
+                       help = "File listing the --twas-weights RDS paths, one per line (instead of --twas-weights)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--fine-mapping-results",
                        help = "Optional comma-separated FineMappingResult RDS (CS/PIP filter source)",
                        type = "character", default = "")
@@ -76,12 +80,10 @@ argv <- parse_args(parser)
 
 split_paths <- function(s) {
   if (is.na(s) || !nzchar(s)) return(character(0))
-  # A single non-.rds path is a text file listing the paths (comma- or line-separated).
-  if (!grepl(",", s, fixed = TRUE) && !grepl("\\.rds$", s, ignore.case = TRUE) && file.exists(s))
-    s <- paste(readLines(s), collapse = ",")
   p <- trimws(strsplit(s, ",", fixed = TRUE)[[1L]])
   p[nzchar(p)]
 }
+readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
 
 manifest <- read.table(argv$manifest, header = TRUE, sep = "\t",
                        stringsAsFactors = FALSE, check.names = FALSE,
@@ -133,9 +135,9 @@ gwasSumStats <- combineGwasSumStats(gwasParts)
 
 # FLAT weight source: an unnamed list of per-gene weight objects. assembleCtwasInputs
 # combines them and places each gene into its home block by `traitPos`.
-weightPaths <- split_paths(argv$twas_weights)
+weightPaths <- if (nzchar(argv$twas_weights_list)) readListFile(argv$twas_weights_list) else split_paths(argv$twas_weights)
 if (length(weightPaths) == 0L)
-  stop("--twas-weights lists no weight RDS paths.")
+  stop("--twas-weights / --twas-weights-list lists no weight RDS paths.")
 weightObjs <- lapply(weightPaths, readRDS)
 
 # Optional precomputed TWAS-Z and the CS/PIP-filter FineMappingResult.

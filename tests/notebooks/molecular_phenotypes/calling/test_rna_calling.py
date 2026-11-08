@@ -13,15 +13,45 @@ replaces (the committed MWE merged references predate it and are stale):
     match except the machine-dependent File path column.
 Fixtures are the MWE per-sample RSEM results (downsampled to 500 rows) + synthetic
 RNA-SeQC GCTs.
+
+The fastp_trim_adaptor and rnaseqc_call workflows also run through the notebook,
+on two samples that share SAMPLE_001's reads, so the merge steps' hand-off of
+their inputs to RNA_calling.R is covered.
 """
 from __future__ import annotations
 
 import gzip
 import subprocess
+from pathlib import Path
+
+import pytest
 
 WORKER = "code/script/molecular_phenotypes/calling/RNA_calling.R"
 SH = "code/script/molecular_phenotypes/calling/RNA_calling.sh"
 FIX = "tests/fixtures/rna_calling"
+
+
+def _input_args(paths, via_list, tmp_path):
+    """--input, or --input-list: the notebook's form (a large cohort's list is
+    too long for the command line)."""
+    if not via_list:
+        return ["--input", *paths]
+    listing = tmp_path / "inputs.txt"
+    listing.write_text("".join(f"{x}\n" for x in paths))
+    return ["--input-list", listing]
+
+
+def _two_sample_sheet(fix, tmp_path):
+    """The fixture sample sheet, with SAMPLE_002's reads linked to SAMPLE_001's
+    (only SAMPLE_001's are committed)."""
+    data = tmp_path / "data"
+    data.mkdir()
+    for s in ("SAMPLE_001", "SAMPLE_002"):
+        for r in ("R1", "R2"):
+            (data / f"{s}_{r}.fastq.gz").symlink_to(fix / "fastq" / f"SAMPLE_001_{r}.fastq.gz")
+    sheet = data / "protocol_example.rnaseq.fastq.list.txt"
+    sheet.write_text((fix / "protocol_example.rnaseq.fastq.list.txt").read_text())
+    return sheet
 
 
 def _rows(text, sep="\t"):
@@ -48,12 +78,14 @@ def _assert_num_match(got_text, exp_text, label_cols, sep="\t", tol=1e-9):
                 assert abs(float(x) - float(y)) < tol, f"num diff row {i} col {j}: {x} vs {y}"
 
 
-def test_rsem_call_2(run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_rsem_call_2(via_list, run_r, repo_root, tmp_path):
     fix = repo_root / FIX
     inp = []
     for s in ("SAMPLE_001", "SAMPLE_002"):
         inp += [fix / f"{s}.rsem.isoforms.results", fix / f"{s}.rsem.genes.results", fix / f"{s}.rsem.cnt"]
-    p = run_r(repo_root / WORKER, ["--step", "rsem_call_2", "--cwd", tmp_path, "--name", "rsem", "--input", *inp])
+    p = run_r(repo_root / WORKER, ["--step", "rsem_call_2", "--cwd", tmp_path, "--name", "rsem",
+                                   *_input_args(inp, via_list, tmp_path)])
     assert p.returncode == 0, p.stdout + p.stderr
     for f in ("rsem_transcripts_expected_count", "rsem_transcripts_tpm", "rsem_transcripts_fpkm",
               "rsem_transcripts_isopct", "rsem_genes_expected_count", "rsem_genes_tpm", "rsem_genes_fpkm"):
@@ -70,7 +102,8 @@ def test_rsem_call_2(run_r, repo_root, tmp_path):
         assert [float(c) for c in keep(rg)[1:]] == [float(c) for c in keep(re_)[1:]]
 
 
-def test_star_align_3(run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_star_align_3(via_list, run_r, repo_root, tmp_path):
     fix = repo_root / FIX
     inp = []
     for s in ("SAMPLE_001", "SAMPLE_002"):
@@ -78,7 +111,8 @@ def test_star_align_3(run_r, repo_root, tmp_path):
         bw = f"{s}.Aligned.sortedByCoord.out_nowasp_noqc.md.bw"
         inp += ["d0", "d1", coord, "d3", bw, "d5"]
     out = tmp_path / "bam_file_list"
-    p = run_r(repo_root / WORKER, ["--step", "star_align_3", "--output", out, "--input", *inp,
+    p = run_r(repo_root / WORKER, ["--step", "star_align_3", "--output", out,
+                                   *_input_args(inp, via_list, tmp_path),
                                    "--sample-id", "SAMPLE_001", "SAMPLE_002", "--strand", "rf", "rf",
                                    "--var-vcf-file", ""])
     assert p.returncode == 0, p.stdout + p.stderr
@@ -92,12 +126,14 @@ def test_detect_strand(run_r, repo_root):
     assert p.stdout.strip() == (fix / "expected" / "SAMPLE_001.strand.txt").read_text().strip()
 
 
-def test_fastp_manifest(run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_fastp_manifest(via_list, run_r, repo_root, tmp_path):
     fix = repo_root / FIX
     trimmed = [f"out/{s}_{r}.fastq.trimmed.fq.gz" for s in ("SAMPLE_001", "SAMPLE_002") for r in ("R1", "R2")]
     out = tmp_path / "fastq.list.trimmed.txt"
     p = run_r(repo_root / WORKER, ["--step", "fastp_manifest", "--sample-list", fix / "protocol_example.rnaseq.fastq.list.txt",
-                                   "--is-paired-end", 1, "--output", out, "--input", *trimmed])
+                                   "--is-paired-end", 1, "--output", out,
+                                   *_input_args(trimmed, via_list, tmp_path)])
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.read_text() == (fix / "expected" / "fastq.list.trimmed.txt").read_text()
 
@@ -317,16 +353,65 @@ def test_rnaseqc_call(run_sh, repo_root, tmp_path):
     assert (tmp_path / "SAMPLE_001.rnaseqc.metrics.tsv").exists()
 
 
-def test_rnaseqc_merge(run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_rnaseqc_merge(via_list, run_r, repo_root, tmp_path):
     fix = repo_root / FIX
     inp = []
     for s in ("SAMPLE_001", "SAMPLE_002"):
         inp += [fix / f"{s}.rnaseqc.gene_tpm.gct.gz", fix / f"{s}.rnaseqc.gene_reads.gct.gz",
                 fix / f"{s}.rnaseqc.exon_reads.gct.gz", fix / f"{s}.rnaseqc.metrics.tsv"]
-    p = run_r(repo_root / WORKER, ["--step", "rnaseqc_merge", "--cwd", tmp_path, "--name", "rnaseqc", "--input", *inp])
+    p = run_r(repo_root / WORKER, ["--step", "rnaseqc_merge", "--cwd", tmp_path, "--name", "rnaseqc",
+                                   *_input_args(inp, via_list, tmp_path)])
     assert p.returncode == 0, p.stdout + p.stderr
     for f in ("gene_tpm.gct.gz", "gene_readsCount.gct.gz", "exon_readsCount.gct.gz"):
         assert gzip.open(tmp_path / f"rnaseqc.rnaseqc.{f}", "rt").read() == \
             gzip.open(fix / "expected" / f"rnaseqc.rnaseqc.{f}", "rt").read()
     assert (tmp_path / "rnaseqc.rnaseqc.metrics.tsv").read_text() == \
         (fix / "expected" / "rnaseqc.rnaseqc.metrics.tsv").read_text()
+
+
+def test_fastp_trim_adaptor_workflow(run_sos, repo_root, tmp_path):
+    # fastp per sample, then [fastp_trim_adaptor_2] points the sample sheet at the
+    # trimmed reads, whose paths it hands to RNA_calling.R in a list file.
+    fix = repo_root / FIX
+    cwd = tmp_path / "out"
+    p = run_sos(repo_root / "pipeline/RNA_calling.ipynb", "fastp_trim_adaptor",
+                {"sample_list": _two_sample_sheet(fix, tmp_path), "cwd": cwd, "numThreads": 1,
+                 "modular_script_dir": repo_root / "code/script"},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    # written under cwd at the sheet's absolute path
+    rows = _rows(next(cwd.rglob("*.trimmed.txt")).read_text())
+    assert rows[0] == ["ID", "fq1", "fq2", "strand", "read_length"]
+    assert [(r[0], Path(r[1]).name, Path(r[2]).name) for r in rows[1:]] == \
+        [(s, f"{s}_R1.fastq.trimmed.fq.gz", f"{s}_R2.fastq.trimmed.fq.gz")
+         for s in ("SAMPLE_001", "SAMPLE_002")]
+
+
+def test_rnaseqc_call_workflow(run_sos, repo_root, tmp_path):
+    # RNA-SeQC per sample, then [rnaseqc_call_2] merges the per-sample tables,
+    # whose paths it hands to RNA_calling.R in a list file. SAMPLE_002's BAM is
+    # linked to SAMPLE_001's.
+    fix = repo_root / FIX
+    bams = tmp_path / "bam"
+    bams.mkdir()
+    bam_list = ["sample_id\tstrand\tcoord_bam_list\tBW_list\tSJ_list\ttrans_bam_list"]
+    for s in ("SAMPLE_001", "SAMPLE_002"):
+        for ext in (".bam", ".bam.bai"):
+            (bams / f"{s}.cord{ext}").symlink_to(fix / "bam" / f"SAMPLE_001.cord{ext}")
+        bam_list.append(f"{s}\trf\t{bams / s}.cord.bam\t-\t-\t-")
+    (tmp_path / "protocol_example.bam_file_list").write_text("\n".join(bam_list) + "\n")
+    cwd = tmp_path / "out"
+    p = run_sos(repo_root / "pipeline/RNA_calling.ipynb", "rnaseqc_call",
+                {"sample_list": _two_sample_sheet(fix, tmp_path),
+                 "bam_list": tmp_path / "protocol_example.bam_file_list",
+                 "gtf": fix / "reference" / "chr22.window.collapsed.gtf",
+                 "reference_fasta": fix / "reference" / "chr22.window.fa.gz",
+                 "cwd": cwd, "numThreads": 1, "modular_script_dir": repo_root / "code/script"},
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    for f in ("gene_tpm.gct.gz", "gene_readsCount.gct.gz", "exon_readsCount.gct.gz"):
+        with gzip.open(cwd / f"protocol_example.rnaseqc.{f}", "rt") as fh:
+            assert fh.readline().rstrip("\n").split("\t") == ["gene_ID", "SAMPLE_001", "SAMPLE_002"]
+    metrics = _rows((cwd / "protocol_example.rnaseqc.metrics.tsv").read_text())
+    assert [r[0] for r in metrics[1:]] == ["SAMPLE_001.cord.bam", "SAMPLE_002.cord.bam"]

@@ -11,6 +11,9 @@
 #   star_align_3        — STAR outputs -> bam_file_list manifest (filename derivation)
 #   rsem_call_2         — per-sample RSEM results -> 7 merged matrices + .cnt metrics
 #
+# --input-list FILE (one path per line) may replace --input; the notebook uses it
+# because a large cohort's merge inputs are too long for the command line.
+#
 # The three merge steps are faithful ports of RNA_calling.py: numeric columns are
 # carried through verbatim (numerically identical to pandas; the float repr is
 # cosmetic), label columns and the manifest are byte-identical.
@@ -40,6 +43,8 @@ p <- add_argument(p, "--name", type = "character", default = "",
                   help = "[rnaseqc_merge/rsem_call_2] output prefix")
 p <- add_argument(p, "--input", type = "character", nargs = Inf,
                   help = "interleaved input files for the selected step")
+p <- add_argument(p, "--input-list", type = "character", default = "",
+                  help = "file listing the --input files in order, one per line (instead of --input)")
 # star_align_3
 p <- add_argument(p, "--sample-id", type = "character", nargs = Inf,
                   help = "[star_align_3] per-sample IDs")
@@ -59,6 +64,10 @@ argv <- parse_args(p)
 
 # nargs=Inf args are NA when not supplied for the selected step
 for (k in c("input", "sample_id", "strand")) argv[[k]] <- argv[[k]][!is.na(argv[[k]])]
+if (nzchar(argv$input_list)) {
+  argv$input <- trimws(vroom::vroom_lines(argv$input_list))
+  argv$input <- argv$input[nzchar(argv$input)]
+}
 
 is_paired   <- argv$is_paired_end
 source_dir  <- argv$input_dir
