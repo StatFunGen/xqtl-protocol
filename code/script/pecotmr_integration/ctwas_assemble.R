@@ -24,9 +24,9 @@
 #   --fine-mapping-results Optional comma-separated FineMappingResult RDS used
 #                          only as the CS / PIP rescue-filter source
 #                          (NOT the weight source)
-#   --method               Which TWAS method to feed into ctwas. Required
-#                          unless the weights carry an 'ensemble' entry, which
-#                          is the only value resolved implicitly.
+#   --method               Which TWAS method to feed into ctwas. Empty uses
+#                          each gene's best method by cross-validated r-squared
+#                          (pecotmr's WeightSelectionParam(methods = "best")).
 #   --twas-z               Optional TWAS-Z GRanges RDS
 #   --twas-weight-cutoff   Pass-through (default 0)
 #   --cs-min-cor           Pass-through (default 0.8)
@@ -51,7 +51,7 @@ parser <- add_argument(parser, "--fine-mapping-results",
                        help = "Optional comma-separated FineMappingResult RDS (CS/PIP filter source)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--method",
-                       help = "Which TWAS method to feed into ctwas (required unless the weights carry an 'ensemble' entry to default to)",
+                       help = "Which TWAS method to feed into ctwas (default: each gene's best method by CV r-squared)",
                        type = "character", default = "")
 parser <- add_argument(parser, "--twas-z",
                        help = "Optional TWAS-Z GRanges RDS",
@@ -147,7 +147,8 @@ inputs <- assembleCtwasInputs(
   twasWeights       = weightObjs,
   twasZ             = tz,
   fineMappingResult = fmr,
-  method            = if (nzchar(argv$method)) argv$method else NULL,
+  weightSelectionParam = if (nzchar(argv$method))
+    WeightSelectionParam(methods = argv$method) else WeightSelectionParam(),
   variantPruningParam = VariantPruningParam(
     weightCutoff = argv$twas_weight_cutoff,
     csMinCor     = argv$cs_min_cor,

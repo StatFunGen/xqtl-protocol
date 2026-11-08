@@ -16,4 +16,7 @@ def test_colocboost(qtl_dataset, run_r, read_rds, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     info = read_rds(out)
     assert info["class"] == "ColocBoostResult" and "isColocalized" in info["colnames"]
-    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)
+    # `fits` (the raw colocboost run) by structure only: its floats drift across BLAS
+    # builds; the sets themselves are compared in full.
+    assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8,
+                            structure_only=["fits"])

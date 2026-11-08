@@ -45,4 +45,4 @@ def test_enrichment_and_coloc(run_sos, read_rds, repo_root, tmp_path):
     assert cf.exists(), p.stdout
     cinfo = read_rds(cf)
     assert cinfo["class"] == "ColocResult"
-    assert "PP.H4.abf" in cinfo["colnames"], cinfo
+    assert "pairs" in cinfo["colnames"], cinfo

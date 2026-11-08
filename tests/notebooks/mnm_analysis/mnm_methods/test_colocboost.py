@@ -40,6 +40,9 @@ def test_colocboost_xqtl(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     assert info["class"] == "ColocBoostResult"
     assert "isColocalized" in info["colnames"]
     # regression: the seeded (seed=999) colocboost result reproduces the committed
-    # snapshot within tolerance; the comparator strips computing_time difftimes.
+    # snapshot within tolerance; the comparator strips computing_time difftimes. The raw
+    # colocboost run kept in `fits` is matched by structure only: its many floats are
+    # the boosting internals, which drift across BLAS builds, while the sets they lead
+    # to are compared in full.
     assert_matches_expected(out, repo_root / EXPECTED / f"test_coloc.{GENE}.colocboost.rds",
-                            mode="tolerant", rtol=1e-6, atol=1e-8)
+                            mode="tolerant", rtol=1e-6, atol=1e-8, structure_only=["fits"])
