@@ -10,6 +10,8 @@
 #
 # Inputs:
 #   --contrast f1 [...]  per-region contrast RDS files (from mash_posterior_contrast.R).
+#   --contrast-list <f>  file listing those RDS files, one per line, instead (a
+#                        genome-wide list is too long for the command line).
 #   --cells c1,c2,...     conditions (columns) whose pairwise contrasts to tally.
 #   --p-cutoff X         significance cutoff. Default 1e-5.
 #   --output <CSV>       output summary CSV (rows: n_sig_snp / n_snp /
@@ -22,6 +24,8 @@ suppressPackageStartupMessages({
 p <- arg_parser("Summarize posterior-contrast significance across regions")
 p <- add_argument(p, "--contrast", type = "character", nargs = Inf,
                   help = "per-region contrast RDS files")
+p <- add_argument(p, "--contrast-list", type = "character", default = "",
+                  help = "file listing the --contrast RDS files, one per line (instead of --contrast)")
 p <- add_argument(p, "--cells", type = "character",
                   help = "comma-separated conditions")
 p <- add_argument(p, "--p-cutoff", type = "numeric", default = 1e-5,
@@ -30,7 +34,8 @@ p <- add_argument(p, "--output", type = "character", help = "output summary CSV"
 argv <- parse_args(p)
 
 cells <- trimws(strsplit(argv$cells, ",", fixed = TRUE)[[1L]])
-files <- as.character(argv$contrast)
+readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
+files <- if (nzchar(argv$contrast_list)) readListFile(argv$contrast_list) else as.character(argv$contrast)
 if (length(files) == 0L) stop("--contrast requires at least one RDS file.")
 
 pairs <- apply(utils::combn(cells, 2L), 2L, paste, collapse = "_vs_")

@@ -5,8 +5,9 @@
 #   ld_by_region_plink_1  package plink's `.ld` matrix + `.bim` variant IDs (the plink
 #                         `--r square0 --make-just-bim` call runs in the notebook cell)
 #                         as an RDS (was a numpy .npz; nothing in-repo reads the .npz).
-#   write_data_list       Filter a "::"-joined file list to non-empty entries and
-#                         write a two-column (#id, #path) manifest.
+#   write_data_list       Filter a "::"-joined file list (or a --data-files-list file,
+#                         one path per line) to non-empty entries and write a
+#                         two-column (#id, #path) manifest.
 #   vcf_gz_summary        Print row/column/header/preview stats for VCF(.gz) files.
 #   file_size_summary     Print file path + human-readable size.
 
@@ -49,8 +50,14 @@ do_ld_by_region <- function(argv) {
 
 do_write_data_list <- function(argv) {
   stopifnot(nzchar(argv$output))
-  files <- Filter(nzchar, strsplit(argv$data_files, "::", fixed = TRUE)[[1]])
-  if (!length(files)) stop("--data-files is required")
+  # A genome-wide region list is too long for one command-line argument, so the
+  # notebook passes it as a file.
+  files <- if (nzchar(argv$data_files_list)) {
+    Filter(nzchar, trimws(read_lines_any(argv$data_files_list)))
+  } else {
+    Filter(nzchar, strsplit(argv$data_files, "::", fixed = TRUE)[[1]])
+  }
+  if (!length(files)) stop("--data-files or --data-files-list is required")
   n <- length(strsplit(argv$ext, ".", fixed = TRUE)[[1]]) + 1
   ids <- character(0); keep <- character(0)
   for (f in files) {
@@ -93,6 +100,9 @@ p <- add_argument(p, "--region-end", help = "ld_by_region: region end bp", defau
 p <- add_argument(p, "--float-type", help = "filename precision tag", default = "16")
 p <- add_argument(p, "--output", help = "output path", default = "")
 p <- add_argument(p, "--data-files", help = "\"::\"-joined file list", default = "")
+p <- add_argument(p, "--data-files-list",
+                  help = "write_data_list: file listing the data files, one per line (instead of --data-files)",
+                  default = "")
 p <- add_argument(p, "--ext", help = "write_data_list: file extension", default = "")
 p <- add_argument(p, "--numThreads", help = "plink threads", default = "8")
 argv <- parse_args(p)

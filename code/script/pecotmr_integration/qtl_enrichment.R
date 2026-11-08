@@ -12,6 +12,9 @@
 #   --qtl-fine-mapping     Path to S4 QtlFineMappingResult RDS
 #                          (output of fine_mapping.ipynb / fineMappingPipeline)
 #   --gwas-fine-mapping    Path to S4 GwasFineMappingResult RDS
+#   --qtl-fine-mapping-list / --gwas-fine-mapping-list
+#                          File listing those RDS paths, one per line, instead
+#                          (a genome-wide list is too long for the command line)
 #   --num-gwas             Number of GWAS variants per study (pass-through)
 #   --pi-qtl               Optional QTL pi value (pass-through)
 #   --lambda               Pass-through (default 1)
@@ -36,6 +39,12 @@ parser <- add_argument(parser, "--qtl-fine-mapping",
 parser <- add_argument(parser, "--gwas-fine-mapping",
                        help = "Path(s) to S4 GwasFineMappingResult RDS (combined if >1)",
                        type = "character", nargs = Inf)
+parser <- add_argument(parser, "--qtl-fine-mapping-list",
+                       help = "File listing the --qtl-fine-mapping RDS paths, one per line (instead of --qtl-fine-mapping)",
+                       type = "character", default = "")
+parser <- add_argument(parser, "--gwas-fine-mapping-list",
+                       help = "File listing the --gwas-fine-mapping RDS paths, one per line (instead of --gwas-fine-mapping)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--num-gwas",
                        help = "Number of GWAS variants (per study; pass-through)",
                        type = "numeric", default = NA)
@@ -70,8 +79,11 @@ argv <- parse_args(parser)
   ld <- tryCatch(fmrs[[1L]]@ldReference, error = function(e) NULL)
   do.call(combineFineMappingResults, c(fmrs, list(ldReference = ld)))
 }
-qtlFmr  <- .loadCombine(argv$qtl_fine_mapping)
-gwasFmr <- .loadCombine(argv$gwas_fine_mapping)
+readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
+qtlFmr  <- .loadCombine(if (nzchar(argv$qtl_fine_mapping_list))
+                          readListFile(argv$qtl_fine_mapping_list) else argv$qtl_fine_mapping)
+gwasFmr <- .loadCombine(if (nzchar(argv$gwas_fine_mapping_list))
+                          readListFile(argv$gwas_fine_mapping_list) else argv$gwas_fine_mapping)
 
 # The impN imputation rounds are drawn in C++ (qtl_enrichment.h), so a
 # main-process set.seed() cannot reach them -- the base seed has to be forwarded,

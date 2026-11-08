@@ -12,10 +12,18 @@ from __future__ import annotations
 import pytest
 
 
-def test_fine_mapping_upset(fmr, run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_fine_mapping_upset(via_list, fmr, run_r, repo_root, tmp_path):
     out = tmp_path / "upset.png"
+    if via_list:
+        # the notebook's form: a genome-wide list is too long for the command line
+        listing = tmp_path / "inputs.txt"
+        listing.write_text(f"{fmr}\n")
+        inputs = ["--input-list", listing]
+    else:
+        inputs = ["--input", fmr]
     p = run_r(repo_root / "code/script/pecotmr_integration/fine_mapping_upset.R",
-              ["--input", fmr, "--output", out], timeout=120)
+              [*inputs, "--output", out], timeout=120)
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.exists() and out.stat().st_size > 0
     assert "No credible sets found across any input" in p.stderr, (

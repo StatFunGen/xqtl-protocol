@@ -13,6 +13,8 @@ variant on this fixture).
 """
 from __future__ import annotations
 
+import pytest
+
 from helpers.expected import assert_matches_expected
 
 MASH_KEYS = {
@@ -49,11 +51,23 @@ def test_mash_preprocessing_qtlsumstats_path(run_r, read_rds, repo_root, tmp_pat
                             rtol=1e-6, atol=1e-8)
 
 
-def test_mash_preprocessing_finemapping_path(run_r, read_rds, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_mash_preprocessing_finemapping_path(via_list, run_r, read_rds, repo_root, tmp_path):
     fx = repo_root / "tests/fixtures/mash"
+    fmr = fx / "protocol_example.QtlFineMappingResult.rds"
     out = tmp_path / "mash_input_fmr.rds"
+    if via_list:
+        # the notebook's form for a genome-wide list. The label is the default
+        # (the file basename), so the result matches the inline expected output.
+        objects = tmp_path / "objects.txt"
+        objects.write_text(f"{fmr}\n")
+        labels = tmp_path / "region_ids.txt"
+        labels.write_text("protocol_example.QtlFineMappingResult\n")
+        inputs = ["--objects-list", objects, "--region-ids-list", labels]
+    else:
+        inputs = ["--objects", fmr]
     p = run_r(repo_root / "code/script/pecotmr_integration/mash_preprocessing.R",
-              ["--objects", fx / "protocol_example.QtlFineMappingResult.rds",
+              [*inputs,
                "--n-random", "15", "--n-null", "15", "--coverage", "0.95",
                "--sig-p-cutoff", "0.1", "--seed", "1", "--output", out], timeout=300)
     assert p.returncode == 0, p.stdout + p.stderr

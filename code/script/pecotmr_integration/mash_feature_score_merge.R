@@ -8,6 +8,8 @@
 #
 # Inputs:
 #   --scores f1 [f2 ...]  per-chunk feature-score RDS files.
+#   --scores-list <f>     file listing those RDS files, one per line, instead (a
+#                         genome-wide list is too long for the command line).
 #   --output <path>       output table; ".csv" -> CSV, else RDS.
 
 suppressPackageStartupMessages(library(argparser))
@@ -15,10 +17,13 @@ suppressPackageStartupMessages(library(argparser))
 p <- arg_parser("Merge per-chunk MASH feature-score tables")
 p <- add_argument(p, "--scores", type = "character", nargs = Inf,
                   help = "per-chunk feature-score RDS files")
+p <- add_argument(p, "--scores-list", type = "character", default = "",
+                  help = "file listing the --scores RDS files, one per line (instead of --scores)")
 p <- add_argument(p, "--output", type = "character", help = "output CSV or RDS")
 argv <- parse_args(p)
 
-files <- as.character(argv$scores)
+readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
+files <- if (nzchar(argv$scores_list)) readListFile(argv$scores_list) else as.character(argv$scores)
 if (length(files) == 0L) stop("--scores requires at least one RDS file.")
 
 merged <- do.call(rbind, lapply(files, function(f) as.data.frame(readRDS(f))))

@@ -46,6 +46,9 @@ parser <- add_argument(parser, "--region", nargs = Inf,
                        type = "character")
 parser <- add_argument(parser, "--inputs", nargs = Inf,
                        help = "[*_2] per-shard output paths to collate", type = "character")
+parser <- add_argument(parser, "--inputs-list",
+                       help = "[*_2] File listing the --inputs paths, one per line (instead of --inputs)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output", help = "Explicit output path", type = "character",
                        default = "")
 parser <- add_argument(parser, "--output-files", help = "[*_2] chrom/region file manifest",
@@ -84,6 +87,12 @@ parser <- add_argument(parser, "--numThreads", help = "Number of threads",
 argv <- parse_args(parser)
 
 if (is.na(argv$step)) stop("--step is required")
+# A genome-wide list of per-region shards is too long for the command line, so
+# the notebook passes it as a file.
+if (nzchar(argv$inputs_list)) {
+  argv$inputs <- trimws(vroom::vroom_lines(argv$inputs_list))
+  argv$inputs <- argv$inputs[nzchar(argv$inputs)]
+}
 if (!nzchar(argv$name) && !is.na(argv$phenoFile)) {
   argv$name <- sub("\\.gct(\\.gz)?$", "", basename(argv$phenoFile))
 }

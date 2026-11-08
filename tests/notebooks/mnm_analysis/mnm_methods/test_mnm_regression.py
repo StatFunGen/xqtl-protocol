@@ -3,7 +3,9 @@
 This is the website-published entrypoint for the QTL fine-mapping / TWAS-weight
 chain. Running the `qtl_dataset_construct+susie_twas` step exercises the SoS cell
 orchestration end-to-end (param wiring, path resolution, step chaining) that the
-direct script tests can't reach, and asserts the same output S4 shapes.
+direct script tests can't reach, and asserts the same output S4 shapes. The
+gene manifest steps ([susie_twas_1] / [mnm_1]) also run alone, on --region-list
+and with no selection.
 """
 from __future__ import annotations
 
@@ -90,6 +92,65 @@ def test_mnm(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     exp = repo_root / "tests/fixtures/mnm_regression/expected"
     assert_matches_expected(fmr, exp / "multicontext_bvsr.rds", mode="tolerant",
                             rtol=1e-6, atol=1e-8)
+
+
+def _gene_manifest_params(repo_root, qtl_mini, cwd):
+    """The [global] inputs of the gene manifest steps; no QtlDataset is needed,
+    since only the manifest step runs."""
+    return {
+        "name": "test_study",
+        "cwd": cwd,
+        "genoFile": qtl_mini / "protocol_example.genotype.chr22.bed",
+        "phenoFile": qtl_mini / "protocol_example.pheno_manifest_context.tsv",
+        "covFile": qtl_mini / "example_covariates.tsv",
+        "modular_script_dir": repo_root / "code/script",
+    }
+
+
+@pytest.mark.parametrize("workflow, folder", [("susie_twas", "fine_mapping"),
+                                              ("mnm", "multivariate_fine_mapping")])
+def test_gene_manifest_from_region_list(run_sos, repo_root, qtl_mini, tmp_path,
+                                        workflow, folder):
+    """The manifest step takes the genes from --region-list's last column, and
+    reruns when the list is edited: the list is a step input, so SoS sees the
+    change instead of reusing the manifest it saved."""
+    cwd = tmp_path / "mnm"
+    genes = tmp_path / "genes.bed"
+    params = {**_gene_manifest_params(repo_root, qtl_mini, cwd), "region-list": genes}
+    manifest = cwd / folder / f"test_study.{workflow}_region_manifest.tsv"
+    for listed in (["ENSG00000130538", GENE], [GENE]):
+        genes.write_text("#chr\tstart\tend\tID\n"
+                         + "".join(f"chr22\t0\t1\t{gene}\n" for gene in listed))
+        p = run_sos(repo_root / "pipeline/mnm_regression.ipynb", f"{workflow}:1",
+                    params, cwd=repo_root, timeout=300)
+        assert p.returncode == 0, p.stdout + p.stderr
+        rows = [line.split("\t") for line in manifest.read_text().splitlines()]
+        column = rows[0].index("region_name")
+        assert [row[column] for row in rows[1:]] == listed
+
+
+@pytest.mark.parametrize("workflow, folder", [("susie_twas", "fine_mapping"),
+                                              ("mnm", "multivariate_fine_mapping")])
+def test_gene_manifest_defaults_to_every_gene(run_sos, repo_root, qtl_mini, tmp_path,
+                                              workflow, folder):
+    """With neither --region-name nor --region-list, every gene in the phenotype
+    manifest is analyzed. The manifest here has no #chr/start/end columns:
+    qtl_dataset_construct does not need them, and gene mode does not either."""
+    cwd = tmp_path / "mnm"
+    pheno = [line.split("\t") for line in
+             (qtl_mini / "protocol_example.pheno_manifest_context.tsv").read_text().splitlines()]
+    keep = [i for i, column in enumerate(pheno[0]) if column not in ("#chr", "start", "end")]
+    no_coordinates = tmp_path / "pheno_manifest.tsv"
+    no_coordinates.write_text("".join("\t".join(row[i] for i in keep) + "\n" for row in pheno))
+    p = run_sos(repo_root / "pipeline/mnm_regression.ipynb", f"{workflow}:1",
+                {**_gene_manifest_params(repo_root, qtl_mini, cwd), "phenoFile": no_coordinates},
+                cwd=repo_root, timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    genes = list(dict.fromkeys(row[pheno[0].index("ID")] for row in pheno[1:]))
+    manifest = cwd / folder / f"test_study.{workflow}_region_manifest.tsv"
+    rows = [line.split("\t") for line in manifest.read_text().splitlines()]
+    column = rows[0].index("region_name")
+    assert [row[column] for row in rows[1:]] == genes
 
 
 def test_fsusie_ti_export(run_sos, read_rds, repo_root, qtl_mini, tmp_path):

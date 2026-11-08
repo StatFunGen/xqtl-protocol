@@ -54,7 +54,8 @@ def test_mash_feature_score(method, score_type, run_r, read_rds, repo_root, tmp_
     # write.csv(row.names=FALSE) drops those path-derived names.
 
 
-def test_mash_feature_score_merge(run_r, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_mash_feature_score_merge(via_list, run_r, repo_root, tmp_path):
     contrast = _contrast(run_r, repo_root, tmp_path)
     fs = tmp_path / "fs.rds"
     p = run_r(repo_root / "code/script/pecotmr_integration/mash_feature_score.R",
@@ -63,8 +64,15 @@ def test_mash_feature_score_merge(run_r, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
 
     out = tmp_path / "merged.csv"
+    if via_list:
+        # the notebook's form: a genome-wide list is too long for the command line
+        listing = tmp_path / "scores.txt"
+        listing.write_text(f"{fs}\n")
+        scores = ["--scores-list", listing]
+    else:
+        scores = ["--scores", fs]
     p = run_r(repo_root / "code/script/pecotmr_integration/mash_feature_score_merge.R",
-              ["--scores", fs, "--output", out], timeout=120)
+              [*scores, "--output", out], timeout=120)
     assert p.returncode == 0, p.stdout + p.stderr
     assert out.exists()
     assert "scoreType" in out.read_text().splitlines()[0]

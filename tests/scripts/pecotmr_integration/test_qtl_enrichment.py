@@ -2,16 +2,28 @@
 QTL + GWAS S4 FineMappingResult fixtures (legacy conversion retired)."""
 from __future__ import annotations
 
+import pytest
+
 FX = "tests/fixtures/susie_enloc"
 QTL = FX + "/protocol_example.enloc.MiGA_eQTL.ENSG00000142798.fine_mapping.rds"
 GWAS = FX + "/protocol_example.enloc.gwas.chr1_20110062_22020160.fine_mapping.rds"
 
 
-def test_qtl_enrichment(run_r, read_rds, repo_root, tmp_path):
+@pytest.mark.parametrize("via_list", [False, True], ids=["inline", "list_file"])
+def test_qtl_enrichment(via_list, run_r, read_rds, repo_root, tmp_path):
     out = tmp_path / "enrich.rds"
+    if via_list:
+        # the notebook's form: a condition's genome-wide list is too long for the
+        # command line
+        qtl_list = tmp_path / "qtl.txt"
+        qtl_list.write_text(f"{repo_root / QTL}\n")
+        gwas_list = tmp_path / "gwas.txt"
+        gwas_list.write_text(f"{repo_root / GWAS}\n")
+        inputs = ["--qtl-fine-mapping-list", qtl_list, "--gwas-fine-mapping-list", gwas_list]
+    else:
+        inputs = ["--qtl-fine-mapping", repo_root / QTL, "--gwas-fine-mapping", repo_root / GWAS]
     p = run_r(repo_root / "code/script/pecotmr_integration/qtl_enrichment.R",
-              ["--qtl-fine-mapping", repo_root / QTL,
-               "--gwas-fine-mapping", repo_root / GWAS,
+              [*inputs,
                # --seed exercises the forwarding into qtlEnrichmentPipeline(seed=);
                # the C++ imputation sampler is unreachable from R's set.seed, so a
                # rejected/renamed argument would only ever surface here. Not a value

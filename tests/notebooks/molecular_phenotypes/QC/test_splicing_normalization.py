@@ -1,7 +1,8 @@
 """Notebook tier: splicing_normalization.ipynb workers (leafcutter).
 
 splicing_normalization.R ports the leafcutter prepare_phenotype_table.py logic.
-Fixtures + references are the 20-sample MWE leafcutter outputs.
+Fixtures + references are the 20-sample MWE leafcutter outputs. The [Junc_list]
+step runs through the notebook on the splicing_calling junction fixtures.
 Float phenotype values are compared NUMERICALLY (identical doubles): Python's shortest-repr
 and R's differ cosmetically on ~4% of values in the 16th/17th digit, but the doubles — what
 downstream tools parse — are identical.
@@ -83,3 +84,27 @@ def test_jointcall_samples(run_r, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     ids = [ln.split("\t")[0] for ln in out.read_text().splitlines()[1:] if ln.strip()]
     assert set(ids) == {"SAMPLE_001", "SAMPLE_002"}          # .final stripped, SAMPLE_999 dropped
+
+
+def test_junc_list(run_sos, repo_root, tmp_path):
+    # [Junc_list] lists a directory's junction files with find (a cohort's files
+    # are too many arguments for realpath): sorted absolute paths, leaving out
+    # other suffixes and hidden files. The fixtures are copied, not linked:
+    # realpath would resolve a link back to the fixture directory, and the
+    # step's grep -v "all" drops every path containing "all" (splicing_calling).
+    fix = repo_root / "tests/fixtures/splicing_calling/leafcutter"
+    juncs = tmp_path / "juncs"
+    juncs.mkdir()
+    for s in ("SAMPLE_002", "SAMPLE_001"):
+        (juncs / f"{s}.junc.gz").write_bytes((fix / f"{s}.junc.gz").read_bytes())
+    (juncs / ".SAMPLE_003.junc.gz").write_bytes(b"")
+    (juncs / "protocol_example.junction_files.txt").write_text("")
+    cwd = tmp_path / "out"
+    p = run_sos(repo_root / "pipeline/splicing_normalization.ipynb", "Junc_list",
+                {"cwd": cwd, "junc_path": juncs, "file_suffix": "junc.gz",
+                 "dataset": "protocol_example"},
+                cwd=repo_root, timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    listed = (cwd / "leafcutter2" / "protocol_example_intron_usage_perind.junc").read_text()
+    assert listed.splitlines() == [str((juncs / f"{s}.junc.gz").resolve())
+                                   for s in ("SAMPLE_001", "SAMPLE_002")]

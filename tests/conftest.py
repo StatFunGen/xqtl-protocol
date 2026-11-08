@@ -141,8 +141,8 @@ def mash_model_chain(run_r, repo_root, tmp_path_factory):
 @pytest.fixture(scope="session")
 def ctwas_chain(run_r, repo_root, tmp_path_factory):
     """Run the cTWAS chain once over the blessed 20-block fixture and return the
-    three intermediate RDS ({inputs, est, finemap}); the inputs for the
-    ctwas_assemble / ctwas_est / ctwas_finemap per-script tests."""
+    three intermediate RDS ({inputs, est, finemap}) plus the block-grid manifest;
+    the inputs for the ctwas_assemble / ctwas_est / ctwas_finemap per-script tests."""
     import csv
     r = repo_root
     S = r / "code/script/pecotmr_integration"
@@ -184,4 +184,4 @@ def ctwas_chain(run_r, repo_root, tmp_path_factory):
     ok("ctwas_finemap.R",
        ["--est", est, "--L", "5", "--min-nonsnp-pip", "0.5", "--keep-snps",
         "--ncore", "1", "--output", finemap])
-    return {"inputs": inputs, "est": est, "finemap": finemap}
+    return {"inputs": inputs, "est": est, "finemap": finemap, "manifest": manifest}
