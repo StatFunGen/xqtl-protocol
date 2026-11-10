@@ -36,8 +36,8 @@ that route with the commands to run them.
 Reference data are standardized and curated by the ADSP FGC Standardization
 Workgroup in coordination with
 NIAGADS. Reference data
-specifications are on the
-[ADSP Dashboard](https://www.niagads.org/adsp/content/adspgcadgenomeresources-v2pdf).
+specifications are in a
+[PDF on Synapse](https://www.synapse.org/Synapse:syn36416587).
 
 ### Software environment
 
