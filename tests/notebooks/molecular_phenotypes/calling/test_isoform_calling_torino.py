@@ -4,7 +4,7 @@ The fixture is 24 single-end BAMs over AP000547.3 (chr22), simulated by
 build_fixture.R from three of its transcripts in proportions recorded in
 simulated_isoform_proportions.tsv. The coverage, depth-matrix and usage steps
 need only bedtools, samtools, htslib and R (argparser, data.table); the
-factorization step needs the torino R package and is skipped without it.
+factorization step also needs the torino R package.
 """
 from __future__ import annotations
 
@@ -54,12 +54,6 @@ def _sh(repo_root, name, *args):
 def _r(repo_root, name, *args):
     return subprocess.run([rscript_bin(), str(repo_root / SCRIPTS / name), *map(str, args)],
                           capture_output=True, text=True)
-
-
-def _has_torino():
-    p = subprocess.run([rscript_bin(), "-e", "quit(status = !requireNamespace('torino', quietly = TRUE))"],
-                       capture_output=True, text=True)
-    return p.returncode == 0
 
 
 # ------------------------------------------------------------------ torino_preprocessing
@@ -205,7 +199,6 @@ def test_usage_filter_can_drop_everything(repo_root, tmp_path):
 
 
 # ------------------------------------------------------------------ torino (needs torino)
-@pytest.mark.skipif(not _has_torino(), reason="the torino R package is not installed")
 def test_torino_recovers_intron_retention(run_sos, repo_root, tmp_path):
     """End to end on the fixture. One component's usage must follow the simulated
     intron-retention fraction, the variable that separates the two sample groups."""
