@@ -158,7 +158,7 @@ padding:var(--s1) var(--s2);border-radius:var(--r);text-align:left}
 .xq .bub{position:absolute;z-index:60;width:min(34rem,calc(100vw - 2rem));
 background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--r);
 box-shadow:0 10px 32px rgba(20,24,27,.18)}
-.xq .bub[hidden]{display:none} @media (max-width:640px){.xq .bub{position:fixed;left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto;max-height:calc(100dvh - 16px);display:flex;flex-direction:column}.xq .bub[hidden]{display:none}.xq .bub-b{max-height:none;flex:1 1 auto;min-height:0}} .xq .back{margin:0 0 var(--s2);font-size:var(--fs-c)}
+.xq .bub[hidden]{display:none} @media (max-width:640px){.xq .bub{position:fixed;left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto;max-height:calc(100dvh - 16px);display:flex;flex-direction:column}.xq .bub[hidden]{display:none}.xq .bub-b{max-height:none;flex:1 1 auto;min-height:0}}
 .xq .bub-h{display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3);
 border-bottom:1px solid var(--border);background:var(--surface-alt)}
 .xq .bub-h h4{font-size:var(--fs-sh);font-weight:600;flex:1;min-width:0;
@@ -302,9 +302,9 @@ align-items:center;font-size:var(--fs-s);color:var(--muted)}
 .term-glossary{margin:10px 0 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface-alt)}.term-glossary summary{cursor:pointer;padding:8px 10px;font-size:var(--fs-s);font-weight:700;color:var(--c2)}.term-glossary dl{margin:0;padding:0 10px 10px}.term-glossary dt{margin-top:8px;font-size:var(--fs-s);font-weight:700;color:var(--ink)}.term-glossary dd{margin:2px 0 0;color:var(--body);font-size:var(--fs-s);line-height:1.5}
 .xq .requirement-note{margin-top:12px;padding:9px 11px;border:1px solid #d8c99f;border-radius:10px;background:#fffaf0}.xq .requirement-note summary{cursor:pointer;font-weight:700;color:#604d1e}.xq .requirement-note .scn{margin-bottom:0}.xq .guidance-note{margin-top:12px;padding:9px 11px;border:1px solid #cddbd7;border-radius:10px;background:#f8fbfa}.xq .guidance-note summary{cursor:pointer;font-weight:700;color:#274d47}.xq .guidance-note .scn{margin-bottom:0}.xq pre{white-space:pre-wrap!important;overflow-wrap:anywhere}.xq .mn{flex:0 1 auto}.tier.extension-tier.lit{border-left:0!important;padding-left:0!important}.tier.extension-tier{border-left:0!important}.xq h1.hdt{margin:var(--s4) 0 var(--s2)}.xq .m{min-height:44px;padding:var(--s2) var(--s3)}.xq .bxt a,.xq .sbt a{display:inline-block;padding:6px 0;min-height:32px}@media(max-width:640px){.xq{display:flex;flex-direction:column}.xq>.hd{order:1}.xq>.lay{order:2}.xq>.pipelineintro{order:3;margin-top:var(--s5)}.xq>.bub{order:4}.xq .hds{font-size:var(--fs-b)}.xq .m{min-height:48px}}</style>
 
+<div class="sitebar"><a class="sitebar__brand" href="https://statfungen.github.io/xqtl-protocol/">FunGen-xQTL Protocol</a><nav aria-label="FunGen-xQTL sites"><ul><li><a href="https://adsp-fgc.niagads.org/xqtl-resources/">Resources</a></li><li><a href="https://statfungen.github.io/xqtl-protocol/" aria-current="page">Protocol</a></li><li><a href="https://xqtl.niagads.org/AD-loci-explorer/">Explorer</a></li><li><a href="https://xqtl.niagads.org/" title="NIAGADS site">xQTL Atlas &#8599;</a></li></ul></nav></div>
 <header class="hd">
   <div class="routeanim" aria-hidden="true"><span></span><i></i><span></span><i></i><span></span></div>
-<p class="back"><a href="https://statfungen.github.io/xqtl-protocol/">&larr; xQTL protocol home</a></p>
 <div class="herorow"><h1 class="hdt">xQTL Analysis Workflow Builder</h1></div>
   <p class="hds">xQTL studies ask how inherited genetic variation changes a molecular phenotype (such as gene expression, splicing, methylation or polyadenylation) and whether that regulatory effect helps explain variation in a complex trait. The map follows that scientific argument from a measured molecular phenotype to a localized regulatory signal and, when appropriate, to evidence connecting the signal with disease biology. Genetic regulation is often tissue- and cell-context-specific, so the relevant path depends on what was measured and where it was measured (<a href="https://doi.org/10.1126/science.aaz1776" target="_blank" rel="noopener">GTEx Consortium, 2020</a>).</p>
 </header>
@@ -737,7 +737,225 @@ $('#xreset').addEventListener('click',()=>{VIEW='guide';F=Object.assign({},DEFAU
   $$('select[data-f]').forEach(s=>s.value=F[s.dataset.f]);close();apply();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
 $$('.m').forEach(m=>m.setAttribute('aria-pressed','false'));
+/* Read-only hooks for the guided questions and route export added below */
+window.XQB={
+  state:()=>Object.assign({},F),
+  setState(o){Object.keys(o).forEach(k=>{if(k in F)F[k]=o[k];});
+    $$('select[data-f]').forEach(x=>{x.value=F[x.dataset.f]||'';if(x.value!==(F[x.dataset.f]||''))F[x.dataset.f]=x.value;});close();apply();},
+  routeRows:()=>$$('.m.route-module').map(button=>{const li=button.closest('.mw'),nb=li.dataset.nb,only=button.dataset.wf;
+    const wfs=(only?[only]:chosen(nb)).filter(w=>cmdOf(nb,w));
+    return {label:button.dataset.label,nb,soon:SOON.includes(nb),cmds:wfs.map(w=>({wf:w,cmd:cmdOf(nb,w).cmd}))};})
+};
 apply();
+})();
+</script>
+<style>
+/* ---- Redesign additions: site bar, guided questions, route export, state labels ---- */
+.xq .sitebar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s4);
+  margin:0 0 var(--s5);padding:0 0 var(--s3);border-bottom:1px solid var(--border)}
+.xq .sitebar__brand{font-weight:700;color:var(--ink);text-decoration:none;margin-right:auto;font-size:var(--fs-b)}
+.xq .sitebar__brand:hover{text-decoration:underline}
+.xq .sitebar nav ul{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);list-style:none;margin:0;padding:0}
+.xq .sitebar nav a{display:inline-block;padding:6px 2px;color:var(--body);text-decoration:none;font-size:var(--fs-s);font-weight:600}
+.xq .sitebar nav a:hover{color:var(--t1);text-decoration:underline}
+.xq .sitebar nav a[aria-current="page"]{color:var(--t1);box-shadow:inset 0 -2px 0 var(--t1)}
+.xq .sitebar nav a:focus-visible,.xq .wz button:focus-visible,.xq .xp button:focus-visible{outline:2px solid var(--t1);outline-offset:2px}
+
+/* Guided questions */
+.xq .wz{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s3);margin:0 0 var(--s3)}
+.xq .wz__count{font-size:var(--fs-s);font-weight:700;color:var(--ink)}
+.xq .wz__dots{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.xq .wz__dots li{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border-strong);background:var(--surface)}
+.xq .wz__dots li.done{background:var(--t1);border-color:var(--t1)}
+.xq .wz__dots li.now{border-color:var(--t1);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--t1)}
+.xq .wz__mode{margin-left:auto;background:none;border:0;padding:6px 0;color:var(--t1);font:inherit;font-size:var(--fs-s);font-weight:600;text-decoration:underline;cursor:pointer}
+.xq .wz__nav{display:flex;gap:var(--s2);margin:var(--s3) 0 0}
+.xq .wz__nav .btn[disabled]{opacity:.45;cursor:default}
+.xq .wz__hint{margin:var(--s2) 0 0;font-size:var(--fs-s);color:var(--muted)}
+.xq.wz-steps .fq.wz-off{display:none}
+.xq.wz-steps .fq.wz-now{grid-column:1/-1}
+.xq.wz-steps .fq.wz-now label{font-size:var(--fs-b);font-weight:700;color:var(--ink)}
+
+/* Route export */
+.xq .xp{display:flex;flex-wrap:wrap;gap:var(--s2);margin:var(--s3) 0 var(--s2)}
+.xq .xp .btn{min-height:44px}
+.xq .xp__msg{flex-basis:100%;margin:0;font-size:var(--fs-s);color:var(--t1);min-height:1.4em}
+.xq .run-state.ready{color:var(--t1)}
+
+/* State labels in words, alongside the visual styling */
+.xq .legend{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);list-style:none;margin:0 0 var(--s3);padding:0;font-size:var(--fs-s);color:var(--body)}
+.xq .legend li{display:flex;align-items:center;gap:6px}
+.xq .legend .sw{display:inline-block;width:16px;height:12px;border-radius:3px;border:1.5px solid var(--border-strong);background:var(--surface)}
+.xq .legend .sw.on{border-color:var(--t1);background:var(--b1)}
+.xq .legend .sw.off{border-style:dashed;opacity:.6}
+.xq .m:has(.mstate:not(.sr-only)){flex-wrap:wrap}
+.xq .mstate{display:block;flex-basis:100%;order:9;margin-top:2px;font-size:var(--fs-c);font-weight:600;letter-spacing:.2px;color:var(--t1)}
+.xq .mstate.soon{color:var(--warn)}
+.xq .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media (max-width:640px){.xq .sitebar__brand{flex-basis:100%}.xq .wz__mode{margin-left:0}}
+</style>
+<script>
+(function(){
+'use strict';
+const root=document.getElementById('xq'), X=window.XQB;
+if(!root||!X)return;
+const $=s=>root.querySelector(s), $$=s=>[...root.querySelectorAll(s)];
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const KEYS=$$('select[data-f]').map(s=>s.dataset.f);
+/* Set markup only when it changed, so the observer below does not loop */
+const put=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h;}};
+const setText=(el,t)=>{if(el.textContent!==t)el.textContent=t;};
+const setCls=(el,c)=>{if(el.className!==c)el.className=c;};
+const tog=(el,c,on)=>{if(el.classList.contains(c)!==!!on)el.classList.toggle(c,!!on);};
+
+/* ---------- Shareable route: the answers live in the address (#pheno=bulk&goal=finemap) ---------- */
+function readHash(){
+  const h=location.hash.replace(/^#/,''); if(!h)return null;
+  const p=new URLSearchParams(h), o={}; let any=false;
+  KEYS.forEach(k=>{const v=p.get(k); if(v!==null){o[k]=v;any=true;}});
+  return any?o:null;
+}
+function writeHash(){
+  const F=X.state(), p=new URLSearchParams();
+  KEYS.forEach(k=>{if(F[k])p.set(k,F[k]);});
+  const h=p.toString();
+  try{history.replaceState(null,'',h?'#'+h:location.pathname+location.search);}catch(e){}
+}
+function shareURL(){writeHash();return location.href;}
+
+/* ---------- Guided questions: one question at a time, with Back and Next ---------- */
+const fg=$('.cfg .fg'), cfg=$('.cfg');
+let mode='steps', step=0;
+try{if(localStorage.getItem('xq_wz_mode')==='all')mode='all';}catch(e){}
+const wz=document.createElement('div'); wz.className='wz';
+const nav=document.createElement('div'); nav.className='wz__nav';
+nav.innerHTML='<button type="button" class="btn" data-wz="back">Back</button><button type="button" class="btn btn-p" data-wz="next">Next</button>';
+const hint=document.createElement('p'); hint.className='wz__hint'; hint.id='xwzhint';
+fg.parentNode.insertBefore(wz,fg); fg.parentNode.insertBefore(nav,fg.nextSibling); nav.parentNode.insertBefore(hint,nav.nextSibling);
+function visibleQs(){return $$('.cfg .fq').filter(q=>!q.hidden);}
+function renderWizard(){
+  const qs=visibleQs(); if(step>qs.length-1)step=qs.length-1; if(step<0)step=0;
+  tog(root,'wz-steps',mode==='steps');
+  qs.forEach((q,i)=>{tog(q,'wz-off',i!==step);tog(q,'wz-now',i===step);});
+  $$('.cfg .fq').filter(q=>q.hidden).forEach(q=>{tog(q,'wz-off',false);tog(q,'wz-now',false);});
+  const F=X.state();
+  const dots=qs.map((q,i)=>{const k=q.querySelector('select').dataset.f;
+    return `<li class="${i===step?'now':F[k]?'done':''}" aria-hidden="true"></li>`;}).join('');
+  put(wz,(mode==='steps'
+      ?`<span class="wz__count" aria-live="polite">Question ${step+1} of ${qs.length}</span><ul class="wz__dots">${dots}</ul>`
+      :`<span class="wz__count">All questions</span>`)
+    +`<button type="button" class="wz__mode" data-wz="mode">${mode==='steps'?'Show all questions':'One question at a time'}</button>`);
+  if(nav.hidden!==(mode!=='steps'))nav.hidden=mode!=='steps';
+  const back=nav.querySelector('[data-wz="back"]'), next=nav.querySelector('[data-wz="next"]');
+  if(back.disabled!==(step===0))back.disabled=step===0;
+  const last=step===qs.length-1;
+  setText(next,last?'See my route':'Next');
+  if(hint.hidden!==(mode!=='steps'))hint.hidden=mode!=='steps';
+  setText(hint,last?'Later questions appear only when your earlier answers need them.':'Your route updates as you answer. "Any" keeps every option open.');
+}
+cfg.addEventListener('click',e=>{
+  const b=e.target.closest('[data-wz]'); if(!b)return;
+  const qs=visibleQs();
+  if(b.dataset.wz==='mode'){mode=mode==='steps'?'all':'steps';try{localStorage.setItem('xq_wz_mode',mode);}catch(err){} renderWizard();return;}
+  if(b.dataset.wz==='back'){step=Math.max(0,step-1);renderWizard();focusQ();return;}
+  if(b.dataset.wz==='next'){
+    if(step<qs.length-1){step++;renderWizard();focusQ();}
+    else{const r=$('#xroute'); if(r&&!r.hidden){r.scrollIntoView({behavior:'smooth',block:'start'});const h=r.querySelector('h3');if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true});}}
+      else{hint.textContent='Choose a molecular phenotype and an analysis goal to see a route.';step=0;renderWizard();focusQ();}}
+  }
+});
+function focusQ(){const q=visibleQs()[step]; if(q)q.querySelector('select').focus();}
+
+/* ---------- Route export: copy every command, download a script, copy a link ---------- */
+function routeText(){
+  const rows=X.routeRows(), F=X.state();
+  const ph=$('#x-pheno'), gl=$('#x-goal');
+  const lines=['#!/usr/bin/env bash',
+    '# xQTL protocol route: '+ph.options[ph.selectedIndex].text+' for '+gl.options[gl.selectedIndex].text,
+    '# Built with the xQTL Analysis Workflow Builder: '+shareURL(),
+    '# Run from the root of a clone of https://github.com/StatFunGen/xqtl-protocol inside its pixi environment.',
+    '# Steps run in order; a later step may read files written by an earlier one.',
+    'set -euo pipefail',''];
+  rows.forEach((r,i)=>{
+    lines.push('# '+(i+1)+'. '+r.label);
+    if(r.soon){lines.push('#    Not yet available: this module cannot run yet.','');return;}
+    if(!r.cmds.length){lines.push('#    No command for this selection; open the module page.','');return;}
+    r.cmds.forEach(c=>{
+      if(/<path\/to\//.test(c.cmd))lines.push('#    Needs input: replace each <path/to/...> before running.');
+      lines.push(c.cmd.trim(),'');
+    });
+  });
+  return lines.join('\n');
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true;}
+  catch(e){const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.position='fixed';a.style.opacity='0';
+    document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy');}catch(err){} a.remove();return ok;}
+}
+function exportBar(body){
+  if(body.querySelector('.xp'))return;
+  const d=document.createElement('div'); d.className='xp'; d.setAttribute('role','group'); d.setAttribute('aria-label','Use this route');
+  d.innerHTML='<button type="button" class="btn" data-xp="copy">Copy all commands</button>'
+    +'<button type="button" class="btn" data-xp="sh">Download as script</button>'
+    +'<button type="button" class="btn" data-xp="link">Copy link to this route</button>'
+    +'<p class="xp__msg" role="status" aria-live="polite"></p>';
+  const list=body.querySelector('.run-list');
+  body.insertBefore(d,list||body.firstChild);
+}
+root.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-xp]'); if(!b)return;
+  const msg=b.parentNode.querySelector('.xp__msg');
+  if(b.dataset.xp==='copy'){msg.textContent=(await copyText(routeText()))?'All commands copied.':'Copy failed: use Download as script instead.';}
+  else if(b.dataset.xp==='link'){msg.textContent=(await copyText(shareURL()))?'Link copied. Opening it restores these answers.':'Copy failed: the link is in the address bar.';}
+  else if(b.dataset.xp==='sh'){
+    const blob=new Blob([routeText()+'\n'],{type:'text/x-shellscript'}), a=document.createElement('a');
+    const F=X.state(); a.href=URL.createObjectURL(blob);
+    a.download='xqtl_route_'+[F.pheno||'any',F.goal||'any'].join('_')+'.sh';
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);
+    msg.textContent='Script downloaded as '+a.download+'.';
+  }
+});
+
+/* ---------- States in words: route list and module buttons ---------- */
+function labelStates(){
+  $$('#xroutebody .run-state').forEach(s=>{if(!s.textContent.trim()){s.textContent='Ready';tog(s,'ready',true);}});
+  const routeOn=root.classList.contains('has-route');
+  $$('.mw').forEach(li=>{
+    li.querySelectorAll('.m').forEach(btn=>{
+      let tag=btn.querySelector('.mstate');
+      const soon=!!btn.querySelector('.soon');
+      let txt='',cls='',sr='';
+      if(soon){txt='Coming soon';cls='soon';}
+      else if(routeOn&&btn.classList.contains('route-module')){txt=btn.classList.contains('run-next')?'In your route: run next':'In your route';}
+      else if(routeOn&&li.classList.contains('off')){sr='Not needed for your answers';}
+      if(!tag){tag=document.createElement('span');btn.appendChild(tag);}
+      setCls(tag,'mstate'+(cls?' '+cls:'')+(sr&&!txt?' sr-only':''));
+      setText(tag,txt||sr);
+    });
+  });
+}
+function legend(){
+  if($('.legend'))return;
+  const ul=document.createElement('ul'); ul.className='legend'; ul.setAttribute('aria-label','How to read the map');
+  ul.innerHTML='<li><span class="sw on" aria-hidden="true"></span>In your route</li>'
+    +'<li><span class="sw off" aria-hidden="true"></span>Not needed for your answers</li>'
+    +'<li><span aria-hidden="true">🚧</span>Coming soon</li>'
+    +'<li>Select a module to see its inputs, outputs and command</li>';
+  const flow=$('.flow'); if(flow)flow.parentNode.insertBefore(ul,flow);
+}
+
+/* ---------- Keep everything in step with the builder ---------- */
+let pending=false;
+function refresh(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;
+  renderWizard();labelStates();const body=$('#xroutebody');if(body&&body.children.length)exportBar(body);writeHash();});}
+new MutationObserver(refresh).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class']});
+root.addEventListener('change',e=>{if(e.target.matches('select[data-f]'))refresh();});
+
+legend();
+const fromLink=readHash();
+if(fromLink){X.setState(fromLink);
+  if(fromLink.pheno&&fromLink.goal){const qs=visibleQs();step=qs.length-1;}}
+refresh();
 })();
 </script>
 </body></html>
