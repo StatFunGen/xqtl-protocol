@@ -110,7 +110,7 @@ separately; commands that need them show the expected path.
 
 ### See Also
 
-- [FunGen-xQTL analyses](https://github.com/cumc/xqtl-analysis) that use this protocol
+- [FunGen-xQTL analyses](https://github.com/cumc/xqtl-analysis) that use this protocol (lab access only)
 - [FunGen-xQTL resource catalog](https://adsp-fgc.niagads.org/xqtl-resources/): the datasets and results, and where to get them
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
 
