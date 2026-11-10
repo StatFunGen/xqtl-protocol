@@ -12,7 +12,7 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 | **Molecular phenotypes** | Quantify expression, splicing, methylation and polyadenylation from bulk RNA-seq, single-nuclei or array data |
 | **Data preprocessing** | Genotype QC and formatting, phenotype imputation and formatting, covariate and hidden-factor estimation |
 | **QTL association testing** | cis and trans scans with TensorQTL, quantile-regression QTL, hierarchical multiple testing |
-| **Multivariate modelling** | MASH, to borrow information across tissues and cell types |
+| **Multivariate modeling** | MASH, to borrow information across tissues and cell types |
 | **Fine-mapping and TWAS** | SuSiE, mvSuSiE, fSuSiE and SuSiE-RSS, from individual-level data or summary statistics, with TWAS weights |
 | **GWAS integration** | Colocalization (SuSiE-enloc, ColocBoost), TWAS and cTWAS, INTACT |
 | **Enrichment and validation** | Pathway analysis, GREGOR, stratified LD score regression |
