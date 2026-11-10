@@ -176,6 +176,14 @@ inRegions <- function(j) nrow(regions) == 0L ||
       regions$start <= xqtlTss[[j]] & regions$stop >= xqtlTss[[j]])
 units <- if (argv$unit == "gene") {
   keep <- Filter(inRegions, seq_len(nrow(xqtlDf)))
+  # The gene window comes from the meta start/end: stop now rather than pass
+  # an NA window to the twas step.
+  noWin <- keep[is.na(suppressWarnings(as.integer(xqtlDf$start[keep]))) |
+                is.na(suppressWarnings(as.integer(xqtlDf$end[keep])))]
+  if (length(noWin) > 0L)
+    stop("--unit gene needs a start and end for every gene in --xqtl-meta; missing for: ",
+         paste(head(xqtlDf$region_id[noWin], 5L), collapse = ", "),
+         if (length(noWin) > 5L) ", ...")
   # Optional prefilter: drop genes that can have no imputable model, so the
   # twas step does not build their GWAS input. Lenient on purpose: a gene is
   # kept if ANY context/method row passes, a superset of what pecotmr's own
@@ -216,9 +224,11 @@ units <- if (argv$unit == "gene") {
         # best-r2 rule and are ignored; a gene where no method has one is kept.
         metrics <- list()
         for (r in cv) {
-          perMethod <- if (!is.null(r$metrics)) list(r) else as.list(r)
+          if (!is.list(r)) next
+          perMethod <- if (!is.null(r[["metrics"]])) list(r) else as.list(r)
           for (mm in perMethod) {
-            v <- mm$metrics
+            if (!is.list(mm)) next
+            v <- mm[["metrics"]]
             if (!is.null(v) && !is.na(v[argv$rsq_option])) metrics[[length(metrics) + 1L]] <- v
           }
         }
@@ -299,13 +309,20 @@ if (length(rows) == 0L)
   stop("No regions with overlapping xQTL weights; nothing to analyse.")
 out <- do.call(rbind, rows)
 if (argv$unit == "gene") {
-  # region_id names the per-gene output files: make it file-name safe (sQTL
-  # IDs carry ':') and require one meta row per gene.
-  out$region_id <- gsub("[^A-Za-z0-9_.-]", "_", out$region_id)
+  # region_id names the per-gene output files: require one meta row per gene,
+  # then make it file-name safe (sQTL IDs carry ':') and check that no two
+  # genes end up with the same name.
   dup <- unique(out$region_id[duplicated(out$region_id)])
   if (length(dup) > 0L)
     stop("--unit gene needs one xQTL meta row per gene; repeated: ",
          paste(head(dup, 5L), collapse = ", "), if (length(dup) > 5L) ", ...")
+  safe <- gsub("[^A-Za-z0-9_.-]", "_", out$region_id)
+  clash <- out$region_id[duplicated(safe) | duplicated(safe, fromLast = TRUE)]
+  if (length(clash) > 0L)
+    stop("--unit gene: these gene IDs give the same file name once characters ",
+         "other than letters, digits, '_', '.' and '-' become '_': ",
+         paste(head(clash, 6L), collapse = ", "), if (length(clash) > 6L) ", ...")
+  out$region_id <- safe
 }
 
 writeManifest(out, argv$output)

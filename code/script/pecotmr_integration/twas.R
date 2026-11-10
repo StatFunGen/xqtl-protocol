@@ -112,9 +112,16 @@ if (length(fmPaths) != length(twPaths)) stop("--fine-mapping-result needs one pa
 # this object's ldReference, per gene and scoped to that gene's matched
 # variants (and for a genotype panel it uses the LD factor, so the p x p matrix
 # is never formed). Nothing here computes or caches LD.
-# gwas_sumstats_construct.R writes no GwasSumStats file for an LD block with
-# no GWAS variants; every gene of such a block gets an empty result.
-gss <- if (file.exists(argv$gwas_sumstats)) readRDS(argv$gwas_sumstats) else NULL
+# gwas_sumstats_construct.R writes no GwasSumStats file for a window with no
+# GWAS variants; every gene of such a window gets an empty result. A missing
+# folder is a wrong path, not an empty window, and stops here.
+gss <- if (file.exists(argv$gwas_sumstats)) readRDS(argv$gwas_sumstats) else {
+  if (!dir.exists(dirname(argv$gwas_sumstats)))
+    stop("--gwas-sumstats ", argv$gwas_sumstats, ": its folder does not exist.")
+  message("No GwasSumStats file at ", argv$gwas_sumstats,
+          " (none is written for a window without GWAS variants); every gene gets an empty result.")
+  NULL
+}
 
 readFmr <- function(p) if (nzchar(p) && p != "." && file.exists(p)) readRDS(p) else NULL
 
@@ -124,7 +131,7 @@ readFmr <- function(p) if (nzchar(p) && p != "." && file.exists(p)) readRDS(p) e
 # A gene with no scorable (QTL, GWAS) pair gets an empty list with a `noResult`
 # attribute, so the other genes of the block are still scored.
 for (i in seq_along(twPaths)) {
-  res <- if (is.null(gss)) structure(list(), noResult = "no GWAS variants in this LD block") else
+  res <- if (is.null(gss)) structure(list(), noResult = "no GWAS variants in this window") else
     tryCatch(causalInferencePipeline(
     gwasSumStats = gss,
     twasWeights = readRDS(twPaths[i]),

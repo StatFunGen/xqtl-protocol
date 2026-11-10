@@ -82,3 +82,49 @@ def test_twas_manifest_prefilter_drops_failing_genes(run_r, repo_root, tmp_path)
                        "--min-cv-rsq", "2", "--max-cv-pval", "Inf")
     assert p.returncode != 0
     assert "kept 0 of 1 genes" in p.stdout + p.stderr
+
+
+@pytest.mark.parametrize("max_p, kept", [("0.05", True), ("0.02", False)])
+def test_twas_manifest_prefilter_pvalue_cutoff(run_r, repo_root, tmp_path, max_p, kept):
+    """The CV p-value cutoff: the toy gene's best model (mrash, rsq 0.089, CV
+    p 0.022) passes p < 0.05 and no model passes p < 0.02. The toy weights have
+    no adj_rsq_pval, so this also covers the fall-back to pval, and they carry
+    an ensemble method without CV metrics, which must be skipped."""
+    meta = _gene_meta(tmp_path / "meta.tsv", [("ENSG00000130538", repo_root / TOY_WEIGHTS)])
+    p = _gene_manifest(run_r, repo_root, meta, tmp_path / "manifest.tsv",
+                       "--min-cv-rsq", "0.01", "--max-cv-pval", max_p)
+    out = p.stdout + p.stderr
+    if kept:
+        assert p.returncode == 0, out
+        assert "kept 1 of 1 genes" in out
+    else:
+        assert p.returncode != 0
+        assert "kept 0 of 1 genes" in out
+
+
+def test_twas_manifest_gene_unit_needs_window(run_r, repo_root, tmp_path):
+    meta = tmp_path / "meta.tsv"
+    meta.write_text("#chr\tstart\tend\tregion_id\tTSS\toriginal_data\tcontexts\n"
+                    f"chr22\tNA\t19000000\tENSG00000130538\t15528191\t{repo_root / TOY_WEIGHTS}\tbulk_rnaseq\n")
+    p = _gene_manifest(run_r, repo_root, meta, tmp_path / "manifest.tsv")
+    assert p.returncode != 0
+    assert "needs a start and end for every gene" in p.stdout + p.stderr
+
+
+def test_twas_manifest_gene_unit_file_name_safe(run_r, repo_root, tmp_path):
+    """sQTL-style IDs with ':' become file-name safe unit IDs."""
+    meta = _gene_meta(tmp_path / "meta.tsv", [("ENSG00000130538:clu_1", repo_root / TOY_WEIGHTS)])
+    out = tmp_path / "manifest.tsv"
+    p = _gene_manifest(run_r, repo_root, meta, out)
+    assert p.returncode == 0, p.stdout + p.stderr
+    row = out.read_text().splitlines()[1].split("\t")
+    assert row[0] == "ENSG00000130538_clu_1"
+    assert row[4] == "ENSG00000130538:clu_1"
+
+
+def test_twas_manifest_gene_unit_rejects_name_clash(run_r, repo_root, tmp_path):
+    w = repo_root / TOY_WEIGHTS
+    meta = _gene_meta(tmp_path / "meta.tsv", [("ENSG1:a", w), ("ENSG1_a", w)])
+    p = _gene_manifest(run_r, repo_root, meta, tmp_path / "manifest.tsv")
+    assert p.returncode != 0
+    assert "give the same file name" in p.stdout + p.stderr

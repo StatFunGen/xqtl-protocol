@@ -57,8 +57,8 @@ for (f in files) {
       vids <- if (is.matrix(w)) rownames(w) else names(w)
       # Some releases store weights for the QC'd variant subset only, without
       # row names; their IDs are then in preset_variants_result$variant_names.
-      # Prefer that subset when its length fits, since variant_names can have
-      # the same length but list the full set.
+      # That subset is tried first because it is what the weights were fitted
+      # on; variant_names is the fallback, used when its length fits.
       if (is.null(vids)) vids <- Find(function(v) length(v) == NROW(w),
         list(co$preset_variants_result$variant_names, co$variant_names))
       if (is.null(vids)) stop("No variant IDs of length ", NROW(w), " for ", cn, " ", wn, " in ", f)
@@ -77,7 +77,8 @@ if (!length(E)) {
   # e.g. a gene stored as NULL or with all-zero weights: write an empty result
   # and empty meta rows, so step 2 leaves the gene out instead of failing
   msg <- paste("No usable (non-zero) weights in:", a$legacy)
-  warning(msg)
+  # message(), not warning(): a top-level warning is lost when quit() runs first
+  message("Warning: ", msg)
   dir.create(dirname(a$output), showWarnings = FALSE, recursive = TRUE)
   saveRDS(structure(list(), noResult = msg), a$output)
   file.create(a$meta_row)
