@@ -1,8 +1,9 @@
 # FunGen-xQTL Computational Protocol
 
-Developed for reproducible & reusable molecular QTL analyses for the NIH/NIA
+Reproducible, reusable pipelines for molecular QTL analysis, developed for the NIH/NIA
 Alzheimer's Disease Sequencing Project (ADSP) Functional Genomics xQTL (FunGen-xQTL)
-Project.
+project. A molecular QTL (xQTL) is a genetic variant linked to a change in a molecular
+trait, such as gene expression, splicing, protein level or DNA methylation.
 
 ## What the protocol covers
 
@@ -25,7 +26,7 @@ that route with the commands to run them.
 
 | I want to... | Go to |
 |---|---|
-| **Set up my computing environment** | [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl-protocol-demo) |
+| **Set up my computing environment** | [Environment Setup](code/SoS/xqtl_protocol_demo.ipynb) |
 | **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) |
 
 ## Overview of the protocol
@@ -34,8 +35,8 @@ that route with the commands to run them.
 
 Reference data are standardized and curated by the ADSP FGC Standardization
 Workgroup in coordination with
-[NIAGADS](https://www.nia.nih.gov/research/ad-genetics). Please find reference data
-specifications on
+[NIAGADS](https://www.niagads.org/). Reference data
+specifications are on the
 [ADSP Dashboard](https://www.niagads.org/adsp/content/adspgcadgenomeresources-v2pdf).
 
 ### Software environment
@@ -55,35 +56,34 @@ Pipelines in this repository are written in the
 [Script of Scripts (SoS) workflow language](https://vatlab.github.io/sos-docs/).
 Like most other workflow languages, SoS workflows can **distribute and execute
 computing jobs directly in High Performance Computing cluster**. Unlike most other
-workflow languages, SoS workflows are created using SoS Notebooks (based on Ipython
-Notebook and developed in [Jupyter](https://jupyter.org/)) which allow for both
+workflow languages, SoS workflows are created using SoS Notebooks (based on IPython
+notebooks in [Jupyter](https://jupyter.org/)) which allow for both
 **scientific narrative and pipeline scripts in the same document**. Unlike typical
 Jupyter Notebooks intended for interactive data analysis, SoS workflows written in
 Jupyter Notebooks can be executed directly as command line scripts either on a
 local computer or in an HPC environment.
 
-We provide this
-[toy example for running SoS pipeline on a typical HPC cluster environment](https://github.com/statfungen/xqtl-protocol/blob/main/code/SoS/misc/Job_Example.ipynb).
-First time users are encouraged to try it out in order to help setting up the
-computational environment necessary to run the analysis in this protocol.
+First-time users should try the
+[toy example of an SoS pipeline on an HPC cluster](https://github.com/statfungen/xqtl-protocol/blob/main/code/SoS/misc/Job_Example.ipynb),
+which helps set up the computing environment the protocol needs.
 
 ### Source code
 
-- Source code of pipelines implemented in this repository are available at
-  <https://github.com/statfungen/xqtl-protocol/tree/main/code>.
+The source code of the pipelines is in the
+[`code` folder on GitHub](https://github.com/statfungen/xqtl-protocol/tree/main/code).
 
 ## How to use the resource
 
 ### Organization of the resource
 
-The website <https://statfungen.github.io/xqtl-protocol> is generated from files
+This website is generated from files
 under the `code` folder of the source code repository. The `pipeline` folder
 contains symbolic links automatically generated for pipeline files under `code`, so
 analyses are run from the root of the repository by typing
 `sos run pipeline/<pipeline_file>.ipynb`.
 
 The logic of the entire xQTL analysis workflow is roughly reflected on the **left
-sidebar**:
+sidebar** (on a narrow screen, open it with the menu button):
 
 - **Mini-protocols**, represented as clickable, non-bold text under each analysis
   category, lead to specific notebooks detailing the commands necessary for the
@@ -100,23 +100,22 @@ sidebar**:
 
 Every module has example data committed under `tests/fixtures/`, subset to chr22 to
 keep the repository small. These are the same files the test suite runs against, so
-the commands shown in the documentation can be run directly after cloning -- no
+the commands shown in the documentation can be run directly after cloning, with no
 download required. Every path shown resolves either to one of these fixtures or to
 the output directory of the step that produces it.
 
-Large reference files -- genome FASTA, GTF annotations, aligner indices, external
-LD panels -- are not distributed with the repository and must be obtained
+Large reference files (genome FASTA, GTF annotations, aligner indices, external
+LD panels) are not distributed with the repository and must be obtained
 separately; commands that need them show the expected path.
 
 ### See Also
 
-- Analyses from the FunGen-xQTL consortium using this protocol:
-  <https://github.com/cumc/xqtl-analysis>
-- FunGen-xQTL data resources and results:
-  <https://github.com/statfungen/xqtl-resources>
+- [FunGen-xQTL analyses](https://github.com/cumc/xqtl-analysis) that use this protocol
+- [FunGen-xQTL resource catalog](https://adsp-fgc.niagads.org/xqtl-resources/): the datasets and results, and where to get them
+- [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
 
 ## Contributors
 
 This repository is developed by the Analysis Working Group of the NIA FunGen-xQTL
-consortium. Lead developers, contributors and leadership are listed
-[here](https://github.com/StatFunGen/xqtl-protocol/blob/main/CONTRIBUTORS.md).
+consortium. Lead developers, contributors and leadership are listed in
+[CONTRIBUTORS.md](https://github.com/StatFunGen/xqtl-protocol/blob/main/CONTRIBUTORS.md).
