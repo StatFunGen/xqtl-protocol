@@ -68,6 +68,10 @@ p <- add_argument(p, "--min-cv-rsq", type = "numeric", default = NA,
   help = "gene unit only: skip genes where no context/method reaches this CV r2 (with --max-cv-pval); NA = no prefilter")
 p <- add_argument(p, "--max-cv-pval", type = "numeric", default = NA,
   help = "gene unit only: CV p-value that must also be passed (Inf = no p-value check)")
+p <- add_argument(p, "--rsq-option", type = "character", default = "rsq",
+  help = "gene unit prefilter: CV metric compared with --min-cv-rsq (same as twas.R --rsq-option)")
+p <- add_argument(p, "--rsq-pval-option", type = "character", default = "adj_rsq_pval,pval",
+  help = "gene unit prefilter: comma-separated CV p-value metrics, first present is used (same as twas.R --rsq-pval-option)")
 p <- add_argument(p, "--threads", type = "integer", default = 1L,
   help = "Cores for reading weight files in the prefilter")
 p <- add_argument(p, "--output", type = "character", help = "Output manifest TSV path")
@@ -176,28 +180,67 @@ units <- if (argv$unit == "gene") {
   # twas step does not build their GWAS input. Lenient on purpose: a gene is
   # kept if ANY context/method row passes, a superset of what pecotmr's own
   # best-method selection can keep; pecotmr still applies the exact rule.
-  if (!is.na(argv$min_cv_rsq)) {
+  # --min-cv-rsq <= 0 (e.g. --rsq_cutoff 0) disables the prefilter, as it
+  # disables the cutoff in twas.R.
+  if (!is.na(argv$min_cv_rsq) && argv$min_cv_rsq > 0) {
+    # The weights are pecotmr S4 objects: load it so their class and mcols()
+    # resolve here, instead of every gene falling back to "keep".
+    suppressPackageStartupMessages(loadNamespace("pecotmr"))
     maxP <- if (is.na(argv$max_cv_pval)) Inf else argv$max_cv_pval
+    pvalOpt <- trimws(strsplit(argv$rsq_pval_option, ",", fixed = TRUE)[[1L]])
+    # TRUE when one context/method row passes, or when the CV information
+    # needed to judge it is missing (pecotmr then applies the exact rule).
+    rowPasses <- function(v) {
+      r2 <- v[argv$rsq_option]
+      if (r2 < argv$min_cv_rsq) return(FALSE)
+      if (is.infinite(maxP)) return(TRUE)
+      pv <- v[intersect(pvalOpt, names(v))]
+      pv <- pv[!is.na(pv)]
+      if (length(pv) == 0L) return(TRUE)
+      pv[[1L]] < maxP
+    }
     passes <- function(j) {
       f <- trimws(strsplit(xqtlDf$original_data[[j]], ",")[[1L]])
       f <- vapply(f[nzchar(f)], adaptFilePath, character(1), referenceFile = argv$xqtl_meta, USE.NAMES = FALSE)
+      if (length(f) == 0L) return(TRUE)
       for (x in f) {
         w <- readRDS(x)
-      # Legacy list-layout weights carry no per-row cvResult column: keep the
-      # gene and let pecotmr apply the CV rule.
-      if (!methods::is(w, "TwasWeights")) return(TRUE)
-      cv <- as.list(S4Vectors::mcols(w)$cvResult)
+        # Legacy list-layout weights, or TwasWeights without a cvResult
+        # column, carry no per-row CV: keep the gene.
+        if (!methods::is(w, "TwasWeights")) return(TRUE)
+        cv <- as.list(S4Vectors::mcols(w)$cvResult)
+        if (length(cv) == 0L) return(TRUE)
+        # One cvResult per context row; it holds either the metrics directly
+        # or one list(metrics = ...) per method (pecotmr >= 0.9.5 layout).
+        # Methods without a CV r2 (e.g. ensemble) cannot be picked by the
+        # best-r2 rule and are ignored; a gene where no method has one is kept.
+        metrics <- list()
         for (r in cv) {
-          v <- r$metrics
-          if (is.null(v) || is.na(v["rsq"])) return(TRUE)  # no CV info: let pecotmr decide
-          pv <- if (!is.na(v["adj_rsq_pval"])) v["adj_rsq_pval"] else v["pval"]
-          if (v["rsq"] >= argv$min_cv_rsq && (is.infinite(maxP) || (!is.na(pv) && pv < maxP))) return(TRUE)
+          perMethod <- if (!is.null(r$metrics)) list(r) else as.list(r)
+          for (mm in perMethod) {
+            v <- mm$metrics
+            if (!is.null(v) && !is.na(v[argv$rsq_option])) metrics[[length(metrics) + 1L]] <- v
+          }
         }
+        if (length(metrics) == 0L) return(TRUE)
+        if (any(vapply(metrics, rowPasses, logical(1)))) return(TRUE)
+        rm(w)
       }
       FALSE
     }
-    ok <- unlist(parallel::mclapply(keep, passes, mc.cores = max(1L, argv$threads)))
-    message(sprintf("CV prefilter (r2 >= %g, p < %g): kept %d of %d genes.", argv$min_cv_rsq, maxP, sum(ok), length(keep)))
+    # A gene whose weight file cannot be read is kept (with a warning) so the
+    # twas step reports it, rather than failing the whole manifest.
+    # message() rather than warning(): warnings raised in mclapply's forked
+    # workers are lost, messages reach stderr.
+    safePasses <- function(j) tryCatch(passes(j), error = function(e) {
+      message(sprintf("Warning: CV prefilter could not read weights of %s (%s); keeping it.",
+                      xqtlDf$region_id[[j]], conditionMessage(e)))
+      TRUE
+    })
+    res <- parallel::mclapply(keep, safePasses, mc.cores = max(1L, argv$threads))
+    ok <- vapply(res, function(z) !isFALSE(z), logical(1))
+    message(sprintf("CV prefilter (%s >= %g, p < %g): kept %d of %d genes.",
+                    argv$rsq_option, argv$min_cv_rsq, maxP, sum(ok), length(keep)))
     keep <- keep[ok]
   }
   lapply(keep, function(j) list(chrom = xqtlChr[[j]],
@@ -255,6 +298,15 @@ if (skipped > 0L)
 if (length(rows) == 0L)
   stop("No regions with overlapping xQTL weights; nothing to analyse.")
 out <- do.call(rbind, rows)
+if (argv$unit == "gene") {
+  # region_id names the per-gene output files: make it file-name safe (sQTL
+  # IDs carry ':') and require one meta row per gene.
+  out$region_id <- gsub("[^A-Za-z0-9_.-]", "_", out$region_id)
+  dup <- unique(out$region_id[duplicated(out$region_id)])
+  if (length(dup) > 0L)
+    stop("--unit gene needs one xQTL meta row per gene; repeated: ",
+         paste(head(dup, 5L), collapse = ", "), if (length(dup) > 5L) ", ...")
+}
 
 writeManifest(out, argv$output)
-cat(sprintf("Wrote TWAS manifest with %d region(s) to %s\n", nrow(out), argv$output))
+cat(sprintf("Wrote TWAS manifest with %d %s unit(s) to %s\n", nrow(out), argv$unit, argv$output))

@@ -52,14 +52,16 @@ for (f in files) {
     names(perf) <- sub("_performance$", "", names(perf))
     for (wn in names(co$twas_weights)) {
       w <- co$twas_weights[[wn]]
-      vids <- if (is.matrix(w)) rownames(w) else names(w)
-      # Some releases store weights for the QC'd variant subset only, without row
-    # names; their IDs are then in preset_variants_result$variant_names
-    if (is.null(vids)) vids <- Find(function(v) length(v) == NROW(w),
-      list(co$variant_names, co$preset_variants_result$variant_names))
-    if (is.null(vids)) stop("No variant IDs of length ", NROW(w), " for ", cn, " ", wn, " in ", f)
       wv <- if (is.matrix(w)) as.numeric(w[, 1]) else as.numeric(w)
       if (all(is.na(wv)) || all(wv == 0, na.rm = TRUE)) next
+      vids <- if (is.matrix(w)) rownames(w) else names(w)
+      # Some releases store weights for the QC'd variant subset only, without
+      # row names; their IDs are then in preset_variants_result$variant_names.
+      # Prefer that subset when its length fits, since variant_names can have
+      # the same length but list the full set.
+      if (is.null(vids)) vids <- Find(function(v) length(v) == NROW(w),
+        list(co$preset_variants_result$variant_names, co$variant_names))
+      if (is.null(vids)) stop("No variant IDs of length ", NROW(w), " for ", cn, " ", wn, " in ", f)
       m <- sub("_weights$", "", wn)
       fits <- if (m %in% c("susie", "susie_inf", "susie_ash")) co$susie_weights_intermediate else NULL
       E[[length(E) + 1L]] <- TwasWeightsRow(variantIds = vids, weights = wv,
