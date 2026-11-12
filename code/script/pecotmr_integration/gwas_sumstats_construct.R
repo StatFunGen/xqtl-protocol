@@ -215,6 +215,7 @@ if (length(clash) > 0L)
 # --skip-region: comma-separated chr:start-end windows -> character vector
 # (NULL when unset so summaryStatsQc's skipRegion default applies).
 skip_region_vec <- splitCsv(argv$skip_region)
+if (!is.null(skip_region_vec)) skip_region_vec <- GenomicRanges::GRanges(skip_region_vec)
 if (length(skip_region_vec) == 0L) skip_region_vec <- NULL
 
 qc_method <- match.arg(argv$qc_method, c("none", "slalom", "dentist"))
