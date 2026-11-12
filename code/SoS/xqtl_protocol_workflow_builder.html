@@ -795,6 +795,12 @@ apply();
 .xq .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @media (max-width:640px){.xq .sitebar__brand{flex-basis:100%}.xq .wz__mode{margin-left:0}}
 .xq .xp [hidden]{display:none!important}
+
+/* "Coming soon": a drawn icon (dashed ring with a clock hand) instead of an emoji */
+.xq .soon--icon{display:inline-block;width:14px;height:14px;vertical-align:-2px;border:1.5px dashed var(--warn,#8a5a00);border-radius:50%;position:relative}
+.xq .soon--icon::after{content:"";position:absolute;left:5.5px;top:2px;width:1.5px;height:5px;background:var(--warn,#8a5a00);box-shadow:2px 3.5px 0 -0px transparent}
+.xq .howto{margin:0 0 12px;border:1px solid var(--border);border-radius:6px;padding:8px 12px;background:var(--surface)}
+.xq .howto>summary{cursor:pointer;font-weight:600;color:var(--ink);min-height:32px;display:flex;align-items:center}
 </style>
 <script>
 (function(){
@@ -948,15 +954,32 @@ function legend(){
   const ul=document.createElement('ul'); ul.className='legend'; ul.setAttribute('aria-label','How to read the map');
   ul.innerHTML='<li><span class="sw on" aria-hidden="true"></span>In your route</li>'
     +'<li><span class="sw off" aria-hidden="true"></span>Not needed for your answers</li>'
-    +'<li><span aria-hidden="true">🚧</span>Coming soon</li>'
+    +'<li><span class="soon soon--icon" aria-hidden="true"></span>Coming soon</li>'
     +'<li>Select a module to see its inputs, outputs and command</li>';
   const flow=$('.flow'); if(flow)flow.parentNode.insertBefore(ul,flow);
 }
 
+/* ---------- "Coming soon" as a drawn icon instead of an emoji ---------- */
+const EMO='\u{1F6A7}';
+function deEmoji(){
+  $$('.soon').forEach(s=>{if(s.textContent.includes(EMO)){s.textContent='';s.classList.add('soon--icon');}});
+  $$('option').forEach(o=>{if(o.textContent.includes(EMO))o.textContent=o.textContent.replace(' '+EMO,' (coming soon)').replace(EMO,'(coming soon)');});
+}
+/* ---------- Phones: the questions come first; the explanation folds under "How this works" ---------- */
+(function(){
+  if(!(window.matchMedia&&matchMedia('(max-width: 640px)').matches))return;
+  const hds=root.querySelector('.hd .hds'), intro=root.querySelector('.pipelineintro');
+  if(!hds&&!intro)return;
+  const d=document.createElement('details');d.className='howto';
+  d.innerHTML='<summary>How this works</summary>';
+  const anchor=(hds||intro);anchor.parentNode.insertBefore(d,anchor);
+  if(hds)d.appendChild(hds); if(intro){const host=d; host.appendChild(intro);}
+})();
+
 /* ---------- Keep everything in step with the builder ---------- */
 let pending=false;
 function refresh(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;
-  renderWizard();labelStates();const body=$('#xroutebody');if(body&&body.children.length)exportBar(body);writeHash();});}
+  renderWizard();labelStates();deEmoji();const body=$('#xroutebody');if(body&&body.children.length)exportBar(body);writeHash();});}
 new MutationObserver(refresh).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class']});
 root.addEventListener('change',e=>{if(e.target.matches('select[data-f]'))refresh();});
 
