@@ -2,7 +2,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 html, body { font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif; }
 code, pre, kbd, samp { font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace; }
-article a, .myst-toc a:hover { color: #1f716d; }
-html.dark article a, html.dark .myst-toc a:hover { color: #5cc4bc; }
+/* links and inline code in the shared colors (attribute selectors outrank the theme's utility classes) */
+html body article a[href] { color: #1f716d; text-decoration-color: rgba(31, 113, 109, .45); }
+html.dark body article a[href] { color: #5cc4bc; text-decoration-color: rgba(92, 196, 188, .45); }
+html body article :not(pre) > code[class], html body article :not(pre) > code { color: #19354a; }
+html.dark body article :not(pre) > code { color: #c8d9e6; }
+/* current page in the left menu: teal tint instead of blue */
+.myst-toc-item.active, .myst-toc-item.myst-toc-item-exact { background-color: rgba(31, 113, 109, .12); }
+html.dark .myst-toc-item.active, html.dark .myst-toc-item.myst-toc-item-exact { background-color: rgba(92, 196, 188, .16); }
 :focus-visible { outline: 2px solid #1f716d; outline-offset: 2px; }
 html.dark :focus-visible { outline-color: #5cc4bc; }
