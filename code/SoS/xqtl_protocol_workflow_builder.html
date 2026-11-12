@@ -507,7 +507,7 @@ function routeSummary(c,act,nbs,r){
   rows.push({label:button.dataset.label,state,cls});
  });
  body.innerHTML=`<p><b>${esc(ph)}</b> analyzed for <b>${esc(gl)}</b>.</p>`
-  +`<p>Run the modules below in order. Open a step to inspect its fixtures and copy the command. A later step may consume files produced by an earlier one.</p>`
+  +`<p>The modules below are listed in run order. Each command uses that module's own example files, so the commands do not feed into one another as written: with your own data, point each step's inputs at the outputs of the step before it. Open a step to see its inputs, outputs and command.</p>`
   +`<ol class="run-list">${rows.map((x,i)=>`<li class="run-item"><span class="run-num">${i+1}</span><button type="button" class="run-open" data-route-label="${esc(x.label)}">${esc(x.label)}</button><span class="run-state ${x.cls}">${x.state}</span></li>`).join('')}</ol>`
   +`<details class="route-detail"><summary>Expected biological products</summary><p>Each module bubble identifies its toy inputs, expected outputs and the biological role of those outputs. TWAS weights produced by a fine-mapping command are shown as an output of that run, not as a duplicate step.</p></details>`;
  box.hidden=false;
