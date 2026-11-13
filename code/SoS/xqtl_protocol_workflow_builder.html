@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>xQTL Analysis Workflow Builder</title><style>body{font:15px/1.5 Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Roboto,sans-serif;margin:0;padding:24px;max-width:1120px;margin-inline:auto;color:#2c3338;background:#fff}@media (prefers-color-scheme:dark){body{background:#141c24;color:#c9d4dc}}</style></head><body>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>xQTL Analysis Workflow Builder</title><meta name="description" content="Choose a molecular phenotype and an analysis goal to get the FunGen-xQTL protocol modules, in order, with example commands you can copy or download."><link rel="canonical" href="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html"><meta property="og:type" content="website"><meta property="og:site_name" content="FunGen-xQTL Protocol"><meta property="og:title" content="xQTL Analysis Workflow Builder"><meta property="og:description" content="Choose a molecular phenotype and an analysis goal to get the FunGen-xQTL protocol modules, in order, with example commands."><meta property="og:url" content="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html"><meta name="twitter:card" content="summary"><style>body{font:15px/1.5 Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Roboto,sans-serif;margin:0;padding:24px;max-width:1120px;margin-inline:auto;color:#2c3338;background:#fff}@media (prefers-color-scheme:dark){body{background:#141c24;color:#c9d4dc}}</style></head><body>
 <div class="xq" id="xq">
 <style>
 /* Scoped to .xq so it cannot leak into the book theme.
@@ -91,7 +91,7 @@ background:var(--surface-alt)}
 .xq .run-state,.xq 
 .xq .run-state.next{color:var(--c2);border-color:var(--c2);background:var(--b2)}
 .xq .run-state.input{color:var(--warn);border-color:var(--warn);background:#fff7f2}
-.xq .m.route-alternative{opacity:.52;box-shadow:none}
+.xq .m.route-alternative{box-shadow:inset 0 0 0 1px var(--border-strong);background:transparent}
 .xq .m.run-next{box-shadow:0 0 0 3px color-mix(in srgb,var(--k) 24%,transparent)}
 .xq .readiness{border-left:3px solid var(--c2);background:var(--b2);padding:var(--s2) var(--s3);margin-top:var(--s3)}
 .xq .readiness.needs-input{border-left-color:var(--warn);background:#fff7f2}
@@ -702,7 +702,7 @@ async function copy(t,btn){
   const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1100);
 }
 root.addEventListener('click',async e=>{
- const ro=e.target.closest('.run-open');if(ro){const target=$$('.m').find(x=>x.dataset.label===ro.dataset.routeLabel&&!x.disabled);if(target){target.scrollIntoView({behavior:'smooth',block:'center'});open(target);}return;}
+ const ro=e.target.closest('.run-open');if(ro){const target=$$('.m').find(x=>x.dataset.label===ro.dataset.routeLabel&&!x.disabled);if(target){target.scrollIntoView({behavior:xqScroll(),block:'center'});open(target);}return;}
 const pv=e.target.closest('.fxpv');
  if(pv){const panel=pv.closest('li').querySelector('.fxpreview'),opening=panel.hidden;if(opening&&!panel.dataset.ready){panel.innerHTML=previewHTML(pv.dataset.preview);panel.dataset.ready='1';}panel.hidden=!opening;pv.setAttribute('aria-expanded',String(opening));pv.textContent=opening?'Hide preview':'Preview';return;}
  const dl=e.target.closest('.fxdl');
@@ -876,7 +876,7 @@ cfg.addEventListener('click',e=>{
   if(b.dataset.wz==='back'){step=Math.max(0,step-1);renderWizard();focusQ();return;}
   if(b.dataset.wz==='next'){
     if(step<qs.length-1){step++;renderWizard();focusQ();}
-    else{const r=$('#xroute'); if(r&&!r.hidden){r.scrollIntoView({behavior:'smooth',block:'start'});const h=r.querySelector('h3');if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true});}}
+    else{const r=$('#xroute'); if(r&&!r.hidden){r.scrollIntoView({behavior:xqScroll(),block:'start'});const h=r.querySelector('h3');if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true});}}
       else{hint.textContent='Choose a molecular phenotype and an analysis goal to see a route.';step=0;renderWizard();focusQ();}}
   }
 });
@@ -885,6 +885,10 @@ function focusQ(){const q=visibleQs()[step]; if(q)q.querySelector('select').focu
 /* ---------- Route export: example commands and a shareable link ----------
    The commands come from each module's own example data, so they do not pass
    files to one another. The export says so plainly. */
+/* Scrolling honours the reduced-motion setting. */
+function xqScroll(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';}
+/* Protocol revision, stamped in by website/build_support.py when the site is built. */
+const XQ_REV='__XQTL_PROTOCOL_REV__';
 function routeText(){
   const rows=X.routeRows();
   const ph=$('#x-pheno'), gl=$('#x-goal');
@@ -893,6 +897,8 @@ function routeText(){
     '# Built with the xQTL Analysis Workflow Builder: '+shareURL(),
     '# Each command runs one module on that module\'s own example data, from the root of a clone of',
     '# https://github.com/StatFunGen/xqtl-protocol inside its pixi environment.',
+    (/^__/.test(XQ_REV)?'# Protocol revision: not recorded (this builder copy was not stamped at build time).':'# Protocol revision: '+XQ_REV+' (https://github.com/StatFunGen/xqtl-protocol/tree/'+XQ_REV+')'),
+    '# Environment: the pixi environment installed by https://github.com/StatFunGen/pixi-setup',
     '# The commands do not pass files to one another. To analyze your own data, replace the input',
     '# paths in each command with your files or with the outputs of the step before it.',
     'set -euo pipefail',''];

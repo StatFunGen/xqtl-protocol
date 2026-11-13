@@ -44,7 +44,17 @@ STAGED_WIDGET = REPO_ROOT / "website" / "_generated" / "xqtl_protocol_workflow_b
 WIDGET_PREFIX = (
     '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
     '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
-    "<title>xQTL Analysis Workflow Builder</title><style>"
+    "<title>xQTL Analysis Workflow Builder</title>"
+    '<meta name="description" content="Choose a molecular phenotype and an analysis goal to get the FunGen-xQTL '
+    'protocol modules, in order, with example commands you can copy or download.">'
+    '<link rel="canonical" href="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html">'
+    '<meta property="og:type" content="website"><meta property="og:site_name" content="FunGen-xQTL Protocol">'
+    '<meta property="og:title" content="xQTL Analysis Workflow Builder">'
+    '<meta property="og:description" content="Choose a molecular phenotype and an analysis goal to get the '
+    'FunGen-xQTL protocol modules, in order, with example commands.">'
+    '<meta property="og:url" content="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html">'
+    '<meta name="twitter:card" content="summary">'
+    "<style>"
     "body{font:15px/1.5 Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Roboto,sans-serif;"
     "margin:0;padding:24px;max-width:1120px;margin-inline:auto;color:#2c3338;background:#fff}"
     "@media (prefers-color-scheme:dark){body{background:#141c24;color:#c9d4dc}}"
@@ -110,10 +120,33 @@ def stage_widget_notebook():
     print(f"Staged book page {STAGED_WIDGET.relative_to(REPO_ROOT)}")
 
 
+REVISION_PLACEHOLDER = "__XQTL_PROTOCOL_REV__"
+
+
+def protocol_revision():
+    """The commit the site is built from: GITHUB_SHA in CI, else the local checkout."""
+    rev = os.environ.get("GITHUB_SHA", "").strip()
+    if not rev:
+        try:
+            import subprocess
+            rev = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture_output=True,
+                                 text=True, check=True).stdout.strip()
+        except (OSError, subprocess.CalledProcessError):
+            rev = ""
+    return rev if re.fullmatch(r"[0-9a-f]{7,40}", rev) else ""
+
+
 def write_widget(html_root: Path):
+    """Write the deployed builder page, stamped with the Protocol revision so exported
+    routes record which version of the commands they came from. The committed copy
+    keeps the placeholder, so it stays identical to the notebook."""
     target = html_root / WIDGET_PAGE
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(extract_widget_html(), encoding="utf-8")
+    page = extract_widget_html()
+    rev = protocol_revision()
+    if rev:
+        page = page.replace(REVISION_PLACEHOLDER, rev)
+    target.write_text(page, encoding="utf-8")
     print(f"Wrote standalone {WIDGET_PAGE} ({target.stat().st_size} bytes) under {html_root}")
 
 
