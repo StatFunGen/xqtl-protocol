@@ -885,8 +885,8 @@ function focusQ(){const q=visibleQs()[step]; if(q)q.querySelector('select').focu
 /* ---------- Route export: example commands and a shareable link ----------
    The commands come from each module's own example data, so they do not pass
    files to one another. The export says so plainly. */
-/* Scrolling honours the reduced-motion setting. */
-function xqScroll(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';}
+/* Scrolling honours the reduced-motion setting. Global, because the route-step handlers live in another script block. */
+window.xqScroll=function(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';};
 /* Protocol revision, stamped in by website/build_support.py when the site is built. */
 const XQ_REV='__XQTL_PROTOCOL_REV__';
 function routeText(){
