@@ -2,7 +2,7 @@
 # rss_ld_sketch.R — worker for rss_ld_sketch.ipynb (RSS LD random-projection sketch).
 #
 # Two steps:
-#   generate_w     Draw the shared projection matrix W ~ N(0, 1/sqrt(n)), shape (n, B).
+#   generate_w     Draw the shared projection matrix W with entries ~ N(0, 1/n) (sd 1/sqrt(n)), shape (n, B).
 #                  Run ONCE; every chromosome/block reuses the same W so the per-block
 #                  stochastic genotype sketches are arithmetically mergeable.
 #   process_block  For one LD block: read the VCF region, filter variants
@@ -36,7 +36,7 @@ do_generate_w <- function(argv) {
   W <- matrix(rnorm(n * B, mean = 0, sd = 1 / sqrt(n)), nrow = n, ncol = B)
   dir.create(dirname(normalizePath(argv$output, mustWork = FALSE)), recursive = TRUE, showWarnings = FALSE)
   saveRDS(W, argv$output)
-  cat(sprintf("Generated W ~ N(0, 1/sqrt(%d)), shape (%d, %d), seed=%d -> %s\n",
+  cat(sprintf("Generated W ~ N(0, var 1/%d), shape (%d, %d), seed=%d -> %s\n",
               n, n, B, seed, argv$output))
 }
 
