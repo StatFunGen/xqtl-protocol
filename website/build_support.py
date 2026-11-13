@@ -45,8 +45,9 @@ WIDGET_PREFIX = (
     '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
     '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
     "<title>xQTL Analysis Workflow Builder</title><style>"
-    "body{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Roboto,sans-serif;"
-    "margin:0;padding:24px;max-width:1120px;margin-inline:auto;color:#2c3338}"
+    "body{font:15px/1.5 Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Roboto,sans-serif;"
+    "margin:0;padding:24px;max-width:1120px;margin-inline:auto;color:#2c3338;background:#fff}"
+    "@media (prefers-color-scheme:dark){body{background:#141c24;color:#c9d4dc}}"
     "</style></head><body>\n"
 )
 WIDGET_SUFFIX = "</body></html>\n"
