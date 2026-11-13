@@ -28,3 +28,20 @@ html.dark body article p, html.dark body article li { color: #d5dde4; }
 /* FunGen-xQTL sites in the top bar: this site in the logo blue and underlined, as on the Resources site and the Explorer */
 .myst-top-nav-item a[href^="https://statfungen.github.io/xqtl-protocol"] { color: #3d6289; box-shadow: inset 0 -2px 0 #3d6289; }
 html.dark .myst-top-nav-item a[href^="https://statfungen.github.io/xqtl-protocol"] { color: #8fb0d0; box-shadow: inset 0 -2px 0 #8fb0d0; }
+/* Shared heading scale must win over the theme's utility classes (text-3xl and the like), so these
+   selectors carry an id-level :not() and also target the frontmatter title block */
+html body article h1:not(#_), html body .myst-fm-block-title:not(#_) { font: 700 32px/1.2 'Figtree', system-ui, sans-serif; letter-spacing: -.015em; color: #19354a; }
+html body article h2:not(#_) { font: 600 22px/1.3 'Figtree', system-ui, sans-serif; letter-spacing: -.01em; color: #19354a; }
+html body article h3:not(#_) { font: 600 17px/1.35 'Figtree', system-ui, sans-serif; color: #19354a; }
+html.dark body article :is(h1, h2, h3):not(#_), html.dark body .myst-fm-block-title:not(#_) { color: #e6edf3; }
+@media (max-width: 640px) {
+  html body article h1:not(#_), html body .myst-fm-block-title:not(#_) { font-size: 24px; line-height: 1.25; }
+  html body article h2:not(#_) { font-size: 20px; }
+}
+/* Narrow phones: the logo stays and the "FunGen-xQTL Protocol" text is kept for screen readers only,
+   so search, menu and theme buttons fit inside 320 px */
+@media (max-width: 420px) {
+  .myst-home-link { margin-left: 8px; }
+  .myst-home-link-logo { margin-right: 0; }
+  .myst-home-link > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
