@@ -5,6 +5,14 @@ Alzheimer's Disease Sequencing Project (ADSP) Functional Genomics xQTL (FunGen-x
 project. A molecular QTL (xQTL) is a genetic variant linked to a change in a molecular
 trait, such as gene expression, splicing, protein level or DNA methylation.
 
+## Getting started
+
+| I want to... | Go to |
+|---|---|
+| **Set up my computing environment** | [Environment Setup](code/SoS/xqtl_protocol_demo.ipynb) |
+| **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html): answer a few questions, get the modules and commands for your route |
+| **Find a specific module or method** | Search the site (top of the page), or browse the menu by analysis stage |
+
 ## What the protocol covers
 
 | Stage | What it does |
@@ -21,13 +29,6 @@ Not every project needs every stage. The
 [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html)
 asks what you measured and what you want to find out, then shows the modules on
 that route with the commands to run them.
-
-## Getting started
-
-| I want to... | Go to |
-|---|---|
-| **Set up my computing environment** | [Environment Setup](code/SoS/xqtl_protocol_demo.ipynb) |
-| **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) |
 
 ## Overview of the protocol
 
