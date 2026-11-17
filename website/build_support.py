@@ -64,7 +64,17 @@ WIDGET_SUFFIX = "</body></html>\n"
 # Absolute: MyST would otherwise prepend BASE_URL to a root-relative path, or
 # content-hash anything it can resolve as a local asset.
 WIDGET_URL = f"https://statfungen.github.io/xqtl-protocol/{WIDGET_PAGE}"
-WIDGET_LINK = f"**[Open the xQTL Analysis Workflow Builder]({WIDGET_URL})**\n"
+# The book page shows the builder in place. It runs in a frame because MyST
+# does not execute scripts inside raw HTML; inside the frame the builder hides
+# its own site bar and opens links in the main window.
+WIDGET_EMBED = (
+    f":::{{iframe}} {WIDGET_URL}\n"
+    ":width: 100%\n"
+    ":class: fx-builder\n"
+    ":title: xQTL Analysis Workflow Builder\n"
+    ":::\n\n"
+    f"[Open the builder in its own window ↗]({WIDGET_URL})\n"
+)
 
 
 def toc_entries():
@@ -107,11 +117,11 @@ def extract_widget_html():
 
 
 def stage_widget_notebook():
-    """Write the book-page copy of the builder notebook: widget replaced by a link."""
+    """Write the book-page copy of the builder notebook: widget shown in a frame."""
     notebook = nbformat.read(WIDGET_NOTEBOOK, as_version=4)
     replaced = 0
     for cell in _markdown_cells(notebook):
-        cell.source, count = RAW_HTML_BLOCK_RE.subn(lambda _: WIDGET_LINK, cell.source)
+        cell.source, count = RAW_HTML_BLOCK_RE.subn(lambda _: WIDGET_EMBED, cell.source)
         replaced += count
     if replaced != 1:
         raise SystemExit(f"Expected to replace exactly one widget block, replaced {replaced}.")
@@ -203,7 +213,7 @@ def write_redirects(html_root: Path):
     for source, slug in sorted(slugs.items()):
         path = Path(source)
         if path.suffix != ".ipynb":
-            continue  # README.md / CONTRIBUTORS.md have no legacy URLs
+            continue  # README.md and website/about.md have no notebook URLs
         is_widget = path.name == WIDGET_NOTEBOOK.name
         target = html_root / (WIDGET_PAGE if is_widget else f"{slug}/index.html")
 
@@ -224,6 +234,12 @@ def write_redirects(html_root: Path):
         for old in old_paths:
             write_redirect(old, target)
             count += 1
+
+    # The contributors list moved into the About page.
+    about = slugs.get("website/about.md")
+    if about and not (html_root / "contributors" / "index.html").exists():
+        write_redirect(html_root / "contributors" / "index.html", html_root / about / "index.html")
+        count += 1
     print(f"Wrote {count} compatibility redirects under {html_root}")
 
 

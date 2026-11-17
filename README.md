@@ -114,9 +114,4 @@ separately; commands that need them show the expected path.
 - [FunGen-xQTL analyses](https://github.com/cumc/xqtl-analysis) that use this protocol (lab access only)
 - [FunGen-xQTL resource catalog](https://adsp-fgc.niagads.org/xqtl-resources/): the datasets and results, and where to get them
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
-
-## Contributors
-
-This repository is developed by the Analysis Working Group of the NIA FunGen-xQTL
-consortium. Lead developers, contributors and leadership are listed in
-[CONTRIBUTORS.md](https://github.com/StatFunGen/xqtl-protocol/blob/main/CONTRIBUTORS.md).
+- [About](website/about.md): who develops the protocol, funding, license and contributors
