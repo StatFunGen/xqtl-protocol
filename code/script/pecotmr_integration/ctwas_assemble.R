@@ -172,7 +172,9 @@ inputs <- assembleCtwasInputs(
 # MSBB_BM36_pQTL_chr1_<gene>_<protein>; sQTL: <context>_intron_chr1:<cluster>),
 # which gives every gene its own group, and the prior EM cannot fit a group of
 # one gene (its log-likelihood becomes NaN). --group-context-pattern removes
-# the trait part, e.g. '_chr[0-9XY]+[_:].*$', so those genes share one group.
+# the trait part, so those genes share one group: '_chr[0-9XY]+[_:].*$'
+# for pQTL and intron sQTL, plus '|(?<=_PSI)_.*$|_gp_[0-9]+_.*$' for PSI sQTL
+# and glycopeptide contexts.
 # Gene IDs are unchanged.
 zGene <- inputs$z_gene
 pattern <- argv$group_context_pattern
