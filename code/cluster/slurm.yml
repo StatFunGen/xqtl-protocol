@@ -1,0 +1,33 @@
+# SoS host configuration for a SLURM cluster.
+# Copy this file, edit the lines marked EDIT, then add `-c slurm.yml -q slurm`
+# to any `sos run` command. Each SoS task becomes one SLURM job.
+# Guide: https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/
+
+localhost: localhost
+hosts:
+  localhost:
+    address: localhost
+  slurm:
+    address: localhost
+    queue_type: pbs
+    submit_cmd: sbatch {job_file}
+    submit_cmd_output: "Submitted batch job {job_id}"
+    status_cmd: squeue --job {job_id}
+    kill_cmd: scancel {job_id}
+    # EDIT: how many jobs SoS may keep in the queue at once.
+    max_running_jobs: 100
+    # EDIT: the largest request your cluster allows. A task asking for more stops with an error.
+    max_mem: 250G
+    max_cores: 32
+    max_walltime: "72:00:00"
+    # EDIT: add `#SBATCH --account=...` or `#SBATCH --partition=...` lines if your cluster needs them.
+    task_template: |
+      #!/bin/bash
+      #SBATCH --job-name={task}
+      #SBATCH --time={walltime}
+      #SBATCH --mem={mem//10**6}M
+      #SBATCH --cpus-per-task={cores}
+      #SBATCH --output={cur_dir}/.sos/{task}.out
+      #SBATCH --error={cur_dir}/.sos/{task}.err
+      cd {cur_dir}
+      {command}

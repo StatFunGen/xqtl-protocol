@@ -11,6 +11,8 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 |---|---|
 | **Set up my computing environment** | [Environment Setup](code/SoS/xqtl_protocol_demo.ipynb) |
 | **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html): answer a few questions, get the modules and commands for your route |
+| **Run the pipelines on my own data** | [Using your own data](website/own_data.md): file formats, sample IDs and checks for each input |
+| **Run on my cluster (SLURM or SGE)** | [Running on a cluster](website/running_on_a_cluster.md): one-time setup, then add `-c <host file> -q <queue>` to any command |
 | **Find a specific module or method** | Search the site (top of the page), or browse the menu by analysis stage |
 
 ## What the protocol covers
