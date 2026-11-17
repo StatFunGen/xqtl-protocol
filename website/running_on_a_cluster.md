@@ -128,6 +128,7 @@ What each task asks for unless you override it, as set in each module's code. Ru
 | Pseudobulk preprocessing | 16G | 5h | 8 | 1 |
 | Methylation calling | 16G | 5h | 8 | 1 |
 | Splicing calling (LeafCutter, LeafCutter2) | 16G | 5h | 8 | 1 |
+| Isoform usage (Torino) | 16G | 5h | 1 | 1 |
 | Splicing normalization | 16G | 5h | 8 | 1 |
 | APA calling | 200G | 400h | 8 | 1 |
 | APA imputation | 32G | 40h | 16 | 1 |
