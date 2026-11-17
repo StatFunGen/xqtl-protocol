@@ -66,9 +66,9 @@ Jupyter Notebooks intended for interactive data analysis, SoS workflows written 
 Jupyter Notebooks can be executed directly as command line scripts either on a
 local computer or in an HPC environment.
 
-First-time users should try the
-[toy example of an SoS pipeline on an HPC cluster](https://github.com/statfungen/xqtl-protocol/blob/main/code/SoS/misc/Job_Example.ipynb),
-which helps set up the computing environment the protocol needs.
+To run on a SLURM or SGE cluster, follow
+[Running on a cluster](website/running_on_a_cluster.md): a one-time setup, then any
+command on this site can send its jobs to the cluster.
 
 ### Source code
 
