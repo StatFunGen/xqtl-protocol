@@ -1,0 +1,41 @@
+# SoS host configuration for the Boston University Shared Computing Cluster (SGE).
+# A worked example of code/cluster/sge.yml adapted to one site; tested on BU SCC.
+# Copy this file, edit the lines marked EDIT, then add `-c bu_scc.yml -q sge`
+# to any `sos run` command. Each SoS task becomes one SGE job.
+# Guide: https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/
+
+localhost: localhost
+hosts:
+  localhost:
+    address: localhost
+  sge:
+    address: localhost
+    queue_type: pbs
+    submit_cmd: qsub {job_file}
+    submit_cmd_output: 'Your job {job_id} ("{job_name}") has been submitted'
+    status_cmd: qstat -j {job_id}
+    kill_cmd: qdel {job_id}
+    # EDIT: how many jobs SoS may keep in the queue at once.
+    max_running_jobs: 100
+    # EDIT: the largest request your cluster allows. A task asking for more stops with an error.
+    max_mem: 250G
+    max_cores: 32
+    max_walltime: "72:00:00"
+    # EDIT: replace `xqtl` in `-P xqtl` with your SCC project name.
+    # SCC asks for memory per core (`mem_per_core`), so the total request is divided by the cores.
+    # The job writes its log to ~/.sos/tasks/<task>.out/.err and sets HOME to yours,
+    # because some clusters start batch jobs with a different home directory.
+    task_template: |
+      #!/bin/bash
+      #$ -N {task}
+      #$ -l h_rt={walltime}
+      #$ -l mem_per_core={max(1,-(-mem//cores//10**9))}G
+      #$ -pe omp {cores}
+      #$ -cwd
+      #$ -V
+      #$ -P xqtl
+      #$ -o {os.environ['HOME']}/.sos/tasks/{task}.out
+      #$ -e {os.environ['HOME']}/.sos/tasks/{task}.err
+      export HOME={os.environ['HOME']}
+      cd {cur_dir}
+      {command}

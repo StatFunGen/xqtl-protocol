@@ -18,12 +18,15 @@ You run `sos run` once; the cluster runs the tasks. The `sos run` command itself
 pixi global install -c conda-forge --environment python sos-pbs
 ```
 
+This can take several minutes, because pixi re-checks the whole Python environment.
+
 **2. Copy the host file for your scheduler** into your clone of the protocol:
 
 | Scheduler | Template | Queue name to use |
 |---|---|---|
 | SLURM (`sbatch`, `squeue`) | [`code/cluster/slurm.yml`](https://github.com/StatFunGen/xqtl-protocol/blob/main/code/cluster/slurm.yml) | `slurm` |
 | SGE (`qsub`, `qstat`) | [`code/cluster/sge.yml`](https://github.com/StatFunGen/xqtl-protocol/blob/main/code/cluster/sge.yml) | `sge` |
+| SGE at Boston University (SCC), as a worked example | [`code/cluster/bu_scc.yml`](https://github.com/StatFunGen/xqtl-protocol/blob/main/code/cluster/bu_scc.yml) | `sge` |
 
 ```bash
 cp code/cluster/slurm.yml my_cluster.yml   # or code/cluster/sge.yml
@@ -101,11 +104,11 @@ Add the same `-c my_cluster.yml -q slurm` (or `-q sge`) to these so SoS looks at
 | To... | Run |
 |---|---|
 | See the state of every task | `sos status -c my_cluster.yml -q slurm -v 3` |
-| Read a failed task's error | open `.sos/<task id>.err` in the folder you ran from, or `sos status <task id> -c my_cluster.yml -q slurm -v 4` |
+| Read a failed task's error | open `~/.sos/tasks/<task id>.err`, or run `sos status <task id> -c my_cluster.yml -q slurm -v 4` |
 | Resume after a failure or a killed driver | run the same `sos run` command again: finished tasks are skipped |
 | Redo steps whose outputs already exist | add `-s force` |
-| Stop all running tasks | `sos kill --all -c my_cluster.yml -q slurm` |
-| Clean up old task records | `sos purge --all -c my_cluster.yml -q slurm` |
+| Stop the pipeline | press Ctrl-C twice in the terminal running `sos run`; jobs already in the queue finish or can be removed with `scancel` / `qdel` |
+| Clean up records of finished tasks | `sos purge -s completed -c my_cluster.yml -q slurm` |
 
 (default-resources)=
 ## Default resources by module
@@ -160,6 +163,8 @@ What each task asks for unless you override it, as set in each module's code. Ru
 **`Failed to load task engine of type "pbs"`.** The `sos-pbs` plugin is missing; install it (step 1).
 
 **`requested more mem ... than allowed max_mem`.** A task asked for more than the `max_mem` in your host file. Lower `--mem`, or raise `max_mem` if your cluster allows it.
+
+**Every task fails with `does not match any existing task`.** The job started with a different home directory than your login shell, so SoS could not find its task files. The templates set `HOME` inside each job to prevent this; keep that line if you edit the template.
 
 **Jobs sit in the queue and never start.** The request may exceed what any node offers, or your cluster needs an account or partition line. Check with `squeue -u $USER --start` (SLURM) or `qstat -j <job id>` (SGE).
 

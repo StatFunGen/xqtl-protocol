@@ -21,13 +21,16 @@ hosts:
     max_cores: 32
     max_walltime: "72:00:00"
     # EDIT: add `#SBATCH --account=...` or `#SBATCH --partition=...` lines if your cluster needs them.
+    # The job writes its log to ~/.sos/tasks/<task>.out/.err and sets HOME to yours,
+    # because some clusters start batch jobs with a different home directory.
     task_template: |
       #!/bin/bash
       #SBATCH --job-name={task}
       #SBATCH --time={walltime}
       #SBATCH --mem={mem//10**6}M
       #SBATCH --cpus-per-task={cores}
-      #SBATCH --output={cur_dir}/.sos/{task}.out
-      #SBATCH --error={cur_dir}/.sos/{task}.err
+      #SBATCH --output={os.environ['HOME']}/.sos/tasks/{task}.out
+      #SBATCH --error={os.environ['HOME']}/.sos/tasks/{task}.err
+      export HOME={os.environ['HOME']}
       cd {cur_dir}
       {command}

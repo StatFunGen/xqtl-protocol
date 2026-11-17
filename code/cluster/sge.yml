@@ -24,8 +24,10 @@ hosts:
     #   - Parallel environment: `-pe smp {cores}` here; some sites call it `omp` or `threaded`
     #     (`qconf -spl` lists the names on yours).
     #   - Memory: `h_vmem` here is per slot, so the total request is divided by the cores.
-    #     Some sites use another resource; BU SCC, for example, uses `-l mem_per_core=...`.
+    #     Some sites use another resource; see code/cluster/bu_scc.yml for a tested BU SCC version.
     #   Add `#$ -P <project>` or `#$ -q <queue>` lines if your cluster needs them.
+    # The job writes its log to ~/.sos/tasks/<task>.out/.err and sets HOME to yours,
+    # because some clusters start batch jobs with a different home directory.
     task_template: |
       #!/bin/bash
       #$ -N {task}
@@ -33,7 +35,8 @@ hosts:
       #$ -l h_vmem={mem//10**6//cores}M
       #$ -pe smp {cores}
       #$ -cwd
-      #$ -o {cur_dir}/.sos/{task}.out
-      #$ -e {cur_dir}/.sos/{task}.err
+      #$ -o {os.environ['HOME']}/.sos/tasks/{task}.out
+      #$ -e {os.environ['HOME']}/.sos/tasks/{task}.err
+      export HOME={os.environ['HOME']}
       cd {cur_dir}
       {command}
