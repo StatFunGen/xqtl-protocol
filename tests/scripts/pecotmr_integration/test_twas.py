@@ -34,3 +34,22 @@ def test_twas(via_table, run_r, read_rds, repo_root, tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     assert read_rds(out)["class"] == "GRanges"
     assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant", rtol=1e-6, atol=1e-8)
+
+
+def test_twas_missing_gwas_sumstats(run_r, repo_root, tmp_path):
+    """No GwasSumStats file (gwas_sumstats_construct.R writes none for a window
+    without GWAS variants): every gene gets an empty result. A missing folder
+    is a wrong path and must fail instead."""
+    r = repo_root
+    out = tmp_path / "twas.rds"
+    p = run_r(r / "code/script/pecotmr_integration/twas.R",
+              ["--twas-weights", r / TW, "--output", out,
+               "--gwas-sumstats", tmp_path / "none.gwas_sumstats.rds"], timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert out.exists()
+    assert "No GwasSumStats file" in p.stdout + p.stderr
+    p = run_r(r / "code/script/pecotmr_integration/twas.R",
+              ["--twas-weights", r / TW, "--output", tmp_path / "twas2.rds",
+               "--gwas-sumstats", tmp_path / "no_such_dir" / "gss.rds"], timeout=300)
+    assert p.returncode != 0
+    assert "folder does not exist" in p.stdout + p.stderr

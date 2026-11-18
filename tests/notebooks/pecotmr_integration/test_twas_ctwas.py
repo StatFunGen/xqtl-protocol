@@ -36,6 +36,9 @@ def test_twas(run_sos, repo_root, tmp_path):
             "xqtl_meta_data": meta,
             "ld_meta_data": fx / "ld_reference/ld_meta_file.tsv",
             "region-name": "chr22_10000000_19000000",
+            # The notebook defaults to the gene unit; this test covers the
+            # region unit (test_twas_gene_unit covers the default).
+            "twas_unit": "region",
             # twas.R's default, under which its expected output was made (the
             # notebook defaults to 0.05)
             "rsq_pval_cutoff": "inf",
@@ -54,6 +57,36 @@ def test_twas(run_sos, repo_root, tmp_path):
                             fx / "twas/expected/twas.chr22.rds",
                             mode="tolerant", rtol=1e-6, atol=1e-8)
 
+
+
+def test_twas_gene_unit(run_sos, repo_root, tmp_path):
+    """The gene unit (--twas_unit gene, CV prefilter off by default) scores the toy
+    gene over its own weight window. The window equals the toy region here, so the result
+    must match the region-unit expected output."""
+    fx = repo_root / "tests" / "fixtures"
+    tw = fx / "twas/protocol_example.twas.reshaped_toy.chr22_ENSG00000130538.twas_weights.s4.rds"
+    meta = tmp_path / "xqtl_meta.tsv"
+    meta.write_text("#chr\tstart\tend\tregion_id\tTSS\toriginal_data\tcontexts\n"
+                    f"chr22\t10000000\t19000000\tENSG00000130538\t15528191\t{tw}\tbulk_rnaseq\n")
+    cwd = tmp_path / "out"
+    p = run_sos(
+        repo_root / "pipeline/twas_ctwas.ipynb", "twas",
+        {
+            "cwd": cwd,
+            "name": "protocol_example",
+            "gwas_meta_data": fx / "twas/protocol_example.twas.gwas_meta.tsv",
+            "xqtl_meta_data": meta,
+            "ld_meta_data": fx / "ld_reference/ld_meta_file.tsv",
+            "region-name": "chr22_10000000_19000000",
+            "rsq_pval_cutoff": "inf",
+            "twas_unit": "gene",
+            "modular_script_dir": repo_root / "code/script",
+        },
+        cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = cwd / "twas" / "protocol_example.ENSG00000130538.ENSG00000130538.twas.rds"
+    assert_matches_expected(out, fx / "twas/expected/twas.chr22.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
 
 # The blessed cTWAS weights as committed S4 TwasWeights (region-provenance
 # stamped -- chrom/p0/p1 -- which assembleCtwasInputs needs for LD-block

@@ -62,6 +62,18 @@ p <- add_argument(p, "--gwas-data", type = "character", nargs = Inf,
                   default = NA_character_, help = "Optional inline GWAS sumstats paths")
 p <- add_argument(p, "--column-mapping", type = "character", nargs = Inf,
                   default = NA_character_, help = "Optional inline GWAS column-mapping paths")
+p <- add_argument(p, "--unit", type = "character", default = "region",
+  help = "Analysis unit: 'region' (default; genes grouped by --regions) or 'gene' (one unit per gene spanning its weight window, no LD blocks; twas_ctwas.ipynb passes this by default)")
+p <- add_argument(p, "--min-cv-rsq", type = "numeric", default = NA,
+  help = "gene unit only: skip genes where no context/method reaches this CV r2 (with --max-cv-pval); NA = no prefilter")
+p <- add_argument(p, "--max-cv-pval", type = "numeric", default = NA,
+  help = "gene unit only: CV p-value that must also be passed (Inf = no p-value check)")
+p <- add_argument(p, "--rsq-option", type = "character", default = "rsq",
+  help = "gene unit prefilter: CV metric compared with --min-cv-rsq (same as twas.R --rsq-option)")
+p <- add_argument(p, "--rsq-pval-option", type = "character", default = "adj_rsq_pval,pval",
+  help = "gene unit prefilter: comma-separated CV p-value metrics, first present is used (same as twas.R --rsq-pval-option)")
+p <- add_argument(p, "--threads", type = "integer", default = 1L,
+  help = "Cores for reading weight files in the prefilter")
 p <- add_argument(p, "--output", type = "character", help = "Output manifest TSV path")
 argv <- parse_args(p)
 
@@ -139,8 +151,10 @@ if (length(rn) > 0L) {
     stringsAsFactors = FALSE)
 }
 regions <- unique(regions)
-if (nrow(regions) == 0L)
-  stop("No analysis regions: provide --regions and/or --region-name.")
+if (!argv$unit %in% c("gene", "region"))
+  stop("--unit must be 'gene' or 'region', got: ", argv$unit)
+if (argv$unit == "region" && nrow(regions) == 0L)
+  stop("--unit region needs --regions and/or --region-name.")
 
 # ---- xQTL weight metadata --------------------------------------------------
 if (is.null(argv$xqtl_meta) || !nzchar(argv$xqtl_meta) || !file.exists(argv$xqtl_meta))
@@ -152,12 +166,106 @@ xqtlChr <- chromAdd(xqtlDf[["#chr"]])
 xqtlTss <- suppressWarnings(as.integer(xqtlDf$TSS))
 
 # ---- per-region: overlapping genes/weights + covering GWAS -----------------
+# Analysis units. gene: one unit per xQTL meta row, spanning that
+# gene's weight window (meta start..end), so every weight variant is scored
+# with GWAS and LD read from the per-chromosome files; --regions /
+# --region-name, if given, only filter genes by TSS. region (default): genes
+# binned into --regions by TSS, one unit per region.
+inRegions <- function(j) nrow(regions) == 0L ||
+  any(regions$chr == xqtlChr[[j]] & !is.na(xqtlTss[[j]]) &
+      regions$start <= xqtlTss[[j]] & regions$stop >= xqtlTss[[j]])
+units <- if (argv$unit == "gene") {
+  keep <- Filter(inRegions, seq_len(nrow(xqtlDf)))
+  # The gene window comes from the meta start/end: stop now rather than pass
+  # an NA window to the twas step.
+  noWin <- keep[is.na(suppressWarnings(as.integer(xqtlDf$start[keep]))) |
+                is.na(suppressWarnings(as.integer(xqtlDf$end[keep])))]
+  if (length(noWin) > 0L)
+    stop("--unit gene needs a start and end for every gene in --xqtl-meta; missing for: ",
+         paste(head(xqtlDf$region_id[noWin], 5L), collapse = ", "),
+         if (length(noWin) > 5L) ", ...")
+  # Optional prefilter: drop genes that can have no imputable model, so the
+  # twas step does not build their GWAS input. Lenient on purpose: a gene is
+  # kept if ANY context/method row passes, a superset of what pecotmr's own
+  # best-method selection can keep; pecotmr still applies the exact rule.
+  # --min-cv-rsq <= 0 (e.g. --rsq_cutoff 0) disables the prefilter, as it
+  # disables the cutoff in twas.R.
+  if (!is.na(argv$min_cv_rsq) && argv$min_cv_rsq > 0) {
+    # The weights are pecotmr S4 objects: load it so their class and mcols()
+    # resolve here, instead of every gene falling back to "keep".
+    suppressPackageStartupMessages(loadNamespace("pecotmr"))
+    maxP <- if (is.na(argv$max_cv_pval)) Inf else argv$max_cv_pval
+    pvalOpt <- trimws(strsplit(argv$rsq_pval_option, ",", fixed = TRUE)[[1L]])
+    # TRUE when one context/method row passes, or when the CV information
+    # needed to judge it is missing (pecotmr then applies the exact rule).
+    rowPasses <- function(v) {
+      r2 <- v[argv$rsq_option]
+      if (r2 < argv$min_cv_rsq) return(FALSE)
+      if (is.infinite(maxP)) return(TRUE)
+      pv <- v[intersect(pvalOpt, names(v))]
+      pv <- pv[!is.na(pv)]
+      if (length(pv) == 0L) return(TRUE)
+      pv[[1L]] < maxP
+    }
+    passes <- function(j) {
+      f <- trimws(strsplit(xqtlDf$original_data[[j]], ",")[[1L]])
+      f <- vapply(f[nzchar(f)], adaptFilePath, character(1), referenceFile = argv$xqtl_meta, USE.NAMES = FALSE)
+      if (length(f) == 0L) return(TRUE)
+      for (x in f) {
+        w <- readRDS(x)
+        # Legacy list-layout weights, or TwasWeights without a cvResult
+        # column, carry no per-row CV: keep the gene.
+        if (!methods::is(w, "TwasWeights")) return(TRUE)
+        cv <- as.list(S4Vectors::mcols(w)$cvResult)
+        if (length(cv) == 0L) return(TRUE)
+        # One cvResult per context row; it holds either the metrics directly
+        # or one list(metrics = ...) per method (pecotmr >= 0.9.5 layout).
+        # Methods without a CV r2 (e.g. ensemble) cannot be picked by the
+        # best-r2 rule and are ignored; a gene where no method has one is kept.
+        metrics <- list()
+        for (r in cv) {
+          if (!is.list(r)) next
+          perMethod <- if (!is.null(r[["metrics"]])) list(r) else as.list(r)
+          for (mm in perMethod) {
+            if (!is.list(mm)) next
+            v <- mm[["metrics"]]
+            if (!is.null(v) && !is.na(v[argv$rsq_option])) metrics[[length(metrics) + 1L]] <- v
+          }
+        }
+        if (length(metrics) == 0L) return(TRUE)
+        if (any(vapply(metrics, rowPasses, logical(1)))) return(TRUE)
+        rm(w)
+      }
+      FALSE
+    }
+    # A gene whose weight file cannot be read is kept (with a warning) so the
+    # twas step reports it, rather than failing the whole manifest.
+    # message() rather than warning(): warnings raised in mclapply's forked
+    # workers are lost, messages reach stderr.
+    safePasses <- function(j) tryCatch(passes(j), error = function(e) {
+      message(sprintf("Warning: CV prefilter could not read weights of %s (%s); keeping it.",
+                      xqtlDf$region_id[[j]], conditionMessage(e)))
+      TRUE
+    })
+    res <- parallel::mclapply(keep, safePasses, mc.cores = max(1L, argv$threads))
+    ok <- vapply(res, function(z) !isFALSE(z), logical(1))
+    message(sprintf("CV prefilter (%s >= %g, p < %g): kept %d of %d genes.",
+                    argv$rsq_option, argv$min_cv_rsq, maxP, sum(ok), length(keep)))
+    keep <- keep[ok]
+  }
+  lapply(keep, function(j) list(chrom = xqtlChr[[j]],
+    start = as.integer(xqtlDf$start[[j]]), stop = as.integer(xqtlDf$end[[j]]), hit = j))
+} else {
+  lapply(seq_len(nrow(regions)), function(i) {
+    chrom <- regions$chr[[i]]; start <- regions$start[[i]]; stop <- regions$stop[[i]]
+    list(chrom = chrom, start = start, stop = stop,
+         hit = which(xqtlChr == chrom & !is.na(xqtlTss) & xqtlTss >= start & xqtlTss <= stop))
+  })
+}
 rows <- list()
 skipped <- 0L
-for (i in seq_len(nrow(regions))) {
-  chrom <- regions$chr[[i]]; start <- regions$start[[i]]; stop <- regions$stop[[i]]
-  hit <- which(xqtlChr == chrom & !is.na(xqtlTss) &
-               xqtlTss >= start & xqtlTss <= stop)
+for (u in units) {
+  chrom <- u$chrom; start <- u$start; stop <- u$stop; hit <- u$hit
   genes <- character(0); weightFiles <- character(0)
   for (j in hit) {
     files <- trimws(strsplit(xqtlDf$original_data[[j]], ",")[[1L]])
@@ -185,7 +293,7 @@ for (i in seq_len(nrow(regions))) {
   }
 
   rows[[length(rows) + 1L]] <- data.frame(
-    region_id     = sprintf("%s_%d_%d", chrom, start, stop),
+    region_id     = if (argv$unit == "gene") genes[[1L]] else sprintf("%s_%d_%d", chrom, start, stop),
     chrom         = chrom, start = start, stop = stop,
     genes         = paste(genes, collapse = ","),
     weight_files  = paste(weightFiles, collapse = ","),
@@ -195,11 +303,27 @@ for (i in seq_len(nrow(regions))) {
     stringsAsFactors = FALSE)
 }
 if (skipped > 0L)
-  message(sprintf("Skipping %d of %d region(s): no overlapping xQTL weights.",
-                  skipped, nrow(regions)))
+  message(sprintf("Skipping %d of %d unit(s): no overlapping xQTL weights.",
+                  skipped, length(units)))
 if (length(rows) == 0L)
   stop("No regions with overlapping xQTL weights; nothing to analyse.")
 out <- do.call(rbind, rows)
+if (argv$unit == "gene") {
+  # region_id names the per-gene output files: require one meta row per gene,
+  # then make it file-name safe (sQTL IDs carry ':') and check that no two
+  # genes end up with the same name.
+  dup <- unique(out$region_id[duplicated(out$region_id)])
+  if (length(dup) > 0L)
+    stop("--unit gene needs one xQTL meta row per gene; repeated: ",
+         paste(head(dup, 5L), collapse = ", "), if (length(dup) > 5L) ", ...")
+  safe <- gsub("[^A-Za-z0-9_.-]", "_", out$region_id)
+  clash <- out$region_id[duplicated(safe) | duplicated(safe, fromLast = TRUE)]
+  if (length(clash) > 0L)
+    stop("--unit gene: these gene IDs give the same file name once characters ",
+         "other than letters, digits, '_', '.' and '-' become '_': ",
+         paste(head(clash, 6L), collapse = ", "), if (length(clash) > 6L) ", ...")
+  out$region_id <- safe
+}
 
 writeManifest(out, argv$output)
-cat(sprintf("Wrote TWAS manifest with %d region(s) to %s\n", nrow(out), argv$output))
+cat(sprintf("Wrote TWAS manifest with %d %s unit(s) to %s\n", nrow(out), argv$unit, argv$output))

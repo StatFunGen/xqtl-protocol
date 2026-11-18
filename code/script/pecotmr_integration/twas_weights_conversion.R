@@ -52,10 +52,16 @@ for (f in files) {
     names(perf) <- sub("_performance$", "", names(perf))
     for (wn in names(co$twas_weights)) {
       w <- co$twas_weights[[wn]]
-      vids <- if (is.matrix(w)) rownames(w) else names(w)
-      if (is.null(vids)) vids <- co$variant_names
       wv <- if (is.matrix(w)) as.numeric(w[, 1]) else as.numeric(w)
       if (all(is.na(wv)) || all(wv == 0, na.rm = TRUE)) next
+      vids <- if (is.matrix(w)) rownames(w) else names(w)
+      # Some releases store weights for the QC'd variant subset only, without
+      # row names; their IDs are then in preset_variants_result$variant_names.
+      # That subset is tried first because it is what the weights were fitted
+      # on; variant_names is the fallback, used when its length fits.
+      if (is.null(vids)) vids <- Find(function(v) length(v) == NROW(w),
+        list(co$preset_variants_result$variant_names, co$variant_names))
+      if (is.null(vids)) stop("No variant IDs of length ", NROW(w), " for ", cn, " ", wn, " in ", f)
       m <- sub("_weights$", "", wn)
       fits <- if (m %in% c("susie", "susie_inf", "susie_ash")) co$susie_weights_intermediate else NULL
       E[[length(E) + 1L]] <- TwasWeightsRow(variantIds = vids, weights = wv,
@@ -67,7 +73,18 @@ for (f in files) {
     ctxs <- union(ctxs, ctx)
   }
 }
-if (!length(E)) stop("No usable (non-zero) weights in: ", a$legacy)
+if (!length(E)) {
+  # e.g. a gene stored as NULL or with all-zero weights: write an empty result
+  # and empty meta rows, so step 2 leaves the gene out instead of failing
+  msg <- paste("No usable (non-zero) weights in:", a$legacy)
+  # message(), not warning(): a top-level warning is lost when quit() runs first
+  message("Warning: ", msg)
+  dir.create(dirname(a$output), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(structure(list(), noResult = msg), a$output)
+  file.create(a$meta_row)
+  if (nzchar(a$type_rows)) file.create(a$type_rows)
+  quit(save = "no", status = 0)
+}
 
 tw <- TwasWeights(studyName = S, context = C, trait = Tr, method = M, entry = E,
                   traitPos = GenomicRanges::GRanges(TPc, IRanges::IRanges(TPp, width = 1L)))

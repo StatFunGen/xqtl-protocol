@@ -34,6 +34,8 @@
 #   --cs-min-cor           Pass-through (default 0.8)
 #   --min-pip-cutoff       Pass-through (default 0)
 #   --max-num-variants     Pass-through (default Inf)
+#   --group-context-pattern  Optional regex removed from each gene's context to
+#                          form its cTWAS group (default: one group per context)
 #   --output               Output RDS path (the assembled `inputs` list)
 
 suppressPackageStartupMessages({
@@ -73,6 +75,9 @@ parser <- add_argument(parser, "--min-pip-cutoff",
 parser <- add_argument(parser, "--max-num-variants",
                        help = "Per-gene variant cap",
                        type = "numeric", default = Inf)
+parser <- add_argument(parser, "--group-context-pattern",
+                       help = "Regex removed from each context to form its cTWAS group (empty: one group per context)",
+                       type = "character", default = "")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path (assembled cTWAS inputs)",
                        type = "character")
@@ -161,6 +166,36 @@ inputs <- assembleCtwasInputs(
     csMinCor     = argv$cs_min_cor,
     pipRescue    = argv$min_pip_cutoff,
     maxVariants  = argv$max_num_variants))
+
+# cTWAS estimates one prior per group, and a gene's group is its context and
+# type. Some released weights name the molecular trait in the context (pQTL:
+# MSBB_BM36_pQTL_chr1_<gene>_<protein>; sQTL: <context>_intron_chr1:<cluster>),
+# which gives every gene its own group, and the prior EM cannot fit a group of
+# one gene (its log-likelihood becomes NaN). --group-context-pattern removes
+# the trait part, so those genes share one group: '_chr[0-9XY]+[_:].*$'
+# for pQTL and intron sQTL, plus '|(?<=_PSI)_.*$|_gp_[0-9]+_.*$' for PSI sQTL
+# and glycopeptide contexts.
+# Gene IDs are unchanged.
+zGene <- inputs$z_gene
+pattern <- argv$group_context_pattern
+if (!is.null(zGene) && !is.na(pattern) && nzchar(pattern)) {
+  ctx <- sub(pattern, "", zGene$context, perl = TRUE)
+  if (any(!nzchar(ctx)))
+    stop("--group-context-pattern '", pattern, "' leaves an empty context for: ",
+         paste(head(unique(zGene$context[!nzchar(ctx)]), 3), collapse = ", "))
+  inputs$z_gene$context <- ctx
+  inputs$z_gene$group <- paste(ctx, zGene$type, sep = "|")
+  for (i in seq_along(inputs$weights))
+    inputs$weights[[i]]$context <- sub(pattern, "", inputs$weights[[i]]$context, perl = TRUE)
+  cat(sprintf("--group-context-pattern: %d groups -> %d\n",
+              length(unique(zGene$group)), length(unique(inputs$z_gene$group))))
+} else if (!is.null(zGene)) {
+  sizes <- table(zGene$group)
+  if (length(sizes) > 10L && all(sizes == 1L))
+    message("Warning: each of the ", length(sizes), " cTWAS groups holds one gene, ",
+            "so the prior EM will likely fail. If the contexts name the molecular ",
+            "trait, pass --group-context-pattern to group the genes by context.")
+}
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(inputs, argv$output)
