@@ -115,5 +115,6 @@ separately; commands that need them show the expected path.
 
 - [FunGen-xQTL analyses](https://github.com/cumc/xqtl-analysis) that use this protocol (lab access only)
 - [FunGen-xQTL resource catalog](https://adsp-fgc.niagads.org/xqtl-resources/): the datasets and results, and where to get them
+- [pecotmr](https://statfungen.github.io/pecotmr): the R package behind the fine-mapping, colocalization, TWAS and Mendelian randomization steps ([source](https://github.com/StatFunGen/pecotmr))
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
 - [About](website/about.md): who develops the protocol, funding, license and contributors
