@@ -1,5 +1,9 @@
 # FunGen-xQTL Computational Protocol
 
+[![Tests](https://github.com/StatFunGen/xqtl-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/StatFunGen/xqtl-protocol/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/StatFunGen/xqtl-protocol/blob/main/LICENSE)
+<!-- end-badges -->
+
 Reproducible, reusable pipelines for molecular QTL analysis, developed for the NIH/NIA
 Alzheimer's Disease Sequencing Project (ADSP) Functional Genomics xQTL (FunGen-xQTL)
 project. A molecular QTL (xQTL) is a genetic variant linked to a change in a molecular
@@ -120,3 +124,22 @@ separately; commands that need them show the expected path.
 - [pecotmr](https://statfungen.github.io/pecotmr): the R package behind the fine-mapping, colocalization, TWAS and Mendelian randomization steps ([source](https://github.com/StatFunGen/pecotmr))
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
 - [About](https://statfungen.github.io/xqtl-protocol/about/): who develops the protocol, funding, license and contributors
+
+## What's new
+
+- **November 2026:** [Running on a cluster](https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/) (SLURM and SGE) and [Using your own data](https://statfungen.github.io/xqtl-protocol/own-data/) guides; the Workflow Builder can export a route as a cluster job script.
+- **November 2026:** [Torino](https://statfungen.github.io/xqtl-protocol/isoform-calling-torino/) module for isoform usage without a reference annotation, next to LeafCutter and LeafCutter2 for splicing.
+- **November 2026:** the [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) asks one question at a time and gives the modules and example commands for your route.
+
+All changes are in the [commit history](https://github.com/StatFunGen/xqtl-protocol/commits/main).
+
+## How to cite
+
+The FunGen-xQTL protocol paper is in preparation. Until it is out, please cite this
+repository (https://github.com/StatFunGen/xqtl-protocol) and the papers for the
+methods you use, such as SuSiE, ColocBoost or TensorQTL.
+
+## Get help
+
+- Something not working, or a question about a module: [open an issue on GitHub](https://github.com/StatFunGen/xqtl-protocol/issues).
+- Include the command you ran, the error message and the output of `pixi list` if it is about the software environment.

@@ -6,7 +6,7 @@ title: FunGen-xQTL Computational Protocol
 % text plus the start cards, which GitHub cannot render.
 
 ```{include} ../README.md
-:start-after: # FunGen-xQTL Computational Protocol
+:start-after: <!-- end-badges -->
 :end-before: <!-- end-intro -->
 ```
 
