@@ -18,6 +18,8 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 | **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html): answer a few questions, get the modules and commands for your route |
 | **Run the pipelines on my own data** | [Using your own data](website/own_data.md): file formats, sample IDs and checks for each input |
 | **Run on my cluster (SLURM or SGE)** | [Running on a cluster](website/running_on_a_cluster.md): one-time setup, then add `-c <host file> -q <queue>` to any command |
+| **Get the full-size reference files** | [Where to get reference data](https://statfungen.github.io/xqtl-protocol/reference-data-sources/): genome, annotation and LD reference, and the modules that use them |
+| **Look up a term** | [Glossary](https://statfungen.github.io/xqtl-protocol/glossary/) |
 | **Find a specific module or method** | Search the site (top of the page), or browse the menu by analysis stage |
 
 <!-- site-home-continues -->
@@ -114,8 +116,8 @@ download required. Every path shown resolves either to one of these fixtures or 
 the output directory of the step that produces it.
 
 Large reference files (genome FASTA, GTF annotations, aligner indices, external
-LD panels) are not distributed with the repository and must be obtained
-separately; commands that need them show the expected path.
+LD panels) are not distributed with the repository. [Where to get reference data](https://statfungen.github.io/xqtl-protocol/reference-data-sources/)
+lists their sources and the modules that use them.
 
 ### See Also
 
@@ -137,7 +139,8 @@ All changes are in the [commit history](https://github.com/StatFunGen/xqtl-proto
 
 The FunGen-xQTL protocol paper is in preparation. Until it is out, please cite this
 repository (https://github.com/StatFunGen/xqtl-protocol) and the papers for the
-methods you use, such as SuSiE, ColocBoost or TensorQTL.
+methods you use, such as SuSiE, ColocBoost or TensorQTL. [Methods and references](https://statfungen.github.io/xqtl-protocol/methods-and-references/)
+lists the paper for each method by module.
 
 ## Get help
 
