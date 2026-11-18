@@ -11,7 +11,7 @@ CW,CH,CY=248,226,24
 GAP=(W-4*CW-60)//3
 XS=[30+i*(CW+GAP) for i in range(4)]
 STEPS=[('INSTALL','SoS + pixi environment'),('CLONE','xqtl-protocol repository'),
-       ('TRY FIXTURES','tests/fixtures/protocol_example.*'),('RUN','sos run pipeline/....ipynb')]
+       ('EXAMPLE DATA','tests/fixtures/, no download'),('RUN','sos run pipeline/....ipynb')]
 ft=ImageFont.truetype(FB,15); fs=ImageFont.truetype(FR,10)
 fb=ImageFont.truetype(FB,11); fy=ImageFont.truetype(FB,8)
 def ctr(d,t,f,cx,y,c):
