@@ -4,6 +4,7 @@ Reproducible, reusable pipelines for molecular QTL analysis, developed for the N
 Alzheimer's Disease Sequencing Project (ADSP) Functional Genomics xQTL (FunGen-xQTL)
 project. A molecular QTL (xQTL) is a genetic variant linked to a change in a molecular
 trait, such as gene expression, splicing, protein level or DNA methylation.
+<!-- end-intro -->
 
 ## Getting started
 
@@ -15,6 +16,7 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 | **Run on my cluster (SLURM or SGE)** | [Running on a cluster](website/running_on_a_cluster.md): one-time setup, then add `-c <host file> -q <queue>` to any command |
 | **Find a specific module or method** | Search the site (top of the page), or browse the menu by analysis stage |
 
+<!-- site-home-continues -->
 ## What the protocol covers
 
 | Stage | What it does |
@@ -67,7 +69,7 @@ Jupyter Notebooks can be executed directly as command line scripts either on a
 local computer or in an HPC environment.
 
 To run on a SLURM or SGE cluster, follow
-[Running on a cluster](website/running_on_a_cluster.md): a one-time setup, then any
+[Running on a cluster](https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/): a one-time setup, then any
 command on this site can send its jobs to the cluster.
 
 ### Source code
@@ -117,4 +119,4 @@ separately; commands that need them show the expected path.
 - [FunGen-xQTL resource catalog](https://adsp-fgc.niagads.org/xqtl-resources/): the datasets and results, and where to get them
 - [pecotmr](https://statfungen.github.io/pecotmr): the R package behind the fine-mapping, colocalization, TWAS and Mendelian randomization steps ([source](https://github.com/StatFunGen/pecotmr))
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
-- [About](website/about.md): who develops the protocol, funding, license and contributors
+- [About](https://statfungen.github.io/xqtl-protocol/about/): who develops the protocol, funding, license and contributors
