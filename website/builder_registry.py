@@ -15,12 +15,18 @@ Selecting the command (fails closed, never guesses):
   * Several untagged examples, several tagged ones, or none at all is an error
     that names the notebook, the cell and the workflow.
 
-Inputs and outputs:
-  * Declared in the tagged cell's metadata, ``"builder": {"inputs": {...},
-    "outputs": {...}}``, each entry with a ``kind`` and either ``source`` (``user``
-    or ``<module>.<workflow>.<output>``) or ``path``.
-  * Otherwise inferred from the command's options for display only, and reported
-    as inferred.
+Inputs and outputs (declared, never guessed):
+  * Each selected cell carries ``"builder": {"inputs": {...}, "outputs": {...}}`` in
+    its metadata. An input is keyed by its option name and has a ``kind``, the
+    ``path`` used in the command and, for files made by another step, a ``source``
+    ``<module>.<workflow>.<output>`` (``user`` for placeholders). An output has a
+    ``kind`` and a ``path``.
+  * Checks: every file path in the command is declared and every declared path is in
+    the command; a ``source`` names an existing output of another builder step, the
+    input sits at or under that output's path, and the kinds agree (a directory
+    output accepts any file under it); every ``output/...`` input has a ``source``
+    unless it is listed in website/builder/known_gaps.json; every
+    ``tests/fixtures/...`` path exists.
 
 Notebooks are read as JSON and never executed. Output is deterministic.
 
@@ -33,12 +39,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 WORKFLOWS = REPO / "website" / "builder" / "workflows.json"
+KNOWN_GAPS = REPO / "website" / "builder" / "known_gaps.json"
 BUILDER = REPO / "code" / "SoS" / "xqtl_protocol_workflow_builder.ipynb"
 SKIP_DIRS = ("graveyard", "misc")
 # a commented-out example ("# sos run ...") is kept commented
@@ -119,28 +127,79 @@ def select(cands: list[Candidate], module: str, wf: str, variant: str = "") -> C
                         f"({', '.join(c.where for c in untagged)}); tag the builder's one with 'builder'")
 
 
-def io_of(c: Candidate) -> tuple[dict, bool]:
-    """Declared inputs/outputs, or ones inferred from the options (second value: inferred?)."""
-    if c.meta.get("inputs") or c.meta.get("outputs"):
-        ins = [v.get("path") or v.get("source") for v in c.meta.get("inputs", {}).values()]
-        outs = [v.get("path") for v in c.meta.get("outputs", {}).values()]
-        return {"i": [x for x in ins if x], "o": [x for x in outs if x]}, False
-    toks = c.command.split()
-    ins, outs, flag = [], [], None
-    for t in toks[4:]:
-        if t.startswith("-"):
+def path_args(command: str) -> list[tuple[str, str]]:
+    """(option, value) for every file-like value in a command (output folders included)."""
+    toks = shlex.split(command.replace("`", " "))[4:]
+    out, flag = [], None
+    for t in toks:
+        if t.startswith("--"):
             flag = t
             continue
-        if not flag or flag in NOT_PATHS or "/" not in t or t.startswith(("`", "http", "<")):
+        if t.startswith("-") and len(t) == 2:
+            flag = None
             continue
-        (outs if flag in OUT_FLAGS else ins).append(t)
-    return {"i": ins, "o": outs}, True
+        if not flag or flag in NOT_PATHS:
+            continue
+        if ("/" in t or t.startswith("<")) and not t.startswith(("http", "s/")) and '"' not in t:
+            out.append((flag, t))
+    return out
+
+
+def io_of(c: Candidate) -> dict:
+    """The declared inputs and outputs as the builder shows them."""
+    ins = [v["path"] for v in c.meta.get("inputs", {}).values()]
+    outs = [v["path"] for v in c.meta.get("outputs", {}).values()]
+    return {"i": list(dict.fromkeys(ins)), "o": list(dict.fromkeys(outs))}
+
+
+def check_io(selected: dict, gaps: set) -> list[str]:
+    """Declared I/O agrees with the commands and every upstream link resolves."""
+    errors, used_gaps = [], set()
+    outputs = {f"{m}.{wf}.{name}": o for (m, wf), c in selected.items()
+               for name, o in c.meta.get("outputs", {}).items()}
+    for (m, wf), c in selected.items():
+        key = f"{m}|{wf}"
+        if not c.meta.get("outputs") and not c.meta.get("inputs"):
+            errors.append(f"{key}: {c.where} has no declared inputs/outputs")
+            continue
+        args = path_args(c.command)
+        in_cmd = {v for f, v in args if f not in OUT_FLAGS}
+        out_cmd = {v.rstrip("/") for f, v in args if f in OUT_FLAGS}
+        declared = {d["path"] for d in c.meta.get("inputs", {}).values()}
+        for v in sorted(in_cmd - declared):
+            errors.append(f"{key}: {v} is in the command but not declared as an input ({c.where})")
+        for v in sorted(declared - in_cmd):
+            errors.append(f"{key}: declared input {v} is not in the command ({c.where})")
+        for v in sorted(out_cmd - {o["path"] for o in c.meta.get("outputs", {}).values()}):
+            errors.append(f"{key}: output folder {v} is not declared ({c.where})")
+        for name, d in c.meta.get("inputs", {}).items():
+            path, src = d["path"], d.get("source")
+            if path.startswith("tests/fixtures/") and not any(ch in path for ch in "$*{<") \
+                    and not (REPO / path).exists():
+                errors.append(f"{key}: fixture {path} does not exist")
+            if src and src != "user":
+                o = outputs.get(src)
+                if o is None:
+                    errors.append(f"{key}: input {name} names {src}, which is not a builder step output")
+                elif not (path == o["path"] or path.startswith(o["path"] + "/")):
+                    errors.append(f"{key}: input {name} ({path}) is not under {src} ({o['path']})")
+                elif o["kind"] != "directory" and o["kind"] != d["kind"]:
+                    errors.append(f"{key}: input {name} is {d['kind']} but {src} is {o['kind']}")
+            elif path.startswith("output/") and not src:
+                if (key, path) in gaps:
+                    used_gaps.add((key, path))
+                else:
+                    errors.append(f"{key}: input {name} ({path}) is made by no builder step; "
+                                  "link it with a source or fix the route")
+    for k, p in sorted(gaps - used_gaps):
+        errors.append(f"known_gaps.json: {k} {p} no longer applies; remove the entry")
+    return errors
 
 
 def build():
     want = json.loads(WORKFLOWS.read_text(encoding="utf-8"))
     paths = notebooks()
-    cmdlib, wio, errors, inferred = {}, {}, [], []
+    cmdlib, wio, errors, selected = {}, {}, [], {}
     cache = {}
     for module, wfs in want.items():
         if module not in paths:
@@ -155,11 +214,11 @@ def build():
                 errors.append(str(e))
                 continue
             cmdlib.setdefault(module, []).append({"wf": wf, "cmd": c.command})
-            io, guessed = io_of(c)
-            wio[f"{module}|{wf}"] = io
-            if guessed:
-                inferred.append(f"{module}|{wf}")
-    return cmdlib, wio, errors, inferred
+            wio[f"{module}|{wf}"] = io_of(c)
+            selected[(module, wf)] = c
+    gaps = {(g["step"], g["input"]) for g in json.loads(KNOWN_GAPS.read_text(encoding="utf-8"))["gaps"]}
+    errors += check_io(selected, gaps)
+    return cmdlib, wio, errors, selected
 
 
 def dump(obj) -> str:
@@ -190,9 +249,9 @@ def main(argv=None):
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--diff", action="store_true", help="list commands that differ from the builder's current ones")
     args = ap.parse_args(argv)
-    cmdlib, wio, errors, inferred = build()
+    cmdlib, wio, errors, _ = build()
     n = sum(len(v) for v in cmdlib.values())
-    print(f"{n} commands resolved; {len(errors)} errors; {len(inferred)} with inferred inputs/outputs")
+    print(f"{n} commands resolved; {len(errors)} errors")
     for e in errors:
         print("ERROR", e)
     if args.diff:
