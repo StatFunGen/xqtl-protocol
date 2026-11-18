@@ -27,9 +27,10 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 
 | Stage | What it does |
 |---|---|
+| **Reference data** | Prepare the genome, gene annotation, alignment indices, TAD-based association windows and LD reference |
 | **Molecular phenotypes** | Quantify expression, splicing, methylation and polyadenylation from bulk RNA-seq, single-nuclei or array data |
 | **Data preprocessing** | Genotype QC and formatting, phenotype imputation and formatting, covariate and hidden-factor estimation |
-| **QTL association testing** | cis and trans scans with TensorQTL, quantile-regression QTL, hierarchical multiple testing |
+| **QTL association testing** | *cis* and *trans* scans with TensorQTL, quantile-regression QTL, hierarchical multiple testing |
 | **Multivariate modeling** | MASH, to borrow information across tissues and cell types |
 | **Fine-mapping and TWAS** | SuSiE, mvSuSiE, fSuSiE and SuSiE-RSS, from individual-level data or summary statistics, with TWAS weights |
 | **GWAS integration** | Colocalization (SuSiE-enloc, ColocBoost), TWAS and cTWAS, INTACT |
@@ -44,11 +45,11 @@ that route with the commands to run them.
 
 ### Standardized reference data
 
-Reference data are standardized and curated by the ADSP FGC Standardization
-Workgroup in coordination with
-NIAGADS. Reference data
-specifications are with the
-[reference data on Synapse](https://www.synapse.org/Synapse:syn36416587).
+The ADSP FGC Standardization Workgroup curates the reference data with NIAGADS.
+The standardized files and their specifications are on
+[Synapse (syn36416587)](https://www.synapse.org/Synapse:syn36416587).
+[Where to get reference data](https://statfungen.github.io/xqtl-protocol/reference-data-sources/)
+lists each file, its source and the modules that use it.
 
 ### Software environment
 
@@ -65,14 +66,10 @@ Subsystem for Linux (WSL).
 
 Pipelines in this repository are written in the
 [Script of Scripts (SoS) workflow language](https://vatlab.github.io/sos-docs/).
-Like most other workflow languages, SoS workflows can **distribute and execute
-computing jobs directly in High Performance Computing cluster**. Unlike most other
-workflow languages, SoS workflows are created using SoS Notebooks (based on IPython
-notebooks in [Jupyter](https://jupyter.org/)) which allow for both
-**scientific narrative and pipeline scripts in the same document**. Unlike typical
-Jupyter Notebooks intended for interactive data analysis, SoS workflows written in
-Jupyter Notebooks can be executed directly as command line scripts either on a
-local computer or in an HPC environment.
+Each pipeline is a Jupyter notebook that holds both the explanation and the
+pipeline code. The same notebook runs as a command-line script with
+`sos run`, on a local computer or on a cluster, where SoS submits each task as a
+job.
 
 To run on a SLURM or SGE cluster, follow
 [Running on a cluster](https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/): a one-time setup, then any
@@ -93,19 +90,14 @@ contains symbolic links automatically generated for pipeline files under `code`,
 analyses are run from the root of the repository by typing
 `sos run pipeline/<pipeline_file>.ipynb`.
 
-The logic of the entire xQTL analysis workflow is roughly reflected on the **left
-sidebar** (on a narrow screen, open it with the menu button):
+The left sidebar (the menu button on a narrow screen) follows the order of an
+xQTL analysis, one analysis stage per entry:
 
-- **Mini-protocols**, represented as clickable, non-bold text under each analysis
-  category, lead to specific notebooks detailing the commands necessary for the
-  analyses defined in them. Predominantly tutorial-based, they are designed to be
-  **executed interactively in Jupyter or via the command and terminal**, allowing
-  users to navigate through the SoS pipelines step by step.
-- *Mini-protocols* can be expanded by clicking the downward arrows, revealing the
-  SoS implementations of ***pipeline modules***. These represent the crux of the
-  pipeline implementations and are intended to be **executed as command line
-  software**. They are also **self-contained**, allowing for reusability beyond the
-  specific context of xQTL data analysis.
+- **Mini-protocols** are the pages directly under each stage. Each walks through
+  one analysis step by step, with the commands to run in a terminal or in Jupyter.
+- **Pipeline modules** are listed under each mini-protocol (open it with the
+  arrow). Each module is a self-contained command-line pipeline that can also be
+  used outside xQTL analysis.
 
 ### Example data
 

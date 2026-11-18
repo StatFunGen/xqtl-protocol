@@ -34,7 +34,7 @@ The ADSP Functional Genomics Consortium keeps the standardized reference files, 
 
 Fine-mapping from summary statistics ([RSS fine-mapping](../code/SoS/mnm_analysis/mnm_methods/rss_analysis.ipynb)), [TWAS, cTWAS and MR](../code/SoS/pecotmr_integration/twas_ctwas.ipynb), [ColocBoost](../code/SoS/mnm_analysis/mnm_methods/colocboost.ipynb) with summary statistics and [SuSiE-enloc](../code/SoS/pecotmr_integration/SuSiE_enloc.ipynb) need a linkage disequilibrium (LD) reference: correlations between variants, split into LD blocks. Modules read it through an LD meta file (`--ld-meta-data`), a table of blocks (`#chr`, `start`, `end`, `path`).
 
-- **ADSP European-ancestry LD matrices.** Described on the [xQTL Resources LD reference page](https://adsp-fgc.niagads.org/xqtl-resources/xqtl-data/reference_data/ld_reference/).
+- **ADSP LD reference panel.** LD matrices from whole-genome sequencing of 16,571 non-Hispanic white individuals (Genome Center for Alzheimer's Disease), computed within 1,361 LD blocks defined from 1000 Genomes EUR samples. Each block is a `.cor.xz` matrix with a `.cor.xz.bim` variant list. Controlled access: request ADSP access on the AD Knowledge Portal, then `synapse get -r syn53171227`. Details on the [xQTL Resources LD reference page](https://adsp-fgc.niagads.org/xqtl-resources/xqtl-data/reference_data/ld_reference/).
 - **Your own panel.** Build LD sketches from genotypes with [RSS LD sketch](../code/SoS/reference_data/rss_ld_sketch.ipynb). Use this when your GWAS ancestry differs from the ADSP panel.
 
 The example LD meta file is `tests/fixtures/ld_reference/ld_meta_file.tsv`.
