@@ -41,7 +41,8 @@ REPO = Path(__file__).resolve().parents[1]
 WORKFLOWS = REPO / "website" / "builder" / "workflows.json"
 BUILDER = REPO / "code" / "SoS" / "xqtl_protocol_workflow_builder.ipynb"
 SKIP_DIRS = ("graveyard", "misc")
-CMD_RE = re.compile(r"sos run pipeline/(?P<nb>[\w]+)\.ipynb\s+(?P<wf>[\w+:]+)[^\n]*")
+# a commented-out example ("# sos run ...") is kept commented
+CMD_RE = re.compile(r"(?:#\s*)?sos run pipeline/(?P<nb>[\w]+)\.ipynb\s+(?P<wf>[\w+:]+)[^\n]*")
 OUT_FLAGS = {"--cwd", "--output-dir", "--wd", "--output_dir"}
 NOT_PATHS = {"--name", "--container", "--modular-script-dir", "--modular_script_dir",
              "--study", "--context", "--genome", "--chrom"}
