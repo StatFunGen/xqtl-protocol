@@ -1,0 +1,52 @@
+# Data configuration for the EMS example: the committed features under tests/fixtures/ems_training.
+# Paths are relative to code/SoS/xqtl_modifier_score, where the workflow runs.
+feature_data:
+  gene_constraint:
+    name: "gene_lof"
+    file_path: "../../../tests/fixtures/ems_training/protocol_example.gene_constraint.xlsx"
+    xlsx_sheet: "Supplementary Table 1"
+    include_columns: ["ensg", "post_mean"]
+    column_mapping:
+      source_gene_id: "ensg"
+      target_gene_id: "gene_id"
+      source_value: "post_mean"
+      target_value: "gene_lof"
+    transformations:
+      log2: ["post_mean"]
+
+  population_genetics:
+    name: "maf"
+    file_pattern: "../../../tests/fixtures/ems_training/protocol_example.gnomad_MAF_chr{chromosome}.tsv"
+    column_mapping:
+      variant_id: "variant_id"
+      target_value: "gnomad_MAF"
+
+  distance_features:
+    columns_dict_file: "../../../tests/fixtures/ems_training/protocol_example.columns_dict.json"
+    subset_keys: ["distance"]
+    columns_to_remove: ["abs_distance_TSS", "distance_TSS"]
+
+  regulatory_features:
+    columns_dict_file: "../../../tests/fixtures/ems_training/protocol_example.columns_dict.json"
+    subset_keys: ["ABC", "celltype", "baseline"]
+
+  deep_learning_features:
+    columns_dict_file: "../../../tests/fixtures/ems_training/protocol_example.columns_dict.json"
+    subset_keys: ["chrombpnet_positive", "diff", "tf_positive"]
+    transformations:
+      absolute_value: ["diff", "tf_positive", "chrombpnet_positive"]
+
+  variant_features:
+    generated_columns: ["length_diff", "is_SNP", "is_indel", "is_insertion", "is_deletion", "gene_lof", "gnomad_MAF"]
+
+training_data:
+  base_dir: "../../../tests/fixtures/ems_training/{cohort}/training_data"
+  file_pattern: "annotated_data_{cohort}_{chromosome}.parquet"
+  train_dir_pattern: "train_NPR_{npr_tr}_PIP_{pos_threshold}_{neg_threshold}"
+  test_dir_pattern: "test_NPR_{npr_te}_PIP_{pos_threshold}_{neg_threshold}"
+  metadata_columns: ["variant_id", "pip", "CHR", "BP", "REF", "ALT", "SNP", "label", "weight"]
+
+output:
+  base_dir: "../../../output/xqtl_modifier_score/{cohort}/model_results"
+  predictions_dir: "predictions_parquet_catboost"
+

@@ -20,7 +20,8 @@ Inputs and outputs (declared, never guessed):
     its metadata. An input is keyed by its option name and has a ``kind``, the
     ``path`` used in the command and, for files made by another step, a ``source``
     ``<module>.<workflow>.<output>`` (``user`` for placeholders). An output has a
-    ``kind`` and a ``path``.
+    ``kind`` and a ``path``. ``source: setup`` marks a file the cell's own setup lines
+    write before the command (shell lines above ``sos run`` in a tagged cell are kept).
   * Checks: every file path in the command is declared and every declared path is in
     the command; a ``source`` names an existing output of another builder step, the
     input sits at or under that output's path, and the kinds agree (a directory
@@ -97,12 +98,18 @@ def candidates(path: Path) -> list[Candidate]:
             continue
         text = "".join(cell.get("source", "")).replace("\\\n", " ")
         meta = cell.get("metadata", {})
-        for m in CMD_RE.finditer(text):
+        tags = list(meta.get("tags", []))
+        for k, m in enumerate(CMD_RE.finditer(text)):
             if m.group("nb") != path.stem:
                 continue
             cmd = re.sub(r"\s+", " ", m.group(0)).strip()
             wf = m.group("wf").split(":")[0]
-            found.append(Candidate(path.stem, i, wf, cmd, list(meta.get("tags", [])), meta.get("builder", {})))
+            # a builder cell may prepare its inputs with shell lines before the command
+            setup = [l.strip() for l in text[:m.start()].splitlines()
+                     if l.strip() and not l.strip().startswith("#")] if k == 0 else []
+            if setup and any(t == "builder" or t.startswith("builder:") for t in tags):
+                cmd = "\n".join(setup + [cmd])
+            found.append(Candidate(path.stem, i, wf, cmd, tags, meta.get("builder", {})))
     return found
 
 
@@ -127,9 +134,18 @@ def select(cands: list[Candidate], module: str, wf: str, variant: str = "") -> C
                         f"({', '.join(c.where for c in untagged)}); tag the builder's one with 'builder'")
 
 
+def sos_line(command: str) -> str:
+    """The `sos run` line of a command that may start with setup lines."""
+    return command.split("\n")[-1].lstrip("# ")
+
+
+def setup_lines(command: str) -> str:
+    return "\n".join(command.split("\n")[:-1])
+
+
 def path_args(command: str) -> list[tuple[str, str]]:
     """(option, value) for every file-like value in a command (output folders included)."""
-    toks = shlex.split(command.replace("`", " "))[4:]
+    toks = shlex.split(sos_line(command).replace("`", " "))[4:]
     out, flag = [], None
     for t in toks:
         if t.startswith("--"):
@@ -172,12 +188,19 @@ def check_io(selected: dict, gaps: set) -> list[str]:
             errors.append(f"{key}: declared input {v} is not in the command ({c.where})")
         for v in sorted(out_cmd - {o["path"] for o in c.meta.get("outputs", {}).values()}):
             errors.append(f"{key}: output folder {v} is not declared ({c.where})")
+        for f in re.findall(r"tests/fixtures/[\w./-]+", setup_lines(c.command)):
+            if not (REPO / f).exists():
+                errors.append(f"{key}: fixture {f} in the setup lines does not exist")
         for name, d in c.meta.get("inputs", {}).items():
             path, src = d["path"], d.get("source")
             if path.startswith("tests/fixtures/") and not any(ch in path for ch in "$*{<") \
                     and not (REPO / path).exists():
                 errors.append(f"{key}: fixture {path} does not exist")
-            if src and src != "user":
+            if src == "setup":
+                if path not in setup_lines(c.command):
+                    errors.append(f"{key}: input {name} is declared as made by the setup lines, "
+                                  f"but they do not mention {path}")
+            elif src and src != "user":
                 o = outputs.get(src)
                 if o is None:
                     errors.append(f"{key}: input {name} names {src}, which is not a builder step output")

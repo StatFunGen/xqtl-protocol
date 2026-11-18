@@ -178,7 +178,7 @@ def test_builder_options_exist(module):
     for (m, wf), c in SELECTED.items():
         if m != module:
             continue
-        toks = shlex.split(c.command.lstrip("# ").replace("`", " "))
+        toks = shlex.split(reg.sos_line(c.command).replace("`", " "))
         bad += [f"{wf}: workflow {w}" for w in toks[3].split("+") if wfs and w not in wfs]
         bad += [f"{wf}: {t}" for t in toks[4:] if t.startswith("--") and _norm(t) not in opts]
     assert bad == []
