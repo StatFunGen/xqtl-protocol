@@ -113,3 +113,24 @@ def test_cis_via_sos(run_sos, repo_root, tmp_path):
     assert (tmp_path / PARQUET).exists()
     assert nominal.exists() and sig.exists() and summ.exists() and summ.stat().st_size > 0
     assert "qvalue" in _header(nominal)                 # q-values added by the R step in cis_1
+
+
+def test_trans_via_sos(run_sos, repo_root, tmp_path):
+    # `sos run TensorQTL.ipynb trans`: python trans scan restricted to chr22 variants
+    # (--trans-geno-chromosome) and the genes in the region list, then
+    # `Rscript TensorQTL.R trans_qvalues` adds global q-values in place.
+    fix = repo_root / FIX
+    p = run_sos(repo_root / NB, "trans", {
+        "genotype_file": fix / "protocol_example.genotype.chr22.bed",
+        "phenotype_file": fix / "example_geneexpr.bed.gz",
+        "covariate_file": fix / "example_covariates.tsv",
+        "name": "protocol_example", "chromosome": 22, "MAC": 0,
+        "trans_geno_chromosome": 22,
+        "region_list": fix / "association_windows.bed", "region_list_phenotype_column": 4,
+        "cwd": tmp_path, "numThreads": 1,
+        "modular_script_dir": repo_root / MSD}, timeout=1200)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = tmp_path / "example_geneexpr_chr22_geno_chr22.trans_qtl.pairs.tsv.gz"
+    assert out.exists() and (tmp_path / (out.name + ".tbi")).exists()
+    header = _header(out)
+    assert {"variant_id", "pvalue", "qvalue"}.issubset(header), header
