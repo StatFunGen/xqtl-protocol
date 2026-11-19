@@ -481,6 +481,8 @@ sos run pipeline/VCF_QC.ipynb qc \
 
 **What it does:** Convert the output of step 1 to PLINK. The merge command generalizes to multiple chromosome-level files.
 
+The example VCF covers chr22 only, and with a single file there is nothing to merge (the workflow skips itself), so the merge uses the committed chr21 and chr22 PLINK files of the same 60 samples.
+
 
 ```python
 
@@ -491,10 +493,9 @@ sos run pipeline/genotype_formatting.ipynb vcf_to_plink \
     -j 4
 
 sos run pipeline/genotype_formatting.ipynb merge_plink \
-    --genoFile `ls output/genotype_formatting/plink/protocol_example.genotype.chr*.bed` \
+    --genoFile tests/fixtures/genotype_formatting/geno/chr21.bed tests/fixtures/genotype_formatting/geno/chr22.bed \
     --name protocol_example.genotype.merged \
-    --cwd output/genotype_formatting/plink \
-    -j 2
+    --cwd output/genotype_formatting/plink
 
 ```
 
@@ -508,6 +509,7 @@ sos run pipeline/genotype_formatting.ipynb merge_plink \
 ```python
 
 sos run pipeline/GWAS_QC.ipynb qc_no_prune \
+    --name protocol_example \
     --cwd output/gwas_qc/plink \
     --genoFile output/genotype_formatting/plink/protocol_example.genotype.merged.bed \
     --geno-filter 0.1 \
@@ -527,9 +529,10 @@ sos run pipeline/GWAS_QC.ipynb qc_no_prune \
 ```python
 
 sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
-    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.bed \
+    --name protocol_example \
+    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.protocol_example.plink_qc.bed \
     --cwd output/genotype_by_chrom \
-    --chrom `cut -f 1 output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.bim | uniq | sed "s/chr//g"` \
+    --chrom `cut -f 1 output/gwas_qc/plink/protocol_example.genotype.merged.protocol_example.plink_qc.bim | uniq | sed "s/chr//g"` \
     -j 4
 
 ```
@@ -544,8 +547,9 @@ sos run pipeline/genotype_formatting.ipynb genotype_by_chrom \
 ```python
 
 sos run pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
+    --name protocol_example \
     --cwd output/gwas_qc/genotype \
-    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.fam \
+    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.protocol_example.plink_qc.fam \
     --phenoFile tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz
 
 ```
@@ -561,7 +565,7 @@ sos run pipeline/GWAS_QC.ipynb genotype_phenotype_sample_overlap \
 
 sos run pipeline/GWAS_QC.ipynb king \
     --cwd output/gwas_qc/kinship \
-    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.plink_qc.bed \
+    --genoFile output/gwas_qc/plink/protocol_example.genotype.merged.protocol_example.plink_qc.bed \
     --name protocol_example.king \
     --keep-samples output/gwas_qc/genotype/protocol_example.rnaseq.bed.sample_genotypes.txt
 
@@ -577,8 +581,9 @@ sos run pipeline/GWAS_QC.ipynb king \
 ```python
 
 sos run pipeline/GWAS_QC.ipynb qc \
+    --name protocol_example \
     --cwd output/gwas_qc/genotype \
-    --genoFile output/gwas_qc/kinship/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.bed \
+    --genoFile output/gwas_qc/kinship/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.unrelated.bed \
     --mac-filter 5
 
 ```
@@ -594,7 +599,7 @@ sos run pipeline/GWAS_QC.ipynb qc \
 
 sos run pipeline/PCA.ipynb flashpca \
     --cwd output/pca_uf \
-    --genoFile output/gwas_qc/genotype/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
+    --genoFile output/gwas_qc/genotype/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.unrelated.protocol_example.plink_qc.prune.bed \
     --name protocol_example
 
 ```
@@ -610,9 +615,9 @@ sos run pipeline/PCA.ipynb flashpca \
 
 sos run pipeline/GWAS_QC.ipynb qc_no_prune \
     --cwd output/pca_related \
-    --genoFile output/gwas_qc/kinship/protocol_example.genotype.merged.plink_qc.protocol_example.king.related.bed \
+    --genoFile output/gwas_qc/kinship/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.related.bed \
     --geno-filter 0 --mind-filter 0.1 --maf-filter 0 \
-    --keep-variants output/gwas_qc/genotype/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.in \
+    --keep-variants output/gwas_qc/genotype/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.unrelated.protocol_example.plink_qc.prune.in \
     --name for_pca
 
 ```
@@ -628,9 +633,9 @@ sos run pipeline/GWAS_QC.ipynb qc_no_prune \
 
 sos run pipeline/PCA.ipynb project_samples \
     --cwd output/pca_uf \
-    --genoFile output/pca_related/protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed \
+    --genoFile output/pca_related/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed \
     --phenoFile tests/fixtures/pca/protocol_example.pca_pheno.txt \
-    --pca-model output/pca_uf/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.protocol_example.pca.rds \
+    --pca-model output/pca_uf/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.unrelated.protocol_example.plink_qc.prune.protocol_example.pca.rds \
     --label-col race --pop-col race --name protocol_example --maha-k 2
 
 ```
@@ -646,8 +651,8 @@ sos run pipeline/PCA.ipynb project_samples \
 
 sos run pipeline/GWAS_QC.ipynb qc_no_prune \
     --cwd output/pca_related \
-    --genoFile output/pca_related/protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed \
-    --remove-samples output/pca_uf/protocol_example.pca_pheno.pca.projected.outliers \
+    --genoFile output/pca_related/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.bed \
+    --remove-samples output/pca_uf/protocol_example.pca_pheno.protocol_example.pca.projected.outliers \
     --name no_outlier
 
 ```
@@ -662,8 +667,8 @@ sos run pipeline/GWAS_QC.ipynb qc_no_prune \
 ```python
 
 sos run pipeline/genotype_formatting.ipynb merge_plink \
-    --genoFile output/gwas_qc/genotype/protocol_example.genotype.merged.plink_qc.protocol_example.king.unrelated.plink_qc.prune.bed \
-               output/pca_related/protocol_example.genotype.merged.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.no_outlier.plink_qc.bed \
+    --genoFile output/gwas_qc/genotype/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.unrelated.protocol_example.plink_qc.prune.bed \
+               output/pca_related/protocol_example.genotype.merged.protocol_example.plink_qc.protocol_example.king.related.for_pca.plink_qc.extracted.no_outlier.plink_qc.bed \
     --cwd output/genotype_final \
     --name protocol_example.qced
 
@@ -986,7 +991,7 @@ Timing: TBD
 ```python
 
 sos run pipeline/TensorQTL.ipynb cis \
-    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt \
+    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.protocol_example.plink_qc.genotype_by_chrom_files.txt \
     --phenotype-file output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt \
     --covariate-file output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
     --cwd output/tensorqtl_cis --name protocol_example --MAC 5 --numThreads 2
@@ -1003,7 +1008,7 @@ sos run pipeline/TensorQTL.ipynb cis \
 ```python
 
 sos run pipeline/TensorQTL.ipynb trans \
-    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt \
+    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.protocol_example.plink_qc.genotype_by_chrom_files.txt \
     --phenotype-file output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt \
     --covariate-file output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
     --cwd output/tensorqtl_trans --name protocol_example --MAC 5 --numThreads 2 \
@@ -1021,7 +1026,7 @@ sos run pipeline/TensorQTL.ipynb trans \
 ```python
 
 sos run pipeline/TensorQTL.ipynb cis \
-    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.plink_qc.genotype_by_chrom_files.txt \
+    --genotype-file output/genotype_by_chrom/protocol_example.genotype.merged.protocol_example.plink_qc.genotype_by_chrom_files.txt \
     --phenotype-file output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt \
     --covariate-file output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
     --cwd output/tensorqtl_int --name protocol_example --MAC 5 --numThreads 2 \
