@@ -127,12 +127,22 @@ def test_registry_has_no_errors():
 
 
 def test_committed_builder_matches_generator():
-    """Edit the module page and run builder_registry.py --write; never edit CMDLIB/WIO by hand."""
-    s = "".join(json.loads(reg.BUILDER.read_text(encoding="utf-8"))["cells"][0]["source"])
-    for name, obj in (("CMDLIB", BUILT[0]), ("WIO", BUILT[1])):
-        i = s.index(name + "=") + len(name) + 1
-        committed, _ = json.JSONDecoder().raw_decode(s[i:])
-        assert committed == obj, f"{name} in the builder is out of date: run website/builder_registry.py --write"
+    """The builder page is assembled from website/builder/ and the module pages; never edit it by hand."""
+    assert reg.committed_cell() == reg.render_cell(BUILT[0], BUILT[1], BUILT[3]), (
+        "the builder notebook is out of date: run website/builder_registry.py --write")
+
+
+def test_page_template_is_xml():
+    """page.js parses the template as XML (so <sc-for> can sit inside table rows); it must stay well formed."""
+    import xml.dom.minidom
+    xml.dom.minidom.parseString("<root>" + reg.page_template() + "</root>")
+
+
+def test_page_previews_example_inputs():
+    """Each text example file a command reads gets a preview on the page."""
+    data = reg.page_data(*BUILT[:2], BUILT[3])
+    assert len(data["prev"]) > 20
+    assert all(len(v["rows"]) >= 1 and v["cols"] >= len(v["rows"][0]) for v in data["prev"].values())
 
 
 UNTESTED = REPO / "website" / "builder" / "untested_steps.json"

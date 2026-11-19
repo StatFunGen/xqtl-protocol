@@ -10,18 +10,18 @@ LANDING = SOS / "xqtl_protocol_workflow_builder.html"
 FIXTURE_PATH = re.compile(r"tests/fixtures/[A-Za-z0-9_.@+/*?\[\]{}-]+")
 STALE_INPUT = re.compile(r"(?<![A-Za-z0-9_./-])input/[A-Za-z0-9_.@+/*?\[\]{}-]+")
 LOCAL_ABSOLUTE = re.compile(r"(?:/restricted/projectnb/|/projectnb/|/Users/|/home/|/gpfs/|/mnt/|/scratch/|~/)")
-# Jupyter Book 2 publishes slugified, extensionless page URLs, so the landing
-# page links to /reference-data-preparation rather than /reference_data_preparation.html.
-DOC_SLUG = re.compile(r'data-doc="[^"]*/([^/"]+)"')
+# Jupyter Book 2 publishes slugified, extensionless page URLs, so the builder page
+# links to /reference-data-preparation rather than /reference_data_preparation.html.
+DOC_MAP = re.compile(r"var DOC = (\{.*?\});")
+DATA = re.compile(r'<script type="application/json" id="xqb-data">(.*?)</script>', re.S)
 
 def _myst_slug(name):
     return re.sub(r"[^a-z0-9]+", "-", Path(name).stem.lower()).strip("-")
-JSON_CMD = re.compile(r'"cmd":("(?:\\.|[^"\\])*")')
 
 def _documented_slugs():
-    slugs = {s for s in DOC_SLUG.findall(LANDING.read_text()) if s}
-    assert slugs, f"No data-doc page links found in {LANDING.name}; the link scheme changed."
-    return slugs
+    m = DOC_MAP.search(LANDING.read_text())
+    assert m, f"No module page links (var DOC) found in {LANDING.name}; the link scheme changed."
+    return {v for v in json.loads(m.group(1)).values() if v}
 
 def _notebooks_by_slug():
     by_slug = {}
@@ -50,7 +50,8 @@ def _notebook_commands(path):
     return commands
 
 def _landing_commands():
-    return [json.loads(m.group(1)) for m in JSON_CMD.finditer(LANDING.read_text())]
+    data = json.loads(DATA.search(LANDING.read_text()).group(1).replace("<\\/", "</"))
+    return [data["cmd"][k] for k in sorted(data["cmd"])]
 
 def _cases():
     cases = []
