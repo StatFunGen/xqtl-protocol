@@ -26,9 +26,9 @@ These files are not downloaded; [Reference Data Standardization](../code/SoS/ref
 | RefFlat annotation | 10 | Picard RNA-seq QC in RNA-seq expression calling |
 | Collapsed gene model, `*.collapse_only.gene.gtf` | 6 | Gene coordinate annotation, RNA-seq calling, expression normalization |
 
-## Standardized copies on Synapse
+## Standardized copies on the AD Knowledge Portal
 
-The ADSP Functional Genomics Consortium keeps the standardized reference files, with their specifications, on [Synapse (syn36416587)](https://www.synapse.org/#!Synapse:syn36416587). Use these to match the consortium's analyses exactly. Synapse needs a free account.
+The ADSP Functional Genomics Consortium keeps the standardized reference files, with their specifications, on the [AD Knowledge Portal (syn36416587)](https://www.synapse.org/#!Synapse:syn36416587). Use these to match the consortium's analyses exactly. The AD Knowledge Portal needs a free account.
 
 ## LD reference
 
