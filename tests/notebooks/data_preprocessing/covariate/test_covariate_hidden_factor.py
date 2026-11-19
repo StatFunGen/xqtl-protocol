@@ -189,3 +189,17 @@ def test_marchenko_workflow_via_sos(run_sos, repo_root, tmp_path):
         "N": 0, "numThreads": 1, "modular_script_dir": repo_root / MSD})
     assert p.returncode == 0, p.stdout + p.stderr
     assert len(list(tmp_path.glob("*.Marchenko_PC.gz"))) == 1
+
+
+def test_pca_workflow_via_sos(run_sos, repo_root, tmp_path):
+    # `sos run covariate_hidden_factor.ipynb PCA`: residualize, then PCA with the number of
+    # factors chosen by Buja & Eyuboglu permutation (the builder's alternative to Marchenko-Pastur).
+    p = run_sos(repo_root / NB, "PCA", {
+        "phenoFile": repo_root / PHENO, "covFile": repo_root / COV, "cwd": tmp_path,
+        "choose_k_method": "Buja_Eyuboglu", "N": 0, "numThreads": 1,
+        "modular_script_dir": repo_root / MSD}, timeout=1800)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = list(tmp_path.glob("*.Buja_Eyuboglu_PC.gz"))
+    assert len(out) == 1
+    rows = _col1(out[0])
+    assert rows[0] == "#id" and any(r.startswith("PC") for r in rows[1:])

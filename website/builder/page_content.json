@@ -1,0 +1,1543 @@
+{
+ "_about": "Text and example previews for the Workflow Builder page that do not come from the module pages' builder metadata: method choices per module (workflow, label, default, description), one-paragraph module intros, example-data run times, a preview of one example output per module, and key terms per module. builder_registry.py --write merges this with the commands, inputs and outputs it generates.",
+ "meth": {
+  "phenotype_imputation": [
+   [
+    "gEBMF",
+    "gEBMF (grouped Empirical Bayes MF)",
+    true,
+    "Fits factors within row groups (by chromosome), borrowing structure shared across features in the same group. The protocol's recommended default."
+   ],
+   [
+    "EBMF",
+    "EBMF (Empirical Bayes MF)",
+    false,
+    "Decomposes the matrix into latent factors with adaptive shrinkage, then reconstructs it. Captures global low-rank structure across all samples and features."
+   ],
+   [
+    "missforest",
+    "missForest",
+    false,
+    "Non-parametric iterative random-forest imputation; each feature is predicted from the others until values stabilize. Handles non-linear relationships but is computationally heavier."
+   ],
+   [
+    "missxgboost",
+    "missXGBoost",
+    false,
+    "Same iterative scheme with gradient-boosted trees instead of forests. Often faster and more accurate than missForest on large matrices."
+   ],
+   [
+    "knn",
+    "KNN (k-nearest neighbors)",
+    false,
+    "Fills a gap with a distance-weighted average from the k most similar samples. Simple and fast; works well when samples cluster into similar profiles."
+   ],
+   [
+    "soft",
+    "SoftImpute",
+    false,
+    "Matrix completion by iterative soft-thresholded SVD. A good linear baseline for structured data. Note: 450K methylation took ~15 min and ~34 GB RSS."
+   ],
+   [
+    "mean",
+    "Mean imputation",
+    false,
+    "Replaces each gap with the feature mean. Fastest, but ignores all correlation structure. Use as a baseline, not a final choice."
+   ],
+   [
+    "lod",
+    "LOD (limit of detection)",
+    false,
+    "Replaces gaps with a low constant derived from the smallest observed values. The right choice when missingness means 'below the assay's detection threshold'."
+   ]
+  ],
+  "covariate_hidden_factor": [
+   [
+    "Marchenko_PC",
+    "PCA + Marchenko-Pastur",
+    true,
+    "Regresses phenotype on known covariates, runs PCA on the residuals, and keeps the components whose eigenvalues exceed the Marchenko-Pastur random-matrix noise threshold. Used for the protocol's main analyses."
+   ],
+   [
+    "PEER",
+    "PEER (GTEx-style)",
+    false,
+    "Probabilistic MOFA-based factor model. Factor count follows GTEx recommendations by sample size, or fix it with --N. Pick this for comparability with GTEx."
+   ],
+   [
+    "PCA",
+    "PCA + Buja & Eyuboglu permutation",
+    false,
+    "Same PCA workflow, but factor count is chosen by permutation (--choose_k_method Buja_Eyuboglu, B=100) rather than the analytic threshold. Slower than Marchenko-Pastur for a similar answer."
+   ]
+  ],
+  "gene_annotation": [
+   [
+    "annotate_coord",
+    "Gene expression or protein matrix",
+    true,
+    "Matches each ENSEMBL gene ID against the GTF for coordinates. For proteins whose IDs look like gene_id|UniProt, pass --molecular-trait-type protein."
+   ],
+   [
+    "map_leafcutter_cluster_to_gene",
+    "LeafCutter clusters to genes",
+    false,
+    "Assigns LeafCutter intron clusters to genes. Run this before annotating LeafCutter isoforms. Default --map-stra site maps introns by site."
+   ],
+   [
+    "annotate_leafcutter_isoforms",
+    "LeafCutter isoforms",
+    false,
+    "Turns raw LeafCutter intron-excision output into a coordinate-annotated phenotype BED plus a phenotype-group file. Builds on the cluster-to-gene mapping."
+   ],
+   [
+    "annotate_coord_biomart",
+    "biomaRt web service",
+    false,
+    "Fetches coordinates from Ensembl over the network instead of a local GTF. Requires a gene_ID column and a reachable Ensembl release."
+   ]
+  ],
+  "mnm_regression": [
+   [
+    "susie_twas",
+    "SuSiE (univariate)",
+    true,
+    "Univariate fine-mapping per phenotype. Also the route that produces TWAS prediction weights."
+   ],
+   [
+    "mnm",
+    "mvSuSiE (multivariate)",
+    false,
+    "Multivariate across contexts, via mvSuSiE or mr.mash. Uses the mixture prior from MASH, so run MASH first. Also produces multi-context ensemble TWAS weights."
+   ],
+   [
+    "mnm_genes",
+    "Multi-gene",
+    false,
+    "Fine-maps several genes sharing a locus jointly."
+   ],
+   [
+    "fsusie",
+    "fSuSiE (functional)",
+    false,
+    "Functional regression for epigenomic QTLs."
+   ],
+   [
+    "mvfsusie",
+    "mvfSuSiE (work in progress)",
+    false,
+    "Multivariate functional regression; WIP placeholder."
+   ]
+  ],
+  "isoform_calling_torino": [
+   [
+    "torino",
+    "Coverage components and usage from BAMs",
+    true,
+    "Reads coverage from each BAM, builds a depth matrix per gene, factorizes it into --K components and writes the cohort usage tables."
+   ],
+   [
+    "torino_preprocessing",
+    "Depth matrices only",
+    false,
+    "Stops once the per-gene depth matrices are written."
+   ]
+  ],
+  "splicing_calling_leafcutter2": [
+   [
+    "leafcutter2",
+    "From BAM files",
+    true,
+    "Extracts junctions from each BAM with regtools, then clusters, classifies and quantifies them. The entry point for a full cohort."
+   ],
+   [
+    "leafcutter2_cluster",
+    "From junction files",
+    false,
+    "Clusters, classifies and quantifies a list of existing junction files."
+   ],
+   [
+    "leafcutter2_preprocessing",
+    "Junction extraction only",
+    false,
+    "Extracts junctions from the BAMs and writes the junction list, for clustering done elsewhere."
+   ],
+   [
+    "star2junc",
+    "From STAR SJ.out.tab",
+    false,
+    "Converts STAR junction tables when the BAMs are not available; its output feeds the junction-file route."
+   ],
+   [
+    "differential_splicing",
+    "Differential splicing between two groups",
+    false,
+    "Tests clustered intron counts between two groups with leafcutter_ds.R and recomputes the false discovery rate over all clusters."
+   ]
+  ]
+ },
+ "intro": {
+  "GWAS_QC": "This module performs the standard quality-control pass on a merged PLINK genotype set. It estimates kinship to identify related individuals, filters variants and samples by allele frequency, missingness, and Hardy-Weinberg equilibrium, and prunes correlated variants for principal-component analysis.",
+  "METAL": "This notebook runs cross-cohort meta-analysis of summary statistics with METAL on the toy protocol_example dataset. METAL is a command-line tool that takes a script documenting the input summary-statistic files, the field mapping for each, and the analysis settings.",
+  "PCA": "Population structure is the classic confounder in genetic association: if ancestry correlates with both genotype and phenotype, unadjusted tests return associations that are real but not causal. The remedy is to compute principal components of the genotype matrix and carry the leading ones as covariates.",
+  "RNA_calling": "RNA-seq reads record the transcripts present in each sample. This module aligns reads to the reference genome and quantifies gene-level expression, producing the count and abundance matrices that define the molecular phenotype.",
+  "SuSiE_enloc": "This workflow processes fine-mapping results for xQTL, generated by susietwas in the mnm_regression.ipynb notebook for cis xQTL, and GWAS fine-mapping results produced by susierss in the rss_analysis.ipynb notebook. It is designed to perform enrichment and colocalization analysis, particularly when fine-mapping results originate from different regions in the case of cis-xQTL and GWAS.",
+  "TensorQTL": "This module tests whether inherited variants are associated with molecular phenotypes across individuals. Cis analysis focuses on variants near each feature, where regulatory effects are most interpretable, while trans analysis searches for distal effects.",
+  "VCF_QC": "Variant quality control removes genotypes that cannot support reliable regulatory mapping. The workflows normalize variant representation, restrict analysis to the intended samples and regions, remove poorly measured or uninformative variants, and harmonize identifiers before conversion to analysis-ready formats.",
+  "apa_calling": "Most genes have more than one polyadenylation site, and which one is used shifts the length of the 3' UTR, changing which regulatory elements survive in the transcript. Treating a gene as a single expression value hides that.",
+  "apa_impute": "Alternative polyadenylation is quantified as PDUI, the fraction of transcripts using the distal poly(A) site. DaPars leaves gaps wherever a gene had too little coverage in a sample to call that fraction, and downstream models need a complete matrix.",
+  "bulk_expression_QC": "Sample-level quality control asks whether each RNA-seq profile represents the intended biological specimen. The module compares expression patterns, sample annotations, and technical metrics to identify swaps, outliers, or globally degraded libraries.",
+  "bulk_expression_normalization": "Lowly expressed genes provide little reliable information for mapping genetic effects and can add noise to association testing. This step retains genes that are consistently detected across individuals, then normalizes their expression levels so differences in sequencing depth and RNA composition do not obscure biological variation.",
+  "colocboost": "Two signals at the same locus (a QTL and a GWAS hit, or QTLs in two cell types) may share a causal variant or merely sit in the same LD block. Colocalization tries to tell those apart.",
+  "covariate_formatting": "The association scan takes a single covariate file, but covariates arrive from several places: batch and demographic variables you supply, genotype principal components from PCA, and hidden factors estimated by covariatehiddenfactor. This step merges them, reconciles sample identifiers across the sources, and writes the combined matrix in the orientation the scan expects.",
+  "covariate_hidden_factor": "Unmeasured differences in batch, cell composition, RNA quality, or other latent processes can induce correlation among molecular phenotypes. This module estimates hidden factors from the phenotype matrix after accounting for known covariates.",
+  "ems_prediction": "Not yet available: the prediction step is not implemented, so this module does not produce scores yet. When finished, it will apply the CatBoost model (.cbm) from scEEMS Training to the variants of one cohort and chromosome, using the feature settings in the data config, and write the predicted probability that each variant is a causal eQTL",
+  "ems_training": "Most disease-associated GWAS variants lie in non-coding regions of the genome, where they likely modulate gene expression. However, bulk-tissue eQTL studies fail to explain the majority of these variants, a phenomenon termed \"missing regulation\" (Connally et al., 2022).",
+  "eoo_enrichment": "A variant set that overlaps an annotation more often than chance would predict is evidence that the annotation marks functional sequence. Counting the overlap is easy; putting an error bar on it is not, because variants are correlated along the genome and so cannot be resampled independently.",
+  "gene_annotation": "Molecular phenotype matrices arrive keyed only by a feature identifier, such as an ENSEMBL gene ID, a UniProt accession, or a LeafCutter intron-cluster label, but every downstream QTL step needs a genomic position to define a cis window. This module attaches those coordinates, turning a plain matrix into a coordinate-sorted, bgzipped and tabix-indexed bed.gz file.",
+  "generalized_TADB": "Analyses that work locus by locus need a definition of \"locus\". Using a fixed window around each gene is simple but arbitrary: regulatory contacts do not respect a fixed distance, and two genes in the same regulatory neighborhood get analyzed as if independent.",
+  "genotype_formatting": "Nothing here changes the genotypes; it changes how they are packaged. Tools in the protocol disagree about format (some want PLINK, some want VCF), and the association and fine-mapping steps run per region or per chromosome, so the genotype data has to be split the same way to be processed in parallel.",
+  "gregor": "A set of trait-associated variants is more interpretable if you can say what kind of sequence they fall in. Enrichment testing asks whether they overlap a class of genomic feature (an annotation, a chromatin state, a set of regulatory elements) more often than chance allows, where chance has to account for the fact that variants are not exchangeable: they differ in minor allele frequency, in the number of LD proxies they carry, and in distance to the nearest gene.",
+  "gsea": "A list of genes is hard to interpret on its own. Over-representation testing asks whether a group contains more members of some pathway or ontology term than chance would give, turning a list of identifiers into statements about biology.",
+  "intact": "INTACT combines evidence from PTWAS and fastENLOC for the same genes. It converts TWAS z-scores into Bayes factors across a grid of prior effect-size values, averages those Bayes factors, transforms the gene-level colocalization probability into a prior probability, and returns a posterior probability that integrates both sources of evidence.",
+  "ld_prune_reference": "Many downstream methods assume the variants they are handed are approximately independent. A reference genotype panel is not: neighbouring variants are correlated through linkage disequilibrium, so a raw variant list counts the same signal several times over.",
+  "mash_fit": "Effects estimated separately in each condition are noisy, and analyzing them one condition at a time ignores that most effects are shared. MASH fits a mixture of multivariate normal distributions to the effect estimates, learning from the data which patterns of sharing actually occur (which conditions move together, and how strongly), so that individual estimates can later be shrunk towards those patterns rather than towards zero.",
+  "mash_posterior": "For each input chunk (a list of matrices bhat/sbhat/Z), the posterior workflow loads the MASH model and calls mashcomputeposteriormatrices. Additional workflows compute posterior contrasts between conditions and feature-level scores (meta, fine-mapped, n-significant, and p-value pairs) from the contrast results.",
+  "mash_preprocessing": "This module constructs the three effect matrices used to learn cross-condition sharing patterns in MASH. The strong-effect matrix contains the top fine-mapped locus from each condition, the null matrix contains independent variants with small z-scores, and the random matrix samples variants from the supplied independent-variant list.",
+  "methylation_calling": "This module quantifies array-based DNA methylation using either sesame or minfi, with sesame recommended for the protocol. Both methods remove probes affected by SNPs or cross-reactivity, assess sample and probe quality, and correct assay bias before producing methylation measurements for downstream QTL analysis.",
+  "mixture_prior": "Genetic effects can be specific to one tissue or cell type, shared across several contexts, or similar across all contexts. MASH represents these possibilities as a mixture of covariance patterns.",
+  "mnm_regression": "An association scan tells you a region matters; it does not tell you which variant in it is responsible, because variants in linkage disequilibrium carry nearly the same signal. SuSiE reframes the question as variable selection: it fits a sum of single effects and returns credible sets (small groups of variants, each likely to contain one causal variant) together with posterior inclusion probabilities (Wang et al., 2020).",
+  "phenotype_formatting": "Association testing and fine-mapping run per chromosome or per region, so the phenotype matrix has to be partitioned the same way before that work can be parallelized. These workflows split a phenotype BED by chromosome or by region, annotate features against TAD boundaries when region-based analysis is wanted, and accept GCT-format input as well as BED.",
+  "phenotype_imputation": "Missing molecular measurements can arise when a feature falls below detection or is measured unreliably in a subset of samples. This module reconstructs missing values so downstream models can use a complete phenotype matrix.",
+  "pseudobulk_preprocessing": "This module prepares single-nucleus RNA-seq or ATAC-seq data for sample-level QTL analysis. It aggregates per-nucleus measurements into a pseudobulk count matrix for each cell type, harmonizes individual and sample identifiers across metadata and count matrices, then filters and normalizes the data before regressing technical covariates.",
+  "qr_and_twas": "Standard QTL mapping models the mean: it asks whether genotype shifts average expression. That misses variants whose effect is confined to part of the distribution, acting only in highly expressing samples, or changing spread rather than center.",
+  "qtl_association_postprocessing": "A cis scan reports a p-value for every variant against every molecular phenotype, which is not yet a result: the variants within a gene's window are correlated and the genes are many, so raw p-values overstate significance twice over. The correction is hierarchical, in three steps: local adjustment of the p-values of all cis variants within each gene, global adjustment of the minimum adjusted p-value across genes, then selection of the xQTLs whose locally adjusted p-value falls below the threshold (the eigenMT-BH procedure of Huang et al.",
+  "reference_data_preparation": "Every study that uses this protocol should start from the same reference files: the same genome build, the same gene annotation, the same variant lists. When those differ between steps or between cohorts, the failures are quiet ones: coordinates that shift by a base, genes that exist in one annotation and not the other, meta-analyses that silently drop variants.",
+  "rss_analysis": "Fine-mapping asks which variants in a region are consistent with a causal effect rather than merely correlated with one. SuSiE-RSS works from available summary data, specifically per-variant z-scores and an LD matrix from a reference panel, and returns credible sets with posterior inclusion probabilities (Zou et al., 2022).",
+  "rss_ld_sketch": "This module creates a compact LD reference from whole-genome sequencing genotypes. A random projection transforms the individual-by-variant genotype matrix into a smaller stochastic genotype matrix that preserves pairwise correlation structure approximately.",
+  "sldsc_enrichment": "Heritability is not distributed evenly across the genome. This module tests whether a functional category, such as a chromatin state, regulatory-element set, or xQTL annotation, explains more heritability than expected from its SNP count.",
+  "snRNAseq_preprocessing": "Single-nuclei RNA-seq counts arrive with artefacts that would otherwise be read as biology: dying cells with high mitochondrial content, ambient RNA carried over from the suspension, and droplets holding two nuclei rather than one. Filtering those out, and then deciding what cell type each surviving nucleus is, has to happen before any per-cell-type analysis can start.",
+  "splicing_calling": "This module converts STAR-aligned RNA-seq data into splicing phenotypes using two independent approaches. LeafCutter groups introns that share splice sites and reports each intron as a fraction of its cluster, which captures exon skipping and alternative splice-site usage without requiring predefined event labels (Li et al., 2018).",
+  "splicing_normalization": "Splicing measurements quantify how frequently alternative introns or transcript events are used across individuals. This module removes poorly measured events, adjusts the retained measurements for library and sample-level effects, and produces a stable splicing phenotype matrix.",
+  "twas_ctwas": "A TWAS scan tests each gene's genetically predicted expression against a trait, but a significant gene is not necessarily a causal one: nearby variants with direct effects on the trait, and the predicted expression of neighbouring genes, are correlated with the gene's own eQTLs and act as confounders. cTWAS addresses this by fine-mapping genes and variants jointly within a region, so a gene is credited only for signal that its expression explains beyond the surrounding variants and genes, and reports a posterior inclusion probability rather than a p-value (Zhao et al., 2024).",
+  "isoform_calling_torino": "This module turns aligned RNA-seq into isoform-level phenotypes without a transcript annotation. For each gene, Torino factorizes the per-base read depth across samples into a few coverage components, which capture cassette exons, retained introns, alternative first and last exons and alternative polyadenylation, and writes each sample's usage of every component as a phenotype table for QTL mapping.",
+  "splicing_calling_leafcutter2": "This module quantifies alternative splicing with LeafCutter2. Like splicing_calling, it groups introns that share splice sites into clusters and reports each intron as a fraction of its cluster, but it also labels every junction as productive or unproductive, so splicing changes that disrupt the protein can be told apart from those that do not.",
+  "qtl_rss_analysis": "This module fine-maps a cis window and learns TWAS weights from cis-QTL summary statistics and an LD reference panel, without individual-level genotypes. It reads a cis-QTL nominal association table (for example from TensorQTL), pairs it with the LD panel, runs summary-statistics QC, then SuSiE-RSS fine-mapping and TWAS weight learning."
+ },
+ "bench": {
+  "twas_ctwas": "311 s for 1 test",
+  "methylation_calling": "251 s for 2 tests",
+  "snRNAseq_preprocessing": "221 s for 3 tests",
+  "reference_data_preparation": "196 s for 13 tests",
+  "gsea": "157 s for 1 test",
+  "mnm_postprocessing": "153 s for 7 tests",
+  "TensorQTL": "148 s for 3 tests",
+  "sldsc_enrichment": "146 s for 6 tests",
+  "mnm_regression": "143 s for 1 test",
+  "rss_ld_sketch": "113 s for 6 tests",
+  "covariate_hidden_factor": "113 s for 7 tests",
+  "gene_annotation": "99 s for 5 tests",
+  "phenotype_imputation": "96 s for 10 tests",
+  "mash_fit": "93 s for 1 test",
+  "phenotype_formatting": "73 s for 6 tests",
+  "rss_analysis": "71 s for 1 test",
+  "PCA": "68 s for 5 tests",
+  "SuSiE_enloc": "67 s for 1 test",
+  "colocboost": "60 s for 1 test",
+  "mixture_prior": "54 s for 1 test",
+  "qtl_association_postprocessing": "29 s for 1 test",
+  "mash_preprocessing": "25 s for 1 test",
+  "bulk_expression_QC": "24 s for 4 tests",
+  "apa_impute": "24 s for 1 test",
+  "mash_posterior": "23 s for 1 test",
+  "GWAS_QC": "20 s for 8 tests",
+  "intact": "20 s for 1 test",
+  "eoo_enrichment": "19 s for 1 test",
+  "gregor": "19 s for 2 tests",
+  "ems_training": "15 s for 3 tests",
+  "VCF_QC": "12 s for 5 tests",
+  "generalized_TADB": "10 s for 1 test",
+  "covariate_formatting": "10 s for 2 tests",
+  "ld_prune_reference": "7 s for 2 tests",
+  "genotype_formatting": "23s on example data (8 workflows)",
+  "splicing_normalization": "32s on example data (4 workflows)",
+  "splicing_calling": "50s on example data (5 workflows)",
+  "isoform_calling_torino": "about 1 min on example data (2 workflows)",
+  "apa_calling": "22s on example data (6 workflows)",
+  "RNA_calling": "1m 20s on example data (16 workflows)",
+  "bulk_expression_normalization": "12s on example data",
+  "pseudobulk_preprocessing": "30s on example data (4 workflows)"
+ },
+ "outPrev": {
+  "covariate_hidden_factor": {
+   "file": "residual.bed.gz",
+   "rows": [
+    [
+     "#chr",
+     "start",
+     "end",
+     "ID",
+     "SAMPLE_001",
+     "SAMPLE_002"
+    ],
+    [
+     "chr22",
+     "10939387",
+     "10961337",
+     "ENSG00000283047",
+     "29.946170491386496",
+     "-8.44968773314525"
+    ],
+    [
+     "chr22",
+     "15528191",
+     "15529138",
+     "ENSG00000130538",
+     "-2.9173358185760385",
+     "-5.007200781431884"
+    ],
+    [
+     "chr22",
+     "15611758",
+     "15613095",
+     "ENSG00000231565",
+     "2.85916554775662",
+     "-4.676226628425212"
+    ],
+    [
+     "chr22",
+     "15615401",
+     "15615577",
+     "ENSG00000226474",
+     "-3.43724022258903",
+     "-4.399174614860805"
+    ]
+   ],
+   "cols": 53
+  },
+  "eoo_enrichment": {
+   "file": "enrichment_results_summary.tsv.gz",
+   "rows": [
+    [
+     "Annotation",
+     "OR",
+     "OR_SE",
+     "OR_log2",
+     "OR_SE_log2",
+     "Enrichment"
+    ],
+    [
+     "maf",
+     "1",
+     "0",
+     "0",
+     "0",
+     "1"
+    ],
+    [
+     "ANNO_baseline",
+     "1",
+     "0",
+     "0",
+     "0",
+     "1"
+    ]
+   ],
+   "cols": 13
+  },
+  "gene_annotation": {
+   "file": "protocol_example.atac.bed.gz",
+   "rows": [
+    [
+     "#chr",
+     "start",
+     "end",
+     "ID",
+     "S0561",
+     "S0321"
+    ],
+    [
+     "22",
+     "10662152",
+     "10664678",
+     "C22P107555",
+     "2.65660494706228",
+     "2.96635134658411"
+    ],
+    [
+     "22",
+     "16094161",
+     "16096165",
+     "C22P107557",
+     "2.80449305810594",
+     "3.56480978765153"
+    ],
+    [
+     "22",
+     "16110745",
+     "16113398",
+     "C22P107559",
+     "3.62969398452243",
+     "3.54653724981745"
+    ],
+    [
+     "22",
+     "16128374",
+     "16129953",
+     "C22P107560",
+     "3.10935961334414",
+     "3.02651991574473"
+    ]
+   ],
+   "cols": 14
+  },
+  "generalized_TADB": {
+   "file": "extended_TADB.bed",
+   "rows": [
+    [
+     "#chr",
+     "start",
+     "end",
+     "index"
+    ],
+    [
+     "chr22",
+     "0",
+     "13626642",
+     "TADB_1"
+    ],
+    [
+     "chr22",
+     "12650000",
+     "16304556",
+     "TADB_2"
+    ],
+    [
+     "chr22",
+     "14273854",
+     "18558149",
+     "TADB_3"
+    ],
+    [
+     "chr22",
+     "16084953",
+     "21111875",
+     "TADB_4"
+    ]
+   ],
+   "cols": 4
+  },
+  "genotype_formatting": {
+   "file": "vcf_to_plink.bim",
+   "rows": [
+    [
+     "22",
+     "chr22:10526333_CGCCGCCGC",
+     "0",
+     "10526333",
+     "*",
+     "CGCCGCCGCGGGTTTTTTCCCCCG"
+    ],
+    [
+     "22",
+     "chr22:10526566_AC_*",
+     "0",
+     "10526566",
+     "*",
+     "AC"
+    ],
+    [
+     "22",
+     "chr22:10657618_C_G",
+     "0",
+     "10657618",
+     "G",
+     "C"
+    ],
+    [
+     "22",
+     "chr22:10684490_G_A",
+     "0",
+     "10684490",
+     "A",
+     "G"
+    ],
+    [
+     "22",
+     "chr22:10685239_C_T",
+     "0",
+     "10685239",
+     "T",
+     "C"
+    ]
+   ],
+   "cols": 6
+  },
+  "GWAS_QC": {
+   "file": "qc_ld_prune.bim",
+   "rows": [
+    [
+     "22",
+     "chr22:10761227_G_A",
+     "0",
+     "10761227",
+     "A",
+     "G"
+    ],
+    [
+     "22",
+     "chr22:10859684_C_G",
+     "0",
+     "10859684",
+     "G",
+     "C"
+    ],
+    [
+     "22",
+     "chr22:11271327_T_C",
+     "0",
+     "11271327",
+     "C",
+     "T"
+    ],
+    [
+     "22",
+     "chr22:11285239_C_T",
+     "0",
+     "11285239",
+     "T",
+     "C"
+    ],
+    [
+     "22",
+     "chr22:11296634_C_T",
+     "0",
+     "11296634",
+     "T",
+     "C"
+    ]
+   ],
+   "cols": 6
+  },
+  "ld_prune_reference": {
+   "file": "LD_pruned_variants.txt",
+   "rows": [
+    [
+     "chrom",
+     "pos",
+     "alt",
+     "ref",
+     "variant_id"
+    ],
+    [
+     "chr22",
+     "10761227",
+     "G",
+     "A",
+     "chr22:10761227:G:A"
+    ],
+    [
+     "chr22",
+     "11312810",
+     "G",
+     "A",
+     "chr22:11312810:G:A"
+    ],
+    [
+     "chr22",
+     "11328856",
+     "G",
+     "T",
+     "chr22:11328856:G:T"
+    ],
+    [
+     "chr22",
+     "11334723",
+     "T",
+     "C",
+     "chr22:11334723:T:C"
+    ]
+   ],
+   "cols": 5
+  },
+  "mash_fit": {
+   "file": "feature_score_merge.nsig.csv",
+   "rows": [
+    [
+     "\"gene\"",
+     "\"condition\"",
+     "\"contrast\"",
+     "\"score\"",
+     "\"scoreType\""
+    ],
+    [
+     "\"GENE1\"",
+     "\"ALL\"",
+     "NA",
+     "0.529411764705882",
+     "\"nsig_ratio\""
+    ],
+    [
+     "\"GENE1\"",
+     "\"Ast\"",
+     "NA",
+     "0.588235294117647",
+     "\"nsig_ratio\""
+    ],
+    [
+     "\"GENE1\"",
+     "\"End\"",
+     "NA",
+     "0.411764705882353",
+     "\"nsig_ratio\""
+    ],
+    [
+     "\"GENE1\"",
+     "\"Exc\"",
+     "NA",
+     "0.470588235294118",
+     "\"nsig_ratio\""
+    ]
+   ],
+   "cols": 5
+  },
+  "methylation_calling": {
+   "file": "protocol_example.methylation.sample_sheet_int.sesame.M.bed.gz",
+   "rows": [
+    [
+     "#chr",
+     "start",
+     "end",
+     "ID",
+     "SAMPLE_009",
+     "SAMPLE_010"
+    ],
+    [
+     "chr22",
+     "12095366",
+     "12095367",
+     "cg03887676",
+     "0.444742249852316",
+     "0.52779511110653"
+    ],
+    [
+     "chr22",
+     "16387319",
+     "16387320",
+     "cg03389890",
+     "-0.174695028494768",
+     "-1.14660445035291"
+    ],
+    [
+     "chr22",
+     "16593219",
+     "16593220",
+     "cg19702979",
+     "1.1682386697105",
+     "0.805501110993181"
+    ],
+    [
+     "chr22",
+     "16597463",
+     "16597464",
+     "cg02130266",
+     "1.37670764479292",
+     "1.33801036499323"
+    ]
+   ],
+   "cols": 17
+  },
+  "mnm_postprocessing": {
+   "file": "affected_region.tsv",
+   "rows": [
+    [
+     "seqnames",
+     "start",
+     "end",
+     "width",
+     "strand",
+     "cs"
+    ],
+    [
+     "chr22",
+     "1",
+     "8",
+     "8",
+     "*",
+     "fsusie_1"
+    ],
+    [
+     "chr22",
+     "9",
+     "16",
+     "8",
+     "*",
+     "fsusie_1"
+    ],
+    [
+     "chr22",
+     "2",
+     "8",
+     "7",
+     "*",
+     "fsusie_2"
+    ],
+    [
+     "chr22",
+     "9",
+     "15",
+     "7",
+     "*",
+     "fsusie_2"
+    ]
+   ],
+   "cols": 13
+  },
+  "PCA": {
+   "file": "pca_plink.eigenvec",
+   "rows": [
+    [
+     "#FID",
+     "IID",
+     "PC1",
+     "PC2",
+     "PC3",
+     "PC4"
+    ],
+    [
+     "SAMPLE_001",
+     "SAMPLE_001",
+     "0.00975568",
+     "0.0604747",
+     "-0.0528306",
+     "-0.0341157"
+    ],
+    [
+     "SAMPLE_002",
+     "SAMPLE_002",
+     "0.217029",
+     "0.104595",
+     "0.0209335",
+     "-0.132771"
+    ],
+    [
+     "SAMPLE_003",
+     "SAMPLE_003",
+     "0.0106779",
+     "0.0423513",
+     "0.00974808",
+     "0.0217471"
+    ],
+    [
+     "SAMPLE_004",
+     "SAMPLE_004",
+     "-0.0945621",
+     "-0.158357",
+     "-0.00838697",
+     "0.0441399"
+    ]
+   ],
+   "cols": 22
+  },
+  "phenotype_formatting": {
+   "file": "protocol_example.chr22.bed.gz",
+   "rows": [
+    [
+     "#chr",
+     "start",
+     "end",
+     "ID",
+     "SAMPLE_001",
+     "SAMPLE_002"
+    ],
+    [
+     "chr22",
+     "10939387",
+     "10961337",
+     "ENSG00000283047",
+     "37.0768403309204",
+     "0.0"
+    ],
+    [
+     "chr22",
+     "15528191",
+     "15529138",
+     "ENSG00000130538",
+     "0.0",
+     "1.08358035439567"
+    ],
+    [
+     "chr22",
+     "15611758",
+     "15613095",
+     "ENSG00000231565",
+     "5.97808406328782",
+     "0.0"
+    ],
+    [
+     "chr22",
+     "15615401",
+     "15615577",
+     "ENSG00000226474",
+     "0.0",
+     "0.0"
+    ]
+   ],
+   "cols": 64
+  },
+  "phenotype_imputation": {
+   "file": "protocol_example.protein.missing.knn.imputed.bed.gz",
+   "rows": [
+    [
+     "#chr",
+     "start",
+     "end",
+     "ID",
+     "SAMPLE_001",
+     "SAMPLE_002"
+    ],
+    [
+     "chr12",
+     "752578",
+     "752579",
+     "chr12_ENSG00000060237_Q9",
+     "0.238966360190167",
+     "-0.611171227886468"
+    ],
+    [
+     "chr12",
+     "990508",
+     "990509",
+     "chr12_ENSG00000082805_Q8",
+     "-0.703447297160565",
+     "-1.86313205860919"
+    ],
+    [
+     "chr12",
+     "2794969",
+     "2794970",
+     "chr12_ENSG00000004478_Q0",
+     "-1.17242006085983",
+     "-0.938018529427372"
+    ],
+    [
+     "chr12",
+     "4649113",
+     "4649114",
+     "chr12_ENSG00000139180_Q1",
+     "-1.8025806392753",
+     "2.33608132863355"
+    ]
+   ],
+   "cols": 64
+  },
+  "pseudobulk_preprocessing": {
+   "file": "expected_MIC_residuals_qn.txt",
+   "rows": [
+    [
+     "",
+     "SAMPLE_001",
+     "SAMPLE_002",
+     "SAMPLE_003",
+     "SAMPLE_004",
+     "SAMPLE_005"
+    ],
+    [
+     "ENSG00000000001",
+     "0.273701889612983",
+     "-0.0245772610640276",
+     "-0.273701889612983",
+     "-0.0737912738082727",
+     "0.786845099455005"
+    ],
+    [
+     "ENSG00000000002",
+     "-0.541395085129088",
+     "-0.0245772610640276",
+     "-1.00743560128731",
+     "-1.75986102793353",
+     "1.5647264713618"
+    ],
+    [
+     "ENSG00000000003",
+     "0.377391943828554",
+     "0.721522283982343",
+     "-2.06191650080946",
+     "-0.430727299295457",
+     "-0.928899491647271"
+    ],
+    [
+     "ENSG00000000004",
+     "0.223007830940367",
+     "-0.123184771485879",
+     "-1.41570209380051",
+     "-0.273701889612983",
+     "-0.599229868099345"
+    ]
+   ],
+   "cols": 51
+  },
+  "qtl_association_postprocessing": {
+   "file": "qap.cis_regional.fdr.tsv.gz",
+   "rows": [
+    [
+     "chrom",
+     "pos",
+     "n_variants",
+     "beta_shape1",
+     "beta_shape2",
+     "true_df"
+    ],
+    [
+     "22",
+     "11797697",
+     "6",
+     "0.9714302",
+     "5.6756625",
+     "29.047987"
+    ],
+    [
+     "22",
+     "15838003",
+     "51",
+     "1.0111347",
+     "30.198004",
+     "28.527073"
+    ],
+    [
+     "22",
+     "15838010",
+     "49",
+     "0.9969245",
+     "25.608551",
+     "27.582878"
+    ],
+    [
+     "22",
+     "16214693",
+     "43",
+     "0.9960056",
+     "21.905655",
+     "27.860561"
+    ]
+   ],
+   "cols": 38
+  },
+  "RNA_calling": {
+   "file": "fastq.list.trimmed.txt",
+   "rows": [
+    [
+     "ID",
+     "fq1",
+     "fq2",
+     "strand",
+     "read_length"
+    ],
+    [
+     "SAMPLE_001",
+     "out/SAMPLE_001_R1.fastq.",
+     "out/SAMPLE_001_R2.fastq.",
+     "rf",
+     "100"
+    ],
+    [
+     "SAMPLE_002",
+     "out/SAMPLE_002_R1.fastq.",
+     "out/SAMPLE_002_R2.fastq.",
+     "rf",
+     "100"
+    ]
+   ],
+   "cols": 5
+  },
+  "rss_ld_sketch": {
+   "file": "event_id.tsv",
+   "rows": [
+    [
+     "ID",
+     "CHROM",
+     "POS",
+     "REF",
+     "ALT",
+     "event_id"
+    ],
+    [
+     "chr22:17250000:C:CGAT",
+     "22",
+     "17250000",
+     "C",
+     "CGAT",
+     "chr22:17250000:INS:GAT"
+    ],
+    [
+     "chr22:17250000:CGAT:C",
+     "22",
+     "17250000",
+     "CGAT",
+     "C",
+     "chr22:17250001:DEL:GAT"
+    ]
+   ],
+   "cols": 10
+  },
+  "splicing_normalization": {
+   "file": "expected.prepare_phenotype.phenotype_file_list.txt",
+   "rows": [
+    [
+     "#chr",
+     "#dir"
+    ],
+    [
+     "chr22",
+     "leafcutter_perind.counts"
+    ]
+   ],
+   "cols": 2
+  },
+  "TensorQTL": {
+   "file": "cis_qtl.pairs.tsv.gz",
+   "rows": [
+    [
+     "chrom",
+     "pos",
+     "molecular_trait_id",
+     "variant_id",
+     "tss_distance",
+     "tes_distance"
+    ],
+    [
+     "22",
+     "10414272",
+     "ENSG00000283047",
+     "chr22:10414272:A:T",
+     "-525115",
+     "-547066"
+    ],
+    [
+     "22",
+     "10416111",
+     "ENSG00000283047",
+     "chr22:10416111:A:T",
+     "-523276",
+     "-545227"
+    ],
+    [
+     "22",
+     "10416669",
+     "ENSG00000283047",
+     "chr22:10416669:A:T",
+     "-522718",
+     "-544669"
+    ],
+    [
+     "22",
+     "10420511",
+     "ENSG00000283047",
+     "chr22:10420511:A:T",
+     "-518876",
+     "-540827"
+    ]
+   ],
+   "cols": 14
+  },
+  "VCF_QC": {
+   "file": "rename_chrs.variants.tsv",
+   "rows": [
+    [
+     "chr22",
+     "10526333",
+     "chr22:10526333_CGCCGCCGC",
+     "CGCCGCCGCGGGTTTTTTCCCCCG",
+     "*"
+    ],
+    [
+     "chr22",
+     "10526566",
+     "chr22:10526566_AC_*",
+     "AC",
+     "*"
+    ],
+    [
+     "chr22",
+     "10657618",
+     "chr22:10657618_C_G",
+     "C",
+     "G"
+    ],
+    [
+     "chr22",
+     "10684490",
+     "chr22:10684490_G_A",
+     "G",
+     "A"
+    ],
+    [
+     "chr22",
+     "10685239",
+     "chr22:10685239_C_T",
+     "C",
+     "T"
+    ]
+   ],
+   "cols": 5
+  }
+ },
+ "terms": {
+  "reference_data_preparation": [
+   [
+    "Reference genome build",
+    "The coordinate system and allele reference used to align genotype, annotation, and molecular phenotype data."
+   ],
+   [
+    "Gene annotation",
+    "A catalog that links genomic intervals to genes, transcripts, and other functional features."
+   ]
+  ],
+  "generalized_TADB": [
+   [
+    "Topologically associating domain (TAD)",
+    "A genomic region whose DNA sequences interact with one another more often than with sequences outside the region."
+   ],
+   [
+    "Regulatory domain",
+    "The genomic neighborhood in which variants are considered capable of regulating a molecular feature."
+   ]
+  ],
+  "ld_prune_reference": [
+   [
+    "Linkage disequilibrium (LD)",
+    "Correlation between alleles at nearby variants caused by their shared inheritance."
+   ],
+   [
+    "LD pruning",
+    "Selection of a comparatively independent subset of variants by removing highly correlated markers."
+   ]
+  ],
+  "rss_ld_sketch": [
+   [
+    "LD matrix",
+    "A matrix of correlations among variants in a genomic region."
+   ],
+   [
+    "Summary-statistics fine-mapping",
+    "Inference of causal variants from association statistics and an external LD reference rather than individual-level genotypes."
+   ]
+  ],
+  "RNA_calling": [
+   [
+    "Read alignment",
+    "Placement of sequencing reads onto a reference genome or transcriptome."
+   ],
+   [
+    "Gene-level count",
+    "The number of aligned fragments assigned to a gene, used as a measure of RNA abundance."
+   ]
+  ],
+  "bulk_expression_QC": [
+   [
+    "Expression quality control",
+    "Detection of samples or genes whose sequencing, mapping, or abundance profiles are inconsistent with the study population."
+   ],
+   [
+    "Outlier sample",
+    "A sample whose molecular profile differs unusually from the rest and may reflect technical failure or biological heterogeneity."
+   ]
+  ],
+  "bulk_expression_normalization": [
+   [
+    "Library-size normalization",
+    "Adjustment for differences in sequencing depth and RNA composition across samples."
+   ],
+   [
+    "Inverse-normal transformation",
+    "A rank-based transformation that maps a phenotype to an approximately normal distribution."
+   ]
+  ],
+  "snRNAseq_preprocessing": [
+   [
+    "Single-nucleus RNA sequencing",
+    "Measurement of RNA abundance in individual nuclei, often used for frozen tissue."
+   ],
+   [
+    "Cell type",
+    "A biologically defined class of cells or nuclei identified from characteristic expression patterns."
+   ]
+  ],
+  "pseudobulk_preprocessing": [
+   [
+    "Pseudobulk expression",
+    "Counts aggregated across cells of the same donor and cell type to create a donor-level molecular phenotype."
+   ],
+   [
+    "Donor",
+    "The individual from whom molecular measurements and genotypes were obtained."
+   ]
+  ],
+  "splicing_calling": [
+   [
+    "Splice junction",
+    "A boundary formed when an intron is removed and two exons are joined."
+   ],
+   [
+    "Intron excision",
+    "Removal of an intron from a precursor RNA molecule during splicing."
+   ]
+  ],
+  "splicing_normalization": [
+   [
+    "Intron excision ratio",
+    "The relative usage of a splice junction or intron within its local cluster."
+   ],
+   [
+    "Alternative splicing",
+    "Production of different RNA isoforms through differential exon or splice-junction use."
+   ]
+  ],
+  "methylation_calling": [
+   [
+    "DNA methylation",
+    "Addition of a methyl group to DNA, commonly measured at CpG sites as an epigenetic regulatory mark."
+   ],
+   [
+    "Beta value",
+    "The estimated fraction of methylated signal at a CpG probe."
+   ]
+  ],
+  "apa_calling": [
+   [
+    "Alternative polyadenylation",
+    "Use of different transcript cleavage and polyadenylation sites, which changes the RNA 3-prime end."
+   ],
+   [
+    "Polyadenylation site",
+    "The transcript position at which RNA is cleaved before addition of the poly(A) tail."
+   ]
+  ],
+  "apa_impute": [
+   [
+    "Imputation",
+    "Estimation of missing molecular measurements from patterns observed across features and samples."
+   ],
+   [
+    "Missingness",
+    "The pattern and proportion of unavailable measurements in a molecular phenotype matrix."
+   ]
+  ],
+  "VCF_QC": [
+   [
+    "Minor allele frequency (MAF)",
+    "The frequency of the less common allele at a variant in the analyzed sample."
+   ],
+   [
+    "Hardy-Weinberg equilibrium",
+    "The expected genotype-frequency relationship under random mating, used as one signal of genotype quality."
+   ]
+  ],
+  "genotype_formatting": [
+   [
+    "Allele harmonization",
+    "Alignment of variant identifiers, reference alleles, alternate alleles, and strand orientation across datasets."
+   ],
+   [
+    "Dosage",
+    "The expected number of alternate alleles carried by an individual, often ranging continuously from zero to two after imputation."
+   ]
+  ],
+  "GWAS_QC": [
+   [
+    "Genome-wide association study (GWAS)",
+    "A scan for genetic variants associated with a complex trait or disease."
+   ],
+   [
+    "Genomic inflation",
+    "Systematic excess of association signal that can reflect confounding, relatedness, or polygenicity."
+   ]
+  ],
+  "PCA": [
+   [
+    "Population structure",
+    "Systematic genetic differences among ancestry groups or subpopulations."
+   ],
+   [
+    "Genotype principal component",
+    "A major axis of genetic variation used to adjust association analyses for population structure."
+   ]
+  ],
+  "gene_annotation": [
+   [
+    "Transcription start site (TSS)",
+    "The genomic position where transcription of a gene begins."
+   ],
+   [
+    "Gene model",
+    "The annotated genomic structure of a gene, including its exons, transcripts, and strand."
+   ]
+  ],
+  "phenotype_imputation": [
+   [
+    "Phenotype imputation",
+    "Estimation of missing molecular phenotype values using information shared across samples or features."
+   ],
+   [
+    "Limit of detection",
+    "The smallest abundance that an assay can distinguish reliably from background."
+   ]
+  ],
+  "phenotype_formatting": [
+   [
+    "Molecular phenotype",
+    "A quantitative molecular trait such as gene expression, splicing, methylation, or protein abundance."
+   ],
+   [
+    "Genomic interval",
+    "A chromosome, start, and end coordinate used to locate a molecular feature."
+   ]
+  ],
+  "covariate_formatting": [
+   [
+    "Covariate",
+    "A measured variable included in a model to account for known biological or technical variation."
+   ],
+   [
+    "Design matrix",
+    "A numeric representation of model covariates across samples."
+   ]
+  ],
+  "covariate_hidden_factor": [
+   [
+    "Hidden factor",
+    "An unmeasured source of variation, such as cell composition, technical batch, or RNA quality, inferred from the molecular phenotype matrix."
+   ],
+   [
+    "Confounding",
+    "Distortion of a genetic association by a variable related to both the tested genotype and molecular phenotype."
+   ]
+  ],
+  "TensorQTL": [
+   [
+    "xQTL",
+    "A genetic variant associated with variation in a molecular phenotype such as expression, splicing, methylation, or protein abundance."
+   ],
+   [
+    "cis association",
+    "An association between a variant and a nearby molecular feature within a defined genomic window."
+   ],
+   [
+    "False discovery rate (FDR)",
+    "The expected proportion of false positives among results declared significant."
+   ]
+  ],
+  "qr_and_twas": [
+   [
+    "Quantile regression",
+    "A model that estimates genetic effects at selected points of a phenotype distribution rather than only its mean."
+   ],
+   [
+    "TWAS weight",
+    "An estimated genetic effect used to predict a molecular trait from local variants."
+   ]
+  ],
+  "qtl_association_postprocessing": [
+   [
+    "Lead variant",
+    "The variant with the strongest association signal for a molecular feature or region."
+   ],
+   [
+    "Allelic effect",
+    "The direction and magnitude of phenotype change associated with an allele."
+   ]
+  ],
+  "METAL": [
+   [
+    "Meta-analysis",
+    "Statistical combination of association evidence across cohorts while allowing each cohort to retain its own participants."
+   ],
+   [
+    "Heterogeneity",
+    "Variation in estimated genetic effects across cohorts or studies."
+   ]
+  ],
+  "mash_preprocessing": [
+   [
+    "Effect-size matrix",
+    "A matrix of association estimates arranged across variants or genes and biological conditions."
+   ],
+   [
+    "Standard error",
+    "The estimated uncertainty of an effect-size estimate."
+   ]
+  ],
+  "mixture_prior": [
+   [
+    "Covariance prior",
+    "A learned representation of how genetic effects tend to be shared across tissues, cell types, or molecular traits."
+   ],
+   [
+    "Residual correlation",
+    "Correlation among association estimates that remains after accounting for true shared effects."
+   ]
+  ],
+  "mash_fit": [
+   [
+    "Empirical Bayes",
+    "A framework that estimates a prior distribution from the observed data and uses it to update noisy effects."
+   ],
+   [
+    "Shrinkage",
+    "Pulling uncertain effect estimates toward patterns supported by the full dataset."
+   ],
+   [
+    "Local false sign rate",
+    "The posterior probability that the reported direction of an effect is wrong."
+   ]
+  ],
+  "mash_posterior": [
+   [
+    "Posterior distribution",
+    "The updated probability distribution of an effect after combining the observed data with the fitted prior."
+   ],
+   [
+    "Posterior contrast",
+    "A probabilistic comparison of effects between biological conditions."
+   ]
+  ],
+  "mnm_regression": [
+   [
+    "Fine-mapping",
+    "Prioritization of variants that may causally explain an association signal."
+   ],
+   [
+    "Posterior inclusion probability (PIP)",
+    "The posterior probability that a variant contributes to the genetic signal in the fitted model."
+   ],
+   [
+    "Credible set",
+    "A group of variants that jointly contains a causal regulatory variant with a stated posterior probability under the fitted model."
+   ]
+  ],
+  "rss_analysis": [
+   [
+    "Fine-mapping",
+    "Prioritization of variants that may causally explain an association signal."
+   ],
+   [
+    "Posterior inclusion probability (PIP)",
+    "The posterior probability that a variant contributes to the genetic signal in the fitted model."
+   ],
+   [
+    "Credible set",
+    "A group of variants that jointly contains a causal regulatory variant with a stated posterior probability under the fitted model."
+   ]
+  ],
+  "SuSiE_enloc": [
+   [
+    "Colocalization",
+    "Evidence that molecular-trait and complex-trait associations in a region are explained by the same underlying genetic signal."
+   ],
+   [
+    "Regional enrichment",
+    "Increased probability that a trait-associated region also contains a molecular QTL signal."
+   ]
+  ],
+  "twas_ctwas": [
+   [
+    "Transcriptome-wide association study (TWAS)",
+    "A test relating genetically predicted molecular phenotypes to a complex trait."
+   ],
+   [
+    "Mediated association",
+    "A trait association consistent with a genetic effect acting through a measured molecular phenotype."
+   ]
+  ],
+  "colocboost": [
+   [
+    "Colocalization",
+    "Evidence that molecular-trait and complex-trait associations in a region are explained by the same underlying genetic signal."
+   ],
+   [
+    "Multiple causal signals",
+    "More than one distinct causal association pattern within the same genomic region."
+   ]
+  ],
+  "intact": [
+   [
+    "Colocalization",
+    "Evidence that molecular-trait and complex-trait associations in a region are explained by the same underlying genetic signal."
+   ],
+   [
+    "Cross-tissue evidence",
+    "Association information combined across tissues or molecular contexts."
+   ]
+  ],
+  "watershed": [
+   [
+    "Variant-to-gene prioritization",
+    "Ranking variants by evidence that they regulate a particular gene and contribute to disease risk."
+   ],
+   [
+    "Functional annotation",
+    "Biological information about a variant or genomic region used to interpret its potential mechanism."
+   ]
+  ],
+  "eoo_enrichment": [
+   [
+    "Enrichment",
+    "An excess of overlap between two sets of genomic signals relative to an appropriate null expectation."
+   ],
+   [
+    "Observed-to-expected ratio",
+    "The observed overlap divided by the overlap expected under a null model."
+   ]
+  ],
+  "gsea": [
+   [
+    "Gene set enrichment analysis (GSEA)",
+    "A test for coordinated concentration of association evidence within a predefined group of genes."
+   ],
+   [
+    "Gene set",
+    "A collection of genes sharing a pathway, function, annotation, or experimental signature."
+   ]
+  ],
+  "gregor": [
+   [
+    "Regulatory enrichment",
+    "Overrepresentation of associated variants in regulatory annotations compared with matched control variants."
+   ],
+   [
+    "Matched control variant",
+    "A background variant selected to resemble an associated variant in properties such as allele frequency and LD."
+   ]
+  ],
+  "sldsc_enrichment": [
+   [
+    "Stratified LD score regression (S-LDSC)",
+    "A method that partitions SNP heritability across genomic annotations using GWAS summary statistics and LD."
+   ],
+   [
+    "SNP heritability",
+    "The proportion of trait variation attributable to the additive effects of measured or tagged variants."
+   ]
+  ],
+  "ems_training": [
+   [
+    "Expression modifier score (EMS)",
+    "A learned score estimating the probability that a variant has a regulatory effect on a gene."
+   ],
+   [
+    "Training label",
+    "An observed outcome used to teach a predictive model which genomic patterns distinguish regulatory variants."
+   ]
+  ],
+  "ems_prediction": [
+   [
+    "Expression modifier score (EMS)",
+    "A learned score estimating the probability that a variant has a regulatory effect on a gene."
+   ],
+   [
+    "Calibration",
+    "Agreement between predicted probabilities and the observed frequency of the corresponding outcome."
+   ]
+  ]
+ }
+}

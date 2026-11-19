@@ -113,3 +113,66 @@ def test_cis_via_sos(run_sos, repo_root, tmp_path):
     assert (tmp_path / PARQUET).exists()
     assert nominal.exists() and sig.exists() and summ.exists() and summ.stat().st_size > 0
     assert "qvalue" in _header(nominal)                 # q-values added by the R step in cis_1
+
+
+def test_trans_via_sos(run_sos, repo_root, tmp_path):
+    # `sos run TensorQTL.ipynb trans`: python trans scan restricted to chr22 variants
+    # (--trans-geno-chromosome) and the genes in the region list, then
+    # `Rscript TensorQTL.R trans_qvalues` adds global q-values in place.
+    fix = repo_root / FIX
+    p = run_sos(repo_root / NB, "trans", {
+        "genotype_file": fix / "protocol_example.genotype.chr22.bed",
+        "phenotype_file": fix / "example_geneexpr.bed.gz",
+        "covariate_file": fix / "example_covariates.tsv",
+        "name": "protocol_example", "chromosome": 22, "MAC": 0,
+        "trans_geno_chromosome": 22,
+        "region_list": fix / "association_windows.bed", "region_list_phenotype_column": 4,
+        "cwd": tmp_path, "numThreads": 1,
+        "modular_script_dir": repo_root / MSD}, timeout=1200)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = tmp_path / "example_geneexpr_chr22_geno_chr22.trans_qtl.pairs.tsv.gz"
+    assert out.exists() and (tmp_path / (out.name + ".tbi")).exists()
+    header = _header(out)
+    assert {"variant_id", "pvalue", "qvalue"}.issubset(header), header
+
+
+def test_cis_interaction_via_sos(run_sos, repo_root, tmp_path):
+    # The builder's "interaction" variant of `cis`: a genotype x sex term, named with
+    # --interaction (sex is a row of the covariate file). tensorQTL runs no permutation
+    # pass in interaction mode, hence --no-permutation.
+    fix = repo_root / FIX
+    p = run_sos(repo_root / NB, "cis", {
+        "genotype_file": fix / "protocol_example.genotype.chr22.bed",
+        "phenotype_file": fix / "example_geneexpr.bed.gz",
+        "covariate_file": fix / "example_covariates.tsv",
+        "name": "protocol_example", "chromosome": 22, "MAC": 0,
+        "interaction": "sex", "maf_threshold": 0.05, "no-permutation": True,
+        "cwd": tmp_path, "numThreads": 1,
+        "modular_script_dir": repo_root / MSD}, timeout=1200)
+    assert p.returncode == 0, p.stdout + p.stderr
+    # interaction outputs carry the interaction name: <prefix>_chr22_sex.cis_qtl.pairs.tsv.gz
+    nominal = tmp_path / NOMINAL.replace(".cis_qtl.pairs", "_sex.cis_qtl.pairs")
+    assert nominal.exists(), sorted(x.name for x in tmp_path.iterdir())
+    header = _header(nominal)
+    assert {"pvalue_sex_interaction", "qvalue_main", "qvalue_interaction"}.issubset(header), header
+
+
+def test_cis_interaction_file_via_sos(run_sos, repo_root, tmp_path):
+    # --interaction given a file (sample ID, value): genotype x age from the example
+    # interaction file. `age` is also a covariate row, so the worker drops that row and
+    # the term enters the model once; outputs and columns carry the name `age`.
+    fix = repo_root / FIX
+    p = run_sos(repo_root / NB, "cis", {
+        "genotype_file": fix / "protocol_example.genotype.chr22.bed",
+        "phenotype_file": fix / "example_geneexpr.bed.gz",
+        "covariate_file": fix / "example_covariates.tsv",
+        "name": "protocol_example", "chromosome": 22, "MAC": 0,
+        "interaction": repo_root / "tests/fixtures/tensorqtl/protocol_example.interaction_age.tsv",
+        "maf_threshold": 0.05, "no-permutation": True,
+        "cwd": tmp_path, "numThreads": 1,
+        "modular_script_dir": repo_root / MSD}, timeout=1200)
+    assert p.returncode == 0, p.stdout + p.stderr
+    nominal = tmp_path / NOMINAL.replace(".cis_qtl.pairs", "_age.cis_qtl.pairs")
+    assert nominal.exists(), sorted(x.name for x in tmp_path.iterdir())
+    header = _header(nominal)
+    assert {"pvalue_age_interaction", "qvalue_main", "qvalue_interaction"}.issubset(header), header

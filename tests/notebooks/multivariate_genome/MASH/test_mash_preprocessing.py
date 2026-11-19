@@ -17,3 +17,20 @@ def test_mash_preprocessing_susie_to_mash(run_sos, read_rds, repo_root, tmp_path
     assert out.exists(), p.stdout
     names = set(read_rds(out)["names"])
     assert {"strong.z", "random.z", "null.z", "XtX"}.issubset(names)
+
+
+def test_mash_preprocessing_random_null_tensorqtl(run_sos, read_rds, repo_root, tmp_path):
+    """The module page's example: per-chromosome tensorQTL files listed in a sumstats list."""
+    cwd = tmp_path / "rn"
+    fx = repo_root / "tests/fixtures/mash"
+    p = run_sos(repo_root / "pipeline/mash_preprocessing.ipynb", "random_null_tensorqtl",
+                dict(name="toy_mash", region_file=fx / "protocol_example.region",
+                     sum_files=fx / "protocol_example.sumstats_list.txt",
+                     traits=["Mic_De_Jager_eQTL", "Ast_De_Jager_eQTL"], cwd=cwd,
+                     sig_p_cutoff="0.1", modular_script_dir=repo_root / "code/script"),
+                cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = cwd / "toy_mash.mash_input.rds"
+    assert out.exists(), p.stdout
+    names = set(read_rds(out)["names"])
+    assert {"strong.z", "random.z", "null.z", "XtX"}.issubset(names)

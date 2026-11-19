@@ -1,0 +1,197 @@
+"""Workflow Builder commands are generated from the module pages (website/builder_registry.py).
+
+The selection rules fail closed: one example is used automatically, several need a
+`builder` tag, and anything ambiguous or missing is an error naming the cell.
+"""
+from __future__ import annotations
+
+import importlib.util
+import json
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO = Path(__file__).resolve().parents[2]
+spec = importlib.util.spec_from_file_location("builder_registry", REPO / "website/builder_registry.py")
+reg = importlib.util.module_from_spec(spec)
+sys.modules["builder_registry"] = reg  # dataclasses look the module up by name
+spec.loader.exec_module(reg)
+
+
+def cand(cell, wf, cmd="sos run pipeline/m.ipynb x", tags=(), meta=None):
+    return reg.Candidate("m", cell, wf, cmd, list(tags), meta or {})
+
+
+def test_single_untagged_example_is_used():
+    c = cand(1, "qc")
+    assert reg.select([c], "m", "qc") is c
+
+
+def test_several_untagged_examples_need_a_tag():
+    with pytest.raises(reg.RegistryError, match="tag the builder's one"):
+        reg.select([cand(1, "qc"), cand(2, "qc")], "m", "qc")
+
+
+def test_tagged_example_wins_over_untagged():
+    tagged = cand(2, "qc", tags=["builder"])
+    assert reg.select([cand(1, "qc"), tagged], "m", "qc") is tagged
+
+
+def test_two_tagged_examples_are_an_error():
+    with pytest.raises(reg.RegistryError, match="2 cells tagged"):
+        reg.select([cand(1, "qc", tags=["builder"]), cand(2, "qc", tags=["builder"])], "m", "qc")
+
+
+def test_named_variant_is_selected_by_its_tag():
+    std = cand(1, "cis")
+    inter = cand(2, "cis", tags=["builder:interaction"])
+    assert reg.select([std, inter], "m", "cis", "interaction") is inter
+    assert reg.select([std, inter], "m", "cis") is std  # the plain workflow ignores the variant
+
+
+def test_missing_example_is_an_error():
+    with pytest.raises(reg.RegistryError, match="no example command"):
+        reg.select([cand(1, "other")], "m", "qc")
+
+
+def test_combined_run_matches_its_first_workflow():
+    c = cand(1, "qtl_dataset_construct+susie_twas")
+    assert reg.select([c], "m", "qtl_dataset_construct") is c
+
+
+def test_declared_inputs_outputs_are_shown():
+    c = cand(1, "qc", meta={"inputs": {"geno": {"kind": "plink", "path": "a/b.bed"}},
+                            "outputs": {"cwd": {"kind": "directory", "path": "output/qc"}}})
+    assert reg.io_of(c) == {"i": ["a/b.bed"], "o": ["output/qc"]}
+
+
+def _step(m, wf, cmd, ins, outs):
+    return (m, wf), reg.Candidate(m, 1, wf, cmd, [], {"inputs": ins, "outputs": outs})
+
+
+UP = _step("a", "make", "sos run pipeline/a.ipynb make --cwd output/a",
+           {}, {"cwd": {"kind": "directory", "path": "output/a"}})
+
+
+def _down(source="a.make.cwd", path="output/a/x.bed", extra=""):
+    ins = {"geno": {"kind": "plink", "path": path}}
+    if source:
+        ins["geno"]["source"] = source
+    return _step("b", "use", f"sos run pipeline/b.ipynb use --geno {path}{extra} --cwd output/b",
+                 ins, {"cwd": {"kind": "directory", "path": "output/b"}})
+
+
+def test_linked_input_passes():
+    assert reg.check_io(dict([UP, _down()]), set()) == []
+
+
+def test_input_in_command_must_be_declared():
+    errs = reg.check_io(dict([UP, _down(extra=" --ref tests/fixtures/x.fa")]), set())
+    assert any("not declared as an input" in e for e in errs)
+
+
+def test_source_must_be_a_builder_output():
+    errs = reg.check_io(dict([UP, _down(source="a.other.cwd")]), set())
+    assert any("not a builder step output" in e for e in errs)
+
+
+def test_input_must_sit_under_its_source():
+    errs = reg.check_io(dict([UP, _down(path="output/z/x.bed")]), set())
+    assert any("is not under" in e for e in errs)
+
+
+def test_unlinked_output_input_is_an_error_unless_known():
+    step = dict([UP, _down(source=None)])
+    assert any("made by no builder step" in e for e in reg.check_io(step, set()))
+    assert reg.check_io(step, {("b|use", "output/a/x.bed")}) == []
+
+
+def test_stale_known_gap_is_an_error():
+    errs = reg.check_io(dict([UP, _down()]), {("b|use", "output/a/x.bed")})
+    assert any("no longer applies" in e for e in errs)
+
+
+# ---- the repository itself -------------------------------------------------------
+
+BUILT = reg.build()
+SELECTED = BUILT[3]
+
+
+def test_registry_has_no_errors():
+    assert BUILT[2] == []
+
+
+def test_committed_builder_matches_generator():
+    """The builder page is assembled from website/builder/ and the module pages; never edit it by hand."""
+    assert reg.committed_cell() == reg.render_cell(BUILT[0], BUILT[1], BUILT[3]), (
+        "the builder notebook is out of date: run website/builder_registry.py --write")
+
+
+def test_page_template_is_xml():
+    """page.js parses the template as XML (so <sc-for> can sit inside table rows); it must stay well formed."""
+    import xml.dom.minidom
+    xml.dom.minidom.parseString("<root>" + reg.page_template() + "</root>")
+
+
+def test_page_previews_example_inputs():
+    """Each text example file a command reads gets a preview on the page."""
+    data = reg.page_data(*BUILT[:2], BUILT[3])
+    assert len(data["prev"]) > 20
+    assert all(len(v["rows"]) >= 1 and v["cols"] >= len(v["rows"][0]) for v in data["prev"].values())
+
+
+UNTESTED = REPO / "website" / "builder" / "untested_steps.json"
+
+
+def test_untested_steps_are_real_and_explained():
+    """tests/notebooks/test_builder_examples.py runs every builder command except the ones
+    listed in untested_steps.json; each listed step must exist and say why it is skipped."""
+    data = json.loads(UNTESTED.read_text(encoding="utf-8"))
+    known = set(data["steps"])
+    assert known - {f"{m}|{wf}" for m, wf in SELECTED} == set(), "gone from the builder: remove"
+    assert known == set(data.get("reasons", {})), "every listed step needs a reason"
+    assert all(len(r) > 20 for r in data["reasons"].values())
+
+
+def _help(notebook):
+    r = subprocess.run([shutil.which("sos"), "run", str(notebook), "-h"],
+                       capture_output=True, text=True, timeout=300, cwd=REPO)
+    return r.stdout + r.stderr
+
+
+def _norm(opt):
+    opt = opt.lstrip("-").replace("-", "_").lower()
+    return opt[3:] if opt.startswith("no_") else opt
+
+
+@pytest.mark.skipif(shutil.which("sos") is None, reason="needs sos")
+@pytest.mark.parametrize("module", sorted({m for m, _ in SELECTED}))
+def test_builder_options_exist(module):
+    """Every workflow and --option in a builder command is listed by `sos run <module> -h`."""
+    h = _help(reg.notebooks()[module])
+    opts = {_norm(o.replace("[no-]", "")) for o in re.findall(r"(?<![\w-])--(?:\[no-\])?[A-Za-z][\w-]*", h)}
+    wfs = set(re.findall(r"^\s{2}(\w+)\s*$", h.split("Sections")[0], re.M))
+    bad = []
+    for (m, wf), c in SELECTED.items():
+        if m != module:
+            continue
+        toks = shlex.split(reg.sos_line(c.command).replace("`", " "))
+        bad += [f"{wf}: workflow {w}" for w in toks[3].split("+") if wfs and w not in wfs]
+        bad += [f"{wf}: {t}" for t in toks[4:] if t.startswith("--") and _norm(t) not in opts]
+    assert bad == []
+
+
+def test_build_is_deterministic():
+    second = reg.build()
+    assert reg.dump(BUILT[0]) == reg.dump(second[0]) and reg.dump(BUILT[1]) == reg.dump(second[1])
+    assert BUILT[2] == second[2]
+
+
+def test_path_args_skip_names_and_keep_placeholders():
+    cmd = "sos run pipeline/m.ipynb qc --genoFile a/b.bed --name x/y --ref <path/to/ref> --cwd out/qc"
+    assert reg.path_args(cmd) == [("--genoFile", "a/b.bed"), ("--ref", "<path/to/ref>"), ("--cwd", "out/qc")]
