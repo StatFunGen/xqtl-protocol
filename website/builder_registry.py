@@ -11,6 +11,7 @@ and page_content.json (method choices, intros, example outputs), with this data:
   io        {"module|workflow": {"i": [input paths], "o": [output paths]}}
   untested  steps not run on the example data, with their reasons (untested_steps.json)
   prev      the first rows of each example input file the commands read
+  ext       the inputs of each step that the user supplies (no producing step, no setup line)
 
 Selecting the command (fails closed, never guesses):
   * A code cell tagged ``builder`` (or ``builder:<variant>`` for a named variant)
@@ -306,7 +307,11 @@ def page_data(cmdlib, wio, selected):
     data = {"cmd": {f"{m}|{e['wf']}": e["cmd"] for m, l in cmdlib.items() for e in l}, "io": wio,
             "untested": untested["steps"], "untestedWhy": untested["reasons"], "prev": prev,
             "after": {f"{m}|{wf}": [a.replace(".", "|", 1) for a in c.meta.get("after", [])]
-                      for (m, wf), c in sorted(selected.items()) if c.meta.get("after")}}
+                      for (m, wf), c in sorted(selected.items()) if c.meta.get("after")},
+            # inputs a user supplies: declared without a producing step and not written by setup lines
+            "ext": {f"{m}|{wf}": paths for (m, wf), c in sorted(selected.items())
+                    if (paths := [v["path"] for v in c.meta.get("inputs", {}).values()
+                                  if v.get("source", "user") == "user"])}}
     data.update({k: content[k] for k in ("meth", "intro", "bench", "outPrev")})
     return data
 
