@@ -31,8 +31,8 @@
 
   <div style="display: flex; flex-direction: column; align-items: stretch">
     <sc-for list="{{flow}}" as="ph">
-      <sc-if value="{{ph.arrow}}"><div aria-hidden="true" style="display: flex; justify-content: center; padding: 4px 0"><svg width="14" height="26" viewBox="0 0 14 26"><path d="M7 0 V20" stroke="#202b35" stroke-width="1.6"></path><path d="M2 17 L7 24 L12 17" fill="none" stroke="#202b35" stroke-width="1.6"></path></svg></div></sc-if>
-      <div style="{{ph.labelStyle}}">{{ph.label}}</div>
+      <sc-if value="{{ph.arrow}}"><div aria-hidden="true" style="display: flex; justify-content: center; padding: 4px 0"><svg width="14" height="26" viewBox="0 0 14 26"><path d="M7 0 V21" stroke="#9fb3c6" stroke-width="1.5"></path><path d="M3 18 L7 23 L11 18" fill="none" stroke="#9fb3c6" stroke-width="1.5"></path></svg></div></sc-if>
+      <div style="{{ph.labelStyle}}"><span style="{{ph.numStyle}}">{{ph.n}}</span>{{ph.label}}</div>
       <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center">
         <sc-for list="{{ph.boxes}}" as="bx">
           <div style="{{bx.style}}">
@@ -40,7 +40,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px">
               <sc-for list="{{bx.groups}}" as="gr">
                 <div style="{{gr.style}}">
-                  <sc-if value="{{gr.title}}"><div style="font-size: 14px; font-weight: 600; color: var(--teal); padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid var(--ln)">{{gr.title}}</div></sc-if>
+                  <sc-if value="{{gr.title}}"><div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink2); margin: 0 0 4px 8px">{{gr.title}}</div></sc-if>
                   <sc-for list="{{gr.mods}}" as="m">
                     <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" title="{{m.desc}}" style="{{m.style}}">{{m.label}}<sc-if value="{{m.soon}}"><span style="display: block; font-size: 11.5px; font-weight: 400; color: var(--ink2)">Coming soon</span></sc-if></button>
                   </sc-for>
@@ -613,8 +613,6 @@ var FLOW = [
   ['Integration', 7, [['GWAS Integration', [[null, ['SuSiE_enloc', 'twas_ctwas', 'colocboost', 'intact']]]], ['Rare-variant xQTL', [[null, ['watershed']]]]]],
   ['Interpretation', 8, [['Enrichment & Validation', [[null, ['eoo_enrichment', 'gsea', 'gregor', 'sldsc_enrichment']]]], ['xQTL Modifier Score', [[null, ['ems_training', 'ems_prediction']]]]]]
 ];
-// phase colours from the original builder (text, tint)
-var PHASE_C = { 1: ['#0f5257', '#ecf1f2'], 2: ['#1f6b3a', '#edf3ef'], 3: ['#1a4e89', '#edf1f6'], 4: ['#8a4b0a', '#f6f1eb'], 5: ['#4a3d8f', '#f1eff6'], 6: ['#8c2b46', '#f6eef0'], 7: ['#6b2d7a', '#f3eef4'], 8: ['#4a5a1e', '#f1f2ed'] };
 var SOON = {METAL: 1, watershed: 1, ems_prediction: 1, qr_and_twas: 1};
 var LABEL = {}, STAGE_OF = {}, DESC = {};
 CATALOG.forEach(function (g, gi) { g[2].forEach(function (m) { LABEL[m[0]] = m[1]; STAGE_OF[m[0]] = gi; DESC[m[0]] = m[2]; }); });
@@ -767,8 +765,9 @@ class Component {
         badge: 'width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; ' + (active ? 'background: #19354a; color: #ffffff' : 'background: #eef2f5; color: #63717d'),
         rail: gi < CATALOG.length - 1 ? 'flex: 1 1 auto; width: 2px; background: #dce3e8; margin: 4px 0' : 'flex: 1 1 auto; width: 2px; background: transparent' };
     });
+    // Resources-site look: white cards with a hairline border, navy titles, teal for the route
     var flow = FLOW.map(function (ph, pi) {
-      var c = PHASE_C[ph[1]], hasSel = false, nOn = 0;
+      var hasSel = false, nOn = 0;
       var boxes = ph[2].map(function (bx) {
         var groups = bx[1].map(function (gr) {
           var mods = gr[1].map(function (id) {
@@ -776,19 +775,21 @@ class Component {
             if (sel) hasSel = true; if (on) nOn++;
             return { label: LABEL[id] || id, desc: DESC[id] || '', soon: soon, pressed: String(sel),
               pick: function () { self.setState({ selMod: sel ? '' : id }); },
-              style: 'display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; line-height: 1.35; padding: 6px 8px; margin: 1px 0; border-radius: 5px; cursor: pointer; border: 1px solid ' + (sel ? c[0] : 'transparent') + '; border-left: 3px solid ' + (sel ? c[0] : (on ? c[0] : 'transparent')) + '; background: ' + (sel ? c[0] : (on ? '#ffffff' : 'transparent')) + '; color: ' + (sel ? '#ffffff' : (soon ? '#63717d' : '#202b35')) + '; font-weight: ' + (on || sel ? '600' : '400') + '; opacity: ' + (dim ? '0.35' : '1') };
+              style: 'display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; line-height: 1.35; padding: 6px 10px; margin: 1px 0; cursor: pointer; border: 0; border-left: 2px solid ' + (sel ? '#19354a' : (on ? '#3d6289' : 'transparent')) + '; border-radius: 0 6px 6px 0; background: ' + (sel ? '#19354a' : (on ? '#e8eef5' : 'transparent')) + '; color: ' + (sel ? '#ffffff' : (on ? '#19354a' : (soon ? '#63717d' : '#202b35'))) + '; font-weight: ' + (on || sel ? '600' : '400') + '; opacity: ' + (dim ? '0.35' : '1') };
           });
-          return { title: gr[0], mods: mods, style: 'background: #ffffff; border: 1px solid ' + (gr[0] ? '#c9d3da' : 'transparent') + '; border-radius: 6px; padding: ' + (gr[0] ? '8px 10px' : '0') };
+          return { title: gr[0], mods: mods, style: gr[0] ? 'padding: 8px 0 4px; border-top: 1px solid #eef2f5' : 'padding: 0' };
         });
         var wide = bx[1].length > 1;
-        return { title: bx[0], groups: groups, titleStyle: 'font-size: 17px; font-weight: 600; color: ' + c[0] + '; margin-bottom: 8px',
-          style: 'flex: ' + (wide || ph[2].length === 1 ? '1 1 100%' : '1 1 300px') + '; min-width: 0; box-sizing: border-box; max-width: ' + (wide ? '100%' : (ph[2].length === 1 ? '460px' : '100%')) + '; background: ' + c[1] + '; border-top: 3px solid ' + c[0] + '; border-radius: 4px; padding: 12px 14px' };
+        return { title: bx[0], groups: groups, titleStyle: 'font-size: 16px; font-weight: 700; color: #19354a; margin-bottom: 8px',
+          style: 'flex: ' + (wide || ph[2].length === 1 ? '1 1 100%' : '1 1 300px') + '; min-width: 0; box-sizing: border-box; max-width: ' + (wide || ph[2].length > 1 ? '100%' : '460px') + '; background: #ffffff; border: 1px solid #dce3e8; border-radius: 8px; box-shadow: 0 1px 2px rgba(25, 53, 74, 0.05); padding: 14px 16px' };
       });
-      return { label: ph[0].toUpperCase(), arrow: pi > 0, boxes: boxes, hasSel: hasSel,
-        labelStyle: 'text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; margin: 2px 0 8px; color: ' + c[0] + '; opacity: ' + (mapRoute && !nOn ? '0.45' : '1') };
+      var faded = mapRoute && !nOn;
+      return { n: pi + 1, label: ph[0].toUpperCase(), arrow: pi > 0, boxes: boxes, hasSel: hasSel,
+        labelStyle: 'display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; margin: 2px 0 8px; color: #63717d; opacity: ' + (faded ? '0.45' : '1'),
+        numStyle: 'width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; letter-spacing: 0; background: ' + (nOn ? '#19354a' : '#eef2f5') + '; color: ' + (nOn ? '#ffffff' : '#63717d') };
     });
     var mapViews = [['all', 'All stages'], ['route', 'My route']].map(function (v) { var on = s.mapView === v[0]; return { label: v[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ mapView: v[0] }); } }; });
-    var mapNote = mapRoute ? 'Modules not on your route are faded.' : 'Modules on your route are marked with a coloured edge.';
+    var mapNote = mapRoute ? 'Modules not on your route are faded.' : 'Modules on your route are highlighted, and their phase numbers turn dark.';
 
     var selVals = { stage: '', label: '', what: '', inputs: [], outputs: [], fromEarlier: false, hasOut: false, outNote: '', outHead: [], outRows: [], doc: '', status: '', statusStyle: '', canTry: false, tryLabel: '', tryIt: function () {} };
     if (s.selMod && LABEL[s.selMod]) {
