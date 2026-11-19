@@ -150,8 +150,9 @@ def test_cis_interaction_via_sos(run_sos, repo_root, tmp_path):
         "cwd": tmp_path, "numThreads": 1,
         "modular_script_dir": repo_root / MSD}, timeout=1200)
     assert p.returncode == 0, p.stdout + p.stderr
-    nominal = tmp_path / NOMINAL
-    assert nominal.exists()
+    # interaction outputs carry the interaction name: <prefix>_chr22_sex.cis_qtl.pairs.tsv.gz
+    nominal = tmp_path / NOMINAL.replace(".cis_qtl.pairs", "_sex.cis_qtl.pairs")
+    assert nominal.exists(), sorted(x.name for x in tmp_path.iterdir())
     header = _header(nominal)
     assert {"pvalue_sex_interaction", "qvalue_main", "qvalue_interaction"}.issubset(header), header
 
@@ -171,7 +172,7 @@ def test_cis_interaction_file_via_sos(run_sos, repo_root, tmp_path):
         "cwd": tmp_path, "numThreads": 1,
         "modular_script_dir": repo_root / MSD}, timeout=1200)
     assert p.returncode == 0, p.stdout + p.stderr
-    found = sorted(tmp_path.glob("*.cis_qtl.pairs.tsv.gz"))
-    assert len(found) == 1, sorted(x.name for x in tmp_path.iterdir())
-    header = _header(found[0])
+    nominal = tmp_path / NOMINAL.replace(".cis_qtl.pairs", "_age.cis_qtl.pairs")
+    assert nominal.exists(), sorted(x.name for x in tmp_path.iterdir())
+    header = _header(nominal)
     assert {"pvalue_age_interaction", "qvalue_main", "qvalue_interaction"}.issubset(header), header
