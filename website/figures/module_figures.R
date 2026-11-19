@@ -122,7 +122,7 @@ best <- kk[which.max(eg)]
 p3b <- ggplot(data.frame(kk, eg), aes(kk, eg)) +
   geom_vline(xintercept = best, linetype = 2, colour = red) +
   geom_line(colour = blue, linewidth = 0.8) + geom_point(colour = navy, size = 2) +
-  annotate("text", x = best, y = min(eg), label = " best number here", hjust = 0, vjust = 0, colour = red, size = ann) +
+  annotate("text", x = best, y = min(eg), label = " most QTL genes in this simulation", hjust = 0, vjust = 0, colour = red, size = ann) +
   annotate("text", x = 60, y = min(eg) + 150, label = "too many factors can\nremove real signal", hjust = 1, vjust = 0, colour = grey, size = ann) +
   labs(title = "QTL genes found depend on the number", x = "Hidden factors added",
        y = "Genes with a QTL") + theme_x()
@@ -137,7 +137,9 @@ lib <- rlnorm(ns, log(2e7), 0.35)
 comp <- matrix(1, ng, ns); hot <- sample(ns, 120); comp[1:40, hot] <- 25
 mu <- sweep(base * comp, 2, colSums(base * comp), "/") * rep(lib, each = ng)
 Y <- matrix(rnbinom(ng * ns, mu = mu, size = 10), ng)
-tmm <- function(Y, logratio_trim = 0.3, sum_trim = 0.05) {   # TMM factors (Robinson & Oshlack 2010)
+# TMM factors (Robinson & Oshlack 2010), written out so the script needs only ggplot2. On this
+# matrix they equal edgeR::calcNormFactors(DGEList(Y), method = "TMM") to machine precision (edgeR 4.8.2).
+tmm <- function(Y, logratio_trim = 0.3, sum_trim = 0.05) {
   N <- colSums(Y); uq <- apply(sweep(Y, 2, N, "/"), 2, quantile, 0.75)
   ref <- which.min(abs(uq - mean(uq)))
   f <- sapply(seq_len(ncol(Y)), function(j) {
