@@ -113,7 +113,7 @@ var SOON = {METAL: 1, watershed: 1, ems_prediction: 1, qr_and_twas: 1};
 var LABEL = {}, STAGE_OF = {}, DESC = {};
 CATALOG.forEach(function (g, gi) { g[2].forEach(function (m) { LABEL[m[0]] = m[1]; STAGE_OF[m[0]] = gi; DESC[m[0]] = m[2]; }); });
 var FIXED_CHOICES = {
-  TensorQTL: [['cis', 'Cis scan', true, 'Tests variants near each gene. The protocol’s main analysis.'], ['interaction', 'Interaction scan', false, 'Cis scan with a genotype × covariate term, for example sex.'], ['trans', 'Trans scan', false, 'Tests variants far from each gene, on other chromosomes too.']],
+  TensorQTL: [['cis', 'Cis scan', true, 'Tests variants near each gene. The protocol’s main analysis.'], ['cis:interaction', 'Interaction scan', false, 'Cis scan with a genotype × covariate term, for example sex.'], ['trans', 'Trans scan', false, 'Tests variants far from each gene, on other chromosomes too.']],
   RNA_calling: [['rnaseqc_call', 'RNA-SeQC gene counts', true, 'Gene-level read counts and QC metrics.'], ['rsem_call', 'RSEM', false, 'Transcript and gene expression estimates.']],
   methylation_calling: [['sesame', 'SeSAMe', true, 'Beta values with SeSAMe normalization.'], ['minfi', 'minfi', false, 'Beta values with quantile normalization; needs several samples.']]
 };
@@ -136,7 +136,7 @@ var REF_RX = /(^reference_data\/|ld_reference|\/reference\/|\.gtf|\.fa(sta)?(\.g
 // replace one declared input path, as a whole word, in a command
 function swapPath(c, p, to) { var esc = p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); return c.replace(new RegExp('(^|[\\s=\'"`])' + esc + '(?=$|[\\s\'"`;|)])', 'g'), function (_, pre) { return pre + to; }); }
 var EXAMPLES = [
-  { id: 'eqtl', stage: 3, label: 'eQTL discovery, starting from prepared data', study: { goals: { discover: true } }, title: 'Example: discover eQTLs', learn: 'How genotypes and gene expression are combined to find variants associated with each gene’s expression.', given: 'Genotypes, an expression matrix and covariates for a small set of samples on chromosome 22.', result: 'Variant–expression association results and the list of genes with a significant eQTL.', after: 'Open the results table, then use the same workflow with your own data.' },
+  { id: 'eqtl', stage: 3, label: 'eQTL discovery, starting from prepared data', study: { goals: { discover: true } }, title: 'Example: discover eQTLs', learn: 'How genotypes and gene expression are combined to find variants associated with each gene’s expression.', given: 'Genotypes on chromosomes 21 and 22, plus an expression matrix and covariates for the same small set of samples. The expression data cover chromosome 22, so association is tested there.', result: 'Variant–expression association results and the list of genes with a significant eQTL.', after: 'Open the results table, then use the same workflow with your own data.' },
   { id: 'finemap', stage: 4, label: 'Fine-mapping, from the same prepared data', study: { goals: { discover: true, finemap: true } }, title: 'Example: fine-map eQTL signals', learn: 'How fine-mapping narrows a QTL signal to credible sets of likely causal variants.', given: 'The same example genotypes, expression and covariates.', result: 'Association results, then credible sets and TWAS weights for an example gene.', after: 'Look at the credible sets, then connect them to a GWAS trait.' },
   { id: 'gwas', stage: 5, label: 'GWAS integration, colocalization with an example trait', study: { goals: { discover: true, finemap: true, gwas: true }, link: 'colocboost' }, title: 'Example: connect eQTLs to a GWAS trait', learn: 'How colocalization asks whether a QTL and a trait association share a causal variant.', given: 'The example QTL data plus example GWAS summary statistics and an LD reference.', result: 'Colocalized variants shared by the gene and the trait.', after: 'Prioritize the shared genes, or test enrichment.' }
 ];
@@ -162,7 +162,7 @@ function buildRoute(s, methods, D) {
     add('pf', 'phenotype_formatting', ['phenotype_by_chrom'], 'Phenotype files per chromosome');
     add('cf', 'covariate_formatting', ['merge_genotype_pc'], 'Merge covariates with genotype PCs');
     addChoice('hf', 'covariate_hidden_factor', 'Estimate hidden factors');
-    if (g.discover || g.mash || s.quantile === 'interaction') { addChoice('tq', 'TensorQTL', 'Association scan', s.quantile === 'interaction' ? 'interaction' : null); add('pp', 'qtl_association_postprocessing', ['default'], 'Multiple-testing correction'); }
+    if (g.discover || g.mash || s.quantile === 'interaction') { addChoice('tq', 'TensorQTL', 'Association scan', s.quantile === 'interaction' ? 'cis:interaction' : null); add('pp', 'qtl_association_postprocessing', ['default'], 'Multiple-testing correction'); }
     if (s.cohorts === 'multiple') add('metal', 'METAL', ['METAL'], 'Meta-analysis across cohorts', { soon: true });
     if (g.mash) { add('mp', 'mash_preprocessing', ['random_null_tensorqtl'], 'Prepare effects for MASH'); add('mx', 'mixture_prior', ['ed_bovy'], 'Learn sharing patterns'); add('mf', 'mash_fit', ['mash'], 'Fit MASH'); add('mpo', 'mash_posterior', ['posterior'], 'Shared and specific effects'); }
   }
@@ -493,7 +493,7 @@ class Component {
         aria: label + ', ' + mods.length + ' modules' + (nOn ? ', ' + nOn + ' on your route' : '') + (opt ? ', optional' : ''),
         nid: 'xqb-node-' + pi + (gi == null ? '' : '-' + gi),
         cls: 'xqb-node' + (nOn ? ' is-route' : ' is-off') + (opt ? ' is-opt' : '') + (sel ? ' is-sel' : '') + (gi != null ? ' is-stream' : ''),
-        pick: function () { self.setState({ phase: sel ? null : pi, stream: sel ? null : (gi == null ? null : gi), selMod: '' }); if (!sel) scrollTo('xqb-phase'); } };
+        pick: function () { if (!sel) app.focusNext = 'xqb-phase-h'; self.setState({ phase: sel ? null : pi, stream: sel ? null : (gi == null ? null : gi), selMod: '' }); if (!sel) scrollTo('xqb-phase'); } };
     };
     var groupTitles = function (pi) { var t = []; FLOW[pi][2].forEach(function (bx) { bx[1].forEach(function (gr) { t.push(gr[0] || bx[0]); }); }); return t; };
     var smap = {
@@ -528,6 +528,7 @@ class Component {
       phaseVals = { kicker: 'PHASE ' + (pi + 1) + (gi != null ? ' · ' + STREAMS[gi][0].toUpperCase() + ' STREAM' : ''),
         label: ph[0] === 'Inputs' ? 'Reference data preparation' : (pi === 2 ? 'Data pre-processing' : (pi === 3 ? 'QTL association testing' : (pi === 5 ? 'Fine-mapping' : (pi === 6 ? 'GWAS integration' : (pi === 7 ? 'Enrichment, validation and interpretation' : (pi === 1 ? 'Molecular phenotype quantification' : 'Multivariate modeling')))))),
         what: pi === 2 ? (gi != null ? STREAMS[gi][2] : 'Genotype, phenotype and covariate preparation run side by side and converge on association testing.') : PHASES[pi][0] + '. ' + PHASES[pi][1],
+        srHint: (gi != null ? STREAMS[gi][0] + ' stream, ' : '') + groups.reduce(function (a, g) { return a + g.mods.length; }, 0) + ' modules listed below. Close returns you to the map',
         groups: groups, hasMod: !!modVals.label, canBuild: !!preset, buildLabel: preset ? preset.label : '',
         build: function () {
           var ex = preset.example && s.mode === 'example' ? preset.example : '';
@@ -590,8 +591,8 @@ function paint() {
   kids(tpl, [app.renderVals()], frag);
   root.replaceChildren(frag);
   Object.keys(open).forEach(function (id) { var d = document.getElementById(id); if (d) d.open = open[id]; });
-  if (app.focusNext) { fid = app.focusNext; sel = null; app.focusNext = null; }
-  if (fid) { var f = document.getElementById(fid); if (f) { f.focus(); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+  var jump = !!app.focusNext; if (jump) { fid = app.focusNext; sel = null; app.focusNext = null; }
+  if (fid) { var f = document.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 // in-page links scroll here instead of sending the parent page to the builder's own URL
 root.addEventListener('click', function (e) {
