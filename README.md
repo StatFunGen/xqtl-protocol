@@ -47,7 +47,7 @@ that route with the commands to run them.
 
 The ADSP FGC Standardization Workgroup curates the reference data with NIAGADS.
 The standardized files and their specifications are on
-[Synapse (syn36416587)](https://www.synapse.org/Synapse:syn36416587).
+[the AD Knowledge Portal (syn36416587)](https://www.synapse.org/Synapse:syn36416587).
 [Where to get reference data](https://statfungen.github.io/xqtl-protocol/reference-data-sources/)
 lists each file, its source and the modules that use it.
 
