@@ -330,11 +330,7 @@ def page_data(cmdlib, wio, selected):
     return data
 
 
-HEADER = ("# xQTL Analysis Workflow Builder\n\n"
-          "Not set up yet? Start with [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl-protocol-demo) "
-          "to install the software stack and run a first pipeline on the example data shipped in this repository. "
-          "Each module below links to its own page, where the inputs, expected outputs and full command interface "
-          "are documented.\n\n")
+HEADER = "# xQTL Analysis Workflow Builder\n\n"
 # In the site's frame: hide the duplicate title and open links in the main window.
 EMBED = ("if(window.self!==window.top){document.documentElement.classList.add('xq-embedded');"
          "var b=document.createElement('base');b.target='_top';document.head.appendChild(b);}")
