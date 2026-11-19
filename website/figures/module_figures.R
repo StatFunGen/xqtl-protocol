@@ -80,36 +80,8 @@ p1b <- ggplot(d1b, aes(pos, lp, colour = r2)) +
   theme(legend.key.width = unit(1.2, "cm"))
 save_panels("tensorqtl.png", list(p1a, p1b), widths = c(0.8, 1.2))
 
-## 2. QTL post-processing: correction within a gene, then across genes --------------------
-Gw <- sim_geno(n, c(10, 14, 8, 12, 9, 7), err = 0.005)               # one gene's cis window: 60 variants
-ev <- eigen(cor(Gw), only.values = TRUE)$values
-m_eff <- which(cumsum(ev) / sum(ev) >= 0.99)[1]          # eigenMT-style effective number of tests
-yv <- 0.45 * Gw[, 27] + rnorm(n)
-pv <- apply(Gw, 2, function(x) summary(lm(yv ~ x))$coefficients[2, 4])
-keep <- pv < 0.05 / m_eff
-d2a <- data.frame(i = seq_along(pv), lp = -log10(pv), keep)
-p2a <- ggplot(d2a, aes(i, lp, colour = keep)) +
-  geom_hline(yintercept = -log10(0.05 / m_eff), linetype = 2, colour = red) +
-  annotate("text", x = length(pv), y = -log10(0.05 / m_eff),
-           label = sprintf("0.05 / %d effective tests", m_eff), hjust = 1, vjust = -0.5, colour = red, size = ann) +
-  geom_point(size = 2) +
-  scale_colour_manual(values = c(`TRUE` = red, `FALSE` = sky), labels = c(`TRUE` = "passes", `FALSE` = "does not pass"), name = NULL) +
-  labs(title = "Within a gene: local threshold", x = "Variants in one gene's cis window (by position)",
-       y = expression(bold(-log[10]~p))) + theme_x()
-m <- 2000; is_e <- runif(m) < 0.25
-pmin <- ifelse(is_e, rbeta(m, 0.08, 1), runif(m))       # gene-level, locally adjusted minimum p
-d2b <- data.frame(p = pmin, sig = p.adjust(pmin, "BH") < 0.05)
-p2b <- ggplot(d2b, aes(p, fill = sig)) +
-  geom_histogram(breaks = seq(0, 1, 0.025), colour = "white", linewidth = 0.2) +
-  geom_hline(yintercept = sum(!is_e) / 40, linetype = 2, colour = grey) +
-  annotate("text", x = 0.62, y = sum(!is_e) / 40, label = "genes with no QTL\n(flat background)",
-           vjust = -1.4, colour = grey, size = ann) +
-  scale_fill_manual(values = c(`TRUE` = red, `FALSE` = sky), labels = c(`TRUE` = "FDR < 5%", `FALSE` = "not significant"), name = NULL) +
-  labs(title = "Across genes: control the FDR", x = "Gene-level p-value (after local adjustment)",
-       y = "Genes") + theme_x()
-save_panels("qtl_postprocessing.png", list(p2a, p2b))
-
-## 3. Hidden factors: choosing how many to keep -------------------------------------------
+## 2. Hidden factors: choosing how many to keep -------------------------------------------
+set.seed(2027)
 k <- 1:30; ve <- 22 * exp(-k / 3.2) + 0.6 + runif(30, 0, 0.2)
 p3a <- ggplot(data.frame(k, ve), aes(k, ve)) +
   geom_col(fill = sky, width = 0.75) + geom_col(data = data.frame(k = 1:8, ve = ve[1:8]), fill = blue, width = 0.75) +
@@ -128,7 +100,8 @@ p3b <- ggplot(data.frame(kk, eg), aes(kk, eg)) +
        y = "Genes with a QTL") + theme_x()
 save_panels("hidden_factors.png", list(p3a, p3b))
 
-## 4. Expression normalization: one gene, three scales -------------------------------------
+## 3. Expression normalization: one gene, three scales -------------------------------------
+set.seed(2028)
 # Counts for 2,000 genes x 400 samples. In some samples a few genes take a large share of the
 # reads (a composition effect), which plain library-size scaling gets wrong and TMM corrects.
 ng <- 2000; ns <- 400
@@ -167,43 +140,3 @@ p4 <- ggplot(d4, aes(v)) +
   labs(title = "One gene across 400 samples, after each step", x = NULL, y = "Samples") +
   theme_x()
 save_panels("expression_normalization.png", list(p4), h = 3.8)
-
-## 5. Methylation: beta and M values -------------------------------------------------------
-beta <- c(rbeta(6000, 1.2, 14), rbeta(7000, 14, 1.6), rbeta(1500, 4, 4))
-p5a <- ggplot(data.frame(beta), aes(beta)) + geom_density(fill = pale, colour = blue, linewidth = 0.7) +
-  annotate("text", x = 0.05, y = 2.6, label = "mostly\nunmethylated", hjust = 0, vjust = 0, size = ann, colour = navy) +
-  annotate("text", x = 0.97, y = 2.6, label = "mostly\nmethylated", hjust = 1, vjust = 0, size = ann, colour = navy) +
-  scale_y_continuous(expand = expansion(mult = c(0.02, 0.25))) +
-  labs(title = "Many CpG sites are low or high", x = "Beta value (methylated / total signal)",
-       y = "Density") + theme_x()
-bb <- seq(0.005, 0.995, length.out = 200)
-p5b <- ggplot(data.frame(bb, M = log2(bb / (1 - bb))), aes(bb, M)) +
-  annotate("rect", xmin = 0, xmax = 0.1, ymin = -Inf, ymax = Inf, fill = "#f3f6f8") +
-  annotate("rect", xmin = 0.9, xmax = 1, ymin = -Inf, ymax = Inf, fill = "#f3f6f8") +
-  geom_line(colour = red, linewidth = 0.9) +
-  annotate("text", x = 0.5, y = 5, label = "the transform spreads out\nvalues near 0 and 1", size = ann, colour = navy) +
-  labs(title = "M value = log2(beta / (1 - beta))", x = "Beta value", y = "M value") + theme_x()
-save_panels("methylation.png", list(p5a, p5b))
-
-## 6. RNA-seq calling: where the reads go --------------------------------------------------
-ns <- 12; s <- sprintf("S%02d", 1:ns)
-uniq <- runif(ns, 0.78, 0.9); multi <- runif(ns, 0.04, 0.09); unm <- 1 - uniq - multi
-uniq[9] <- 0.52; multi[9] <- 0.08; unm[9] <- 0.40                     # one poor sample
-d6 <- data.frame(sample = rep(s, 3), frac = c(uniq, multi, unm),
-                 fate = factor(rep(c("Uniquely mapped", "Multi-mapped", "Unmapped"), each = ns),
-                               levels = c("Unmapped", "Multi-mapped", "Uniquely mapped")))
-p6a <- ggplot(d6, aes(sample, frac, fill = fate)) + geom_col(width = 0.8) +
-  annotate("text", x = 9, y = 1.04, label = "check this sample", size = ann, colour = red) +
-  scale_fill_manual(values = c(`Uniquely mapped` = blue, `Multi-mapped` = sky, Unmapped = sand), name = NULL) +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 1.08), breaks = seq(0, 1, 0.25)) +
-  labs(title = "STAR: where each sample's reads go", x = "Sample", y = "Reads") + theme_x()
-tpm <- rlnorm(9000, 0.5, 2.2); tpm[runif(9000) < 0.3] <- 0
-p6b <- ggplot(data.frame(l = log10(tpm + 0.01)), aes(l)) +
-  geom_histogram(bins = 40, fill = sky, colour = "white", linewidth = 0.2) +
-  geom_vline(xintercept = log10(0.1), linetype = 2, colour = red) +
-  annotate("text", x = log10(0.1), y = Inf, label = "TPM 0.1", hjust = -0.1, vjust = 1.5, size = ann, colour = red) +
-  annotate("text", x = -0.85, y = 2100, label = "tall bar on the left:\ngenes with TPM 0", hjust = 0, vjust = 1,
-           size = ann, colour = grey, lineheight = 0.9) +
-  labs(title = "Expression levels in one sample", x = expression(bold(log[10]~"(TPM + 0.01)")),
-       y = "Genes") + theme_x()
-save_panels("rna_calling.png", list(p6a, p6b), widths = c(1.2, 0.9))
