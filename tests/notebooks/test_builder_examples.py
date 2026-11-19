@@ -98,6 +98,14 @@ def _repo_state():
                           cwd=REPO, capture_output=True, text=True).stdout
 
 
+def _task_errors(tmp_path, n=3, lines=25):
+    """The end of the newest step .stderr files, where SoS leaves the real error."""
+    errs = sorted((f for f in tmp_path.rglob("*.stderr") if f.stat().st_size > 0),
+                  key=lambda f: f.stat().st_mtime)[-n:]
+    return "".join(f"\n--- {f.relative_to(tmp_path)}\n"
+                   + "\n".join(f.read_text(errors="replace").splitlines()[-lines:]) for f in errs)
+
+
 def _run_group(steps, tmp_path):
     for d in ("pipeline", "code", "tests"):
         (tmp_path / d).symlink_to(REPO / d)
@@ -107,11 +115,12 @@ def _run_group(steps, tmp_path):
         script = CMDS[(m, wf)].replace("sos run ", f"{sos_bin()} run ")
         p = subprocess.run(["bash", "-euo", "pipefail", "-c", script], cwd=tmp_path,
                            capture_output=True, text=True, timeout=2400, env=env)
-        assert p.returncode == 0, f"{m}|{wf}\n{script}\n{p.stdout[-4000:]}\n{p.stderr[-4000:]}"
+        assert p.returncode == 0, f"{m}|{wf}\n{script}\n{p.stdout[-4000:]}\n{p.stderr[-4000:]}{_task_errors(tmp_path)}"
         for o in WIO.get(f"{m}|{wf}", {}).get("o", []):
             o = tmp_path / o
-            made = [f for f in o.rglob("*") if f.is_file() and f.stat().st_size > 0
-                    and not f.name.endswith((".stderr", ".stdout"))] if o.is_dir() else ([o] if o.exists() else [])
+            # any result file counts, including an empty `.done` marker; SoS logs do not
+            made = [f for f in o.rglob("*") if f.is_file()
+                    and not f.name.endswith((".stderr", ".stdout", ".sh"))] if o.is_dir() else ([o] if o.exists() else [])
             assert made, f"{m}|{wf}: {o} has no output files"
         # a command must write under output/, never next to the example files it reads
         assert _repo_state() == before, f"{m}|{wf} wrote into the repository:\n{_repo_state()}"
