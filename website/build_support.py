@@ -45,8 +45,8 @@ WIDGET_PREFIX = (
     '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
     '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
     "<title>xQTL Analysis Workflow Builder</title>"
-    '<meta name="description" content="Choose a molecular phenotype and an analysis goal to get the FunGen-xQTL '
-    'protocol modules, in order, with example commands you can copy or download.">'
+    '<meta name="description" content="See how an xQTL analysis fits together, try it on the example data, then '
+    'get the FunGen-xQTL protocol commands for your own study, in order, to copy or download.">'
     '<link rel="canonical" href="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html">'
     '<meta property="og:type" content="website"><meta property="og:site_name" content="FunGen-xQTL Protocol">'
     '<meta property="og:title" content="xQTL Analysis Workflow Builder">'
@@ -54,11 +54,10 @@ WIDGET_PREFIX = (
     'FunGen-xQTL protocol modules, in order, with example commands.">'
     '<meta property="og:url" content="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html">'
     '<meta name="twitter:card" content="summary">'
-    "<style>"
-    "body{font:15px/1.5 Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Roboto,sans-serif;"
-    "margin:0;padding:24px;max-width:1120px;margin-inline:auto;color:#2c3338;background:#fff}"
-    "@media (prefers-color-scheme:dark){body{background:#141c24;color:#c9d4dc}}"
-    "</style></head><body>\n"
+    '<link rel="preconnect" href="https://fonts.googleapis.com">'
+    '<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700'
+    '&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">'
+    "<style>body{margin:0;padding:24px 16px;background:#fff;color:#202b35}</style></head><body>\n"
 )
 WIDGET_SUFFIX = "</body></html>\n"
 # Absolute: MyST would otherwise prepend BASE_URL to a root-relative path, or

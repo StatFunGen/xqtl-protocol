@@ -3,10 +3,14 @@
 
 The module notebooks are the single source of truth. For every workflow the builder
 offers (website/builder/workflows.json), this script finds the example command on
-the module page, checks it, and writes two JSON objects into the builder notebook:
+the module page and checks it. With --write it assembles the builder page into the
+builder notebook from website/builder/page.html (template), page.js (logic), page.css
+and page_content.json (method choices, intros, example outputs), with this data:
 
-  CMDLIB  {module: [{"wf": workflow, "cmd": command}, ...]}
-  WIO     {"module|workflow": {"i": [input paths], "o": [output paths]}}
+  cmd       {"module|workflow": command}
+  io        {"module|workflow": {"i": [input paths], "o": [output paths]}}
+  untested  steps not run on the example data, with their reasons (untested_steps.json)
+  prev      the first rows of each example input file the commands read
 
 Selecting the command (fails closed, never guesses):
   * A code cell tagged ``builder`` (or ``builder:<variant>`` for a named variant)
@@ -51,6 +55,8 @@ REPO = Path(__file__).resolve().parents[1]
 WORKFLOWS = REPO / "website" / "builder" / "workflows.json"
 KNOWN_GAPS = REPO / "website" / "builder" / "known_gaps.json"
 BUILDER = REPO / "code" / "SoS" / "xqtl_protocol_workflow_builder.ipynb"
+PAGE = REPO / "website" / "builder"
+UNTESTED = PAGE / "untested_steps.json"
 SKIP_DIRS = ("graveyard", "misc")
 # a commented-out example ("# sos run ...") is kept commented
 CMD_RE = re.compile(r"(?:#\s*)?sos run pipeline/(?P<nb>[\w]+)\.ipynb\s+(?P<wf>[\w+:]+)[^\n]*")
@@ -262,22 +268,96 @@ def dump(obj) -> str:
     return json.dumps(obj, separators=(",", ":"), ensure_ascii=False)
 
 
-def replace_json(text: str, name: str, obj) -> str:
-    start = text.index(name + "=") + len(name) + 1
-    _, n = json.JSONDecoder().raw_decode(text[start:])
-    return text[:start] + dump(obj) + text[start + n:]
+PREVIEW_ROWS, PREVIEW_COLS = 3, 6
 
 
-def write(cmdlib, wio):
+def preview(path: str):
+    """The header and first rows of a text example file, or None for binary files and folders."""
+    import gzip
+    f = REPO / path
+    if not f.is_file():
+        return None
+    try:
+        opener = gzip.open if f.suffix in (".gz", ".bgz") else open
+        with opener(f, "rt", encoding="utf-8") as h:
+            lines = []
+            for line in h:
+                if "\x00" in line:
+                    return None
+                if line.strip():
+                    lines.append(line.rstrip("\n\r"))
+                if len(lines) > PREVIEW_ROWS:
+                    break
+    except (UnicodeDecodeError, OSError, EOFError):
+        return None
+    if not lines:
+        return None
+    sep = "\t" if "\t" in lines[0] else ("," if f.name.endswith((".csv", ".csv.gz")) else None)
+    rows = [l.split(sep) for l in lines]
+    return {"rows": [r[:PREVIEW_COLS] for r in rows], "cols": len(rows[0])}
+
+
+def page_data(cmdlib, wio, selected):
+    """Everything the page shows that comes from the repository."""
+    untested = json.loads(UNTESTED.read_text(encoding="utf-8"))
+    content = json.loads((PAGE / "page_content.json").read_text(encoding="utf-8"))
+    fixtures = sorted({p for io in wio.values() for p in io["i"] if p.startswith("tests/fixtures/")})
+    prev = {p: v for p in fixtures if (v := preview(p))}
+    data = {"cmd": {f"{m}|{e['wf']}": e["cmd"] for m, l in cmdlib.items() for e in l}, "io": wio,
+            "untested": untested["steps"], "untestedWhy": untested["reasons"], "prev": prev,
+            "after": {f"{m}|{wf}": [a.replace(".", "|", 1) for a in c.meta.get("after", [])]
+                      for (m, wf), c in sorted(selected.items()) if c.meta.get("after")}}
+    data.update({k: content[k] for k in ("meth", "intro", "bench", "outPrev")})
+    return data
+
+
+HEADER = ("# xQTL Analysis Workflow Builder\n\n"
+          "Not set up yet? Start with [Environment Setup](https://statfungen.github.io/xqtl-protocol/xqtl-protocol-demo) "
+          "to install the software stack and run a first pipeline on the example data shipped in this repository. "
+          "Each module below links to its own page, where the inputs, expected outputs and full command interface "
+          "are documented.\n\n")
+# In the site's frame: hide the duplicate title and open links in the main window.
+EMBED = ("if(window.self!==window.top){document.documentElement.classList.add('xq-embedded');"
+         "var b=document.createElement('base');b.target='_top';document.head.appendChild(b);}")
+
+
+def page_template() -> str:
+    """page.html as XML, so the browser keeps <sc-for> inside table rows where it was written."""
+    t = re.sub(r"<!--.*?-->", "", (PAGE / "page.html").read_text(encoding="utf-8"), flags=re.S)
+    return re.sub(r"<(input|br|img|hr)\b([^>]*?)\s*/?>", r"<\1\2 />", t).strip()
+
+
+def render_cell(cmdlib, wio, selected) -> str:
+    """The builder notebook's one markdown cell: a short intro and the page as raw HTML."""
+    data = dump(page_data(cmdlib, wio, selected)).replace("</", "<\\/")
+    tpl = page_template()
+    css = (PAGE / "page.css").read_text(encoding="utf-8").strip()
+    js = (PAGE / "page.js").read_text(encoding="utf-8").strip()
+    html = ('<div class="xqb" id="xqb"></div>\n'
+            f'<script type="text/xml" id="xqb-tpl"><root>{tpl}</root></script>\n'
+            f'<script type="application/json" id="xqb-data">{data}</script>\n'
+            f"<style>\n{css}\n</style>\n<script>{EMBED}</script>\n<script>\n{js}\n</script>")
+    return HEADER + "````{raw} html\n" + html + "\n````\n"
+
+
+def write(cmdlib, wio, selected):
     raw = BUILDER.read_text(encoding="utf-8")
     nb = json.loads(raw)
-    cell = nb["cells"][0]
-    s = "".join(cell["source"])
-    s = replace_json(replace_json(s, "CMDLIB", cmdlib), "WIO", wio)
-    lines = s.split("\n")
-    cell["source"] = [l + "\n" for l in lines[:-1]] + ([lines[-1]] if lines[-1] else [])
+    lines = render_cell(cmdlib, wio, selected).split("\n")
+    nb["cells"][0]["source"] = [l + "\n" for l in lines[:-1]] + ([lines[-1]] if lines[-1] else [])
     indent = 1 if raw.startswith('{\n "') else 2
     BUILDER.write_text(json.dumps(nb, indent=indent, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def committed_cell() -> str:
+    return "".join(json.loads(BUILDER.read_text(encoding="utf-8"))["cells"][0]["source"])
+
+
+def committed_data():
+    """The data object in the committed builder notebook."""
+    s = committed_cell()
+    i = s.index('id="xqb-data">') + len('id="xqb-data">')
+    return json.loads(s[i:s.index("</script>", i)].replace("<\\/", "</"))
 
 
 def main(argv=None):
@@ -286,26 +366,26 @@ def main(argv=None):
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--diff", action="store_true", help="list commands that differ from the builder's current ones")
     args = ap.parse_args(argv)
-    cmdlib, wio, errors, _ = build()
+    cmdlib, wio, errors, selected = build()
     n = sum(len(v) for v in cmdlib.values())
     print(f"{n} commands resolved; {len(errors)} errors")
     for e in errors:
         print("ERROR", e)
     if args.diff:
-        s = "".join(json.loads(BUILDER.read_text(encoding="utf-8"))["cells"][0]["source"])
-        i = s.index("CMDLIB=") + 7
-        old, _ = json.JSONDecoder().raw_decode(s[i:])
-        oldc = {(m, e["wf"]): e["cmd"] for m, l in old.items() for e in l}
+        try:
+            oldc = committed_data()["cmd"]
+        except ValueError:
+            oldc = {}
         changed = [k for m, l in cmdlib.items() for e in l
-                   if oldc.get(k := (m, e["wf"])) is not None and re.sub(r"\s+", " ", oldc[k]).strip() != e["cmd"]]
+                   if (k := f"{m}|{e['wf']}") in oldc and oldc[k] != e["cmd"]]
         print(f"{len(changed)} resolved commands differ from the builder's current ones")
-        for m, wf in changed:
-            print("  DIFF", f"{m}|{wf}")
+        for k in changed:
+            print("  DIFF", k)
     if errors:
         return 1
     if args.write:
-        write(cmdlib, wio)
-        print(f"wrote CMDLIB and WIO into {BUILDER.relative_to(REPO)}")
+        write(cmdlib, wio, selected)
+        print(f"wrote the builder page into {BUILDER.relative_to(REPO)}")
     return 0
 
 
