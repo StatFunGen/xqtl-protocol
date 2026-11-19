@@ -1,0 +1,42 @@
+# SoS host configuration for an SGE (Sun / Univa / Son of Grid Engine) cluster.
+# Copy this file, edit the lines marked EDIT, then add `-c sge.yml -q sge`
+# to any `sos run` command. Each SoS task becomes one SGE job.
+# Guide: https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/
+
+localhost: localhost
+hosts:
+  localhost:
+    address: localhost
+  sge:
+    address: localhost
+    queue_type: pbs
+    submit_cmd: qsub {job_file}
+    submit_cmd_output: 'Your job {job_id} ("{job_name}") has been submitted'
+    status_cmd: qstat -j {job_id}
+    kill_cmd: qdel {job_id}
+    # EDIT: how many jobs SoS may keep in the queue at once.
+    max_running_jobs: 100
+    # EDIT: the largest request your cluster allows. A task asking for more stops with an error.
+    max_mem: 250G
+    max_cores: 32
+    max_walltime: "72:00:00"
+    # EDIT: SGE sites differ in the two resource lines of the template.
+    #   - Parallel environment: `-pe smp {cores}` here; some sites call it `omp` or `threaded`
+    #     (`qconf -spl` lists the names on yours).
+    #   - Memory: `h_vmem` here is per slot, so the total request is divided by the cores.
+    #     Some sites use another resource; see code/cluster/bu_scc.yml for a tested BU SCC version.
+    #   Add `#$ -P <project>` or `#$ -q <queue>` lines if your cluster needs them.
+    # The job writes its log to ~/.sos/tasks/<task>.out/.err and sets HOME to yours,
+    # because some clusters start batch jobs with a different home directory.
+    task_template: |
+      #!/bin/bash
+      #$ -N {task}
+      #$ -l h_rt={walltime}
+      #$ -l h_vmem={mem//10**6//cores}M
+      #$ -pe smp {cores}
+      #$ -cwd
+      #$ -o {os.environ['HOME']}/.sos/tasks/{task}.out
+      #$ -e {os.environ['HOME']}/.sos/tasks/{task}.err
+      export HOME={os.environ['HOME']}
+      cd {cur_dir}
+      {command}
