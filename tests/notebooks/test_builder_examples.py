@@ -107,8 +107,19 @@ def _task_errors(tmp_path, n=3, lines=25):
 
 
 def _run_group(steps, tmp_path):
-    for d in ("pipeline", "code", "tests"):
+    for d in ("pipeline", "tests"):
         (tmp_path / d).symlink_to(REPO / d)
+    # code/ is mirrored as real folders holding links to the files, not linked as a whole:
+    # a workflow that runs inside code/... and writes to ../../../output must land in this
+    # scratch folder, as it would in a checkout, not next to the repository's own code/.
+    for root, dirs, files in os.walk(REPO / "code"):
+        rel = Path(root).relative_to(REPO)
+        (tmp_path / rel).mkdir(exist_ok=True)
+        for f in files:
+            (tmp_path / rel / f).symlink_to(Path(root) / f)
+        for d in [d for d in dirs if (Path(root) / d).is_symlink()]:
+            (tmp_path / rel / d).symlink_to(Path(root) / d)
+            dirs.remove(d)
     env = _worker_env() or dict(os.environ)
     before = _repo_state()
     for m, wf in steps:
