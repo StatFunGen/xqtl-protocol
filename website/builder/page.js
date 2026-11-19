@@ -78,6 +78,19 @@ var CATALOG = [
   ['GWAS integration', 'Relate regulation to complex traits', [['SuSiE_enloc','SuSiE-enloc','Pairwise xQTL-GWAS colocalization'],['twas_ctwas','TWAS & cTWAS','Gene-level trait association'],['colocboost','ColocBoost','Shared variants across many traits'],['intact','INTACT','Combine TWAS and colocalization evidence'],['watershed','Watershed','Rare-variant functional prediction']]],
   ['Enrichment and scoring', 'Which annotations and pathways are involved', [['eoo_enrichment','Excess of Overlap (EOO)','Block-jackknife enrichment'],['gsea','GSEA','Pathway overrepresentation'],['gregor','GREGOR','SNP set vs matched null'],['sldsc_enrichment','S-LDSC','Heritability partitioning'],['ems_training','scEEMS Training','Fit per-variant CatBoost model'],['ems_prediction','scEEMS Prediction','Score variants with a trained model']]]
 ];
+// The overview flowchart: phases (top to bottom) > boxes > groups > modules, as on the original builder.
+var FLOW = [
+  ['Inputs', 1, [['Reference Data', [[null, ['reference_data_preparation', 'generalized_TADB', 'ld_prune_reference', 'rss_ld_sketch']]]]]],
+  ['Quantification', 2, [['Molecular Phenotype Quantification', [['Bulk RNA-seq', ['RNA_calling', 'bulk_expression_QC', 'bulk_expression_normalization']], ['Single-nuclei / pseudobulk', ['snRNAseq_preprocessing', 'pseudobulk_preprocessing']], ['Alternative splicing', ['splicing_calling', 'splicing_calling_leafcutter2', 'isoform_calling_torino', 'splicing_normalization']], ['DNA methylation', ['methylation_calling']], ['Polyadenylation', ['apa_calling', 'apa_impute']]]]]],
+  ['Pre-processing', 3, [['Data Pre-processing', [['Genotype', ['VCF_QC', 'genotype_formatting', 'GWAS_QC', 'PCA']], ['Phenotype', ['gene_annotation', 'phenotype_imputation', 'phenotype_formatting']], ['Covariate', ['covariate_formatting', 'covariate_hidden_factor']]]]]],
+  ['Discovery', 4, [['QTL Association Testing', [[null, ['TensorQTL', 'qtl_association_postprocessing', 'qr_and_twas']]]]]],
+  ['Multivariate modeling', 5, [['Cross-cohort Meta-analysis', [[null, ['METAL']]]], ['Multivariate Mixture (MASH)', [[null, ['mash_preprocessing', 'mixture_prior', 'mash_fit', 'mash_posterior']]]]]],
+  ['Regression', 6, [['High-dimensional Regression', [['Individual level', ['mnm_regression', 'mnm_postprocessing']], ['Summary statistics level', ['qtl_rss_analysis', 'rss_analysis']]]]]],
+  ['Integration', 7, [['GWAS Integration', [[null, ['SuSiE_enloc', 'twas_ctwas', 'colocboost', 'intact']]]], ['Rare-variant xQTL', [[null, ['watershed']]]]]],
+  ['Interpretation', 8, [['Enrichment & Validation', [[null, ['eoo_enrichment', 'gsea', 'gregor', 'sldsc_enrichment']]]], ['xQTL Modifier Score', [[null, ['ems_training', 'ems_prediction']]]]]]
+];
+// phase colours from the original builder (text, tint)
+var PHASE_C = { 1: ['#0f5257', '#ecf1f2'], 2: ['#1f6b3a', '#edf3ef'], 3: ['#1a4e89', '#edf1f6'], 4: ['#8a4b0a', '#f6f1eb'], 5: ['#4a3d8f', '#f1eff6'], 6: ['#8c2b46', '#f6eef0'], 7: ['#6b2d7a', '#f3eef4'], 8: ['#4a5a1e', '#f1f2ed'] };
 var SOON = {METAL: 1, watershed: 1, ems_prediction: 1, qr_and_twas: 1};
 var LABEL = {}, STAGE_OF = {}, DESC = {};
 CATALOG.forEach(function (g, gi) { g[2].forEach(function (m) { LABEL[m[0]] = m[1]; STAGE_OF[m[0]] = gi; DESC[m[0]] = m[2]; }); });
@@ -230,8 +243,28 @@ class Component {
         badge: 'width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; ' + (active ? 'background: #19354a; color: #ffffff' : 'background: #eef2f5; color: #63717d'),
         rail: gi < CATALOG.length - 1 ? 'flex: 1 1 auto; width: 2px; background: #dce3e8; margin: 4px 0' : 'flex: 1 1 auto; width: 2px; background: transparent' };
     });
+    var flow = FLOW.map(function (ph, pi) {
+      var c = PHASE_C[ph[1]], hasSel = false, nOn = 0;
+      var boxes = ph[2].map(function (bx) {
+        var groups = bx[1].map(function (gr) {
+          var mods = gr[1].map(function (id) {
+            var sel = s.selMod === id, on = !!onRoute[id], soon = !!SOON[id], dim = mapRoute && !on;
+            if (sel) hasSel = true; if (on) nOn++;
+            return { label: LABEL[id] || id, desc: DESC[id] || '', soon: soon, pressed: String(sel),
+              pick: function () { self.setState({ selMod: sel ? '' : id }); },
+              style: 'display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; line-height: 1.35; padding: 6px 8px; margin: 1px 0; border-radius: 5px; cursor: pointer; border: 1px solid ' + (sel ? c[0] : 'transparent') + '; border-left: 3px solid ' + (sel ? c[0] : (on ? c[0] : 'transparent')) + '; background: ' + (sel ? c[0] : (on ? '#ffffff' : 'transparent')) + '; color: ' + (sel ? '#ffffff' : (soon ? '#63717d' : '#202b35')) + '; font-weight: ' + (on || sel ? '600' : '400') + '; opacity: ' + (dim ? '0.35' : '1') };
+          });
+          return { title: gr[0], mods: mods, style: 'background: #ffffff; border: 1px solid ' + (gr[0] ? '#c9d3da' : 'transparent') + '; border-radius: 6px; padding: ' + (gr[0] ? '8px 10px' : '0') };
+        });
+        var wide = bx[1].length > 1;
+        return { title: bx[0], groups: groups, titleStyle: 'font-size: 17px; font-weight: 600; color: ' + c[0] + '; margin-bottom: 8px',
+          style: 'flex: ' + (wide || ph[2].length === 1 ? '1 1 100%' : '1 1 300px') + '; min-width: 0; box-sizing: border-box; max-width: ' + (wide ? '100%' : (ph[2].length === 1 ? '460px' : '100%')) + '; background: ' + c[1] + '; border-top: 3px solid ' + c[0] + '; border-radius: 4px; padding: 12px 14px' };
+      });
+      return { label: ph[0].toUpperCase(), arrow: pi > 0, boxes: boxes, hasSel: hasSel,
+        labelStyle: 'text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; margin: 2px 0 8px; color: ' + c[0] + '; opacity: ' + (mapRoute && !nOn ? '0.45' : '1') };
+    });
     var mapViews = [['all', 'All stages'], ['route', 'My route']].map(function (v) { var on = s.mapView === v[0]; return { label: v[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ mapView: v[0] }); } }; });
-    var mapNote = mapRoute ? 'Showing only the stages and modules on your route.' : 'Open a stage to see its modules. Modules on your route are highlighted.';
+    var mapNote = mapRoute ? 'Modules not on your route are faded.' : 'Modules on your route are marked with a coloured edge.';
 
     var selVals = { stage: '', label: '', what: '', inputs: [], outputs: [], fromEarlier: false, hasOut: false, outNote: '', outHead: [], outRows: [], doc: '', status: '', statusStyle: '', canTry: false, tryLabel: '', tryIt: function () {} };
     if (s.selMod && LABEL[s.selMod]) {
@@ -379,7 +412,7 @@ class Component {
     return {
       testedCount: testedCount, journey: journey, moduleCount: Object.keys(LABEL).length, clusterDoc: BASE + 'running-on-a-cluster',
       stageNav: CATALOG.map(function (g) { return { label: g[0] }; }),
-      mapViews: mapViews, mapNote: mapNote, map: map, hasSel: !!selVals.label, sel: selVals, closeSel: function () { self.setState({ selMod: '' }); },
+      mapViews: mapViews, mapNote: mapNote, map: map, flow: flow, hasSel: !!selVals.label, sel: selVals, closeSel: function () { self.setState({ selMod: '' }); },
       modes: modes, isExample: isExample, isOwn: isOwn, examples: examples,
       qPheno: qPheno, qStart: qStart, qGoals: qGoals, hasContextual: contextual.length > 0, contextual: contextual,
       adv: s.adv, advExpanded: String(s.adv), toggleAdv: function () { self.setState({ adv: !s.adv }); }, advLabel: s.adv ? 'Hide advanced study settings' : 'Advanced study settings', advCount: nonDefault ? nonDefault + ' changed' : 'genotype QC, cohorts, contexts', allOpts: allOpts,

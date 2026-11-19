@@ -18,7 +18,7 @@
 
 <section aria-labelledby="map-h" style="margin-bottom: 44px">
   <h2 id="map-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">1. Understand the workflow</h2>
-  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6; color: var(--ink)">The protocol's analysis stages, from reference data to enrichment. Studies branch: not every study runs every stage, and several stages offer alternative methods. Select a module to see what it does, what it takes and what it produces.</p>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6; color: var(--ink)">The protocol's analysis stages, from reference data to interpretation. Studies branch: not every study runs every stage, and several stages offer alternative methods. Select a module to see what it does, what it takes and what it produces.</p>
   <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px">
     <div role="group" aria-label="Show" style="display: inline-flex; border: 1px solid var(--ln2); border-radius: 6px; overflow: hidden">
       <sc-for list="{{mapViews}}" as="v">
@@ -28,99 +28,97 @@
     <span style="font-size: 13.5px; color: var(--ink2)">{{mapNote}}</span>
   </div>
 
-  <div style="display: flex; flex-direction: column; gap: 0">
-    <sc-for list="{{map}}" as="st">
-      <div style="display: flex; gap: 14px; align-items: stretch">
-        <div style="flex: 0 0 34px; display: flex; flex-direction: column; align-items: center">
-          <span style="{{st.badge}}">{{st.n}}</span>
-          <span style="{{st.rail}}"></span>
-        </div>
-        <div style="flex: 1 1 auto; min-width: 0; padding-bottom: 14px">
-          <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px">
-            <span style="{{st.titleStyle}}">{{st.label}}</span>
-            <span style="font-size: 13px; color: var(--ink2)">{{st.sub}}</span>
-            <button type="button" aria-expanded="{{st.expanded}}" onClick="{{st.toggle}}" style="font-size: 13px; min-height: 30px; padding: 2px 4px; border: 0; background: none; color: var(--teal); font-weight: 600; cursor: pointer">{{st.btn}}</button>
-          </div>
-          <sc-if value="{{st.showMods}}">
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
-              <sc-for list="{{st.mods}}" as="m">
-                <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="{{m.style}}">{{m.label}}</button>
+  <div style="display: flex; flex-direction: column; align-items: stretch">
+    <sc-for list="{{flow}}" as="ph">
+      <sc-if value="{{ph.arrow}}"><div aria-hidden="true" style="display: flex; justify-content: center; padding: 4px 0"><svg width="14" height="26" viewBox="0 0 14 26"><path d="M7 0 V20" stroke="#202b35" stroke-width="1.6"></path><path d="M2 17 L7 24 L12 17" fill="none" stroke="#202b35" stroke-width="1.6"></path></svg></div></sc-if>
+      <div style="{{ph.labelStyle}}">{{ph.label}}</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center">
+        <sc-for list="{{ph.boxes}}" as="bx">
+          <div style="{{bx.style}}">
+            <div style="{{bx.titleStyle}}">{{bx.title}}</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px">
+              <sc-for list="{{bx.groups}}" as="gr">
+                <div style="{{gr.style}}">
+                  <sc-if value="{{gr.title}}"><div style="font-size: 14px; font-weight: 600; color: var(--teal); padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid var(--ln)">{{gr.title}}</div></sc-if>
+                  <sc-for list="{{gr.mods}}" as="m">
+                    <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" title="{{m.desc}}" style="{{m.style}}">{{m.label}}<sc-if value="{{m.soon}}"><span style="display: block; font-size: 11.5px; font-weight: 400; color: var(--ink2)">Coming soon</span></sc-if></button>
+                  </sc-for>
+                </div>
               </sc-for>
             </div>
-          </sc-if>
-        </div>
+          </div>
+        </sc-for>
       </div>
-    </sc-for>
-  </div>
-
-  <sc-if value="{{hasSel}}">
-    <div aria-live="polite" style="border: 1px solid var(--ln); border-radius: 8px; background: #ffffff; margin-top: 6px">
-      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px; padding: 16px 18px 12px; border-bottom: 1px solid var(--ln)">
-        <div style="min-width: 0">
-          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink2)"><span style="width: 8px; height: 8px; background: var(--teal); border-radius: 2px; display: inline-block"></span>{{sel.stage}}</div>
-          <div style="font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px">{{sel.label}}</div>
-        </div>
-        <button type="button" onClick="{{closeSel}}" aria-label="Close module details" style="width: 36px; height: 36px; border: 1px solid var(--ln2); border-radius: 6px; background: #ffffff; color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
-        </button>
-      </div>
-      <div style="padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 14px">
-        <p style="margin: 0; font-size: 15px; line-height: 1.6">{{sel.what}}</p>
-        <div>
-          <div style="font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 8px">Input</div>
-          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
-            <sc-for list="{{sel.inputs}}" as="f">
-              <li style="border: 1px solid var(--ln); border-radius: 6px; padding: 10px 12px">
-                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px">
-                  <div style="min-width: 0; flex: 1 1 260px">
-                    <div style="font-size: 14px; font-weight: 600">{{f.label}}</div>
-                    <div style="font-family: var(--mono); font-size: 12.5px; color: var(--ink2); overflow-wrap: anywhere; margin-top: 2px">{{f.path}}</div>
-                  </div>
-                  <sc-if value="{{f.hasPreview}}">
-                    <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="font-size: 13.5px; min-height: 34px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ln2); background: #ffffff; color: var(--navy); cursor: pointer">{{f.btn}}</button>
-                  </sc-if>
-                </div>
-                <sc-if value="{{f.open}}">
-                  <div style="margin-top: 10px">
-                    <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
-                    <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-                      <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
-                        <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                        <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-                      </table>
-                    </div>
+        <sc-if value="{{ph.hasSel}}">
+          <div aria-live="polite" style="border: 1px solid var(--ln); border-radius: 8px; background: #ffffff; margin-top: 12px">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px; padding: 16px 18px 12px; border-bottom: 1px solid var(--ln)">
+              <div style="min-width: 0">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink2)"><span style="width: 8px; height: 8px; background: var(--teal); border-radius: 2px; display: inline-block"></span>{{sel.stage}}</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px">{{sel.label}}</div>
+              </div>
+              <button type="button" onClick="{{closeSel}}" aria-label="Close module details" style="width: 36px; height: 36px; border: 1px solid var(--ln2); border-radius: 6px; background: #ffffff; color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+              </button>
+            </div>
+            <div style="padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 14px">
+              <p style="margin: 0; font-size: 15px; line-height: 1.6">{{sel.what}}</p>
+              <div>
+                <div style="font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 8px">Input</div>
+                <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+                  <sc-for list="{{sel.inputs}}" as="f">
+                    <li style="border: 1px solid var(--ln); border-radius: 6px; padding: 10px 12px">
+                      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px">
+                        <div style="min-width: 0; flex: 1 1 260px">
+                          <div style="font-size: 14px; font-weight: 600">{{f.label}}</div>
+                          <div style="font-family: var(--mono); font-size: 12.5px; color: var(--ink2); overflow-wrap: anywhere; margin-top: 2px">{{f.path}}</div>
+                        </div>
+                        <sc-if value="{{f.hasPreview}}">
+                          <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="font-size: 13.5px; min-height: 34px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ln2); background: #ffffff; color: var(--navy); cursor: pointer">{{f.btn}}</button>
+                        </sc-if>
+                      </div>
+                      <sc-if value="{{f.open}}">
+                        <div style="margin-top: 10px">
+                          <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
+                          <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
+                            <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+                              <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+                              <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </sc-if>
+                    </li>
+                  </sc-for>
+                </ul>
+                <sc-if value="{{sel.fromEarlier}}"><p style="margin: 8px 0 0; font-size: 13.5px; color: var(--ink2)">Also reads files made by earlier modules.</p></sc-if>
+              </div>
+              <div>
+                <div style="font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 8px">Output</div>
+                <ul style="margin: 0 0 8px; padding-left: 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; overflow-wrap: anywhere">
+                  <sc-for list="{{sel.outputs}}" as="o"><li>{{o.v}}</li></sc-for>
+                </ul>
+                <sc-if value="{{sel.hasOut}}">
+                  <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{sel.outNote}}</div>
+                  <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
+                    <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+                      <thead><tr style="background: var(--tint)"><sc-for list="{{sel.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+                      <tbody><sc-for list="{{sel.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+                    </table>
                   </div>
                 </sc-if>
-              </li>
-            </sc-for>
-          </ul>
-          <sc-if value="{{sel.fromEarlier}}"><p style="margin: 8px 0 0; font-size: 13.5px; color: var(--ink2)">Also reads files made by earlier modules.</p></sc-if>
-        </div>
-        <div>
-          <div style="font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 8px">Output</div>
-          <ul style="margin: 0 0 8px; padding-left: 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; overflow-wrap: anywhere">
-            <sc-for list="{{sel.outputs}}" as="o"><li>{{o.v}}</li></sc-for>
-          </ul>
-          <sc-if value="{{sel.hasOut}}">
-            <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{sel.outNote}}</div>
-            <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-              <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
-                <thead><tr style="background: var(--tint)"><sc-for list="{{sel.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                <tbody><sc-for list="{{sel.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-              </table>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-size: 14px">
+                <span style="{{sel.statusStyle}}">{{sel.status}}</span>
+                <a href="{{sel.doc}}">Open the {{sel.label}} notebook</a>
+                <sc-if value="{{sel.canTry}}">
+                  <button type="button" onClick="{{sel.tryIt}}" style="font-size: 14px; min-height: 36px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--navy); background: #ffffff; color: var(--navy); font-weight: 500; cursor: pointer">{{sel.tryLabel}}</button>
+                </sc-if>
+              </div>
             </div>
-          </sc-if>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-size: 14px">
-          <span style="{{sel.statusStyle}}">{{sel.status}}</span>
-          <a href="{{sel.doc}}">Open the {{sel.label}} notebook</a>
-          <sc-if value="{{sel.canTry}}">
-            <button type="button" onClick="{{sel.tryIt}}" style="font-size: 14px; min-height: 36px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--navy); background: #ffffff; color: var(--navy); font-weight: 500; cursor: pointer">{{sel.tryLabel}}</button>
-          </sc-if>
-        </div>
-      </div>
-    </div>
-  </sc-if>
+          </div>
+        </sc-if>
+    </sc-for>
+  </div>
 </section>
 
 <section aria-labelledby="begin-h" style="margin-bottom: 44px">
