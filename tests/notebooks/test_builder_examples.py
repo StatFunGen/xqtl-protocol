@@ -107,7 +107,7 @@ def _task_errors(tmp_path, n=3, lines=25):
 
 
 def _run_group(steps, tmp_path):
-    for d in ("pipeline", "tests"):
+    for d in ("pipeline", "tests", "data"):
         (tmp_path / d).symlink_to(REPO / d)
     # code/ is mirrored as real folders holding links to the files, not linked as a whole:
     # a workflow that runs inside code/... and writes to ../../../output must land in this
