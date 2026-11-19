@@ -504,6 +504,8 @@ class Component {
                 pick: function () { if (!sel) app.focusNext = 'xqb-phase-h'; self.setState(sel ? { phase: null, stream: null, selMod: '' } : { phase: pi, stream: null, selMod: id }); } }; }) }; }) }; }) };
     });
     var phaseVals = null, modVals = {};
+    // the phase or module details open as a dialog; closing returns focus to what opened it
+    var closePanel = function () { app.focusNext = s.selMod ? 'xqb-mod-' + String(s.selMod).replace(/[^A-Za-z0-9]+/g, '-') : 'xqb-node-' + s.phase; self.setState({ phase: null, stream: null, selMod: '' }); };
     if (s.phase != null && FLOW[s.phase]) {
       var pi = s.phase, gi = s.stream, ph = FLOW[pi], preset = PHASES[pi][2];
       var groups = [];
@@ -515,13 +517,23 @@ class Component {
         }) });
       }); });
       if (s.selMod && LABEL[s.selMod]) {
-        var m = s.selMod, st = modStatus(m), ins = [], outs = [];
-        st.ks.forEach(function (k) { var io = D.io[k] || {}; (io.i || []).forEach(function (p) { var l = optLabel(((D.opt || {})[k] || {})[p], p) + (p.indexOf('output/') === 0 ? ' (from an earlier module)' : ''); if (ins.indexOf(l) < 0) ins.push(l); }); (io.o || []).forEach(function (o) { if (outs.indexOf(o) < 0) outs.push(o); }); });
+        var m = s.selMod, st = modStatus(m), ins = [], seen = {}, outs = [];
+        // inputs one per line, by name, with the example file's preview where there is one
+        st.ks.forEach(function (k) { var io = D.io[k] || {}; (io.i || []).forEach(function (p) {
+          var name = optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, '');
+          if (seen[name]) return; seen[name] = 1;
+          ins.push(fileItem('m:' + m + ':' + p, p, { name: name, n: ins.length + 1 }));
+        }); (io.o || []).forEach(function (o) { if (outs.indexOf(o) < 0) outs.push(o); }); });
+        // outputs one per line; the example output's preview sits on the output it comes from
+        var op = (D.outPrev || {})[m], ot = outOf(m), okey = 'mo:' + m, oOn = !!s.pv[okey];
+        var oAt = op ? Math.max(0, outs.findIndex(function (o) { return op.file.indexOf(o.replace(/\/$/, '')) >= 0 || o.indexOf(op.file) >= 0; })) : -1;
+        var outItems = outs.map(function (o, i) { var has = i === oAt;
+          return { v: o, hasPreview: has, open: has && oOn, expanded: String(has && oOn), btn: has && oOn ? 'Hide example' : 'Show example', note: ot.outNote, head: ot.outHead, rows: ot.outRows,
+            toggle: function () { var q = Object.assign({}, s.pv); q[okey] = !q[okey]; self.setState({ pv: q }); } }; });
         var gIdx = -1; ph[2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gr[1].indexOf(m) >= 0) gIdx = g; }); });
         modVals = Object.assign({ label: LABEL[m], what: D.intro[m] || DESC[m], doc: BASE + (DOC[m] || ''),
           when: pi === 2 && gIdx >= 0 ? STREAMS[gIdx][2] : (PHASES[pi][1] || DESC[m]),
-          inputs: ins.length ? ins.slice(0, 5).join(' · ') + (ins.length > 5 ? ' · and ' + (ins.length - 5) + ' more' : '') : 'See the notebook',
-          output: outs.length ? outs.slice(0, 2).join(', ') : 'See the notebook' }, st);
+          inputs: ins, hasInputs: ins.length > 0, outputs: outItems, hasOutputs: outs.length > 0 });
       }
       phaseVals = { kicker: 'PHASE ' + (pi + 1) + (gi != null ? ' · ' + STREAMS[gi][0].toUpperCase() + ' STREAM' : ''),
         label: ph[0] === 'Inputs' ? 'Reference data preparation' : (pi === 2 ? 'Data pre-processing' : (pi === 3 ? 'QTL association testing' : (pi === 5 ? 'Fine-mapping' : (pi === 6 ? 'GWAS integration' : (pi === 7 ? 'Enrichment, validation and interpretation' : (pi === 1 ? 'Molecular phenotype quantification' : 'Multivariate modeling')))))),
@@ -535,7 +547,8 @@ class Component {
             self.setRoute({ mode: 'own', src: 'own', study: st0, methods: {} }, 'Applied the study preset for this phase.'); }
           scrollTo('r-h');
         },
-        close: function () { app.focusNext = 'xqb-node-' + s.phase + (s.stream == null ? '' : '-' + s.stream); self.setState({ phase: null, stream: null, selMod: '' }); } };
+        close: closePanel,
+        backdrop: function (e) { if (e.target === e.currentTarget) closePanel(); } };
     }
 
     var testedCount = Object.keys(D.cmd).filter(testedKey).length;
@@ -593,6 +606,12 @@ function paint() {
   if (fid) { var f = R.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 // in-page links scroll here instead of sending the parent page to the builder's own URL
+// Esc closes the phase or module dialog
+root.addEventListener('keydown', function (e) {
+  var st = app.state; if (e.key !== 'Escape' || st.phase == null) return;
+  app.focusNext = st.selMod ? 'xqb-mod-' + String(st.selMod).replace(/[^A-Za-z0-9]+/g, '-') : 'xqb-node-' + st.phase;
+  app.setState({ phase: null, stream: null, selMod: '' });
+});
 root.addEventListener('click', function (e) {
   var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
   var t = R.getElementById(a.getAttribute('href').slice(1)); e.preventDefault();

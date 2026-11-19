@@ -314,30 +314,46 @@
             </div>
           </sc-for>
         </div>
-        <sc-if value="{{p.open}}">
-          <div id="xqb-phase" role="region" aria-labelledby="xqb-phase-h" class="xqb-stage">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
-              <div><div class="xqb-k">{{phase.kicker}}</div><h3 id="xqb-phase-h" tabindex="-1" class="xqb-phase-h">{{phase.label}}<span class="xqb-sr">, {{phase.srHint}}</span></h3></div>
-              <button type="button" onClick="{{phase.close}}" aria-label="Close this phase" class="xqb-x">×</button>
-            </div>
-            <p style="margin: 6px 0 10px; font-size: 15px; line-height: 1.6">{{phase.what}}</p>
-            <sc-if value="{{phase.hasMod}}">
-              <div class="xqb-prev">
-                <div style="grid-column: 1 / -1; font-size: 16px; font-weight: 700; color: var(--navy)">{{mod.label}}</div>
-                <div><div class="xqb-k">WHAT IT DOES</div>{{mod.what}}</div>
-                <div><div class="xqb-k">WHEN TO USE IT</div>{{mod.when}}</div>
-                <div><div class="xqb-k">INPUTS</div>{{mod.inputs}}</div>
-                <div><div class="xqb-k">MAIN OUTPUT</div><span style="font-family: var(--mono); font-size: 13.5px; overflow-wrap: anywhere">{{mod.output}}</span></div>
-                <div><div class="xqb-k">STATUS</div><span style="{{mod.statusStyle}}">{{mod.status}}</span></div>
-                <div><div class="xqb-k">MORE</div><a href="{{mod.doc}}">{{mod.label}} notebook</a> · full details are in the route step when it is on your route</div>
-              </div>
-            </sc-if>
-            <sc-if value="{{phase.canBuild}}"><div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><button type="button" onClick="{{phase.build}}" class="xqb-btn">{{phase.buildLabel}}</button><span style="font-size: 14px; color: var(--ink2)">applies a study preset; it does not add modules by itself</span></div></sc-if>
-          </div>
-        </sc-if>
       </div>
     </sc-for>
   </div>
+  <sc-if value="{{hasPhase}}">
+    <div class="xqb-modal" onClick="{{phase.backdrop}}">
+    <div id="xqb-phase" role="dialog" aria-modal="true" aria-labelledby="xqb-phase-h" class="xqb-stage">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+        <div><div class="xqb-k">{{phase.kicker}}</div><h3 id="xqb-phase-h" tabindex="-1" class="xqb-phase-h">{{phase.label}}<span class="xqb-sr">, {{phase.srHint}}</span></h3></div>
+        <button type="button" onClick="{{phase.close}}" aria-label="Close this phase" class="xqb-x">×</button>
+      </div>
+      <p style="margin: 6px 0 10px; font-size: 15px; line-height: 1.6">{{phase.what}}</p>
+      <sc-if value="{{phase.hasMod}}">
+        <div class="xqb-mdet">
+          <h4>{{mod.label}}</h4>
+          <div><div class="xqb-k">WHAT IT DOES</div><p>{{mod.what}}</p></div>
+          <div><div class="xqb-k">WHEN TO USE IT</div><p>{{mod.when}}</p></div>
+          <sc-if value="{{mod.hasInputs}}"><div><div class="xqb-k">INPUTS</div>
+            <ol class="xqb-mlist">
+              <sc-for list="{{mod.inputs}}" as="f">
+                <li><div class="xqb-mrow"><span>{{f.name}}</span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if></div>
+                  <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                </li>
+              </sc-for>
+            </ol></div></sc-if>
+          <sc-if value="{{mod.hasOutputs}}"><div><div class="xqb-k">MAIN OUTPUT</div>
+            <ol class="xqb-mlist">
+              <sc-for list="{{mod.outputs}}" as="o">
+                <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                  <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                </li>
+              </sc-for>
+            </ol>
+          </div></sc-if>
+          <p style="margin: 0"><a href="{{mod.doc}}">Open the {{mod.label}} notebook</a></p>
+        </div>
+      </sc-if>
+      <sc-if value="{{phase.canBuild}}"><div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><button type="button" onClick="{{phase.build}}" class="xqb-btn">{{phase.buildLabel}}</button><span style="font-size: 14px; color: var(--ink2)">applies a study preset; it does not add modules by itself</span></div></sc-if>
+    </div>
+  </div>
+  </sc-if>
 </section>
 
 <section aria-labelledby="res-h" style="margin-bottom: 44px">
