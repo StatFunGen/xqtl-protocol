@@ -9,8 +9,8 @@ site:
 % which GitHub cannot render.
 
 <div class="fx-hero">
-<img class="fx-hero__mark fx-only-light" src="fungen_mark.svg" alt="">
-<img class="fx-hero__mark fx-only-dark" src="fungen_mark_dark.svg" alt="">
+<img class="fx-hero__mark fx-only-light" src="fungen_mark.svg" alt="" width="136" height="136">
+<img class="fx-hero__mark fx-only-dark" src="fungen_mark_dark.svg" alt="" width="136" height="136">
 <div class="fx-hero__text">
 <p class="fx-hero__org">ADSP Functional Genomics Consortium (FunGen-AD)</p>
 <h1 class="fx-hero__title">FunGen<span class="fx-hero__x">-xQTL</span> Protocol</h1>
