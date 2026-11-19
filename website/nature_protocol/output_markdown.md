@@ -415,7 +415,7 @@ sos run pipeline/bulk_expression_normalization.ipynb -h
 
 
 #### Alternative splicing from RNA-seq data
-Timing: TBD
+Timing: ~42 s (on the toy dataset)
 ##### 1. Quantify intron usage with LeafCutter
 
 **What it does:** `leafcutter` extracts splice junctions and clusters introns to calculate per-sample intron excision ratios.
@@ -960,23 +960,6 @@ sos run pipeline/covariate_hidden_factor.ipynb PCA \
 
 
 
-##### 5. Infer factors with bi-cross-validation
-
-**What it does:** Residualize the phenotype and select latent structure using the BiCV workflow.
-
-
-```python
-
-sos run pipeline/covariate_hidden_factor.ipynb BiCV \
-    --cwd output/covariate \
-    --phenoFile tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz \
-    --covFile output/covariate/protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.gz \
-    --N 3
-
-```
-
-
-
 #### Command Interface
 
 List the workflows and parameters available in each module used by this mini-protocol.
@@ -1014,7 +997,7 @@ sos run pipeline/TensorQTL.ipynb cis \
 
 ##### 2. trans-QTL scan
 
-**What it does:** Tests the selected traits against variants on chromosome 22, restricting traits to the identifiers listed in `data/combined_AD_genes.csv`.
+**What it does:** Tests the selected traits against variants on chromosome 22, restricting traits to the identifiers listed in `tests/fixtures/qtl_mini/association_windows.bed`.
 
 
 ```python
@@ -1024,7 +1007,7 @@ sos run pipeline/TensorQTL.ipynb trans \
     --phenotype-file output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.txt \
     --covariate-file output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz \
     --cwd output/tensorqtl_trans --name protocol_example --MAC 5 --numThreads 2 \
-    --trans-geno-chromosome 22 --region-list data/combined_AD_genes.csv --region-list-phenotype-column 4
+    --trans-geno-chromosome 22 --region-list tests/fixtures/qtl_mini/association_windows.bed --region-list-phenotype-column 4
 
 ```
 
@@ -1074,7 +1057,7 @@ sos run pipeline/mnm_regression.ipynb qtl_dataset_construct+susie_twas   --name 
 
 ```python
 
-sos run pipeline/mnm_regression.ipynb mnm   --name protocol_example --cwd output/mnm/multivariate   --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed   --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv   --covFile tests/fixtures/qtl_mini/example_covariates.tsv   --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed   --fine-mapping-meta tests/fixtures/qtl_mini/fine_mapping_meta.tsv   --transpose-covariates --save-data -j1
+sos run pipeline/mnm_regression.ipynb mnm   --name protocol_example --cwd output/mnm/multivariate   --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed   --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv   --covFile tests/fixtures/qtl_mini/example_covariates.tsv   --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed   --transpose-covariates --save-data -j1
 
 ```
 
@@ -1087,7 +1070,7 @@ sos run pipeline/mnm_regression.ipynb mnm   --name protocol_example --cwd output
 
 ```python
 
-sos run pipeline/mnm_regression.ipynb mnm_genes   --name protocol_example --cwd output/mnm/multigene   --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed   --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv   --covFile tests/fixtures/qtl_mini/example_covariates.tsv   --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed   --pheno-id-map-file tests/fixtures/qtl_mini/pheno_id_map.tsv   --fine-mapping-meta tests/fixtures/qtl_mini/fine_mapping_meta.tsv   --keep-samples tests/fixtures/qtl_mini/keep_samples.txt --save-data -j1
+sos run pipeline/mnm_regression.ipynb mnm_genes   --name protocol_example --cwd output/mnm/multigene   --genoFile tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed   --phenoFile tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv   --covFile tests/fixtures/qtl_mini/example_covariates.tsv   --customized-association-windows tests/fixtures/qtl_mini/association_windows.bed   --keep-samples tests/fixtures/qtl_mini/keep_samples.txt --save-data -j1
 
 ```
 
