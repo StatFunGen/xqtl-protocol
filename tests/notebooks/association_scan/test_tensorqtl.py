@@ -154,3 +154,24 @@ def test_cis_interaction_via_sos(run_sos, repo_root, tmp_path):
     assert nominal.exists()
     header = _header(nominal)
     assert {"pvalue_sex_interaction", "qvalue_main", "qvalue_interaction"}.issubset(header), header
+
+
+def test_cis_interaction_file_via_sos(run_sos, repo_root, tmp_path):
+    # --interaction given a file (sample ID, value): genotype x age from the example
+    # interaction file. `age` is also a covariate row, so the worker drops that row and
+    # the term enters the model once; outputs and columns carry the name `age`.
+    fix = repo_root / FIX
+    p = run_sos(repo_root / NB, "cis", {
+        "genotype_file": fix / "protocol_example.genotype.chr22.bed",
+        "phenotype_file": fix / "example_geneexpr.bed.gz",
+        "covariate_file": fix / "example_covariates.tsv",
+        "name": "protocol_example", "chromosome": 22, "MAC": 0,
+        "interaction": repo_root / "tests/fixtures/tensorqtl/protocol_example.interaction_age.tsv",
+        "maf_threshold": 0.05, "no-permutation": True,
+        "cwd": tmp_path, "numThreads": 1,
+        "modular_script_dir": repo_root / MSD}, timeout=1200)
+    assert p.returncode == 0, p.stdout + p.stderr
+    found = sorted(tmp_path.glob("*.cis_qtl.pairs.tsv.gz"))
+    assert len(found) == 1, sorted(x.name for x in tmp_path.iterdir())
+    header = _header(found[0])
+    assert {"pvalue_age_interaction", "qvalue_main", "qvalue_interaction"}.issubset(header), header
