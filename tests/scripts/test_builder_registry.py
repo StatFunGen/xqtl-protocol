@@ -135,25 +135,17 @@ def test_committed_builder_matches_generator():
         assert committed == obj, f"{name} in the builder is out of date: run website/builder_registry.py --write"
 
 
-def _tested_steps():
-    covered = set()
-    for f in (REPO / "tests" / "notebooks").rglob("test_*.py"):
-        t = f.read_text(encoding="utf-8")
-        nbs = set(re.findall(r"(\w+)\.ipynb", t))
-        pieces = {p for lit in re.findall(r"""["']([\w+]+)["']""", t) for p in lit.split("+")}
-        covered |= {k for k in SELECTED if k[0] in nbs and k[1].split("+")[0] in pieces}
-    return covered
-
-
 UNTESTED = REPO / "website" / "builder" / "untested_steps.json"
 
 
-def test_every_builder_step_is_run_by_a_notebook_test():
-    """A new builder step needs a notebook test; a step that gains one leaves untested_steps.json."""
-    known = set(json.loads(UNTESTED.read_text(encoding="utf-8"))["steps"])
-    missing = {f"{m}|{wf}" for m, wf in SELECTED} - {f"{m}|{wf}" for m, wf in _tested_steps()}
-    assert missing - known == set(), "builder steps with no notebook test"
-    assert known - missing == set(), "now tested or gone: remove from untested_steps.json"
+def test_untested_steps_are_real_and_explained():
+    """tests/notebooks/test_builder_examples.py runs every builder command except the ones
+    listed in untested_steps.json; each listed step must exist and say why it is skipped."""
+    data = json.loads(UNTESTED.read_text(encoding="utf-8"))
+    known = set(data["steps"])
+    assert known - {f"{m}|{wf}" for m, wf in SELECTED} == set(), "gone from the builder: remove"
+    assert known == set(data.get("reasons", {})), "every listed step needs a reason"
+    assert all(len(r) > 20 for r in data["reasons"].values())
 
 
 def _help(notebook):

@@ -134,3 +134,23 @@ def test_trans_via_sos(run_sos, repo_root, tmp_path):
     assert out.exists() and (tmp_path / (out.name + ".tbi")).exists()
     header = _header(out)
     assert {"variant_id", "pvalue", "qvalue"}.issubset(header), header
+
+
+def test_cis_interaction_via_sos(run_sos, repo_root, tmp_path):
+    # The builder's "interaction" variant of `cis`: a genotype x sex term, named with
+    # --interaction (sex is a row of the covariate file). tensorQTL runs no permutation
+    # pass in interaction mode, hence --no-permutation.
+    fix = repo_root / FIX
+    p = run_sos(repo_root / NB, "cis", {
+        "genotype_file": fix / "protocol_example.genotype.chr22.bed",
+        "phenotype_file": fix / "example_geneexpr.bed.gz",
+        "covariate_file": fix / "example_covariates.tsv",
+        "name": "protocol_example", "chromosome": 22, "MAC": 0,
+        "interaction": "sex", "maf_threshold": 0.05, "no-permutation": True,
+        "cwd": tmp_path, "numThreads": 1,
+        "modular_script_dir": repo_root / MSD}, timeout=1200)
+    assert p.returncode == 0, p.stdout + p.stderr
+    nominal = tmp_path / NOMINAL
+    assert nominal.exists()
+    header = _header(nominal)
+    assert {"pvalue_sex_interaction", "qvalue_main", "qvalue_interaction"}.issubset(header), header

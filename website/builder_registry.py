@@ -20,7 +20,9 @@ Inputs and outputs (declared, never guessed):
     its metadata. An input is keyed by its option name and has a ``kind``, the
     ``path`` used in the command and, for files made by another step, a ``source``
     ``<module>.<workflow>.<output>`` (``user`` for placeholders). An output has a
-    ``kind`` and a ``path``. ``source: setup`` marks a file the cell's own setup lines
+    ``kind`` and a ``path``. An optional ``after`` list names steps (``module.workflow``)
+    whose files the command reads without naming them, e.g. a config in a shared --cwd.
+    ``source: setup`` marks a file the cell's own setup lines
     write before the command (shell lines above ``sos run`` in a tagged cell are kept).
   * Checks: every file path in the command is declared and every declared path is in
     the command; a ``source`` names an existing output of another builder step, the
@@ -115,7 +117,10 @@ def candidates(path: Path) -> list[Candidate]:
 
 def select(cands: list[Candidate], module: str, wf: str, variant: str = "") -> Candidate:
     # exact workflow token first; otherwise a combined run that starts with it
-    same = [c for c in cands if c.workflow == wf] or [c for c in cands if c.workflow.split("+")[0] == wf]
+    same = ([c for c in cands if c.workflow == wf]
+            or [c for c in cands if c.workflow.split("+")[0] == wf]
+            # a chained example such as qtl_dataset_construct+susie_twas serves its last workflow
+            or [c for c in cands if "+" in c.workflow and c.workflow.split("+")[-1] == wf])
     tagged = [c for c in same if variant in c.variants]
     if len(tagged) == 1:
         return tagged[0]
@@ -178,6 +183,11 @@ def check_io(selected: dict, gaps: set) -> list[str]:
         if not c.meta.get("outputs") and not c.meta.get("inputs"):
             errors.append(f"{key}: {c.where} has no declared inputs/outputs")
             continue
+        for a in c.meta.get("after", []):
+            # a step that reads an earlier step's files without naming them on the command
+            # line (e.g. a config written into the shared --cwd) lists that step here
+            if tuple(a.split(".", 1)) not in selected:
+                errors.append(f"{key}: after names {a}, which is not a builder step")
         args = path_args(c.command)
         in_cmd = {v for f, v in args if f not in OUT_FLAGS}
         out_cmd = {v.rstrip("/") for f, v in args if f in OUT_FLAGS}
@@ -197,7 +207,8 @@ def check_io(selected: dict, gaps: set) -> list[str]:
                     and not (REPO / path).exists():
                 errors.append(f"{key}: fixture {path} does not exist")
             if src == "setup":
-                if path not in setup_lines(c.command):
+                st = setup_lines(c.command)
+                if path not in st and path.rsplit("/", 1)[0] + "/" not in st:
                     errors.append(f"{key}: input {name} is declared as made by the setup lines, "
                                   f"but they do not mention {path}")
             elif src and src != "user":
@@ -236,9 +247,12 @@ def build():
             except RegistryError as e:
                 errors.append(str(e))
                 continue
-            cmdlib.setdefault(module, []).append({"wf": wf, "cmd": c.command})
-            wio[f"{module}|{wf}"] = io_of(c)
-            selected[(module, wf)] = c
+            # a variant of a workflow already listed (e.g. TensorQTL cis + cis:interaction)
+            # gets its own key, so both commands are kept
+            key = f"{wf}:{variant}" if variant and (module, wf) in selected else wf
+            cmdlib.setdefault(module, []).append({"wf": key, "cmd": c.command})
+            wio[f"{module}|{key}"] = io_of(c)
+            selected[(module, key)] = c
     gaps = {(g["step"], g["input"]) for g in json.loads(KNOWN_GAPS.read_text(encoding="utf-8"))["gaps"]}
     errors += check_io(selected, gaps)
     return cmdlib, wio, errors, selected
