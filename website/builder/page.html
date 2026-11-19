@@ -28,10 +28,19 @@
     <span style="font-size: 13.5px; color: var(--ink2)">{{mapNote}}</span>
   </div>
 
+  <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--ink2)">The phases are not one straight pipeline: genotype, phenotype and covariate preparation run side by side, and phases 5 to 8 are branches you add for your study question. Open a phase to see its modules.</p>
   <div style="display: flex; flex-direction: column; align-items: stretch">
     <sc-for list="{{flow}}" as="ph">
-      <sc-if value="{{ph.arrow}}"><div aria-hidden="true" style="display: flex; justify-content: center; padding: 4px 0"><svg width="14" height="26" viewBox="0 0 14 26"><path d="M7 0 V21" stroke="#9fb3c6" stroke-width="1.5"></path><path d="M3 18 L7 23 L11 18" fill="none" stroke="#9fb3c6" stroke-width="1.5"></path></svg></div></sc-if>
-      <div style="{{ph.labelStyle}}"><span style="{{ph.numStyle}}">{{ph.n}}</span>{{ph.label}}</div>
+      <sc-if value="{{ph.arrow}}"><div aria-hidden="true" style="display: flex; justify-content: center; padding: 2px 0"><svg width="14" height="20" viewBox="0 0 14 20"><path d="M7 0 V15" stroke="#9fb3c6" stroke-width="1.5"></path><path d="M3 12 L7 17 L11 12" fill="none" stroke="#9fb3c6" stroke-width="1.5"></path></svg></div></sc-if>
+      <div style="{{ph.cardStyle}}">
+        <button type="button" aria-expanded="{{ph.expanded}}" onClick="{{ph.toggle}}" style="display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; background: none; border: 0; padding: 12px 14px; cursor: pointer; color: var(--ink)">
+          <span style="{{ph.numStyle}}">{{ph.n}}</span>
+          <span style="flex: 1 1 auto; min-width: 0"><span style="display: block; font-size: 16px; font-weight: 700; color: var(--navy)">{{ph.label}}</span><span style="display: block; font-size: 13.5px; color: var(--ink2); margin-top: 1px">{{ph.desc}}</span></span>
+          <span style="{{ph.countStyle}}">{{ph.count}}</span>
+          <span aria-hidden="true" style="flex: 0 0 auto; font-size: 13px; color: var(--teal)">{{ph.chev}}</span>
+        </button>
+        <sc-if value="{{ph.open}}">
+          <div style="padding: 0 14px 14px">
       <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center">
         <sc-for list="{{ph.boxes}}" as="bx">
           <div style="{{bx.style}}">
@@ -41,13 +50,17 @@
                 <div style="{{gr.style}}">
                   <sc-if value="{{gr.title}}"><div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink2); margin: 0 0 4px 8px">{{gr.title}}</div></sc-if>
                   <sc-for list="{{gr.mods}}" as="m">
-                    <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" title="{{m.desc}}" style="{{m.style}}">{{m.label}}<sc-if value="{{m.soon}}"><span style="display: block; font-size: 11.5px; font-weight: 400; color: var(--ink2)">Coming soon</span></sc-if></button>
+                    <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" title="{{m.desc}}" style="{{m.style}}">{{m.label}}<sc-if value="{{m.onRoute}}"><span style="font-size: 11.5px; font-weight: 500; color: inherit; opacity: 0.8"> · on your route</span></sc-if><sc-if value="{{m.soon}}"><span style="display: block; font-size: 11.5px; font-weight: 400; color: var(--ink2)">Coming soon</span></sc-if></button>
                   </sc-for>
                 </div>
               </sc-for>
             </div>
           </div>
         </sc-for>
+      </div>
+            <sc-if value="{{ph.hasAlt}}"><button type="button" onClick="{{ph.toggleAlt}}" style="margin-top: 8px; font-size: 13.5px; min-height: 32px; padding: 4px 0; border: 0; background: none; color: var(--teal); font-weight: 600; cursor: pointer">{{ph.altLabel}}</button></sc-if>
+          </div>
+        </sc-if>
       </div>
         <sc-if value="{{ph.hasSel}}">
           <div aria-live="polite" style="border: 1px solid var(--ln); border-radius: 8px; background: #ffffff; margin-top: 12px">
@@ -408,7 +421,8 @@
     </div>
   </div>
 
-  <div style="border: 1px solid var(--ln); border-radius: 8px; background: var(--code); overflow: hidden">
+  <sc-if value="{{hasStatus}}"><p role="status" style="{{statusStyle}}"><strong>{{statusHead}}</strong> {{status}}</p></sc-if>
+<div style="border: 1px solid var(--ln); border-radius: 8px; background: var(--code); overflow: hidden">
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--ln); background: var(--tint)">
       <span style="font-family: var(--mono); font-size: 13px; color: var(--ink2)">bash · {{fileName}} · {{srcLabel}}</span>
       <div style="display: flex; gap: 6px">

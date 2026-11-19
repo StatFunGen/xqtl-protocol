@@ -79,6 +79,7 @@ var CATALOG = [
   ['Enrichment and scoring', 'Which annotations and pathways are involved', [['eoo_enrichment','Excess of Overlap (EOO)','Block-jackknife enrichment'],['gsea','GSEA','Pathway overrepresentation'],['gregor','GREGOR','SNP set vs matched null'],['sldsc_enrichment','S-LDSC','Heritability partitioning'],['ems_training','scEEMS Training','Fit per-variant CatBoost model'],['ems_prediction','scEEMS Prediction','Score variants with a trained model']]]
 ];
 // The overview flowchart: phases (top to bottom) > boxes > groups > modules, as on the original builder.
+var PHASE_DESC = ['Reference genomes, gene annotations and LD panels', 'Turn sequencing or array data into molecular phenotypes', 'Prepare genotypes, phenotypes and covariates', 'Find variants associated with each molecular phenotype', 'Combine cohorts and compare effects across contexts', 'Fine-map likely causal variants and build TWAS weights', 'Connect molecular QTLs to complex traits', 'Test enrichment and score variant function'];
 var FLOW = [
   ['Inputs', 1, [['Reference Data', [[null, ['reference_data_preparation', 'generalized_TADB', 'ld_prune_reference', 'rss_ld_sketch']]]]]],
   ['Quantification', 2, [['Molecular Phenotype Quantification', [['Bulk RNA-seq', ['RNA_calling', 'bulk_expression_QC', 'bulk_expression_normalization']], ['Single-nuclei / pseudobulk', ['snRNAseq_preprocessing', 'pseudobulk_preprocessing']], ['Alternative splicing', ['splicing_calling', 'splicing_calling_leafcutter2', 'isoform_calling_torino', 'splicing_normalization']], ['DNA methylation', ['methylation_calling']], ['Polyadenylation', ['apa_calling', 'apa_impute']]]]]],
@@ -112,7 +113,9 @@ var MAIN = {
   gregor: ['SNP-set enrichment', 'Whether your SNP set overlaps an annotation more than matched SNPs.', 'Report the enriched annotations.'],
   sldsc_enrichment: ['Heritability enrichment', 'How much trait heritability an annotation explains relative to its size.', 'Report the enriched annotations.']
 };
-var REF_RX = /(ld_reference|\/reference\/|\.gtf|\.fa(sta)?(\.gz)?$|ld_meta|LD_blocks)/i;
+var REF_RX = /(^reference_data\/|ld_reference|\/reference\/|\.gtf|\.fa(sta)?(\.gz)?$|ld_meta|LD_blocks|_Index)/i;
+// replace one declared input path, as a whole word, in a command
+function swapPath(c, p, to) { var esc = p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); return c.replace(new RegExp('(^|[\\s=\'"`])' + esc + '(?=$|[\\s\'"`;|)])', 'g'), function (_, pre) { return pre + to; }); }
 var EXAMPLES = [
   { id: 'eqtl', stage: 3, label: 'eQTL discovery, starting from prepared data', study: { goals: { discover: true } }, title: 'Example: discover eQTLs', learn: 'How genotypes and gene expression are combined to find variants associated with each gene’s expression.', given: 'Genotypes, an expression matrix and covariates for a small set of samples on chromosome 22.', result: 'Variant–expression association results and the list of genes with a significant eQTL.', after: 'Open the results table, then use the same workflow with your own data.' },
   { id: 'finemap', stage: 4, label: 'Fine-mapping, from the same prepared data', study: { goals: { discover: true, finemap: true } }, title: 'Example: fine-map eQTL signals', learn: 'How fine-mapping narrows a QTL signal to credible sets of likely causal variants.', given: 'The same example genotypes, expression and covariates.', result: 'Association results, then credible sets and TWAS weights for an example gene.', after: 'Look at the credible sets, then connect them to a GWAS trait.' },
@@ -195,7 +198,7 @@ function nice(p) { var b = p.split('/').pop(); return b.replace(/^protocol_examp
 
 class Component {
   constructor() {
-    this.state = { data: XQB_DATA, mode: 'example', example: 'eqtl', study: studyFor('eqtl'), methods: {}, src: 'example', runOn: 'local', paths: {}, mapView: 'all', selMod: '', open: {}, pv: {}, expStage: {}, changed: {}, msg: '', adv: false, q: '', filter: 'all', copied: '' };
+    this.state = { data: XQB_DATA, mode: 'example', example: 'eqtl', study: studyFor('eqtl'), methods: {}, src: 'example', runOn: 'local', paths: {}, mapView: 'all', selMod: '', open: {}, pv: {}, expStage: {}, openPh: {}, altPh: {}, changed: {}, msg: '', adv: false, q: '', filter: 'all', copied: '' };
   }
   setRoute(patch, label) {
     var s = this.state, D = s.data;
@@ -241,31 +244,39 @@ class Component {
         badge: 'width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; ' + (active ? 'background: #19354a; color: #ffffff' : 'background: #eef2f5; color: #63717d'),
         rail: gi < CATALOG.length - 1 ? 'flex: 1 1 auto; width: 2px; background: #dce3e8; margin: 4px 0' : 'flex: 1 1 auto; width: 2px; background: transparent' };
     });
-    // Resources-site look: white cards with a hairline border, navy titles, teal for the route
+    // Resources-site look: one card per phase, closed until opened. In "My route" the phases on
+    // the route open showing only their route modules, with a button for the alternatives.
     var flow = FLOW.map(function (ph, pi) {
-      var hasSel = false, nOn = 0;
+      var hasSel = false, nOn = 0, nAll = 0;
+      ph[2].forEach(function (bx) { bx[1].forEach(function (gr) { gr[1].forEach(function (id) { nAll++; if (onRoute[id]) nOn++; if (s.selMod === id) hasSel = true; }); }); });
+      var showAll = !mapRoute || !!s.altPh[pi];
       var boxes = ph[2].map(function (bx) {
         var groups = bx[1].map(function (gr) {
-          var mods = gr[1].map(function (id) {
-            var sel = s.selMod === id, on = !!onRoute[id], soon = !!SOON[id], dim = mapRoute && !on;
-            if (sel) hasSel = true; if (on) nOn++;
-            return { label: LABEL[id] || id, desc: DESC[id] || '', soon: soon, pressed: String(sel),
+          var mods = gr[1].filter(function (id) { return showAll || onRoute[id]; }).map(function (id) {
+            var sel = s.selMod === id, on = !!onRoute[id], soon = !!SOON[id];
+            return { label: LABEL[id] || id, desc: DESC[id] || '', soon: soon, onRoute: on && !sel, pressed: String(sel),
               pick: function () { self.setState({ selMod: sel ? '' : id }); },
-              style: 'display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; line-height: 1.35; padding: 6px 10px; margin: 1px 0; cursor: pointer; border: 0; border-left: 2px solid ' + (sel ? '#19354a' : (on ? '#3d6289' : 'transparent')) + '; border-radius: 0 6px 6px 0; background: ' + (sel ? '#19354a' : (on ? '#e8eef5' : 'transparent')) + '; color: ' + (sel ? '#ffffff' : (on ? '#19354a' : (soon ? '#63717d' : '#202b35'))) + '; font-weight: ' + (on || sel ? '600' : '400') + '; opacity: ' + (dim ? '0.35' : '1') };
+              style: 'display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; line-height: 1.35; padding: 6px 10px; margin: 1px 0; cursor: pointer; border: 0; border-left: 2px solid ' + (sel ? '#19354a' : (on ? '#3d6289' : 'transparent')) + '; border-radius: 0 6px 6px 0; background: ' + (sel ? '#19354a' : (on ? '#e8eef5' : 'transparent')) + '; color: ' + (sel ? '#ffffff' : (on ? '#19354a' : (soon ? '#63717d' : '#202b35'))) + '; font-weight: ' + (on || sel ? '600' : '400') };
           });
-          return { title: gr[0], mods: mods, style: gr[0] ? 'padding: 8px 0 4px; border-top: 1px solid #eef2f5' : 'padding: 0' };
-        });
+          return { title: gr[0], mods: mods, style: gr[0] ? 'padding: 8px 0 4px; border-top: 1px solid #e3e9ee' : 'padding: 0' };
+        }).filter(function (gr) { return gr.mods.length; });
         var wide = bx[1].length > 1;
-        return { title: bx[0], groups: groups, titleStyle: 'font-size: 16px; font-weight: 700; color: #19354a; margin-bottom: 8px',
-          style: 'flex: ' + (wide || ph[2].length === 1 ? '1 1 100%' : '1 1 300px') + '; min-width: 0; box-sizing: border-box; max-width: ' + (wide || ph[2].length > 1 ? '100%' : '460px') + '; background: #ffffff; border: 1px solid #dce3e8; border-radius: 8px; box-shadow: 0 1px 2px rgba(25, 53, 74, 0.05); padding: 14px 16px' };
-      });
-      var faded = mapRoute && !nOn;
-      return { n: pi + 1, label: ph[0].toUpperCase(), arrow: pi > 0, boxes: boxes, hasSel: hasSel,
-        labelStyle: 'display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; margin: 2px 0 8px; color: #63717d; opacity: ' + (faded ? '0.45' : '1'),
-        numStyle: 'width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; letter-spacing: 0; background: ' + (nOn ? '#19354a' : '#eef2f5') + '; color: ' + (nOn ? '#ffffff' : '#63717d') };
+        return { title: bx[0], groups: groups, titleStyle: 'font-size: 15px; font-weight: 700; color: #19354a; margin-bottom: 6px',
+          style: 'flex: ' + (wide || ph[2].length === 1 ? '1 1 100%' : '1 1 280px') + '; min-width: 0; box-sizing: border-box; background: #f6f8fa; border: 1px solid #eef2f5; border-radius: 6px; padding: 12px 14px' };
+      }).filter(function (bx) { return bx.groups.length; });
+      var fixedOpen = mapRoute && nOn > 0, open = fixedOpen || !!s.openPh[pi] || hasSel;
+      return { n: pi + 1, label: ph[0], desc: PHASE_DESC[pi], arrow: pi > 0, boxes: boxes, hasSel: hasSel && open, open: open, expanded: String(open),
+        chev: fixedOpen ? '' : (open ? 'Hide' : 'Show'),
+        toggle: function () { if (fixedOpen) return; var o = Object.assign({}, s.openPh); o[pi] = !open; self.setState({ openPh: o, selMod: open && hasSel ? '' : s.selMod }); },
+        count: nOn ? nOn + ' of ' + nAll + ' on your route' : nAll + ' module' + (nAll === 1 ? '' : 's'),
+        countStyle: 'flex: 0 0 auto; font-size: 12.5px; padding: 2px 8px; border-radius: 4px; ' + (nOn ? 'background: #e8eef5; color: #19354a; font-weight: 600' : 'color: #63717d'),
+        hasAlt: mapRoute && nOn > 0 && nOn < nAll, altLabel: s.altPh[pi] ? 'Show only my route' : 'Show the ' + (nAll - nOn) + ' alternative module' + (nAll - nOn === 1 ? '' : 's'),
+        toggleAlt: function () { var a = Object.assign({}, s.altPh); a[pi] = !a[pi]; self.setState({ altPh: a }); },
+        cardStyle: 'background: #ffffff; border: 1px solid #dce3e8; border-radius: 8px; box-shadow: 0 1px 2px rgba(25, 53, 74, 0.05); opacity: ' + (mapRoute && !nOn ? '0.55' : '1'),
+        numStyle: 'flex: 0 0 26px; width: 26px; height: 26px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; background: ' + (nOn ? '#19354a' : '#eef2f5') + '; color: ' + (nOn ? '#ffffff' : '#63717d') };
     });
     var mapViews = [['all', 'All stages'], ['route', 'My route']].map(function (v) { var on = s.mapView === v[0]; return { label: v[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ mapView: v[0] }); } }; });
-    var mapNote = mapRoute ? 'Modules not on your route are faded.' : 'Modules on your route are highlighted, and their phase numbers turn dark.';
+    var mapNote = mapRoute ? 'Only the modules on your route are listed; each phase can show its alternatives.' : 'Phases with a dark number are on your route.';
 
     var selVals = { stage: '', label: '', what: '', inputs: [], outputs: [], fromEarlier: false, hasOut: false, outNote: '', outHead: [], outRows: [], doc: '', status: '', statusStyle: '', canTry: false, tryLabel: '', tryIt: function () {} };
     if (s.selMod && LABEL[s.selMod]) {
@@ -321,6 +332,7 @@ class Component {
     var producer = function (p, i) { var best = -1, len = 0; Object.keys(outsOf).forEach(function (o) { if (outsOf[o] < i && (p === o || p.indexOf(o + '/') === 0) && o.length > len) { best = outsOf[o]; len = o.length; } }); return best; };
     var own = s.src === 'own';
     var userFiles = {}, userOrder = [];
+    var placeholder = function (p) { return '<your_' + nice(p.replace(/^<|>$/g, '').replace(/^path\/to\//, '')).replace(/ /g, '_') + '>'; };
     var routeVals = route.map(function (r, i) {
       var keys = r.wfs.map(function (w) { return r.m + '|' + w; });
       var tested = !r.soon && keys.every(testedKey);
@@ -330,11 +342,12 @@ class Component {
         if (ins.some(function (x) { return x.raw === p; })) return;
         var pi = p.indexOf('output/') === 0 ? producer(p, i) : -1;
         if (pi >= 0) reads[pi + 1] = 1;
-        var fixture = p.indexOf('tests/fixtures/') === 0;
-        if (fixture) { if (!userFiles[p]) { userFiles[p] = []; userOrder.push(p); } if (userFiles[p].indexOf(i + 1) < 0) userFiles[p].push(i + 1); }
-        var src = pi >= 0 ? 'From step ' + (pi + 1) : (p.indexOf('output/') === 0 ? 'Made by a module not on this route' : (fixture ? (own ? 'Your file' : 'Example file') : 'Reference data'));
-        var shown = fixture && own ? (s.paths[p] || '<your ' + nice(p) + '>') : p;
-        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, hasPreview: !!(D.prev || {})[p] && !(fixture && own && s.paths[p]) }));
+        // a file the user supplies is one the module page declares with no producing step (D.ext)
+        var user = (D.ext[k] || []).indexOf(p) >= 0, ref = user && REF_RX.test(p);
+        if (user) { if (!userFiles[p]) { userFiles[p] = []; userOrder.push(p); } if (userFiles[p].indexOf(i + 1) < 0) userFiles[p].push(i + 1); }
+        var src = pi >= 0 ? 'From step ' + (pi + 1) : (p.indexOf('output/') === 0 ? 'Made by a module not on this route' : (user ? (ref ? 'Reference data' : (own ? 'Your file' : 'Example file')) : 'Written by this step’s setup lines'));
+        var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
+        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
       }); });
       var stepsRead = Object.keys(reads).map(Number).sort(function (a, b) { return a - b; });
       var outs = []; keys.forEach(function (k) { ((D.io[k] || {}).o || []).forEach(function (o) { if (outs.indexOf(o) < 0) outs.push(o); }); });
@@ -372,16 +385,42 @@ class Component {
     var missing = userOrder.filter(function (p) { return !s.paths[p]; }).length;
     var soonSteps = route.map(function (r, i) { return r.soon ? i + 1 : 0; }).filter(Boolean);
     var cluster = s.runOn === 'local' ? '' : ' \\\n    -c my_cluster.yml -q ' + s.runOn;
+    var noCmd = [], exampleOnly = 0;
     var blocks = route.map(function (r, i) {
       var head = '# Step ' + (i + 1) + '. ' + r.title + ' (' + (LABEL[r.m] || r.m) + ')';
       if (r.soon) return head + '\necho "Step ' + (i + 1) + ' has no command yet: see its notebook." >&2; exit 1';
-      return head + '\n' + r.wfs.map(function (w) { var c = D.cmd[r.m + '|' + w]; if (!c) return '# loading…'; c = fmt(c, cluster); if (own) c = c.replace(/tests\/fixtures\/[^\s`'"\\]+/g, function (p) { return s.paths[p] || '<your ' + nice(p).replace(/ /g, '_') + '>'; }); return c; }).join('\n\n');
+      return head + '\n' + r.wfs.map(function (w) {
+        var k = r.m + '|' + w, c = D.cmd[k];
+        if (!c) { noCmd.push(i + 1); return 'echo "Step ' + (i + 1) + ': the builder has no command for ' + w + '; see its notebook." >&2; exit 1'; }
+        c = fmt(c, cluster);
+        if (own) {
+          // swap exactly the inputs the module page declares as user-supplied
+          (D.ext[k] || []).forEach(function (p) { c = swapPath(c, p, s.paths[p] || placeholder(p)); });
+          // anything else still pointing at example files (setup lines that copy example data) must not run silently
+          c = c.split('\n').map(function (l) { if (l.indexOf('tests/fixtures/') < 0) return l; exampleOnly++; return '# EXAMPLE DATA, replace with your own: ' + l; }).join('\n');
+        }
+        return c;
+      }).join('\n\n');
     });
-    var script = route.length ? '#!/bin/bash\n# xQTL analysis route from the Workflow Builder\n# Protocol revision: ' + REV + '\n# ' + (own ? 'Your data' : 'Repository example data') + ' · ' + { local: 'runs here', slurm: 'SoS submits each step to SLURM', sge: 'SoS submits each step to SGE' }[s.runOn] + (soonSteps.length ? '\n# NOT READY: step ' + soonSteps.join(', ') + ' has no command yet; the script stops there.' : '') + '\nset -euo pipefail\n\n' + blocks.join('\n\n') : '# Choose an example or describe your study to build the route.';
+    var body = blocks.join('\n\n');
+    var holes = (body.match(/<your_[^>]+>/g) || []).filter(function (h, n, a) { return a.indexOf(h) === n; }).length;
+    var untestedSteps = route.map(function (r, i) { return !r.soon && !r.wfs.every(function (w) { return testedKey(r.m + '|' + w); }) ? i + 1 : 0; }).filter(Boolean);
+    var blockers = soonSteps.concat(noCmd);
+    var plural = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); };
+    // Runnable or template: said in the script's header and in a box above it
+    var status = '', ready = false;
+    if (route.length) {
+      if (blockers.length) status = 'Step ' + blockers.join(', ') + ' has no command in the builder, so the script stops there.';
+      else if (own && (holes || exampleOnly)) status = [holes ? 'Fill in ' + plural(holes, 'input path') + ' above' : '', exampleOnly ? 'replace ' + plural(exampleOnly, 'line') + ' marked EXAMPLE DATA with your own files' : ''].filter(Boolean).join(', and ').replace(/^./, function (c) { return c.toUpperCase(); }) + '.';
+      else if (own) { ready = true; status = 'Your paths are filled in. Each step has been run on the example data' + (untestedSteps.length ? ' except step ' + untestedSteps.join(', ') : '') + ', not on your data, so check the first steps’ output.'; }
+      else if (untestedSteps.length) status = 'Step ' + untestedSteps.join(', ') + ' has not been run on the example data, so this is a demonstration, not a tested script.';
+      else { ready = true; status = 'Every step of this route runs on the example data as written.'; }
+    }
+    var script = route.length ? '#!/bin/bash\n# xQTL analysis route from the Workflow Builder\n# Protocol revision: ' + REV + '\n# ' + (own ? 'Your data' : 'Repository example data') + ' · ' + { local: 'runs here', slurm: 'SoS submits each step to SLURM', sge: 'SoS submits each step to SGE' }[s.runOn] + '\n# Status: ' + (ready ? 'ready to run. ' : 'NOT RUNNABLE YET. ') + status + '\nset -euo pipefail\n\n' + body : '# Choose an example or describe your study to build the route.';
     var setupOnce = [{ v: 'Clone the repository.' }, { v: 'Install the software environment with pixi (see Environment setup).' }];
     if (s.runOn !== 'local') setupOnce.push({ v: 'Copy code/cluster/' + s.runOn + '.yml to my_cluster.yml and set your account and queue.' });
     var setupRoute = [{ v: 'Open a terminal in the repository folder' + (s.runOn === 'local' ? '.' : ', on the cluster’s login node.') }];
-    if (own) setupRoute.push({ v: missing ? 'Fill in the ' + missing + ' input path' + (missing > 1 ? 's' : '') + ' above; the script shows <your …> until you do.' : 'Check that each path above points at a readable file.' });
+    if (own) setupRoute.push({ v: missing ? 'Fill in the ' + missing + ' input path' + (missing > 1 ? 's' : '') + ' above; the script shows <your_…> until you do.' : 'Check that each path above points at a readable file.' });
     else setupRoute.push({ v: 'The example files are already in the repository; nothing to download.' });
     setupRoute.push({ v: s.runOn === 'local' ? 'Run the script: every step runs on this computer, one after another.' : 'Run the script: SoS sends each step to ' + (s.runOn === 'slurm' ? 'SLURM' : 'SGE') + ' and waits for it. This page does not submit anything itself.' });
     var mainResults = [], inter = [];
@@ -429,7 +468,7 @@ class Component {
       hasProduces: mainResults.length > 0, produces: 'This analysis produces ' + (function (t) { t = t.map(function (x) { return x.charAt(0).toLowerCase() + x.slice(1); }); return t.length > 1 ? t.slice(0, -1).join(', ') + ' and ' + t[t.length - 1] : t[0]; })(mainResults.map(function (m) { return m.title; })) + '.',
       jumpOwn: function () { self.setState({ mode: 'own', src: 'own', msg: '' }); },
       tut: { title: exObj.title, items: [{ k: 'WHAT YOU LEARN', v: exObj.learn }, { k: 'PROVIDED INPUTS', v: exObj.given }, { k: 'EXPECTED RESULT', v: exObj.result }, { k: 'AFTERWARDS', v: exObj.after }] },
-      script: script, fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
+      script: script, hasStatus: !!status, status: status, statusStyle: 'border-radius: 6px; padding: 10px 14px; font-size: 14px; line-height: 1.5; margin-bottom: 10px; background: ' + (ready ? '#e3f1e8; color: #1f6b3d' : '#fbf0d9; color: #7a5300'), statusHead: ready ? 'Ready to run.' : 'Not a runnable script yet.', fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
       copyScriptLabel: s.copied === 'script' ? 'Copied' : (s.copied === 'fail' ? 'Copy failed' : 'Copy all'), copyScript: function () { copyText(script, 'script'); },
       downloadScript: function () { try { var b = new Blob([script + '\n'], { type: 'text/x-shellscript' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = own ? 'xqtl_route.sh' : 'xqtl_route_example.sh'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); } catch (e) {} },
       ownNeed: String(userOrder.length), useWithMine: function () { self.setState({ mode: 'own', src: 'own', msg: 'Kept your route and methods. Fill in the input paths below.' }); },
