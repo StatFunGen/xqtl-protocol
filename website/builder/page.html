@@ -1,0 +1,509 @@
+<!-- Workflow Builder page template. Rendered by page.js: {{path}} inserts a value, <sc-for list= as=> repeats, <sc-if value=> shows when true, on<Event>="{{fn}}" binds a handler. Assembled into the builder notebook by website/builder_registry.py --write. -->
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13.5px; color: var(--ink2); font-weight: 600; margin-bottom: 10px">
+  <span style="width: 9px; height: 9px; background: var(--navy); border-radius: 2px; display: inline-block"></span><span style="color: var(--navy)">Workflow Builder</span><span>·</span><span>{{moduleCount}} modules</span><span>·</span><span>{{testedCount}} commands run on example data</span>
+</div>
+<h1 class="hdt" style="margin: 0 0 14px; font-size: 32px; line-height: 1.2; font-weight: 700; color: var(--navy)">xQTL Analysis Workflow Builder</h1>
+<p style="margin: 0 0 26px; font-size: 18px; line-height: 1.6; color: var(--ink2)">See how an xQTL analysis fits together, try it on the repository's example data, then use the same route on your own study. Every command on this page comes from a module notebook and, unless marked otherwise, runs as shown on the example data.</p>
+
+<p style="margin: -12px 0 22px; font-size: 15px">Already know the pipeline? <a href="#begin-h" onClick="{{jumpOwn}}" style="font-weight: 600">Go straight to your own data</a></p>
+<ol style="list-style: none; margin: 0 0 36px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); border: 1px solid var(--ln); border-radius: 8px; overflow: hidden">
+  <sc-for list="{{journey}}" as="j">
+    <li style="{{j.style}}">
+      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--ink2)">STEP {{j.n}}</div>
+      <a href="{{j.href}}" style="display: block; font-size: 15px; font-weight: 600; color: var(--navy); margin-top: 2px">{{j.label}}</a>
+      <div style="font-size: 13px; color: var(--ink2); margin-top: 2px; line-height: 1.4">{{j.sub}}</div>
+    </li>
+  </sc-for>
+</ol>
+
+<section aria-labelledby="map-h" style="margin-bottom: 44px">
+  <h2 id="map-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">1. Understand the workflow</h2>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6; color: var(--ink)">The protocol's analysis stages, from reference data to enrichment. Studies branch: not every study runs every stage, and several stages offer alternative methods. Select a module to see what it does, what it takes and what it produces.</p>
+  <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px">
+    <div role="group" aria-label="Show" style="display: inline-flex; border: 1px solid var(--ln2); border-radius: 6px; overflow: hidden">
+      <sc-for list="{{mapViews}}" as="v">
+        <button type="button" aria-pressed="{{v.pressed}}" onClick="{{v.pick}}" style="{{v.style}}">{{v.label}}</button>
+      </sc-for>
+    </div>
+    <span style="font-size: 13.5px; color: var(--ink2)">{{mapNote}}</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 0">
+    <sc-for list="{{map}}" as="st">
+      <div style="display: flex; gap: 14px; align-items: stretch">
+        <div style="flex: 0 0 34px; display: flex; flex-direction: column; align-items: center">
+          <span style="{{st.badge}}">{{st.n}}</span>
+          <span style="{{st.rail}}"></span>
+        </div>
+        <div style="flex: 1 1 auto; min-width: 0; padding-bottom: 14px">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px">
+            <span style="{{st.titleStyle}}">{{st.label}}</span>
+            <span style="font-size: 13px; color: var(--ink2)">{{st.sub}}</span>
+            <button type="button" aria-expanded="{{st.expanded}}" onClick="{{st.toggle}}" style="font-size: 13px; min-height: 30px; padding: 2px 4px; border: 0; background: none; color: var(--teal); font-weight: 600; cursor: pointer">{{st.btn}}</button>
+          </div>
+          <sc-if value="{{st.showMods}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
+              <sc-for list="{{st.mods}}" as="m">
+                <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="{{m.style}}">{{m.label}}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{hasSel}}">
+    <div aria-live="polite" style="border: 1px solid var(--ln); border-radius: 8px; background: #ffffff; margin-top: 6px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px; padding: 16px 18px 12px; border-bottom: 1px solid var(--ln)">
+        <div style="min-width: 0">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink2)"><span style="width: 8px; height: 8px; background: var(--teal); border-radius: 2px; display: inline-block"></span>{{sel.stage}}</div>
+          <div style="font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px">{{sel.label}}</div>
+        </div>
+        <button type="button" onClick="{{closeSel}}" aria-label="Close module details" style="width: 36px; height: 36px; border: 1px solid var(--ln2); border-radius: 6px; background: #ffffff; color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+      <div style="padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 14px">
+        <p style="margin: 0; font-size: 15px; line-height: 1.6">{{sel.what}}</p>
+        <div>
+          <div style="font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 8px">Input</div>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+            <sc-for list="{{sel.inputs}}" as="f">
+              <li style="border: 1px solid var(--ln); border-radius: 6px; padding: 10px 12px">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px">
+                  <div style="min-width: 0; flex: 1 1 260px">
+                    <div style="font-size: 14px; font-weight: 600">{{f.label}}</div>
+                    <div style="font-family: var(--mono); font-size: 12.5px; color: var(--ink2); overflow-wrap: anywhere; margin-top: 2px">{{f.path}}</div>
+                  </div>
+                  <sc-if value="{{f.hasPreview}}">
+                    <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="font-size: 13.5px; min-height: 34px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ln2); background: #ffffff; color: var(--navy); cursor: pointer">{{f.btn}}</button>
+                  </sc-if>
+                </div>
+                <sc-if value="{{f.open}}">
+                  <div style="margin-top: 10px">
+                    <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
+                    <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
+                      <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+                        <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+                        <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </sc-if>
+              </li>
+            </sc-for>
+          </ul>
+          <sc-if value="{{sel.fromEarlier}}"><p style="margin: 8px 0 0; font-size: 13.5px; color: var(--ink2)">Also reads files made by earlier modules.</p></sc-if>
+        </div>
+        <div>
+          <div style="font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 8px">Output</div>
+          <ul style="margin: 0 0 8px; padding-left: 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; overflow-wrap: anywhere">
+            <sc-for list="{{sel.outputs}}" as="o"><li>{{o.v}}</li></sc-for>
+          </ul>
+          <sc-if value="{{sel.hasOut}}">
+            <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{sel.outNote}}</div>
+            <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
+              <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+                <thead><tr style="background: var(--tint)"><sc-for list="{{sel.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+                <tbody><sc-for list="{{sel.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+              </table>
+            </div>
+          </sc-if>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-size: 14px">
+          <span style="{{sel.statusStyle}}">{{sel.status}}</span>
+          <a href="{{sel.doc}}">Open the {{sel.label}} notebook</a>
+          <sc-if value="{{sel.canTry}}">
+            <button type="button" onClick="{{sel.tryIt}}" style="font-size: 14px; min-height: 36px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--navy); background: #ffffff; color: var(--navy); font-weight: 500; cursor: pointer">{{sel.tryLabel}}</button>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</section>
+
+<section aria-labelledby="begin-h" style="margin-bottom: 44px">
+  <h2 id="begin-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">2. Choose how to begin</h2>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">Both lead to the same route and the same commands. You can switch at any time.</p>
+  <div role="radiogroup" aria-label="How to begin" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px">
+    <sc-for list="{{modes}}" as="md">
+      <button type="button" role="radio" aria-checked="{{md.checked}}" onClick="{{md.pick}}" style="{{md.style}}">
+        <span style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+          <span style="font-size: 17px; font-weight: 700; color: var(--navy)">{{md.label}}</span>
+          <span style="{{md.dot}}"></span>
+        </span>
+        <span style="display: block; font-size: 14.5px; line-height: 1.5; color: var(--ink); margin-top: 6px">{{md.desc}}</span>
+        <span style="display: block; font-size: 13px; color: var(--ink2); margin-top: 10px">{{md.foot}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{isExample}}">
+    <fieldset style="border: 1px solid var(--ln); border-radius: 8px; margin: 16px 0 0; padding: 16px 18px">
+      <legend style="font-size: 15px; font-weight: 600; color: var(--navy); padding: 0 6px">Choose an example</legend>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <sc-for list="{{examples}}" as="ex">
+          <label style="{{ex.style}}">
+            <input type="radio" name="example" checked="{{ex.checked}}" disabled="{{ex.disabled}}" onChange="{{ex.pick}}" style="accent-color: #19354a; margin: 4px 0 0">
+            <span style="min-width: 0">
+              <span style="font-weight: 600; color: var(--ink)">{{ex.label}}</span> <span style="{{ex.tagStyle}}">{{ex.tag}}</span>
+              <span style="display: block; font-size: 14px; color: var(--ink); margin-top: 4px; line-height: 1.45"><strong style="font-weight: 600">What you’ll learn:</strong> {{ex.learn}}</span>
+              <span style="display: block; font-size: 14px; color: var(--ink); margin-top: 2px; line-height: 1.45"><strong style="font-weight: 600">Expected output:</strong> {{ex.result}}</span>
+              <span style="display: block; font-size: 13px; color: var(--ink2); margin-top: 4px; line-height: 1.45">{{ex.route}}</span>
+            </span>
+          </label>
+        </sc-for>
+      </div>
+      <p style="margin: 12px 0 0; font-size: 13px; color: var(--ink2)">Examples marked as a demonstration show the route and commands, but at least one step does not yet run on the example files.</p>
+    </fieldset>
+    <div style="border: 1px solid var(--ln); border-radius: 8px; margin-top: 12px; background: var(--tint)">
+      <div style="padding: 14px 18px 4px; font-size: 17px; font-weight: 700; color: var(--navy)">{{tut.title}}</div>
+      <dl style="margin: 0; padding: 6px 18px 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 20px">
+        <sc-for list="{{tut.items}}" as="t">
+          <div>
+            <dt style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--ink2)">{{t.k}}</dt>
+            <dd style="margin: 4px 0 0; font-size: 14.5px; line-height: 1.5">{{t.v}}</dd>
+          </div>
+        </sc-for>
+      </dl>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isOwn}}">
+    <div style="border: 1px solid var(--ln); border-radius: 8px; margin-top: 16px">
+      <fieldset style="border: 0; margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--ln)">
+        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">1. What molecular phenotype are you studying?</legend>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; clear: both">
+          <sc-for list="{{qPheno}}" as="o">
+            <label style="{{o.style}}"><input type="radio" name="ph" checked="{{o.checked}}" onChange="{{o.pick}}" style="accent-color: #19354a; margin: 0">{{o.label}}</label>
+          </sc-for>
+        </div>
+      </fieldset>
+      <fieldset style="border: 0; margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--ln)">
+        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">2. What data do you already have?</legend>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; clear: both">
+          <sc-for list="{{qStart}}" as="o">
+            <label style="{{o.style}}"><input type="radio" name="start" checked="{{o.checked}}" onChange="{{o.pick}}" style="accent-color: #19354a; margin: 0">{{o.label}}</label>
+          </sc-for>
+        </div>
+      </fieldset>
+      <fieldset style="border: 0; margin: 0; padding: 16px 18px">
+        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">3. What analyses do you want? <span style="font-weight: 400; color: var(--ink2); font-size: 13.5px">Choose any</span></legend>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; clear: both">
+          <sc-for list="{{qGoals}}" as="o">
+            <label style="{{o.style}}"><input type="checkbox" checked="{{o.checked}}" onChange="{{o.pick}}" style="accent-color: #19354a; margin: 0">{{o.label}}</label>
+          </sc-for>
+        </div>
+        <sc-if value="{{hasContextual}}">
+          <div style="margin-top: 14px; padding: 12px 14px; border-radius: 6px; background: var(--tint); display: flex; flex-direction: column; gap: 12px">
+            <sc-for list="{{contextual}}" as="q">
+              <div>
+                <label for="{{q.id}}" style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px">{{q.label}} <span style="font-weight: 400; color: var(--ink2)">· {{q.why}}</span></label>
+                <select id="{{q.id}}" onChange="{{q.pick}}" value="{{q.value}}" style="font-size: 14px; min-height: 38px; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; background: #ffffff; color: var(--ink); max-width: 100%">
+                  <sc-for list="{{q.opts}}" as="op"><option value="{{op.v}}">{{op.label}}</option></sc-for>
+                </select>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </fieldset>
+      <div style="border-top: 1px solid var(--ln); padding: 8px 18px">
+        <button type="button" aria-expanded="{{advExpanded}}" aria-controls="adv-opts" onClick="{{toggleAdv}}" style="font-size: 14.5px; min-height: 40px; padding: 6px 0; background: none; border: 0; color: var(--teal); font-weight: 600; cursor: pointer">{{advLabel}} <span style="font-weight: 400; color: var(--ink2); font-size: 13px">{{advCount}}</span></button>
+        <sc-if value="{{adv}}">
+          <div id="adv-opts" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 18px; padding: 6px 0 10px">
+            <sc-for list="{{allOpts}}" as="q">
+              <div>
+                <label for="{{q.id}}" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px">{{q.label}}</label>
+                <select id="{{q.id}}" onChange="{{q.pick}}" value="{{q.value}}" style="width: 100%; font-size: 14px; min-height: 38px; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; background: #ffffff; color: var(--ink)">
+                  <sc-for list="{{q.opts}}" as="op"><option value="{{op.v}}">{{op.label}}</option></sc-for>
+                </select>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+  <p role="status" aria-live="polite" style="{{msgStyle}}">{{msg}}</p>
+</section>
+
+<section id="route" aria-labelledby="r-h" style="margin-bottom: 44px">
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">
+    <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">3. Your analysis route</h2>
+    <span style="font-size: 13.5px; color: var(--ink2)">{{routeSummary}}</span>
+  </div>
+  <sc-if value="{{hasProduces}}"><p style="margin: 12px 0 0; font-size: 15.5px; line-height: 1.6; font-weight: 600; color: var(--navy)">{{produces}}</p></sc-if>
+  <p style="margin: 8px 0 14px; font-size: 15.5px; line-height: 1.6">The modules to run, in order. Open a step to see why it is here, where each input comes from, what it writes and which method it uses.</p>
+  <sc-if value="{{routeEmpty}}">
+    <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
+  </sc-if>
+  <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{route}}" as="r">
+      <li id="{{r.anchor}}" style="{{r.cardStyle}}">
+        <div style="display: flex; gap: 14px; align-items: flex-start">
+          <span style="{{r.numStyle}}">{{r.n}}</span>
+          <div style="flex: 1 1 auto; min-width: 0">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px">
+              <span style="font-weight: 600; font-size: 16px; color: var(--ink)">{{r.title}}</span>
+              <sc-if value="{{r.changed}}"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: var(--stb); color: var(--stf)">Changed</span></sc-if>
+            </div>
+            <div style="font-size: 14px; color: var(--ink2); margin-top: 3px; line-height: 1.45">{{r.module}} · {{r.methodLine}}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
+              <span style="{{r.testStyle}}">{{r.tested}}</span>
+              <sc-if value="{{r.hasTime}}"><span style="font-size: 12.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--ln); color: var(--ink2)">{{r.time}}</span></sc-if>
+              <span style="font-size: 12.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--ln); color: var(--ink2)">{{r.readsLine}}</span>
+            </div>
+          </div>
+          <button type="button" aria-expanded="{{r.expanded}}" aria-controls="{{r.panelId}}" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
+        </div>
+        <sc-if value="{{r.isOpen}}">
+          <div id="{{r.panelId}}" style="margin-top: 14px; border-top: 1px solid var(--ln); padding-top: 14px; display: flex; flex-direction: column; gap: 14px">
+            <div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 4px">Why this step</div>
+              <p style="margin: 0; font-size: 14.5px; line-height: 1.6">{{r.why}}</p>
+            </div>
+            <sc-if value="{{r.hasChoices}}">
+              <fieldset style="border: 1px solid var(--ln); border-radius: 6px; margin: 0; padding: 10px 14px">
+                <legend style="font-size: 13px; font-weight: 600; color: var(--ink2); padding: 0 6px">Method</legend>
+                <div style="display: flex; flex-direction: column; gap: 6px">
+                  <sc-for list="{{r.choices}}" as="c">
+                    <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; padding: 4px 0">
+                      <input type="radio" name="{{r.radioName}}" checked="{{c.checked}}" onChange="{{c.pick}}" style="accent-color: #19354a; margin: 3px 0 0">
+                      <span><span style="font-weight: 600">{{c.label}}</span> <span style="{{c.tagStyle}}">{{c.tag}}</span><span style="display: block; color: var(--ink2); font-size: 13px">{{c.desc}}</span></span>
+                    </label>
+                  </sc-for>
+                </div>
+              </fieldset>
+            </sc-if>
+            <div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Input</div>
+              <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+                <sc-for list="{{r.inputs}}" as="f">
+                  <li style="border: 1px solid var(--ln); border-radius: 6px; padding: 8px 12px">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px">
+                      <div style="min-width: 0; flex: 1 1 260px">
+                        <div style="font-size: 13.5px; font-weight: 600">{{f.source}}</div>
+                        <div style="font-family: var(--mono); font-size: 12.5px; color: var(--ink2); overflow-wrap: anywhere; margin-top: 2px">{{f.path}}</div>
+                      </div>
+                      <sc-if value="{{f.hasPreview}}">
+                        <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="font-size: 13.5px; min-height: 34px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ln2); background: #ffffff; color: var(--navy); cursor: pointer">{{f.btn}}</button>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{f.open}}">
+                      <div style="margin-top: 10px">
+                        <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
+                        <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
+                          <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+                            <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+                            <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </li>
+                </sc-for>
+              </ul>
+            </div>
+            <div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Output</div>
+              <ul style="margin: 0 0 8px; padding-left: 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; overflow-wrap: anywhere">
+                <sc-for list="{{r.outputs}}" as="o"><li>{{o.v}}</li></sc-for>
+              </ul>
+              <sc-if value="{{r.hasOut}}">
+                <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{r.outNote}}</div>
+                <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
+                  <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+                    <thead><tr style="background: var(--tint)"><sc-for list="{{r.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+                    <tbody><sc-for list="{{r.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+                  </table>
+                </div>
+              </sc-if>
+            </div>
+            <a href="{{r.doc}}" style="font-size: 14px; align-self: flex-start">Open the {{r.module}} notebook</a>
+          </div>
+        </sc-if>
+      </li>
+    </sc-for>
+  </ol>
+</section>
+
+<section aria-labelledby="c-h" style="margin-bottom: 44px">
+  <h2 id="c-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">4. Generate your commands</h2>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">One script for the whole route, taken from the module notebooks. It updates as you change the route, the data source or where it runs.</p>
+
+  <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 4px 18px; margin-bottom: 14px">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 0; border-bottom: 1px solid var(--ln)">
+      <span style="flex: 0 0 150px; font-size: 14px; font-weight: 600; color: var(--ink2)">Data source</span>
+      <div role="group" aria-label="Data source" style="display: inline-flex; border: 1px solid var(--ln2); border-radius: 6px; overflow: hidden">
+        <sc-for list="{{srcTabs}}" as="t">
+          <button type="button" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <fieldset style="border: 0; margin: 0; padding: 12px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px">
+      <legend style="float: left; flex: 0 0 150px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink2)">Where it runs</legend>
+      <sc-for list="{{runOn}}" as="p">
+        <label style="{{p.style}}"><input type="radio" name="runon" checked="{{p.checked}}" onChange="{{p.pick}}" style="accent-color: #19354a; margin: 0">{{p.label}}</label>
+      </sc-for>
+    </fieldset>
+  </div>
+
+  <sc-if value="{{showCluster}}">
+    <div style="border-radius: 6px; background: var(--acs); padding: 12px 14px; font-size: 14px; line-height: 1.55; margin-bottom: 14px"><strong style="color: var(--navy)">These are SoS commands that submit jobs to {{runOnName}} for you</strong>, through your cluster settings file <code style="font-family: var(--mono); font-size: 13px">my_cluster.yml</code> (copy it from <code style="font-family: var(--mono); font-size: 13px">code/cluster/{{runOnFile}}.yml</code>). They are not a native <code style="font-family: var(--mono); font-size: 13px">{{nativeCmd}}</code> script: run them on a login node and SoS submits and tracks each step. <a href="{{clusterDoc}}">Running on a cluster</a> explains the settings file.</div>
+  </sc-if>
+
+  <sc-if value="{{isOwnSrc}}">
+    <div style="border: 1px solid var(--ln); border-radius: 8px; margin-bottom: 14px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; padding: 12px 16px; border-bottom: 1px solid var(--ln)">
+        <span style="font-size: 15px; font-weight: 600; color: var(--navy)">Your input files</span>
+        <span style="{{pathStatusStyle}}">{{pathStatus}}</span>
+      </div>
+      <div style="padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 12px">
+        <p style="margin: 0; font-size: 13.5px; color: var(--ink2); line-height: 1.5">Only the files this route reads from outside are listed; files made by an earlier step are filled in for you. Paths stay in your browser and nothing is uploaded.</p>
+        <sc-if value="{{noPaths}}"><p style="margin: 0; font-size: 14px">This route needs no input files of yours.</p></sc-if>
+        <sc-for list="{{pathGroups}}" as="g">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--ink2); padding-top: 4px">{{g.label}}</div>
+            <sc-for list="{{g.fields}}" as="f">
+              <div style="border: 1px solid var(--ln); border-radius: 6px; padding: 12px 14px">
+                <label for="{{f.id}}" style="display: block; font-size: 14.5px; font-weight: 600; margin-bottom: 2px">{{f.label}}</label>
+                <div style="font-size: 13px; color: var(--ink2); margin-bottom: 8px; line-height: 1.5">{{f.format}} · needed by step {{f.steps}} · <a href="{{f.doc}}">format in the {{f.module}} notebook</a></div>
+                <input id="{{f.id}}" type="text" value="{{f.value}}" onInput="{{f.set}}" placeholder="{{f.placeholder}}" style="width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 13px; min-height: 40px; padding: 8px 10px; border: 1px solid var(--ln2); border-radius: 6px; color: var(--ink); background: #ffffff">
+                <sc-if value="{{f.hasPreview}}">
+                  <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="margin-top: 8px; font-size: 13.5px; min-height: 32px; padding: 4px 0; border: 0; background: none; color: var(--teal); font-weight: 600; cursor: pointer">{{f.btn}}</button>
+                </sc-if>
+                <sc-if value="{{f.open}}">
+                  <div style="margin-top: 6px">
+                    <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
+                    <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
+                      <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+                        <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+                        <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{incomplete}}">
+    <div role="alert" style="border-radius: 6px; background: var(--stb); color: var(--stf); padding: 12px 14px; font-size: 14px; line-height: 1.55; margin-bottom: 14px"><strong>This route is not ready to run.</strong> {{incompleteText}}</div>
+  </sc-if>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 14px">
+    <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
+      <div style="font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px">One-time setup</div>
+      <ol style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.65">
+        <sc-for list="{{setupOnce}}" as="b"><li>{{b.v}}</li></sc-for>
+      </ol>
+    </div>
+    <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
+      <div style="font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px">For this route</div>
+      <ol style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.65">
+        <sc-for list="{{setupRoute}}" as="b"><li>{{b.v}}</li></sc-for>
+      </ol>
+    </div>
+  </div>
+
+  <div style="border: 1px solid var(--ln); border-radius: 8px; background: var(--code); overflow: hidden">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--ln); background: var(--tint)">
+      <span style="font-family: var(--mono); font-size: 13px; color: var(--ink2)">bash · {{fileName}} · {{srcLabel}}</span>
+      <div style="display: flex; gap: 6px">
+        <button type="button" onClick="{{copyScript}}" style="font-size: 13.5px; padding: 6px 12px; border: 0; background: transparent; border-radius: 6px; color: var(--ink2); min-height: 36px; cursor: pointer">{{copyScriptLabel}}</button>
+        <button type="button" onClick="{{downloadScript}}" style="font-size: 13.5px; padding: 6px 12px; border: 1px solid var(--navy); background: var(--navy); border-radius: 6px; color: #ffffff; min-height: 36px; cursor: pointer">Download .sh</button>
+      </div>
+    </div>
+    <pre style="margin: 0; padding: 14px 16px; overflow: auto; max-height: 460px; font-family: var(--mono); font-size: 13px; line-height: 1.65; color: var(--ink); white-space: pre">{{script}}</pre>
+  </div>
+
+  <sc-if value="{{isExampleSrc}}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 14px; padding: 14px 16px; border: 1px solid var(--ln); border-radius: 8px">
+      <div style="min-width: 0; flex: 1 1 320px">
+        <div style="font-size: 15px; font-weight: 600; color: var(--navy)">Ran the example? Use this workflow with your data.</div>
+        <div style="font-size: 14px; color: var(--ink2); margin-top: 2px; line-height: 1.5">Keeps this route and its methods, and asks only for the {{ownNeed}} files to replace.</div>
+      </div>
+      <button type="button" onClick="{{useWithMine}}" style="font-size: 14.5px; min-height: 42px; padding: 8px 18px; border-radius: 6px; border: 1px solid var(--navy); background: var(--navy); color: #ffffff; font-weight: 600; cursor: pointer">Use this workflow with my data</button>
+    </div>
+  </sc-if>
+
+</section>
+
+<section aria-labelledby="res-h" style="margin-bottom: 44px">
+  <h2 id="res-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">5. Understand your results</h2>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">The files to look at first, what they mean, and what to do next. Everything else the route writes is an intermediate file that later steps read.</p>
+  <sc-if value="{{noResults}}"><p style="margin: 0; color: var(--ink2); font-size: 15px">Build a route to see its results.</p></sc-if>
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <sc-for list="{{mainResults}}" as="m">
+      <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px">
+          <span style="font-size: 16px; font-weight: 600; color: var(--navy)">{{m.title}}</span>
+          <span style="font-size: 13px; color: var(--ink2)">step {{m.n}} · {{m.module}}</span>
+        </div>
+        <p style="margin: 6px 0 8px; font-size: 14.5px; line-height: 1.6">{{m.meaning}}</p>
+        <div style="font-family: var(--mono); font-size: 12.5px; color: var(--ink2); overflow-wrap: anywhere; margin-bottom: 8px">{{m.path}}</div>
+        <sc-if value="{{m.hasOut}}">
+          <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{m.outNote}}</div>
+          <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px; margin-bottom: 8px">
+            <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+              <thead><tr style="background: var(--tint)"><sc-for list="{{m.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
+              <tbody><sc-for list="{{m.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
+            </table>
+          </div>
+        </sc-if>
+        <div style="font-size: 14px; line-height: 1.55"><strong style="color: var(--navy)">Next:</strong> {{m.next}}</div>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{hasInter}}">
+    <details id="xqb-inter" style="border: 1px solid var(--ln); border-radius: 8px; padding: 10px 16px; margin-top: 10px">
+      <summary style="cursor: pointer; font-size: 14.5px; font-weight: 600; color: var(--navy); min-height: 28px">Intermediate files ({{interCount}})</summary>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px">
+        <tbody>
+          <sc-for list="{{inter}}" as="e">
+            <tr style="border-top: 1px solid var(--ln)"><td style="padding: 6px 10px 6px 0; color: var(--ink2); width: 70px">Step {{e.n}}</td><td style="padding: 6px 0; font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere">{{e.path}}</td></tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </details>
+  </sc-if>
+</section>
+
+<section aria-labelledby="e-h" style="margin-bottom: 20px">
+  <h2 id="e-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">6. Explore all modules</h2>
+  <p style="margin: 12px 0 12px; font-size: 15.5px; line-height: 1.6">The complete catalog, including alternative methods your route doesn't use.</p>
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px">
+    <label style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--ln2); border-radius: 6px; padding: 0 10px; height: 38px; flex: 1 1 220px; color: var(--ink2)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input id="xqb-search" type="search" placeholder="Search modules" aria-label="Search modules" value="{{q}}" onInput="{{onSearch}}" style="border: 0; outline: none; font: inherit; font-size: 14px; width: 100%; background: transparent; color: var(--ink)">
+    </label>
+    <div role="group" aria-label="Show" style="display: flex; flex-wrap: wrap; gap: 6px">
+      <sc-for list="{{filters}}" as="f">
+        <button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.label}}</button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <sc-for list="{{catalog}}" as="g">
+      <div>
+        <h3 style="font-size: 14px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink2); margin: 0 0 6px">{{g.label}}</h3>
+        <ul style="list-style: none; margin: 0; padding: 0; border: 1px solid var(--ln); border-radius: 8px">
+          <sc-for list="{{g.items}}" as="it">
+            <li style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid var(--ln)">
+              <div style="min-width: 0; flex: 1 1 260px"><a href="{{it.doc}}" style="font-size: 14.5px; font-weight: 600">{{it.label}}</a><div style="font-size: 13.5px; color: var(--ink2)">{{it.desc}}</div></div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                <sc-if value="{{it.onRoute}}"><span style="font-size: 12.5px; padding: 2px 8px; border-radius: 4px; background: var(--navy); color: #ffffff">On your route</span></sc-if>
+                <span style="{{it.statusStyle}}">{{it.status}}</span>
+              </div>
+            </li>
+          </sc-for>
+        </ul>
+      </div>
+    </sc-for>
+    <sc-if value="{{catalogEmpty}}"><p style="margin: 0; color: var(--ink2); font-size: 14px">No module matches.</p></sc-if>
+  </div>
+</section>
