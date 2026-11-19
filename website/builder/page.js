@@ -15,7 +15,11 @@
  */
 (function () {
 'use strict';
-var XQB_DATA = JSON.parse(document.getElementById('xqb-data').textContent);
+// R: where the builder's elements live. The standalone page uses the document; on the site's
+// builder page the MyST widget renders it inside a shadow root, which sets XQB_ROOT first.
+var R = (typeof XQB_ROOT !== 'undefined' && XQB_ROOT) || document;
+var WIDGET = R !== document;
+var XQB_DATA = JSON.parse(R.getElementById('xqb-data').textContent);
 var REV = '__XQTL_PROTOCOL_REV__'.indexOf('__') === 0 ? 'unreleased' : '__XQTL_PROTOCOL_REV__';
 
 /* ---- Rendering: a small renderer for the template's {{path}}, sc-for and sc-if ---- */
@@ -249,7 +253,8 @@ class Component {
     var s = this.state, self = this, D = s.data || { cmd: {}, io: {}, untested: [], bench: {}, meth: {}, intro: {}, terms: {}, untestedWhy: {} };
     var untested = {}; (D.untested || []).forEach(function (k) { untested[k] = 1; });
     var testedKey = function (k) { return !!D.cmd[k] && !untested[k]; };
-    var chip = function (bg, fg, extra) { return 'font-size: 12.5px; padding: 2px 8px; border-radius: 4px; background: ' + bg + '; color: ' + fg + ';' + (extra || ''); };
+    // status as coloured text with a small dot, not a filled box (bg is kept for the call sites)
+    var chip = function (bg, fg, extra) { return 'font-size: 13.5px; font-weight: 600; padding-left: 13px; color: ' + fg + '; background: radial-gradient(circle, ' + fg + ' 3.5px, transparent 4px) 0 50% / 8px 8px no-repeat;' + (extra || ''); };
     var tableOf = function (pv) { return { head: pv ? pv.rows[0].map(function (v) { return { v: v }; }) : [], rows: pv ? pv.rows.slice(1).map(function (row) { return { cells: row.map(function (v) { return { v: v }; }) }; }) : [] }; };
     var fileItem = function (key, p, extra) {
       var pv = (D.prev || {})[p], on = !!s.pv[key] && !!pv, t = tableOf(pv);
@@ -258,8 +263,8 @@ class Component {
         toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }, extra || {});
     };
     var outOf = function (m) { var op = (D.outPrev || {})[m], t = tableOf(op); return { hasOut: !!op, outNote: op ? 'Example output, ' + op.file + ': first ' + (op.rows.length - 1) + ' rows' + (op.cols > 6 ? ', 6 of ' + op.cols + ' columns' : '') + '.' : '', outHead: t.head, outRows: t.rows }; };
-    var segStyle = function (on) { return 'font-size: 14px; min-height: 36px; padding: 6px 14px; border: 0; cursor: pointer; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on ? '600' : '400'); };
-    var pillStyle = function (on) { return 'display: inline-flex; align-items: center; gap: 8px; font-size: 14px; min-height: 38px; padding: 7px 13px; border-radius: 6px; cursor: pointer; box-sizing: border-box; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; color: var(--ink); font-weight: ' + (on ? '600' : '400'); };
+    var segStyle = function (on) { return 'font-size: 15px; min-height: 36px; padding: 6px 14px; border: 0; cursor: pointer; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on ? '600' : '400'); };
+    var pillStyle = function (on) { return 'display: inline-flex; align-items: center; gap: 8px; font-size: 15px; min-height: 38px; padding: 7px 13px; border-radius: 6px; cursor: pointer; box-sizing: border-box; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; color: var(--ink); font-weight: ' + (on ? '600' : '400'); };
 
     var route = buildRoute(s.study, s.methods, s.data);
     var onRoute = {}; route.forEach(function (r) { onRoute[r.m] = 1; });
@@ -273,14 +278,14 @@ class Component {
       var mods = g[2].filter(function (m) { return !mapRoute || onRoute[m[0]]; }).map(function (m) {
         var sel = s.selMod === m[0], on = !!onRoute[m[0]];
         return { label: m[1], pressed: String(sel), pick: function () { var e = Object.assign({}, s.expStage); e[gi] = true; self.setState({ selMod: sel ? '' : m[0], expStage: e }); },
-          style: 'font-size: 13.5px; min-height: 34px; padding: 5px 11px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (sel ? 'var(--navy)' : (on ? 'var(--teal)' : 'var(--ln)')) + '; background: ' + (sel ? 'var(--navy)' : (on ? 'var(--acs)' : 'var(--bg)')) + '; color: ' + (sel ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on || sel ? '600' : '400') };
+          style: 'font-size: 14px; min-height: 34px; padding: 5px 11px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (sel ? 'var(--navy)' : (on ? 'var(--teal)' : 'var(--ln)')) + '; background: ' + (sel ? 'var(--navy)' : (on ? 'var(--acs)' : 'var(--bg)')) + '; color: ' + (sel ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on || sel ? '600' : '400') };
       });
       var exp = mapRoute || !!s.expStage[gi];
       return { n: gi + 1, label: g[0], sub: mapRoute ? nOn + ' module' + (nOn === 1 ? '' : 's') + ' on your route' : g[1], mods: mods,
         showMods: exp, expanded: String(exp), btn: mapRoute ? '' : (exp ? 'Hide modules' : 'Show ' + g[2].length + ' modules'),
         toggle: function () { var e = Object.assign({}, s.expStage); e[gi] = !e[gi]; self.setState({ expStage: e }); },
         titleStyle: 'font-size: 16px; font-weight: 600; color: ' + (active ? 'var(--navy)' : 'var(--ink2)'),
-        badge: 'width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; ' + (active ? 'background: var(--navy); color: var(--on)' : 'background: var(--sk); color: var(--ink2)'),
+        badge: 'width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; ' + (active ? 'background: var(--navy); color: var(--on)' : 'background: var(--sk); color: var(--ink2)'),
         rail: gi < CATALOG.length - 1 ? 'flex: 1 1 auto; width: 2px; background: var(--ln); margin: 4px 0' : 'flex: 1 1 auto; width: 2px; background: transparent' };
     });
     var mapViews = [['all', 'All stages'], ['route', 'My route']].map(function (v) { var on = s.mapView === v[0]; return { label: v[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ mapView: v[0] }); } }; });
@@ -379,11 +384,11 @@ class Component {
         methodLine: r.soon ? 'coming soon' : (choice ? choice[1] : (r.wfs.length > 1 ? r.wfs.length + ' workflows' : r.wfs[0])),
         readsLine: stepsRead.length ? 'Uses step ' + stepsRead.join(', ') : 'Starts from input files',
         cardStyle: 'border: 1px solid ' + (s.changed[r.id] ? 'var(--stf)' : 'var(--ln)') + '; border-radius: 8px; padding: 12px 14px; background: var(--bg)',
-        numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
+        numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
         tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         hasTime: !!D.bench[r.m], time: D.bench[r.m] ? 'Example: ' + D.bench[r.m] : '',
         isOpen: open, expanded: String(open), panelId: 'panel-' + r.id, btn: open ? 'Hide' : 'Details',
-        btnStyle: 'flex: 0 0 auto; font-size: 14px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: ' + (open ? 'var(--sk)' : 'var(--bg)') + '; color: var(--navy); font-weight: 500',
+        btnStyle: 'flex: 0 0 auto; font-size: 15px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: ' + (open ? 'var(--sk)' : 'var(--bg)') + '; color: var(--navy); font-weight: 500',
         toggle: function () { var o = Object.assign({}, s.open); o[r.id] = !open; self.setState({ open: o }); },
         why: why, hasChoices: !!r.choices, radioName: 'm-' + r.id,
         choices: (r.choices || []).map(function (c) { var k = r.m + '|' + c[0], t = testedKey(k); return { label: c[1], desc: c[3], checked: c[0] === r.chosen, tag: !D.cmd[k] ? 'No command' : (t ? 'Runs on example data' : 'Not yet run'), tagStyle: t ? chip('var(--okb)', 'var(--okf)', ' margin-left: 4px;') : chip('var(--stb)', 'var(--stf)', ' margin-left: 4px;'), pick: function () { var mm = Object.assign({}, s.methods); mm[r.id] = c[0]; self.setRoute({ methods: mm }, c[1] + ' selected.'); } }; }),
@@ -474,37 +479,30 @@ class Component {
       }).filter(function (it) { if (s.catOnly && s.catOnly.indexOf(it.id) < 0) return false; if (qq && (it.label + ' ' + it.desc + ' ' + it.id).toLowerCase().indexOf(qq) < 0) return false; if (s.filter === 'route') return it.onRoute; if (s.filter === 'alt') return !it.onRoute && !it.notReady; if (s.filter === 'notready') return it.notReady; return true; });
       return { label: g[0].toUpperCase(), items: items };
     }).filter(function (g) { return g.items.length; });
-    var filters = [['all', 'All modules'], ['route', 'On my route'], ['alt', 'Alternatives'], ['notready', 'Not ready']].map(function (f) { var on = s.filter === f[0]; return { label: f[1], pressed: String(on), pick: function () { self.setState({ filter: f[0] }); }, style: 'font-size: 13.5px; min-height: 34px; padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') }; });
+    var filters = [['all', 'All modules'], ['route', 'On my route'], ['alt', 'Alternatives'], ['notready', 'Not ready']].map(function (f) { var on = s.filter === f[0]; return { label: f[1], pressed: String(on), pick: function () { self.setState({ filter: f[0] }); }, style: 'font-size: 14px; min-height: 34px; padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') }; });
 
-    // 1. The eight-phase map (explains the science; the route below says what runs)
-    var scrollTo = function (id) { setTimeout(function () { var t = document.getElementById(id); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); };
+    // the eight-phase map (explains the science; the route above says what runs)
+    var scrollTo = function (id) { setTimeout(function () { var t = R.getElementById(id); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); };
     var modStatus = function (id) {
       var ks = Object.keys(D.cmd).filter(function (k) { return k.indexOf(id + '|') === 0; }), nt = ks.filter(testedKey).length, soon = !!SOON[id];
       return { ks: ks, soon: soon, notReady: soon || !ks.length || nt < ks.length, status: soon ? 'Coming soon' : (ks.length ? nt + ' of ' + ks.length + ' workflow' + (ks.length === 1 ? '' : 's') + ' run on example data' : 'No builder command; see notebook'),
         statusStyle: soon || !ks.length ? chip('var(--sk)', 'var(--ink2)') : (nt === ks.length ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)')) };
     };
     var modsOf = function (pi, gi) { var out = []; FLOW[pi][2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gi == null || g === gi) out = out.concat(gr[1]); }); }); return out; };
-    var nodeVals = function (pi, gi, label, desc, tags) {
-      var mods = modsOf(pi, gi), nOn = mods.filter(function (id) { return onRoute[id]; }).length;
-      var sel = s.phase === pi && (gi == null ? s.stream == null : s.stream === gi), opt = !!OPTIONAL[pi];
-      return { num: gi == null ? String(pi + 1) : '', label: label, desc: desc, tags: (tags || []).map(function (v) { return { v: v }; }), hasTags: !!(tags && tags.length),
-        count: (nOn ? nOn + ' of ' + mods.length : mods.length + ' module' + (mods.length === 1 ? '' : 's')),
-        state: nOn ? 'On your route' : (opt ? 'Optional branch' : ''), pressed: String(sel),
-        aria: label + ', ' + mods.length + ' modules' + (nOn ? ', ' + nOn + ' on your route' : '') + (opt ? ', optional' : ''),
-        nid: 'xqb-node-' + pi + (gi == null ? '' : '-' + gi),
-        cls: 'xqb-node' + (nOn ? ' is-route' : ' is-off') + (opt ? ' is-opt' : '') + (sel ? ' is-sel' : '') + (gi != null ? ' is-stream' : ''),
-        pick: function () { if (!sel) app.focusNext = 'xqb-phase-h'; self.setState({ phase: sel ? null : pi, stream: sel ? null : (gi == null ? null : gi), selMod: '' }); if (!sel) scrollTo('xqb-phase'); } };
-    };
-    var groupTitles = function (pi) { var t = []; FLOW[pi][2].forEach(function (bx) { bx[1].forEach(function (gr) { t.push(gr[0] || bx[0]); }); }); return t; };
-    var smap = {
-      ref: [nodeVals(0, null, 'Reference data preparation', PHASES[0][0])],
-      quant: [nodeVals(1, null, 'Molecular phenotype quantification', PHASES[1][0], groupTitles(1))],
-      streams: STREAMS.map(function (st, g) { return nodeVals(2, g, st[0], st[1]); }),
-      qtl: [nodeVals(3, null, 'QTL association testing', PHASES[3][0])],
-      branch: [nodeVals(4, null, 'Multivariate modeling', PHASES[4][0], ['Across cohorts', 'Across contexts']), nodeVals(5, null, 'Fine-mapping', PHASES[5][0], ['Individual-level', 'Summary statistics + LD'])],
-      gwas: [nodeVals(6, null, 'GWAS integration', PHASES[6][0])],
-      enr: [nodeVals(7, null, 'Enrichment, validation and interpretation', PHASES[7][0])]
-    };
+    // the flowchart: each phase lists its modules in boxes and groups (FLOW), as on the original builder
+    var flow = FLOW.map(function (ph, pi) {
+      var open = s.phase === pi;
+      return { num: String(pi + 1), kicker: ph[0], hasArrow: pi > 0, open: open, hid: 'xqb-node-' + pi, pressed: String(open && !s.selMod),
+        headPick: function () { var on = open && !s.selMod; if (!on) app.focusNext = 'xqb-phase-h'; self.setState({ phase: on ? null : pi, stream: null, selMod: '' }); },
+        rowCls: 'xqb-frow' + (ph[2].length > 1 ? ' is-multi' : ''),
+        boxes: ph[2].map(function (bx) { return { title: bx[0], cls: 'xqb-fbox', gridCls: 'xqb-fgrid' + (bx[1].length > 1 ? ' is-multi' : ''),
+          groups: bx[1].map(function (gr) { return { title: gr[0] || '', hasTitle: !!gr[0], cls: 'xqb-fg' + (gr[0] ? '' : ' is-plain'),
+            mods: gr[1].map(function (id) { var on = !!onRoute[id], sel = open && s.selMod === id, soon = !!SOON[id];
+              return { label: LABEL[id] || id, soon: soon, pressed: String(sel), mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'),
+                aria: (LABEL[id] || id) + (on ? ', on your route' : '') + (soon ? ', coming soon' : ''),
+                cls: 'xqb-fm' + (on ? ' is-route' : '') + (sel ? ' is-sel' : '') + (soon ? ' is-soon' : ''),
+                pick: function () { if (!sel) app.focusNext = 'xqb-phase-h'; self.setState(sel ? { phase: null, stream: null, selMod: '' } : { phase: pi, stream: null, selMod: id }); } }; }) }; }) }; }) };
+    });
     var phaseVals = null, modVals = {};
     if (s.phase != null && FLOW[s.phase]) {
       var pi = s.phase, gi = s.stream, ph = FLOW[pi], preset = PHASES[pi][2];
@@ -546,7 +544,7 @@ class Component {
     });
 
     return {
-      testedCount: testedCount, journey: journey, smap: smap, hasPhase: !!phaseVals, phase: phaseVals || {}, mod: modVals, setupDoc: BASE + 'xqtl-protocol-demo',
+      testedCount: testedCount, journey: journey, flow: flow, hasPhase: !!phaseVals, phase: phaseVals || {}, mod: modVals, setupDoc: BASE + 'xqtl-protocol-demo',
       readiness: readiness, loadExample: loadExample, resetAll: resetAll, copyLink: copyLink, copyLinkLabel: s.copied === 'link' ? 'Link copied' : 'Copy a link to this setup',
       catOpen: !!s.catOpen, catExpanded: String(!!s.catOpen), catBtn: s.catOpen ? 'Hide the module catalog' : 'Show all ' + Object.keys(LABEL).length + ' modules', toggleCat: function () { self.setState({ catOpen: !s.catOpen, catOnly: null }); },
       hasCatOnly: !!s.catOnly, catOnlyLabel: s.catOnly ? 'Showing the ' + (s.catOnlyLabel || '') + ' modules.' : '', clearCatOnly: function () { self.setState({ catOnly: null }); }, moduleCount: Object.keys(LABEL).length, clusterDoc: BASE + 'running-on-a-cluster',
@@ -555,7 +553,7 @@ class Component {
       modes: modes, isExample: isExample, isOwn: isOwn, examples: examples,
       qPheno: qPheno, qStart: qStart, qGoals: qGoals, hasContextual: contextual.length > 0, contextual: contextual,
       adv: s.adv, advExpanded: String(s.adv), toggleAdv: function () { self.setState({ adv: !s.adv }); }, advLabel: s.adv ? 'Hide advanced study settings' : 'Advanced study settings', advCount: nonDefault ? nonDefault + ' changed' : 'genotype QC, cohorts, contexts', allOpts: allOpts,
-      msg: s.msg, msgStyle: s.msg ? 'margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--stb); color: var(--stf); font-size: 14px' : 'margin: 0; height: 0; overflow: hidden',
+      msg: s.msg, msgStyle: s.msg ? 'margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--tint); border-left: 3px solid var(--teal); color: var(--ink); font-size: 15px' : 'margin: 0; height: 0; overflow: hidden',
       route: routeVals, routeEmpty: route.length === 0, routeSummary: route.length ? route.length + ' steps · ' + nTested + ' run on example data' : '',
       srcTabs: [['example', 'Example data'], ['own', 'My own data']].map(function (t) { var on = s.src === t[0]; return { label: t[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ src: t[0], mode: t[0] }); } }; }),
       runOn: [['local', 'Local terminal'], ['slurm', 'SLURM'], ['sge', 'SGE']].map(function (p) { var on = s.runOn === p[0]; return { label: p[1], checked: on, style: pillStyle(on), pick: function () { self.setState({ runOn: p[0] }); } }; }),
@@ -567,7 +565,7 @@ class Component {
       hasProduces: mainResults.length > 0, produces: 'This analysis produces ' + (function (t) { t = t.map(function (x) { return x.charAt(0).toLowerCase() + x.slice(1); }); return t.length > 1 ? t.slice(0, -1).join(', ') + ' and ' + t[t.length - 1] : t[0]; })(mainResults.map(function (m) { return m.title; })) + '.',
       jumpOwn: function () { self.setState({ mode: 'own', src: 'own', msg: '' }); },
       tut: { title: exObj.title, items: [{ k: 'WHAT YOU LEARN', v: exObj.learn }, { k: 'PROVIDED INPUTS', v: exObj.given }, { k: 'EXPECTED RESULT', v: exObj.result }, { k: 'AFTERWARDS', v: exObj.after }] },
-      script: script, hasStatus: !!status, status: status, statusStyle: 'border-radius: 6px; padding: 10px 14px; font-size: 14px; line-height: 1.5; margin-bottom: 10px; background: ' + (ready ? 'var(--okb); color: var(--okf)' : 'var(--stb); color: var(--stf)'), statusHead: ready ? 'Ready to run.' : 'Not a runnable script yet.', fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
+      script: script, hasStatus: !!status, status: status, statusStyle: 'border-radius: 6px; padding: 10px 14px; font-size: 15px; line-height: 1.5; margin-bottom: 10px; background: var(--tint); color: var(--ink); border-left: 3px solid ' + (ready ? 'var(--okf)' : 'var(--stf)'), statusHead: ready ? 'Ready to run.' : 'Not a runnable script yet.', fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
       copyScriptLabel: s.copied === 'script' ? 'Copied' : (s.copied === 'fail' ? 'Copy failed' : 'Copy all'), copyScript: function () { copyText(script, 'script'); },
       downloadScript: function () { try { var b = new Blob([script + '\n'], { type: 'text/x-shellscript' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = own ? 'xqtl_route.sh' : 'xqtl_route_example.sh'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); } catch (e) {} },
       ownNeed: String(userOrder.length), useWithMine: function () { self.setState({ mode: 'own', src: 'own', msg: 'Kept your route and methods. Enter your files in the route steps.' }); scrollTo('r-h'); },
@@ -578,38 +576,40 @@ class Component {
 
 /* ---- Mount ---- */
 // the template is XML so that <sc-for> stays inside table rows (an HTML parser would move it out)
-var root = document.getElementById('xqb');
-var tpl = new DOMParser().parseFromString(document.getElementById('xqb-tpl').textContent, 'application/xml').documentElement;
+var root = R.getElementById('xqb');
+var tpl = new DOMParser().parseFromString(R.getElementById('xqb-tpl').textContent, 'application/xml').documentElement;
 var app = new Component(), pending = false;
 app.setState = function (patch) { Object.assign(app.state, patch); if (!pending) { pending = true; (window.requestAnimationFrame || setTimeout)(function () { pending = false; paint(); }); } };
 function paint() {
   // keep focus, caret and open <details> across re-renders
-  var a = document.activeElement, fid = a && root.contains(a) && a.id, sel = null;
+  var a = R.activeElement, fid = a && root.contains(a) && a.id, sel = null;
   if (fid && typeof a.selectionStart === 'number') sel = [a.selectionStart, a.selectionEnd];
   var open = {}; Array.prototype.forEach.call(root.querySelectorAll('details[id]'), function (d) { open[d.id] = d.open; });
   var frag = document.createDocumentFragment();
   kids(tpl, [app.renderVals()], frag);
   root.replaceChildren(frag);
-  Object.keys(open).forEach(function (id) { var d = document.getElementById(id); if (d) d.open = open[id]; });
+  Object.keys(open).forEach(function (id) { var d = R.getElementById(id); if (d) d.open = open[id]; });
   var jump = !!app.focusNext; if (jump) { fid = app.focusNext; sel = null; app.focusNext = null; }
-  if (fid) { var f = document.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+  if (fid) { var f = R.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 // in-page links scroll here instead of sending the parent page to the builder's own URL
 root.addEventListener('click', function (e) {
   var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
-  var t = document.getElementById(a.getAttribute('href').slice(1)); e.preventDefault();
+  var t = R.getElementById(a.getAttribute('href').slice(1)); e.preventDefault();
   if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 var shared = readShared(); if (shared) Object.assign(app.state, shared);
-// dark theme: follow the site's toggle when shown in its frame, else the system setting
+// dark theme: follow the site's toggle (on the site's page or in its frame), else the system setting
+var host = WIDGET ? document : (function () { try { return window.self !== window.top ? window.parent.document : null; } catch (e) { return null; } })();
+var themeEl = WIDGET ? root.parentNode : document.documentElement;
 function applyTheme() {
-  var dark = false, mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  try { if (window.self !== window.top) { var h = window.parent.document.documentElement; dark = h.classList.contains('dark') || h.getAttribute('data-theme') === 'dark'; } else dark = !!(mq && mq.matches); }
-  catch (e) { dark = !!(mq && mq.matches); }
-  document.documentElement.classList.toggle('xqb-dark', dark);
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null, dark;
+  if (host) { var h = host.documentElement; dark = h.classList.contains('dark') || h.getAttribute('data-theme') === 'dark'; }
+  else dark = !!(mq && mq.matches);
+  themeEl.classList.toggle('xqb-dark', dark);
 }
 applyTheme();
-try { new MutationObserver(applyTheme).observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] }); } catch (e) {}
+try { if (host) new MutationObserver(applyTheme).observe(host.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] }); } catch (e) {}
 try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
 paint();
 })();
