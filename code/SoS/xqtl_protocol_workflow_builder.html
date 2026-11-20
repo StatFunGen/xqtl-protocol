@@ -1,8 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>xQTL Analysis Workflow Builder</title><meta name="description" content="See how an xQTL analysis fits together, try it on the example data, then get the FunGen-xQTL protocol commands for your own study, in order, to copy or download."><link rel="canonical" href="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html"><meta property="og:type" content="website"><meta property="og:site_name" content="FunGen-xQTL Protocol"><meta property="og:title" content="xQTL Analysis Workflow Builder"><meta property="og:description" content="Choose a molecular phenotype and an analysis goal to get the FunGen-xQTL protocol modules, in order, with example commands."><meta property="og:url" content="https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html"><meta name="twitter:card" content="summary"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>body{margin:0;padding:24px 16px;background:#fff;color:#202b35}</style></head><body>
 <div class="xqb" id="xqb"></div>
-<script type="text/xml" id="xqb-tpl"><root><div class="xqb-meta"><span class="xqb-dot"></span><span style="color: var(--navy)">Workflow Builder</span><span>·</span><span>{{moduleCount}} modules</span><span>·</span><span>{{testedCount}} commands run on example data</span></div>
-<h1 class="hdt">xQTL Analysis Workflow Builder</h1>
-<p class="xqb-lede">Explore the molecular QTL analysis pipeline, try a working example, or build a reproducible workflow for your own study. New to the Protocol? Start with <a href="{{setupDoc}}">Environment setup</a>.</p>
+<script type="text/xml" id="xqb-tpl"><root><h1 class="hdt">xQTL Analysis Workflow Builder</h1>
+<p class="xqb-lede">Try a tested example, or describe your study, to get the steps to run and one script for them.</p>
 
 <div role="radiogroup" aria-label="How to begin" class="xqb-modes">
   <sc-for list="{{modes}}" as="md">
@@ -21,8 +20,7 @@
     <sc-for list="{{examples}}" as="ex">
       <button type="button" role="radio" aria-checked="{{ex.ariaChecked}}" onClick="{{ex.pick}}" style="{{ex.style}}">
         <span style="display: block; font-size: 15px; font-weight: 700; color: var(--navy)">{{ex.title}}</span>
-        <span style="display: block; margin: 6px 0"><span style="{{ex.tagStyle}}">{{ex.tag}}</span></span>
-        <span style="display: block; font-size: 14px; line-height: 1.45; color: var(--ink)">{{ex.learn}}</span>
+        <sc-if value="{{ex.notReady}}"><span style="display: block; margin: 6px 0"><span style="{{ex.tagStyle}}">{{ex.tag}}</span></span></sc-if>
         <span style="display: block; font-size: 13.5px; line-height: 1.4; color: var(--ink2); margin-top: 6px">{{ex.steps}}</span>
       </button>
     </sc-for>
@@ -101,7 +99,6 @@
     <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">1. Your analysis route</h2>
     <a href="#map-h" style="font-size: 15px">View the full analysis map</a>
   </div>
-  <sc-if value="{{hasProduces}}"><p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6; font-weight: 600; color: var(--navy)">{{produces}}</p></sc-if>
   <sc-if value="{{isOwnSrc}}"><p style="margin: -6px 0 14px; font-size: 15px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each file where it is first needed; paths stay in your browser.</span></p></sc-if>
   <sc-if value="{{routeEmpty}}">
     <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
@@ -116,12 +113,8 @@
               <span style="font-weight: 600; font-size: 16px; color: var(--ink)">{{r.title}}</span>
               <sc-if value="{{r.changed}}"><span style="font-size: 13.5px; font-weight: 600; color: var(--stf)">Changed</span></sc-if>
             </div>
-            <div style="font-size: 15px; color: var(--ink2); margin-top: 3px; line-height: 1.45">{{r.module}} · {{r.methodLine}}</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
-              <span style="{{r.testStyle}}">{{r.tested}}</span>
-              <sc-if value="{{r.hasTime}}"><span style="font-size: 13.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--ln); color: var(--ink2)">{{r.time}}</span></sc-if>
-              <span style="font-size: 13.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--ln); color: var(--ink2)">{{r.readsLine}}</span>
-            </div>
+            <div style="font-size: 15px; color: var(--ink2); margin-top: 3px; line-height: 1.45">{{r.metaLine}}</div>
+            <sc-if value="{{r.notTested}}"><div style="margin-top: 6px"><span style="{{r.testStyle}}">{{r.tested}}</span></div></sc-if>
             <sc-if value="{{r.hasFiles}}">
               <div class="xqb-files">
                 <div class="xqb-files-h">Files this step needs</div>
@@ -202,7 +195,7 @@
 
 <section aria-labelledby="c-h" style="margin-bottom: 44px">
   <h2 id="c-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">2. Prepare and run</h2>
-  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">One script for the whole route, taken from the module notebooks. It updates as you change the route, the data source or where it runs.</p>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">One script runs the whole route.</p>
 
   <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 4px 18px; margin-bottom: 14px">
     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 0; border-bottom: 1px solid var(--ln)">
@@ -272,8 +265,7 @@
 
 <section aria-labelledby="map-h" style="margin-bottom: 44px">
   <h2 id="map-h" class="xqb-h2">3. The xQTL analysis, end to end</h2>
-  <p style="margin: 12px 0 6px; font-size: 15.5px; line-height: 1.6">What methods exist and how they relate. This is a map of the science, not your run order: your route above lists exactly what runs. Select a box to see its modules.</p>
-  <p style="margin: 0 0 14px; font-size: 14px; color: var(--ink2)">Boxes on your current route are highlighted in blue.</p>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">How the whole analysis fits together. Select a box to see its modules; boxes on your route are blue.</p>
   <div class="xqb-flow">
     <sc-for list="{{flow}}" as="p">
       <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
@@ -342,7 +334,7 @@
 
 <section aria-labelledby="res-h" style="margin-bottom: 44px">
   <h2 id="res-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">4. Understand your results</h2>
-  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">The files to look at first, what they mean, and what to do next. Everything else the route writes is an intermediate file that later steps read.</p>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">The files to look at first.</p>
   <sc-if value="{{noResults}}"><p style="margin: 0; color: var(--ink2); font-size: 15px">Build a route to see its results.</p></sc-if>
   <div style="display: flex; flex-direction: column; gap: 10px">
     <sc-for list="{{mainResults}}" as="m">
@@ -382,7 +374,7 @@
 
 <section aria-labelledby="e-h" style="margin-bottom: 20px">
   <h2 id="e-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">5. All modules</h2>
-  <p style="margin: 12px 0 12px; font-size: 15.5px; line-height: 1.6">The complete catalog, including alternative methods your route doesn't use. Viewing a module here does not add it to your route.</p>
+  <p style="margin: 12px 0 12px; font-size: 15.5px; line-height: 1.6">Every module, including ones your route does not use.</p>
   <button type="button" aria-expanded="{{catExpanded}}" onClick="{{toggleCat}}" class="xqb-link">{{catBtn}}</button>
   <sc-if value="{{catOpen}}">
   <sc-if value="{{hasCatOnly}}"><p style="margin: 10px 0 0; font-size: 15px"><strong style="color: var(--navy)">{{catOnlyLabel}}</strong> <button type="button" onClick="{{clearCatOnly}}" class="xqb-link">Show all modules</button></p></sc-if>
@@ -914,7 +906,7 @@ class Component {
       var rt = buildRoute(studyFor(e.id), {}, s.data), ok = routeOk(rt), on = isExample && s.example === e.id;
       return { label: e.label, title: e.title.replace(/^Example: /, '').replace(/^./, function (c) { return c.toUpperCase(); }), checked: on, ariaChecked: String(on), disabled: false, learn: e.learn, result: e.result, route: 'Route: ' + rt.map(function (r) { return LABEL[r.m]; }).join(' → '),
         steps: rt.length + ' steps · ' + rt.filter(function (r) { return MAIN[r.m]; }).map(function (r) { return LABEL[r.m]; }).join(', '),
-        tag: ok ? 'Runs on example data' : 'Demonstration: not every step runs on the example data yet', tagStyle: ok ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
+        notReady: !ok, tag: ok ? 'Runs on example data' : 'Demonstration: not every step runs on the example data yet', tagStyle: ok ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         style: 'text-align: left; font: inherit; cursor: pointer; display: block; width: 100%; padding: 12px 14px; border-radius: 8px; background: var(--bg); border: ' + (on ? '2px solid var(--navy)' : '1px solid var(--ln)') + '; box-shadow: 0 1px 2px rgba(25, 53, 74, 0.05)',
         pick: function () { var x = Object.assign({}, s.expStage); x[e.stage] = true; self.setRoute({ example: e.id, study: studyFor(e.id), methods: {}, expStage: x }); } };
     });
@@ -975,10 +967,10 @@ class Component {
       return Object.assign({
         n: i + 1, anchor: 'step-' + r.id, title: r.title, module: LABEL[r.m] || r.m, changed: !!s.changed[r.id],
         methodLine: r.soon ? 'coming soon' : (choice ? choice[1] : (r.wfs.length > 1 ? r.wfs.length + ' workflows' : r.wfs[0])),
-        readsLine: stepsRead.length ? 'Uses step ' + stepsRead.join(', ') : 'Starts from input files',
+        metaLine: (LABEL[r.m] || r.m) + ' · ' + (r.soon ? 'coming soon' : (choice ? choice[1] : (r.wfs.length > 1 ? r.wfs.length + ' workflows' : r.wfs[0]))) + (stepsRead.length ? ' · uses step ' + stepsRead.join(', ') : ''),
         cardStyle: 'border: 1px solid ' + (s.changed[r.id] ? 'var(--stf)' : 'var(--ln)') + '; border-radius: 8px; padding: 12px 14px; background: var(--bg)',
         numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
-        tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
+        notTested: r.soon || !tested, tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         hasTime: !!D.bench[r.m], time: D.bench[r.m] ? 'Example: ' + D.bench[r.m] : '',
         // step details open as a dialog, one at a time; closing returns focus to the step's button
         isOpen: open, btnId: 'xqb-stepbtn-' + r.id, btn: 'Details',
@@ -1046,6 +1038,7 @@ class Component {
       { k: 'Reference data', v: refFiles ? refFiles + ' reference file' + (refFiles === 1 ? '' : 's') + (own ? ' to point to' : ' from the example') : 'none needed for this route', mark: refFiles && own ? '!' : '✓', cls: refFiles && own ? 'is-todo' : 'is-ok' },
       s.runOn === 'local' ? { k: 'Cluster settings', v: 'not needed for local execution', mark: '✓', cls: 'is-ok' } : { k: 'Cluster settings', v: 'check account and queue in my_cluster.yml; this page cannot', mark: '!', cls: 'is-todo' }
     ];
+    readiness = readiness.filter(function (c) { return c.cls !== 'is-ok'; });
     var script = route.length ? '#!/bin/bash\n# xQTL analysis route from the Workflow Builder\n# Protocol revision: ' + REV + '\n# ' + (own ? 'Your data' : 'Repository example data') + ' · ' + { local: 'runs here', slurm: 'SoS submits each step to SLURM', sge: 'SoS submits each step to SGE' }[s.runOn] + '\n# Status: ' + (ready ? 'ready to run. ' : 'NOT RUNNABLE YET. ') + status + '\nset -euo pipefail\n\n' + body : '# Choose an example or describe your study to build the route.';
     var setupOnce = [{ v: 'Clone the repository.' }, { v: 'Install the software environment with pixi (see Environment setup).' }];
     if (s.runOn !== 'local') setupOnce.push({ v: 'Copy code/cluster/' + s.runOn + '.yml to my_cluster.yml and set your account and queue.' });
