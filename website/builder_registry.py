@@ -306,6 +306,69 @@ def preview(path: str):
     return {"rows": [r[:PREVIEW_COLS] for r in rows], "cols": len(rows[0])}
 
 
+FIXTURE_SKIP = (".tbi", ".bai", ".csi", ".log", ".md", "expected_manifest.tsv")
+
+
+TEST_FILE_RE = re.compile(r"[\"']([\w.\-]+\.(?:gz|tsv|txt|bed|csv|rds|bim|fam|vcf|list|gct))[\"']")
+
+
+def consumer_example(module: str, option: str):
+    """A preview of the fixture the module's own tests pass to this option, or None."""
+    key = module.lower().replace("_", "")
+    pats = [f'"--{option}"', f'"--{option.replace("_", "-")}"', f"'--{option}'"]
+    for test in sorted((REPO / "tests").rglob("test_*.py")):
+        if key not in test.stem.lower().replace("_", ""):
+            continue
+        text = test.read_text(encoding="utf-8")
+        for pat in pats:
+            for hit in re.finditer(re.escape(pat), text):
+                name = TEST_FILE_RE.search(text[hit.end():hit.end() + 200])
+                if name and (f := next((REPO / "tests" / "fixtures").rglob(name.group(1)), None)):
+                    if (out := _fixture_preview(f)):
+                        return out
+    return None
+
+
+def fixture_example(path: str, source: str):
+    """A preview of the test fixture that shows what a step's output looks like, or None.
+
+    Looks in tests/fixtures/<module>/ (expected outputs first) for a file whose name ends the
+    same way as the output, e.g. ...Marchenko_PC.gz or ...phenotype_by_chrom_files.txt. PLINK
+    genotypes (.bed) match the .bim of the same workflow, shown as its variant list."""
+    module, workflow = source.split(".")[:2]
+    root = REPO / "tests" / "fixtures" / module.lower()
+    if not root.is_dir():
+        return None
+    files = sorted((f for f in root.rglob("*") if f.is_file() and not f.name.endswith(FIXTURE_SKIP)),
+                   key=lambda f: ("expected" not in f.parts, str(f)))
+    name = path.rsplit("/", 1)[-1]
+    if name.endswith(".bed") and not name.endswith((".bed.gz",)):
+        bims = [f for f in files if f.suffix == ".bim"]
+        pick = [f for f in bims if workflow in f.name] or bims
+        return _fixture_preview(pick[0]) if pick else None
+    toks = name.split(".")
+
+    def shared(f):  # how many trailing dot-separated parts match
+        t, n = f.name.split("."), 0
+        while n < min(len(t), len(toks)) and t[-1 - n] == toks[-1 - n]:
+            n += 1
+        return n
+    best = max(files, key=shared, default=None)
+    if best is None or shared(best) < 2:
+        return None
+    return _fixture_preview(best)
+
+
+def _fixture_preview(f: Path):
+    rel = str(f.relative_to(REPO))
+    out = preview(rel)
+    if out is not None and f.suffix == ".bim":  # no header line: name its six columns
+        out["rows"] = [["chromosome", "variant", "cM", "position", "allele 1", "allele 2"][:out["cols"]]] + out["rows"][:PREVIEW_ROWS]
+    if out is not None:
+        out["ex"] = f.name
+    return out
+
+
 def _src_step(source: str) -> str:
     """'module.workflow.output' -> 'module|workflow'."""
     module, rest = source.split(".", 1)
@@ -318,6 +381,15 @@ def page_data(cmdlib, wio, selected):
     content = json.loads((PAGE / "page_content.json").read_text(encoding="utf-8"))
     fixtures = sorted({p for io in wio.values() for p in io["i"] if p.startswith("tests/fixtures/")})
     prev = {p: v for p in fixtures if (v := preview(p))}
+    # files made by an earlier step: show an example from the test fixtures, either the file the
+    # reading module's own tests pass to that option, or the making module's expected output
+    for (m, wf), c in sorted(selected.items()):
+        for opt, v in c.meta.get("inputs", {}).items():
+            src, path = v.get("source"), v.get("path", "")
+            if path in prev or src in (None, "user", "setup") or not path.startswith("output/"):
+                continue
+            if (ex := consumer_example(m, opt) or fixture_example(path, src)):
+                prev[path] = ex
     data = {"cmd": {f"{m}|{e['wf']}": e["cmd"] for m, l in cmdlib.items() for e in l}, "io": wio,
             "untested": untested["steps"], "untestedWhy": untested["reasons"], "prev": prev,
             "after": {f"{m}|{wf}": [a.replace(".", "|", 1) for a in c.meta.get("after", [])]
