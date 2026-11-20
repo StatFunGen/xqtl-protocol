@@ -62,12 +62,14 @@ WIDGET_PREFIX = (
 WIDGET_SUFFIX = "</body></html>\n"
 # Absolute: MyST would otherwise prepend BASE_URL to a root-relative path, or
 # content-hash anything it can resolve as a local asset.
-WIDGET_URL = f"https://statfungen.github.io/xqtl-protocol/{WIDGET_PAGE}"
+# XQTL_SITE_URL lets a fork build a preview (e.g. https://<user>.github.io/xqtl-protocol)
+SITE_URL = os.environ.get("XQTL_SITE_URL", "https://statfungen.github.io/xqtl-protocol").rstrip("/")
+WIDGET_URL = f"{SITE_URL}/{WIDGET_PAGE}"
 # The book page shows the builder in place, at full width. MyST does not execute scripts inside
 # raw HTML, so the page uses MyST's anywidget directive: an ES module that renders the builder
 # into the page (inside a shadow root, which keeps the theme's styles and the builder's apart).
 WIDGET_MODULE = "xqtl_builder_widget.mjs"
-WIDGET_MODULE_URL = f"https://statfungen.github.io/xqtl-protocol/{WIDGET_MODULE}"
+WIDGET_MODULE_URL = f"{SITE_URL}/{WIDGET_MODULE}"
 WIDGET_EMBED = (
     f":::{{anywidget}} {WIDGET_MODULE_URL}\n"
     ":class: fx-builder\n"
