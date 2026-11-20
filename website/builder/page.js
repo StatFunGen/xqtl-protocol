@@ -113,10 +113,13 @@ var FLOW = [
   ['Interpretation', 8, [['Enrichment & Validation', [[null, ['eoo_enrichment', 'gsea', 'gregor', 'sldsc_enrichment']]]], ['xQTL Modifier Score', [[null, ['ems_training', 'ems_prediction']]]]]]
 ];
 // The stage map: parallel inputs meet at QTL discovery, then branch by question.
+// the phase each module belongs to, for placing route steps on the map
+var PHASE_OF = {};
 // plain titles for workflows a route adds because a later step reads their output
 var WF_TITLE = {"bulk_expression_QC|qc": "Remove outlier samples", "splicing_calling_leafcutter2|leafcutter2": "Call splicing events", "splicing_normalization|leafcutter_norm": "Normalize splicing ratios", "VCF_QC|qc": "Variant QC on the raw VCF", "genotype_formatting|merge_plink": "Merge genotype files", "PCA|flashpca": "Genotype principal components", "genotype_formatting|genotype_by_chrom": "Split genotypes by chromosome", "phenotype_formatting|phenotype_by_chrom": "Phenotype files per chromosome", "covariate_formatting|merge_genotype_pc": "Merge covariates with genotype PCs", "qtl_association_postprocessing|default": "Multiple-testing correction", "METAL|METAL": "Meta-analysis across cohorts", "mash_preprocessing|random_null_tensorqtl": "Prepare effects for MASH", "mixture_prior|ed_bovy": "Learn sharing patterns", "mash_fit|mash": "Fit MASH", "mash_posterior|posterior": "Shared and specific effects", "qtl_rss_analysis|qtl_rss": "Fine-map from summary statistics"};
 var SOON = {METAL: 1, watershed: 1, ems_prediction: 1, qr_and_twas: 1};
 var LABEL = {}, STAGE_OF = {}, DESC = {};
+FLOW.forEach(function (ph, pi) { ph[2].forEach(function (bx) { bx[1].forEach(function (gr) { gr[1].forEach(function (m) { if (PHASE_OF[m] == null) PHASE_OF[m] = pi; }); }); }); });
 CATALOG.forEach(function (g, gi) { g[2].forEach(function (m) { LABEL[m[0]] = m[1]; STAGE_OF[m[0]] = gi; DESC[m[0]] = m[2]; }); });
 var FIXED_CHOICES = {
   TensorQTL: [['cis', 'Cis scan', true, 'Tests variants near each gene. The protocol’s main analysis.'], ['cis:interaction', 'Interaction scan', false, 'Cis scan with a genotype × covariate term, for example sex.'], ['trans', 'Trans scan', false, 'Tests variants far from each gene, on other chromosomes too.']],
@@ -261,7 +264,7 @@ class Component {
     var fileItem = function (key, p, extra) {
       var pv = (D.prev || {})[p], on = !!s.pv[key] && !!pv, t = tableOf(pv);
       return Object.assign({ label: nice(p).replace(/^./, function (c) { return c.toUpperCase(); }), path: p, hasPreview: !!pv, open: on, expanded: String(on), btn: on ? 'Hide example' : 'Show example',
-        note: pv ? 'First ' + (pv.rows.length - 1) + ' rows' + (pv.cols > 6 ? ', 6 of ' + pv.cols + ' columns' : '') + ' of the example file.' : '', head: t.head, rows: t.rows,
+        note: pv ? (pv.via ? 'PLINK binary file; this is its variant list (' + pv.via + '): ' : 'First ') + (pv.via ? 'first ' : '') + (pv.rows.length - 1) + ' rows' + (pv.cols > 6 ? ', 6 of ' + pv.cols + ' columns' : '') + (pv.via ? '.' : ' of the example file.') : '', head: t.head, rows: t.rows,
         toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }, extra || {});
     };
     var outOf = function (m) { var op = (D.outPrev || {})[m], t = tableOf(op); return { hasOut: !!op, outNote: op ? 'Example output, ' + op.file + ': first ' + (op.rows.length - 1) + ' rows' + (op.cols > 6 ? ', 6 of ' + op.cols + ' columns' : '') + '.' : '', outHead: t.head, outRows: t.rows }; };
@@ -378,7 +381,7 @@ class Component {
         if (user) { if (!userFiles[p]) { userFiles[p] = []; userOrder.push(p); } if (userFiles[p].indexOf(i + 1) < 0) userFiles[p].push(i + 1); }
         var src = pi >= 0 ? 'From step ' + (pi + 1) : (p.indexOf('output/') === 0 ? 'Made by a module not on this route' : (user ? (ref ? 'Reference data' : (own ? 'Your file' : 'Example file')) : 'Written by this step’s setup lines'));
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
-        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
+        ins.push(fileItem('r' + i + ':' + p, p, { fromStep: pi >= 0 ? pi + 1 : 0, openStep: pi >= 0 ? (function (sid) { return function () { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: sid }); }; })(route[pi].id) : null, raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
         var first = user ? userFiles[p][0] === i + 1 : false, label = optLabel(((D.opt || {})[k] || {})[p], p);
         if (user && own && first) supply.push({ name: label.replace(/ \([^()]*\)$/, ''), step: 'step ' + (i + 1), href: '#path-' + userOrder.indexOf(p), done: !!s.paths[p], mark: s.paths[p] ? '✓ ' : '' });
         files.push({ label: label.replace(/ \([^()]*\)$/, ''), source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
@@ -506,7 +509,10 @@ class Component {
     var modsOf = function (pi, gi) { var out = []; FLOW[pi][2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gi == null || g === gi) out = out.concat(gr[1]); }); }); return out; };
     // the flowchart: each phase lists its modules in boxes and groups (FLOW), as on the original builder
     var flow = FLOW.map(function (ph, pi) {
+      var steps = routeVals.filter(function (rv, i) { return PHASE_OF[route[i].m] === pi; }), moreId = 'xqb-node-' + pi + '-more';
       return { num: String(pi + 1), kicker: ph[0], hasArrow: pi > 0, rowCls: 'xqb-frow' + (ph[2].length > 1 ? ' is-multi' : ''),
+        steps: steps, hasSteps: steps.length > 0, noSteps: !steps.length, moreId: moreId,
+        more: function () { app.focusNext = 'xqb-phase-h'; self.setState({ phase: pi, stream: null, selMod: '', phaseFrom: moreId }); },
         boxes: ph[2].map(function (bx, bi) {
           var mods = []; bx[1].forEach(function (gr) { mods = mods.concat(gr[1]); });
           var on = mods.some(function (id) { return onRoute[id]; }), bid = 'xqb-node-' + pi + '-' + bi;
@@ -515,6 +521,7 @@ class Component {
             aria: bx[0] + (on ? ', on your route' : '') + ', show its modules',
             pick: function () { app.focusNext = 'xqb-phase-h'; self.setState({ phase: pi, stream: null, selMod: '', phaseFrom: bid }); } }; }) };
     });
+    var looseSteps = routeVals.filter(function (rv, i) { return PHASE_OF[route[i].m] == null; });
     var phaseVals = null, modVals = {};
     // the phase or module details open as a dialog; closing returns focus to what opened it
     var closePanel = function () { app.focusNext = s.phaseFrom || ('xqb-node-' + s.phase + '-0'); self.setState({ phase: null, stream: null, selMod: '' }); };
@@ -565,7 +572,7 @@ class Component {
     });
 
     return {
-      testedCount: testedCount, journey: journey, flow: flow, hasPhase: !!phaseVals, phase: phaseVals || {}, mod: modVals, setupDoc: BASE + 'xqtl-protocol-demo',
+      testedCount: testedCount, journey: journey, flow: flow, looseSteps: looseSteps, hasLoose: looseSteps.length > 0, hasPhase: !!phaseVals, phase: phaseVals || {}, mod: modVals, setupDoc: BASE + 'xqtl-protocol-demo',
       readiness: readiness, loadExample: loadExample, resetAll: resetAll, copyLink: copyLink, copyLinkLabel: s.copied === 'link' ? 'Link copied' : 'Copy a link to this setup',
       catOpen: !!s.catOpen, catExpanded: String(!!s.catOpen), catBtn: s.catOpen ? 'Hide the module catalog' : 'Show all ' + Object.keys(LABEL).length + ' modules', toggleCat: function () { self.setState({ catOpen: !s.catOpen, catOnly: null }); },
       hasCatOnly: !!s.catOnly, catOnlyLabel: s.catOnly ? 'Showing the ' + (s.catOnlyLabel || '') + ' modules.' : '', clearCatOnly: function () { self.setState({ catOnly: null }); }, moduleCount: Object.keys(LABEL).length, clusterDoc: BASE + 'running-on-a-cluster',
@@ -626,8 +633,9 @@ root.addEventListener('keydown', function (e) {
   var next = all[(i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : all.length - 1)) % all.length];
   e.preventDefault(); if (next.id) app.focusNext = next.id; next.click(); next.focus();
 });
-// dialogs: Esc closes, Tab stays inside, focus returns to what opened it
-root.addEventListener('keydown', function (e) {
+// dialogs: Esc closes, Tab stays inside, focus returns to what opened it. Listened for on the
+// document, so it still works when a redraw has moved focus out of the builder.
+document.addEventListener('keydown', function (e) {
   var st = app.state, dlg = R.querySelector('[role=dialog]');
   if (!dlg) return;
   if (e.key === 'Tab') {

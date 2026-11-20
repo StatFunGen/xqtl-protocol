@@ -95,16 +95,126 @@
 
 <section id="route" aria-labelledby="r-h" style="margin: 36px 0 44px">
   <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">
-    <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">1. Your analysis route</h2>
-    <a href="#map-h" style="font-size: 15px">View the full analysis map</a>
+    <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">1. Your analysis</h2>
   </div>
   <sc-if value="{{isOwnSrc}}"><div class="xqb-supply"><p style="margin: 0 0 6px; font-size: 15px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each one in the step that first needs it; paths stay in your browser.</span></p>
     <ul><sc-for list="{{supply}}" as="f"><li><a href="{{f.href}}">{{f.mark}}{{f.name}}</a> <span>{{f.step}}</span></li></sc-for></ul></div></sc-if>
   <sc-if value="{{routeEmpty}}">
     <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
   </sc-if>
-  <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
-    <sc-for list="{{route}}" as="r">
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">Your steps, numbered in the order they run, sit in their phase of the analysis. Open "Other modules" or a grey box to see the rest of a phase.</p>
+  <div class="xqb-flow">
+    <sc-for list="{{flow}}" as="p">
+      <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
+      <div class="xqb-fstage">
+        <div class="xqb-fhead"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></div>
+        <sc-if value="{{p.hasSteps}}">
+          <ol class="xqb-steps">
+            <sc-for list="{{p.steps}}" as="r">
+          <li id="{{r.anchor}}" style="{{r.cardStyle}}">
+            <div style="display: flex; gap: 14px; align-items: flex-start">
+              <span style="{{r.numStyle}}">{{r.n}}</span>
+              <div style="flex: 1 1 auto; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px">
+                  <span style="font-weight: 600; font-size: 16px; color: var(--ink)">{{r.title}}</span>
+                  <sc-if value="{{r.changed}}"><span style="font-size: 13.5px; font-weight: 600; color: var(--stf)">Changed</span></sc-if>
+                </div>
+                <div style="font-size: 15px; color: var(--ink2); margin-top: 3px; line-height: 1.45">{{r.metaLine}}</div>
+                <sc-if value="{{r.notTested}}"><div style="margin-top: 6px"><span style="{{r.testStyle}}">{{r.tested}}</span></div></sc-if>
+                <sc-if value="{{r.hasFiles}}">
+                  <div class="xqb-files">
+                    <div class="xqb-files-h">Files this step needs</div>
+                    <ul>
+                      <sc-for list="{{r.files}}" as="f">
+                        <li>
+                          <span class="xqb-file-name">{{f.label}}</span><span class="xqb-file-src">{{f.source}}</span>
+                          <sc-if value="{{f.ask}}"><input id="{{f.id}}" class="xqb-path" type="text" value="{{f.value}}" onInput="{{f.set}}" placeholder="{{f.placeholder}}" aria-label="{{f.aria}}"/></sc-if>
+                        </li>
+                      </sc-for>
+                    </ul>
+                  </div>
+                </sc-if>
+              </div>
+              <button type="button" id="{{r.btnId}}" aria-haspopup="dialog" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
+            </div>
+            <sc-if value="{{r.isOpen}}">
+              <div class="xqb-modal" onClick="{{r.backdrop}}">
+              <div role="dialog" aria-modal="true" aria-labelledby="xqb-step-h" class="xqb-stage" style="display: flex; flex-direction: column; gap: 14px">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+                  <div><div class="xqb-k">STEP {{r.n}} OF YOUR ROUTE</div><h3 id="xqb-step-h" tabindex="-1" class="xqb-phase-h">{{r.title}}</h3><div style="font-size: 15px; color: var(--ink2); margin-top: 2px">{{r.module}} · {{r.methodLine}}</div></div>
+                  <button type="button" onClick="{{r.close}}" aria-label="Close this step" class="xqb-x">×</button>
+                </div>
+                <div>
+                  <div class="xqb-k" style="margin-bottom: 4px">WHY THIS STEP</div>
+                  <p style="margin: 0; font-size: 15px; line-height: 1.6">{{r.why}}</p>
+                </div>
+                <sc-if value="{{r.hasChoices}}">
+                  <fieldset style="border: 1px solid var(--ln); border-radius: 6px; margin: 0; padding: 10px 14px">
+                    <legend style="font-size: 14px; font-weight: 600; color: var(--ink2); padding: 0 6px">Method</legend>
+                    <div style="display: flex; flex-direction: column; gap: 6px">
+                      <sc-for list="{{r.choices}}" as="c">
+                        <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.45; cursor: pointer; padding: 4px 0">
+                          <input type="radio" name="{{r.radioName}}" checked="{{c.checked}}" onChange="{{c.pick}}" style="accent-color: var(--navy); margin: 3px 0 0">
+                          <span><span style="font-weight: 600">{{c.label}}</span> <span style="{{c.tagStyle}}">{{c.tag}}</span><span style="display: block; color: var(--ink2); font-size: 14px">{{c.desc}}</span></span>
+                        </label>
+                      </sc-for>
+                    </div>
+                  </fieldset>
+                </sc-if>
+                <div><div class="xqb-k">INPUTS</div>
+                  <ol class="xqb-mlist">
+                    <sc-for list="{{r.inputs}}" as="f">
+                      <li><div class="xqb-mrow"><span>{{f.name}} <span class="xqb-src">· {{f.source}}</span></span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if><sc-if value="{{f.fromStep}}"><button type="button" onClick="{{f.openStep}}" class="xqb-btn xqb-sm">Open step {{f.fromStep}}</button></sc-if></div>
+                        <sc-if value="{{f.showPath}}"><div class="xqb-mono" style="color: var(--ink2); font-size: 13.5px">{{f.path}}</div></sc-if>
+                        <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                      </li>
+                    </sc-for>
+                  </ol>
+                </div>
+                <div><div class="xqb-k">OUTPUTS</div>
+                  <ol class="xqb-mlist">
+                    <sc-for list="{{r.outputs}}" as="o">
+                      <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                        <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                      </li>
+                    </sc-for>
+                  </ol>
+                </div>
+                <div>
+                  <div class="xqb-k" style="margin-bottom: 6px">COMMAND FOR THIS STEP</div>
+                  <pre class="xqb-code" tabindex="0">{{r.cmd}}</pre>
+                </div>
+                <sc-if value="{{r.hasTerms}}">
+                  <div>
+                    <div class="xqb-k" style="margin-bottom: 4px">TERMS</div>
+                    <dl class="xqb-terms"><sc-for list="{{r.terms}}" as="tm"><dt>{{tm.k}}</dt><dd>{{tm.v}}</dd></sc-for></dl>
+                  </div>
+                </sc-if>
+                <a href="{{r.doc}}" style="font-size: 15px; align-self: flex-start">Open the {{r.module}} notebook</a>
+              </div>
+              </div>
+            </sc-if>
+          </li>
+            </sc-for>
+          </ol>
+          <button type="button" id="{{p.moreId}}" aria-haspopup="dialog" onClick="{{p.more}}" class="xqb-link xqb-more">Other modules in this phase</button>
+        </sc-if>
+        <sc-if value="{{p.noSteps}}">
+        <div class="{{p.rowCls}}">
+          <sc-for list="{{p.boxes}}" as="b">
+            <button type="button" id="{{b.bid}}" aria-haspopup="dialog" aria-label="{{b.aria}}" onClick="{{b.pick}}" class="{{b.cls}}">
+              <span class="xqb-ft">{{b.title}}</span>
+              <sc-if value="{{b.hasSub}}"><span class="xqb-fsub">{{b.sub}}</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{hasLoose}}">
+    <ol class="xqb-steps" style="margin-top: 16px">
+      <sc-for list="{{looseSteps}}" as="r">
       <li id="{{r.anchor}}" style="{{r.cardStyle}}">
         <div style="display: flex; gap: 14px; align-items: flex-start">
           <span style="{{r.numStyle}}">{{r.n}}</span>
@@ -158,7 +268,7 @@
             <div><div class="xqb-k">INPUTS</div>
               <ol class="xqb-mlist">
                 <sc-for list="{{r.inputs}}" as="f">
-                  <li><div class="xqb-mrow"><span>{{f.name}} <span class="xqb-src">· {{f.source}}</span></span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if></div>
+                  <li><div class="xqb-mrow"><span>{{f.name}} <span class="xqb-src">· {{f.source}}</span></span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if><sc-if value="{{f.fromStep}}"><button type="button" onClick="{{f.openStep}}" class="xqb-btn xqb-sm">Open step {{f.fromStep}}</button></sc-if></div>
                     <sc-if value="{{f.showPath}}"><div class="xqb-mono" style="color: var(--ink2); font-size: 13.5px">{{f.path}}</div></sc-if>
                     <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
                   </li>
@@ -189,9 +299,58 @@
           </div>
         </sc-if>
       </li>
-    </sc-for>
-  </ol>
-  <sc-if value="{{hasRoute}}"><p style="margin: 12px 0 0; font-size: 15px"><a href="#c-h">Continue to Prepare and run ↓</a></p></sc-if>
+      </sc-for>
+    </ol>
+  </sc-if>
+  <sc-if value="{{hasRoute}}"><p style="margin: 14px 0 0; font-size: 15px"><a href="#c-h">Continue to Prepare and run ↓</a></p></sc-if>
+  <sc-if value="{{hasPhase}}">
+    <div class="xqb-modal" onClick="{{phase.backdrop}}">
+    <div id="xqb-phase" role="dialog" aria-modal="true" aria-labelledby="xqb-phase-h" class="xqb-stage">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+        <div><div class="xqb-k">{{phase.kicker}}</div><h3 id="xqb-phase-h" tabindex="-1" class="xqb-phase-h">{{phase.label}}<span class="xqb-sr">, {{phase.srHint}}</span></h3></div>
+        <button type="button" onClick="{{phase.close}}" aria-label="Close this phase" class="xqb-x">×</button>
+      </div>
+      <p style="margin: 6px 0 10px; font-size: 15px; line-height: 1.6">{{phase.what}}</p>
+      <sc-if value="{{phase.showList}}">
+        <div class="xqb-fgrid is-multi">
+          <sc-for list="{{phase.groups}}" as="g">
+            <div class="xqb-fg">
+              <sc-if value="{{g.title}}"><div class="xqb-fgt">{{g.title}}</div></sc-if>
+              <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{phase.hasMod}}"><button type="button" onClick="{{phase.back}}" class="xqb-link">← All modules in this phase</button></sc-if>
+      <sc-if value="{{phase.hasMod}}">
+        <div class="xqb-mdet">
+          <h4>{{mod.label}}</h4>
+          <div><div class="xqb-k">WHAT IT DOES</div><p>{{mod.what}}</p></div>
+          <div><div class="xqb-k">WHEN TO USE IT</div><p>{{mod.when}}</p></div>
+          <sc-if value="{{mod.hasInputs}}"><div><div class="xqb-k">INPUTS</div>
+            <ol class="xqb-mlist">
+              <sc-for list="{{mod.inputs}}" as="f">
+                <li><div class="xqb-mrow"><span>{{f.name}}</span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if></div>
+                  <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                </li>
+              </sc-for>
+            </ol></div></sc-if>
+          <sc-if value="{{mod.hasOutputs}}"><div><div class="xqb-k">MAIN OUTPUT</div>
+            <ol class="xqb-mlist">
+              <sc-for list="{{mod.outputs}}" as="o">
+                <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                  <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                </li>
+              </sc-for>
+            </ol>
+          </div></sc-if>
+          <p style="margin: 0"><a href="{{mod.doc}}">Open the {{mod.label}} notebook</a></p>
+        </div>
+      </sc-if>
+      <sc-if value="{{phase.canBuild}}"><div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><button type="button" onClick="{{phase.build}}" class="xqb-btn">{{phase.buildLabel}}</button><span style="font-size: 14px; color: var(--ink2)">applies a study preset; it does not add modules by itself</span></div></sc-if>
+    </div>
+  </div>
+  </sc-if>
 </section>
 
 <section aria-labelledby="c-h" style="margin-bottom: 44px">
@@ -256,77 +415,8 @@
 
 </section>
 
-<section aria-labelledby="map-h" style="margin-bottom: 44px">
-  <h2 id="map-h" class="xqb-h2">3. The xQTL analysis, end to end</h2>
-  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">How the whole analysis fits together. Select a box to see its modules; boxes on your route are blue.</p>
-  <div class="xqb-flow">
-    <sc-for list="{{flow}}" as="p">
-      <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
-      <div class="xqb-fstage">
-        <div class="xqb-fhead"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></div>
-        <div class="{{p.rowCls}}">
-          <sc-for list="{{p.boxes}}" as="b">
-            <button type="button" id="{{b.bid}}" aria-haspopup="dialog" aria-label="{{b.aria}}" onClick="{{b.pick}}" class="{{b.cls}}">
-              <span class="xqb-ft">{{b.title}}</span>
-              <sc-if value="{{b.hasSub}}"><span class="xqb-fsub">{{b.sub}}</span></sc-if>
-            </button>
-          </sc-for>
-        </div>
-      </div>
-    </sc-for>
-  </div>
-  <sc-if value="{{hasPhase}}">
-    <div class="xqb-modal" onClick="{{phase.backdrop}}">
-    <div id="xqb-phase" role="dialog" aria-modal="true" aria-labelledby="xqb-phase-h" class="xqb-stage">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
-        <div><div class="xqb-k">{{phase.kicker}}</div><h3 id="xqb-phase-h" tabindex="-1" class="xqb-phase-h">{{phase.label}}<span class="xqb-sr">, {{phase.srHint}}</span></h3></div>
-        <button type="button" onClick="{{phase.close}}" aria-label="Close this phase" class="xqb-x">×</button>
-      </div>
-      <p style="margin: 6px 0 10px; font-size: 15px; line-height: 1.6">{{phase.what}}</p>
-      <sc-if value="{{phase.showList}}">
-        <div class="xqb-fgrid is-multi">
-          <sc-for list="{{phase.groups}}" as="g">
-            <div class="xqb-fg">
-              <sc-if value="{{g.title}}"><div class="xqb-fgt">{{g.title}}</div></sc-if>
-              <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
-            </div>
-          </sc-for>
-        </div>
-      </sc-if>
-      <sc-if value="{{phase.hasMod}}"><button type="button" onClick="{{phase.back}}" class="xqb-link">← All modules in this phase</button></sc-if>
-      <sc-if value="{{phase.hasMod}}">
-        <div class="xqb-mdet">
-          <h4>{{mod.label}}</h4>
-          <div><div class="xqb-k">WHAT IT DOES</div><p>{{mod.what}}</p></div>
-          <div><div class="xqb-k">WHEN TO USE IT</div><p>{{mod.when}}</p></div>
-          <sc-if value="{{mod.hasInputs}}"><div><div class="xqb-k">INPUTS</div>
-            <ol class="xqb-mlist">
-              <sc-for list="{{mod.inputs}}" as="f">
-                <li><div class="xqb-mrow"><span>{{f.name}}</span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if></div>
-                  <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
-                </li>
-              </sc-for>
-            </ol></div></sc-if>
-          <sc-if value="{{mod.hasOutputs}}"><div><div class="xqb-k">MAIN OUTPUT</div>
-            <ol class="xqb-mlist">
-              <sc-for list="{{mod.outputs}}" as="o">
-                <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
-                  <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
-                </li>
-              </sc-for>
-            </ol>
-          </div></sc-if>
-          <p style="margin: 0"><a href="{{mod.doc}}">Open the {{mod.label}} notebook</a></p>
-        </div>
-      </sc-if>
-      <sc-if value="{{phase.canBuild}}"><div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><button type="button" onClick="{{phase.build}}" class="xqb-btn">{{phase.buildLabel}}</button><span style="font-size: 14px; color: var(--ink2)">applies a study preset; it does not add modules by itself</span></div></sc-if>
-    </div>
-  </div>
-  </sc-if>
-</section>
-
 <section aria-labelledby="res-h" style="margin-bottom: 44px">
-  <h2 id="res-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">4. Understand your results</h2>
+  <h2 id="res-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">3. Understand your results</h2>
   <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">The files to look at first.</p>
   <sc-if value="{{noResults}}"><p style="margin: 0; color: var(--ink2); font-size: 15px">Build a route to see its results.</p></sc-if>
   <div style="display: flex; flex-direction: column; gap: 10px">
@@ -366,7 +456,7 @@
 </section>
 
 <section aria-labelledby="e-h" style="margin-bottom: 20px">
-  <h2 id="e-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">5. All modules</h2>
+  <h2 id="e-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">4. All modules</h2>
   <p style="margin: 12px 0 12px; font-size: 15.5px; line-height: 1.6">Every module, including ones your route does not use.</p>
   <button type="button" aria-expanded="{{catExpanded}}" onClick="{{toggleCat}}" class="xqb-link">{{catBtn}}</button>
   <sc-if value="{{catOpen}}">
