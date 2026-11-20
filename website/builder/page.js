@@ -15,7 +15,11 @@
  */
 (function () {
 'use strict';
-var XQB_DATA = JSON.parse(document.getElementById('xqb-data').textContent);
+// R: where the builder's elements live. The standalone page uses the document; on the site's
+// builder page the MyST widget renders it inside a shadow root, which sets XQB_ROOT first.
+var R = (typeof XQB_ROOT !== 'undefined' && XQB_ROOT) || document;
+var WIDGET = R !== document;
+var XQB_DATA = JSON.parse(R.getElementById('xqb-data').textContent);
 var REV = '__XQTL_PROTOCOL_REV__'.indexOf('__') === 0 ? 'unreleased' : '__XQTL_PROTOCOL_REV__';
 
 /* ---- Rendering: a small renderer for the template's {{path}}, sc-for and sc-if ---- */
@@ -109,8 +113,13 @@ var FLOW = [
   ['Interpretation', 8, [['Enrichment & Validation', [[null, ['eoo_enrichment', 'gsea', 'gregor', 'sldsc_enrichment']]]], ['xQTL Modifier Score', [[null, ['ems_training', 'ems_prediction']]]]]]
 ];
 // The stage map: parallel inputs meet at QTL discovery, then branch by question.
+// the phase each module belongs to, for placing route steps on the map
+var PHASE_OF = {};
+// plain titles for workflows a route adds because a later step reads their output
+var WF_TITLE = {"bulk_expression_QC|qc": "Remove outlier samples", "splicing_calling_leafcutter2|leafcutter2": "Call splicing events", "splicing_normalization|leafcutter_norm": "Normalize splicing ratios", "VCF_QC|qc": "Variant QC on the raw VCF", "genotype_formatting|merge_plink": "Merge genotype files", "PCA|flashpca": "Genotype principal components", "genotype_formatting|genotype_by_chrom": "Split genotypes by chromosome", "phenotype_formatting|phenotype_by_chrom": "Phenotype files per chromosome", "covariate_formatting|merge_genotype_pc": "Merge covariates with genotype PCs", "qtl_association_postprocessing|default": "Multiple-testing correction", "METAL|METAL": "Meta-analysis across cohorts", "mash_preprocessing|random_null_tensorqtl": "Prepare effects for MASH", "mixture_prior|ed_bovy": "Learn sharing patterns", "mash_fit|mash": "Fit MASH", "mash_posterior|posterior": "Shared and specific effects", "qtl_rss_analysis|qtl_rss": "Fine-map from summary statistics"};
 var SOON = {METAL: 1, watershed: 1, ems_prediction: 1, qr_and_twas: 1};
 var LABEL = {}, STAGE_OF = {}, DESC = {};
+FLOW.forEach(function (ph, pi) { ph[2].forEach(function (bx) { bx[1].forEach(function (gr) { gr[1].forEach(function (m) { if (PHASE_OF[m] == null) PHASE_OF[m] = pi; }); }); }); });
 CATALOG.forEach(function (g, gi) { g[2].forEach(function (m) { LABEL[m[0]] = m[1]; STAGE_OF[m[0]] = gi; DESC[m[0]] = m[2]; }); });
 var FIXED_CHOICES = {
   TensorQTL: [['cis', 'Cis scan', true, 'Tests variants near each gene. The protocol’s main analysis.'], ['cis:interaction', 'Interaction scan', false, 'Cis scan with a genotype × covariate term, for example sex.'], ['trans', 'Trans scan', false, 'Tests variants far from each gene, on other chromosomes too.']],
@@ -191,7 +200,7 @@ function closeRoute(R, D) {
     if (placed[k]) return; placed[k] = 1;
     needs(k).forEach(function (pk) { place(pk, forTitle); });
     var mw = k.split('|');
-    res.push({ id: 'dep-' + k.replace(/[^A-Za-z0-9]+/g, '-'), m: mw[0], wfs: [mw[1]], title: 'Prepare an input: ' + mw[1], auto: true });
+    res.push({ id: 'dep-' + k.replace(/[^A-Za-z0-9]+/g, '-'), m: mw[0], wfs: [mw[1]], title: WF_TITLE[k] || ((LABEL[mw[0]] || mw[0]) + ': ' + mw[1].replace(/_/g, ' ')), auto: true });
   }
   R.forEach(function (r) { r.wfs.forEach(function (w) { needs(r.m + '|' + w).forEach(function (pk) { place(pk); }); }); res.push(r); });
   return res;
@@ -249,20 +258,32 @@ class Component {
     var s = this.state, self = this, D = s.data || { cmd: {}, io: {}, untested: [], bench: {}, meth: {}, intro: {}, terms: {}, untestedWhy: {} };
     var untested = {}; (D.untested || []).forEach(function (k) { untested[k] = 1; });
     var testedKey = function (k) { return !!D.cmd[k] && !untested[k]; };
-    var chip = function (bg, fg, extra) { return 'font-size: 12.5px; padding: 2px 8px; border-radius: 4px; background: ' + bg + '; color: ' + fg + ';' + (extra || ''); };
+    // status as coloured text with a small dot, not a filled box (bg is kept for the call sites)
+    var chip = function (bg, fg, extra) { return 'font-size: 13.5px; font-weight: 600; padding-left: 13px; color: ' + fg + '; background: radial-gradient(circle, ' + fg + ' 3.5px, transparent 4px) 0 50% / 8px 8px no-repeat;' + (extra || ''); };
     var tableOf = function (pv) { return { head: pv ? pv.rows[0].map(function (v) { return { v: v }; }) : [], rows: pv ? pv.rows.slice(1).map(function (row) { return { cells: row.map(function (v) { return { v: v }; }) }; }) : [] }; };
     var fileItem = function (key, p, extra) {
       var pv = (D.prev || {})[p], on = !!s.pv[key] && !!pv, t = tableOf(pv);
       return Object.assign({ label: nice(p).replace(/^./, function (c) { return c.toUpperCase(); }), path: p, hasPreview: !!pv, open: on, expanded: String(on), btn: on ? 'Hide example' : 'Show example',
-        note: pv ? 'First ' + (pv.rows.length - 1) + ' rows' + (pv.cols > 6 ? ', 6 of ' + pv.cols + ' columns' : '') + ' of the example file.' : '', head: t.head, rows: t.rows,
+        note: pv ? (pv.ex ? 'Example from the module tests (' + pv.ex + ')' + (pv.via ? ', a PLINK file shown by its variant list' : '') + ': '
+          : (pv.via ? 'PLINK binary file, shown by its variant list (' + pv.via + '): ' : 'Example file: '))
+          + 'first ' + (pv.rows.length - 1) + ' rows' + (pv.cols > 6 ? ', 6 of ' + pv.cols + ' columns' : '') + '.' : '',
+        head: t.head, rows: t.rows,
         toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }, extra || {});
     };
     var outOf = function (m) { var op = (D.outPrev || {})[m], t = tableOf(op); return { hasOut: !!op, outNote: op ? 'Example output, ' + op.file + ': first ' + (op.rows.length - 1) + ' rows' + (op.cols > 6 ? ', 6 of ' + op.cols + ' columns' : '') + '.' : '', outHead: t.head, outRows: t.rows }; };
-    var segStyle = function (on) { return 'font-size: 14px; min-height: 36px; padding: 6px 14px; border: 0; cursor: pointer; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on ? '600' : '400'); };
-    var pillStyle = function (on) { return 'display: inline-flex; align-items: center; gap: 8px; font-size: 14px; min-height: 38px; padding: 7px 13px; border-radius: 6px; cursor: pointer; box-sizing: border-box; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; color: var(--ink); font-weight: ' + (on ? '600' : '400'); };
+    // outputs one per line; the example output's preview sits on the output it comes from
+    var outList = function (m, outs) {
+      var op = (D.outPrev || {})[m], ot = outOf(m), key = 'mo:' + m, on = !!s.pv[key];
+      var at = op ? Math.max(0, outs.findIndex(function (o) { return op.file.indexOf(o.replace(/\/$/, '')) >= 0 || o.indexOf(op.file) >= 0; })) : -1;
+      return outs.map(function (o, i) { var has = i === at;
+        return { v: o, hasPreview: has, open: has && on, expanded: String(has && on), btn: has && on ? 'Hide example' : 'Show example', note: ot.outNote, head: ot.outHead, rows: ot.outRows,
+          toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }; });
+    };
+    var segStyle = function (on) { return 'font-size: 15px; min-height: 36px; padding: 6px 14px; border: 0; cursor: pointer; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on ? '600' : '400'); };
+    var pillStyle = function (on) { return 'display: inline-flex; align-items: center; gap: 8px; font-size: 15px; min-height: 38px; padding: 7px 13px; border-radius: 6px; cursor: pointer; box-sizing: border-box; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; color: var(--ink); font-weight: ' + (on ? '600' : '400'); };
 
     var route = buildRoute(s.study, s.methods, s.data);
-    var onRoute = {}; route.forEach(function (r) { onRoute[r.m] = 1; });
+    var onRoute = {}, stepOf = {}; route.forEach(function (r) { onRoute[r.m] = 1; if (!stepOf[r.m]) stepOf[r.m] = r.id; });
     var routeOk = function (rt) { return rt.length > 0 && rt.every(function (r) { return !r.soon && r.wfs.every(function (w) { return testedKey(r.m + '|' + w); }); }); };
 
     // 1. Map
@@ -273,14 +294,14 @@ class Component {
       var mods = g[2].filter(function (m) { return !mapRoute || onRoute[m[0]]; }).map(function (m) {
         var sel = s.selMod === m[0], on = !!onRoute[m[0]];
         return { label: m[1], pressed: String(sel), pick: function () { var e = Object.assign({}, s.expStage); e[gi] = true; self.setState({ selMod: sel ? '' : m[0], expStage: e }); },
-          style: 'font-size: 13.5px; min-height: 34px; padding: 5px 11px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (sel ? 'var(--navy)' : (on ? 'var(--teal)' : 'var(--ln)')) + '; background: ' + (sel ? 'var(--navy)' : (on ? 'var(--acs)' : 'var(--bg)')) + '; color: ' + (sel ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on || sel ? '600' : '400') };
+          style: 'font-size: 14px; min-height: 34px; padding: 5px 11px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (sel ? 'var(--navy)' : (on ? 'var(--teal)' : 'var(--ln)')) + '; background: ' + (sel ? 'var(--navy)' : (on ? 'var(--acs)' : 'var(--bg)')) + '; color: ' + (sel ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on || sel ? '600' : '400') };
       });
       var exp = mapRoute || !!s.expStage[gi];
       return { n: gi + 1, label: g[0], sub: mapRoute ? nOn + ' module' + (nOn === 1 ? '' : 's') + ' on your route' : g[1], mods: mods,
         showMods: exp, expanded: String(exp), btn: mapRoute ? '' : (exp ? 'Hide modules' : 'Show ' + g[2].length + ' modules'),
         toggle: function () { var e = Object.assign({}, s.expStage); e[gi] = !e[gi]; self.setState({ expStage: e }); },
         titleStyle: 'font-size: 16px; font-weight: 600; color: ' + (active ? 'var(--navy)' : 'var(--ink2)'),
-        badge: 'width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; ' + (active ? 'background: var(--navy); color: var(--on)' : 'background: var(--sk); color: var(--ink2)'),
+        badge: 'width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; ' + (active ? 'background: var(--navy); color: var(--on)' : 'background: var(--sk); color: var(--ink2)'),
         rail: gi < CATALOG.length - 1 ? 'flex: 1 1 auto; width: 2px; background: var(--ln); margin: 4px 0' : 'flex: 1 1 auto; width: 2px; background: transparent' };
     });
     var mapViews = [['all', 'All stages'], ['route', 'My route']].map(function (v) { var on = s.mapView === v[0]; return { label: v[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ mapView: v[0] }); } }; });
@@ -307,16 +328,16 @@ class Component {
     var isExample = s.mode === 'example', isOwn = s.mode === 'own';
     var modes = [['example', 'Try an example', 'Learn from a tested analysis that runs on the repository’s example data.', ''], ['own', 'Build my workflow', 'Choose your goals, then give the files your route needs.', '']].map(function (md) {
       var on = s.mode === md[0];
-      return { label: md[1], desc: md[2], foot: md[3], checked: String(on),
+      return { rid: 'xqb-mode-' + md[0], label: md[1], desc: md[2], foot: md[3], checked: String(on),
         style: 'text-align: left; font: inherit; cursor: pointer; padding: 16px 18px; border-radius: 8px; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; border: ' + (on ? '2px solid var(--navy)' : '1px solid var(--ln2)') + '; display: block; width: 100%',
         dot: 'flex: 0 0 18px; width: 18px; height: 18px; border-radius: 9px; box-sizing: border-box; border: ' + (on ? '6px solid var(--navy)' : '2px solid var(--ln2)') + '; background: var(--bg)',
         pick: function () { if (md[0] === 'example') self.setRoute({ mode: 'example', src: 'example', study: studyFor(s.example), methods: {} }); else self.setState({ mode: 'own', src: 'own', msg: '' }); } };
     });
     var examples = EXAMPLES.map(function (e) {
       var rt = buildRoute(studyFor(e.id), {}, s.data), ok = routeOk(rt), on = isExample && s.example === e.id;
-      return { label: e.label, title: e.title.replace(/^Example: /, '').replace(/^./, function (c) { return c.toUpperCase(); }), checked: on, ariaChecked: String(on), disabled: false, learn: e.learn, result: e.result, route: 'Route: ' + rt.map(function (r) { return LABEL[r.m]; }).join(' → '),
+      return { rid: 'xqb-ex-' + e.id, label: e.label, title: e.title.replace(/^Example: /, '').replace(/^./, function (c) { return c.toUpperCase(); }), checked: on, ariaChecked: String(on), disabled: false, learn: e.learn, result: e.result, route: 'Route: ' + rt.map(function (r) { return LABEL[r.m]; }).join(' → '),
         steps: rt.length + ' steps · ' + rt.filter(function (r) { return MAIN[r.m]; }).map(function (r) { return LABEL[r.m]; }).join(', '),
-        tag: ok ? 'Runs on example data' : 'Demonstration: not every step runs on the example data yet', tagStyle: ok ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
+        notReady: !ok, tag: ok ? 'Runs on example data' : 'Demonstration: not every step runs on the example data yet', tagStyle: ok ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         style: 'text-align: left; font: inherit; cursor: pointer; display: block; width: 100%; padding: 12px 14px; border-radius: 8px; background: var(--bg); border: ' + (on ? '2px solid var(--navy)' : '1px solid var(--ln)') + '; box-shadow: 0 1px 2px rgba(25, 53, 74, 0.05)',
         pick: function () { var x = Object.assign({}, s.expStage); x[e.stage] = true; self.setRoute({ example: e.id, study: studyFor(e.id), methods: {}, expStage: x }); } };
     });
@@ -347,12 +368,12 @@ class Component {
       return best;
     };
     var own = s.src === 'own';
-    var userFiles = {}, userOrder = [];
+    var userFiles = {}, userOrder = [], supply = [];
     var placeholder = function (p) { return '<your_' + nice(p.replace(/^<|>$/g, '').replace(/^path\/to\//, '')).replace(/ /g, '_') + '>'; };
     var routeVals = route.map(function (r, i) {
       var keys = r.wfs.map(function (w) { return r.m + '|' + w; });
       var tested = !r.soon && keys.every(testedKey);
-      var open = !!s.open[r.id], reads = {};
+      var open = s.stepOpen === r.id, reads = {};
       var ins = [], files = [];
       keys.forEach(function (k) { ((D.io[k] || {}).i || []).forEach(function (p) {
         if (ins.some(function (x) { return x.raw === p; })) return;
@@ -363,10 +384,11 @@ class Component {
         if (user) { if (!userFiles[p]) { userFiles[p] = []; userOrder.push(p); } if (userFiles[p].indexOf(i + 1) < 0) userFiles[p].push(i + 1); }
         var src = pi >= 0 ? 'From step ' + (pi + 1) : (p.indexOf('output/') === 0 ? 'Made by a module not on this route' : (user ? (ref ? 'Reference data' : (own ? 'Your file' : 'Example file')) : 'Written by this step’s setup lines'));
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
-        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
+        ins.push(fileItem('r' + i + ':' + p, p, { fromStep: pi >= 0 ? pi + 1 : 0, openStep: pi >= 0 ? (function (sid) { return function () { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: sid }); }; })(route[pi].id) : null, raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
         var first = user ? userFiles[p][0] === i + 1 : false, label = optLabel(((D.opt || {})[k] || {})[p], p);
-        files.push({ label: label, source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
-          ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/your/' + p.replace(/^<|>$/g, '').split('/').pop(),
+        if (user && own && first) supply.push({ name: label.replace(/ \([^()]*\)$/, ''), step: 'step ' + (i + 1), href: '#path-' + userOrder.indexOf(p), done: !!s.paths[p], mark: s.paths[p] ? '✓ ' : '' });
+        files.push({ label: label.replace(/ \([^()]*\)$/, ''), source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
+          ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/' + label.replace(/ \([^()]*\)$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + ((p.split('/').pop().match(/\.[a-z0-9]+(\.gz)?$/i) || [''])[0]),
           set: function (e) { var q = Object.assign({}, s.paths); q[p] = e.target.value; self.setState({ paths: q }); } });
       }); });
       var stepsRead = Object.keys(reads).map(Number).sort(function (a, b) { return a - b; });
@@ -377,17 +399,20 @@ class Component {
       return Object.assign({
         n: i + 1, anchor: 'step-' + r.id, title: r.title, module: LABEL[r.m] || r.m, changed: !!s.changed[r.id],
         methodLine: r.soon ? 'coming soon' : (choice ? choice[1] : (r.wfs.length > 1 ? r.wfs.length + ' workflows' : r.wfs[0])),
-        readsLine: stepsRead.length ? 'Uses step ' + stepsRead.join(', ') : 'Starts from input files',
+        metaLine: (LABEL[r.m] || r.m) + ' · ' + (r.soon ? 'coming soon' : (choice ? choice[1] : (r.wfs.length > 1 ? r.wfs.length + ' workflows' : r.wfs[0]))) + (stepsRead.length ? ' · uses step ' + stepsRead.join(', ') : ''),
         cardStyle: 'border: 1px solid ' + (s.changed[r.id] ? 'var(--stf)' : 'var(--ln)') + '; border-radius: 8px; padding: 12px 14px; background: var(--bg)',
-        numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
-        tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
+        numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
+        notTested: r.soon || !tested, tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         hasTime: !!D.bench[r.m], time: D.bench[r.m] ? 'Example: ' + D.bench[r.m] : '',
-        isOpen: open, expanded: String(open), panelId: 'panel-' + r.id, btn: open ? 'Hide' : 'Details',
-        btnStyle: 'flex: 0 0 auto; font-size: 14px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: ' + (open ? 'var(--sk)' : 'var(--bg)') + '; color: var(--navy); font-weight: 500',
-        toggle: function () { var o = Object.assign({}, s.open); o[r.id] = !open; self.setState({ open: o }); },
+        // step details open as a dialog, one at a time; closing returns focus to the step's button
+        isOpen: open, btnId: 'xqb-stepbtn-' + r.id, btn: 'Details',
+        btnStyle: 'flex: 0 0 auto; font-size: 15px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: var(--bg); color: var(--navy); font-weight: 500',
+        toggle: function () { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: r.id, phase: null, stream: null, selMod: '' }); },
+        close: function () { app.focusNext = 'xqb-stepbtn-' + r.id; self.setState({ stepOpen: null }); },
+        backdrop: function (e) { if (e.target === e.currentTarget) { app.focusNext = 'xqb-stepbtn-' + r.id; self.setState({ stepOpen: null }); } },
         why: why, hasChoices: !!r.choices, radioName: 'm-' + r.id,
         choices: (r.choices || []).map(function (c) { var k = r.m + '|' + c[0], t = testedKey(k); return { label: c[1], desc: c[3], checked: c[0] === r.chosen, tag: !D.cmd[k] ? 'No command' : (t ? 'Runs on example data' : 'Not yet run'), tagStyle: t ? chip('var(--okb)', 'var(--okf)', ' margin-left: 4px;') : chip('var(--stb)', 'var(--stf)', ' margin-left: 4px;'), pick: function () { var mm = Object.assign({}, s.methods); mm[r.id] = c[0]; self.setRoute({ methods: mm }, c[1] + ' selected.'); } }; }),
-        inputs: ins, files: files, hasFiles: files.length > 0, outputs: outs.map(function (o) { return { v: o }; }), doc: BASE + (DOC[r.m] || '')
+        inputs: ins, files: files.filter(function (f) { return f.ask; }), hasFiles: own && files.some(function (f) { return f.ask; }), outputs: outList(r.m, outs), doc: BASE + (DOC[r.m] || '')
       }, outOf(r.m));
     });
     var nTested = routeVals.filter(function (r) { return r.tested === 'Runs on example data'; }).length;
@@ -445,6 +470,7 @@ class Component {
       { k: 'Reference data', v: refFiles ? refFiles + ' reference file' + (refFiles === 1 ? '' : 's') + (own ? ' to point to' : ' from the example') : 'none needed for this route', mark: refFiles && own ? '!' : '✓', cls: refFiles && own ? 'is-todo' : 'is-ok' },
       s.runOn === 'local' ? { k: 'Cluster settings', v: 'not needed for local execution', mark: '✓', cls: 'is-ok' } : { k: 'Cluster settings', v: 'check account and queue in my_cluster.yml; this page cannot', mark: '!', cls: 'is-todo' }
     ];
+    readiness = readiness.filter(function (c) { return c.cls !== 'is-ok'; });
     var script = route.length ? '#!/bin/bash\n# xQTL analysis route from the Workflow Builder\n# Protocol revision: ' + REV + '\n# ' + (own ? 'Your data' : 'Repository example data') + ' · ' + { local: 'runs here', slurm: 'SoS submits each step to SLURM', sge: 'SoS submits each step to SGE' }[s.runOn] + '\n# Status: ' + (ready ? 'ready to run. ' : 'NOT RUNNABLE YET. ') + status + '\nset -euo pipefail\n\n' + body : '# Choose an example or describe your study to build the route.';
     var setupOnce = [{ v: 'Clone the repository.' }, { v: 'Install the software environment with pixi (see Environment setup).' }];
     if (s.runOn !== 'local') setupOnce.push({ v: 'Copy code/cluster/' + s.runOn + '.yml to my_cluster.yml and set your account and queue.' });
@@ -474,38 +500,34 @@ class Component {
       }).filter(function (it) { if (s.catOnly && s.catOnly.indexOf(it.id) < 0) return false; if (qq && (it.label + ' ' + it.desc + ' ' + it.id).toLowerCase().indexOf(qq) < 0) return false; if (s.filter === 'route') return it.onRoute; if (s.filter === 'alt') return !it.onRoute && !it.notReady; if (s.filter === 'notready') return it.notReady; return true; });
       return { label: g[0].toUpperCase(), items: items };
     }).filter(function (g) { return g.items.length; });
-    var filters = [['all', 'All modules'], ['route', 'On my route'], ['alt', 'Alternatives'], ['notready', 'Not ready']].map(function (f) { var on = s.filter === f[0]; return { label: f[1], pressed: String(on), pick: function () { self.setState({ filter: f[0] }); }, style: 'font-size: 13.5px; min-height: 34px; padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') }; });
+    var filters = [['all', 'All modules'], ['route', 'On my route'], ['alt', 'Alternatives'], ['notready', 'Not ready']].map(function (f) { var on = s.filter === f[0]; return { label: f[1], pressed: String(on), pick: function () { self.setState({ filter: f[0] }); }, style: 'font-size: 14px; min-height: 34px; padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') }; });
 
-    // 1. The eight-phase map (explains the science; the route below says what runs)
-    var scrollTo = function (id) { setTimeout(function () { var t = document.getElementById(id); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); };
+    // the eight-phase map (explains the science; the route above says what runs)
+    var scrollTo = function (id) { setTimeout(function () { var t = R.getElementById(id); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); };
     var modStatus = function (id) {
       var ks = Object.keys(D.cmd).filter(function (k) { return k.indexOf(id + '|') === 0; }), nt = ks.filter(testedKey).length, soon = !!SOON[id];
       return { ks: ks, soon: soon, notReady: soon || !ks.length || nt < ks.length, status: soon ? 'Coming soon' : (ks.length ? nt + ' of ' + ks.length + ' workflow' + (ks.length === 1 ? '' : 's') + ' run on example data' : 'No builder command; see notebook'),
         statusStyle: soon || !ks.length ? chip('var(--sk)', 'var(--ink2)') : (nt === ks.length ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)')) };
     };
     var modsOf = function (pi, gi) { var out = []; FLOW[pi][2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gi == null || g === gi) out = out.concat(gr[1]); }); }); return out; };
-    var nodeVals = function (pi, gi, label, desc, tags) {
-      var mods = modsOf(pi, gi), nOn = mods.filter(function (id) { return onRoute[id]; }).length;
-      var sel = s.phase === pi && (gi == null ? s.stream == null : s.stream === gi), opt = !!OPTIONAL[pi];
-      return { num: gi == null ? String(pi + 1) : '', label: label, desc: desc, tags: (tags || []).map(function (v) { return { v: v }; }), hasTags: !!(tags && tags.length),
-        count: (nOn ? nOn + ' of ' + mods.length : mods.length + ' module' + (mods.length === 1 ? '' : 's')),
-        state: nOn ? 'On your route' : (opt ? 'Optional branch' : ''), pressed: String(sel),
-        aria: label + ', ' + mods.length + ' modules' + (nOn ? ', ' + nOn + ' on your route' : '') + (opt ? ', optional' : ''),
-        nid: 'xqb-node-' + pi + (gi == null ? '' : '-' + gi),
-        cls: 'xqb-node' + (nOn ? ' is-route' : ' is-off') + (opt ? ' is-opt' : '') + (sel ? ' is-sel' : '') + (gi != null ? ' is-stream' : ''),
-        pick: function () { if (!sel) app.focusNext = 'xqb-phase-h'; self.setState({ phase: sel ? null : pi, stream: sel ? null : (gi == null ? null : gi), selMod: '' }); if (!sel) scrollTo('xqb-phase'); } };
-    };
-    var groupTitles = function (pi) { var t = []; FLOW[pi][2].forEach(function (bx) { bx[1].forEach(function (gr) { t.push(gr[0] || bx[0]); }); }); return t; };
-    var smap = {
-      ref: [nodeVals(0, null, 'Reference data preparation', PHASES[0][0])],
-      quant: [nodeVals(1, null, 'Molecular phenotype quantification', PHASES[1][0], groupTitles(1))],
-      streams: STREAMS.map(function (st, g) { return nodeVals(2, g, st[0], st[1]); }),
-      qtl: [nodeVals(3, null, 'QTL association testing', PHASES[3][0])],
-      branch: [nodeVals(4, null, 'Multivariate modeling', PHASES[4][0], ['Across cohorts', 'Across contexts']), nodeVals(5, null, 'Fine-mapping', PHASES[5][0], ['Individual-level', 'Summary statistics + LD'])],
-      gwas: [nodeVals(6, null, 'GWAS integration', PHASES[6][0])],
-      enr: [nodeVals(7, null, 'Enrichment, validation and interpretation', PHASES[7][0])]
-    };
+    // the flowchart: each phase lists its modules in boxes and groups (FLOW), as on the original builder
+    var flow = FLOW.map(function (ph, pi) {
+      var steps = routeVals.filter(function (rv, i) { return PHASE_OF[route[i].m] === pi; }), moreId = 'xqb-node-' + pi + '-more';
+      return { num: String(pi + 1), kicker: ph[0], hasArrow: pi > 0, rowCls: 'xqb-frow' + (ph[2].length > 1 ? ' is-multi' : ''),
+        steps: steps, hasSteps: steps.length > 0, noSteps: !steps.length, moreId: moreId, boxTitle: ph[2].map(function (bx) { return bx[0]; }).join(' · '),
+        more: function () { app.focusNext = 'xqb-phase-h'; self.setState({ phase: pi, stream: null, selMod: '', phaseFrom: moreId }); },
+        boxes: ph[2].map(function (bx, bi) {
+          var mods = []; bx[1].forEach(function (gr) { mods = mods.concat(gr[1]); });
+          var on = mods.some(function (id) { return onRoute[id]; }), bid = 'xqb-node-' + pi + '-' + bi;
+          return { title: bx[0], sub: bx[1].filter(function (gr) { return gr[0]; }).map(function (gr) { return gr[0]; }).join(' · '),
+            hasSub: bx[1].some(function (gr) { return gr[0]; }), bid: bid, cls: 'xqb-fbox' + (on ? ' is-route' : ''),
+            aria: bx[0] + (on ? ', on your route' : '') + ', show its modules',
+            pick: function () { app.focusNext = 'xqb-phase-h'; self.setState({ phase: pi, stream: null, selMod: '', phaseFrom: bid }); } }; }) };
+    });
+    var looseSteps = routeVals.filter(function (rv, i) { return PHASE_OF[route[i].m] == null; });
     var phaseVals = null, modVals = {};
+    // the phase or module details open as a dialog; closing returns focus to what opened it
+    var closePanel = function () { app.focusNext = s.phaseFrom || ('xqb-node-' + s.phase + '-0'); self.setState({ phase: null, stream: null, selMod: '' }); };
     if (s.phase != null && FLOW[s.phase]) {
       var pi = s.phase, gi = s.stream, ph = FLOW[pi], preset = PHASES[pi][2];
       var groups = [];
@@ -513,23 +535,29 @@ class Component {
         groups.push({ title: gr[0] || (ph[2].length > 1 ? bx[0] : ''), cls: 'xqb-g' + (gi != null && g !== gi ? ' is-faint' : ''), mods: gr[1].map(function (id) {
           var on = !!onRoute[id], st = modStatus(id), sel = s.selMod === id;
           return { label: LABEL[id] || id, pressed: String(sel), state: on ? ' · on your route' : (st.soon ? ' · coming soon' : (st.notReady ? ' · not fully tested' : '')),
-            mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'), cls: 'xqb-mod' + (on ? ' is-route' : '') + (sel ? ' is-sel' : '') + (st.soon ? ' is-soon' : ''), pick: function () { self.setState({ selMod: sel ? '' : id }); } };
+            mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'), soon: st.soon, cls: 'xqb-fm' + (on ? ' is-route' : '') + (st.soon ? ' is-soon' : ''),
+            pick: function () { var step = stepOf[id]; if (step) { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: step, phase: null, stream: null, selMod: '' }); return; } app.focusNext = 'xqb-phase-h'; self.setState({ selMod: id }); } };
         }) });
       }); });
       if (s.selMod && LABEL[s.selMod]) {
-        var m = s.selMod, st = modStatus(m), ins = [], outs = [];
-        st.ks.forEach(function (k) { var io = D.io[k] || {}; (io.i || []).forEach(function (p) { var l = optLabel(((D.opt || {})[k] || {})[p], p) + (p.indexOf('output/') === 0 ? ' (from an earlier module)' : ''); if (ins.indexOf(l) < 0) ins.push(l); }); (io.o || []).forEach(function (o) { if (outs.indexOf(o) < 0) outs.push(o); }); });
+        var m = s.selMod, st = modStatus(m), ins = [], seen = {}, outs = [];
+        // inputs one per line, by name, with the example file's preview where there is one
+        st.ks.forEach(function (k) { var io = D.io[k] || {}; (io.i || []).forEach(function (p) {
+          var name = optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, '');
+          if (seen[name]) return; seen[name] = 1;
+          ins.push(fileItem('m:' + m + ':' + p, p, { name: name, n: ins.length + 1 }));
+        }); (io.o || []).forEach(function (o) { if (outs.indexOf(o) < 0) outs.push(o); }); });
+        var outItems = outList(m, outs);
         var gIdx = -1; ph[2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gr[1].indexOf(m) >= 0) gIdx = g; }); });
         modVals = Object.assign({ label: LABEL[m], what: D.intro[m] || DESC[m], doc: BASE + (DOC[m] || ''),
           when: pi === 2 && gIdx >= 0 ? STREAMS[gIdx][2] : (PHASES[pi][1] || DESC[m]),
-          inputs: ins.length ? ins.slice(0, 5).join(' · ') + (ins.length > 5 ? ' · and ' + (ins.length - 5) + ' more' : '') : 'See the notebook',
-          output: outs.length ? outs.slice(0, 2).join(', ') : 'See the notebook' }, st);
+          inputs: ins, hasInputs: ins.length > 0, outputs: outItems, hasOutputs: outs.length > 0 });
       }
       phaseVals = { kicker: 'PHASE ' + (pi + 1) + (gi != null ? ' · ' + STREAMS[gi][0].toUpperCase() + ' STREAM' : ''),
         label: ph[0] === 'Inputs' ? 'Reference data preparation' : (pi === 2 ? 'Data pre-processing' : (pi === 3 ? 'QTL association testing' : (pi === 5 ? 'Fine-mapping' : (pi === 6 ? 'GWAS integration' : (pi === 7 ? 'Enrichment, validation and interpretation' : (pi === 1 ? 'Molecular phenotype quantification' : 'Multivariate modeling')))))),
         what: pi === 2 ? (gi != null ? STREAMS[gi][2] : 'Genotype, phenotype and covariate preparation run side by side and converge on association testing.') : PHASES[pi][0] + '. ' + PHASES[pi][1],
         srHint: (gi != null ? STREAMS[gi][0] + ' stream, ' : '') + groups.reduce(function (a, g) { return a + g.mods.length; }, 0) + ' modules listed below. Close returns you to the map',
-        groups: groups, hasMod: !!modVals.label, canBuild: !!preset, buildLabel: preset ? preset.label : '',
+        groups: groups, hasMod: !!modVals.label, showList: !modVals.label, back: function () { app.focusNext = 'xqb-phase-h'; self.setState({ selMod: '' }); }, canBuild: !!preset, buildLabel: preset ? preset.label : '',
         build: function () {
           var ex = preset.example && s.mode === 'example' ? preset.example : '';
           if (ex) self.setRoute({ example: ex, study: studyFor(ex), methods: {} }, 'Loaded the matching example.');
@@ -537,7 +565,8 @@ class Component {
             self.setRoute({ mode: 'own', src: 'own', study: st0, methods: {} }, 'Applied the study preset for this phase.'); }
           scrollTo('r-h');
         },
-        close: function () { app.focusNext = 'xqb-node-' + s.phase + (s.stream == null ? '' : '-' + s.stream); self.setState({ phase: null, stream: null, selMod: '' }); } };
+        close: closePanel,
+        backdrop: function (e) { if (e.target === e.currentTarget) closePanel(); } };
     }
 
     var testedCount = Object.keys(D.cmd).filter(testedKey).length;
@@ -546,7 +575,7 @@ class Component {
     });
 
     return {
-      testedCount: testedCount, journey: journey, smap: smap, hasPhase: !!phaseVals, phase: phaseVals || {}, mod: modVals, setupDoc: BASE + 'xqtl-protocol-demo',
+      testedCount: testedCount, journey: journey, flow: flow, looseSteps: looseSteps, hasLoose: looseSteps.length > 0, hasPhase: !!phaseVals, phase: phaseVals || {}, mod: modVals, setupDoc: BASE + 'xqtl-protocol-demo',
       readiness: readiness, loadExample: loadExample, resetAll: resetAll, copyLink: copyLink, copyLinkLabel: s.copied === 'link' ? 'Link copied' : 'Copy a link to this setup',
       catOpen: !!s.catOpen, catExpanded: String(!!s.catOpen), catBtn: s.catOpen ? 'Hide the module catalog' : 'Show all ' + Object.keys(LABEL).length + ' modules', toggleCat: function () { self.setState({ catOpen: !s.catOpen, catOnly: null }); },
       hasCatOnly: !!s.catOnly, catOnlyLabel: s.catOnly ? 'Showing the ' + (s.catOnlyLabel || '') + ' modules.' : '', clearCatOnly: function () { self.setState({ catOnly: null }); }, moduleCount: Object.keys(LABEL).length, clusterDoc: BASE + 'running-on-a-cluster',
@@ -555,19 +584,19 @@ class Component {
       modes: modes, isExample: isExample, isOwn: isOwn, examples: examples,
       qPheno: qPheno, qStart: qStart, qGoals: qGoals, hasContextual: contextual.length > 0, contextual: contextual,
       adv: s.adv, advExpanded: String(s.adv), toggleAdv: function () { self.setState({ adv: !s.adv }); }, advLabel: s.adv ? 'Hide advanced study settings' : 'Advanced study settings', advCount: nonDefault ? nonDefault + ' changed' : 'genotype QC, cohorts, contexts', allOpts: allOpts,
-      msg: s.msg, msgStyle: s.msg ? 'margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--stb); color: var(--stf); font-size: 14px' : 'margin: 0; height: 0; overflow: hidden',
-      route: routeVals, routeEmpty: route.length === 0, routeSummary: route.length ? route.length + ' steps · ' + nTested + ' run on example data' : '',
+      msg: s.msg, msgStyle: s.msg ? 'margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--tint); border-left: 3px solid var(--teal); color: var(--ink); font-size: 15px' : 'margin: 0; height: 0; overflow: hidden',
+      route: routeVals, routeEmpty: route.length === 0, hasRoute: route.length > 0, 
       srcTabs: [['example', 'Example data'], ['own', 'My own data']].map(function (t) { var on = s.src === t[0]; return { label: t[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ src: t[0], mode: t[0] }); } }; }),
       runOn: [['local', 'Local terminal'], ['slurm', 'SLURM'], ['sge', 'SGE']].map(function (p) { var on = s.runOn === p[0]; return { label: p[1], checked: on, style: pillStyle(on), pick: function () { self.setState({ runOn: p[0] }); } }; }),
       showCluster: s.runOn !== 'local', runOnName: s.runOn === 'slurm' ? 'SLURM' : 'SGE', runOnFile: s.runOn, nativeCmd: s.runOn === 'slurm' ? 'sbatch' : 'qsub',
       isOwnSrc: own, isExampleSrc: !own && route.length > 0, pathGroups: pathGroups, noPaths: own && pathFields.length === 0,
-      pathStatus: missing ? missing + ' of ' + pathFields.length + ' still needed' : 'Complete', pathStatusStyle: missing ? chip('var(--stb)', 'var(--stf)') : chip('var(--okb)', 'var(--okf)'),
+      supply: supply, pathStatus: missing ? missing + ' of ' + pathFields.length + ' files still needed' : 'All files entered', pathStatusStyle: missing ? chip('var(--stb)', 'var(--stf)') : chip('var(--okb)', 'var(--okf)'),
       setupOnce: setupOnce, setupRoute: setupRoute, incomplete: soonSteps.length > 0, incompleteText: 'Step ' + soonSteps.join(', ') + ' has no command in the builder yet, so the script stops before it. Choose another method for that step or run it from its notebook.',
       mainResults: mainResults, noResults: route.length === 0, inter: inter, hasInter: inter.length > 0, interCount: String(inter.length),
       hasProduces: mainResults.length > 0, produces: 'This analysis produces ' + (function (t) { t = t.map(function (x) { return x.charAt(0).toLowerCase() + x.slice(1); }); return t.length > 1 ? t.slice(0, -1).join(', ') + ' and ' + t[t.length - 1] : t[0]; })(mainResults.map(function (m) { return m.title; })) + '.',
       jumpOwn: function () { self.setState({ mode: 'own', src: 'own', msg: '' }); },
       tut: { title: exObj.title, items: [{ k: 'WHAT YOU LEARN', v: exObj.learn }, { k: 'PROVIDED INPUTS', v: exObj.given }, { k: 'EXPECTED RESULT', v: exObj.result }, { k: 'AFTERWARDS', v: exObj.after }] },
-      script: script, hasStatus: !!status, status: status, statusStyle: 'border-radius: 6px; padding: 10px 14px; font-size: 14px; line-height: 1.5; margin-bottom: 10px; background: ' + (ready ? 'var(--okb); color: var(--okf)' : 'var(--stb); color: var(--stf)'), statusHead: ready ? 'Ready to run.' : 'Not a runnable script yet.', fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
+      script: script, hasStatus: !!status, status: status, statusStyle: 'border-radius: 6px; padding: 10px 14px; font-size: 15px; line-height: 1.5; margin-bottom: 10px; background: var(--tint); color: var(--ink); border-left: 3px solid ' + (ready ? 'var(--okf)' : 'var(--stf)'), statusHead: ready && own ? 'Paths complete.' : ready ? 'Ready to run.' : 'Not a runnable script yet.', fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
       copyScriptLabel: s.copied === 'script' ? 'Copied' : (s.copied === 'fail' ? 'Copy failed' : 'Copy all'), copyScript: function () { copyText(script, 'script'); },
       downloadScript: function () { try { var b = new Blob([script + '\n'], { type: 'text/x-shellscript' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = own ? 'xqtl_route.sh' : 'xqtl_route_example.sh'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); } catch (e) {} },
       ownNeed: String(userOrder.length), useWithMine: function () { self.setState({ mode: 'own', src: 'own', msg: 'Kept your route and methods. Enter your files in the route steps.' }); scrollTo('r-h'); },
@@ -578,38 +607,71 @@ class Component {
 
 /* ---- Mount ---- */
 // the template is XML so that <sc-for> stays inside table rows (an HTML parser would move it out)
-var root = document.getElementById('xqb');
-var tpl = new DOMParser().parseFromString(document.getElementById('xqb-tpl').textContent, 'application/xml').documentElement;
+var root = R.getElementById('xqb');
+var tpl = new DOMParser().parseFromString(R.getElementById('xqb-tpl').textContent, 'application/xml').documentElement;
 var app = new Component(), pending = false;
 app.setState = function (patch) { Object.assign(app.state, patch); if (!pending) { pending = true; (window.requestAnimationFrame || setTimeout)(function () { pending = false; paint(); }); } };
 function paint() {
   // keep focus, caret and open <details> across re-renders
-  var a = document.activeElement, fid = a && root.contains(a) && a.id, sel = null;
+  var a = R.activeElement, fid = a && root.contains(a) && a.id, sel = null;
   if (fid && typeof a.selectionStart === 'number') sel = [a.selectionStart, a.selectionEnd];
   var open = {}; Array.prototype.forEach.call(root.querySelectorAll('details[id]'), function (d) { open[d.id] = d.open; });
   var frag = document.createDocumentFragment();
   kids(tpl, [app.renderVals()], frag);
   root.replaceChildren(frag);
-  Object.keys(open).forEach(function (id) { var d = document.getElementById(id); if (d) d.open = open[id]; });
+  Object.keys(open).forEach(function (id) { var d = R.getElementById(id); if (d) d.open = open[id]; });
+  Array.prototype.forEach.call(root.querySelectorAll('[role=radiogroup]'), function (g) {
+    var rs = g.querySelectorAll('[role=radio]'), on = g.querySelector('[role=radio][aria-checked=true]') || rs[0];
+    Array.prototype.forEach.call(rs, function (x) { x.tabIndex = x === on ? 0 : -1; });
+  });
   var jump = !!app.focusNext; if (jump) { fid = app.focusNext; sel = null; app.focusNext = null; }
-  if (fid) { var f = document.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+  if (fid) { var f = R.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 // in-page links scroll here instead of sending the parent page to the builder's own URL
+// radio groups built from buttons: arrow keys move and select, as with native radios
+root.addEventListener('keydown', function (e) {
+  var r = e.target.closest && e.target.closest('[role=radio]'), g = r && r.closest('[role=radiogroup]');
+  if (!g || ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].indexOf(e.key) < 0) return;
+  var all = Array.prototype.slice.call(g.querySelectorAll('[role=radio]')), i = all.indexOf(r);
+  var next = all[(i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : all.length - 1)) % all.length];
+  e.preventDefault(); if (next.id) app.focusNext = next.id; next.click(); next.focus();
+});
+// dialogs: Esc closes, Tab stays inside, focus returns to what opened it. Listened for on the
+// document, so it still works when a redraw has moved focus out of the builder.
+document.addEventListener('keydown', function (e) {
+  var st = app.state, dlg = R.querySelector('[role=dialog]');
+  if (!dlg) return;
+  if (e.key === 'Tab') {
+    var f = Array.prototype.filter.call(dlg.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'), function (x) { return !x.disabled && x.offsetParent !== null; });
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1], a = R.activeElement;
+    if (e.shiftKey && (a === first || !dlg.contains(a))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (a === last || !dlg.contains(a))) { e.preventDefault(); first.focus(); }
+    return;
+  }
+  if (e.key !== 'Escape') return;
+  if (st.stepOpen) { app.focusNext = 'xqb-stepbtn-' + st.stepOpen; app.setState({ stepOpen: null }); return; }
+  if (st.phase == null) return;
+  app.focusNext = st.phaseFrom || ('xqb-node-' + st.phase + '-0');
+  app.setState({ phase: null, stream: null, selMod: '' });
+});
 root.addEventListener('click', function (e) {
   var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
-  var t = document.getElementById(a.getAttribute('href').slice(1)); e.preventDefault();
-  if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  var t = R.getElementById(a.getAttribute('href').slice(1)); e.preventDefault();
+  if (t) { t.scrollIntoView({ behavior: 'smooth', block: t.tagName === 'INPUT' ? 'center' : 'start' }); if (t.tagName === 'INPUT') t.focus({ preventScroll: true }); }
 });
 var shared = readShared(); if (shared) Object.assign(app.state, shared);
-// dark theme: follow the site's toggle when shown in its frame, else the system setting
+// dark theme: follow the site's toggle (on the site's page or in its frame), else the system setting
+var host = WIDGET ? document : (function () { try { return window.self !== window.top ? window.parent.document : null; } catch (e) { return null; } })();
+var themeEl = WIDGET ? root.parentNode : document.documentElement;
 function applyTheme() {
-  var dark = false, mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  try { if (window.self !== window.top) { var h = window.parent.document.documentElement; dark = h.classList.contains('dark') || h.getAttribute('data-theme') === 'dark'; } else dark = !!(mq && mq.matches); }
-  catch (e) { dark = !!(mq && mq.matches); }
-  document.documentElement.classList.toggle('xqb-dark', dark);
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null, dark;
+  if (host) { var h = host.documentElement; dark = h.classList.contains('dark') || h.getAttribute('data-theme') === 'dark'; }
+  else dark = !!(mq && mq.matches);
+  themeEl.classList.toggle('xqb-dark', dark);
 }
 applyTheme();
-try { new MutationObserver(applyTheme).observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] }); } catch (e) {}
+try { if (host) new MutationObserver(applyTheme).observe(host.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] }); } catch (e) {}
 try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
 paint();
 })();
