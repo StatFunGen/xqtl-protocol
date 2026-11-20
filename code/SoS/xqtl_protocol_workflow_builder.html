@@ -100,10 +100,9 @@
 <section id="route" aria-labelledby="r-h" style="margin: 36px 0 44px">
   <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">
     <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">1. Your analysis route</h2>
-    <span style="font-size: 15px; color: var(--ink2)">{{routeSummary}} <a href="#map-h" style="margin-left: 10px">View the full analysis map</a></span>
+    <a href="#map-h" style="font-size: 15px">View the full analysis map</a>
   </div>
-  <sc-if value="{{hasProduces}}"><p style="margin: 12px 0 0; font-size: 15.5px; line-height: 1.6; font-weight: 600; color: var(--navy)">{{produces}}</p></sc-if>
-  <p style="margin: 8px 0 14px; font-size: 15.5px; line-height: 1.6">The modules to run, in order, and the files each one needs. Open a step for the method choice, exact file names, example previews and outputs.</p>
+  <sc-if value="{{hasProduces}}"><p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6; font-weight: 600; color: var(--navy)">{{produces}}</p></sc-if>
   <sc-if value="{{isOwnSrc}}"><p style="margin: -6px 0 14px; font-size: 15px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each file where it is first needed; paths stay in your browser.</span></p></sc-if>
   <sc-if value="{{routeEmpty}}">
     <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
@@ -138,12 +137,17 @@
               </div>
             </sc-if>
           </div>
-          <button type="button" aria-expanded="{{r.expanded}}" aria-controls="{{r.panelId}}" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
+          <button type="button" id="{{r.btnId}}" aria-haspopup="dialog" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
         </div>
         <sc-if value="{{r.isOpen}}">
-          <div id="{{r.panelId}}" style="margin-top: 14px; border-top: 1px solid var(--ln); padding-top: 14px; display: flex; flex-direction: column; gap: 14px">
+          <div class="xqb-modal" onClick="{{r.backdrop}}">
+          <div role="dialog" aria-modal="true" aria-labelledby="xqb-step-h" class="xqb-stage" style="display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+              <div><div class="xqb-k">STEP {{r.n}} OF YOUR ROUTE</div><h3 id="xqb-step-h" tabindex="-1" class="xqb-phase-h">{{r.title}}</h3><div style="font-size: 15px; color: var(--ink2); margin-top: 2px">{{r.module}} · {{r.methodLine}}</div></div>
+              <button type="button" onClick="{{r.close}}" aria-label="Close this step" class="xqb-x">×</button>
+            </div>
             <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 4px">Why this step</div>
+              <div class="xqb-k" style="margin-bottom: 4px">WHY THIS STEP</div>
               <p style="margin: 0; font-size: 15px; line-height: 1.6">{{r.why}}</p>
             </div>
             <sc-if value="{{r.hasChoices}}">
@@ -159,61 +163,37 @@
                 </div>
               </fieldset>
             </sc-if>
-            <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Input</div>
-              <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+            <div><div class="xqb-k">INPUTS</div>
+              <ol class="xqb-mlist">
                 <sc-for list="{{r.inputs}}" as="f">
-                  <li style="border: 1px solid var(--ln); border-radius: 6px; padding: 8px 12px">
-                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px">
-                      <div style="min-width: 0; flex: 1 1 260px">
-                        <div style="font-size: 14px; font-weight: 600">{{f.source}}</div>
-                        <div style="font-family: var(--mono); font-size: 13.5px; color: var(--ink2); overflow-wrap: anywhere; margin-top: 2px">{{f.path}}</div>
-                      </div>
-                      <sc-if value="{{f.hasPreview}}">
-                        <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="font-size: 14px; min-height: 34px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ln2); background: var(--bg); color: var(--navy); cursor: pointer">{{f.btn}}</button>
-                      </sc-if>
-                    </div>
-                    <sc-if value="{{f.open}}">
-                      <div style="margin-top: 10px">
-                        <div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
-                        <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-                          <table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%">
-                            <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                            <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </sc-if>
+                  <li><div class="xqb-mrow"><span>{{f.name}} <span class="xqb-src">· {{f.source}}</span></span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if></div>
+                    <sc-if value="{{f.showPath}}"><div class="xqb-mono" style="color: var(--ink2); font-size: 13.5px">{{f.path}}</div></sc-if>
+                    <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
                   </li>
                 </sc-for>
-              </ul>
+              </ol>
+            </div>
+            <div><div class="xqb-k">OUTPUTS</div>
+              <ol class="xqb-mlist">
+                <sc-for list="{{r.outputs}}" as="o">
+                  <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                    <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                  </li>
+                </sc-for>
+              </ol>
             </div>
             <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Output</div>
-              <ul style="margin: 0 0 8px; padding-left: 18px; font-family: var(--mono); font-size: 13.5px; line-height: 1.7; overflow-wrap: anywhere">
-                <sc-for list="{{r.outputs}}" as="o"><li>{{o.v}}</li></sc-for>
-              </ul>
-              <sc-if value="{{r.hasOut}}">
-                <div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{r.outNote}}</div>
-                <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-                  <table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%">
-                    <thead><tr style="background: var(--tint)"><sc-for list="{{r.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                    <tbody><sc-for list="{{r.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-                  </table>
-                </div>
-              </sc-if>
-            </div>
-            <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Command for this step</div>
+              <div class="xqb-k" style="margin-bottom: 6px">COMMAND FOR THIS STEP</div>
               <pre class="xqb-code" tabindex="0">{{r.cmd}}</pre>
             </div>
             <sc-if value="{{r.hasTerms}}">
               <div>
-                <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 4px">Terms</div>
+                <div class="xqb-k" style="margin-bottom: 4px">TERMS</div>
                 <dl class="xqb-terms"><sc-for list="{{r.terms}}" as="tm"><dt>{{tm.k}}</dt><dd>{{tm.v}}</dd></sc-for></dl>
               </div>
             </sc-if>
             <a href="{{r.doc}}" style="font-size: 15px; align-self: flex-start">Open the {{r.module}} notebook</a>
+          </div>
           </div>
         </sc-if>
       </li>
@@ -299,7 +279,7 @@
     <sc-for list="{{flow}}" as="p">
       <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
       <div class="xqb-fstage">
-        <button type="button" class="xqb-fhead" id="{{p.hid}}" aria-expanded="{{p.pressed}}" aria-controls="xqb-phase" onClick="{{p.headPick}}"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></button>
+        <button type="button" class="xqb-fhead" id="{{p.hid}}" aria-haspopup="dialog" onClick="{{p.headPick}}"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></button>
         <div class="{{p.rowCls}}">
           <sc-for list="{{p.boxes}}" as="b">
             <div class="{{b.cls}}">
@@ -308,7 +288,7 @@
                 <sc-for list="{{b.groups}}" as="g">
                   <div class="{{g.cls}}">
                     <sc-if value="{{g.hasTitle}}"><div class="xqb-fgt">{{g.title}}</div></sc-if>
-                    <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" aria-pressed="{{m.pressed}}" aria-label="{{m.aria}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
+                    <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" aria-haspopup="dialog" aria-label="{{m.aria}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
                   </div>
                 </sc-for>
               </div>
@@ -461,7 +441,7 @@ html.xq-embedded .xqb h1.hdt,.xq-widget>.xqb h1.hdt{display:none}
 .xqb .xqb-v{font-size:15px;line-height:1.5;margin-top:3px}
 .xqb .xqb-modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 .xqb .xqb-examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px}
-.xqb .xqb-tut{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 18px;margin-top:10px;padding:12px 16px;border-radius:8px;background:var(--tint)}
+.xqb .xqb-tut{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 18px;margin-top:10px;padding:12px 16px;border-radius:8px;background:var(--tint)}
 /* the eight-phase map */
 .xqb .xqb-map{display:flex;flex-direction:column;align-items:stretch;padding:2px 4px}
 .xqb .xqb-row{display:grid;gap:10px;justify-items:center}
@@ -589,6 +569,9 @@ html.xqb-dark .xqb input,html.xqb-dark .xqb select,.xqb-dark>.xqb input,.xqb-dar
 .xqb .xqb-mlist .xqb-mono{font-family:var(--mono);font-size:14px;overflow-wrap:anywhere;min-width:0}
 .xqb .xqb-mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .xqb .xqb-btn.xqb-sm{min-height:32px;padding:4px 12px;font-size:14px}
+@media (max-width:760px){.xqb .xqb-tut{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.xqb .xqb-tut{grid-template-columns:minmax(0,1fr)}}
+.xqb .xqb-src{color:var(--ink2);font-size:14px}
 </style>
 <script>if(window.self!==window.top){document.documentElement.classList.add('xq-embedded');var b=document.createElement('base');b.target='_top';document.head.appendChild(b);}</script>
 <script>
@@ -857,11 +840,19 @@ class Component {
         toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }, extra || {});
     };
     var outOf = function (m) { var op = (D.outPrev || {})[m], t = tableOf(op); return { hasOut: !!op, outNote: op ? 'Example output, ' + op.file + ': first ' + (op.rows.length - 1) + ' rows' + (op.cols > 6 ? ', 6 of ' + op.cols + ' columns' : '') + '.' : '', outHead: t.head, outRows: t.rows }; };
+    // outputs one per line; the example output's preview sits on the output it comes from
+    var outList = function (m, outs) {
+      var op = (D.outPrev || {})[m], ot = outOf(m), key = 'mo:' + m, on = !!s.pv[key];
+      var at = op ? Math.max(0, outs.findIndex(function (o) { return op.file.indexOf(o.replace(/\/$/, '')) >= 0 || o.indexOf(op.file) >= 0; })) : -1;
+      return outs.map(function (o, i) { var has = i === at;
+        return { v: o, hasPreview: has, open: has && on, expanded: String(has && on), btn: has && on ? 'Hide example' : 'Show example', note: ot.outNote, head: ot.outHead, rows: ot.outRows,
+          toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }; });
+    };
     var segStyle = function (on) { return 'font-size: 15px; min-height: 36px; padding: 6px 14px; border: 0; cursor: pointer; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on ? '600' : '400'); };
     var pillStyle = function (on) { return 'display: inline-flex; align-items: center; gap: 8px; font-size: 15px; min-height: 38px; padding: 7px 13px; border-radius: 6px; cursor: pointer; box-sizing: border-box; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; color: var(--ink); font-weight: ' + (on ? '600' : '400'); };
 
     var route = buildRoute(s.study, s.methods, s.data);
-    var onRoute = {}; route.forEach(function (r) { onRoute[r.m] = 1; });
+    var onRoute = {}, stepOf = {}; route.forEach(function (r) { onRoute[r.m] = 1; if (!stepOf[r.m]) stepOf[r.m] = r.id; });
     var routeOk = function (rt) { return rt.length > 0 && rt.every(function (r) { return !r.soon && r.wfs.every(function (w) { return testedKey(r.m + '|' + w); }); }); };
 
     // 1. Map
@@ -951,7 +942,7 @@ class Component {
     var routeVals = route.map(function (r, i) {
       var keys = r.wfs.map(function (w) { return r.m + '|' + w; });
       var tested = !r.soon && keys.every(testedKey);
-      var open = !!s.open[r.id], reads = {};
+      var open = s.stepOpen === r.id, reads = {};
       var ins = [], files = [];
       keys.forEach(function (k) { ((D.io[k] || {}).i || []).forEach(function (p) {
         if (ins.some(function (x) { return x.raw === p; })) return;
@@ -962,7 +953,7 @@ class Component {
         if (user) { if (!userFiles[p]) { userFiles[p] = []; userOrder.push(p); } if (userFiles[p].indexOf(i + 1) < 0) userFiles[p].push(i + 1); }
         var src = pi >= 0 ? 'From step ' + (pi + 1) : (p.indexOf('output/') === 0 ? 'Made by a module not on this route' : (user ? (ref ? 'Reference data' : (own ? 'Your file' : 'Example file')) : 'Written by this step’s setup lines'));
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
-        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
+        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
         var first = user ? userFiles[p][0] === i + 1 : false, label = optLabel(((D.opt || {})[k] || {})[p], p);
         files.push({ label: label, source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
           ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/your/' + p.replace(/^<|>$/g, '').split('/').pop(),
@@ -981,12 +972,15 @@ class Component {
         numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
         tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         hasTime: !!D.bench[r.m], time: D.bench[r.m] ? 'Example: ' + D.bench[r.m] : '',
-        isOpen: open, expanded: String(open), panelId: 'panel-' + r.id, btn: open ? 'Hide' : 'Details',
-        btnStyle: 'flex: 0 0 auto; font-size: 15px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: ' + (open ? 'var(--sk)' : 'var(--bg)') + '; color: var(--navy); font-weight: 500',
-        toggle: function () { var o = Object.assign({}, s.open); o[r.id] = !open; self.setState({ open: o }); },
+        // step details open as a dialog, one at a time; closing returns focus to the step's button
+        isOpen: open, btnId: 'xqb-stepbtn-' + r.id, btn: 'Details',
+        btnStyle: 'flex: 0 0 auto; font-size: 15px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: var(--bg); color: var(--navy); font-weight: 500',
+        toggle: function () { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: r.id, phase: null, stream: null, selMod: '' }); },
+        close: function () { app.focusNext = 'xqb-stepbtn-' + r.id; self.setState({ stepOpen: null }); },
+        backdrop: function (e) { if (e.target === e.currentTarget) { app.focusNext = 'xqb-stepbtn-' + r.id; self.setState({ stepOpen: null }); } },
         why: why, hasChoices: !!r.choices, radioName: 'm-' + r.id,
         choices: (r.choices || []).map(function (c) { var k = r.m + '|' + c[0], t = testedKey(k); return { label: c[1], desc: c[3], checked: c[0] === r.chosen, tag: !D.cmd[k] ? 'No command' : (t ? 'Runs on example data' : 'Not yet run'), tagStyle: t ? chip('var(--okb)', 'var(--okf)', ' margin-left: 4px;') : chip('var(--stb)', 'var(--stf)', ' margin-left: 4px;'), pick: function () { var mm = Object.assign({}, s.methods); mm[r.id] = c[0]; self.setRoute({ methods: mm }, c[1] + ' selected.'); } }; }),
-        inputs: ins, files: files, hasFiles: files.length > 0, outputs: outs.map(function (o) { return { v: o }; }), doc: BASE + (DOC[r.m] || '')
+        inputs: ins, files: files, hasFiles: own && files.length > 0, outputs: outList(r.m, outs), doc: BASE + (DOC[r.m] || '')
       }, outOf(r.m));
     });
     var nTested = routeVals.filter(function (r) { return r.tested === 'Runs on example data'; }).length;
@@ -1095,7 +1089,7 @@ class Component {
               return { label: LABEL[id] || id, soon: soon, pressed: String(sel), mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'),
                 aria: (LABEL[id] || id) + (on ? ', on your route' : '') + (soon ? ', coming soon' : ''),
                 cls: 'xqb-fm' + (on ? ' is-route' : '') + (sel ? ' is-sel' : '') + (soon ? ' is-soon' : ''),
-                pick: function () { if (!sel) app.focusNext = 'xqb-phase-h'; self.setState(sel ? { phase: null, stream: null, selMod: '' } : { phase: pi, stream: null, selMod: id }); } }; }) }; }) }; }) };
+                pick: function () { var step = stepOf[id]; if (step) { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: step, phase: null, stream: null, selMod: '' }); return; } if (!sel) app.focusNext = 'xqb-phase-h'; self.setState(sel ? { phase: null, stream: null, selMod: '' } : { phase: pi, stream: null, selMod: id }); } }; }) }; }) }; }) };
     });
     var phaseVals = null, modVals = {};
     // the phase or module details open as a dialog; closing returns focus to what opened it
@@ -1118,12 +1112,7 @@ class Component {
           if (seen[name]) return; seen[name] = 1;
           ins.push(fileItem('m:' + m + ':' + p, p, { name: name, n: ins.length + 1 }));
         }); (io.o || []).forEach(function (o) { if (outs.indexOf(o) < 0) outs.push(o); }); });
-        // outputs one per line; the example output's preview sits on the output it comes from
-        var op = (D.outPrev || {})[m], ot = outOf(m), okey = 'mo:' + m, oOn = !!s.pv[okey];
-        var oAt = op ? Math.max(0, outs.findIndex(function (o) { return op.file.indexOf(o.replace(/\/$/, '')) >= 0 || o.indexOf(op.file) >= 0; })) : -1;
-        var outItems = outs.map(function (o, i) { var has = i === oAt;
-          return { v: o, hasPreview: has, open: has && oOn, expanded: String(has && oOn), btn: has && oOn ? 'Hide example' : 'Show example', note: ot.outNote, head: ot.outHead, rows: ot.outRows,
-            toggle: function () { var q = Object.assign({}, s.pv); q[okey] = !q[okey]; self.setState({ pv: q }); } }; });
+        var outItems = outList(m, outs);
         var gIdx = -1; ph[2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gr[1].indexOf(m) >= 0) gIdx = g; }); });
         modVals = Object.assign({ label: LABEL[m], what: D.intro[m] || DESC[m], doc: BASE + (DOC[m] || ''),
           when: pi === 2 && gIdx >= 0 ? STREAMS[gIdx][2] : (PHASES[pi][1] || DESC[m]),
@@ -1161,7 +1150,7 @@ class Component {
       qPheno: qPheno, qStart: qStart, qGoals: qGoals, hasContextual: contextual.length > 0, contextual: contextual,
       adv: s.adv, advExpanded: String(s.adv), toggleAdv: function () { self.setState({ adv: !s.adv }); }, advLabel: s.adv ? 'Hide advanced study settings' : 'Advanced study settings', advCount: nonDefault ? nonDefault + ' changed' : 'genotype QC, cohorts, contexts', allOpts: allOpts,
       msg: s.msg, msgStyle: s.msg ? 'margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--tint); border-left: 3px solid var(--teal); color: var(--ink); font-size: 15px' : 'margin: 0; height: 0; overflow: hidden',
-      route: routeVals, routeEmpty: route.length === 0, routeSummary: route.length ? route.length + ' steps · ' + nTested + ' run on example data' : '',
+      route: routeVals, routeEmpty: route.length === 0, 
       srcTabs: [['example', 'Example data'], ['own', 'My own data']].map(function (t) { var on = s.src === t[0]; return { label: t[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ src: t[0], mode: t[0] }); } }; }),
       runOn: [['local', 'Local terminal'], ['slurm', 'SLURM'], ['sge', 'SGE']].map(function (p) { var on = s.runOn === p[0]; return { label: p[1], checked: on, style: pillStyle(on), pick: function () { self.setState({ runOn: p[0] }); } }; }),
       showCluster: s.runOn !== 'local', runOnName: s.runOn === 'slurm' ? 'SLURM' : 'SGE', runOnFile: s.runOn, nativeCmd: s.runOn === 'slurm' ? 'sbatch' : 'qsub',
@@ -1200,9 +1189,21 @@ function paint() {
   if (fid) { var f = R.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 // in-page links scroll here instead of sending the parent page to the builder's own URL
-// Esc closes the phase or module dialog
+// dialogs: Esc closes, Tab stays inside, focus returns to what opened it
 root.addEventListener('keydown', function (e) {
-  var st = app.state; if (e.key !== 'Escape' || st.phase == null) return;
+  var st = app.state, dlg = R.querySelector('[role=dialog]');
+  if (!dlg) return;
+  if (e.key === 'Tab') {
+    var f = Array.prototype.filter.call(dlg.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'), function (x) { return !x.disabled && x.offsetParent !== null; });
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1], a = R.activeElement;
+    if (e.shiftKey && (a === first || !dlg.contains(a))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (a === last || !dlg.contains(a))) { e.preventDefault(); first.focus(); }
+    return;
+  }
+  if (e.key !== 'Escape') return;
+  if (st.stepOpen) { app.focusNext = 'xqb-stepbtn-' + st.stepOpen; app.setState({ stepOpen: null }); return; }
+  if (st.phase == null) return;
   app.focusNext = st.selMod ? 'xqb-mod-' + String(st.selMod).replace(/[^A-Za-z0-9]+/g, '-') : 'xqb-node-' + st.phase;
   app.setState({ phase: null, stream: null, selMod: '' });
 });
