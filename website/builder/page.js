@@ -264,7 +264,10 @@ class Component {
     var fileItem = function (key, p, extra) {
       var pv = (D.prev || {})[p], on = !!s.pv[key] && !!pv, t = tableOf(pv);
       return Object.assign({ label: nice(p).replace(/^./, function (c) { return c.toUpperCase(); }), path: p, hasPreview: !!pv, open: on, expanded: String(on), btn: on ? 'Hide example' : 'Show example',
-        note: pv ? (pv.via ? 'PLINK binary file; this is its variant list (' + pv.via + '): ' : 'First ') + (pv.via ? 'first ' : '') + (pv.rows.length - 1) + ' rows' + (pv.cols > 6 ? ', 6 of ' + pv.cols + ' columns' : '') + (pv.via ? '.' : ' of the example file.') : '', head: t.head, rows: t.rows,
+        note: pv ? (pv.ex ? 'Example from the module tests (' + pv.ex + ')' + (pv.via ? ', a PLINK file shown by its variant list' : '') + ': '
+          : (pv.via ? 'PLINK binary file, shown by its variant list (' + pv.via + '): ' : 'Example file: '))
+          + 'first ' + (pv.rows.length - 1) + ' rows' + (pv.cols > 6 ? ', 6 of ' + pv.cols + ' columns' : '') + '.' : '',
+        head: t.head, rows: t.rows,
         toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }, extra || {});
     };
     var outOf = function (m) { var op = (D.outPrev || {})[m], t = tableOf(op); return { hasOut: !!op, outNote: op ? 'Example output, ' + op.file + ': first ' + (op.rows.length - 1) + ' rows' + (op.cols > 6 ? ', 6 of ' + op.cols + ' columns' : '') + '.' : '', outHead: t.head, outRows: t.rows }; };
@@ -511,7 +514,7 @@ class Component {
     var flow = FLOW.map(function (ph, pi) {
       var steps = routeVals.filter(function (rv, i) { return PHASE_OF[route[i].m] === pi; }), moreId = 'xqb-node-' + pi + '-more';
       return { num: String(pi + 1), kicker: ph[0], hasArrow: pi > 0, rowCls: 'xqb-frow' + (ph[2].length > 1 ? ' is-multi' : ''),
-        steps: steps, hasSteps: steps.length > 0, noSteps: !steps.length, moreId: moreId,
+        steps: steps, hasSteps: steps.length > 0, noSteps: !steps.length, moreId: moreId, boxTitle: ph[2].map(function (bx) { return bx[0]; }).join(' · '),
         more: function () { app.focusNext = 'xqb-phase-h'; self.setState({ phase: pi, stream: null, selMod: '', phaseFrom: moreId }); },
         boxes: ph[2].map(function (bx, bi) {
           var mods = []; bx[1].forEach(function (gr) { mods = mods.concat(gr[1]); });

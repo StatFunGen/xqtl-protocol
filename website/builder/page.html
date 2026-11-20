@@ -102,13 +102,15 @@
   <sc-if value="{{routeEmpty}}">
     <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
   </sc-if>
-  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">Your steps, numbered in the order they run, sit in their phase of the analysis. Open "Other modules" or a grey box to see the rest of a phase.</p>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">Your steps, numbered in the order they run, sit in their phase of the analysis. Phases on your route are highlighted; open any other box to see its modules.</p>
   <div class="xqb-flow">
     <sc-for list="{{flow}}" as="p">
       <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
       <div class="xqb-fstage">
         <div class="xqb-fhead"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></div>
         <sc-if value="{{p.hasSteps}}">
+          <div class="xqb-fbox is-route xqb-routebox">
+          <div class="xqb-ft">{{p.boxTitle}}</div>
           <ol class="xqb-steps">
             <sc-for list="{{p.steps}}" as="r">
           <li id="{{r.anchor}}" style="{{r.cardStyle}}">
@@ -198,6 +200,7 @@
             </sc-for>
           </ol>
           <button type="button" id="{{p.moreId}}" aria-haspopup="dialog" onClick="{{p.more}}" class="xqb-link xqb-more">Other modules in this phase</button>
+          </div>
         </sc-if>
         <sc-if value="{{p.noSteps}}">
         <div class="{{p.rowCls}}">
