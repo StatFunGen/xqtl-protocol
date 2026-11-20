@@ -113,6 +113,8 @@ var FLOW = [
   ['Interpretation', 8, [['Enrichment & Validation', [[null, ['eoo_enrichment', 'gsea', 'gregor', 'sldsc_enrichment']]]], ['xQTL Modifier Score', [[null, ['ems_training', 'ems_prediction']]]]]]
 ];
 // The stage map: parallel inputs meet at QTL discovery, then branch by question.
+// plain titles for workflows a route adds because a later step reads their output
+var WF_TITLE = {"bulk_expression_QC|qc": "Remove outlier samples", "splicing_calling_leafcutter2|leafcutter2": "Call splicing events", "splicing_normalization|leafcutter_norm": "Normalize splicing ratios", "VCF_QC|qc": "Variant QC on the raw VCF", "genotype_formatting|merge_plink": "Merge genotype files", "PCA|flashpca": "Genotype principal components", "genotype_formatting|genotype_by_chrom": "Split genotypes by chromosome", "phenotype_formatting|phenotype_by_chrom": "Phenotype files per chromosome", "covariate_formatting|merge_genotype_pc": "Merge covariates with genotype PCs", "qtl_association_postprocessing|default": "Multiple-testing correction", "METAL|METAL": "Meta-analysis across cohorts", "mash_preprocessing|random_null_tensorqtl": "Prepare effects for MASH", "mixture_prior|ed_bovy": "Learn sharing patterns", "mash_fit|mash": "Fit MASH", "mash_posterior|posterior": "Shared and specific effects", "qtl_rss_analysis|qtl_rss": "Fine-map from summary statistics"};
 var SOON = {METAL: 1, watershed: 1, ems_prediction: 1, qr_and_twas: 1};
 var LABEL = {}, STAGE_OF = {}, DESC = {};
 CATALOG.forEach(function (g, gi) { g[2].forEach(function (m) { LABEL[m[0]] = m[1]; STAGE_OF[m[0]] = gi; DESC[m[0]] = m[2]; }); });
@@ -195,7 +197,7 @@ function closeRoute(R, D) {
     if (placed[k]) return; placed[k] = 1;
     needs(k).forEach(function (pk) { place(pk, forTitle); });
     var mw = k.split('|');
-    res.push({ id: 'dep-' + k.replace(/[^A-Za-z0-9]+/g, '-'), m: mw[0], wfs: [mw[1]], title: 'Prepare an input: ' + mw[1], auto: true });
+    res.push({ id: 'dep-' + k.replace(/[^A-Za-z0-9]+/g, '-'), m: mw[0], wfs: [mw[1]], title: WF_TITLE[k] || ((LABEL[mw[0]] || mw[0]) + ': ' + mw[1].replace(/_/g, ' ')), auto: true });
   }
   R.forEach(function (r) { r.wfs.forEach(function (w) { needs(r.m + '|' + w).forEach(function (pk) { place(pk); }); }); res.push(r); });
   return res;
@@ -378,8 +380,8 @@ class Component {
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
         ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
         var first = user ? userFiles[p][0] === i + 1 : false, label = optLabel(((D.opt || {})[k] || {})[p], p);
-        files.push({ label: label, source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
-          ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/your/' + p.replace(/^<|>$/g, '').split('/').pop(),
+        files.push({ label: label.replace(/ \([^()]*\)$/, ''), source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
+          ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/' + label.replace(/ \([^()]*\)$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + ((p.split('/').pop().match(/\.[a-z0-9]+(\.gz)?$/i) || [''])[0]),
           set: function (e) { var q = Object.assign({}, s.paths); q[p] = e.target.value; self.setState({ paths: q }); } });
       }); });
       var stepsRead = Object.keys(reads).map(Number).sort(function (a, b) { return a - b; });
@@ -403,7 +405,7 @@ class Component {
         backdrop: function (e) { if (e.target === e.currentTarget) { app.focusNext = 'xqb-stepbtn-' + r.id; self.setState({ stepOpen: null }); } },
         why: why, hasChoices: !!r.choices, radioName: 'm-' + r.id,
         choices: (r.choices || []).map(function (c) { var k = r.m + '|' + c[0], t = testedKey(k); return { label: c[1], desc: c[3], checked: c[0] === r.chosen, tag: !D.cmd[k] ? 'No command' : (t ? 'Runs on example data' : 'Not yet run'), tagStyle: t ? chip('var(--okb)', 'var(--okf)', ' margin-left: 4px;') : chip('var(--stb)', 'var(--stf)', ' margin-left: 4px;'), pick: function () { var mm = Object.assign({}, s.methods); mm[r.id] = c[0]; self.setRoute({ methods: mm }, c[1] + ' selected.'); } }; }),
-        inputs: ins, files: files, hasFiles: own && files.length > 0, outputs: outList(r.m, outs), doc: BASE + (DOC[r.m] || '')
+        inputs: ins, files: files.filter(function (f) { return f.ask; }), hasFiles: own && files.some(function (f) { return f.ask; }), outputs: outList(r.m, outs), doc: BASE + (DOC[r.m] || '')
       }, outOf(r.m));
     });
     var nTested = routeVals.filter(function (r) { return r.tested === 'Runs on example data'; }).length;
