@@ -329,7 +329,7 @@ class Component {
       var rt = buildRoute(studyFor(e.id), {}, s.data), ok = routeOk(rt), on = isExample && s.example === e.id;
       return { label: e.label, title: e.title.replace(/^Example: /, '').replace(/^./, function (c) { return c.toUpperCase(); }), checked: on, ariaChecked: String(on), disabled: false, learn: e.learn, result: e.result, route: 'Route: ' + rt.map(function (r) { return LABEL[r.m]; }).join(' → '),
         steps: rt.length + ' steps · ' + rt.filter(function (r) { return MAIN[r.m]; }).map(function (r) { return LABEL[r.m]; }).join(', '),
-        tag: ok ? 'Runs on example data' : 'Demonstration: not every step runs on the example data yet', tagStyle: ok ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
+        notReady: !ok, tag: ok ? 'Runs on example data' : 'Demonstration: not every step runs on the example data yet', tagStyle: ok ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         style: 'text-align: left; font: inherit; cursor: pointer; display: block; width: 100%; padding: 12px 14px; border-radius: 8px; background: var(--bg); border: ' + (on ? '2px solid var(--navy)' : '1px solid var(--ln)') + '; box-shadow: 0 1px 2px rgba(25, 53, 74, 0.05)',
         pick: function () { var x = Object.assign({}, s.expStage); x[e.stage] = true; self.setRoute({ example: e.id, study: studyFor(e.id), methods: {}, expStage: x }); } };
     });
@@ -390,10 +390,10 @@ class Component {
       return Object.assign({
         n: i + 1, anchor: 'step-' + r.id, title: r.title, module: LABEL[r.m] || r.m, changed: !!s.changed[r.id],
         methodLine: r.soon ? 'coming soon' : (choice ? choice[1] : (r.wfs.length > 1 ? r.wfs.length + ' workflows' : r.wfs[0])),
-        readsLine: stepsRead.length ? 'Uses step ' + stepsRead.join(', ') : 'Starts from input files',
+        metaLine: (LABEL[r.m] || r.m) + ' · ' + (r.soon ? 'coming soon' : (choice ? choice[1] : (r.wfs.length > 1 ? r.wfs.length + ' workflows' : r.wfs[0]))) + (stepsRead.length ? ' · uses step ' + stepsRead.join(', ') : ''),
         cardStyle: 'border: 1px solid ' + (s.changed[r.id] ? 'var(--stf)' : 'var(--ln)') + '; border-radius: 8px; padding: 12px 14px; background: var(--bg)',
         numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
-        tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
+        notTested: r.soon || !tested, tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         hasTime: !!D.bench[r.m], time: D.bench[r.m] ? 'Example: ' + D.bench[r.m] : '',
         // step details open as a dialog, one at a time; closing returns focus to the step's button
         isOpen: open, btnId: 'xqb-stepbtn-' + r.id, btn: 'Details',
@@ -461,6 +461,7 @@ class Component {
       { k: 'Reference data', v: refFiles ? refFiles + ' reference file' + (refFiles === 1 ? '' : 's') + (own ? ' to point to' : ' from the example') : 'none needed for this route', mark: refFiles && own ? '!' : '✓', cls: refFiles && own ? 'is-todo' : 'is-ok' },
       s.runOn === 'local' ? { k: 'Cluster settings', v: 'not needed for local execution', mark: '✓', cls: 'is-ok' } : { k: 'Cluster settings', v: 'check account and queue in my_cluster.yml; this page cannot', mark: '!', cls: 'is-todo' }
     ];
+    readiness = readiness.filter(function (c) { return c.cls !== 'is-ok'; });
     var script = route.length ? '#!/bin/bash\n# xQTL analysis route from the Workflow Builder\n# Protocol revision: ' + REV + '\n# ' + (own ? 'Your data' : 'Repository example data') + ' · ' + { local: 'runs here', slurm: 'SoS submits each step to SLURM', sge: 'SoS submits each step to SGE' }[s.runOn] + '\n# Status: ' + (ready ? 'ready to run. ' : 'NOT RUNNABLE YET. ') + status + '\nset -euo pipefail\n\n' + body : '# Choose an example or describe your study to build the route.';
     var setupOnce = [{ v: 'Clone the repository.' }, { v: 'Install the software environment with pixi (see Environment setup).' }];
     if (s.runOn !== 'local') setupOnce.push({ v: 'Copy code/cluster/' + s.runOn + '.yml to my_cluster.yml and set your account and queue.' });
