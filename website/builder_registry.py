@@ -279,6 +279,13 @@ def preview(path: str):
     f = REPO / path
     if not f.is_file():
         return None
+    # PLINK genotypes are binary; show the variant list (.bim) that sits next to them
+    if f.suffix == ".bed" and f.with_suffix(".bim").is_file():
+        out = preview(str(f.with_suffix(".bim").relative_to(REPO)))
+        if out:  # .bim has no header line: name its six columns
+            out["rows"] = [["chromosome", "variant", "cM", "position", "allele 1", "allele 2"][:out["cols"]]] + out["rows"][:PREVIEW_ROWS]
+            out["via"] = f.with_suffix(".bim").name
+        return out
     try:
         opener = gzip.open if f.suffix in (".gz", ".bgz") else open
         with opener(f, "rt", encoding="utf-8") as h:
