@@ -69,9 +69,11 @@ WIDGET_URL = f"{SITE_URL}/{WIDGET_PAGE}"
 # raw HTML, so the page uses MyST's anywidget directive: an ES module that renders the builder
 # into the page (inside a shadow root, which keeps the theme's styles and the builder's apart).
 WIDGET_MODULE = "xqtl_builder_widget.mjs"
-WIDGET_MODULE_URL = f"{SITE_URL}/{WIDGET_MODULE}"
+# Written next to the staged notebook before the MyST build, so MyST bundles it as a local file
+# (a URL would be fetched at build time, before the module is published).
+STAGED_MODULE = STAGED_WIDGET.parent / WIDGET_MODULE
 WIDGET_EMBED = (
-    f":::{{anywidget}} {WIDGET_MODULE_URL}\n"
+    f":::{{anywidget}} {WIDGET_MODULE}\n"
     ":class: fx-builder\n"
     ":::\n\n"
     f"[Open the builder in its own window ↗]({WIDGET_URL})\n"
@@ -158,7 +160,12 @@ def stage_widget_notebook():
         raise SystemExit(f"Expected to replace exactly one widget block, replaced {replaced}.")
     STAGED_WIDGET.parent.mkdir(parents=True, exist_ok=True)
     nbformat.write(notebook, STAGED_WIDGET)
-    print(f"Staged book page {STAGED_WIDGET.relative_to(REPO_ROOT)}")
+    module = widget_module()
+    rev = protocol_revision()
+    if rev:
+        module = module.replace(REVISION_PLACEHOLDER, rev)
+    STAGED_MODULE.write_text(module, encoding="utf-8")
+    print(f"Staged book page {STAGED_WIDGET.relative_to(REPO_ROOT)} and {STAGED_MODULE.relative_to(REPO_ROOT)}")
 
 
 REVISION_PLACEHOLDER = "__XQTL_PROTOCOL_REV__"
@@ -189,11 +196,7 @@ def write_widget(html_root: Path):
         page = page.replace(REVISION_PLACEHOLDER, rev)
     target.write_text(page, encoding="utf-8")
     print(f"Wrote standalone {WIDGET_PAGE} ({target.stat().st_size} bytes) under {html_root}")
-    module = widget_module()
-    if rev:
-        module = module.replace(REVISION_PLACEHOLDER, rev)
-    (html_root / WIDGET_MODULE).write_text(module, encoding="utf-8")
-    print(f"Wrote {WIDGET_MODULE} under {html_root}")
+
 
 
 # --------------------------------------------------------------------------- #
