@@ -29,7 +29,6 @@
   <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px">
     <button type="button" onClick="{{loadExample}}" class="xqb-btn xqb-primary">Load example</button>
     <button type="button" onClick="{{resetAll}}" class="xqb-btn">Reset</button>
-    <button type="button" onClick="{{copyLink}}" class="xqb-btn">{{copyLinkLabel}}</button>
   </div>
   <div class="xqb-tut">
     <sc-for list="{{tut.items}}" as="t">
@@ -93,7 +92,7 @@
       </div>
     </div>
   </sc-if>
-  <sc-if value="{{isOwn}}"><div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px"><button type="button" onClick="{{resetAll}}" class="xqb-btn">Reset</button><button type="button" onClick="{{copyLink}}" class="xqb-btn">{{copyLinkLabel}}</button></div></sc-if>
+  <sc-if value="{{isOwn}}"><div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px"><button type="button" onClick="{{resetAll}}" class="xqb-btn">Reset</button></div></sc-if>
   <p role="status" aria-live="polite" style="{{msgStyle}}">{{msg}}</p>
 
 <section id="route" aria-labelledby="r-h" style="margin: 36px 0 44px">
@@ -272,26 +271,19 @@
 
 <section aria-labelledby="map-h" style="margin-bottom: 44px">
   <h2 id="map-h" class="xqb-h2">3. The xQTL analysis, end to end</h2>
-  <p style="margin: 12px 0 6px; font-size: 15.5px; line-height: 1.6">What methods exist and how they relate. This is a map of the science, not your run order: your route above lists exactly what runs. Select a module for what it does, its inputs and outputs.</p>
-  <p style="margin: 0 0 14px; font-size: 14px; color: var(--ink2)">Modules on your current route are highlighted in blue.</p>
+  <p style="margin: 12px 0 6px; font-size: 15.5px; line-height: 1.6">What methods exist and how they relate. This is a map of the science, not your run order: your route above lists exactly what runs. Select a box to see its modules.</p>
+  <p style="margin: 0 0 14px; font-size: 14px; color: var(--ink2)">Boxes on your current route are highlighted in blue.</p>
   <div class="xqb-flow">
     <sc-for list="{{flow}}" as="p">
       <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
       <div class="xqb-fstage">
-        <button type="button" class="xqb-fhead" id="{{p.hid}}" aria-haspopup="dialog" onClick="{{p.headPick}}"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></button>
+        <div class="xqb-fhead"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></div>
         <div class="{{p.rowCls}}">
           <sc-for list="{{p.boxes}}" as="b">
-            <div class="{{b.cls}}">
-              <div class="xqb-ft">{{b.title}}</div>
-              <div class="{{b.gridCls}}">
-                <sc-for list="{{b.groups}}" as="g">
-                  <div class="{{g.cls}}">
-                    <sc-if value="{{g.hasTitle}}"><div class="xqb-fgt">{{g.title}}</div></sc-if>
-                    <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" aria-haspopup="dialog" aria-label="{{m.aria}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
-                  </div>
-                </sc-for>
-              </div>
-            </div>
+            <button type="button" id="{{b.bid}}" aria-haspopup="dialog" aria-label="{{b.aria}}" onClick="{{b.pick}}" class="{{b.cls}}">
+              <span class="xqb-ft">{{b.title}}</span>
+              <sc-if value="{{b.hasSub}}"><span class="xqb-fsub">{{b.sub}}</span></sc-if>
+            </button>
           </sc-for>
         </div>
       </div>
@@ -305,6 +297,17 @@
         <button type="button" onClick="{{phase.close}}" aria-label="Close this phase" class="xqb-x">×</button>
       </div>
       <p style="margin: 6px 0 10px; font-size: 15px; line-height: 1.6">{{phase.what}}</p>
+      <sc-if value="{{phase.showList}}">
+        <div class="xqb-fgrid is-multi">
+          <sc-for list="{{phase.groups}}" as="g">
+            <div class="xqb-fg">
+              <sc-if value="{{g.title}}"><div class="xqb-fgt">{{g.title}}</div></sc-if>
+              <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{phase.hasMod}}"><button type="button" onClick="{{phase.back}}" class="xqb-link">← All modules in this phase</button></sc-if>
       <sc-if value="{{phase.hasMod}}">
         <div class="xqb-mdet">
           <h4>{{mod.label}}</h4>

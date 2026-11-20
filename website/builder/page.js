@@ -502,21 +502,18 @@ class Component {
     var modsOf = function (pi, gi) { var out = []; FLOW[pi][2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gi == null || g === gi) out = out.concat(gr[1]); }); }); return out; };
     // the flowchart: each phase lists its modules in boxes and groups (FLOW), as on the original builder
     var flow = FLOW.map(function (ph, pi) {
-      var open = s.phase === pi;
-      return { num: String(pi + 1), kicker: ph[0], hasArrow: pi > 0, open: open, hid: 'xqb-node-' + pi, pressed: String(open && !s.selMod),
-        headPick: function () { var on = open && !s.selMod; if (!on) app.focusNext = 'xqb-phase-h'; self.setState({ phase: on ? null : pi, stream: null, selMod: '' }); },
-        rowCls: 'xqb-frow' + (ph[2].length > 1 ? ' is-multi' : ''),
-        boxes: ph[2].map(function (bx) { return { title: bx[0], cls: 'xqb-fbox', gridCls: 'xqb-fgrid' + (bx[1].length > 1 ? ' is-multi' : ''),
-          groups: bx[1].map(function (gr) { return { title: gr[0] || '', hasTitle: !!gr[0], cls: 'xqb-fg' + (gr[0] ? '' : ' is-plain'),
-            mods: gr[1].map(function (id) { var on = !!onRoute[id], sel = open && s.selMod === id, soon = !!SOON[id];
-              return { label: LABEL[id] || id, soon: soon, pressed: String(sel), mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'),
-                aria: (LABEL[id] || id) + (on ? ', on your route' : '') + (soon ? ', coming soon' : ''),
-                cls: 'xqb-fm' + (on ? ' is-route' : '') + (sel ? ' is-sel' : '') + (soon ? ' is-soon' : ''),
-                pick: function () { var step = stepOf[id]; if (step) { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: step, phase: null, stream: null, selMod: '' }); return; } if (!sel) app.focusNext = 'xqb-phase-h'; self.setState(sel ? { phase: null, stream: null, selMod: '' } : { phase: pi, stream: null, selMod: id }); } }; }) }; }) }; }) };
+      return { num: String(pi + 1), kicker: ph[0], hasArrow: pi > 0, rowCls: 'xqb-frow' + (ph[2].length > 1 ? ' is-multi' : ''),
+        boxes: ph[2].map(function (bx, bi) {
+          var mods = []; bx[1].forEach(function (gr) { mods = mods.concat(gr[1]); });
+          var on = mods.some(function (id) { return onRoute[id]; }), bid = 'xqb-node-' + pi + '-' + bi;
+          return { title: bx[0], sub: bx[1].filter(function (gr) { return gr[0]; }).map(function (gr) { return gr[0]; }).join(' · '),
+            hasSub: bx[1].some(function (gr) { return gr[0]; }), bid: bid, cls: 'xqb-fbox' + (on ? ' is-route' : ''),
+            aria: bx[0] + (on ? ', on your route' : '') + ', show its modules',
+            pick: function () { app.focusNext = 'xqb-phase-h'; self.setState({ phase: pi, stream: null, selMod: '', phaseFrom: bid }); } }; }) };
     });
     var phaseVals = null, modVals = {};
     // the phase or module details open as a dialog; closing returns focus to what opened it
-    var closePanel = function () { app.focusNext = s.selMod ? 'xqb-mod-' + String(s.selMod).replace(/[^A-Za-z0-9]+/g, '-') : 'xqb-node-' + s.phase; self.setState({ phase: null, stream: null, selMod: '' }); };
+    var closePanel = function () { app.focusNext = s.phaseFrom || ('xqb-node-' + s.phase + '-0'); self.setState({ phase: null, stream: null, selMod: '' }); };
     if (s.phase != null && FLOW[s.phase]) {
       var pi = s.phase, gi = s.stream, ph = FLOW[pi], preset = PHASES[pi][2];
       var groups = [];
@@ -524,7 +521,8 @@ class Component {
         groups.push({ title: gr[0] || (ph[2].length > 1 ? bx[0] : ''), cls: 'xqb-g' + (gi != null && g !== gi ? ' is-faint' : ''), mods: gr[1].map(function (id) {
           var on = !!onRoute[id], st = modStatus(id), sel = s.selMod === id;
           return { label: LABEL[id] || id, pressed: String(sel), state: on ? ' · on your route' : (st.soon ? ' · coming soon' : (st.notReady ? ' · not fully tested' : '')),
-            mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'), cls: 'xqb-mod' + (on ? ' is-route' : '') + (sel ? ' is-sel' : '') + (st.soon ? ' is-soon' : ''), pick: function () { self.setState({ selMod: sel ? '' : id }); } };
+            mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'), soon: st.soon, cls: 'xqb-fm' + (on ? ' is-route' : '') + (st.soon ? ' is-soon' : ''),
+            pick: function () { var step = stepOf[id]; if (step) { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: step, phase: null, stream: null, selMod: '' }); return; } app.focusNext = 'xqb-phase-h'; self.setState({ selMod: id }); } };
         }) });
       }); });
       if (s.selMod && LABEL[s.selMod]) {
@@ -545,7 +543,7 @@ class Component {
         label: ph[0] === 'Inputs' ? 'Reference data preparation' : (pi === 2 ? 'Data pre-processing' : (pi === 3 ? 'QTL association testing' : (pi === 5 ? 'Fine-mapping' : (pi === 6 ? 'GWAS integration' : (pi === 7 ? 'Enrichment, validation and interpretation' : (pi === 1 ? 'Molecular phenotype quantification' : 'Multivariate modeling')))))),
         what: pi === 2 ? (gi != null ? STREAMS[gi][2] : 'Genotype, phenotype and covariate preparation run side by side and converge on association testing.') : PHASES[pi][0] + '. ' + PHASES[pi][1],
         srHint: (gi != null ? STREAMS[gi][0] + ' stream, ' : '') + groups.reduce(function (a, g) { return a + g.mods.length; }, 0) + ' modules listed below. Close returns you to the map',
-        groups: groups, hasMod: !!modVals.label, canBuild: !!preset, buildLabel: preset ? preset.label : '',
+        groups: groups, hasMod: !!modVals.label, showList: !modVals.label, back: function () { app.focusNext = 'xqb-phase-h'; self.setState({ selMod: '' }); }, canBuild: !!preset, buildLabel: preset ? preset.label : '',
         build: function () {
           var ex = preset.example && s.mode === 'example' ? preset.example : '';
           if (ex) self.setRoute({ example: ex, study: studyFor(ex), methods: {} }, 'Loaded the matching example.');
@@ -627,7 +625,7 @@ root.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape') return;
   if (st.stepOpen) { app.focusNext = 'xqb-stepbtn-' + st.stepOpen; app.setState({ stepOpen: null }); return; }
   if (st.phase == null) return;
-  app.focusNext = st.selMod ? 'xqb-mod-' + String(st.selMod).replace(/[^A-Za-z0-9]+/g, '-') : 'xqb-node-' + st.phase;
+  app.focusNext = st.phaseFrom || ('xqb-node-' + st.phase + '-0');
   app.setState({ phase: null, stream: null, selMod: '' });
 });
 root.addEventListener('click', function (e) {
