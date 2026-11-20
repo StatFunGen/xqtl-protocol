@@ -322,14 +322,14 @@ class Component {
     var isExample = s.mode === 'example', isOwn = s.mode === 'own';
     var modes = [['example', 'Try an example', 'Learn from a tested analysis that runs on the repository’s example data.', ''], ['own', 'Build my workflow', 'Choose your goals, then give the files your route needs.', '']].map(function (md) {
       var on = s.mode === md[0];
-      return { label: md[1], desc: md[2], foot: md[3], checked: String(on),
+      return { rid: 'xqb-mode-' + md[0], label: md[1], desc: md[2], foot: md[3], checked: String(on),
         style: 'text-align: left; font: inherit; cursor: pointer; padding: 16px 18px; border-radius: 8px; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; border: ' + (on ? '2px solid var(--navy)' : '1px solid var(--ln2)') + '; display: block; width: 100%',
         dot: 'flex: 0 0 18px; width: 18px; height: 18px; border-radius: 9px; box-sizing: border-box; border: ' + (on ? '6px solid var(--navy)' : '2px solid var(--ln2)') + '; background: var(--bg)',
         pick: function () { if (md[0] === 'example') self.setRoute({ mode: 'example', src: 'example', study: studyFor(s.example), methods: {} }); else self.setState({ mode: 'own', src: 'own', msg: '' }); } };
     });
     var examples = EXAMPLES.map(function (e) {
       var rt = buildRoute(studyFor(e.id), {}, s.data), ok = routeOk(rt), on = isExample && s.example === e.id;
-      return { label: e.label, title: e.title.replace(/^Example: /, '').replace(/^./, function (c) { return c.toUpperCase(); }), checked: on, ariaChecked: String(on), disabled: false, learn: e.learn, result: e.result, route: 'Route: ' + rt.map(function (r) { return LABEL[r.m]; }).join(' → '),
+      return { rid: 'xqb-ex-' + e.id, label: e.label, title: e.title.replace(/^Example: /, '').replace(/^./, function (c) { return c.toUpperCase(); }), checked: on, ariaChecked: String(on), disabled: false, learn: e.learn, result: e.result, route: 'Route: ' + rt.map(function (r) { return LABEL[r.m]; }).join(' → '),
         steps: rt.length + ' steps · ' + rt.filter(function (r) { return MAIN[r.m]; }).map(function (r) { return LABEL[r.m]; }).join(', '),
         notReady: !ok, tag: ok ? 'Runs on example data' : 'Demonstration: not every step runs on the example data yet', tagStyle: ok ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         style: 'text-align: left; font: inherit; cursor: pointer; display: block; width: 100%; padding: 12px 14px; border-radius: 8px; background: var(--bg); border: ' + (on ? '2px solid var(--navy)' : '1px solid var(--ln)') + '; box-shadow: 0 1px 2px rgba(25, 53, 74, 0.05)',
@@ -362,7 +362,7 @@ class Component {
       return best;
     };
     var own = s.src === 'own';
-    var userFiles = {}, userOrder = [];
+    var userFiles = {}, userOrder = [], supply = [];
     var placeholder = function (p) { return '<your_' + nice(p.replace(/^<|>$/g, '').replace(/^path\/to\//, '')).replace(/ /g, '_') + '>'; };
     var routeVals = route.map(function (r, i) {
       var keys = r.wfs.map(function (w) { return r.m + '|' + w; });
@@ -380,6 +380,7 @@ class Component {
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
         ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
         var first = user ? userFiles[p][0] === i + 1 : false, label = optLabel(((D.opt || {})[k] || {})[p], p);
+        if (user && own && first) supply.push({ name: label.replace(/ \([^()]*\)$/, ''), step: 'step ' + (i + 1), href: '#path-' + userOrder.indexOf(p), done: !!s.paths[p], mark: s.paths[p] ? '✓ ' : '' });
         files.push({ label: label.replace(/ \([^()]*\)$/, ''), source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
           ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/' + label.replace(/ \([^()]*\)$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + ((p.split('/').pop().match(/\.[a-z0-9]+(\.gz)?$/i) || [''])[0]),
           set: function (e) { var q = Object.assign({}, s.paths); q[p] = e.target.value; self.setState({ paths: q }); } });
@@ -574,18 +575,18 @@ class Component {
       qPheno: qPheno, qStart: qStart, qGoals: qGoals, hasContextual: contextual.length > 0, contextual: contextual,
       adv: s.adv, advExpanded: String(s.adv), toggleAdv: function () { self.setState({ adv: !s.adv }); }, advLabel: s.adv ? 'Hide advanced study settings' : 'Advanced study settings', advCount: nonDefault ? nonDefault + ' changed' : 'genotype QC, cohorts, contexts', allOpts: allOpts,
       msg: s.msg, msgStyle: s.msg ? 'margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--tint); border-left: 3px solid var(--teal); color: var(--ink); font-size: 15px' : 'margin: 0; height: 0; overflow: hidden',
-      route: routeVals, routeEmpty: route.length === 0, 
+      route: routeVals, routeEmpty: route.length === 0, hasRoute: route.length > 0, 
       srcTabs: [['example', 'Example data'], ['own', 'My own data']].map(function (t) { var on = s.src === t[0]; return { label: t[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ src: t[0], mode: t[0] }); } }; }),
       runOn: [['local', 'Local terminal'], ['slurm', 'SLURM'], ['sge', 'SGE']].map(function (p) { var on = s.runOn === p[0]; return { label: p[1], checked: on, style: pillStyle(on), pick: function () { self.setState({ runOn: p[0] }); } }; }),
       showCluster: s.runOn !== 'local', runOnName: s.runOn === 'slurm' ? 'SLURM' : 'SGE', runOnFile: s.runOn, nativeCmd: s.runOn === 'slurm' ? 'sbatch' : 'qsub',
       isOwnSrc: own, isExampleSrc: !own && route.length > 0, pathGroups: pathGroups, noPaths: own && pathFields.length === 0,
-      pathStatus: missing ? missing + ' of ' + pathFields.length + ' still needed' : 'Complete', pathStatusStyle: missing ? chip('var(--stb)', 'var(--stf)') : chip('var(--okb)', 'var(--okf)'),
+      supply: supply, pathStatus: missing ? missing + ' of ' + pathFields.length + ' files still needed' : 'All files entered', pathStatusStyle: missing ? chip('var(--stb)', 'var(--stf)') : chip('var(--okb)', 'var(--okf)'),
       setupOnce: setupOnce, setupRoute: setupRoute, incomplete: soonSteps.length > 0, incompleteText: 'Step ' + soonSteps.join(', ') + ' has no command in the builder yet, so the script stops before it. Choose another method for that step or run it from its notebook.',
       mainResults: mainResults, noResults: route.length === 0, inter: inter, hasInter: inter.length > 0, interCount: String(inter.length),
       hasProduces: mainResults.length > 0, produces: 'This analysis produces ' + (function (t) { t = t.map(function (x) { return x.charAt(0).toLowerCase() + x.slice(1); }); return t.length > 1 ? t.slice(0, -1).join(', ') + ' and ' + t[t.length - 1] : t[0]; })(mainResults.map(function (m) { return m.title; })) + '.',
       jumpOwn: function () { self.setState({ mode: 'own', src: 'own', msg: '' }); },
       tut: { title: exObj.title, items: [{ k: 'WHAT YOU LEARN', v: exObj.learn }, { k: 'PROVIDED INPUTS', v: exObj.given }, { k: 'EXPECTED RESULT', v: exObj.result }, { k: 'AFTERWARDS', v: exObj.after }] },
-      script: script, hasStatus: !!status, status: status, statusStyle: 'border-radius: 6px; padding: 10px 14px; font-size: 15px; line-height: 1.5; margin-bottom: 10px; background: var(--tint); color: var(--ink); border-left: 3px solid ' + (ready ? 'var(--okf)' : 'var(--stf)'), statusHead: ready ? 'Ready to run.' : 'Not a runnable script yet.', fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
+      script: script, hasStatus: !!status, status: status, statusStyle: 'border-radius: 6px; padding: 10px 14px; font-size: 15px; line-height: 1.5; margin-bottom: 10px; background: var(--tint); color: var(--ink); border-left: 3px solid ' + (ready ? 'var(--okf)' : 'var(--stf)'), statusHead: ready && own ? 'Paths complete.' : ready ? 'Ready to run.' : 'Not a runnable script yet.', fileName: own ? 'xqtl_route.sh' : 'xqtl_route_example.sh', srcLabel: own ? 'your data' : 'example data',
       copyScriptLabel: s.copied === 'script' ? 'Copied' : (s.copied === 'fail' ? 'Copy failed' : 'Copy all'), copyScript: function () { copyText(script, 'script'); },
       downloadScript: function () { try { var b = new Blob([script + '\n'], { type: 'text/x-shellscript' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = own ? 'xqtl_route.sh' : 'xqtl_route_example.sh'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); } catch (e) {} },
       ownNeed: String(userOrder.length), useWithMine: function () { self.setState({ mode: 'own', src: 'own', msg: 'Kept your route and methods. Enter your files in the route steps.' }); scrollTo('r-h'); },
@@ -609,10 +610,22 @@ function paint() {
   kids(tpl, [app.renderVals()], frag);
   root.replaceChildren(frag);
   Object.keys(open).forEach(function (id) { var d = R.getElementById(id); if (d) d.open = open[id]; });
+  Array.prototype.forEach.call(root.querySelectorAll('[role=radiogroup]'), function (g) {
+    var rs = g.querySelectorAll('[role=radio]'), on = g.querySelector('[role=radio][aria-checked=true]') || rs[0];
+    Array.prototype.forEach.call(rs, function (x) { x.tabIndex = x === on ? 0 : -1; });
+  });
   var jump = !!app.focusNext; if (jump) { fid = app.focusNext; sel = null; app.focusNext = null; }
   if (fid) { var f = R.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 // in-page links scroll here instead of sending the parent page to the builder's own URL
+// radio groups built from buttons: arrow keys move and select, as with native radios
+root.addEventListener('keydown', function (e) {
+  var r = e.target.closest && e.target.closest('[role=radio]'), g = r && r.closest('[role=radiogroup]');
+  if (!g || ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].indexOf(e.key) < 0) return;
+  var all = Array.prototype.slice.call(g.querySelectorAll('[role=radio]')), i = all.indexOf(r);
+  var next = all[(i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : all.length - 1)) % all.length];
+  e.preventDefault(); if (next.id) app.focusNext = next.id; next.click(); next.focus();
+});
 // dialogs: Esc closes, Tab stays inside, focus returns to what opened it
 root.addEventListener('keydown', function (e) {
   var st = app.state, dlg = R.querySelector('[role=dialog]');
@@ -634,7 +647,7 @@ root.addEventListener('keydown', function (e) {
 root.addEventListener('click', function (e) {
   var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
   var t = R.getElementById(a.getAttribute('href').slice(1)); e.preventDefault();
-  if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (t) { t.scrollIntoView({ behavior: 'smooth', block: t.tagName === 'INPUT' ? 'center' : 'start' }); if (t.tagName === 'INPUT') t.focus({ preventScroll: true }); }
 });
 var shared = readShared(); if (shared) Object.assign(app.state, shared);
 // dark theme: follow the site's toggle (on the site's page or in its frame), else the system setting

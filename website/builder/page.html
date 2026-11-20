@@ -4,7 +4,7 @@
 
 <div role="radiogroup" aria-label="How to begin" class="xqb-modes">
   <sc-for list="{{modes}}" as="md">
-    <button type="button" role="radio" aria-checked="{{md.checked}}" onClick="{{md.pick}}" style="{{md.style}}">
+    <button type="button" id="{{md.rid}}" role="radio" aria-checked="{{md.checked}}" onClick="{{md.pick}}" style="{{md.style}}">
       <span style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
         <span style="font-size: 17px; font-weight: 700; color: var(--navy)">{{md.label}}</span>
         <span style="{{md.dot}}"></span>
@@ -17,7 +17,7 @@
 <sc-if value="{{isExample}}">
   <div role="radiogroup" aria-label="Example" class="xqb-examples">
     <sc-for list="{{examples}}" as="ex">
-      <button type="button" role="radio" aria-checked="{{ex.ariaChecked}}" onClick="{{ex.pick}}" style="{{ex.style}}">
+      <button type="button" id="{{ex.rid}}" role="radio" aria-checked="{{ex.ariaChecked}}" onClick="{{ex.pick}}" style="{{ex.style}}">
         <span style="display: block; font-size: 15px; font-weight: 700; color: var(--navy)">{{ex.title}}</span>
         <sc-if value="{{ex.notReady}}"><span style="display: block; margin: 6px 0"><span style="{{ex.tagStyle}}">{{ex.tag}}</span></span></sc-if>
         <span style="display: block; font-size: 13.5px; line-height: 1.4; color: var(--ink2); margin-top: 6px">{{ex.steps}}</span>
@@ -51,6 +51,7 @@
             <label style="{{o.style}}"><input type="radio" name="start" checked="{{o.checked}}" onChange="{{o.pick}}" style="accent-color: var(--navy); margin: 0">{{o.label}}</label>
           </sc-for>
         </div>
+        <p style="margin: 8px 0 0; font-size: 14px; color: var(--ink2)">Processed phenotype matrix: normalized values, one row per gene or other trait and one column per sample (BED format).</p>
       </fieldset>
       <fieldset style="border: 0; margin: 0; padding: 16px 18px">
         <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">What analyses do you want? <span style="font-weight: 400; color: var(--ink2); font-size: 14px">Choose any</span></legend>
@@ -97,7 +98,8 @@
     <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">1. Your analysis route</h2>
     <a href="#map-h" style="font-size: 15px">View the full analysis map</a>
   </div>
-  <sc-if value="{{isOwnSrc}}"><p style="margin: -6px 0 14px; font-size: 15px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each file where it is first needed; paths stay in your browser.</span></p></sc-if>
+  <sc-if value="{{isOwnSrc}}"><div class="xqb-supply"><p style="margin: 0 0 6px; font-size: 15px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each one in the step that first needs it; paths stay in your browser.</span></p>
+    <ul><sc-for list="{{supply}}" as="f"><li><a href="{{f.href}}">{{f.mark}}{{f.name}}</a> <span>{{f.step}}</span></li></sc-for></ul></div></sc-if>
   <sc-if value="{{routeEmpty}}">
     <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
   </sc-if>
@@ -189,6 +191,7 @@
       </li>
     </sc-for>
   </ol>
+  <sc-if value="{{hasRoute}}"><p style="margin: 12px 0 0; font-size: 15px"><a href="#c-h">Continue to Prepare and run ↓</a></p></sc-if>
 </section>
 
 <section aria-labelledby="c-h" style="margin-bottom: 44px">
