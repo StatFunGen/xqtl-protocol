@@ -99,10 +99,9 @@
 <section id="route" aria-labelledby="r-h" style="margin: 36px 0 44px">
   <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">
     <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">1. Your analysis route</h2>
-    <span style="font-size: 15px; color: var(--ink2)">{{routeSummary}} <a href="#map-h" style="margin-left: 10px">View the full analysis map</a></span>
+    <a href="#map-h" style="font-size: 15px">View the full analysis map</a>
   </div>
-  <sc-if value="{{hasProduces}}"><p style="margin: 12px 0 0; font-size: 15.5px; line-height: 1.6; font-weight: 600; color: var(--navy)">{{produces}}</p></sc-if>
-  <p style="margin: 8px 0 14px; font-size: 15.5px; line-height: 1.6">The modules to run, in order, and the files each one needs. Open a step for the method choice, exact file names, example previews and outputs.</p>
+  <sc-if value="{{hasProduces}}"><p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6; font-weight: 600; color: var(--navy)">{{produces}}</p></sc-if>
   <sc-if value="{{isOwnSrc}}"><p style="margin: -6px 0 14px; font-size: 15px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each file where it is first needed; paths stay in your browser.</span></p></sc-if>
   <sc-if value="{{routeEmpty}}">
     <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
@@ -137,12 +136,17 @@
               </div>
             </sc-if>
           </div>
-          <button type="button" aria-expanded="{{r.expanded}}" aria-controls="{{r.panelId}}" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
+          <button type="button" id="{{r.btnId}}" aria-haspopup="dialog" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
         </div>
         <sc-if value="{{r.isOpen}}">
-          <div id="{{r.panelId}}" style="margin-top: 14px; border-top: 1px solid var(--ln); padding-top: 14px; display: flex; flex-direction: column; gap: 14px">
+          <div class="xqb-modal" onClick="{{r.backdrop}}">
+          <div role="dialog" aria-modal="true" aria-labelledby="xqb-step-h" class="xqb-stage" style="display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+              <div><div class="xqb-k">STEP {{r.n}} OF YOUR ROUTE</div><h3 id="xqb-step-h" tabindex="-1" class="xqb-phase-h">{{r.title}}</h3><div style="font-size: 15px; color: var(--ink2); margin-top: 2px">{{r.module}} · {{r.methodLine}}</div></div>
+              <button type="button" onClick="{{r.close}}" aria-label="Close this step" class="xqb-x">×</button>
+            </div>
             <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 4px">Why this step</div>
+              <div class="xqb-k" style="margin-bottom: 4px">WHY THIS STEP</div>
               <p style="margin: 0; font-size: 15px; line-height: 1.6">{{r.why}}</p>
             </div>
             <sc-if value="{{r.hasChoices}}">
@@ -158,61 +162,37 @@
                 </div>
               </fieldset>
             </sc-if>
-            <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Input</div>
-              <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+            <div><div class="xqb-k">INPUTS</div>
+              <ol class="xqb-mlist">
                 <sc-for list="{{r.inputs}}" as="f">
-                  <li style="border: 1px solid var(--ln); border-radius: 6px; padding: 8px 12px">
-                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px">
-                      <div style="min-width: 0; flex: 1 1 260px">
-                        <div style="font-size: 14px; font-weight: 600">{{f.source}}</div>
-                        <div style="font-family: var(--mono); font-size: 13.5px; color: var(--ink2); overflow-wrap: anywhere; margin-top: 2px">{{f.path}}</div>
-                      </div>
-                      <sc-if value="{{f.hasPreview}}">
-                        <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="font-size: 14px; min-height: 34px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ln2); background: var(--bg); color: var(--navy); cursor: pointer">{{f.btn}}</button>
-                      </sc-if>
-                    </div>
-                    <sc-if value="{{f.open}}">
-                      <div style="margin-top: 10px">
-                        <div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
-                        <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-                          <table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%">
-                            <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                            <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </sc-if>
+                  <li><div class="xqb-mrow"><span>{{f.name}} <span class="xqb-src">· {{f.source}}</span></span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if></div>
+                    <sc-if value="{{f.showPath}}"><div class="xqb-mono" style="color: var(--ink2); font-size: 13.5px">{{f.path}}</div></sc-if>
+                    <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
                   </li>
                 </sc-for>
-              </ul>
+              </ol>
+            </div>
+            <div><div class="xqb-k">OUTPUTS</div>
+              <ol class="xqb-mlist">
+                <sc-for list="{{r.outputs}}" as="o">
+                  <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                    <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                  </li>
+                </sc-for>
+              </ol>
             </div>
             <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Output</div>
-              <ul style="margin: 0 0 8px; padding-left: 18px; font-family: var(--mono); font-size: 13.5px; line-height: 1.7; overflow-wrap: anywhere">
-                <sc-for list="{{r.outputs}}" as="o"><li>{{o.v}}</li></sc-for>
-              </ul>
-              <sc-if value="{{r.hasOut}}">
-                <div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{r.outNote}}</div>
-                <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-                  <table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%">
-                    <thead><tr style="background: var(--tint)"><sc-for list="{{r.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                    <tbody><sc-for list="{{r.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-                  </table>
-                </div>
-              </sc-if>
-            </div>
-            <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Command for this step</div>
+              <div class="xqb-k" style="margin-bottom: 6px">COMMAND FOR THIS STEP</div>
               <pre class="xqb-code" tabindex="0">{{r.cmd}}</pre>
             </div>
             <sc-if value="{{r.hasTerms}}">
               <div>
-                <div style="font-size: 14px; font-weight: 600; color: var(--ink2); margin-bottom: 4px">Terms</div>
+                <div class="xqb-k" style="margin-bottom: 4px">TERMS</div>
                 <dl class="xqb-terms"><sc-for list="{{r.terms}}" as="tm"><dt>{{tm.k}}</dt><dd>{{tm.v}}</dd></sc-for></dl>
               </div>
             </sc-if>
             <a href="{{r.doc}}" style="font-size: 15px; align-self: flex-start">Open the {{r.module}} notebook</a>
+          </div>
           </div>
         </sc-if>
       </li>
@@ -298,7 +278,7 @@
     <sc-for list="{{flow}}" as="p">
       <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
       <div class="xqb-fstage">
-        <button type="button" class="xqb-fhead" id="{{p.hid}}" aria-expanded="{{p.pressed}}" aria-controls="xqb-phase" onClick="{{p.headPick}}"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></button>
+        <button type="button" class="xqb-fhead" id="{{p.hid}}" aria-haspopup="dialog" onClick="{{p.headPick}}"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></button>
         <div class="{{p.rowCls}}">
           <sc-for list="{{p.boxes}}" as="b">
             <div class="{{b.cls}}">
@@ -307,7 +287,7 @@
                 <sc-for list="{{b.groups}}" as="g">
                   <div class="{{g.cls}}">
                     <sc-if value="{{g.hasTitle}}"><div class="xqb-fgt">{{g.title}}</div></sc-if>
-                    <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" aria-pressed="{{m.pressed}}" aria-label="{{m.aria}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
+                    <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" aria-haspopup="dialog" aria-label="{{m.aria}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
                   </div>
                 </sc-for>
               </div>

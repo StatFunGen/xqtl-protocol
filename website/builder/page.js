@@ -263,11 +263,19 @@ class Component {
         toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }, extra || {});
     };
     var outOf = function (m) { var op = (D.outPrev || {})[m], t = tableOf(op); return { hasOut: !!op, outNote: op ? 'Example output, ' + op.file + ': first ' + (op.rows.length - 1) + ' rows' + (op.cols > 6 ? ', 6 of ' + op.cols + ' columns' : '') + '.' : '', outHead: t.head, outRows: t.rows }; };
+    // outputs one per line; the example output's preview sits on the output it comes from
+    var outList = function (m, outs) {
+      var op = (D.outPrev || {})[m], ot = outOf(m), key = 'mo:' + m, on = !!s.pv[key];
+      var at = op ? Math.max(0, outs.findIndex(function (o) { return op.file.indexOf(o.replace(/\/$/, '')) >= 0 || o.indexOf(op.file) >= 0; })) : -1;
+      return outs.map(function (o, i) { var has = i === at;
+        return { v: o, hasPreview: has, open: has && on, expanded: String(has && on), btn: has && on ? 'Hide example' : 'Show example', note: ot.outNote, head: ot.outHead, rows: ot.outRows,
+          toggle: function () { var q = Object.assign({}, s.pv); q[key] = !q[key]; self.setState({ pv: q }); } }; });
+    };
     var segStyle = function (on) { return 'font-size: 15px; min-height: 36px; padding: 6px 14px; border: 0; cursor: pointer; background: ' + (on ? 'var(--navy)' : 'var(--bg)') + '; color: ' + (on ? 'var(--bg)' : 'var(--ink)') + '; font-weight: ' + (on ? '600' : '400'); };
     var pillStyle = function (on) { return 'display: inline-flex; align-items: center; gap: 8px; font-size: 15px; min-height: 38px; padding: 7px 13px; border-radius: 6px; cursor: pointer; box-sizing: border-box; border: 1px solid ' + (on ? 'var(--navy)' : 'var(--ln2)') + '; background: ' + (on ? 'var(--acs)' : 'var(--bg)') + '; color: var(--ink); font-weight: ' + (on ? '600' : '400'); };
 
     var route = buildRoute(s.study, s.methods, s.data);
-    var onRoute = {}; route.forEach(function (r) { onRoute[r.m] = 1; });
+    var onRoute = {}, stepOf = {}; route.forEach(function (r) { onRoute[r.m] = 1; if (!stepOf[r.m]) stepOf[r.m] = r.id; });
     var routeOk = function (rt) { return rt.length > 0 && rt.every(function (r) { return !r.soon && r.wfs.every(function (w) { return testedKey(r.m + '|' + w); }); }); };
 
     // 1. Map
@@ -357,7 +365,7 @@ class Component {
     var routeVals = route.map(function (r, i) {
       var keys = r.wfs.map(function (w) { return r.m + '|' + w; });
       var tested = !r.soon && keys.every(testedKey);
-      var open = !!s.open[r.id], reads = {};
+      var open = s.stepOpen === r.id, reads = {};
       var ins = [], files = [];
       keys.forEach(function (k) { ((D.io[k] || {}).i || []).forEach(function (p) {
         if (ins.some(function (x) { return x.raw === p; })) return;
@@ -368,7 +376,7 @@ class Component {
         if (user) { if (!userFiles[p]) { userFiles[p] = []; userOrder.push(p); } if (userFiles[p].indexOf(i + 1) < 0) userFiles[p].push(i + 1); }
         var src = pi >= 0 ? 'From step ' + (pi + 1) : (p.indexOf('output/') === 0 ? 'Made by a module not on this route' : (user ? (ref ? 'Reference data' : (own ? 'Your file' : 'Example file')) : 'Written by this step’s setup lines'));
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
-        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
+        ins.push(fileItem('r' + i + ':' + p, p, { raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
         var first = user ? userFiles[p][0] === i + 1 : false, label = optLabel(((D.opt || {})[k] || {})[p], p);
         files.push({ label: label, source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
           ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/your/' + p.replace(/^<|>$/g, '').split('/').pop(),
@@ -387,12 +395,15 @@ class Component {
         numStyle: 'flex: 0 0 28px; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: ' + (r.soon ? 'var(--sk); color: var(--ink2)' : 'var(--navy); color: var(--on)'),
         tested: r.soon ? 'Coming soon' : (tested ? 'Runs on example data' : 'Not yet run on example data'), testStyle: tested ? chip('var(--okb)', 'var(--okf)') : chip('var(--stb)', 'var(--stf)'),
         hasTime: !!D.bench[r.m], time: D.bench[r.m] ? 'Example: ' + D.bench[r.m] : '',
-        isOpen: open, expanded: String(open), panelId: 'panel-' + r.id, btn: open ? 'Hide' : 'Details',
-        btnStyle: 'flex: 0 0 auto; font-size: 15px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: ' + (open ? 'var(--sk)' : 'var(--bg)') + '; color: var(--navy); font-weight: 500',
-        toggle: function () { var o = Object.assign({}, s.open); o[r.id] = !open; self.setState({ open: o }); },
+        // step details open as a dialog, one at a time; closing returns focus to the step's button
+        isOpen: open, btnId: 'xqb-stepbtn-' + r.id, btn: 'Details',
+        btnStyle: 'flex: 0 0 auto; font-size: 15px; min-height: 36px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--ln2); background: var(--bg); color: var(--navy); font-weight: 500',
+        toggle: function () { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: r.id, phase: null, stream: null, selMod: '' }); },
+        close: function () { app.focusNext = 'xqb-stepbtn-' + r.id; self.setState({ stepOpen: null }); },
+        backdrop: function (e) { if (e.target === e.currentTarget) { app.focusNext = 'xqb-stepbtn-' + r.id; self.setState({ stepOpen: null }); } },
         why: why, hasChoices: !!r.choices, radioName: 'm-' + r.id,
         choices: (r.choices || []).map(function (c) { var k = r.m + '|' + c[0], t = testedKey(k); return { label: c[1], desc: c[3], checked: c[0] === r.chosen, tag: !D.cmd[k] ? 'No command' : (t ? 'Runs on example data' : 'Not yet run'), tagStyle: t ? chip('var(--okb)', 'var(--okf)', ' margin-left: 4px;') : chip('var(--stb)', 'var(--stf)', ' margin-left: 4px;'), pick: function () { var mm = Object.assign({}, s.methods); mm[r.id] = c[0]; self.setRoute({ methods: mm }, c[1] + ' selected.'); } }; }),
-        inputs: ins, files: files, hasFiles: files.length > 0, outputs: outs.map(function (o) { return { v: o }; }), doc: BASE + (DOC[r.m] || '')
+        inputs: ins, files: files, hasFiles: own && files.length > 0, outputs: outList(r.m, outs), doc: BASE + (DOC[r.m] || '')
       }, outOf(r.m));
     });
     var nTested = routeVals.filter(function (r) { return r.tested === 'Runs on example data'; }).length;
@@ -501,7 +512,7 @@ class Component {
               return { label: LABEL[id] || id, soon: soon, pressed: String(sel), mid: 'xqb-mod-' + String(id).replace(/[^A-Za-z0-9]+/g, '-'),
                 aria: (LABEL[id] || id) + (on ? ', on your route' : '') + (soon ? ', coming soon' : ''),
                 cls: 'xqb-fm' + (on ? ' is-route' : '') + (sel ? ' is-sel' : '') + (soon ? ' is-soon' : ''),
-                pick: function () { if (!sel) app.focusNext = 'xqb-phase-h'; self.setState(sel ? { phase: null, stream: null, selMod: '' } : { phase: pi, stream: null, selMod: id }); } }; }) }; }) }; }) };
+                pick: function () { var step = stepOf[id]; if (step) { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: step, phase: null, stream: null, selMod: '' }); return; } if (!sel) app.focusNext = 'xqb-phase-h'; self.setState(sel ? { phase: null, stream: null, selMod: '' } : { phase: pi, stream: null, selMod: id }); } }; }) }; }) }; }) };
     });
     var phaseVals = null, modVals = {};
     // the phase or module details open as a dialog; closing returns focus to what opened it
@@ -524,12 +535,7 @@ class Component {
           if (seen[name]) return; seen[name] = 1;
           ins.push(fileItem('m:' + m + ':' + p, p, { name: name, n: ins.length + 1 }));
         }); (io.o || []).forEach(function (o) { if (outs.indexOf(o) < 0) outs.push(o); }); });
-        // outputs one per line; the example output's preview sits on the output it comes from
-        var op = (D.outPrev || {})[m], ot = outOf(m), okey = 'mo:' + m, oOn = !!s.pv[okey];
-        var oAt = op ? Math.max(0, outs.findIndex(function (o) { return op.file.indexOf(o.replace(/\/$/, '')) >= 0 || o.indexOf(op.file) >= 0; })) : -1;
-        var outItems = outs.map(function (o, i) { var has = i === oAt;
-          return { v: o, hasPreview: has, open: has && oOn, expanded: String(has && oOn), btn: has && oOn ? 'Hide example' : 'Show example', note: ot.outNote, head: ot.outHead, rows: ot.outRows,
-            toggle: function () { var q = Object.assign({}, s.pv); q[okey] = !q[okey]; self.setState({ pv: q }); } }; });
+        var outItems = outList(m, outs);
         var gIdx = -1; ph[2].forEach(function (bx) { bx[1].forEach(function (gr, g) { if (gr[1].indexOf(m) >= 0) gIdx = g; }); });
         modVals = Object.assign({ label: LABEL[m], what: D.intro[m] || DESC[m], doc: BASE + (DOC[m] || ''),
           when: pi === 2 && gIdx >= 0 ? STREAMS[gIdx][2] : (PHASES[pi][1] || DESC[m]),
@@ -567,7 +573,7 @@ class Component {
       qPheno: qPheno, qStart: qStart, qGoals: qGoals, hasContextual: contextual.length > 0, contextual: contextual,
       adv: s.adv, advExpanded: String(s.adv), toggleAdv: function () { self.setState({ adv: !s.adv }); }, advLabel: s.adv ? 'Hide advanced study settings' : 'Advanced study settings', advCount: nonDefault ? nonDefault + ' changed' : 'genotype QC, cohorts, contexts', allOpts: allOpts,
       msg: s.msg, msgStyle: s.msg ? 'margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--tint); border-left: 3px solid var(--teal); color: var(--ink); font-size: 15px' : 'margin: 0; height: 0; overflow: hidden',
-      route: routeVals, routeEmpty: route.length === 0, routeSummary: route.length ? route.length + ' steps · ' + nTested + ' run on example data' : '',
+      route: routeVals, routeEmpty: route.length === 0, 
       srcTabs: [['example', 'Example data'], ['own', 'My own data']].map(function (t) { var on = s.src === t[0]; return { label: t[1], pressed: String(on), style: segStyle(on), pick: function () { self.setState({ src: t[0], mode: t[0] }); } }; }),
       runOn: [['local', 'Local terminal'], ['slurm', 'SLURM'], ['sge', 'SGE']].map(function (p) { var on = s.runOn === p[0]; return { label: p[1], checked: on, style: pillStyle(on), pick: function () { self.setState({ runOn: p[0] }); } }; }),
       showCluster: s.runOn !== 'local', runOnName: s.runOn === 'slurm' ? 'SLURM' : 'SGE', runOnFile: s.runOn, nativeCmd: s.runOn === 'slurm' ? 'sbatch' : 'qsub',
@@ -606,9 +612,21 @@ function paint() {
   if (fid) { var f = R.getElementById(fid); if (f) { f.focus(jump ? { preventScroll: true } : undefined); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 // in-page links scroll here instead of sending the parent page to the builder's own URL
-// Esc closes the phase or module dialog
+// dialogs: Esc closes, Tab stays inside, focus returns to what opened it
 root.addEventListener('keydown', function (e) {
-  var st = app.state; if (e.key !== 'Escape' || st.phase == null) return;
+  var st = app.state, dlg = R.querySelector('[role=dialog]');
+  if (!dlg) return;
+  if (e.key === 'Tab') {
+    var f = Array.prototype.filter.call(dlg.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'), function (x) { return !x.disabled && x.offsetParent !== null; });
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1], a = R.activeElement;
+    if (e.shiftKey && (a === first || !dlg.contains(a))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (a === last || !dlg.contains(a))) { e.preventDefault(); first.focus(); }
+    return;
+  }
+  if (e.key !== 'Escape') return;
+  if (st.stepOpen) { app.focusNext = 'xqb-stepbtn-' + st.stepOpen; app.setState({ stepOpen: null }); return; }
+  if (st.phase == null) return;
   app.focusNext = st.selMod ? 'xqb-mod-' + String(st.selMod).replace(/[^A-Za-z0-9]+/g, '-') : 'xqb-node-' + st.phase;
   app.setState({ phase: null, stream: null, selMod: '' });
 });
