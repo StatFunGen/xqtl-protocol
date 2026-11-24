@@ -130,6 +130,7 @@
                       <sc-for list="{{r.files}}" as="f">
                         <li>
                           <span class="xqb-file-name">{{f.label}}</span><span class="xqb-file-src">{{f.source}}</span>
+                      <sc-if value="{{f.hint}}"><div class="xqb-file-hint">{{f.hint}}</div></sc-if>
                           <sc-if value="{{f.ask}}"><input id="{{f.id}}" class="xqb-path" type="text" value="{{f.value}}" onInput="{{f.set}}" placeholder="{{f.placeholder}}" aria-label="{{f.aria}}"/></sc-if>
                         </li>
                       </sc-for>
@@ -377,7 +378,7 @@
     <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
       <div style="font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px">One-time setup</div>
       <ol style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.65">
-        <sc-for list="{{setupOnce}}" as="b"><li>{{b.v}}</li></sc-for>
+        <sc-for list="{{setupOnce}}" as="b"><li>{{b.v}}<sc-if value="{{b.hasLink}}"> <a href="{{b.href}}">{{b.linkText}}</a>{{b.after}}</sc-if></li></sc-for>
       </ol>
     </div>
     <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
