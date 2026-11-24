@@ -238,7 +238,8 @@ _merge_plink() {
     echo "=== merge_plink: merging files in $file_list ===" >&2
 
     local -a inputs=()
-    if [[ -f "$file_list" ]]; then
+    # A text file lists the inputs one per line; a single .bed or .pgen is itself the input
+    if [[ -f "$file_list" && "$file_list" != *.bed && "$file_list" != *.pgen ]]; then
         while IFS= read -r _il || [[ -n "$_il" ]]; do inputs+=("$_il"); done < "$file_list"
     else
         read -r -a inputs <<< "$file_list"
