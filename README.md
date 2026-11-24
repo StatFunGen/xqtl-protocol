@@ -17,7 +17,7 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 | **Set up my computing environment** | [Environment Setup](code/SoS/xqtl_protocol_demo.ipynb) |
 | **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html): answer a few questions, get the modules and commands for your route |
 
-Reference data sources, methods and references, and the glossary are under [About & Reference](https://statfungen.github.io/xqtl-protocol/about/).
+[Where to get reference data](https://statfungen.github.io/xqtl-protocol/reference-data-sources/) is under Reference data in the sidebar; [Methods and references](https://statfungen.github.io/xqtl-protocol/methods-and-references/) and the [Glossary](https://statfungen.github.io/xqtl-protocol/glossary/) are under Reference.
 
 <!-- site-home-continues -->
 ## What the protocol covers
@@ -117,7 +117,7 @@ lists their sources and the modules that use them.
 - [FunGen-xQTL resource catalog](https://adsp-fgc.niagads.org/xqtl-resources/): the datasets and results, and where to get them
 - [pecotmr](https://statfungen.github.io/pecotmr): the R package behind the fine-mapping, colocalization, TWAS and Mendelian randomization steps ([source](https://github.com/StatFunGen/pecotmr))
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
-- [About & Reference](https://statfungen.github.io/xqtl-protocol/about/): who develops the protocol, funding, license and contributors
+- [About](https://statfungen.github.io/xqtl-protocol/about/): who develops the protocol, funding, license and contributors
 
 <!-- site-use-end -->
 ## What's new
