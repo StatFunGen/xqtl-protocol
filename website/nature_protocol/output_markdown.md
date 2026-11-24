@@ -87,7 +87,6 @@
 ### 1. Reference data
 
 #### Reference data preparation
-Timing: TBD
 ##### 1. Download the human genome
 
 **What it does:** Download the GRCh38 reference FASTA used by sequence-aware tools.
@@ -269,7 +268,6 @@ sos run pipeline/rss_ld_sketch.ipynb merge_chrom --output-dir output/rss_ld_sket
 ### 2. Molecular Phenotypes
 
 #### RNA-seq expression
-Timing: TBD
 ##### 1. Assess FASTQ read quality
 
 **What it does:** Generate per-sample FastQC reports before alignment.
@@ -982,7 +980,6 @@ sos run pipeline/covariate_hidden_factor.ipynb -h
 ### 4. QTL Association Testing
 
 #### QTL association testing
-Timing: TBD
 ##### 1. cis-QTL scan
 
 **What it does:** Tests each molecular trait against variants within its cis window, using `--MAC 5` for the small chromosome 22 example.
@@ -1041,7 +1038,6 @@ sos run pipeline/TensorQTL.ipynb cis \
 ### 6. Multiomics Regression Models
 
 #### Fine-mapping and TWAS analysis
-Timing: TBD
 ##### 1. Univariate fine-mapping and TWAS
 
 **What it does:** `qtl_dataset_construct+susie_twas` builds the regional dataset, fits SuSiE and saves fine-mapping results and cross-validated TWAS weights.
