@@ -131,6 +131,7 @@
                       <sc-for list="{{r.files}}" as="f">
                         <li>
                           <span class="xqb-file-name">{{f.label}}</span><span class="xqb-file-src">{{f.source}}</span>
+                      <sc-if value="{{f.hint}}"><div class="xqb-file-hint">{{f.hint}}</div></sc-if>
                           <sc-if value="{{f.ask}}"><input id="{{f.id}}" class="xqb-path" type="text" value="{{f.value}}" onInput="{{f.set}}" placeholder="{{f.placeholder}}" aria-label="{{f.aria}}" /></sc-if>
                         </li>
                       </sc-for>
@@ -378,7 +379,7 @@
     <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
       <div style="font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px">One-time setup</div>
       <ol style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.65">
-        <sc-for list="{{setupOnce}}" as="b"><li>{{b.v}}</li></sc-for>
+        <sc-for list="{{setupOnce}}" as="b"><li>{{b.v}}<sc-if value="{{b.hasLink}}"> <a href="{{b.href}}">{{b.linkText}}</a>{{b.after}}</sc-if></li></sc-for>
       </ol>
     </div>
     <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
@@ -666,6 +667,7 @@ html.xqb-dark .xqb input,html.xqb-dark .xqb select,.xqb-dark>.xqb input,.xqb-dar
 .xqb .xqb-more{font-size:14.5px;padding:2px 0}
 .xqb .xqb-routebox{box-sizing:border-box;cursor:default;gap:10px;padding:14px 16px 10px}
 .xqb .xqb-routebox:hover{border-color:var(--ln);border-top-color:var(--teal)}
+.xqb .xqb-file-hint{font-size:14px;color:var(--ink2);line-height:1.45;margin:2px 0 4px}
 </style>
 <script>if(window.self!==window.top){document.documentElement.classList.add('xq-embedded');var b=document.createElement('base');b.target='_top';document.head.appendChild(b);}</script>
 <script>
@@ -881,9 +883,24 @@ var OPT_NAMES = { genofile: 'Genotypes', phenofile: 'Phenotype data', covfile: '
 function optLabel(opt, p) {
   var base = p.replace(/^<|>$/g, '').split('/').pop();
   if (!opt) return base;
-  var o = opt.replace(/^-+/, '').toLowerCase().replace(/-/g, '_');
+  var o = opt.replace(/^-+/, '').toLowerCase().replace(/-/g, '_'), nth = (o.match(/_(\d+)$/) || [])[1];
+  if (nth) { o = o.replace(/_\d+$/, ''); opt = opt.replace(/_\d+$/, ''); }
   var name = OPT_NAMES[o] || opt.replace(/^-+/, '').replace(/[_-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/^./, function (c) { return c.toUpperCase(); });
-  return name + ' (' + base + ')';
+  return name + (nth ? ', file ' + nth : '') + ' (' + base + ')';
+}
+// what a file you supply should be, from its type and the example file
+function fileHint(p, name, multi) {
+  var f = p.split('/').pop(), pv = (XQB_DATA.prev || {})[p], h;
+  if (/\.bed$/.test(f)) h = 'PLINK genotypes: give the .bed file; its .bim and .fam must sit next to it.';
+  else if (/\.vcf(\.gz)?$/.test(f)) h = 'VCF genotypes, bgzipped, with a .tbi index next to it.';
+  else if (/\.bed\.gz$/.test(f)) h = 'A BED table: chromosome, start, end and ID columns, then one column per sample; bgzipped, with a .tbi index next to it.';
+  else if (/\.gct(\.gz)?$/.test(f)) h = 'An expression matrix in GCT format: one row per gene, one column per sample.';
+  else if (/\.rds$/.test(f)) h = 'An R data file (.rds)' + (/PC/.test(name) ? ' with the genetic principal components, as written by the PCA module.' : ', as written by the protocol module that makes it.');
+  else if (pv && pv.cols > 8) h = 'A tab-separated table: one row per variable (first column ' + pv.rows[0][0] + '), one column per sample.';
+  else if (pv) h = 'A tab-separated table with the columns ' + pv.rows[0].slice(0, 6).join(', ') + (pv.cols > 6 ? ', …' : '') + '.';
+  else h = '';
+  if (multi) h += (h ? ' ' : '') + 'The example gives one file per chromosome, one per box.';
+  return h + (pv ? ' Open Details for the example file.' : '');
 }
 function sig(r) { return r.m + ':' + r.wfs.join(','); }
 function diff(a, b) { var A = {}, ch = {}, n = 0; a.forEach(function (r) { A[r.id] = sig(r); }); b.forEach(function (r) { if (A[r.id] !== sig(r)) { ch[r.id] = 1; n++; } }); var B = {}; b.forEach(function (r) { B[r.id] = 1; }); a.forEach(function (r) { if (!B[r.id]) n++; }); return { changed: ch, text: n ? 'Route updated: ' + n + ' step' + (n > 1 ? 's' : '') + ' changed.' : '' }; }
@@ -1057,9 +1074,11 @@ class Component {
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
         ins.push(fileItem('r' + i + ':' + p, p, { fromStep: pi >= 0 ? pi + 1 : 0, openStep: pi >= 0 ? (function (sid) { return function () { app.focusNext = 'xqb-step-h'; self.setState({ stepOpen: sid }); }; })(route[pi].id) : null, raw: p, source: src, path: shown, showPath: user && own, name: optLabel(((D.opt || {})[k] || {})[p], p).replace(/ \([^()]*\)$/, ''), hasPreview: !!(D.prev || {})[p] && !(user && own && s.paths[p]) }));
         var first = user ? userFiles[p][0] === i + 1 : false, label = optLabel(((D.opt || {})[k] || {})[p], p);
-        if (user && own && first) supply.push({ name: label.replace(/ \([^()]*\)$/, ''), step: 'step ' + (i + 1), href: '#path-' + userOrder.indexOf(p), done: !!s.paths[p], mark: s.paths[p] ? '✓ ' : '' });
-        files.push({ label: label.replace(/ \([^()]*\)$/, ''), source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
-          ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/' + label.replace(/ \([^()]*\)$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + ((p.split('/').pop().match(/\.[a-z0-9]+(\.gz)?$/i) || [''])[0]),
+        var optName = ((D.opt || {})[k] || {})[p] || '', multi = /_\d+$/.test(optName) || Object.keys((D.opt || {})[k] || {}).some(function (q) { return D.opt[k][q] === optName + '_2'; });
+        var shortLabel = label.replace(/ \([^()]*\)$/, '') + (multi && !/_\d+$/.test(optName) ? ', file 1' : '');
+        if (user && own && first) supply.push({ name: shortLabel, step: 'step ' + (i + 1), href: '#path-' + userOrder.indexOf(p), done: !!s.paths[p], mark: s.paths[p] ? '✓ ' : '' });
+        files.push({ hint: /_\d+$/.test(optName) ? 'Same format as file 1.' : fileHint(p, label, multi), label: shortLabel, source: user && own && !first ? '· same file as step ' + userFiles[p][0] : '· ' + src.charAt(0).toLowerCase() + src.slice(1),
+          ask: user && own && first, id: 'path-' + userOrder.indexOf(p), value: s.paths[p] || '', aria: label + ' (your file)', placeholder: '/path/to/' + shortLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + ((p.split('/').pop().match(/\.[a-z0-9]+(\.gz)?$/i) || [''])[0]),
           set: function (e) { var q = Object.assign({}, s.paths); q[p] = e.target.value; self.setState({ paths: q }); } });
       }); });
       var stepsRead = Object.keys(reads).map(Number).sort(function (a, b) { return a - b; });
@@ -1143,8 +1162,8 @@ class Component {
     ];
     readiness = readiness.filter(function (c) { return c.cls !== 'is-ok'; });
     var script = route.length ? '#!/bin/bash\n# xQTL analysis route from the Workflow Builder\n# Protocol revision: ' + REV + '\n# ' + (own ? 'Your data' : 'Repository example data') + ' · ' + { local: 'runs here', slurm: 'SoS submits each step to SLURM', sge: 'SoS submits each step to SGE' }[s.runOn] + '\n# Status: ' + (ready ? 'ready to run. ' : 'NOT RUNNABLE YET. ') + status + '\nset -euo pipefail\n\n' + body : '# Choose an example or describe your study to build the route.';
-    var setupOnce = [{ v: 'Clone the repository.' }, { v: 'Install the software environment with pixi (see Environment setup).' }];
-    if (s.runOn !== 'local') setupOnce.push({ v: 'Copy code/cluster/' + s.runOn + '.yml to my_cluster.yml and set your account and queue.' });
+    var setupOnce = [{ v: 'Clone the repository.' }, { v: 'Install the software environment with pixi:', hasLink: true, href: BASE + 'xqtl-protocol-demo', linkText: 'Environment setup', after: '.' }];
+    if (s.runOn !== 'local') setupOnce.push({ v: 'Copy code/cluster/' + s.runOn + '.yml to my_cluster.yml and set your account and queue:', hasLink: true, href: BASE + 'running-on-a-cluster', linkText: 'Running on a cluster', after: '.' });
     var setupRoute = [{ v: 'Open a terminal in the repository folder' + (s.runOn === 'local' ? '.' : ', on the cluster’s login node.') }];
     if (own) setupRoute.push({ v: missing ? 'Fill in the ' + missing + ' input path' + (missing > 1 ? 's' : '') + ' above; the script shows <your_…> until you do.' : 'Check that each path above points at a readable file.' });
     else setupRoute.push({ v: 'The example files are already in the repository; nothing to download.' });
