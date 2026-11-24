@@ -1,5 +1,5 @@
 ---
-title: About
+title: About & Reference
 ---
 
 The FunGen-xQTL Computational Protocol is developed for the NIH/NIA Alzheimer's

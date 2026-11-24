@@ -39,4 +39,23 @@ New here? Start with [Environment setup](../code/SoS/xqtl_protocol_demo.ipynb), 
 
 ```{include} ../README.md
 :start-after: <!-- site-home-continues -->
+:end-before: ## Overview of the protocol
+```
+
+:::::{dropdown} Overview of the protocol
+```{include} ../README.md
+:start-after: <!-- site-overview -->
+:end-before: <!-- site-overview-end -->
+```
+:::::
+
+:::::{dropdown} How to use the resource
+```{include} ../README.md
+:start-after: <!-- site-use -->
+:end-before: <!-- site-use-end -->
+```
+:::::
+
+```{include} ../README.md
+:start-after: <!-- site-use-end -->
 ```
