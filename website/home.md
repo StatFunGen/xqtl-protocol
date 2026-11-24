@@ -15,7 +15,7 @@ site:
 <div class="fx-hero__text">
 <p class="fx-hero__org">ADSP Functional Genomics Consortium (FunGen-AD)</p>
 <h1 class="fx-hero__title">FunGen<span class="fx-hero__x">-xQTL</span> Protocol</h1>
-<p class="fx-hero__lead">Reproducible, reusable pipelines for molecular QTL (xQTL) analysis, from reference data and molecular phenotypes to association scans, fine-mapping, colocalization and TWAS. A molecular QTL is a genetic variant linked to a change in a molecular trait, such as gene expression, splicing, protein level or DNA methylation.</p>
+<p class="fx-hero__lead">Reproducible pipelines for molecular QTL (xQTL) analysis, from reference data to association scans, fine-mapping, colocalization and TWAS.</p>
 <p class="fx-hero__btns"><a class="fx-pill fx-pill--solid" href="https://statfungen.github.io/xqtl-protocol/xqtl-protocol-workflow-builder/">Build an analysis workflow</a><a class="fx-pill" href="https://statfungen.github.io/xqtl-protocol/xqtl-protocol-demo/">Set up the software</a></p>
 </div>
 </div>
@@ -36,7 +36,7 @@ Every method the protocol runs, by analysis stage, with its module page and the 
 :::
 ::::
 
-New here? Install the software first with [Environment setup](../code/SoS/xqtl_protocol_demo.ipynb).
+A molecular QTL (xQTL) is a genetic variant linked to a change in a molecular trait, such as gene expression, splicing, protein level or DNA methylation. New here? Install the software first with [Environment setup](../code/SoS/xqtl_protocol_demo.ipynb).
 
 ```{include} ../README.md
 :start-after: <!-- site-home-continues -->
