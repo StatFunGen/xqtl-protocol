@@ -16,7 +16,7 @@ site:
 <p class="fx-hero__org">ADSP Functional Genomics Consortium (FunGen-AD)</p>
 <h1 class="fx-hero__title">FunGen<span class="fx-hero__x">-xQTL</span> Protocol</h1>
 <p class="fx-hero__lead">Reproducible pipelines for molecular QTL (xQTL) analysis, from reference data to association scans, fine-mapping, colocalization and TWAS.</p>
-<p class="fx-hero__btns"><a class="fx-pill fx-pill--solid" href="https://statfungen.github.io/xqtl-protocol/xqtl-protocol-workflow-builder/">Build an analysis workflow</a><a class="fx-pill" href="https://statfungen.github.io/xqtl-protocol/xqtl-protocol-demo/">Set up the software</a></p>
+<p class="fx-hero__btns"><a class="fx-pill fx-pill--solid" href="_generated/xqtl_protocol_workflow_builder.ipynb">Build an analysis workflow</a><a class="fx-pill" href="../code/SoS/xqtl_protocol_demo.ipynb">Set up the software</a></p>
 </div>
 </div>
 
