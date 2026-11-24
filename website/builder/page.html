@@ -1,16 +1,15 @@
 <!-- Workflow Builder page template. Rendered by page.js: {{path}} inserts a value, <sc-for list= as=> repeats, <sc-if value=> shows when true, on<Event>="{{fn}}" binds a handler. Assembled into the builder notebook by website/builder_registry.py with the write option. -->
-<div class="xqb-meta"><span class="xqb-dot"></span><span style="color: var(--navy)">Workflow Builder</span><span>·</span><span>{{moduleCount}} modules</span><span>·</span><span>{{testedCount}} commands run on example data</span></div>
 <h1 class="hdt">xQTL Analysis Workflow Builder</h1>
-<p class="xqb-lede">Explore the molecular QTL analysis pipeline, try a working example, or build a reproducible workflow for your own study. New to the Protocol? Start with <a href="{{setupDoc}}">Environment setup</a>.</p>
+<p class="xqb-lede">Try a tested example, or describe your study, to get the steps to run and one script for them.</p>
 
 <div role="radiogroup" aria-label="How to begin" class="xqb-modes">
   <sc-for list="{{modes}}" as="md">
-    <button type="button" role="radio" aria-checked="{{md.checked}}" onClick="{{md.pick}}" style="{{md.style}}">
+    <button type="button" id="{{md.rid}}" role="radio" aria-checked="{{md.checked}}" onClick="{{md.pick}}" style="{{md.style}}">
       <span style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
         <span style="font-size: 17px; font-weight: 700; color: var(--navy)">{{md.label}}</span>
         <span style="{{md.dot}}"></span>
       </span>
-      <span style="display: block; font-size: 14.5px; line-height: 1.5; color: var(--ink); margin-top: 6px">{{md.desc}}</span>
+      <span style="display: block; font-size: 15px; line-height: 1.5; color: var(--ink); margin-top: 6px">{{md.desc}}</span>
     </button>
   </sc-for>
 </div>
@@ -18,18 +17,15 @@
 <sc-if value="{{isExample}}">
   <div role="radiogroup" aria-label="Example" class="xqb-examples">
     <sc-for list="{{examples}}" as="ex">
-      <button type="button" role="radio" aria-checked="{{ex.ariaChecked}}" onClick="{{ex.pick}}" style="{{ex.style}}">
+      <button type="button" id="{{ex.rid}}" role="radio" aria-checked="{{ex.ariaChecked}}" onClick="{{ex.pick}}" style="{{ex.style}}">
         <span style="display: block; font-size: 15px; font-weight: 700; color: var(--navy)">{{ex.title}}</span>
-        <span style="display: block; margin: 6px 0"><span style="{{ex.tagStyle}}">{{ex.tag}}</span></span>
-        <span style="display: block; font-size: 13.5px; line-height: 1.45; color: var(--ink)">{{ex.learn}}</span>
-        <span style="display: block; font-size: 12.5px; line-height: 1.4; color: var(--ink2); margin-top: 6px">{{ex.steps}}</span>
+        <sc-if value="{{ex.notReady}}"><span style="display: block; margin: 6px 0"><span style="{{ex.tagStyle}}">{{ex.tag}}</span></span></sc-if>
+        <span style="display: block; font-size: 13.5px; line-height: 1.4; color: var(--ink2); margin-top: 6px">{{ex.steps}}</span>
       </button>
     </sc-for>
   </div>
   <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px">
-    <button type="button" onClick="{{loadExample}}" class="xqb-btn xqb-primary">Load example</button>
     <button type="button" onClick="{{resetAll}}" class="xqb-btn">Reset</button>
-    <button type="button" onClick="{{copyLink}}" class="xqb-btn">{{copyLinkLabel}}</button>
   </div>
   <div class="xqb-tut">
     <sc-for list="{{tut.items}}" as="t">
@@ -41,7 +37,7 @@
   <sc-if value="{{isOwn}}">
     <div style="border: 1px solid var(--ln); border-radius: 8px; margin-top: 16px">
       <fieldset style="border: 0; margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--ln)">
-        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">1. What molecular phenotype are you studying?</legend>
+        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">What molecular phenotype are you studying?</legend>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; clear: both">
           <sc-for list="{{qPheno}}" as="o">
             <label style="{{o.style}}"><input type="radio" name="ph" checked="{{o.checked}}" onChange="{{o.pick}}" style="accent-color: var(--navy); margin: 0">{{o.label}}</label>
@@ -49,15 +45,16 @@
         </div>
       </fieldset>
       <fieldset style="border: 0; margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--ln)">
-        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">2. What data do you already have?</legend>
+        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">What data do you already have?</legend>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; clear: both">
           <sc-for list="{{qStart}}" as="o">
             <label style="{{o.style}}"><input type="radio" name="start" checked="{{o.checked}}" onChange="{{o.pick}}" style="accent-color: var(--navy); margin: 0">{{o.label}}</label>
           </sc-for>
         </div>
+        <p style="margin: 8px 0 0; font-size: 14px; color: var(--ink2)">Processed phenotype matrix: normalized values, one row per gene or other trait and one column per sample (BED format).</p>
       </fieldset>
       <fieldset style="border: 0; margin: 0; padding: 16px 18px">
-        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">3. What analyses do you want? <span style="font-weight: 400; color: var(--ink2); font-size: 13.5px">Choose any</span></legend>
+        <legend style="font-weight: 600; font-size: 15px; color: var(--navy); padding: 0; float: left; width: 100%; margin-bottom: 10px">What analyses do you want? <span style="font-weight: 400; color: var(--ink2); font-size: 14px">Choose any</span></legend>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; clear: both">
           <sc-for list="{{qGoals}}" as="o">
             <label style="{{o.style}}"><input type="checkbox" checked="{{o.checked}}" onChange="{{o.pick}}" style="accent-color: var(--navy); margin: 0">{{o.label}}</label>
@@ -67,8 +64,8 @@
           <div style="margin-top: 14px; padding: 12px 14px; border-radius: 6px; background: var(--tint); display: flex; flex-direction: column; gap: 12px">
             <sc-for list="{{contextual}}" as="q">
               <div>
-                <label for="{{q.id}}" style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px">{{q.label}} <span style="font-weight: 400; color: var(--ink2)">· {{q.why}}</span></label>
-                <select id="{{q.id}}" onChange="{{q.pick}}" value="{{q.value}}" style="font-size: 14px; min-height: 38px; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--bg); color: var(--ink); max-width: 100%">
+                <label for="{{q.id}}" style="display: block; font-size: 15px; font-weight: 600; margin-bottom: 6px">{{q.label}} <span style="font-weight: 400; color: var(--ink2)">· {{q.why}}</span></label>
+                <select id="{{q.id}}" onChange="{{q.pick}}" value="{{q.value}}" style="font-size: 15px; min-height: 38px; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--bg); color: var(--ink); max-width: 100%">
                   <sc-for list="{{q.opts}}" as="op"><option value="{{op.v}}">{{op.label}}</option></sc-for>
                 </select>
               </div>
@@ -77,13 +74,13 @@
         </sc-if>
       </fieldset>
       <div style="border-top: 1px solid var(--ln); padding: 8px 18px">
-        <button type="button" aria-expanded="{{advExpanded}}" aria-controls="adv-opts" onClick="{{toggleAdv}}" style="font-size: 14.5px; min-height: 40px; padding: 6px 0; background: none; border: 0; color: var(--teal); font-weight: 600; cursor: pointer">{{advLabel}} <span style="font-weight: 400; color: var(--ink2); font-size: 13px">{{advCount}}</span></button>
+        <button type="button" aria-expanded="{{advExpanded}}" aria-controls="adv-opts" onClick="{{toggleAdv}}" style="font-size: 15px; min-height: 40px; padding: 6px 0; background: none; border: 0; color: var(--teal); font-weight: 600; cursor: pointer">{{advLabel}} <span style="font-weight: 400; color: var(--ink2); font-size: 14px">{{advCount}}</span></button>
         <sc-if value="{{adv}}">
           <div id="adv-opts" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 18px; padding: 6px 0 10px">
             <sc-for list="{{allOpts}}" as="q">
               <div>
-                <label for="{{q.id}}" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px">{{q.label}}</label>
-                <select id="{{q.id}}" onChange="{{q.pick}}" value="{{q.value}}" style="width: 100%; font-size: 14px; min-height: 38px; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--bg); color: var(--ink)">
+                <label for="{{q.id}}" style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px">{{q.label}}</label>
+                <select id="{{q.id}}" onChange="{{q.pick}}" value="{{q.value}}" style="width: 100%; font-size: 15px; min-height: 38px; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--bg); color: var(--ink)">
                   <sc-for list="{{q.opts}}" as="op"><option value="{{op.v}}">{{op.label}}</option></sc-for>
                 </select>
               </div>
@@ -93,96 +90,145 @@
       </div>
     </div>
   </sc-if>
-  <sc-if value="{{isOwn}}"><div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px"><button type="button" onClick="{{resetAll}}" class="xqb-btn">Reset</button><button type="button" onClick="{{copyLink}}" class="xqb-btn">{{copyLinkLabel}}</button></div></sc-if>
+  <sc-if value="{{isOwn}}"><div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px"><button type="button" onClick="{{resetAll}}" class="xqb-btn">Reset</button></div></sc-if>
   <p role="status" aria-live="polite" style="{{msgStyle}}">{{msg}}</p>
 
-<section aria-labelledby="map-h" style="margin: 36px 0 44px">
-  <h2 id="map-h" class="xqb-h2">1. The xQTL analysis, end to end</h2>
-  <p style="margin: 12px 0 6px; font-size: 15.5px; line-height: 1.6">What methods exist and how they relate. This is a map of the science, not your run order: your route below lists exactly what runs. Select a phase to see its modules.</p>
-  <p style="margin: 0 0 14px; font-size: 13.5px; color: var(--ink2)">Phases on your current route are shaded and say so; dashed phases are optional branches.</p>
-  <div class="xqb-map">
-    <div class="xqb-refwrap"><div class="xqb-refside" aria-hidden="true">supporting resources, used where required</div><div class="xqb-refcol">
-      <div class="xqb-row xqb-r1"><sc-for list="{{smap.ref}}" as="n"><button type="button" aria-expanded="{{n.pressed}}" aria-controls="xqb-phase" id="{{n.nid}}" aria-label="{{n.aria}}" onClick="{{n.pick}}" class="{{n.cls}}"><span class="xqb-n-t"><span class="xqb-num">{{n.num}}</span>{{n.label}}<span class="xqb-n-c">{{n.count}}</span></span><span class="xqb-n-d">{{n.desc}}</span><sc-if value="{{n.hasTags}}"><span class="xqb-tags"><sc-for list="{{n.tags}}" as="tg"><span class="xqb-tag">{{tg.v}}</span></sc-for></span></sc-if><sc-if value="{{n.state}}"><span class="xqb-n-s">{{n.state}}</span></sc-if></button></sc-for></div>
-      <svg class="xqb-conn xqb-dash" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d="M50 0 V20"></path></svg>
-      <div class="xqb-row xqb-r1w"><sc-for list="{{smap.quant}}" as="n"><button type="button" aria-expanded="{{n.pressed}}" aria-controls="xqb-phase" id="{{n.nid}}" aria-label="{{n.aria}}" onClick="{{n.pick}}" class="{{n.cls}}"><span class="xqb-n-t"><span class="xqb-num">{{n.num}}</span>{{n.label}}<span class="xqb-n-c">{{n.count}}</span></span><span class="xqb-n-d">{{n.desc}}</span><sc-if value="{{n.hasTags}}"><span class="xqb-tags"><sc-for list="{{n.tags}}" as="tg"><span class="xqb-tag">{{tg.v}}</span></sc-for></span></sc-if><sc-if value="{{n.state}}"><span class="xqb-n-s">{{n.state}}</span></sc-if></button></sc-for></div>
-    </div></div>
-    <svg class="xqb-conn" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d="M50 0 V20"></path></svg>
-    <div class="xqb-ins" aria-hidden="true"><span>raw genotypes (VCF or PLINK)</span><span>quantified phenotypes, from phase 2</span><span>study metadata</span></div>
-    <div class="xqb-cap"><strong>3 · Data pre-processing</strong>: three streams, prepared side by side</div>
-    <div class="xqb-row xqb-r3c"><sc-for list="{{smap.streams}}" as="n"><button type="button" aria-expanded="{{n.pressed}}" aria-controls="xqb-phase" id="{{n.nid}}" aria-label="{{n.aria}}" onClick="{{n.pick}}" class="{{n.cls}}"><span class="xqb-n-t"><span class="xqb-num">{{n.num}}</span>{{n.label}}<span class="xqb-n-c">{{n.count}}</span></span><span class="xqb-n-d">{{n.desc}}</span><sc-if value="{{n.hasTags}}"><span class="xqb-tags"><sc-for list="{{n.tags}}" as="tg"><span class="xqb-tag">{{tg.v}}</span></sc-for></span></sc-if><sc-if value="{{n.state}}"><span class="xqb-n-s">{{n.state}}</span></sc-if></button></sc-for></div>
-    <p class="xqb-xlink">Genotype PCs <span aria-hidden="true">(Genotype →)</span> and phenotype-derived hidden factors <span aria-hidden="true">(Phenotype →)</span> can become covariates, alongside known covariates from study metadata.</p>
-    <svg class="xqb-conn" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d="M16.7 0 V10 M50 0 V10 M83.3 0 V10 M16.7 10 H83.3 M50 10 V20"></path></svg>
-    <div class="xqb-cap">the three streams converge</div>
-    <div class="xqb-row xqb-r1"><sc-for list="{{smap.qtl}}" as="n"><button type="button" aria-expanded="{{n.pressed}}" aria-controls="xqb-phase" id="{{n.nid}}" aria-label="{{n.aria}}" onClick="{{n.pick}}" class="{{n.cls}}"><span class="xqb-n-t"><span class="xqb-num">{{n.num}}</span>{{n.label}}<span class="xqb-n-c">{{n.count}}</span></span><span class="xqb-n-d">{{n.desc}}</span><sc-if value="{{n.hasTags}}"><span class="xqb-tags"><sc-for list="{{n.tags}}" as="tg"><span class="xqb-tag">{{tg.v}}</span></sc-for></span></sc-if><sc-if value="{{n.state}}"><span class="xqb-n-s">{{n.state}}</span></sc-if></button></sc-for></div>
-    <svg class="xqb-conn xqb-dash" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d="M50 0 V8 M25 8 H75 M25 8 V20 M75 8 V20"></path></svg>
-    <div class="xqb-cap">possible downstream analyses, chosen by your question</div>
-    <div class="xqb-row xqb-r2"><sc-for list="{{smap.branch}}" as="n"><button type="button" aria-expanded="{{n.pressed}}" aria-controls="xqb-phase" id="{{n.nid}}" aria-label="{{n.aria}}" onClick="{{n.pick}}" class="{{n.cls}}"><span class="xqb-n-t"><span class="xqb-num">{{n.num}}</span>{{n.label}}<span class="xqb-n-c">{{n.count}}</span></span><span class="xqb-n-d">{{n.desc}}</span><sc-if value="{{n.hasTags}}"><span class="xqb-tags"><sc-for list="{{n.tags}}" as="tg"><span class="xqb-tag">{{tg.v}}</span></sc-for></span></sc-if><sc-if value="{{n.state}}"><span class="xqb-n-s">{{n.state}}</span></sc-if></button></sc-for></div>
-    <svg class="xqb-conn xqb-dash" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d="M25 0 V8 M75 0 V8 M25 8 H75 M50 8 V20"></path></svg>
-    <div class="xqb-cap">possible downstream analyses; some methods start directly from summary statistics</div>
-    <div class="xqb-row xqb-r1"><sc-for list="{{smap.gwas}}" as="n"><button type="button" aria-expanded="{{n.pressed}}" aria-controls="xqb-phase" id="{{n.nid}}" aria-label="{{n.aria}}" onClick="{{n.pick}}" class="{{n.cls}}"><span class="xqb-n-t"><span class="xqb-num">{{n.num}}</span>{{n.label}}<span class="xqb-n-c">{{n.count}}</span></span><span class="xqb-n-d">{{n.desc}}</span><sc-if value="{{n.hasTags}}"><span class="xqb-tags"><sc-for list="{{n.tags}}" as="tg"><span class="xqb-tag">{{tg.v}}</span></sc-for></span></sc-if><sc-if value="{{n.state}}"><span class="xqb-n-s">{{n.state}}</span></sc-if></button></sc-for></div>
-    <svg class="xqb-conn xqb-dash" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d="M50 0 V20"></path></svg>
-    <div class="xqb-cap">where appropriate</div>
-    <div class="xqb-row xqb-r1"><sc-for list="{{smap.enr}}" as="n"><button type="button" aria-expanded="{{n.pressed}}" aria-controls="xqb-phase" id="{{n.nid}}" aria-label="{{n.aria}}" onClick="{{n.pick}}" class="{{n.cls}}"><span class="xqb-n-t"><span class="xqb-num">{{n.num}}</span>{{n.label}}<span class="xqb-n-c">{{n.count}}</span></span><span class="xqb-n-d">{{n.desc}}</span><sc-if value="{{n.hasTags}}"><span class="xqb-tags"><sc-for list="{{n.tags}}" as="tg"><span class="xqb-tag">{{tg.v}}</span></sc-for></span></sc-if><sc-if value="{{n.state}}"><span class="xqb-n-s">{{n.state}}</span></sc-if></button></sc-for></div>
-  </div>
-
-  <sc-if value="{{hasPhase}}">
-    <div id="xqb-phase" role="region" aria-labelledby="xqb-phase-h" class="xqb-stage">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
-        <div><div class="xqb-k">{{phase.kicker}}</div><h3 id="xqb-phase-h" tabindex="-1" class="xqb-phase-h">{{phase.label}}<span class="xqb-sr">, {{phase.srHint}}</span></h3></div>
-        <button type="button" onClick="{{phase.close}}" aria-label="Close this phase" class="xqb-x">×</button>
-      </div>
-      <p style="margin: 6px 0 10px; font-size: 14.5px; line-height: 1.6">{{phase.what}}</p>
-      <div class="xqb-grp">
-        <sc-for list="{{phase.groups}}" as="g">
-          <div class="{{g.cls}}">
-            <sc-if value="{{g.title}}"><div class="xqb-k" style="margin-bottom: 4px">{{g.title}}</div></sc-if>
-            <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<span class="xqb-mstate">{{m.state}}</span></button></sc-for>
-          </div>
-        </sc-for>
-      </div>
-      <sc-if value="{{phase.hasMod}}">
-        <div class="xqb-prev">
-          <div style="grid-column: 1 / -1; font-size: 16px; font-weight: 700; color: var(--navy)">{{mod.label}}</div>
-          <div><div class="xqb-k">WHAT IT DOES</div>{{mod.what}}</div>
-          <div><div class="xqb-k">WHEN TO USE IT</div>{{mod.when}}</div>
-          <div><div class="xqb-k">INPUTS</div>{{mod.inputs}}</div>
-          <div><div class="xqb-k">MAIN OUTPUT</div><span style="font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere">{{mod.output}}</span></div>
-          <div><div class="xqb-k">STATUS</div><span style="{{mod.statusStyle}}">{{mod.status}}</span></div>
-          <div><div class="xqb-k">MORE</div><a href="{{mod.doc}}">{{mod.label}} notebook</a> · full details are in the route step when it is on your route</div>
-        </div>
-      </sc-if>
-      <sc-if value="{{phase.canBuild}}"><div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><button type="button" onClick="{{phase.build}}" class="xqb-btn">{{phase.buildLabel}}</button><span style="font-size: 13px; color: var(--ink2)">applies a study preset; it does not add modules by itself</span></div></sc-if>
-    </div>
-  </sc-if>
-</section>
-
-<section id="route" aria-labelledby="r-h" style="margin-bottom: 44px">
+<section id="route" aria-labelledby="r-h" style="margin: 36px 0 44px">
   <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">
-    <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">2. Your analysis route</h2>
-    <span style="font-size: 13.5px; color: var(--ink2)">{{routeSummary}}</span>
+    <h2 id="r-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0">1. Your analysis</h2>
   </div>
-  <sc-if value="{{hasProduces}}"><p style="margin: 12px 0 0; font-size: 15.5px; line-height: 1.6; font-weight: 600; color: var(--navy)">{{produces}}</p></sc-if>
-  <p style="margin: 8px 0 14px; font-size: 15.5px; line-height: 1.6">The modules to run, in order, and the files each one needs. Open a step for the method choice, exact file names, example previews and outputs.</p>
-  <sc-if value="{{isOwnSrc}}"><p style="margin: -6px 0 14px; font-size: 14px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each file where it is first needed; paths stay in your browser.</span></p></sc-if>
+  <sc-if value="{{isOwnSrc}}"><div class="xqb-supply"><p style="margin: 0 0 6px; font-size: 15px"><span style="{{pathStatusStyle}}">{{pathStatus}}</span> <span style="color: var(--ink2)">Enter each one in the step that first needs it; paths stay in your browser.</span></p>
+    <ul><sc-for list="{{supply}}" as="f"><li><a href="{{f.href}}">{{f.mark}}{{f.name}}</a> <span>{{f.step}}</span></li></sc-for></ul></div></sc-if>
   <sc-if value="{{routeEmpty}}">
     <div style="border: 1px dashed var(--ln2); border-radius: 8px; padding: 22px; text-align: center; color: var(--ink2); font-size: 15px">Choose an example or describe your study above to see your route.</div>
   </sc-if>
-  <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
-    <sc-for list="{{route}}" as="r">
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">Your steps, numbered in the order they run, sit in their phase of the analysis. Phases on your route are highlighted; open any other box to see its modules.</p>
+  <div class="xqb-flow">
+    <sc-for list="{{flow}}" as="p">
+      <sc-if value="{{p.hasArrow}}"><div class="xqb-farrow" aria-hidden="true"></div></sc-if>
+      <div class="xqb-fstage">
+        <div class="xqb-fhead"><span class="xqb-fnum">{{p.num}}</span><span class="xqb-fk">{{p.kicker}}</span></div>
+        <sc-if value="{{p.hasSteps}}">
+          <div class="xqb-fbox is-route xqb-routebox">
+          <div class="xqb-ft">{{p.boxTitle}}</div>
+          <ol class="xqb-steps">
+            <sc-for list="{{p.steps}}" as="r">
+          <li id="{{r.anchor}}" style="{{r.cardStyle}}">
+            <div style="display: flex; gap: 14px; align-items: flex-start">
+              <span style="{{r.numStyle}}">{{r.n}}</span>
+              <div style="flex: 1 1 auto; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px">
+                  <span style="font-weight: 600; font-size: 16px; color: var(--ink)">{{r.title}}</span>
+                  <sc-if value="{{r.changed}}"><span style="font-size: 13.5px; font-weight: 600; color: var(--stf)">Changed</span></sc-if>
+                </div>
+                <div style="font-size: 15px; color: var(--ink2); margin-top: 3px; line-height: 1.45">{{r.metaLine}}</div>
+                <sc-if value="{{r.notTested}}"><div style="margin-top: 6px"><span style="{{r.testStyle}}">{{r.tested}}</span></div></sc-if>
+                <sc-if value="{{r.hasFiles}}">
+                  <div class="xqb-files">
+                    <div class="xqb-files-h">Files this step needs</div>
+                    <ul>
+                      <sc-for list="{{r.files}}" as="f">
+                        <li>
+                          <span class="xqb-file-name">{{f.label}}</span><span class="xqb-file-src">{{f.source}}</span>
+                      <sc-if value="{{f.hint}}"><div class="xqb-file-hint">{{f.hint}}</div></sc-if>
+                          <sc-if value="{{f.ask}}"><input id="{{f.id}}" class="xqb-path" type="text" value="{{f.value}}" onInput="{{f.set}}" placeholder="{{f.placeholder}}" aria-label="{{f.aria}}"/></sc-if>
+                        </li>
+                      </sc-for>
+                    </ul>
+                  </div>
+                </sc-if>
+              </div>
+              <button type="button" id="{{r.btnId}}" aria-haspopup="dialog" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
+            </div>
+            <sc-if value="{{r.isOpen}}">
+              <div class="xqb-modal" onClick="{{r.backdrop}}">
+              <div role="dialog" aria-modal="true" aria-labelledby="xqb-step-h" class="xqb-stage" style="display: flex; flex-direction: column; gap: 14px">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+                  <div><div class="xqb-k">STEP {{r.n}} OF YOUR ROUTE</div><h3 id="xqb-step-h" tabindex="-1" class="xqb-phase-h">{{r.title}}</h3><div style="font-size: 15px; color: var(--ink2); margin-top: 2px">{{r.module}} · {{r.methodLine}}</div></div>
+                  <button type="button" onClick="{{r.close}}" aria-label="Close this step" class="xqb-x">×</button>
+                </div>
+                <div>
+                  <div class="xqb-k" style="margin-bottom: 4px">WHY THIS STEP</div>
+                  <p style="margin: 0; font-size: 15px; line-height: 1.6">{{r.why}}</p>
+                </div>
+                <sc-if value="{{r.hasChoices}}">
+                  <fieldset style="border: 1px solid var(--ln); border-radius: 6px; margin: 0; padding: 10px 14px">
+                    <legend style="font-size: 14px; font-weight: 600; color: var(--ink2); padding: 0 6px">Method</legend>
+                    <div style="display: flex; flex-direction: column; gap: 6px">
+                      <sc-for list="{{r.choices}}" as="c">
+                        <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.45; cursor: pointer; padding: 4px 0">
+                          <input type="radio" name="{{r.radioName}}" checked="{{c.checked}}" onChange="{{c.pick}}" style="accent-color: var(--navy); margin: 3px 0 0">
+                          <span><span style="font-weight: 600">{{c.label}}</span> <span style="{{c.tagStyle}}">{{c.tag}}</span><span style="display: block; color: var(--ink2); font-size: 14px">{{c.desc}}</span></span>
+                        </label>
+                      </sc-for>
+                    </div>
+                  </fieldset>
+                </sc-if>
+                <div><div class="xqb-k">INPUTS</div>
+                  <ol class="xqb-mlist">
+                    <sc-for list="{{r.inputs}}" as="f">
+                      <li><div class="xqb-mrow"><span>{{f.name}} <span class="xqb-src">· {{f.source}}</span></span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if><sc-if value="{{f.fromStep}}"><button type="button" onClick="{{f.openStep}}" class="xqb-btn xqb-sm">Open step {{f.fromStep}}</button></sc-if></div>
+                        <sc-if value="{{f.showPath}}"><div class="xqb-mono" style="color: var(--ink2); font-size: 13.5px">{{f.path}}</div></sc-if>
+                        <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                      </li>
+                    </sc-for>
+                  </ol>
+                </div>
+                <div><div class="xqb-k">OUTPUTS</div>
+                  <ol class="xqb-mlist">
+                    <sc-for list="{{r.outputs}}" as="o">
+                      <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                        <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                      </li>
+                    </sc-for>
+                  </ol>
+                </div>
+                <div>
+                  <div class="xqb-k" style="margin-bottom: 6px">COMMAND FOR THIS STEP</div>
+                  <pre class="xqb-code" tabindex="0">{{r.cmd}}</pre>
+                </div>
+                <sc-if value="{{r.hasTerms}}">
+                  <div>
+                    <div class="xqb-k" style="margin-bottom: 4px">TERMS</div>
+                    <dl class="xqb-terms"><sc-for list="{{r.terms}}" as="tm"><dt>{{tm.k}}</dt><dd>{{tm.v}}</dd></sc-for></dl>
+                  </div>
+                </sc-if>
+                <a href="{{r.doc}}" style="font-size: 15px; align-self: flex-start">Open the {{r.module}} notebook</a>
+              </div>
+              </div>
+            </sc-if>
+          </li>
+            </sc-for>
+          </ol>
+          <button type="button" id="{{p.moreId}}" aria-haspopup="dialog" onClick="{{p.more}}" class="xqb-link xqb-more">Other modules in this phase</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{p.noSteps}}">
+        <div class="{{p.rowCls}}">
+          <sc-for list="{{p.boxes}}" as="b">
+            <button type="button" id="{{b.bid}}" aria-haspopup="dialog" aria-label="{{b.aria}}" onClick="{{b.pick}}" class="{{b.cls}}">
+              <span class="xqb-ft">{{b.title}}</span>
+              <sc-if value="{{b.hasSub}}"><span class="xqb-fsub">{{b.sub}}</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{hasLoose}}">
+    <ol class="xqb-steps" style="margin-top: 16px">
+      <sc-for list="{{looseSteps}}" as="r">
       <li id="{{r.anchor}}" style="{{r.cardStyle}}">
         <div style="display: flex; gap: 14px; align-items: flex-start">
           <span style="{{r.numStyle}}">{{r.n}}</span>
           <div style="flex: 1 1 auto; min-width: 0">
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px">
               <span style="font-weight: 600; font-size: 16px; color: var(--ink)">{{r.title}}</span>
-              <sc-if value="{{r.changed}}"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: var(--stb); color: var(--stf)">Changed</span></sc-if>
+              <sc-if value="{{r.changed}}"><span style="font-size: 13.5px; font-weight: 600; color: var(--stf)">Changed</span></sc-if>
             </div>
-            <div style="font-size: 14px; color: var(--ink2); margin-top: 3px; line-height: 1.45">{{r.module}} · {{r.methodLine}}</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
-              <span style="{{r.testStyle}}">{{r.tested}}</span>
-              <sc-if value="{{r.hasTime}}"><span style="font-size: 12.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--ln); color: var(--ink2)">{{r.time}}</span></sc-if>
-              <span style="font-size: 12.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--ln); color: var(--ink2)">{{r.readsLine}}</span>
-            </div>
+            <div style="font-size: 15px; color: var(--ink2); margin-top: 3px; line-height: 1.45">{{r.metaLine}}</div>
+            <sc-if value="{{r.notTested}}"><div style="margin-top: 6px"><span style="{{r.testStyle}}">{{r.tested}}</span></div></sc-if>
             <sc-if value="{{r.hasFiles}}">
               <div class="xqb-files">
                 <div class="xqb-files-h">Files this step needs</div>
@@ -197,104 +243,127 @@
               </div>
             </sc-if>
           </div>
-          <button type="button" aria-expanded="{{r.expanded}}" aria-controls="{{r.panelId}}" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
+          <button type="button" id="{{r.btnId}}" aria-haspopup="dialog" onClick="{{r.toggle}}" style="{{r.btnStyle}}">{{r.btn}}</button>
         </div>
         <sc-if value="{{r.isOpen}}">
-          <div id="{{r.panelId}}" style="margin-top: 14px; border-top: 1px solid var(--ln); padding-top: 14px; display: flex; flex-direction: column; gap: 14px">
+          <div class="xqb-modal" onClick="{{r.backdrop}}">
+          <div role="dialog" aria-modal="true" aria-labelledby="xqb-step-h" class="xqb-stage" style="display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+              <div><div class="xqb-k">STEP {{r.n}} OF YOUR ROUTE</div><h3 id="xqb-step-h" tabindex="-1" class="xqb-phase-h">{{r.title}}</h3><div style="font-size: 15px; color: var(--ink2); margin-top: 2px">{{r.module}} · {{r.methodLine}}</div></div>
+              <button type="button" onClick="{{r.close}}" aria-label="Close this step" class="xqb-x">×</button>
+            </div>
             <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 4px">Why this step</div>
-              <p style="margin: 0; font-size: 14.5px; line-height: 1.6">{{r.why}}</p>
+              <div class="xqb-k" style="margin-bottom: 4px">WHY THIS STEP</div>
+              <p style="margin: 0; font-size: 15px; line-height: 1.6">{{r.why}}</p>
             </div>
             <sc-if value="{{r.hasChoices}}">
               <fieldset style="border: 1px solid var(--ln); border-radius: 6px; margin: 0; padding: 10px 14px">
-                <legend style="font-size: 13px; font-weight: 600; color: var(--ink2); padding: 0 6px">Method</legend>
+                <legend style="font-size: 14px; font-weight: 600; color: var(--ink2); padding: 0 6px">Method</legend>
                 <div style="display: flex; flex-direction: column; gap: 6px">
                   <sc-for list="{{r.choices}}" as="c">
-                    <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; padding: 4px 0">
+                    <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.45; cursor: pointer; padding: 4px 0">
                       <input type="radio" name="{{r.radioName}}" checked="{{c.checked}}" onChange="{{c.pick}}" style="accent-color: var(--navy); margin: 3px 0 0">
-                      <span><span style="font-weight: 600">{{c.label}}</span> <span style="{{c.tagStyle}}">{{c.tag}}</span><span style="display: block; color: var(--ink2); font-size: 13px">{{c.desc}}</span></span>
+                      <span><span style="font-weight: 600">{{c.label}}</span> <span style="{{c.tagStyle}}">{{c.tag}}</span><span style="display: block; color: var(--ink2); font-size: 14px">{{c.desc}}</span></span>
                     </label>
                   </sc-for>
                 </div>
               </fieldset>
             </sc-if>
-            <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Input</div>
-              <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+            <div><div class="xqb-k">INPUTS</div>
+              <ol class="xqb-mlist">
                 <sc-for list="{{r.inputs}}" as="f">
-                  <li style="border: 1px solid var(--ln); border-radius: 6px; padding: 8px 12px">
-                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px">
-                      <div style="min-width: 0; flex: 1 1 260px">
-                        <div style="font-size: 13.5px; font-weight: 600">{{f.source}}</div>
-                        <div style="font-family: var(--mono); font-size: 12.5px; color: var(--ink2); overflow-wrap: anywhere; margin-top: 2px">{{f.path}}</div>
-                      </div>
-                      <sc-if value="{{f.hasPreview}}">
-                        <button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" style="font-size: 13.5px; min-height: 34px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--ln2); background: var(--bg); color: var(--navy); cursor: pointer">{{f.btn}}</button>
-                      </sc-if>
-                    </div>
-                    <sc-if value="{{f.open}}">
-                      <div style="margin-top: 10px">
-                        <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div>
-                        <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-                          <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
-                            <thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                            <tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </sc-if>
+                  <li><div class="xqb-mrow"><span>{{f.name}} <span class="xqb-src">· {{f.source}}</span></span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if><sc-if value="{{f.fromStep}}"><button type="button" onClick="{{f.openStep}}" class="xqb-btn xqb-sm">Open step {{f.fromStep}}</button></sc-if></div>
+                    <sc-if value="{{f.showPath}}"><div class="xqb-mono" style="color: var(--ink2); font-size: 13.5px">{{f.path}}</div></sc-if>
+                    <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
                   </li>
                 </sc-for>
-              </ul>
+              </ol>
+            </div>
+            <div><div class="xqb-k">OUTPUTS</div>
+              <ol class="xqb-mlist">
+                <sc-for list="{{r.outputs}}" as="o">
+                  <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                    <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                  </li>
+                </sc-for>
+              </ol>
             </div>
             <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Output</div>
-              <ul style="margin: 0 0 8px; padding-left: 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; overflow-wrap: anywhere">
-                <sc-for list="{{r.outputs}}" as="o"><li>{{o.v}}</li></sc-for>
-              </ul>
-              <sc-if value="{{r.hasOut}}">
-                <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{r.outNote}}</div>
-                <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px">
-                  <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
-                    <thead><tr style="background: var(--tint)"><sc-for list="{{r.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
-                    <tbody><sc-for list="{{r.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
-                  </table>
-                </div>
-              </sc-if>
-            </div>
-            <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 6px">Command for this step</div>
+              <div class="xqb-k" style="margin-bottom: 6px">COMMAND FOR THIS STEP</div>
               <pre class="xqb-code" tabindex="0">{{r.cmd}}</pre>
             </div>
             <sc-if value="{{r.hasTerms}}">
               <div>
-                <div style="font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 4px">Terms</div>
+                <div class="xqb-k" style="margin-bottom: 4px">TERMS</div>
                 <dl class="xqb-terms"><sc-for list="{{r.terms}}" as="tm"><dt>{{tm.k}}</dt><dd>{{tm.v}}</dd></sc-for></dl>
               </div>
             </sc-if>
-            <a href="{{r.doc}}" style="font-size: 14px; align-self: flex-start">Open the {{r.module}} notebook</a>
+            <a href="{{r.doc}}" style="font-size: 15px; align-self: flex-start">Open the {{r.module}} notebook</a>
+          </div>
           </div>
         </sc-if>
       </li>
-    </sc-for>
-  </ol>
+      </sc-for>
+    </ol>
+  </sc-if>
+  <sc-if value="{{hasRoute}}"><p style="margin: 14px 0 0; font-size: 15px"><a href="#c-h">Continue to Prepare and run ↓</a></p></sc-if>
+  <sc-if value="{{hasPhase}}">
+    <div class="xqb-modal" onClick="{{phase.backdrop}}">
+    <div id="xqb-phase" role="dialog" aria-modal="true" aria-labelledby="xqb-phase-h" class="xqb-stage">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+        <div><div class="xqb-k">{{phase.kicker}}</div><h3 id="xqb-phase-h" tabindex="-1" class="xqb-phase-h">{{phase.label}}<span class="xqb-sr">, {{phase.srHint}}</span></h3></div>
+        <button type="button" onClick="{{phase.close}}" aria-label="Close this phase" class="xqb-x">×</button>
+      </div>
+      <p style="margin: 6px 0 10px; font-size: 15px; line-height: 1.6">{{phase.what}}</p>
+      <sc-if value="{{phase.showList}}">
+        <div class="xqb-fgrid is-multi">
+          <sc-for list="{{phase.groups}}" as="g">
+            <div class="xqb-fg">
+              <sc-if value="{{g.title}}"><div class="xqb-fgt">{{g.title}}</div></sc-if>
+              <sc-for list="{{g.mods}}" as="m"><button type="button" id="{{m.mid}}" onClick="{{m.pick}}" class="{{m.cls}}">{{m.label}}<sc-if value="{{m.soon}}"><span class="xqb-fsoon">Coming soon</span></sc-if></button></sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{phase.hasMod}}"><button type="button" onClick="{{phase.back}}" class="xqb-link">← All modules in this phase</button></sc-if>
+      <sc-if value="{{phase.hasMod}}">
+        <div class="xqb-mdet">
+          <h4>{{mod.label}}</h4>
+          <div><div class="xqb-k">WHAT IT DOES</div><p>{{mod.what}}</p></div>
+          <div><div class="xqb-k">WHEN TO USE IT</div><p>{{mod.when}}</p></div>
+          <sc-if value="{{mod.hasInputs}}"><div><div class="xqb-k">INPUTS</div>
+            <ol class="xqb-mlist">
+              <sc-for list="{{mod.inputs}}" as="f">
+                <li><div class="xqb-mrow"><span>{{f.name}}</span><sc-if value="{{f.hasPreview}}"><button type="button" aria-expanded="{{f.expanded}}" onClick="{{f.toggle}}" class="xqb-btn xqb-sm">{{f.btn}}</button></sc-if></div>
+                  <sc-if value="{{f.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{f.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{f.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{f.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                </li>
+              </sc-for>
+            </ol></div></sc-if>
+          <sc-if value="{{mod.hasOutputs}}"><div><div class="xqb-k">MAIN OUTPUT</div>
+            <ol class="xqb-mlist">
+              <sc-for list="{{mod.outputs}}" as="o">
+                <li><div class="xqb-mrow"><span class="xqb-mono">{{o.v}}</span><sc-if value="{{o.hasPreview}}"><button type="button" aria-expanded="{{o.expanded}}" onClick="{{o.toggle}}" class="xqb-btn xqb-sm">{{o.btn}}</button></sc-if></div>
+                  <sc-if value="{{o.open}}"><div style="margin: 8px 0 4px"><div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{o.note}}</div><div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px"><table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%"><thead><tr style="background: var(--tint)"><sc-for list="{{o.head}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead><tbody><sc-for list="{{o.rows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody></table></div></div></sc-if>
+                </li>
+              </sc-for>
+            </ol>
+          </div></sc-if>
+          <p style="margin: 0"><a href="{{mod.doc}}">Open the {{mod.label}} notebook</a></p>
+        </div>
+      </sc-if>
+      <sc-if value="{{phase.canBuild}}"><div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><button type="button" onClick="{{phase.build}}" class="xqb-btn">{{phase.buildLabel}}</button><span style="font-size: 14px; color: var(--ink2)">applies a study preset; it does not add modules by itself</span></div></sc-if>
+    </div>
+  </div>
+  </sc-if>
 </section>
 
 <section aria-labelledby="c-h" style="margin-bottom: 44px">
-  <h2 id="c-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">3. Prepare and run</h2>
-  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">One script for the whole route, taken from the module notebooks. It updates as you change the route, the data source or where it runs.</p>
+  <h2 id="c-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">2. Prepare and run</h2>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">One script runs the whole route.</p>
 
   <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 4px 18px; margin-bottom: 14px">
-    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 0; border-bottom: 1px solid var(--ln)">
-      <span style="flex: 0 0 150px; font-size: 14px; font-weight: 600; color: var(--ink2)">Data source</span>
-      <div role="group" aria-label="Data source" style="display: inline-flex; border: 1px solid var(--ln2); border-radius: 6px; overflow: hidden">
-        <sc-for list="{{srcTabs}}" as="t">
-          <button type="button" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
-        </sc-for>
-      </div>
-    </div>
     <fieldset style="border: 0; margin: 0; padding: 12px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px">
-      <legend style="float: left; flex: 0 0 150px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink2)">Where it runs</legend>
+      <legend style="float: left; flex: 0 0 150px; padding: 0; font-size: 15px; font-weight: 600; color: var(--ink2)">Where it runs</legend>
       <sc-for list="{{runOn}}" as="p">
         <label style="{{p.style}}"><input type="radio" name="runon" checked="{{p.checked}}" onChange="{{p.pick}}" style="accent-color: var(--navy); margin: 0">{{p.label}}</label>
       </sc-for>
@@ -302,19 +371,19 @@
   </div>
 
   <sc-if value="{{showCluster}}">
-    <div style="border-radius: 6px; background: var(--acs); padding: 12px 14px; font-size: 14px; line-height: 1.55; margin-bottom: 14px"><strong style="color: var(--navy)">These are SoS commands that submit jobs to {{runOnName}} for you</strong>, through your cluster settings file <code style="font-family: var(--mono); font-size: 13px">my_cluster.yml</code> (copy it from <code style="font-family: var(--mono); font-size: 13px">code/cluster/{{runOnFile}}.yml</code>). They are not a native <code style="font-family: var(--mono); font-size: 13px">{{nativeCmd}}</code> script: run them on a login node and SoS submits and tracks each step. <a href="{{clusterDoc}}">Running on a cluster</a> explains the settings file.</div>
+    <div style="border-radius: 6px; background: var(--acs); padding: 12px 14px; font-size: 15px; line-height: 1.55; margin-bottom: 14px"><strong style="color: var(--navy)">These are SoS commands that submit jobs to {{runOnName}} for you</strong>, through your cluster settings file <code style="font-family: var(--mono); font-size: 14px">my_cluster.yml</code> (copy it from <code style="font-family: var(--mono); font-size: 14px">code/cluster/{{runOnFile}}.yml</code>). They are not a native <code style="font-family: var(--mono); font-size: 14px">{{nativeCmd}}</code> script: run them on a login node and SoS submits and tracks each step. <a href="{{clusterDoc}}">Running on a cluster</a> explains the settings file.</div>
   </sc-if>
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 14px">
     <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
       <div style="font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px">One-time setup</div>
-      <ol style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.65">
-        <sc-for list="{{setupOnce}}" as="b"><li>{{b.v}}</li></sc-for>
+      <ol style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.65">
+        <sc-for list="{{setupOnce}}" as="b"><li>{{b.v}}<sc-if value="{{b.hasLink}}"> <a href="{{b.href}}">{{b.linkText}}</a>{{b.after}}</sc-if></li></sc-for>
       </ol>
     </div>
     <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; background: var(--next)">
       <div style="font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px">For this route</div>
-      <ol style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.65">
+      <ol style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.65">
         <sc-for list="{{setupRoute}}" as="b"><li>{{b.v}}</li></sc-for>
       </ol>
     </div>
@@ -329,60 +398,60 @@
   <div style="font-size: 15px; font-weight: 600; color: var(--navy); margin: 6px 0 6px">Complete route script</div>
 <div style="border: 1px solid var(--ln); border-radius: 8px; background: var(--code); overflow: hidden">
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--ln); background: var(--tint)">
-      <span style="font-family: var(--mono); font-size: 13px; color: var(--ink2)">bash · {{fileName}} · {{srcLabel}}</span>
+      <span style="font-family: var(--mono); font-size: 14px; color: var(--ink2)">bash · {{fileName}} · {{srcLabel}}</span>
       <div style="display: flex; gap: 6px">
-        <button type="button" onClick="{{copyScript}}" style="font-size: 13.5px; padding: 6px 12px; border: 0; background: transparent; border-radius: 6px; color: var(--ink2); min-height: 36px; cursor: pointer">{{copyScriptLabel}}</button>
-        <button type="button" onClick="{{downloadScript}}" style="font-size: 13.5px; padding: 6px 12px; border: 1px solid var(--navy); background: var(--navy); border-radius: 6px; color: var(--on); min-height: 36px; cursor: pointer">Download .sh</button>
+        <button type="button" onClick="{{copyScript}}" style="font-size: 14px; padding: 6px 12px; border: 0; background: transparent; border-radius: 6px; color: var(--ink2); min-height: 36px; cursor: pointer">{{copyScriptLabel}}</button>
+        <button type="button" onClick="{{downloadScript}}" style="font-size: 14px; padding: 6px 12px; border: 1px solid var(--navy); background: var(--navy); border-radius: 6px; color: var(--on); min-height: 36px; cursor: pointer">Download .sh</button>
       </div>
     </div>
-    <pre tabindex="0" style="margin: 0; padding: 14px 16px; overflow: auto; max-height: 460px; font-family: var(--mono); font-size: 13px; line-height: 1.65; color: var(--ink); white-space: pre">{{script}}</pre>
+    <pre tabindex="0" style="margin: 0; padding: 14px 16px; overflow: auto; max-height: 460px; font-family: var(--mono); font-size: 14px; line-height: 1.65; color: var(--ink); white-space: pre">{{script}}</pre>
   </div>
 
   <sc-if value="{{isExampleSrc}}">
     <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 14px; padding: 14px 16px; border: 1px solid var(--ln); border-radius: 8px">
       <div style="min-width: 0; flex: 1 1 320px">
         <div style="font-size: 15px; font-weight: 600; color: var(--navy)">Ran the example? Use this workflow with your data.</div>
-        <div style="font-size: 14px; color: var(--ink2); margin-top: 2px; line-height: 1.5">Keeps this route and its methods, and asks only for the {{ownNeed}} files to replace.</div>
+        <div style="font-size: 15px; color: var(--ink2); margin-top: 2px; line-height: 1.5">Keeps this route and its methods, and asks only for the {{ownNeed}} files to replace.</div>
       </div>
-      <button type="button" onClick="{{useWithMine}}" style="font-size: 14.5px; min-height: 42px; padding: 8px 18px; border-radius: 6px; border: 1px solid var(--navy); background: var(--navy); color: var(--on); font-weight: 600; cursor: pointer">Use this workflow with my data</button>
+      <button type="button" onClick="{{useWithMine}}" style="font-size: 15px; min-height: 42px; padding: 8px 18px; border-radius: 6px; border: 1px solid var(--navy); background: var(--navy); color: var(--on); font-weight: 600; cursor: pointer">Use this workflow with my data</button>
     </div>
   </sc-if>
 
 </section>
 
 <section aria-labelledby="res-h" style="margin-bottom: 44px">
-  <h2 id="res-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">4. Understand your results</h2>
-  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">The files to look at first, what they mean, and what to do next. Everything else the route writes is an intermediate file that later steps read.</p>
+  <h2 id="res-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">3. Understand your results</h2>
+  <p style="margin: 12px 0 14px; font-size: 15.5px; line-height: 1.6">The files to look at first.</p>
   <sc-if value="{{noResults}}"><p style="margin: 0; color: var(--ink2); font-size: 15px">Build a route to see its results.</p></sc-if>
   <div style="display: flex; flex-direction: column; gap: 10px">
     <sc-for list="{{mainResults}}" as="m">
       <div style="border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px">
         <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px">
           <span style="font-size: 16px; font-weight: 600; color: var(--navy)">{{m.title}}</span>
-          <span style="font-size: 13px; color: var(--ink2)">step {{m.n}} · {{m.module}}</span>
+          <span style="font-size: 14px; color: var(--ink2)">step {{m.n}} · {{m.module}}</span>
         </div>
-        <p style="margin: 6px 0 8px; font-size: 14.5px; line-height: 1.6">{{m.meaning}}</p>
-        <div style="font-family: var(--mono); font-size: 12.5px; color: var(--ink2); overflow-wrap: anywhere; margin-bottom: 8px">{{m.path}}</div>
+        <p style="margin: 6px 0 8px; font-size: 15px; line-height: 1.6">{{m.meaning}}</p>
+        <div style="font-family: var(--mono); font-size: 13.5px; color: var(--ink2); overflow-wrap: anywhere; margin-bottom: 8px">{{m.path}}</div>
         <sc-if value="{{m.hasOut}}">
-          <div style="font-size: 12.5px; color: var(--ink2); margin-bottom: 6px">{{m.outNote}}</div>
+          <div style="font-size: 13.5px; color: var(--ink2); margin-bottom: 6px">{{m.outNote}}</div>
           <div style="overflow-x: auto; border: 1px solid var(--ln); border-radius: 6px; margin-bottom: 8px">
-            <table style="border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; width: 100%">
+            <table style="border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; width: 100%">
               <thead><tr style="background: var(--tint)"><sc-for list="{{m.outHead}}" as="h"><th scope="col" style="text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--ln); font-weight: 600; color: var(--navy)">{{h.v}}</th></sc-for></tr></thead>
               <tbody><sc-for list="{{m.outRows}}" as="row"><tr><sc-for list="{{row.cells}}" as="cell"><td style="padding: 6px 10px; border-bottom: 1px solid var(--ln)">{{cell.v}}</td></sc-for></tr></sc-for></tbody>
             </table>
           </div>
         </sc-if>
-        <div style="font-size: 14px; line-height: 1.55"><strong style="color: var(--navy)">Next:</strong> {{m.next}}</div>
+        <div style="font-size: 15px; line-height: 1.55"><strong style="color: var(--navy)">Next:</strong> {{m.next}}</div>
       </div>
     </sc-for>
   </div>
   <sc-if value="{{hasInter}}">
     <details id="xqb-inter" style="border: 1px solid var(--ln); border-radius: 8px; padding: 10px 16px; margin-top: 10px">
-      <summary style="cursor: pointer; font-size: 14.5px; font-weight: 600; color: var(--navy); min-height: 28px">Intermediate files ({{interCount}})</summary>
-      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px">
+      <summary style="cursor: pointer; font-size: 15px; font-weight: 600; color: var(--navy); min-height: 28px">Intermediate files ({{interCount}})</summary>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px">
         <tbody>
           <sc-for list="{{inter}}" as="e">
-            <tr style="border-top: 1px solid var(--ln)"><td style="padding: 6px 10px 6px 0; color: var(--ink2); width: 70px">Step {{e.n}}</td><td style="padding: 6px 0; font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere">{{e.path}}</td></tr>
+            <tr style="border-top: 1px solid var(--ln)"><td style="padding: 6px 10px 6px 0; color: var(--ink2); width: 70px">Step {{e.n}}</td><td style="padding: 6px 0; font-family: var(--mono); font-size: 13.5px; overflow-wrap: anywhere">{{e.path}}</td></tr>
           </sc-for>
         </tbody>
       </table>
@@ -391,15 +460,15 @@
 </section>
 
 <section aria-labelledby="e-h" style="margin-bottom: 20px">
-  <h2 id="e-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">5. All modules</h2>
-  <p style="margin: 12px 0 12px; font-size: 15.5px; line-height: 1.6">The complete catalog, including alternative methods your route doesn't use. Viewing a module here does not add it to your route.</p>
+  <h2 id="e-h" style="font-size: 22px; font-weight: 600; color: var(--navy); margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ln)">4. All modules</h2>
+  <p style="margin: 12px 0 12px; font-size: 15.5px; line-height: 1.6">Every module, including ones your route does not use.</p>
   <button type="button" aria-expanded="{{catExpanded}}" onClick="{{toggleCat}}" class="xqb-link">{{catBtn}}</button>
   <sc-if value="{{catOpen}}">
-  <sc-if value="{{hasCatOnly}}"><p style="margin: 10px 0 0; font-size: 14px"><strong style="color: var(--navy)">{{catOnlyLabel}}</strong> <button type="button" onClick="{{clearCatOnly}}" class="xqb-link">Show all modules</button></p></sc-if>
+  <sc-if value="{{hasCatOnly}}"><p style="margin: 10px 0 0; font-size: 15px"><strong style="color: var(--navy)">{{catOnlyLabel}}</strong> <button type="button" onClick="{{clearCatOnly}}" class="xqb-link">Show all modules</button></p></sc-if>
   <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0">
     <label style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--ln2); border-radius: 6px; padding: 0 10px; height: 38px; flex: 1 1 220px; color: var(--ink2)">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-      <input id="xqb-search" type="search" placeholder="Search modules" aria-label="Search modules" value="{{q}}" onInput="{{onSearch}}" style="border: 0; outline: none; font: inherit; font-size: 14px; width: 100%; background: transparent; color: var(--ink)">
+      <input id="xqb-search" type="search" placeholder="Search modules" aria-label="Search modules" value="{{q}}" onInput="{{onSearch}}" style="border: 0; outline: none; font: inherit; font-size: 15px; width: 100%; background: transparent; color: var(--ink)">
     </label>
     <div role="group" aria-label="Show" style="display: flex; flex-wrap: wrap; gap: 6px">
       <sc-for list="{{filters}}" as="f">
@@ -410,13 +479,13 @@
   <div style="display: flex; flex-direction: column; gap: 16px">
     <sc-for list="{{catalog}}" as="g">
       <div>
-        <h3 style="font-size: 14px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink2); margin: 0 0 6px">{{g.label}}</h3>
+        <h3 style="font-size: 15px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink2); margin: 0 0 6px">{{g.label}}</h3>
         <ul style="list-style: none; margin: 0; padding: 0; border: 1px solid var(--ln); border-radius: 8px">
           <sc-for list="{{g.items}}" as="it">
             <li style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid var(--ln)">
-              <div style="min-width: 0; flex: 1 1 260px"><a href="{{it.doc}}" style="font-size: 14.5px; font-weight: 600">{{it.label}}</a><div style="font-size: 13.5px; color: var(--ink2)">{{it.desc}}</div></div>
+              <div style="min-width: 0; flex: 1 1 260px"><a href="{{it.doc}}" style="font-size: 15px; font-weight: 600">{{it.label}}</a><div style="font-size: 14px; color: var(--ink2)">{{it.desc}}</div></div>
               <div style="display: flex; flex-wrap: wrap; gap: 6px">
-                <sc-if value="{{it.onRoute}}"><span style="font-size: 12.5px; padding: 2px 8px; border-radius: 4px; background: var(--navy); color: var(--on)">On your route</span></sc-if>
+                <sc-if value="{{it.onRoute}}"><span style="font-size: 13.5px; padding: 2px 8px; border-radius: 4px; background: var(--navy); color: var(--on)">On your route</span></sc-if>
                 <span style="{{it.statusStyle}}">{{it.status}}</span>
               </div>
             </li>
@@ -424,7 +493,7 @@
         </ul>
       </div>
     </sc-for>
-    <sc-if value="{{catalogEmpty}}"><p style="margin: 0; color: var(--ink2); font-size: 14px">No module matches.</p></sc-if>
+    <sc-if value="{{catalogEmpty}}"><p style="margin: 0; color: var(--ink2); font-size: 15px">No module matches.</p></sc-if>
   </div>
   </sc-if>
 </section>

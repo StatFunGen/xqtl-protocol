@@ -2,11 +2,11 @@
 title: Where to get reference data
 ---
 
-The example data in `tests/fixtures/` is enough to run every Minimal Working Example. A full analysis also needs genome-wide reference files, which are too large to keep in the repository. This page lists each one, where it comes from, and which modules use it. All files are GRCh38.
+The example data in `tests/fixtures/` is enough to run every Minimal Working Example. A full analysis also needs genome-wide reference files, which are too large to keep in the repository. This page lists each one, where it comes from, and which modules use it. There are two kinds: files you download (first table) and files the protocol builds from them (second table). All files use the GRCh38 human genome build.
 
 ## Download, then format with the protocol
 
-[Reference Data Standardization](../code/SoS/reference_data/reference_data_preparation.ipynb) downloads these files and formats them for the protocol (chromosome names, removed alternate contigs, added ERCC spike-ins). Run its steps rather than using the raw downloads directly.
+[Reference Data Standardization](../code/SoS/reference_data/reference_data_preparation.ipynb) downloads these files and formats them for the protocol: consistent chromosome names, alternate contigs (extra versions of some genome regions) removed, and ERCC spike-in control sequences added. Run its steps rather than using the raw downloads directly.
 
 | File | Source | Used by |
 |---|---|---|

@@ -16,11 +16,8 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 |---|---|
 | **Set up my computing environment** | [Environment Setup](code/SoS/xqtl_protocol_demo.ipynb) |
 | **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html): answer a few questions, get the modules and commands for your route |
-| **Run the pipelines on my own data** | [Using your own data](website/own_data.md): file formats, sample IDs and checks for each input |
-| **Run on my cluster (SLURM or SGE)** | [Running on a cluster](website/running_on_a_cluster.md): one-time setup, then add `-c <host file> -q <queue>` to any command |
-| **Get the full-size reference files** | [Where to get reference data](https://statfungen.github.io/xqtl-protocol/reference-data-sources/): genome, annotation and LD reference, and the modules that use them |
-| **Look up a term** | [Glossary](https://statfungen.github.io/xqtl-protocol/glossary/) |
-| **Find a specific module or method** | Search the site (top of the page), or browse the menu by analysis stage |
+
+[Where to get reference data](https://statfungen.github.io/xqtl-protocol/reference-data-sources/) is under Reference data in the sidebar; [Methods and references](https://statfungen.github.io/xqtl-protocol/methods-and-references/) and the [Glossary](https://statfungen.github.io/xqtl-protocol/glossary/) are under Reference.
 
 <!-- site-home-continues -->
 ## What the protocol covers
@@ -42,6 +39,7 @@ asks what you measured and what you want to find out, then shows the modules on
 that route with the commands to run them.
 
 ## Overview of the protocol
+<!-- site-overview -->
 
 ### Standardized reference data
 
@@ -71,16 +69,18 @@ pipeline code. The same notebook runs as a command-line script with
 `sos run`, on a local computer or on a cluster, where SoS submits each task as a
 job.
 
-To run on a SLURM or SGE cluster, follow
-[Running on a cluster](https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/): a one-time setup, then any
-command on this site can send its jobs to the cluster.
+To run on your own data or on a SLURM or SGE cluster, use the
+[Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl-protocol-workflow-builder/)
+to prepare the required inputs and generate the commands for your route.
 
 ### Source code
 
 The source code of the pipelines is in the
 [`code` folder on GitHub](https://github.com/statfungen/xqtl-protocol/tree/main/code).
 
+<!-- site-overview-end -->
 ## How to use the resource
+<!-- site-use -->
 
 ### Organization of the resource
 
@@ -119,9 +119,10 @@ lists their sources and the modules that use them.
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
 - [About](https://statfungen.github.io/xqtl-protocol/about/): who develops the protocol, funding, license and contributors
 
+<!-- site-use-end -->
 ## What's new
 
-- **November 2026:** [Running on a cluster](https://statfungen.github.io/xqtl-protocol/running-on-a-cluster/) (SLURM and SGE) and [Using your own data](https://statfungen.github.io/xqtl-protocol/own-data/) guides; the Workflow Builder can export a route as a cluster job script.
+- **November 2026:** the Workflow Builder supports your own data and can export a route for a local terminal, SLURM or SGE.
 - **November 2026:** [Torino](https://statfungen.github.io/xqtl-protocol/isoform-calling-torino/) module for isoform usage without a reference annotation, next to LeafCutter and LeafCutter2 for splicing.
 - **November 2026:** the [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html) asks one question at a time and gives the modules and example commands for your route.
 
