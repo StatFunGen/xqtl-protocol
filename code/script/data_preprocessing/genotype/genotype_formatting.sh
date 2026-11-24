@@ -333,7 +333,8 @@ _merge_vcf() {
     [[ -z "$output" ]] && { echo "ERROR: --output is required for merge_vcf" >&2; exit 1; }
 
     local -a inputs=()
-    if [[ -f "$file_list" ]]; then
+    # a single .vcf/.vcf.gz is an input, not a list of files
+    if [[ -f "$file_list" && "$file_list" != *.vcf.gz && "$file_list" != *.vcf && "$file_list" != *.bcf ]]; then
         while IFS= read -r _il || [[ -n "$_il" ]]; do inputs+=("$_il"); done < "$file_list"
     else
         read -r -a inputs <<< "$file_list"
