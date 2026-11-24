@@ -17,7 +17,7 @@ trait, such as gene expression, splicing, protein level or DNA methylation.
 | **Set up my computing environment** | [Environment Setup](code/SoS/xqtl_protocol_demo.ipynb) |
 | **Work out which pipelines I need** | [xQTL Analysis Workflow Builder](https://statfungen.github.io/xqtl-protocol/xqtl_protocol_workflow_builder.html): answer a few questions, get the modules and commands for your route |
 
-Reference data sources, methods and references, and the glossary are under [About](https://statfungen.github.io/xqtl-protocol/about/).
+Reference data sources, methods and references, and the glossary are under [About & Reference](https://statfungen.github.io/xqtl-protocol/about/).
 
 <!-- site-home-continues -->
 ## What the protocol covers
@@ -39,6 +39,7 @@ asks what you measured and what you want to find out, then shows the modules on
 that route with the commands to run them.
 
 ## Overview of the protocol
+<!-- site-overview -->
 
 ### Standardized reference data
 
@@ -77,7 +78,9 @@ to prepare the required inputs and generate the commands for your route.
 The source code of the pipelines is in the
 [`code` folder on GitHub](https://github.com/statfungen/xqtl-protocol/tree/main/code).
 
+<!-- site-overview-end -->
 ## How to use the resource
+<!-- site-use -->
 
 ### Organization of the resource
 
@@ -114,8 +117,9 @@ lists their sources and the modules that use them.
 - [FunGen-xQTL resource catalog](https://adsp-fgc.niagads.org/xqtl-resources/): the datasets and results, and where to get them
 - [pecotmr](https://statfungen.github.io/pecotmr): the R package behind the fine-mapping, colocalization, TWAS and Mendelian randomization steps ([source](https://github.com/StatFunGen/pecotmr))
 - [AD Loci Explorer](https://xqtl.niagads.org/AD-loci-explorer/): the AD GWAS loci linked to their target genes
-- [About](https://statfungen.github.io/xqtl-protocol/about/): who develops the protocol, funding, license and contributors
+- [About & Reference](https://statfungen.github.io/xqtl-protocol/about/): who develops the protocol, funding, license and contributors
 
+<!-- site-use-end -->
 ## What's new
 
 - **November 2026:** the Workflow Builder supports your own data and can export a route for a local terminal, SLURM or SGE.
