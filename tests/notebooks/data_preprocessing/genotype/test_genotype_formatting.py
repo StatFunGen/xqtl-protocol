@@ -202,3 +202,16 @@ def test_gf_merge_vcf(run_sh, repo_root, tmp_path):
     p = run_sh(repo_root / SH, ["merge_vcf", "--genoFile", " ".join(vcfs), "--output", merged])
     assert p.returncode == 0, p.stdout + p.stderr
     assert _vcf_records(merged) == _vcf_records(vcfs[0]) + _vcf_records(vcfs[1])
+
+
+def test_gf_merge_vcf_single(run_sh, repo_root, tmp_path):
+    # one .vcf.gz is an input, not a list file; it is copied through to --output
+    out = tmp_path / "chr22"
+    subprocess.run(["plink2", "--bfile", str(repo_root / CHR22), "--recode", "vcf-iid",
+                    "--out", str(out), "--silent"], check=True, capture_output=True)
+    subprocess.run(["bgzip", "-f", f"{out}.vcf"], check=True)
+    vcf = f"{out}.vcf.gz"
+    merged = tmp_path / "merged.vcf.gz"
+    p = run_sh(repo_root / SH, ["merge_vcf", "--genoFile", vcf, "--output", merged])
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert _vcf_records(merged) == _vcf_records(vcf)
