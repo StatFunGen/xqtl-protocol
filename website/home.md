@@ -35,7 +35,7 @@ Every method the protocol runs, by analysis stage, with its module page and the 
 :::
 ::::
 
-New here? Start with [Environment setup](../code/SoS/xqtl_protocol_demo.ipynb). Reference: [Using your own data](own_data.md) · [Running on a cluster](running_on_a_cluster.md)
+New here? Start with [Environment setup](../code/SoS/xqtl_protocol_demo.ipynb), then use the [Workflow Builder](_generated/xqtl_protocol_workflow_builder.ipynb) to prepare your data and run locally or on a cluster.
 
 ```{include} ../README.md
 :start-after: <!-- site-home-continues -->
