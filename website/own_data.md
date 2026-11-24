@@ -2,7 +2,7 @@
 title: Using your own data
 ---
 
-Every command on this site runs on the example data in `tests/fixtures/`. To run it on your study, you swap those example files for yours. This page lists what your files must look like so the swap works the first time.
+Each module page shows its commands on the example data in `tests/fixtures/`, and the Workflow Builder says whether the route you pick runs on that data as written. To run a command on your study, you swap the example files for yours. This page lists what your files must look like so the swap works the first time.
 
 ## The general rule
 

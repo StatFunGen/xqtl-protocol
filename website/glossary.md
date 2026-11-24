@@ -7,7 +7,7 @@ Terms used across the protocol, in plain language. Most entries link to a module
 ## Genetics and study design
 
 xQTL
-: A genetic variant associated with a molecular trait. The *x* stands for the trait type: *eQTL* for gene expression, *sQTL* for splicing, *pQTL* for protein level, *mQTL* for DNA methylation, *haQTL* for histone acetylation, *apaQTL* for alternative polyadenylation.
+: A genetic variant associated with a molecular trait. The *x* stands for the trait type: *eQTL* for gene expression, *sQTL* for splicing, *tpQTL* for transcriptomic pattern (the shape of RNA-seq read coverage along a gene), *apaQTL* for alternative polyadenylation, *pQTL* for protein level, *glycoQTL* for glycoprotein level, *metQTL* for metabolite level, *mQTL* for DNA methylation, *haQTL* for histone acetylation, *caQTL* for chromatin accessibility. The FunGen-xQTL data catalog groups its results into nine of these modalities, all except apaQTL.
 
 Molecular phenotype
 : A measured molecular trait per sample, such as a gene's expression level or an intron's splicing ratio. Modules store them as a matrix with one row per feature and one column per sample ([Phenotype preprocessing](../code/SoS/data_preprocessing/phenotype_preprocessing.ipynb)).
