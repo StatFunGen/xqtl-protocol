@@ -2,6 +2,7 @@
 title: FunGen-xQTL Computational Protocol
 site:
   hide_title_block: true
+  hide_outline: true
 ---
 
 % The site's home page. README.md is the GitHub front page; this page opens with the same
@@ -35,7 +36,7 @@ Every method the protocol runs, by analysis stage, with its module page and the 
 :::
 ::::
 
-New here? Start with [Environment setup](../code/SoS/xqtl_protocol_demo.ipynb), then use the [Workflow Builder](_generated/xqtl_protocol_workflow_builder.ipynb) to prepare your data and run locally or on a cluster.
+New here? Install the software first with [Environment setup](../code/SoS/xqtl_protocol_demo.ipynb).
 
 ```{include} ../README.md
 :start-after: <!-- site-home-continues -->
