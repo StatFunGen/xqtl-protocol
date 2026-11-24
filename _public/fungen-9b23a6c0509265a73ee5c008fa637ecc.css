@@ -1,0 +1,112 @@
+/* FunGen-xQTL shared design system on the MyST book theme: Figtree and IBM Plex Mono, the logo blue, one focus ring, white page */
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+html, body { font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+html:not(.dark) body { background-color: #ffffff; }
+code, pre, kbd, samp { font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace; }
+/* links and inline code in the shared colors (attribute selectors outrank the theme's utility classes) */
+html body article a[href] { color: #3d6289; text-decoration-color: rgba(61, 98, 137, .45); }
+html.dark body article a[href] { color: #8fb0d0; text-decoration-color: rgba(143, 176, 208, .45); }
+html body article :not(pre) > code[class], html body article :not(pre) > code { color: #19354a; }
+html.dark body article :not(pre) > code { color: #c8d9e6; }
+/* current page in the left menu: a light tint of the logo blue */
+.myst-toc-item.active, .myst-toc-item.myst-toc-item-exact { background-color: rgba(61, 98, 137, .12); }
+html.dark .myst-toc-item.active, html.dark .myst-toc-item.myst-toc-item-exact { background-color: rgba(143, 176, 208, .16); }
+:focus-visible { outline: 2px solid #3d6289; outline-offset: 2px; }
+html.dark :focus-visible { outline-color: #8fb0d0; }
+/* shared type scale across the three sites: page title 32, section 22, subsection 17, body 16, small 14 */
+html body article h1 { font: 700 32px/1.2 'Figtree', system-ui, sans-serif; letter-spacing: -.015em; color: #19354a; }
+html body article h2 { font: 600 22px/1.3 'Figtree', system-ui, sans-serif; letter-spacing: -.01em; color: #19354a; }
+html body article h3 { font: 600 17px/1.35 'Figtree', system-ui, sans-serif; color: #19354a; }
+html body article p, html body article li { font-size: 16px; line-height: 1.6; color: #202b35; }
+html.dark body article h1, html.dark body article h2, html.dark body article h3 { color: #e6edf3; }
+html.dark body article p, html.dark body article li { color: #d5dde4; }
+@media (max-width: 640px) { html body article h1 { font-size: 24px; line-height: 1.25; } html body article h2 { font-size: 20px; } }
+/* FunGen-AD and StatFunGen logos in the site footer, on a transparent background without plates */
+.fx-partners { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 16px 0; }
+.fx-partners a { display: inline-flex; align-items: center; height: 56px; padding: 0; background: transparent; border: 0; }
+.fx-partners img { display: block; width: auto; margin: 0; }
+/* FunGen-xQTL sites in the top bar: this site in the logo blue and underlined, as on the Resources site and the Explorer */
+.myst-top-nav-item a[href^="https://statfungen.github.io/xqtl-protocol"] { color: #3d6289; box-shadow: inset 0 -2px 0 #3d6289; }
+html.dark .myst-top-nav-item a[href^="https://statfungen.github.io/xqtl-protocol"] { color: #8fb0d0; box-shadow: inset 0 -2px 0 #8fb0d0; }
+/* Shared heading scale must win over the theme's utility classes (text-3xl and the like), so these
+   selectors carry an id-level :not() and also target the frontmatter title block */
+html body article h1:not(#_), html body .myst-fm-block-title:not(#_) { font: 700 32px/1.2 'Figtree', system-ui, sans-serif; letter-spacing: -.015em; color: #19354a; }
+html body article h2:not(#_) { font: 600 22px/1.3 'Figtree', system-ui, sans-serif; letter-spacing: -.01em; color: #19354a; }
+html body article h3:not(#_) { font: 600 17px/1.35 'Figtree', system-ui, sans-serif; color: #19354a; }
+html.dark body article :is(h1, h2, h3):not(#_), html.dark body .myst-fm-block-title:not(#_) { color: #e6edf3; }
+@media (max-width: 640px) {
+  html body article h1:not(#_), html body .myst-fm-block-title:not(#_) { font-size: 24px; line-height: 1.25; }
+  html body article h2:not(#_) { font-size: 20px; }
+}
+/* Phones: a smaller "FunGen-xQTL Protocol" next to the logo, like the other two sites; on the
+   narrowest phones the text is kept for screen readers only so the buttons fit inside 320 px */
+@media (max-width: 420px) {
+  .myst-home-link { margin-left: 8px; }
+  .myst-home-link-logo { margin-right: 8px; }
+  .myst-home-link > span:last-child { font-size: 15px; font-weight: 600; white-space: nowrap; margin-right: 0; }
+}
+@media (max-width: 359px) {
+  .myst-home-link-logo { margin-right: 0; }
+  .myst-home-link > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}
+
+/* Workflow builder shown in place on its book page (website/build_support.py): an anywidget that
+   spans the body and the outline column (the page hides its outline; the builder's headings are inside) */
+.fx-builder { margin: 0.5rem 0 1rem; }
+html body article.article-grid > :has(.fx-builder):not(#_) { grid-column: body-start / page-end; }
+
+/* Home page start cards. */
+.fx-start { margin-top: 0.5rem; }
+
+/* Resources-site look for the protocol pages: the same tokens, headings, code, tables and menus */
+:root { --fx-navy: #19354a; --fx-teal: #3d6289; --fx-ink: #202b35; --fx-ink2: #63717d; --fx-ln: #dce3e8; --fx-tint: #f6f8fa; --fx-sk: #eef2f5; --fx-acs: #e8eef5; --fx-code: #f3f6f8; }
+html.dark { --fx-navy: #e6edf3; --fx-teal: #8fb0d0; --fx-ink: #d5dde4; --fx-ink2: #9aa8b4; --fx-ln: #2c3a46; --fx-tint: #17212b; --fx-sk: #1c2833; --fx-acs: #1d2c3b; --fx-code: #17212b; }
+/* section headings sit on a thin rule, as on the Resources pages */
+html body article h2:not(#_) { padding-bottom: 8px; border-bottom: 1px solid var(--fx-ln); margin-top: 36px; }
+/* inline code: navy on a pale grey chip, not the theme's red */
+html body article :not(pre) > code:not(#_) { color: var(--fx-navy); background: var(--fx-code); border: 1px solid var(--fx-ln); border-radius: 4px; padding: 0.05em 0.35em; font-size: 0.875em; }
+/* code blocks: pale panel with a hairline border and 8 px corners */
+html body article .myst-code:not(#_) { background: var(--fx-code); border: 1px solid var(--fx-ln); border-radius: 8px; box-shadow: none; }
+html body article .myst-code-body:not(#_) { background: transparent; font-size: 13.5px; line-height: 1.6; }
+/* tables: bordered card with a tinted header row */
+html body article table:not(#_) { border-collapse: separate; border-spacing: 0; border: 1px solid var(--fx-ln); border-radius: 8px; overflow: hidden; font-size: 14px; }
+html body article table th:not(#_) { background: var(--fx-tint); color: var(--fx-ink2); font-weight: 600; text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--fx-ln); }
+html body article table td:not(#_) { padding: 8px 12px; border-top: 1px solid var(--fx-ln); border-bottom: 0; }
+html body article table tr:first-child td:not(#_) { border-top: 0; }
+/* left menu: plain items, the current page marked with a teal edge */
+.myst-toc-item:not(#_) { font-size: 14px; line-height: 1.35; padding: 5px 10px; margin: 1px 0; color: var(--fx-ink); border-left: 2px solid transparent; border-radius: 0 6px 6px 0; }
+.myst-toc-item:not(#_):hover { background: var(--fx-sk); }
+.myst-toc-item.active:not(#_), .myst-toc-item.myst-toc-item-exact:not(#_) { background: var(--fx-acs); color: var(--fx-navy); font-weight: 600; border-left-color: var(--fx-teal); }
+/* right "Contents" column and breadcrumbs in the small grey type the Resources pages use */
+.myst-outline:not(#_) { font-size: 13px; }
+.myst-outline:not(#_) a { color: var(--fx-ink2); }
+.myst-outline:not(#_) a:hover, .myst-outline:not(#_) a.text-myst-active { color: var(--fx-navy); }
+.myst-breadcrumbs:not(#_), .myst-breadcrumbs:not(#_) a { font-size: 13px; color: var(--fx-ink2); }
+/* admonitions: flat, hairline border, no heavy left bar */
+html body article aside.admonition:not(#_), html body article .myst-admonition:not(#_) { border: 1px solid var(--fx-ln); border-radius: 8px; box-shadow: none; }
+
+/* Home page hero, matching the Resources site and the AD Loci Explorer: mark, consortium line, title, lead, two buttons */
+.fx-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 36px; align-items: center; margin: 24px 0 28px; }
+.fx-hero__mark { width: 136px; height: 136px; margin: 0 !important; }
+html.dark .fx-only-light, html:not(.dark) .fx-only-dark { display: none; }
+/* MyST rebuilds this HTML: classes on p and h1 are dropped and the h1 becomes an h2, so the text
+   block is styled by position: consortium line, title, lead, buttons */
+.fx-hero__text { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+html body article .fx-hero__text > p:not(#_) { margin: 0; }
+html body article .fx-hero__text > p:first-child:not(#_) { font-size: 14px; font-weight: 600; color: var(--fx-teal); }
+html body article .fx-hero__text > :is(h1, h2):not(#_) { margin: 0; font-size: clamp(34px, 5vw, 46px); line-height: 1.08; font-weight: 700; letter-spacing: -.02em; color: var(--fx-navy); border: 0; padding: 0; }
+html body article .fx-hero__text > :is(h1, h2) > a:not(#_) { display: none; }
+.fx-hero__x { color: var(--fx-teal); }
+html body article .fx-hero__text > p:nth-child(3):not(#_) { margin: 2px 0 6px; font-size: 17px; line-height: 1.55; color: var(--fx-ink2); max-width: 660px; }
+html body article .fx-hero__text > p:last-child:not(#_) { display: flex; flex-wrap: wrap; gap: 10px; }
+html body article a.fx-pill:not(#_) { display: inline-flex; align-items: center; min-height: 42px; padding: 0 20px; border-radius: 999px; border: 1.5px solid var(--fx-navy); color: var(--fx-navy); font-size: 15px; font-weight: 600; text-decoration: none; }
+html body article a.fx-pill:not(#_) svg { display: none; }
+html body article a.fx-pill:not(#_):hover { background: var(--fx-sk); }
+html body article a.fx-pill--solid:not(#_) { background: #19354a; border-color: #19354a; color: #fff; }
+html.dark body article a.fx-pill--solid:not(#_) { background: #8fb0d0; border-color: #8fb0d0; color: #11161b; }
+@media (max-width: 720px) {
+  .fx-hero { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 16px; }
+  .fx-hero { margin: 8px 0 20px; }
+  .fx-hero__mark { width: 72px !important; height: 72px !important; }
+  html body article .fx-hero__text > p:last-child:not(#_) { justify-content: center; }
+}
