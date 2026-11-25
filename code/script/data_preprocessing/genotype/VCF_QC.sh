@@ -202,11 +202,13 @@ _qc_2() {
     [[ -z "$GENO_FILE" ]] && { echo "ERROR: --genoFile is required" >&2; exit 1; }
     [[ -z "$OUTPUT" ]] && { echo "ERROR: --output is required" >&2; exit 1; }
 
+    # Keep sites whose FILTER is PASS or unset ("."). Many VCFs (imputed, or converted
+    # from PLINK) never set FILTER, and keeping only PASS would drop every site.
     if gt_only_vcf_qc_enabled; then
         printf 'running GT-only VCF QC\n'
 
         bcftools view -c1 "$GENO_FILE" \
-            | bcftools view -f PASS \
+            | bcftools view -f PASS,. \
             | bcftools filter -i "F_MISSING<${GENO_FILTER} & HWE>${HWE_FILTER}" \
                 -Oz --threads "$NUM_THREADS" -o "$OUTPUT"
     else
@@ -216,7 +218,7 @@ _qc_2() {
             "(TYPE=\"SNP\" & (FMT/DP)>=${DP_SNP} & (FMT/GQ)>=${GQ}) | (TYPE=\"INDEL\" & (FMT/DP)>=${DP_INDEL} & (FMT/GQ)>=${GQ})" \
             "$GENO_FILE" \
             | bcftools view -c1 \
-            | bcftools view -f PASS \
+            | bcftools view -f PASS,. \
             | bcftools filter -i \
                 "GT=\"hom\" | TYPE=\"snp\" & GT=\"het\" & (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) >= ${AB_SNP} | TYPE=\"indel\" & GT=\"het\" & (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) >= ${AB_INDEL}" \
             | bcftools filter -i "F_MISSING<${GENO_FILTER} & HWE>${HWE_FILTER}" \
