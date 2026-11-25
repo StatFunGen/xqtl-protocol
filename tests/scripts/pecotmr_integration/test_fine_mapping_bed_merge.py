@@ -151,3 +151,32 @@ def test_merge_rejects_tables_with_different_headers(run_r, repo_root, tmp_path)
               ["--input", a, b, "--output", tmp_path / "merged.bed.gz"], timeout=300)
     assert p.returncode != 0
     assert "must share the header" in p.stderr, p.stderr
+
+
+def test_merge_keeps_the_genome_line(run_r, repo_root, tmp_path):
+    """writeBed() opens a table with `##genome=<build>` when the result names
+    one. The merge reads past it, keeps it above the merged header, and
+    refuses tables whose `##` lines differ."""
+    a = tmp_path / "r1.exported.bed.gz"
+    b = tmp_path / "r2.exported.bed.gz"
+    _write_with(a, "##genome=GRCh38\n" + HEADER,
+                [("2", 300, 301, "2:301:A:T", "c1", "chr2_1_1000", 0.9)])
+    _write_with(b, "##genome=GRCh38\n" + HEADER,
+                [("2", 100, 101, "2:101:A:T", "c1", "chr2_1_1000", 0.5)])
+    out = tmp_path / "merged.bed.gz"
+    p = run_r(repo_root / "code/script/pecotmr_integration/fine_mapping_bed_merge.R",
+              ["--input", a, b, "--output", out], timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    lines = gzip.open(out, "rt").read().rstrip("\n").split("\n")
+    assert lines[0] == "##genome=GRCh38"
+    assert lines[1] == HEADER.rstrip("\n")
+    assert [int(l.split("\t")[1]) for l in lines[2:]] == [100, 300]
+    assert (tmp_path / "merged.bed.gz.tbi").exists()
+
+    c = tmp_path / "r3.exported.bed.gz"
+    _write_with(c, "##genome=hg19\n" + HEADER,
+                [("2", 500, 501, "2:501:A:T", "c1", "chr2_1_1000", 0.1)])
+    p = run_r(repo_root / "code/script/pecotmr_integration/fine_mapping_bed_merge.R",
+              ["--input", a, c, "--output", tmp_path / "mixed.bed.gz"], timeout=300)
+    assert p.returncode != 0
+    assert "must share the ## lines" in p.stderr, p.stderr

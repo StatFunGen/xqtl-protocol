@@ -88,6 +88,37 @@ def test_twas_gene_unit(run_sos, repo_root, tmp_path):
     assert_matches_expected(out, fx / "twas/expected/twas.chr22.rds",
                             mode="tolerant", rtol=1e-6, atol=1e-8)
 
+
+def test_twas_region_narrower_than_weights(run_sos, repo_root, tmp_path):
+    """A region holds genes by TSS, and the toy gene's weights (chr22:10.7-18.9 Mb)
+    reach well past chr22:15-16 Mb. The step loads the GWAS over the region
+    widened to them, so the gene is scored as over the whole region rather than
+    refused for reaching past the GWAS window."""
+    fx = repo_root / "tests" / "fixtures"
+    tw = fx / "twas/protocol_example.twas.reshaped_toy.chr22_ENSG00000130538.twas_weights.s4.rds"
+    meta = tmp_path / "xqtl_meta.tsv"
+    meta.write_text("#chr\tstart\tend\tregion_id\tTSS\toriginal_data\tcontexts\n"
+                    f"chr22\t10000000\t19000000\tENSG00000130538\t15528191\t{tw}\tbulk_rnaseq\n")
+    cwd = tmp_path / "out"
+    p = run_sos(
+        repo_root / "pipeline/twas_ctwas.ipynb", "twas",
+        {
+            "cwd": cwd,
+            "name": "protocol_example",
+            "gwas_meta_data": fx / "twas/protocol_example.twas.gwas_meta.tsv",
+            "xqtl_meta_data": meta,
+            "ld_meta_data": fx / "ld_reference/ld_meta_file.tsv",
+            "region-name": "chr22_15000000_16000000",
+            "twas_unit": "region",
+            "rsq_pval_cutoff": "inf",
+            "modular_script_dir": repo_root / "code/script",
+        },
+        cwd=repo_root, timeout=600)
+    assert p.returncode == 0, p.stdout + p.stderr
+    out = cwd / "twas" / "protocol_example.chr22_15000000_16000000.ENSG00000130538.twas.rds"
+    assert_matches_expected(out, fx / "twas/expected/twas.chr22.rds",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)
+
 # The blessed cTWAS weights as committed S4 TwasWeights (region-provenance
 # stamped -- chrom/p0/p1 -- which assembleCtwasInputs needs for LD-block
 # placement; the legacy_ctwas_weights_to_s4 conversion step is retired).

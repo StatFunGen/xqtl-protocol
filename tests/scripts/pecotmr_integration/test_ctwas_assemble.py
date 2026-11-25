@@ -47,11 +47,15 @@ GROUP_CHECK = r"""
 a <- commandArgs(TRUE); x <- readRDS(a[1]); g <- readRDS(a[2])
 stopifnot(identical(g$z_gene$id, x$z_gene$id),
           isTRUE(all.equal(g$z_gene$z, x$z_gene$z)))
-ctx <- substr(x$z_gene$context, 1, 1)
-stopifnot(identical(g$z_gene$context, ctx),
-          identical(g$z_gene$group, paste(ctx, x$z_gene$type, sep = "|")))
-wctx <- function(w) unname(vapply(w, `[[`, "", "context"))
-stopifnot(identical(wctx(g$weights), substr(wctx(x$weights), 1, 1)),
+field <- function(w, f) unname(vapply(w, `[[`, "", f))
+# The group's context is the study and the trimmed context; the gene keeps its
+# own context, weight name and weights.
+want <- paste0(field(g$weights, "study"), "_", substr(field(g$weights, "qtl_context"), 1, 1))
+stopifnot(identical(field(g$weights, "context"), want),
+          setequal(g$z_gene$context, want),
+          identical(g$z_gene$group, paste(g$z_gene$context, g$z_gene$type, sep = "|")),
+          identical(field(g$weights, "qtl_context"), field(x$weights, "qtl_context")),
+          identical(field(g$weights, "weight_name"), field(x$weights, "weight_name")),
           isTRUE(all.equal(lapply(g$weights, `[[`, "wgt"), lapply(x$weights, `[[`, "wgt"))))
 cat("groups", length(unique(x$z_gene$group)), "->", length(unique(g$z_gene$group)), "\n")
 """
@@ -59,8 +63,8 @@ cat("groups", length(unique(x$z_gene$group)), "->", length(unique(g$z_gene$group
 
 def test_ctwas_assemble_group_context_pattern(ctwas_chain, run_r, repo_root, tmp_path):
     """--group-context-pattern removes the matched part of each context, so the
-    gene's cTWAS group becomes <trimmed context>|<type>; gene IDs, z-scores and
-    weights are unchanged. The pattern here keeps the first character."""
+    gene's cTWAS group becomes <study>_<trimmed context>|<type>; gene IDs,
+    z-scores and weights are unchanged. The pattern here keeps the first character."""
     out = tmp_path / "grouped.rds"
     p = _assemble(run_r, repo_root, ctwas_chain["manifest"], out,
                   ["--group-context-pattern", "(?<=^.).*$"])

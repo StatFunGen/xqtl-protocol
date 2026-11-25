@@ -305,13 +305,12 @@ gss <- loadGwasSumStatsFromManifest(
   ldReference = ld_sketch_spec,
   which    = as_region_granges(argv$ld_block))
 
-# An LD block with no GWAS variants (a gap in the sumstats) cannot be QC'd:
-# write no output and exit cleanly so the caller can drop the block.
-if (sum(lengths(gss)) == 0L) {
-  message(sprintf("No GWAS variants in %s; skipping block (no output written).",
+# An LD block with no GWAS variants (a gap in the sumstats) is written as an
+# empty GwasSumStats, which summaryStatsQc() passes through: its genes then get
+# empty TWAS results, and ctwas_assemble.R skips the block.
+if (sum(lengths(gss)) == 0L)
+  message(sprintf("No GWAS variants in %s; writing an empty GwasSumStats.",
                   argv$ld_block))
-  quit(save = "no", status = 0)
-}
 gss_out <- if (argv$skip_qc) {
   message("--skip-qc set; serialising raw GwasSumStats without summaryStatsQc().")
   gss
