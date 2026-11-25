@@ -11,7 +11,7 @@
 # regional / significant-QTL / significant-event / summary tables. All the
 # multiple-testing statistics live in pecotmr (p.adjust / qvalue / qbeta).
 #
-# Inputs (one chromosome / batch per call):
+# Inputs (explicit files, or every match of the patterns in --cwd, e.g. one per chromosome):
 #   --regional <tsv.gz>   per-gene TensorQTL regional summary. Needs
 #                         molecular_trait_object_id, n_variants, beta_shape1,
 #                         beta_shape2, p_beta (genetic-effect flavour).
@@ -63,35 +63,44 @@ p <- add_argument(p, "--output-dir", help = "optional dir for flat per-method ta
 argv <- parse_args(p)
 
 idCol <- "molecular_trait_object_id"
-# Resolve each input: an explicit --path, or the first match of a regex pattern
-# in --cwd (the legacy glob CLI).
-resolveOne <- function(explicit, cwd, pattern, what) {
+# Resolve each input: an explicit --path, or every match of a regex pattern in --cwd (the
+# legacy glob CLI). A scan over several chromosomes writes one file per chromosome; they are
+# read together, so the correction across genes covers the whole scan.
+resolveAll <- function(explicit, cwd, pattern, what, required = TRUE) {
   if (!is.na(explicit)) return(explicit)
-  if (is.na(cwd) || is.na(pattern)) return(NA_character_)
-  hits <- list.files(cwd, pattern = pattern, full.names = TRUE)
-  if (length(hits) == 0L) stop("No ", what, " file matching '", pattern, "' in ", cwd)
-  hits[1L]
+  if (is.na(cwd) || is.na(pattern)) return(character(0))
+  hits <- sort(list.files(cwd, pattern = pattern, full.names = TRUE))
+  if (length(hits) == 0L && required) stop("No ", what, " file matching '", pattern, "' in ", cwd)
+  hits
 }
-regionalFile <- resolveOne(argv$regional, argv$cwd, argv$regional_pattern, "regional")
-pairsFile    <- resolveOne(argv$pairs, argv$cwd, argv$qtl_pattern, "pairs")
-nvFile       <- resolveOne(argv$n_variants_stats, argv$cwd, argv$n_variants_suffix, "n_variants")
-if (is.na(regionalFile) || is.na(pairsFile))
+readAll <- function(files, keep = NULL) {
+  do.call(rbind, lapply(files, function(f) {
+    d <- readr::read_tsv(f, show_col_types = FALSE, progress = FALSE)
+    if (is.null(keep)) d else keep(d)
+  }))
+}
+regionalFiles <- resolveAll(argv$regional, argv$cwd, argv$regional_pattern, "regional")
+pairsFiles    <- resolveAll(argv$pairs, argv$cwd, argv$qtl_pattern, "pairs")
+# optional: without it the filtered Bonferroni flavour is skipped
+nvFiles       <- resolveAll(argv$n_variants_stats, argv$cwd, argv$n_variants_suffix, "n_variants", required = FALSE)
+if (length(regionalFiles) == 0L || length(pairsFiles) == 0L)
   stop("Provide --regional/--pairs, or --cwd with --regional-pattern/--qtl-pattern.")
-regional <- readr::read_tsv(regionalFile, show_col_types = FALSE, progress = FALSE)
-pairs    <- readr::read_tsv(pairsFile, show_col_types = FALSE, progress = FALSE)
+if (length(nvFiles) == 0L)
+  message("No per-gene n_variants file found; the filtered Bonferroni correction is skipped.")
+message("Reading ", length(regionalFiles), " regional and ", length(pairsFiles), " pairs file(s).")
+regional <- readAll(regionalFiles)
+# p-value pre-filter, file by file (keeps the object small; the per-gene min variant is always
+# retained so the Bonferroni min is exact).
+pairs <- readAll(pairsFiles, keep = if (argv$pvalue_cutoff < 1) function(d)
+  d[!is.na(d[[argv$pvalue_col]]) & d[[argv$pvalue_col]] < argv$pvalue_cutoff, ] else NULL)
 if (!(idCol %in% names(regional)) || !("p_beta" %in% names(regional)))
   stop("--regional must carry ", idCol, " and p_beta.")
 if (!(idCol %in% names(pairs)) || !(argv$pvalue_col %in% names(pairs)))
   stop("--pairs must carry ", idCol, " and the p-value column '", argv$pvalue_col, "'.")
 
-# p-value pre-filter (keeps the object small; the per-gene min variant is always
-# retained so the Bonferroni min is exact).
-if (argv$pvalue_cutoff < 1)
-  pairs <- pairs[!is.na(pairs[[argv$pvalue_col]]) & pairs[[argv$pvalue_col]] < argv$pvalue_cutoff, ]
-
 nvFilt <- NULL
-if (!is.na(nvFile)) {
-  nvs <- readr::read_tsv(nvFile, show_col_types = FALSE, progress = FALSE)
+if (length(nvFiles)) {
+  nvs <- readAll(nvFiles)
   nvFilt <- setNames(nvs$n_variants_filtered, nvs[[idCol]])
 }
 

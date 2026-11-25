@@ -160,7 +160,7 @@ function buildRoute(s, methods, D) {
   function addChoice(id, m, title, def) { var ch = choicesFor(m); var d = def || (ch ? (ch.filter(function (c) { return c[2]; })[0] || ch[0])[0] : null); var w = (methods && methods[id]) || d; add(id, m, [w], title, { choices: ch, chosen: w, deflt: d }); }
   var sum = s.start === 'sumstats', g = s.goals;
   if (s.start === 'raw') {
-    if (s.ph === 'bulk') { addChoice('quant', 'RNA_calling', 'Quantify expression'); add('bqc', 'bulk_expression_QC', ['qc'], 'Remove outlier samples'); }
+    if (s.ph === 'bulk') { addChoice('quant', 'RNA_calling', 'Quantify expression'); add('bqc', 'bulk_expression_QC', ['qc'], 'Remove outlier samples'); add('bnorm', 'bulk_expression_normalization', ['normalize'], 'Normalize expression into the phenotype BED'); }
     if (s.ph === 'splice') { add('spl', 'splicing_calling_leafcutter2', ['leafcutter2'], 'Call splicing events'); add('spn', 'splicing_normalization', ['leafcutter_norm'], 'Normalize splicing ratios'); }
     if (s.ph === 'meth') addChoice('mc', 'methylation_calling', 'Call methylation');
   }
@@ -193,7 +193,8 @@ function closeRoute(R, D) {
   var res = [];
   function needs(k) {
     var io = D.io[k] || {}, ks = [];
-    (io.i || []).forEach(function (p) { if (p.indexOf('output/') !== 0) return; var pk = ((D.src || {})[k] || {})[p] || producer(p); if (pk && pk !== k) ks.push(pk); });
+    var setup = (D.setup || {})[k] || [];
+    (io.i || []).forEach(function (p) { if (p.indexOf('output/') !== 0 || setup.indexOf(p) >= 0) return; var pk = ((D.src || {})[k] || {})[p] || producer(p); if (pk && pk !== k) ks.push(pk); });
     return ks.concat((D.after || {})[k] || []);
   }
   function place(k, forTitle) {
@@ -214,20 +215,70 @@ var LINKS = {
   'genotype_formatting|merge_plink': [
     { p: 'tests/fixtures/genotype_formatting/geno/chr21.bed', from: 'genotype_formatting|vcf_to_plink', io: 'output/genotype_formatting/plink/*.bcftools_qc.bed', cmd: '`ls output/genotype_formatting/plink/*.bcftools_qc.bed`' },
     { p: 'tests/fixtures/genotype_formatting/geno/chr22.bed', from: 'genotype_formatting|vcf_to_plink', io: null, cmd: '' }],
-  'covariate_formatting|merge_genotype_pc': [{ p: 'tests/fixtures/pca/protocol_example.unrelated.prune.pca.rds', from: 'PCA|flashpca', io: PCA_RDS, cmd: PCA_RDS }]
+  'covariate_formatting|merge_genotype_pc': [{ p: 'tests/fixtures/pca/protocol_example.unrelated.prune.pca.rds', from: 'PCA|flashpca', io: PCA_RDS, cmd: PCA_RDS }],
+  // with genotype QC on the route, the scan reads the QC'd genotypes (all samples that pass, related
+  // ones included; the unrelated set is only for PCA). They are linked under the merged set's
+  // name, so the per-chromosome files keep the names the later steps read.
+  'genotype_formatting|genotype_by_chrom': [
+    { p: 'output/genotype_formatting/plink/protocol_example.genotype.merged.bed', from: 'GWAS_QC|qc_no_prune', io: 'output/gwas_qc/plink/protocol_example.genotype.merged.protocol_example.plink_qc.bed', cmd: 'output/genotype_formatting/scan_genotypes/protocol_example.genotype.merged.bed', link: 'output/gwas_qc/plink/protocol_example.genotype.merged.protocol_example.plink_qc.bed', plink: true },
+    { p: 'output/genotype_formatting/plink/protocol_example.genotype.merged.bim', from: 'GWAS_QC|qc_no_prune', io: null, cmd: 'output/genotype_formatting/scan_genotypes/protocol_example.genotype.merged.bim' }],
+  // after the scan, correct the scan itself; the bundled scan the page example copies is not used
+  'qtl_association_postprocessing|default': [{ p: 'output/qtl_association_postprocessing/tensorqtl_cis', from: 'TensorQTL|cis', io: 'output/tensorqtl_cis', cmd: 'output/tensorqtl_cis',
+    drop: ['# Run on its own', '# In a Workflow Builder route', 'mkdir -p output/qtl_association_postprocessing/tensorqtl_cis', 'cp tests/fixtures/qtl_association_postprocessing/'] }]
 };
+// the file a step's result card points at, when it is not the step's first declared output
+var MAIN_FILE = { qtl_association_postprocessing: 'output/qtl_association_postprocessing/tensorqtl_cis.qtl_association_postprocessing.cis_regional.fdr.tsv.gz' };
 // With your own data, example files that stand for the same file of yours are asked for once.
+// Each command still gets the file under its own example name (see FEEDS); an output/ path is
+// one an earlier step's setup already put in place, and is passed as is.
+var PHENO_BED = 'tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz';
 var SAME_FILE = {
-  'GWAS_QC|genotype_phenotype_sample_overlap': { 'tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz': 'tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz' }
+  'GWAS_QC|genotype_phenotype_sample_overlap': { 'tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz': PHENO_BED },
+  'RNA_calling|rnaseqc_call': { 'tests/fixtures/rna_calling/reference/chr22.window.fa.gz': 'output/rnaseq/reference/chr22.window.fa' }
 };
+// the script's variable for each file you supply, where the option name alone would be unclear
+var VAR_NAME = {
+  'tests/fixtures/rna_calling/fastq': 'FASTQ_DIR', 'output/rnaseq/bam/protocol_example.fastq_list.txt': 'FASTQ_SAMPLE_LIST',
+  'output/rnaseq/reference/STAR_index': 'STAR_INDEX', 'output/rnaseq/reference/chr22.window.fa': 'REFERENCE_FASTA',
+  'tests/fixtures/rna_calling/reference/chr22.window.collapsed.gtf': 'GENE_MODEL_GTF', 'tests/fixtures/rna_calling/reference/chr22.window.refFlat.txt': 'REF_FLAT',
+  'tests/fixtures/bulk_expression_normalization/annotation.gene.gtf': 'GENE_ANNOTATION_GTF', 'tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.sample_participant_lookup.txt': 'SAMPLE_PARTICIPANT_LOOKUP',
+  'tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.tpm.gct.gz': 'TPM_GCT', 'tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.geneCount.gct.gz': 'COUNTS_GCT',
+  'tests/fixtures/vcf_qc/protocol_example.genotype.vcf_list.txt': 'VCF_LIST', 'tests/fixtures/vcf_qc/genotype.chr22_48M.variants.gz': 'DBSNP_VARIANTS', 'tests/fixtures/vcf_qc/reference/chr22.win48.fa.gz': 'VCF_QC_REFERENCE_FASTA',
+  'tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz': 'PHENOTYPE_BED', 'tests/fixtures/covariate_formatting/covariates.base.tsv': 'COVARIATES',
+  'tests/fixtures/qtl_mini/association_windows.bed': 'ASSOCIATION_WINDOWS'
+};
+function canon(k, p) { return (SAME_FILE[k] || {})[p] || p; }
+// With your own data: example files that an earlier step on the route makes. The script links that
+// step's file under the example's name, so every later file name and command stays the one run on
+// the example data; with swap, the file is passed directly (its name does not name later files).
+var NORM = 'bulk_expression_normalization|normalize';
+var NORM_BED = 'output/rnaseq/protocol_example.rnaseq.low_expression_filtered.outlier_removed.tmm_cpm_voom.expression.bed.gz';
+var MARCHENKO = 'output/covariate/protocol_example.rnaseq.bed.protocol_example.covariates.protocol_example.genotype.merged.plink_qc.plink_qc.prune.pca.Marchenko_PC.gz';
+var FM_MANIFEST = 'output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.fine_mapping_manifest.tsv';
+var FEEDS = {
+  'bulk_expression_QC|qc': [
+    { p: 'tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.tpm.gct.gz', from: 'RNA_calling|rnaseqc_call', file: 'output/rnaseq/bam/protocol_example.fastq_list.rnaseqc.gene_tpm.gct.gz' },
+    { p: 'tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.geneCount.gct.gz', from: 'RNA_calling|rnaseqc_call', file: 'output/rnaseq/bam/protocol_example.fastq_list.rnaseqc.gene_readsCount.gct.gz' }],
+  'GWAS_QC|genotype_phenotype_sample_overlap': [{ p: 'tests/fixtures/gene_annotation/protocol_example.rnaseq.bed.gz', from: NORM, file: NORM_BED }],
+  'phenotype_formatting|phenotype_by_chrom': [{ p: PHENO_BED, from: NORM, file: NORM_BED }]
+};
+['Marchenko_PC', 'PEER', 'PCA'].forEach(function (w) { FEEDS['covariate_hidden_factor|' + w] = [{ p: PHENO_BED, from: NORM, file: NORM_BED }]; });
+// fine-mapping from individual-level data reads the discovery inputs: per-chromosome genotypes,
+// the phenotype region list and the covariates with hidden factors
+['susie_twas', 'mnm_genes', 'mnm', 'qtl_dataset_construct'].forEach(function (w) { FEEDS['mnm_regression|' + w] = [
+  // one genotype set (fine-mapping does not take the per-chromosome list): the scan's genotypes,
+  // QC'd when genotype QC is on the route
+  { p: 'tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed', from: 'GWAS_QC|qc_no_prune', file: 'output/genotype_formatting/scan_genotypes/protocol_example.genotype.merged.bed', swap: true },
+  { p: 'tests/fixtures/qtl_mini/protocol_example.genotype.chr22.bed', from: 'genotype_formatting|merge_plink', file: 'output/genotype_formatting/plink/protocol_example.genotype.merged.bed', swap: true },
+  // the region list plus the context and covariate columns a fine-mapping manifest needs
+  { p: 'tests/fixtures/qtl_mini/protocol_example.pheno_manifest_context.tsv', from: 'phenotype_formatting|phenotype_by_chrom', file: FM_MANIFEST, swap: true,
+    make: ['awk -v OFS="\\t" -v cov="$PWD/' + MARCHENKO + '" \'NR == 1 { print $0, "cond", "cov_path"; next } { print $0, "bulk_rnaseq", cov }\' output/phenotype/phenotype_by_chrom_for_cis/bulk_rnaseq.phenotype_by_chrom_files.region_list.txt > ' + FM_MANIFEST] },
+  { p: 'tests/fixtures/qtl_mini/example_covariates.tsv', from: 'covariate_hidden_factor|Marchenko_PC', file: MARCHENKO, swap: true }]; });
+function onRoute(key, route, i) { return route.some(function (r, j) { return j < i && r.wfs.some(function (w) { return r.m + '|' + w === key; }); }); }
+function activeFeeds(k, route, i) { var seen = {}; return (FEEDS[k] || []).filter(function (f) { if (seen[f.p] || !onRoute(f.from, route, i)) return false; return (seen[f.p] = true); }); }
 function optOf(k, p) { var o = ((typeof XQB_DATA !== "undefined" && XQB_DATA.opt) || {})[k] || {}; if (o[p]) return o[p]; var m = SAME_FILE[k] || {}, q = Object.keys(m).filter(function (x) { return m[x] === p; })[0]; return q ? o[q] : undefined; }
-function sameAs(k) { var m = SAME_FILE[k] || {}; return Object.keys(m).map(function (q) { return m[q]; }); }
-// the links that apply to step k on this route: the producing step must come earlier;
-// with own data, also the example files that are the same file as another step's
-function activeLinks(k, route, i, own) {
-  var same = own ? Object.keys(SAME_FILE[k] || {}).map(function (q) { return { p: q, io: SAME_FILE[k][q], cmd: SAME_FILE[k][q] }; }) : [];
-  return same.concat((LINKS[k] || []).filter(function (L) { return route.some(function (r, j) { return j < i && r.wfs.some(function (w) { return r.m + '|' + w === L.from; }); }); }));
-}
+// the links that apply to step k on this route: the producing step must come earlier
+function activeLinks(k, route, i) { return (LINKS[k] || []).filter(function (L) { return onRoute(L.from, route, i); }); }
 function linkedInputs(k, ins, route, i, own) {
   var L = activeLinks(k, route, i, own); if (!L.length) return ins;
   var out = []; ins.forEach(function (p) { var l = L.filter(function (x) { return x.p === p; })[0]; if (!l) out.push(p); else if (l.io && out.indexOf(l.io) < 0) out.push(l.io); });
@@ -235,11 +286,15 @@ function linkedInputs(k, ins, route, i, own) {
 }
 function linkedCmd(k, c, route, i, own) {
   var L = activeLinks(k, route, i, own); if (!L.length) return c;
-  L.forEach(function (l) { c = swapPath(c, l.p, l.cmd); });
+  L.forEach(function (l) {
+    if (l.link) c = '_link ' + l.link + ' ' + l.cmd + (l.plink ? ' plink' : '') + '\n' + c;
+    if (l.drop) c = c.split('\n').filter(function (x) { return !l.drop.some(function (d) { return x.indexOf(d) === 0; }); }).join('\n').replace(/^\n+/, '');
+    c = swapPath(c, l.p, l.cmd);
+  });
   return c.replace(/ {2,}/g, ' ');
 }
 // "genoFile" -> "Genotypes (chr21.bed)": what the file is for, then its name
-var OPT_NAMES = { genofile: 'Genotypes', phenofile: 'Phenotype data', covfile: 'Covariates', covariate_file: 'Covariates', pcafile: 'Genetic PCs', phenotype_file: 'Phenotype data', genotype_file: 'Genotypes', region_list: 'Regions', customized_association_windows: 'Association windows', gwas_meta_data: 'GWAS summary statistics list', ld_meta_data: 'LD reference list', annotation_file: 'Annotation', dbsnp_variants: 'Known variants (dbSNP)', reference_genome: 'Reference genome' };
+var OPT_NAMES = { data_dir: 'FASTQ folder', sample_list: 'FASTQ sample list', star_index: 'STAR index', gtf: 'Gene model (GTF)', reference_fasta: 'Reference genome', ref_flat: 'Gene model (refFlat)', annotation_gtf: 'Gene-level annotation (GTF)', sample_participant_lookup: 'Sample-to-participant IDs', tpm_gct: 'TPM matrix (GCT)', counts_gct: 'Read-count matrix (GCT)', genofile: 'Genotypes', phenofile: 'Phenotype data', covfile: 'Covariates', covariate_file: 'Covariates', pcafile: 'Genetic PCs', phenotype_file: 'Phenotype data', genotype_file: 'Genotypes', region_list: 'Regions', customized_association_windows: 'Association windows', gwas_meta_data: 'GWAS summary statistics list', ld_meta_data: 'LD reference list', annotation_file: 'Annotation', dbsnp_variants: 'Known variants (dbSNP)', reference_genome: 'Reference genome' };
 function optLabel(opt, p) {
   var base = p.replace(/^<|>$/g, '').split('/').pop();
   if (!opt) return base;
@@ -248,16 +303,30 @@ function optLabel(opt, p) {
   var name = OPT_NAMES[o] || opt.replace(/^-+/, '').replace(/[_-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/^./, function (c) { return c.toUpperCase(); });
   return name + (nth ? ', file ' + nth : '') + ' (' + base + ')';
 }
+// what a file you supply should be, for the files whose type alone does not say
+var HINT = {
+  'tests/fixtures/rna_calling/fastq': 'The folder that holds your FASTQ files (.fastq.gz). The sample list names the files in it.',
+  'output/rnaseq/bam/protocol_example.fastq_list.txt': 'A tab-separated sample list with a header: ID, fq1 and, for paired-end reads, fq2 (file names in the FASTQ folder); optional strand (fr, rf or unstranded) and read_length columns.',
+  'output/rnaseq/reference/STAR_index': 'The folder of a STAR genome index for your reference genome and gene model, made by reference_data_preparation STAR_index.',
+  'tests/fixtures/rna_calling/reference/chr22.window.refFlat.txt': 'The gene model as a refFlat table (no header: gene name, transcript ID, chromosome, strand, transcript start and end, then CDS and exon columns), made from your GTF by reference_data_preparation RefFlat_generation. Picard uses it to count where reads fall.',
+  'tests/fixtures/bulk_expression_normalization/annotation.gene.gtf': 'A gene-level GTF (one record per gene), e.g. from reference_data_preparation gene_annotation. It gives each gene its coordinates in the phenotype BED.',
+  'tests/fixtures/bulk_expression_normalization/protocol_example.rnaseq.sample_participant_lookup.txt': 'A two-column table with a header, sample_id and participant_id: the ID of each RNA sample and the matching ID in your genotypes (they can be the same).',
+  'tests/fixtures/qtl_mini/association_windows.bed': 'The window to fine-map around each gene, a BED with the header #chr, start, end, ID (gene ID), e.g. the TSS plus and minus 500 kb or TAD-based windows.',
+  'tests/fixtures/phenotype_formatting/protocol_example.rnaseq.bed.bed.gz': 'The normalized phenotype BED: header #chr, start, end, ID, then one column per sample, with sample IDs as in your genotypes; sorted by chromosome and start, bgzipped, with a .tbi index next to it.',
+  'tests/fixtures/covariate_formatting/covariates.base.tsv': 'A tab-separated table with one row per covariate (first column header #id) and one numeric column per sample, sample IDs as in your genotypes. Fine-mapping uses these covariates plus the genetic PCs and hidden factors made here.'
+};
 // what a file you supply should be, from its type and the example file
 function fileHint(p, name, multi) {
   var f = p.split('/').pop(), pv = (XQB_DATA.prev || {})[p], h;
-  if (/\.bed$/.test(f)) h = 'PLINK genotypes: give the .bed file; its .bim and .fam must sit next to it.';
-  else if (/\.vcf(\.gz)?$/.test(f)) h = 'VCF genotypes, bgzipped, with a .tbi index next to it.';
+  if (HINT[p]) h = HINT[p];
+  else if (/\.bed$/.test(f) && !/window|region/i.test(f)) h = 'PLINK genotypes: give the .bed file; its .bim and .fam must sit next to it.';
+  else if (/\.vcf(\.gz)?$/.test(f)) h = 'VCF genotypes on GRCh38 with chr-prefixed chromosome names, bgzipped, with a .tbi index next to it.';
+  else if (/\.gtf(\.gz)?$/.test(f)) h = 'A gene annotation in GTF format, on the same genome build and chromosome names as your reference genome.';
   else if (/\.bed\.gz$/.test(f)) h = 'A BED table: chromosome, start, end and ID columns, then one column per sample; bgzipped, with a .tbi index next to it.';
   else if (/\.gct(\.gz)?$/.test(f)) h = 'An expression matrix in GCT format: one row per gene, one column per sample.';
-  else if (/\.fa(sta)?(\.gz)?$/.test(f)) h = 'The reference genome in FASTA format (GRCh38).';
+  else if (/\.fa(sta)?(\.gz)?$/.test(f)) h = 'The reference genome in FASTA format (GRCh38), with its .fai index (samtools faidx) next to it' + (/\.gz$/.test(f) ? '; if bgzipped, also its .gzi.' : ' and, for the alignment QC, its .dict (picard CreateSequenceDictionary).');
   else if (/\.variants(\.gz)?$/.test(f)) h = 'Known variants (for example dbSNP) as a table with no header: chromosome, start, end and variant ID.';
-  else if (pv && /\.(vcf(\.gz)?|bed|bed\.gz|bgen|pgen)$/.test(String(pv.rows[0][0]))) h = 'A text file that lists your ' + (/vcf/.test(String(pv.rows[0][0])) ? 'VCF' : 'input') + ' files, one path per line.';
+  else if (pv && /\.(vcf(\.gz)?|bed|bed\.gz|bgen|pgen)$/.test(String(pv.rows[0][0]))) h = 'A text file that lists your ' + (/vcf/.test(String(pv.rows[0][0])) ? 'VCF files (GRCh38, chr-prefixed, bgzipped, each with its .tbi index)' : 'input files') + ', one path per line. Use full paths.';
   else if (/\.rds$/.test(f)) h = 'An R data file (.rds)' + (/PC/.test(name) ? ' with the genetic principal components, as written by the PCA module.' : ', as written by the protocol module that makes it.');
   else if (pv && pv.cols > 8) h = 'A tab-separated table: one row per variable (first column ' + pv.rows[0][0] + '), one column per sample.';
   else if (pv) h = 'A tab-separated table with the columns ' + pv.rows[0].slice(0, 6).join(', ') + (pv.cols > 6 ? ', …' : '') + '.';
@@ -421,7 +490,18 @@ class Component {
     };
     var own = s.src === 'own';
     var userFiles = {}, userOrder = [], supply = [];
-    var placeholder = function (p) { return '<your_' + nice(p.replace(/^<|>$/g, '').replace(/^path\/to\//, '')).replace(/ /g, '_') + '>'; };
+    // each file you supply is one shell variable at the top of the script, named after its field
+    var varOf = {}, varTaken = {}, varKey = {};
+    var nameVar = function (k, p, asked) {
+      if (varOf[p]) return varOf[p];
+      var b = (VAR_NAME[p] || optLabel(optOf(k, asked || p), (asked || p).replace(/\/+$/, ''))).replace(/ \([^()]*\)$/, '').replace(/\.(gz|bgz)$/, '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'FILE';
+      if (/^[0-9]/.test(b)) b = 'F_' + b;
+      var v = b, n = 2; while (varTaken[v]) v = b + '_' + n++;
+      varTaken[v] = 1; varKey[p] = k; return (varOf[p] = v);
+    };
+    var placeholder = function (p) { return '$' + varOf[p]; };
+    var ownInputs = function (k) { return (D.ext[k] || []).concat((D.setup || {})[k] || []); };
+    var stepOf = function (key, i) { var n = -1; route.forEach(function (r, j) { if (j < i && r.wfs.some(function (w) { return r.m + '|' + w === key; })) n = j; }); return n; };
     var routeVals = route.map(function (r, i) {
       var keys = r.wfs.map(function (w) { return r.m + '|' + w; });
       var tested = !r.soon && keys.every(testedKey);
@@ -429,10 +509,18 @@ class Component {
       var ins = [], files = [];
       keys.forEach(function (k) { linkedInputs(k, (D.io[k] || {}).i || [], route, i, own).forEach(function (p) {
         if (ins.some(function (x) { return x.raw === p; })) return;
-        var pi = p.indexOf('output/') === 0 ? producer(p, i, k) : -1;
+        // with your own data: fed from an earlier step, or a file you supply (also what the
+        // example's setup lines write); the same file of yours is asked for once (SAME_FILE)
+        var feed = own ? activeFeeds(k, route, i).filter(function (f) { return f.p === p; })[0] : null;
+        var mine = own && !feed && ownInputs(k).indexOf(p) >= 0;
+        var pi = feed ? stepOf(feed.from, i) : (p.indexOf('output/') === 0 && !mine ? producer(p, i, k) : -1);
         if (pi >= 0) reads[pi + 1] = 1;
+        var q = mine ? canon(k, p) : p;
+        if (mine && q !== p && q.indexOf('output/') === 0 && !userFiles[q]) { mine = false; pi = producer(q, i, k); }
         // a file the user supplies is one the module page declares with no producing step (D.ext)
-        var user = (D.ext[k] || []).concat(own ? sameAs(k) : []).indexOf(p) >= 0, ref = user && REF_RX.test(p);
+        var user = own ? mine : (D.ext[k] || []).indexOf(p) >= 0, ref = user && REF_RX.test(q);
+        if (user && own) nameVar(k, q, p);
+        p = user ? q : p;
         if (user) { if (!userFiles[p]) { userFiles[p] = []; userOrder.push(p); } if (userFiles[p].indexOf(i + 1) < 0) userFiles[p].push(i + 1); }
         var src = pi >= 0 ? 'From step ' + (pi + 1) : (p.indexOf('output/') === 0 ? 'Made by a module not on this route' : (user ? (ref ? 'Reference data' : (own ? 'Your file' : 'Example file')) : 'Written by this step’s setup lines'));
         var shown = user && own ? (s.paths[p] || placeholder(p)) : p;
@@ -484,7 +572,8 @@ class Component {
     var missing = userOrder.filter(function (p) { return !s.paths[p]; }).length;
     var soonSteps = route.map(function (r, i) { return r.soon ? i + 1 : 0; }).filter(Boolean);
     var cluster = s.runOn === 'local' ? '' : ' \\\n    -c my_cluster.yml -q ' + s.runOn;
-    var noCmd = [], exampleOnly = 0;
+    var noCmd = [], exampleOnly = 0, stageLines = [], staged = {}, choices = {};
+    var stageOf = function (p) { return 'output/your_files/' + p.replace(/^tests\/fixtures\//, ''); };
     var blocks = route.map(function (r, i) {
       var head = '# Step ' + (i + 1) + '. ' + r.title + ' (' + (LABEL[r.m] || r.m) + ')';
       if (r.soon) return head + '\necho "Step ' + (i + 1) + ' has no command yet: see its notebook." >&2; exit 1';
@@ -493,9 +582,30 @@ class Component {
         if (!c) { noCmd.push(i + 1); return 'echo "Step ' + (i + 1) + ': the builder has no command for ' + w + '; see its notebook." >&2; exit 1'; }
         c = fmt(linkedCmd(k, c, route, i, own), cluster);
         if (own) {
-          // swap exactly the inputs the module page declares as user-supplied
-          (D.ext[k] || []).concat(sameAs(k)).forEach(function (p) { c = swapPath(c, p, s.paths[p] || placeholder(p)); });
-          // anything else still pointing at example files (setup lines that copy example data) must not run silently
+          var kind = function (p) { return (((D.kind || {})[k] || {})[p]) || ''; };
+          var setupIn = (D.setup || {})[k] || [], glue = [];
+          // the example's setup lines make example files; your files take their place
+          if (setupIn.length) { var n0 = c.split('\n').findIndex(function (l) { return /^sos run /.test(l); }); c = c.split('\n').filter(function (l, j) { return j >= n0 || /^mkdir -p /.test(l); }).join('\n'); }
+          // files an earlier step makes: linked under the example's name, or passed directly
+          activeFeeds(k, route, i).forEach(function (f) {
+            if (f.make) glue = glue.concat(f.make);
+            if (f.swap) { c = swapPath(c, f.p, f.file); return; }
+            var t = stageOf(f.p); glue.push('_link ' + f.file + ' ' + t + (kind(f.p) === 'plink' ? ' plink' : '')); c = swapPath(c, f.p, t);
+          });
+          // your files: a folder is passed as is; a file is linked under the example's name at the top
+          ownInputs(k).forEach(function (p) {
+            var q = canon(k, p), v = varOf[q]; if (!v) return;
+            if (q !== p && q.indexOf('output/') === 0) { c = swapPath(c, p, q); return; }
+            if (kind(p) === 'directory') { c = c.split('\n').map(function (l) { return /^mkdir -p /.test(l) ? swapPath(l, p, '').replace(/ +$/, '') : l; }).join('\n'); c = swapPath(c, p, '"${' + v + '}"'); return; }
+            var t = p.indexOf('output/') === 0 ? p : stageOf(p);
+            if (!staged[t]) { staged[t] = 1; stageLines.push('_link "${' + v + '}" ' + t + ({ plink: ' plink', fasta: ' fasta' }[kind(p)] || '')); }
+            c = swapPath(c, p, t);
+          });
+          // study choices, asked at the top of the script
+          if (/ --chrom chr22(?=$|[\s\\])/m.test(c) && k === 'phenotype_formatting|phenotype_by_chrom') { choices.CHROMOSOMES = 1; c = c.replace(/ --chrom chr22(?=$|[\s\\])/m, ' --chrom ${CHROMOSOMES}'); glue.push('[ -n "$CHROMOSOMES" ] || CHROMOSOMES=$(zcat ' + stageOf(PHENO_BED) + ' | grep -v "^#" | cut -f 1 | sort -u | tr "\\n" " ")'); }
+          if (/ --region-name ENSG\w+/.test(c)) { choices.FINEMAP_GENES = 1; c = c.replace(/ --region-name ENSG\w+/, ' ${FINEMAP_GENES:+--region-name $FINEMAP_GENES}'); }
+          if (glue.length) c = glue.join('\n') + '\n' + c;
+          // anything else still pointing at example files must not run silently
           c = c.split('\n').map(function (l) { if (l.indexOf('tests/fixtures/') < 0) return l; exampleOnly++; return '# EXAMPLE DATA, replace with your own: ' + l; }).join('\n');
         }
         return c;
@@ -503,7 +613,45 @@ class Component {
     });
     var body = blocks.join('\n\n');
     routeVals.forEach(function (rv, i) { rv.cmd = blocks[i]; var tl = (D.terms || {})[route[i].m] || []; rv.terms = tl.map(function (t) { return { k: t[0], v: t[1] }; }); rv.hasTerms = tl.length > 0; });
-    var holes = (body.match(/<your_[^>]+>/g) || []).filter(function (h, n, a) { return a.indexOf(h) === n; }).length;
+    var holes = own ? missing : 0;
+    // with your own data: the paths and study choices, a check that stops before any tool runs,
+    // and your files linked under the example's names
+    var head2 = '';
+    if (own && userOrder.length) {
+      var q1 = function (v) { return "'" + String(v).replace(/'/g, "'\\''") + "'"; };
+      var pad = function (a, w) { return a + new Array(Math.max(1, w + 4 - a.length)).join(' '); };
+      var w = Math.max.apply(null, userOrder.map(function (p) { return varOf[p].length + q1(s.paths[p] || '').length + 1; }).concat([20]));
+      var names = userOrder.map(function (p) { return varOf[p]; }).join(' ');
+      head2 = '# Your files. Put each path between the quotes, or enter them on the Builder page and download again.\n' +
+        '# A relative path is read from the folder you run this script in (the repository folder).\n' +
+        userOrder.map(function (p) { return pad(varOf[p] + '=' + q1(s.paths[p] || ''), w) + '# step ' + userFiles[p].join(', ') + ': ' + optLabel(optOf(varKey[p], p), p).replace(/ \([^()]*\)$/, ''); }).join('\n') + '\n' +
+        (Object.keys(choices).length ? '\n# Study choices (optional)\n' +
+          (choices.CHROMOSOMES ? pad("CHROMOSOMES=''", w) + "# chromosomes to scan, e.g. 'chr21 chr22'; empty: every chromosome in the phenotype BED\n" : '') +
+          (choices.FINEMAP_GENES ? pad("FINEMAP_GENES=''", w) + "# gene IDs to fine-map, e.g. 'ENSG00000283047 ENSG00000130538'; empty: every gene in the phenotype file\n" : '') : '') +
+        '\n# Stop here, before any tool runs, if a path is empty or does not exist.\n' +
+        '_empty=""; _gone=""\n' +
+        'for _v in ' + names + '; do\n' +
+        '  if [ -z "${!_v}" ]; then _empty="$_empty $_v"; elif [ ! -e "${!_v}" ]; then _gone="$_gone $_v=${!_v}"; fi\n' +
+        'done\n' +
+        'if [ -n "$_empty" ]; then echo "Fill in these paths at the top of this script:$_empty" >&2; exit 1; fi\n' +
+        'if [ -n "$_gone" ]; then echo "These paths do not exist:$_gone" >&2; exit 1; fi\n';
+    }
+    if (/^_link /m.test(body) || stageLines.length) head2 += (head2 ? '\n' : '') +
+      '# _link FILE NAME [plink|fasta]: make FILE, and the index files beside it, available as NAME\n' +
+      '_link() {\n' +
+      '  local f="$1" t="$2" x d\n' +
+      '  [ -e "$f" ] || { echo "Not found: $f" >&2; exit 1; }\n' +
+      '  mkdir -p "$(dirname "$t")"; ln -sfn "$(realpath "$f")" "$t"\n' +
+      '  for x in .tbi .csi .fai .gzi; do if [ -e "$f$x" ]; then ln -sfn "$(realpath "$f$x")" "$t$x"; fi; done\n' +
+      '  case "$f" in *.bed.gz|*.vcf.gz) if [ ! -e "$f.tbi" ] && [ ! -e "$f.csi" ]; then echo "$f needs its index ($f.tbi) beside it" >&2; exit 1; fi ;; esac\n' +
+      '  if [ "${3:-}" = plink ]; then for x in bim fam; do [ -e "${f%.bed}.$x" ] || { echo "$f needs ${f%.bed}.$x beside it" >&2; exit 1; }; ln -sfn "$(realpath "${f%.bed}.$x")" "${t%.bed}.$x"; done; fi\n' +
+      '  if [ "${3:-}" = fasta ]; then\n' +
+      '    [ -e "$f.fai" ] || { echo "$f needs its index ($f.fai, from samtools faidx) beside it" >&2; exit 1; }\n' +
+      '    x="${f%.gz}"; x="${x%.*}.dict"; d="${t%.gz}"; d="${d%.*}.dict"; if [ -e "$x" ]; then ln -sfn "$(realpath "$x")" "$d"; fi\n' +
+      '  fi\n' +
+      '}\n';
+    if (stageLines.length) head2 += '\n# Your files, linked under the example\'s file names in output/your_files, so that every command\n# below is the one run on the example data. The results keep the example\'s names (protocol_example).\n' + stageLines.join('\n') + '\n';
+    if (head2) body = head2 + '\n' + body;
     var untestedSteps = route.map(function (r, i) { return !r.soon && !r.wfs.every(function (w) { return testedKey(r.m + '|' + w); }) ? i + 1 : 0; }).filter(Boolean);
     var blockers = soonSteps.concat(noCmd);
     var plural = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); };
@@ -511,7 +659,7 @@ class Component {
     var status = '', ready = false;
     if (route.length) {
       if (blockers.length) status = 'Step ' + blockers.join(', ') + ' has no command in the builder, so the script stops there.';
-      else if (own && (holes || exampleOnly)) status = [holes ? 'Fill in ' + plural(holes, 'input path') + ' above' : '', exampleOnly ? 'replace ' + plural(exampleOnly, 'line') + ' marked EXAMPLE DATA with your own files' : ''].filter(Boolean).join(', and ').replace(/^./, function (c) { return c.toUpperCase(); }) + '.';
+      else if (own && (holes || exampleOnly)) status = [holes ? 'Fill in ' + plural(holes, 'input path') + ' at the top of the script' : '', exampleOnly ? 'replace ' + plural(exampleOnly, 'line') + ' marked EXAMPLE DATA with your own files' : ''].filter(Boolean).join(', and ').replace(/^./, function (c) { return c.toUpperCase(); }) + '.';
       else if (own) { ready = true; status = 'Your paths are filled in. Each step has been run on the example data' + (untestedSteps.length ? ' except step ' + untestedSteps.join(', ') : '') + ', not on your data, so check the first steps’ output.'; }
       else if (untestedSteps.length) status = 'Step ' + untestedSteps.join(', ') + ' has not been run on the example data, so this is a demonstration, not a tested script.';
       else { ready = true; status = 'Every step of this route runs on the example data as written.'; }
@@ -529,12 +677,13 @@ class Component {
     var setupOnce = [{ v: 'Clone the repository.' }, { v: 'Install the software environment with pixi:', hasLink: true, href: BASE + 'xqtl-protocol-demo', linkText: 'Environment setup', after: '.' }];
     if (s.runOn !== 'local') setupOnce.push({ v: 'Copy code/cluster/' + s.runOn + '.yml to my_cluster.yml and set your account and queue:', hasLink: true, href: BASE + 'running-on-a-cluster', linkText: 'Running on a cluster', after: '.' });
     var setupRoute = [{ v: 'Open a terminal in the repository folder' + (s.runOn === 'local' ? '.' : ', on the cluster’s login node.') }];
-    if (own) setupRoute.push({ v: missing ? 'Fill in the ' + missing + ' input path' + (missing > 1 ? 's' : '') + ' above; the script shows <your_…> until you do.' : 'Check that each path above points at a readable file.' });
+    if (own) setupRoute.push({ v: missing ? 'Fill in the ' + missing + ' input path' + (missing > 1 ? 's' : '') + ' above (or at the top of the script). Until you do, the script stops at its first lines and names the paths still empty.' : 'Check that each path above points at a readable file.' });
     else setupRoute.push({ v: 'The example files are already in the repository; nothing to download.' });
     setupRoute.push({ v: s.runOn === 'local' ? 'Run the script: every step runs on this computer, one after another.' : 'Run the script: SoS sends each step to ' + (s.runOn === 'slurm' ? 'SLURM' : 'SGE') + ' and waits for it. This page does not submit anything itself.' });
     var mainResults = [], inter = [];
-    route.forEach(function (r, i) { r.wfs.forEach(function (w) { ((D.io[r.m + '|' + w] || {}).o || []).forEach(function (o) {
-      if (MAIN[r.m] && !mainResults.some(function (x) { return x.m === r.m; })) mainResults.push(Object.assign({ m: r.m, n: i + 1, module: LABEL[r.m], title: MAIN[r.m][0], meaning: MAIN[r.m][1], next: MAIN[r.m][2], path: o }, outOf(r.m)));
+    route.forEach(function (r, i) { r.wfs.forEach(function (w) { var gone = activeLinks(r.m + '|' + w, route, i, own).map(function (l) { return l.p; }); ((D.io[r.m + '|' + w] || {}).o || []).forEach(function (o) {
+      if (gone.indexOf(o) >= 0) return;
+      if (MAIN[r.m] && !mainResults.some(function (x) { return x.m === r.m; })) mainResults.push(Object.assign({ m: r.m, n: i + 1, module: LABEL[r.m], title: MAIN[r.m][0], meaning: MAIN[r.m][1], next: MAIN[r.m][2], path: MAIN_FILE[r.m] || o }, outOf(r.m)));
       else if (!inter.some(function (e) { return e.path === o; }) && !mainResults.some(function (x) { return x.path === o; })) inter.push({ n: i + 1, path: o });
     }); }); });
     var loadExample = function () { self.setRoute({ mode: 'example', src: 'example', study: studyFor(s.example), methods: {} }, 'Loaded the example route.'); scrollTo('r-h'); };
