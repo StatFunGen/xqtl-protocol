@@ -19,8 +19,8 @@
 #                         molecular_trait_object_id, variant_id, chrom, pos,
 #                         <pvalue-col>, <af-col>, tss_distance, tes_distance,
 #                         and (optionally) qvalue.
-#   --n-variants-stats <tsv.gz>  optional per-gene n_variants_filtered (else the
-#                         filtered Bonferroni flavour is skipped).
+#   --n-variants-stats <tsv.gz>  optional per-gene n_variants_filtered (else counted from the
+#                         pairs at --maf-cutoff / --cis-window, or skipped when both are 0).
 # Params mirror the legacy CLI: --maf-cutoff / --cis-window / --fdr-threshold /
 #   --pvalue-cutoff / --pvalue-col / --af-col / --study / --context / --genome.
 # Outputs:
@@ -81,18 +81,39 @@ readAll <- function(files, keep = NULL) {
 }
 regionalFiles <- resolveAll(argv$regional, argv$cwd, argv$regional_pattern, "regional")
 pairsFiles    <- resolveAll(argv$pairs, argv$cwd, argv$qtl_pattern, "pairs")
-# optional: without it the filtered Bonferroni flavour is skipped
+# optional: per-gene variant counts at --maf-cutoff and --cis-window. Without the file they are
+# counted from the pairs below; with neither, the filtered Bonferroni flavour is skipped.
 nvFiles       <- resolveAll(argv$n_variants_stats, argv$cwd, argv$n_variants_suffix, "n_variants", required = FALSE)
 if (length(regionalFiles) == 0L || length(pairsFiles) == 0L)
   stop("Provide --regional/--pairs, or --cwd with --regional-pattern/--qtl-pattern.")
-if (length(nvFiles) == 0L)
-  message("No per-gene n_variants file found; the filtered Bonferroni correction is skipped.")
+recount <- length(nvFiles) == 0L && (argv$maf_cutoff > 0 || argv$cis_window > 0)
 message("Reading ", length(regionalFiles), " regional and ", length(pairsFiles), " pairs file(s).")
 regional <- readAll(regionalFiles)
+# Count, per gene, the variants with minor allele frequency above --maf-cutoff that lie within
+# --cis-window of the gene (TSS - window to TES + window), before the p-value filter. This is
+# the rule of the legacy TensorQTL post-processor that wrote the *_cis_n_variants_stats files.
+countParts <- list()
+countFiltered <- function(d) {
+  need <- c(idCol, argv$af_col, "tss_distance", "tes_distance")
+  if (!all(need %in% names(d))) {
+    recount <<- FALSE
+    message("The pairs file lacks ", paste(setdiff(need, names(d)), collapse = ", "),
+            "; the filtered Bonferroni correction is skipped.")
+    return(invisible(NULL))
+  }
+  af <- as.numeric(d[[argv$af_col]])
+  keep <- !is.na(af)
+  if (argv$maf_cutoff > 0) keep <- keep & pmin(af, 1 - af) > argv$maf_cutoff
+  if (argv$cis_window > 0) keep <- keep & as.numeric(d$tss_distance) >= -argv$cis_window &
+                                         as.numeric(d$tes_distance) <= argv$cis_window
+  countParts[[length(countParts) + 1L]] <<- table(factor(d[[idCol]][keep]))
+}
 # p-value pre-filter, file by file (keeps the object small; the per-gene min variant is always
 # retained so the Bonferroni min is exact).
-pairs <- readAll(pairsFiles, keep = if (argv$pvalue_cutoff < 1) function(d)
-  d[!is.na(d[[argv$pvalue_col]]) & d[[argv$pvalue_col]] < argv$pvalue_cutoff, ] else NULL)
+pairs <- readAll(pairsFiles, keep = function(d) {
+  if (recount) countFiltered(d)
+  if (argv$pvalue_cutoff < 1) d[!is.na(d[[argv$pvalue_col]]) & d[[argv$pvalue_col]] < argv$pvalue_cutoff, ] else d
+})
 if (!(idCol %in% names(regional)) || !("p_beta" %in% names(regional)))
   stop("--regional must carry ", idCol, " and p_beta.")
 if (!(idCol %in% names(pairs)) || !(argv$pvalue_col %in% names(pairs)))
@@ -102,6 +123,15 @@ nvFilt <- NULL
 if (length(nvFiles)) {
   nvs <- readAll(nvFiles)
   nvFilt <- setNames(nvs$n_variants_filtered, nvs[[idCol]])
+} else if (recount) {
+  counts <- unlist(lapply(countParts, function(x) setNames(as.numeric(x), names(x))))
+  counts <- tapply(counts, names(counts), sum)
+  g <- as.character(regional[[idCol]])
+  nvFilt <- setNames(ifelse(g %in% names(counts), counts[g], 0), g)
+  message("Counted variants per gene at MAF > ", argv$maf_cutoff, " and cis-window ", argv$cis_window,
+          " from the pairs file(s).")
+} else {
+  message("No per-gene n_variants file and --maf-cutoff/--cis-window are 0; the filtered Bonferroni correction is skipped.")
 }
 
 genes <- as.character(regional[[idCol]])
