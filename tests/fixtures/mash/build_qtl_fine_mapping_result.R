@@ -42,6 +42,9 @@ fmr <- QtlFineMappingResult(
   trait   = rep("mash", length(conds)),
   method  = rep("susie", length(conds)),
   entry   = lapply(conds, mkEntry))
+# The toy data is on GRCh38; mashInput() needs the build to treat the
+# marginal effects as summary statistics.
+GenomeInfoDb::genome(fmr) <- "GRCh38"
 
 out <- file.path(here, "protocol_example.QtlFineMappingResult.rds")
 saveRDS(fmr, out, compress = "xz")

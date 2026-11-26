@@ -112,27 +112,18 @@ if (length(fmPaths) != length(twPaths)) stop("--fine-mapping-result needs one pa
 # this object's ldReference, per gene and scoped to that gene's matched
 # variants (and for a genotype panel it uses the LD factor, so the p x p matrix
 # is never formed). Nothing here computes or caches LD.
-# gwas_sumstats_construct.R writes no GwasSumStats file for a window with no
-# GWAS variants; every gene of such a window gets an empty result. A missing
-# folder is a wrong path, not an empty window, and stops here.
-gss <- if (file.exists(argv$gwas_sumstats)) readRDS(argv$gwas_sumstats) else {
-  if (!dir.exists(dirname(argv$gwas_sumstats)))
-    stop("--gwas-sumstats ", argv$gwas_sumstats, ": its folder does not exist.")
-  message("No GwasSumStats file at ", argv$gwas_sumstats,
-          " (none is written for a window without GWAS variants); every gene gets an empty result.")
-  NULL
-}
+gss <- readRDS(argv$gwas_sumstats)
 
 readFmr <- function(p) if (nzchar(p) && p != "." && file.exists(p)) readRDS(p) else NULL
 
 # The eight rsq*/mr* arguments travel as two bundles: --rsq-option feeds
 # `metric`, --rsq-pval-option feeds `pvalMetric`, whose default
 # c("adj_rsq_pval", "pval") is this flag's default too.
-# A gene with no scorable (QTL, GWAS) pair gets an empty list with a `noResult`
-# attribute, so the other genes of the block are still scored.
+# A gene with nothing to score -- no weight set clears the CV cutoffs, or the
+# GWAS holds none of its variants -- gets an empty result, and pecotmr says
+# why; any other error stops the run.
 for (i in seq_along(twPaths)) {
-  res <- if (is.null(gss)) structure(list(), noResult = "no GWAS variants in this window") else
-    tryCatch(causalInferencePipeline(
+  res <- causalInferencePipeline(
     gwasSumStats = gss,
     twasWeights = readRDS(twPaths[i]),
     fineMappingResult = readFmr(fmPaths[i]),
@@ -146,11 +137,7 @@ for (i in seq_along(twPaths)) {
       pipCutoff = argv$mr_pip_cutoff,
       cpipCutoff = argv$mr_cpip_cutoff,
       pvalCutoff = argv$mr_pval_cutoff),
-    combineMethods = combine_methods),
-    error = function(e) {
-      message(sprintf("No TWAS result for %s: %s", twPaths[i], conditionMessage(e)))
-      structure(list(), noResult = conditionMessage(e))
-    })
+    combineMethods = combine_methods)
   dir.create(dirname(outPaths[i]), showWarnings = FALSE, recursive = TRUE)
   saveRDS(res, outPaths[i])
   cat(sprintf("Wrote causalInferencePipeline result to %s\n", outPaths[i]))

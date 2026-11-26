@@ -18,6 +18,10 @@
 # reach this step from outside the pipeline, and indexing one with the tabix
 # "bed" preset would read its third column, an allele, as an end coordinate.
 #
+# A table can open with `##` lines above its header (writeBed() records the
+# genome build as `##genome=<build>`). They are skipped on reading, must be
+# the same in every table, and are written back above the merged header.
+#
 # Inputs:
 #   --input <TABLE> [...]  Per-region tables (all sharing one header).
 #   --input-list <PATH>    File listing those tables, one per line, instead (a
@@ -46,12 +50,26 @@ readListFile <- function(f) { x <- trimws(readLines(f)); x[nzchar(x)] }
 inputs <- if (nzchar(argv$input_list)) readListFile(argv$input_list) else as.character(argv$input)
 if (length(inputs) == 0L) stop("--input requires at least one table path.")
 
+# The `##` lines a table opens with, above its column header.
+metaLines <- function(f) {
+  head <- readLines(f, n = 50L)
+  head[cumsum(!startsWith(head, "##")) == 0L]
+}
+metas <- lapply(inputs, metaLines)
+meta <- metas[[1L]]
+differsMeta <- !vapply(metas, identical, logical(1), meta)
+if (any(differsMeta))
+  stop("All tables must share the ## lines of ", inputs[[1L]], " (",
+       paste(meta, collapse = "; "), "); these differ: ",
+       paste(inputs[differsMeta], collapse = ", "))
+
 # col_types = "c" throughout: the packed ";"-joined columns must survive
 # untouched and the table is re-emitted verbatim. One eager (altrep = FALSE)
 # read per file: a multi-file vroom() call, or lazy columns, keeps every file
 # open, and a genome-wide merge of thousands of tables then hits the
 # open-file limit.
-tables <- lapply(inputs, vroom, delim = "\t", col_types = vroom::cols(.default = "c"),
+tables <- lapply(inputs, vroom, delim = "\t", skip = length(meta),
+                 col_types = vroom::cols(.default = "c"),
                  progress = FALSE, altrep = FALSE)
 header <- names(tables[[1L]])
 differs <- !vapply(tables, function(t) identical(names(t), header), logical(1))
@@ -81,8 +99,9 @@ if (nrow(merged) > 0L) {
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 compress <- grepl("\\.(gz|bgz)$", argv$output)
 plain <- if (compress) sub("\\.(gz|bgz)$", "", argv$output) else argv$output
+writeLines(meta, plain)
 vroom_write(merged, plain, delim = "\t", quote = "none", na = "NA",
-            progress = FALSE)
+            progress = FALSE, append = TRUE, col_names = TRUE)
 if (compress) {
   bgzip(plain, dest = argv$output, overwrite = TRUE)
   file.remove(plain)

@@ -37,6 +37,9 @@
 #   --keep-variants        Optional file of variant IDs to keep.
 #   --drop-indel           Drop indels (QtlDataset keepIndel = FALSE).
 #   --no-scale-residuals   Applied at analysis time; refused here (see below).
+#   --genome               Genome build of the data (default GRCh38), recorded
+#                          on the dataset and carried by every result fitted
+#                          from it.
 #   --output               Output RDS path.
 
 suppressPackageStartupMessages({
@@ -82,6 +85,9 @@ parser <- add_argument(parser, "--keep-variants",
 parser <- add_argument(parser, "--no-scale-residuals",
                        help = "Applied at analysis time: pass to fine_mapping.R / twas_weights.R (ResidualizationParam scaleResiduals)",
                        flag = TRUE)
+parser <- add_argument(parser, "--genome",
+                       help = "Genome build of the data, carried by every result fitted from it",
+                       type = "character", default = "GRCh38")
 parser <- add_argument(parser, "--output",
                        help = "Output RDS path", type = "character")
 argv <- parse_args(parser)
@@ -148,7 +154,8 @@ qd <- loadQtlDatasetFromManifest(
   studyName           = argv$study,
   genotypes           = genotype_prefix,
   genotypeCovariates  = genotype_covariates,
-  transposeCovariates = isTRUE(argv$transpose_covariates))
+  transposeCovariates = isTRUE(argv$transpose_covariates),
+  genome              = argv$genome)
 
 dir.create(dirname(argv$output), showWarnings = FALSE, recursive = TRUE)
 saveRDS(qd, argv$output)

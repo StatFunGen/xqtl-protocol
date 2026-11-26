@@ -1,9 +1,12 @@
 """Tier B: twas_manifest.R resolves the twas metas into per-region TWAS units."""
 from __future__ import annotations
 
+import subprocess
+
 import pytest
 
 from helpers.expected import assert_matches_expected
+from helpers.r_runner import rscript_bin
 
 EXPECTED = "tests/fixtures/twas_manifest/expected/twas_manifest.tsv"
 
@@ -100,6 +103,31 @@ def test_twas_manifest_prefilter_pvalue_cutoff(run_r, repo_root, tmp_path, max_p
     else:
         assert p.returncode != 0
         assert "kept 0 of 1 genes" in out
+
+
+def test_twas_manifest_prefilter_keeps_what_twas_scores(run_r, repo_root, tmp_path):
+    """The prefilter makes the twas step's own choice (pecotmr::selectWeights), so
+    it keeps a gene the twas step would score: weights with no CV metric have
+    nothing to gate them, even when the gene's other context fails the cutoff."""
+    weights = tmp_path / "weights.rds"
+    p = subprocess.run([rscript_bin(), "-e", f"""
+        suppressPackageStartupMessages(library(pecotmr))
+        ids <- sprintf("chr22:%d:A:G", 16000000L + 100L * (1:3))
+        saveRDS(TwasWeights(
+            studyName = c("s", "s"), context = c("no_cv", "weak"),
+            trait = c("ENSG00000130538", "ENSG00000130538"), method = c("lasso", "lasso"),
+            entry = list(
+                TwasWeightsRow(variantIds = ids, weights = rep(0.1, 3)),
+                TwasWeightsRow(variantIds = ids, weights = rep(0.1, 3),
+                               cvResult = list(metrics = c(rsq = 0.001, pval = 0.5))))),
+            "{weights}")
+    """], capture_output=True, text=True)
+    assert p.returncode == 0, p.stderr
+    meta = _gene_meta(tmp_path / "meta.tsv", [("ENSG00000130538", weights)])
+    p = _gene_manifest(run_r, repo_root, meta, tmp_path / "manifest.tsv",
+                       "--min-cv-rsq", "0.01", "--max-cv-pval", "0.05")
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "kept 1 of 1 genes" in p.stdout + p.stderr
 
 
 def test_twas_manifest_gene_unit_needs_window(run_r, repo_root, tmp_path):

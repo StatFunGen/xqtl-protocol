@@ -193,9 +193,13 @@ def test_fsusie_ti_export(run_sos, read_rds, repo_root, qtl_mini, tmp_path):
     table = cwd / "fsusie/test_study.exported.bed.gz"
     assert table.with_suffix(table.suffix + ".tbi").exists()
     with gzip.open(table, "rt") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        fields = set(reader.fieldnames)
-        rows = list(reader)
+        lines = handle.read().splitlines()
+    # The `##` lines above the header carry the dataset's genome build.
+    meta = [l for l in lines if l.startswith("##")]
+    assert meta == ["##genome=GRCh38"], meta
+    reader = csv.DictReader(lines[len(meta):], delimiter="\t")
+    fields = set(reader.fieldnames)
+    rows = list(reader)
     # Name the columns rather than count them: the published schema grows a
     # per-coverage credible-set column per `--coverage`, so a bare count is
     # brittle while the vocabulary is the actual contract.

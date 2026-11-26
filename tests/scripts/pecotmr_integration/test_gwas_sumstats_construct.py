@@ -21,3 +21,21 @@ def test_gwas_sumstats_construct(run_r, read_rds, repo_root, tmp_path):
     assert read_rds(out)["class"] == "GwasSumStats"
     assert_matches_expected(out, repo_root / EXPECTED, mode="tolerant",
                             rtol=1e-6, atol=1e-8, normalize_paths=True)
+
+
+def test_gwas_sumstats_construct_empty_window(run_r, read_rds, repo_root, tmp_path):
+    """A window with no GWAS variants is written as an empty GwasSumStats, not
+    skipped, so every caller finds a file."""
+    fx = repo_root / "tests/fixtures"
+    out = tmp_path / "gss.rds"
+    # chr22:10.8-11.2 Mb lies inside the LD panel, between two GWAS variants.
+    p = run_r(repo_root / "code/script/pecotmr_integration/gwas_sumstats_construct.R",
+              ["--study", "protocol_example_twas_chr22",
+               "--gwas-tsv", fx / "twas/protocol_example.twas.gwas_sumstats.chr22.tsv.gz",
+               "--ld-block", "chr22:10800000-11200000",
+               "--ld-meta", fx / "ld_reference/ld_meta_file.tsv", "--output", out], timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "No GWAS variants in chr22:10800000-11200000" in p.stdout + p.stderr
+    summary = read_rds(out)
+    assert summary["class"] == "GwasSumStats"
+    assert summary["nrow"] == 0
