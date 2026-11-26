@@ -11,6 +11,9 @@
 #   qc_3
 # ============================================================
 
+# a failure anywhere in a pipeline fails the step instead of writing a partial file
+set -o pipefail
+
 STEP="${1:?Usage: $(basename "$0") <step> [args...]}"
 shift
 
@@ -131,7 +134,7 @@ _qc() {
         | bcftools norm -d exact --check-ref ws -f "$REFERENCE_GENOME" --threads "$NUM_THREADS" \
         | {
             if gt_only_vcf_qc_enabled; then
-                bcftools +fill-tags -- -t F_MISSING,HWE
+                bcftools +fill-tags -- -t AN,AC,F_MISSING,HWE
             else
                 bcftools +fill-tags -- -t all,F_MISSING,'VD=sum(FMT/DP)'
             fi
@@ -141,7 +144,8 @@ _qc() {
             -a "$DBSNP" \
             -h <(echo '##INFO=<ID=RSID,Number=1,Type=String,Description="dbSNP rsID">') \
             -c CHROM,FROM,TO,INFO/RSID \
-            -Oz --threads "$NUM_THREADS" -o "$out"
+            -Oz --threads "$NUM_THREADS" -o "$out" \
+        || { echo "ERROR: VCF QC (qc) failed; see the messages above" >&2; exit 1; }
 }
 
 _rename_chrs() {
@@ -202,13 +206,16 @@ _qc_2() {
     [[ -z "$GENO_FILE" ]] && { echo "ERROR: --genoFile is required" >&2; exit 1; }
     [[ -z "$OUTPUT" ]] && { echo "ERROR: --output is required" >&2; exit 1; }
 
+    # Keep sites whose FILTER is PASS or unset ("."). Many VCFs (imputed, or converted
+    # from PLINK) never set FILTER, and keeping only PASS would drop every site.
     if gt_only_vcf_qc_enabled; then
         printf 'running GT-only VCF QC\n'
 
         bcftools view -c1 "$GENO_FILE" \
-            | bcftools view -f PASS \
+            | bcftools view -f PASS,. \
             | bcftools filter -i "F_MISSING<${GENO_FILTER} & HWE>${HWE_FILTER}" \
-                -Oz --threads "$NUM_THREADS" -o "$OUTPUT"
+                -Oz --threads "$NUM_THREADS" -o "$OUTPUT" \
+            || { echo "ERROR: VCF QC (qc_2) failed; see the messages above" >&2; exit 1; }
     else
         printf 'running DP/GQ/AD-aware VCF QC\n'
 
@@ -216,11 +223,12 @@ _qc_2() {
             "(TYPE=\"SNP\" & (FMT/DP)>=${DP_SNP} & (FMT/GQ)>=${GQ}) | (TYPE=\"INDEL\" & (FMT/DP)>=${DP_INDEL} & (FMT/GQ)>=${GQ})" \
             "$GENO_FILE" \
             | bcftools view -c1 \
-            | bcftools view -f PASS \
+            | bcftools view -f PASS,. \
             | bcftools filter -i \
                 "GT=\"hom\" | TYPE=\"snp\" & GT=\"het\" & (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) >= ${AB_SNP} | TYPE=\"indel\" & GT=\"het\" & (FORMAT/AD[*:1])/(FORMAT/AD[*:0] + FORMAT/AD[*:1]) >= ${AB_INDEL}" \
             | bcftools filter -i "F_MISSING<${GENO_FILTER} & HWE>${HWE_FILTER}" \
-                -Oz --threads "$NUM_THREADS" -o "$OUTPUT"
+                -Oz --threads "$NUM_THREADS" -o "$OUTPUT" \
+            || { echo "ERROR: VCF QC (qc_2) failed; see the messages above" >&2; exit 1; }
     fi
 
     _print_file_info "$OUTPUT"

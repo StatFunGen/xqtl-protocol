@@ -238,7 +238,8 @@ _merge_plink() {
     echo "=== merge_plink: merging files in $file_list ===" >&2
 
     local -a inputs=()
-    if [[ -f "$file_list" ]]; then
+    # A text file lists the inputs one per line; a single .bed or .pgen is itself the input
+    if [[ -f "$file_list" && "$file_list" != *.bed && "$file_list" != *.pgen ]]; then
         while IFS= read -r _il || [[ -n "$_il" ]]; do inputs+=("$_il"); done < "$file_list"
     else
         read -r -a inputs <<< "$file_list"
@@ -332,7 +333,8 @@ _merge_vcf() {
     [[ -z "$output" ]] && { echo "ERROR: --output is required for merge_vcf" >&2; exit 1; }
 
     local -a inputs=()
-    if [[ -f "$file_list" ]]; then
+    # a single .vcf/.vcf.gz is an input, not a list of files
+    if [[ -f "$file_list" && "$file_list" != *.vcf.gz && "$file_list" != *.vcf && "$file_list" != *.bcf ]]; then
         while IFS= read -r _il || [[ -n "$_il" ]]; do inputs+=("$_il"); done < "$file_list"
     else
         read -r -a inputs <<< "$file_list"

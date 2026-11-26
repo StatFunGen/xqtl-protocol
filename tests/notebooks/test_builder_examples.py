@@ -13,11 +13,15 @@ over workers.
 Steps listed in website/builder/untested_steps.json are skipped, each with a reason there
 (large reference downloads, software not in the environment, unfinished modules). A step
 that needs a skipped step's output must be skipped too; the test below checks that.
+
+A step whose example runs in a container image (``--container <image>``) runs where apptainer or
+singularity is installed, as on SCC, and is skipped elsewhere with that reason.
 """
 from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -106,6 +110,15 @@ def _task_errors(tmp_path, n=3, lines=25):
                    + "\n".join(f.read_text(errors="replace").splitlines()[-lines:]) for f in errs)
 
 
+def _uses_container(cmd):
+    """A step whose example runs in a container image (--container <image>)."""
+    return re.search(r"--container\s+[^-\s]", cmd) is not None
+
+
+def _container_runtime():
+    return shutil.which("apptainer") or shutil.which("singularity")
+
+
 def _run_group(steps, tmp_path):
     for d in ("pipeline", "tests", "data"):
         (tmp_path / d).symlink_to(REPO / d)
@@ -121,6 +134,13 @@ def _run_group(steps, tmp_path):
             (tmp_path / rel / d).symlink_to(Path(root) / d)
             dirs.remove(d)
     env = _worker_env() or dict(os.environ)
+    if any(_uses_container(CMDS[k]) for k in steps):
+        # micromamba inside the image needs a temporary folder that exists there
+        env.update(SINGULARITYENV_TMPDIR="/tmp", APPTAINERENV_TMPDIR="/tmp")
+        # code/ and tests/ here are links into the repository; the image sees only this
+        # folder unless the repository is bound too
+        for var in ("SINGULARITY_BIND", "APPTAINER_BIND"):
+            env[var] = ",".join(x for x in (env.get(var), str(REPO)) if x)
     before = _repo_state()
     for m, wf in steps:
         script = CMDS[(m, wf)].replace("sos run ", f"{sos_bin()} run ")
@@ -142,6 +162,8 @@ def _make(steps):
 
     @pytest.mark.skipif(shutil.which(sos_bin()) is None, reason="needs sos")
     def test_runs(self, tmp_path):
+        if any(_uses_container(CMDS[k]) for k in steps) and _container_runtime() is None:
+            pytest.skip("runs in a container image; needs apptainer or singularity")
         _run_group(steps, tmp_path)
 
     test_runs.__doc__ = " -> ".join(f"{m}|{wf}" for m, wf in steps)

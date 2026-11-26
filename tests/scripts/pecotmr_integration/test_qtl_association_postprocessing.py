@@ -99,3 +99,29 @@ def test_significant_export_branch(run_r, repo_root, tmp_path):
     with open(exports / "qap90.summary.tsv") as fh:
         summ = {r["method"]: int(r["significant_qtl"]) for r in _csv.DictReader(fh, delimiter="\t")}
     assert summ["permutation"] > 0                     # variant-level export non-empty
+
+
+def test_counts_variants_without_stats_file(run_r, repo_root, tmp_path):
+    # The current TensorQTL cis workflow writes no *_cis_n_variants_stats file. Pointed at a
+    # scan folder without one, the wrapper counts the variants per gene from the pairs (MAF above
+    # --maf-cutoff, within --cis-window of the gene) and gives the same corrected table as with
+    # the committed counts file.
+    fx = repo_root / FX
+    scan = tmp_path / "tensorqtl_cis"
+    scan.mkdir()
+    for f in ("protocol_example.cis_qtl.regional.tsv.gz", "protocol_example.cis_qtl.pairs.tsv.gz"):
+        (scan / f).symlink_to(fx / f)
+    out, exports = tmp_path / "qap.rds", tmp_path / "exports"
+    p = run_r(
+        repo_root / "code/script/pecotmr_integration/qtl_association_postprocessing.R",
+        ["--cwd", scan, "--regional-pattern", "cis_qtl[.]regional[.]tsv[.]gz$",
+         "--qtl-pattern", "cis_qtl[.]pairs[.]tsv[.]gz$",
+         "--n-variants-suffix", "cis_n_variants_stats[.]tsv[.]gz$",
+         "--maf-cutoff", "0.01", "--cis-window", "1000000", "--pvalue-cutoff", "0.05",
+         "--study", "protocol_example", "--context", "bulk_rnaseq", "--genome", "hg38",
+         "--output", out, "--output-dir", exports], timeout=300)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "Counted variants per gene" in p.stdout + p.stderr
+    assert_matches_expected(exports / "qap.cis_regional.fdr.tsv.gz",
+                            repo_root / EXP / "qap.cis_regional.fdr.tsv.gz",
+                            mode="tolerant", rtol=1e-6, atol=1e-8)

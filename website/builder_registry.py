@@ -13,6 +13,7 @@ and page_content.json (method choices, intros, example outputs), with this data:
   prev      the first rows of each example input file the commands read
   src, opt  each input's declared producing step and the option it is passed to
   ext       the inputs of each step that the user supplies (no producing step, no setup line)
+  setup     the inputs each step's setup lines write; kind  each input's declared kind
 
 Selecting the command (fails closed, never guesses):
   * A code cell tagged ``builder`` (or ``builder:<variant>`` for a named variant)
@@ -404,7 +405,15 @@ def page_data(cmdlib, wio, selected):
             # inputs a user supplies: declared without a producing step and not written by setup lines
             "ext": {f"{m}|{wf}": paths for (m, wf), c in sorted(selected.items())
                     if (paths := [v["path"] for v in c.meta.get("inputs", {}).values()
-                                  if v.get("source", "user") == "user"])}}
+                                  if v.get("source", "user") == "user"])},
+            # inputs the cell's own setup lines write from example files: with your own data,
+            # these are asked for too, and the setup lines are not used
+            "setup": {f"{m}|{wf}": paths for (m, wf), c in sorted(selected.items())
+                      if (paths := [v["path"] for v in c.meta.get("inputs", {}).values()
+                                    if v.get("source") == "setup"])},
+            # each input's kind (file, directory, table, ...), as declared
+            "kind": {f"{m}|{wf}": {v["path"]: v.get("kind", "") for v in c.meta.get("inputs", {}).values()}
+                     for (m, wf), c in sorted(selected.items()) if c.meta.get("inputs")}}
     data.update({k: content[k] for k in ("meth", "intro", "bench", "outPrev", "terms")})
     return data
 

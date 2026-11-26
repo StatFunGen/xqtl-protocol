@@ -119,9 +119,11 @@ def test_qc_2(run_sh, repo_root, tmp_path):
                                 "--GQ", "20", "--DP-indel", "10", "--AB-snp", "0.15", "--AB-indel", "0.2",
                                 "--hwe-filter", "0", "--numThreads", "1"])
     assert p.returncode == 0, p.stdout + p.stderr
-    assert out.exists() and _vcf_records(out) >= 0            # valid VCF (GT-only toy data may filter all)
-    # regression: the GT-only variant-QC filters remove every record on this toy
-    # data -> an empty variant table; the committed projection pins that outcome.
+    # the toy VCF never sets FILTER ("."); those sites count as passing, so the
+    # polymorphic sites with low missingness survive (before, keeping only PASS
+    # removed every record).
+    assert out.exists() and 0 < _vcf_records(out) < _vcf_records(qc1)
+    # regression: the committed projection pins the surviving variants.
     proj = _variant_table(out, tmp_path / "qc_2.variants.tsv")
     assert_matches_expected(proj, repo_root / EXP / "qc_2.variants.tsv", mode="exact")
 
